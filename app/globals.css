@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-primary: #FAA619;
+  --color-primary-light: #FBB847;
+  --color-primary-dark: #E89510;
+  --color-dark: #58595B;
+  --color-dark-light: #6B6C6E;
+  --color-background: #FFFFFF;
+  --color-background-secondary: #F5F5F5;
+  
+  /* Bezirks-Farben */
+  --color-district-all: #FAA619;
+  --color-district-1: #3B82F6;
+  --color-district-2: #10B981;
+  --color-district-3: #8B5CF6;
+  --color-district-4: #F59E0B;
+  --color-district-5: #EF4444;
+  --color-district-6: #06B6D4;
+  --color-district-7: #EC4899;
+  --color-district-8: #14B8A6;
+  --color-district-9: #6366F1;
+  --color-district-10: #84CC16;
+  --color-district-11: #F97316;
+  --color-district-12: #A855F7;
+  --color-district-13: #22D3EE;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Container Auto-Centering */
+.container {
+  margin-left: auto;
+  margin-right: auto;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Overflow Fix für Mobile */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
 }
