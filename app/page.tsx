@@ -1,9 +1,9 @@
-import Link from 'next/link';
-import HeroSection from '@/components/HeroSection';
-import SectionHeader from '@/components/SectionHeader';
-import EventCard from '@/components/EventCard';
-import NewsCard from '@/components/NewsCard';
-import { getUpcomingEvents, getLatestPosts } from '@/lib/mockData';
+import Link from "next/link";
+import HeroSection from "@/components/HeroSection";
+import SectionHeader from "@/components/SectionHeader";
+import EventCard from "@/components/EventCard";
+import NewsCard from "@/components/NewsCard";
+import { getUpcomingEvents, getLatestPosts } from "@/lib/mockData";
 
 export default function Home() {
   // Mock Daten holen (später von Strapi)
@@ -17,17 +17,17 @@ export default function Home() {
       {/* Termine Section */}
       <section className="py-12 md:py-16 lg:py-20 bg-background">
         <div className="container">
-          <SectionHeader 
-            title="Kommende Termine" 
-            linkText="Alle Termine" 
-            linkHref="/termine" 
+          <SectionHeader
+            title="Kommende Termine"
+            linkText="Alle Termine"
+            linkHref="/termine"
           />
-          
+
           {upcomingEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingEvents.map((event) => (
-                <EventCard 
-                  key={event.id} 
+                <EventCard
+                  key={event.id}
                   id={event.id}
                   title={event.title}
                   date={event.eventDate}
@@ -46,20 +46,20 @@ export default function Home() {
       {/* News Section */}
       <section className="py-12 md:py-16 lg:py-20 bg-background-secondary">
         <div className="container">
-          <SectionHeader 
-            title="Aktuelles" 
-            linkText="Alle News" 
-            linkHref="/aktuelles" 
+          <SectionHeader
+            title="Aktuelles"
+            linkText="Alle News"
+            linkHref="/aktuelles"
           />
 
           {latestPosts.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {latestPosts.map((post) => (
-                <NewsCard 
-                  key={post.id} 
+                <NewsCard
+                  key={post.id}
                   id={post.id}
                   title={post.title}
-                  excerpt={post.excerpt || ''}
+                  excerpt={post.excerpt || ""}
                   date={post.publishedAt || post.createdAt}
                   category={post.category}
                   image={post.coverImage?.url}
@@ -79,9 +79,10 @@ export default function Home() {
             Lust auf Posaunenchor?
           </h2>
           <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-            Finde einen Chor in deiner Nähe oder erfahre mehr über unsere Aus- und Weiterbildungsangebote
+            Finde einen Chor in deiner Nähe oder erfahre mehr über unsere Aus-
+            und Weiterbildungsangebote
           </p>
-          <Link 
+          <Link
             href="/mitmachen"
             className="inline-block px-8 py-3 bg-white text-dark font-semibold rounded-lg hover:bg-gray-100 transition-colors"
           >

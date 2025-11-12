@@ -37,7 +37,7 @@ export default function EventCard({
 
       <h3 className="text-xl font-bold text-dark mb-2">{title}</h3>
 
-      <div className="space-y-2 text-sm text-gray-600 mb-4 flex-grow">
+      <div className="space-y-2 text-sm text-gray-600 mb-4 grow">
         <div className="flex items-center gap-2">
           <svg
             className="w-4 h-4"
