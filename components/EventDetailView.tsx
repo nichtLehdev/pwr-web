@@ -1,23 +1,12 @@
-"use client";
-
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { use } from "react";
-import { mockEvents } from "@/lib/mockData";
+import type { Event } from "@/types/strapi";
 import { getDistrictColor } from "@/lib/districtColors";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
+interface EventDetailViewProps {
+  event: Event;
 }
 
-export default function EventDetailPage({ params }: PageProps) {
-  const { id } = use(params);
-  const event = mockEvents.find((e) => e.id === parseInt(id));
-
-  if (!event) {
-    notFound();
-  }
-
+export default function EventDetailView({ event }: EventDetailViewProps) {
   const districtColor = getDistrictColor(event.districtInfo.name);
   const eventDate = new Date(event.eventDate);
   // set default duration to 2 hours if not provided
@@ -52,13 +41,34 @@ END:VCALENDAR`;
   };
 
   // Share Function
-  const shareEvent = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: event.motto || event.description,
-        url: window.location.href,
-      });
+  const shareEvent = async () => {
+    const shareData = {
+      title: event.title,
+      text:
+        event.motto ||
+        event.description ||
+        `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`,
+      url: typeof window !== "undefined" ? window.location.href : "",
+    };
+
+    // Check if Web Share API is supported
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or error occurred
+        console.log("Share cancelled or failed:", err);
+      }
+    } else {
+      // Fallback: Copy link to clipboard
+      if (typeof navigator !== "undefined" && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          alert("Link wurde in die Zwischenablage kopiert!");
+        } catch (err) {
+          console.error("Failed to copy:", err);
+        }
+      }
     }
   };
 
