@@ -27,7 +27,7 @@ export interface PriceOption {
 
 export interface RegistrationField {
   fieldName: string;
-  fieldType: 'Text' | 'Number' | 'Select' | 'Checkbox' | 'TextArea';
+  fieldType: "Text" | "Number" | "Select" | "Checkbox" | "TextArea";
   options?: string;
   isRequired: boolean;
   helpText?: string;
@@ -39,6 +39,7 @@ export interface Participant {
   birthDate: string;
   city: string;
   instrument?: string;
+  priceOption?: string; // Welche Preisoption wurde gewählt
   customFields?: Record<string, any>;
 }
 
@@ -92,7 +93,7 @@ export interface Event {
   eventDate: string;
   location: Location;
   districtInfo: DistrictInfo;
-  category: 'Concert' | 'Service' | 'Rehearsal' | 'Other';
+  category: "Concert" | "Service" | "Rehearsal" | "Other";
   performingEnsemble?: Ensemble;
   isFree: boolean;
   priceOptions?: PriceOption[];
@@ -107,7 +108,7 @@ export interface Event {
   updatedAt: string;
 }
 
-// Course (NEW!)
+// Course
 export interface Course {
   id: number;
   title: string;
@@ -117,15 +118,12 @@ export interface Course {
   endDate: string;
   location: Location;
   districtInfo: DistrictInfo;
-  courseType: 'D-Course' | 'C-Course' | 'Workshop' | 'Training' | 'Other';
-  targetAudience?: 'Beginners' | 'Advanced' | 'Conductors' | 'Youth' | 'All';
+  courseType: "D-Course" | "C-Course" | "Workshop" | "Training" | "Other";
+  targetAudience?: "Beginners" | "Advanced" | "Conductors" | "Youth" | "All";
   instructors?: User[];
   registrationOpen: boolean;
   registrationDeadline?: string;
   maxParticipants: number;
-  currentParticipants?: number; // computed
-  spotsAvailable?: number; // computed
-  isFull?: boolean; // computed
   allowWaitingList: boolean;
   priceOptions: PriceOption[];
   isFree: boolean;
@@ -143,6 +141,31 @@ export interface Course {
   updatedAt: string;
 }
 
+// Course Registration
+export interface CourseRegistration {
+  id: number;
+  courseId: number;
+  registeredBy: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    choir?: string;
+    district?: string;
+  };
+  participants: Participant[];
+  totalPrice: number;
+  paymentStatus: "pending" | "paid" | "refunded";
+  registrationStatus: "confirmed" | "waitlist" | "cancelled";
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+  // Für Rechnung später:
+  invoiceGenerated: boolean;
+  invoiceId?: number;
+  invoiceDate?: string;
+}
+
 // Post (News)
 export interface Post {
   id: number;
@@ -150,7 +173,7 @@ export interface Post {
   content: string;
   excerpt?: string;
   coverImage?: StrapiMedia;
-  category: 'Magazine' | 'Event' | 'Education' | 'Districts' | 'Other';
+  category: "Magazine" | "Event" | "Education" | "Districts" | "Other";
   districtInfo: DistrictInfo;
   author?: User;
   pinned: boolean;

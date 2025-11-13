@@ -1,4 +1,11 @@
-import type { Event, Post, Course, Ensemble, User } from "@/types/strapi";
+import type {
+  Event,
+  Post,
+  Course,
+  Ensemble,
+  User,
+  CourseRegistration,
+} from "@/types/strapi";
 
 // Mock Users
 export const mockUsers: User[] = [
@@ -192,6 +199,178 @@ export const mockEvents: Event[] = [
   },
 ];
 
+// Mock Course Registrations
+export const mockCourseRegistrations: CourseRegistration[] = [
+  // Registrations für D-Kurs (courseId: 1)
+  {
+    id: 1,
+    courseId: 1,
+    registeredBy: {
+      firstName: "Michael",
+      lastName: "Schmidt",
+      email: "m.schmidt@example.com",
+      phone: "0211 123456",
+      choir: "Posaunenchor Düsseldorf",
+      district: "District 3",
+    },
+    participants: [
+      {
+        firstName: "Lisa",
+        lastName: "Müller",
+        birthDate: "2005-03-15",
+        city: "Düsseldorf",
+        instrument: "Trompete",
+        priceOption: "Jugendliche (bis 18)",
+        customFields: {
+          tshirtSize: "M",
+        },
+      },
+      {
+        firstName: "Tom",
+        lastName: "Weber",
+        birthDate: "2006-07-22",
+        city: "Düsseldorf",
+        instrument: "Posaune",
+        priceOption: "Jugendliche (bis 18)",
+        customFields: {
+          tshirtSize: "L",
+        },
+      },
+      {
+        firstName: "Anna",
+        lastName: "Klein",
+        birthDate: "2004-11-30",
+        city: "Düsseldorf",
+        instrument: "Tenorhorn",
+        priceOption: "Jugendliche (bis 18)",
+        customFields: {
+          tshirtSize: "S",
+        },
+      },
+    ],
+    totalPrice: 240, // 3 x 80€
+    paymentStatus: "pending",
+    registrationStatus: "confirmed",
+    createdAt: "2025-10-15T14:30:00.000Z",
+    updatedAt: "2025-10-15T14:30:00.000Z",
+    invoiceGenerated: false,
+  },
+  {
+    id: 2,
+    courseId: 1,
+    registeredBy: {
+      firstName: "Sarah",
+      lastName: "Wagner",
+      email: "sarah.wagner@example.com",
+      phone: "0202 987654",
+      choir: "Jugendposaunenchor Wuppertal",
+      district: "District 4",
+    },
+    participants: [
+      {
+        firstName: "Max",
+        lastName: "Hoffmann",
+        birthDate: "1998-05-10",
+        city: "Wuppertal",
+        instrument: "Trompete",
+        priceOption: "Erwachsene",
+        customFields: {
+          tshirtSize: "XL",
+        },
+      },
+      {
+        firstName: "Julia",
+        lastName: "Bergmann",
+        birthDate: "1995-09-18",
+        city: "Wuppertal",
+        instrument: "Horn",
+        priceOption: "Erwachsene",
+        customFields: {
+          tshirtSize: "M",
+        },
+      },
+    ],
+    totalPrice: 240, // 2 x 120€
+    paymentStatus: "paid",
+    registrationStatus: "confirmed",
+    createdAt: "2025-10-10T09:15:00.000Z",
+    updatedAt: "2025-10-12T16:45:00.000Z",
+    notes: "Überweisung bereits eingegangen",
+    invoiceGenerated: true,
+    invoiceId: 1001,
+    invoiceDate: "2025-10-12T16:45:00.000Z",
+  },
+  {
+    id: 3,
+    courseId: 1,
+    registeredBy: {
+      firstName: "Thomas",
+      lastName: "Becker",
+      email: "t.becker@example.com",
+      phone: "0221 456789",
+      choir: "Bezirksposaunenchor Köln",
+      district: "District 1",
+    },
+    participants: [
+      {
+        firstName: "Emma",
+        lastName: "Fischer",
+        birthDate: "2008-02-14",
+        city: "Köln",
+        instrument: "Posaune",
+        priceOption: "Kinder (bis 12)",
+        customFields: {
+          tshirtSize: "S",
+        },
+      },
+    ],
+    totalPrice: 60,
+    paymentStatus: "pending",
+    registrationStatus: "confirmed",
+    createdAt: "2025-10-20T11:20:00.000Z",
+    updatedAt: "2025-10-20T11:20:00.000Z",
+    invoiceGenerated: false,
+  },
+
+  // Registrations für Einsteiger-Workshop (courseId: 2)
+  {
+    id: 4,
+    courseId: 2,
+    registeredBy: {
+      firstName: "Peter",
+      lastName: "Meyer",
+      email: "p.meyer@example.com",
+      phone: "0211 789456",
+      choir: "Posaunenchor Erkrath",
+      district: "District 3",
+    },
+    participants: [
+      {
+        firstName: "Sophie",
+        lastName: "Schneider",
+        birthDate: "2010-06-25",
+        city: "Erkrath",
+        instrument: "Posaune (Anfänger)",
+        priceOption: "Kinder und Jugendliche",
+      },
+      {
+        firstName: "Lukas",
+        lastName: "Richter",
+        birthDate: "2011-08-12",
+        city: "Erkrath",
+        instrument: "Posaune (Anfänger)",
+        priceOption: "Kinder und Jugendliche",
+      },
+    ],
+    totalPrice: 30, // 2 x 15€
+    paymentStatus: "pending",
+    registrationStatus: "confirmed",
+    createdAt: "2025-11-01T10:00:00.000Z",
+    updatedAt: "2025-11-01T10:00:00.000Z",
+    invoiceGenerated: false,
+  },
+];
+
 // Mock Courses
 export const mockCourses: Course[] = [
   {
@@ -212,9 +391,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-11-01T23:59:59.000Z",
     maxParticipants: 30,
-    currentParticipants: 18,
-    spotsAvailable: 12,
-    isFull: false,
     allowWaitingList: true,
     priceOptions: [
       { price: 120, label: "Erwachsene" },
@@ -255,9 +431,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-11-15T23:59:59.000Z",
     maxParticipants: 12,
-    currentParticipants: 7,
-    spotsAvailable: 5,
-    isFull: false,
     allowWaitingList: false,
     priceOptions: [
       { price: 25, label: "Erwachsene" },
@@ -287,9 +460,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-05-01T23:59:59.000Z",
     maxParticipants: 15,
-    currentParticipants: 8,
-    spotsAvailable: 7,
-    isFull: false,
     allowWaitingList: true,
     priceOptions: [{ price: 90, label: "Teilnahmegebühr" }],
     isFree: false,
@@ -316,9 +486,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-05-30T23:59:59.000Z",
     maxParticipants: 25,
-    currentParticipants: 12,
-    spotsAvailable: 13,
-    isFull: false,
     allowWaitingList: true,
     priceOptions: [
       { price: 150, label: "Erwachsene" },
@@ -348,9 +515,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-11-10T23:59:59.000Z",
     maxParticipants: 40,
-    currentParticipants: 28,
-    spotsAvailable: 12,
-    isFull: false,
     allowWaitingList: true,
     priceOptions: [
       { price: 45, label: "Teilnahme mit Übernachtung" },
@@ -380,9 +544,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-11-10T23:59:59.000Z",
     maxParticipants: 20,
-    currentParticipants: 15,
-    spotsAvailable: 5,
-    isFull: false,
     allowWaitingList: false,
     priceOptions: [{ price: 35, label: "Jugendliche" }],
     isFree: false,
@@ -409,9 +570,6 @@ export const mockCourses: Course[] = [
     registrationOpen: true,
     registrationDeadline: "2025-11-01T23:59:59.000Z",
     maxParticipants: 12,
-    currentParticipants: 9,
-    spotsAvailable: 3,
-    isFull: false,
     allowWaitingList: true,
     priceOptions: [{ price: 280, label: "Vollpension und Unterkunft" }],
     isFree: false,
@@ -823,7 +981,12 @@ export function getUpcomingEvents(limit?: number): Event[] {
 }
 
 export function getOpenCourses(limit?: number): Course[] {
-  const courses = mockCourses.filter((c) => c.registrationOpen && !c.isFull);
+  const courses = mockCourses
+    .filter((c) => c.registrationOpen && !isCourseFull(c.id, c.maxParticipants))
+    .sort(
+      (a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    );
 
   return limit ? courses.slice(0, limit) : courses;
 }
@@ -851,4 +1014,46 @@ export function getLatestPosts(limit?: number): Post[] {
   const sorted = [...sortedPinned, ...sortedUnpinned];
 
   return limit ? sorted.slice(0, limit) : sorted;
+}
+
+// Helper function: Berechne aktuelle Teilnehmerzahl für einen Kurs
+export function getCurrentParticipants(courseId: number): number {
+  return mockCourseRegistrations
+    .filter(
+      (reg) =>
+        reg.courseId === courseId && reg.registrationStatus === "confirmed"
+    )
+    .reduce((sum, reg) => sum + reg.participants.length, 0);
+}
+
+// Helper function: Berechne verfügbare Plätze
+export function getSpotsAvailable(
+  courseId: number,
+  maxParticipants?: number
+): number {
+  if (maxParticipants === undefined) {
+    const course = getCourseById(courseId);
+    if (!course || course.maxParticipants === undefined) {
+      return 0; // Unbegrenzt oder Kurs nicht gefunden
+    }
+    maxParticipants = course.maxParticipants;
+  }
+
+  const current = getCurrentParticipants(courseId);
+  return Math.max(0, maxParticipants - current);
+}
+
+// Helper function: Prüfe ob Kurs voll ist
+export function isCourseFull(
+  courseId: number,
+  maxParticipants?: number
+): boolean {
+  return getSpotsAvailable(courseId, maxParticipants) === 0;
+}
+
+// Helper function: Hole alle Registrierungen für einen Kurs
+export function getRegistrationsForCourse(
+  courseId: number
+): CourseRegistration[] {
+  return mockCourseRegistrations.filter((reg) => reg.courseId === courseId);
 }

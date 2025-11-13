@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/districtColors";
+import { getSpotsAvailable, isCourseFull } from "@/lib/mockData";
 
 interface CourseCardProps {
   id: number;
@@ -8,7 +9,6 @@ interface CourseCardProps {
   endDate: string;
   location: string;
   courseType: string;
-  spotsAvailable: number;
   registrationOpen: boolean;
   districtName: string;
 }
@@ -20,7 +20,6 @@ export default function CourseCard({
   endDate,
   location,
   courseType,
-  spotsAvailable,
   registrationOpen,
   districtName,
 }: CourseCardProps) {
@@ -33,6 +32,7 @@ export default function CourseCard({
   const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
 
   const districtColor = getDistrictColor(districtName);
+  const spotsAvailable = getSpotsAvailable(id);
 
   return (
     <article
