@@ -8,7 +8,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Posaunenwerk Rheinland",
-  description: "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
+  description:
+    "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
 };
 
 export default function RootLayout({
@@ -20,10 +21,8 @@ export default function RootLayout({
     <html lang="de">
       <body className={inter.className}>
         <Navigation />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        {/* Footer kommt später hier rein */}
+        <main className="min-h-screen">{children}</main>
+        <Footer />
       </body>
     </html>
   );

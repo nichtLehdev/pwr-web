@@ -8,7 +8,7 @@ import { getUpcomingEvents, getLatestPosts } from "@/lib/mockData";
 export default function Home() {
   // Mock Daten holen (später von Strapi)
   const upcomingEvents = getUpcomingEvents(3);
-  const latestPosts = getLatestPosts(2);
+  const latestPosts = getLatestPosts(3);
 
   return (
     <div>
@@ -53,7 +53,7 @@ export default function Home() {
           />
 
           {latestPosts.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {latestPosts.map((post) => (
                 <NewsCard
                   key={post.id}
@@ -63,6 +63,8 @@ export default function Home() {
                   date={post.publishedAt || post.createdAt}
                   category={post.category}
                   image={post.coverImage?.url}
+                  pinned={post.pinned}
+                  district={post.districtInfo?.name}
                 />
               ))}
             </div>

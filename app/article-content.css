@@ -1,0 +1,207 @@
+/* Article Content Styling */
+.article-content {
+  max-width: 100%;
+  color: #374151;
+  line-height: 1.75;
+}
+
+/* Headings */
+.article-content h2 {
+  font-size: 1.875rem !important;
+  font-weight: 700 !important;
+  color: #58595b !important;
+  margin-top: 3rem !important;
+  margin-bottom: 1rem !important;
+  line-height: 1.3 !important;
+}
+
+.article-content h3 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  color: #58595b !important;
+  margin-top: 2rem !important;
+  margin-bottom: 0.75rem !important;
+  line-height: 1.4 !important;
+}
+
+.article-content h4 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: #58595b !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Paragraphs */
+.article-content p {
+  margin-bottom: 1.5rem !important;
+  color: #4b5563 !important;
+  line-height: 1.75 !important;
+}
+
+/* First paragraph - Lead text */
+.article-content > p:first-of-type {
+  font-size: 1.125rem !important;
+  color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+/* Links */
+.article-content a {
+  color: #faa619 !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+.article-content a:hover {
+  text-decoration: underline !important;
+}
+
+/* Strong/Bold */
+.article-content strong,
+.article-content b {
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+
+/* Emphasis/Italic */
+.article-content em,
+.article-content i {
+  font-style: italic !important;
+}
+
+/* Lists */
+.article-content ul,
+.article-content ol {
+  margin: 1.5rem 0 !important;
+  padding-left: 1.5rem !important;
+}
+
+.article-content li {
+  margin: 0.5rem 0 !important;
+  color: #4b5563 !important;
+  line-height: 1.75 !important;
+}
+
+.article-content ul li {
+  list-style-type: disc !important;
+}
+
+.article-content ol li {
+  list-style-type: decimal !important;
+}
+
+/* Nested lists */
+.article-content ul ul,
+.article-content ol ul {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Images */
+.article-content img {
+  max-width: 100% !important;
+  height: auto !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  margin: 2rem auto !important;
+  display: block !important;
+  cursor: pointer !important;
+}
+
+/* Blockquotes */
+.article-content blockquote {
+  border-left: 4px solid #faa619 !important;
+  padding-left: 1.5rem !important;
+  margin: 2rem 0 !important;
+  font-style: italic !important;
+  color: #6b7280 !important;
+}
+
+.article-content blockquote p {
+  margin-bottom: 0.5rem !important;
+}
+
+/* Tables */
+.article-content table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 2rem 0 !important;
+}
+
+.article-content th,
+.article-content td {
+  padding: 0.75rem !important;
+  border: 1px solid #e5e7eb !important;
+  text-align: left !important;
+}
+
+.article-content th {
+  background-color: #f9fafb !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+}
+
+.article-content td {
+  color: #4b5563 !important;
+}
+
+/* Code blocks */
+.article-content code {
+  background-color: #f3f4f6 !important;
+  padding: 0.125rem 0.25rem !important;
+  border-radius: 0.25rem !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace !important;
+  font-size: 0.875rem !important;
+  color: #d946ef !important;
+}
+
+.article-content pre {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  overflow-x: auto !important;
+  margin: 2rem 0 !important;
+}
+
+.article-content pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+  color: #f9fafb !important;
+}
+
+/* Horizontal Rule */
+.article-content hr {
+  border: none !important;
+  border-top: 2px solid #e5e7eb !important;
+  margin: 3rem 0 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .article-content h2 {
+    font-size: 1.5rem !important;
+    margin-top: 2rem !important;
+  }
+
+  .article-content h3 {
+    font-size: 1.25rem !important;
+    margin-top: 1.5rem !important;
+  }
+
+  .article-content h4 {
+    font-size: 1.125rem !important;
+  }
+
+  .article-content img {
+    margin: 1.5rem auto !important;
+  }
+
+  .article-content blockquote {
+    padding-left: 1rem !important;
+    margin: 1.5rem 0 !important;
+  }
+}
