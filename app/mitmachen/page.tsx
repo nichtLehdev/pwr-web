@@ -4,7 +4,14 @@ import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 
 export default function MitmachenPage() {
-  const participationOptions = [
+  const participationOptions: {
+    id: string;
+    title: string;
+    description: string;
+    icon: "map" | "education" | "users" | "heart" | "gift" | "shield";
+    href: string;
+    color: string;
+  }[] = [
     {
       id: "chor-finden",
       title: "Chor finden",

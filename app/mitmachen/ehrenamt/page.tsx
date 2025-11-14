@@ -369,11 +369,11 @@ export default function EhrenamtPage() {
                 </svg>
                 <div>
                   <p className="text-lg text-gray-700 leading-relaxed mb-4 italic">
-                    "Die Arbeit als Chorleiter erfüllt mich sehr. Es ist
+                    `&quot;`Die Arbeit als Chorleiter erfüllt mich sehr. Es ist
                     wunderbar zu sehen, wie sich die Bläserinnen und Bläser
                     entwickeln und gemeinsam Musik machen. Die Unterstützung
                     durch das Posaunenwerk gibt mir Sicherheit und hilft mir,
-                    immer besser zu werden."
+                    immer besser zu werden.`&quot;`
                   </p>
                   <p className="font-semibold text-dark">
                     Michael K., Chorleiter seit 2018

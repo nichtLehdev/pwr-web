@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -84,23 +85,6 @@ export default function CourseRegistrationForm({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
-
-  const districts = [
-    "All Districts",
-    "District 1",
-    "District 2",
-    "District 3",
-    "District 4",
-    "District 5",
-    "District 6",
-    "District 7",
-    "District 8",
-    "District 9",
-    "District 10",
-    "District 11",
-    "District 12",
-    "District 13",
-  ];
 
   // Add new participant
   const addParticipant = () => {

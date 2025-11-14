@@ -434,7 +434,7 @@ export default function FoerdervereinPage() {
               {/* CD */}
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <h3 className="text-2xl font-bold text-dark mb-4">
-                  CD "Unter Sternen und Satelliten"
+                  CD `&quot;`Unter Sternen und Satelliten`&quot;`
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   Unsere Ensembles haben eine wunderbare CD eingespielt – mit

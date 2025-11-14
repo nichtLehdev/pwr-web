@@ -25,7 +25,6 @@ export default function NewsDetailPage({ params }: PageProps) {
   useEffect(() => {
     const images = document.querySelectorAll(".article-content img");
     images.forEach((img) => {
-      img.style.cursor = "pointer";
       img.addEventListener("click", () => {
         setLightboxImage({
           src: img.getAttribute("src") || "",

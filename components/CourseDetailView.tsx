@@ -3,11 +3,8 @@ import { useState } from "react";
 import type { Course } from "@/types/strapi";
 import { getDistrictColor } from "@/lib/districtColors";
 import CourseRegistrationForm from "@/components/CourseRegistrationForm";
-import {
-  getCurrentParticipants,
-  getSpotsAvailable,
-  isCourseFull,
-} from "@/lib/mockData";
+import { getSpotsAvailable, isCourseFull } from "@/lib/mockData";
+import Image from "next/image";
 
 interface CourseDetailViewProps {
   course: Course;
@@ -27,7 +24,6 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
     registrationDeadline && registrationDeadline < new Date();
 
   // Berechne aktuelle Teilnehmerzahl
-  const currentParticipants = getCurrentParticipants(course.id);
   const spotsAvailable = getSpotsAvailable(course.id, course.maxParticipants);
   const isFull = isCourseFull(course.id, course.maxParticipants);
 
@@ -372,7 +368,7 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
                         className="flex items-start gap-3"
                       >
                         {instructor.profileImage?.url && (
-                          <img
+                          <Image
                             src={instructor.profileImage.url}
                             alt={instructor.displayName}
                             className="w-12 h-12 rounded-full object-cover"
