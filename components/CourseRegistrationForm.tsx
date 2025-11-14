@@ -269,11 +269,8 @@ export default function CourseRegistrationForm({
               { num: 3, label: "Details" },
               { num: 4, label: "Übersicht" },
             ].map((step, index) => (
-              <div
-                key={step.num}
-                className="flex items-start flex-1 last:flex-none"
-              >
-                <div className="flex flex-col items-center">
+              <div key={step.num} className="flex items-start flex-1">
+                <div className="flex flex-col items-center w-full">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
                       currentStep >= step.num
@@ -289,7 +286,7 @@ export default function CourseRegistrationForm({
                 </div>
                 {index < 3 && (
                   <div
-                    className={`flex-1 h-1 mx-1 sm:mx-2 mt-4 transition-colors ${
+                    className={`hidden sm:block flex-1 h-1 mx-2 mt-4 transition-colors ${
                       currentStep > step.num ? "bg-white" : "bg-white/20"
                     }`}
                   />
