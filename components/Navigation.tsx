@@ -40,9 +40,9 @@ export default function Navigation() {
       dropdown: [
         { href: "/ueber-uns/struktur", label: "Struktur & Geschichte" },
         { href: "/ueber-uns/vorstand", label: "Vorstand" },
+        { href: "/ueber-uns/posaunenwarte", label: "Posaunenwarte" },
         { href: "/ueber-uns/auswahlchoere", label: "Auswahlchöre" },
         { href: "/ueber-uns/posaunenrat", label: "Posaunenrat" },
-        { href: "/ueber-uns/namibia", label: "Namibia-Partnerschaft" },
       ],
     },
   ];
@@ -69,17 +69,17 @@ export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-50 w-full">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo - immer sichtbar */}
           <Link href="/" className="shrink-0">
-            <div className="h-10 md:h-14 relative">
+            <div className="h-10 lg:h-14 relative">
               {/* Desktop: Komplettes Logo mit Text */}
               <Image
                 src="/images/logo-horizontal.svg"
                 alt="Posaunenwerk Rheinland"
                 width={250}
                 height={56}
-                className="hidden md:block h-full w-auto"
+                className="hidden lg:block h-full w-auto"
                 priority
               />
               {/* Mobile: Nur Icon (optional, falls vorhanden) */}
@@ -88,14 +88,14 @@ export default function Navigation() {
                 alt="Posaunenwerk Rheinland"
                 width={40}
                 height={40}
-                className="md:hidden h-full w-auto"
+                className="lg:hidden h-full w-auto"
                 priority
               />
             </div>
           </Link>
 
-          {/* Desktop Navigation - ab md: sichtbar */}
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Desktop Navigation - ab lg: sichtbar */}
+          <div className="hidden lg:flex items-center space-x-6 text-nowrap">
             {navLinks.map((link) => (
               <div
                 key={link.href}
@@ -190,7 +190,7 @@ export default function Navigation() {
           {/* Mobile Menu Button - nur auf Mobile */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-md text-dark hover:bg-gray-100"
+            className="lg:hidden p-2 rounded-md text-dark hover:bg-gray-100"
             aria-label="Menü öffnen"
           >
             <svg
@@ -220,7 +220,7 @@ export default function Navigation() {
 
         {/* Mobile Menu - slide down */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
+          <div className="lg:hidden border-t border-gray-200 py-4">
             <div className="flex flex-col space-y-1">
               {navLinks.map((link) => (
                 <div key={link.href}>

@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="de" className="scroll-smooth">
       <body className={inter.className}>
         <Navigation />
-        <main className="pt-16 md:pt-20">{children}</main>
+        <main className="pt-16 lg:pt-20">{children}</main>
         <Footer />
       </body>
     </html>
