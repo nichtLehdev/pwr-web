@@ -6,6 +6,7 @@ import CourseCard from "@/components/CourseCard";
 import CalendarView from "@/components/CalendarView";
 import DesktopCalendarView from "@/components/DesktopCalendarView";
 import { mockEvents, mockCourses } from "@/lib/mockData";
+import PageHeader from "@/components/PageHeader";
 
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
@@ -114,6 +115,7 @@ export default function TerminePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHeader title="Termine" color="primary" />
       {/* Header */}
       <section className="bg-primary text-white py-6 md:py-12 lg:py-16">
         <div className="container mx-auto px-4">

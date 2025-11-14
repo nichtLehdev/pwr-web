@@ -235,7 +235,7 @@ export default function EventDetailModal({
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <Link
-              href={`/termine/${eventData.id}`}
+              href={`/termine/${eventData.type}/${eventData.id}`}
               className="flex-1 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors text-center"
               onClick={onClose}
             >

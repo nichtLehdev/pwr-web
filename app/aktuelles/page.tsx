@@ -3,6 +3,7 @@
 import { useState } from "react";
 import NewsCard from "@/components/NewsCard";
 import { mockPosts } from "@/lib/mockData";
+import PageHeader from "@/components/PageHeader";
 
 type FilterCategory =
   | "all"
@@ -97,6 +98,7 @@ export default function AktuellesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHeader title="Aktuelles" color="primary" />
       {/* Header */}
       <section className="bg-primary text-white py-6 md:py-12 lg:py-16">
         <div className="container mx-auto px-4">
