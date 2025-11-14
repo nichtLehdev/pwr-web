@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { Course, Participant } from "@/types/strapi";
+import type { Course, Participant, User } from "@/types/strapi";
 
 interface CourseRegistrationFormProps {
   course: Course;
   onClose: () => void;
   isWaitlist: boolean;
+  currentUser?: User | null; // Optional: Logged in user
 }
 
 interface RegistrationData {
@@ -17,6 +18,16 @@ interface RegistrationData {
     phone: string;
     choir: string;
     district: string;
+  };
+  billingAddress: {
+    useSeparateBilling: boolean;
+    companyName: string;
+    firstName: string;
+    lastName: string;
+    street: string;
+    zipCode: string;
+    city: string;
+    email: string;
   };
   participants: Array<
     Participant & {
@@ -32,16 +43,27 @@ export default function CourseRegistrationForm({
   course,
   onClose,
   isWaitlist,
+  currentUser,
 }: CourseRegistrationFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registeredBy: {
-      firstName: "",
-      lastName: "",
-      email: "",
+      firstName: currentUser?.displayName.split(" ")[0] || "",
+      lastName: currentUser?.displayName.split(" ").slice(1).join(" ") || "",
+      email: currentUser?.email || "",
       phone: "",
       choir: "",
-      district: "",
+      district: currentUser?.district || "",
+    },
+    billingAddress: {
+      useSeparateBilling: false,
+      companyName: "",
+      firstName: "",
+      lastName: "",
+      street: "",
+      zipCode: "",
+      city: "",
+      email: "",
     },
     participants: [],
   });
@@ -157,7 +179,15 @@ export default function CourseRegistrationForm({
       case 1:
         const { firstName, lastName, email, phone } =
           registrationData.registeredBy;
-        return !!(firstName && lastName && email && phone);
+        const basicValid = !!(firstName && lastName && email && phone);
+
+        // Validate billing address if separate billing is enabled
+        if (registrationData.billingAddress.useSeparateBilling) {
+          const { street, zipCode, city } = registrationData.billingAddress;
+          return basicValid && !!(street && zipCode && city);
+        }
+
+        return basicValid;
       case 2:
         return registrationData.participants.length > 0;
       case 3:
@@ -232,33 +262,40 @@ export default function CourseRegistrationForm({
           </div>
 
           {/* Progress Steps */}
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center flex-1">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    currentStep >= step
-                      ? "bg-white text-primary"
-                      : "bg-white/20 text-white/60"
-                  }`}
-                >
-                  {step}
-                </div>
-                {step < 4 && (
+          <div className="flex items-start justify-between">
+            {[
+              { num: 1, label: "Anmelder" },
+              { num: 2, label: "Teilnehmer" },
+              { num: 3, label: "Details" },
+              { num: 4, label: "Übersicht" },
+            ].map((step, index) => (
+              <div
+                key={step.num}
+                className="flex items-start flex-1 last:flex-none"
+              >
+                <div className="flex flex-col items-center">
                   <div
-                    className={`flex-1 h-1 mx-2 ${
-                      currentStep > step ? "bg-white" : "bg-white/20"
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                      currentStep >= step.num
+                        ? "bg-white text-primary"
+                        : "bg-white/20 text-white/60"
+                    }`}
+                  >
+                    {step.num}
+                  </div>
+                  <span className="mt-2 text-xs opacity-90 whitespace-nowrap">
+                    {step.label}
+                  </span>
+                </div>
+                {index < 3 && (
+                  <div
+                    className={`flex-1 h-1 mx-2 mt-4 transition-colors ${
+                      currentStep > step.num ? "bg-white" : "bg-white/20"
                     }`}
                   />
                 )}
               </div>
             ))}
-          </div>
-          <div className="flex justify-between mt-2 text-xs opacity-90">
-            <span>Anmelder</span>
-            <span>Teilnehmer</span>
-            <span>Details</span>
-            <span>Übersicht</span>
           </div>
         </div>
 
@@ -359,53 +396,196 @@ export default function CourseRegistrationForm({
                     placeholder="0211 123456"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Chor / Gemeinde
+              {/* Billing Address Section */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-dark mb-4">
+                  Rechnungsadresse
+                </h3>
+
+                <div className="mb-4">
+                  <label className="flex items-center gap-3 cursor-pointer p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={
+                        registrationData.billingAddress.useSeparateBilling
+                      }
+                      onChange={(e) =>
+                        setRegistrationData({
+                          ...registrationData,
+                          billingAddress: {
+                            ...registrationData.billingAddress,
+                            useSeparateBilling: e.target.checked,
+                          },
+                        })
+                      }
+                      className="w-5 h-5 text-primary focus:ring-primary rounded"
+                    />
+                    <div>
+                      <span className="font-semibold text-dark">
+                        Abweichende Rechnungsadresse
+                      </span>
+                      <p className="text-sm text-gray-600">
+                        z.B. für Kirchengemeinde oder Institution
+                      </p>
+                    </div>
                   </label>
-                  <input
-                    type="text"
-                    value={registrationData.registeredBy.choir}
-                    onChange={(e) =>
-                      setRegistrationData({
-                        ...registrationData,
-                        registeredBy: {
-                          ...registrationData.registeredBy,
-                          choir: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Posaunenchor Düsseldorf"
-                  />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
-                    Bezirk
-                  </label>
-                  <select
-                    value={registrationData.registeredBy.district}
-                    onChange={(e) =>
-                      setRegistrationData({
-                        ...registrationData,
-                        registeredBy: {
-                          ...registrationData.registeredBy,
-                          district: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="">Bitte wählen</option>
-                    {districts.map((district) => (
-                      <option key={district} value={district}>
-                        {district}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {registrationData.billingAddress.useSeparateBilling && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Firma / Institution / Kirchengemeinde
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.companyName}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              companyName: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Evangelische Kirchengemeinde Düsseldorf"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Vorname
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.firstName}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              firstName: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Max"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Nachname
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.lastName}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              lastName: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Mustermann"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Straße und Hausnummer *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.street}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              street: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Musterstraße 123"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        PLZ *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.zipCode}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              zipCode: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="40210"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        Stadt *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingAddress.city}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              city: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="Düsseldorf"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">
+                        E-Mail für Rechnung
+                      </label>
+                      <input
+                        type="email"
+                        value={registrationData.billingAddress.email}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingAddress: {
+                              ...registrationData.billingAddress,
+                              email: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="rechnung@gemeinde.de"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Falls abweichend von Ihrer E-Mail-Adresse
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -817,6 +997,52 @@ export default function CourseRegistrationForm({
                   </p>
                 )}
               </div>
+
+              {/* Billing Address */}
+              {registrationData.billingAddress.useSeparateBilling && (
+                <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
+                  <h4 className="font-bold text-dark mb-3 flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Rechnungsadresse
+                  </h4>
+                  {registrationData.billingAddress.companyName && (
+                    <p className="font-semibold text-dark">
+                      {registrationData.billingAddress.companyName}
+                    </p>
+                  )}
+                  {(registrationData.billingAddress.firstName ||
+                    registrationData.billingAddress.lastName) && (
+                    <p className="text-sm text-gray-700">
+                      {registrationData.billingAddress.firstName}{" "}
+                      {registrationData.billingAddress.lastName}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-700">
+                    {registrationData.billingAddress.street}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {registrationData.billingAddress.zipCode}{" "}
+                    {registrationData.billingAddress.city}
+                  </p>
+                  {registrationData.billingAddress.email && (
+                    <p className="text-sm text-gray-700 mt-2">
+                      Rechnung an: {registrationData.billingAddress.email}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Participants List */}
               <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
