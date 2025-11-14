@@ -324,7 +324,10 @@ export default function MitmachenPage() {
       </section>
 
       {/* Mitgliedschaft im Posaunenwerk */}
-      <section className="py-12 md:py-16 lg:py-20 bg-background">
+      <section
+        className="py-12 md:py-16 lg:py-20 bg-background"
+        id="mitgliedschaft"
+      >
         <div className="container">
           <div className="max-w-5xl mx-auto">
             <div className="bg-white rounded-lg shadow-xl p-8 md:p-12 border-t-4 border-primary">
@@ -368,7 +371,7 @@ export default function MitmachenPage() {
                     uns verbunden sein möchten, und empfehlen hierzu die
                     Mitgliedschaft in unserem{" "}
                     <a
-                      href="#foerderverein"
+                      href="/foerderverein"
                       className="text-primary hover:text-primary-dark font-semibold"
                     >
                       Förderverein
@@ -678,48 +681,6 @@ export default function MitmachenPage() {
               >
                 Mehr über uns
               </Link>
-            </div>
-
-            {/* Ansprechpartner */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="font-bold text-dark mb-2">Allgemeine Fragen</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Landesposaunenwartin
-                </p>
-                <a
-                  href="mailto:info@posaunenwerk-rheinland.de"
-                  className="text-primary hover:text-primary-dark text-sm font-semibold"
-                >
-                  E-Mail senden →
-                </a>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="font-bold text-dark mb-2">
-                  Aus- und Weiterbildung
-                </h3>
-                <p className="text-sm text-gray-600 mb-3">Bildungsreferat</p>
-                <a
-                  href="mailto:bildung@posaunenwerk-rheinland.de"
-                  className="text-primary hover:text-primary-dark text-sm font-semibold"
-                >
-                  E-Mail senden →
-                </a>
-              </div>
-
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="font-bold text-dark mb-2">Jungbläserarbeit</h3>
-                <p className="text-sm text-gray-600 mb-3">
-                  Referent für Jungbläserarbeit
-                </p>
-                <a
-                  href="mailto:jungblaeser@posaunenwerk-rheinland.de"
-                  className="text-primary hover:text-primary-dark text-sm font-semibold"
-                >
-                  E-Mail senden →
-                </a>
-              </div>
             </div>
           </div>
         </div>
