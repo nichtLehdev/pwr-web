@@ -16,7 +16,6 @@ export default function TerminDetailPage({ params }: PageProps) {
 
   if (type === "event") {
     const event = mockEvents.find((e) => e.id === numericId);
-    console.log(event);
     if (!event) {
       notFound();
     }

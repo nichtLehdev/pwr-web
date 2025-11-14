@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Event } from "@/types/strapi";
 import { getDistrictColor } from "@/lib/districtColors";
+import PageHeader from "./PageHeader";
 
 interface EventDetailViewProps {
   event: Event;
@@ -72,8 +73,27 @@ END:VCALENDAR`;
     }
   };
 
+  const district =
+    event.districtInfo.name === "All Districts"
+      ? "primary"
+      : (event.districtInfo.name.replace(" ", "-").toLowerCase() as
+          | "district-1"
+          | "district-2"
+          | "district-3"
+          | "district-4"
+          | "district-5"
+          | "district-6"
+          | "district-7"
+          | "district-8"
+          | "district-9"
+          | "district-10"
+          | "district-11"
+          | "district-12"
+          | "district-13");
+
   return (
     <div className="min-h-screen bg-background">
+      <PageHeader title={event.title} color={district} />
       {/* Header */}
       <section
         className="text-white py-8 md:py-12 lg:py-16"

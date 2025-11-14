@@ -5,6 +5,7 @@ import { getDistrictColor } from "@/lib/districtColors";
 import CourseRegistrationForm from "@/components/CourseRegistrationForm";
 import { getSpotsAvailable, isCourseFull } from "@/lib/mockData";
 import Image from "next/image";
+import PageHeader from "./PageHeader";
 
 interface CourseDetailViewProps {
   course: Course;
@@ -39,8 +40,27 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
     !isDeadlinePassed &&
     (!isFull || course.allowWaitingList);
 
+  const district =
+    course.districtInfo.name === "All Districts"
+      ? "primary"
+      : (course.districtInfo.name.replace(" ", "-").toLowerCase() as
+          | "district-1"
+          | "district-2"
+          | "district-3"
+          | "district-4"
+          | "district-5"
+          | "district-6"
+          | "district-7"
+          | "district-8"
+          | "district-9"
+          | "district-10"
+          | "district-11"
+          | "district-12"
+          | "district-13");
+
   return (
     <div className="min-h-screen bg-background">
+      <PageHeader title={course.title} color={district} />
       {/* Header */}
       <section
         className="text-white py-8 md:py-12 lg:py-16"

@@ -378,7 +378,6 @@ export default function TerminePage() {
                             endDate={item.endDate}
                             location={item.location.city}
                             courseType={item.courseType}
-                            registrationOpen={item.registrationOpen}
                             districtName={item.districtInfo.name}
                           />
                         )

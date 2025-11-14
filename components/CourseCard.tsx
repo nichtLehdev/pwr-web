@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/districtColors";
-import { getSpotsAvailable } from "@/lib/mockData";
+import { getCourseById, getSpotsAvailable } from "@/lib/mockData";
 
 interface CourseCardProps {
   id: number;
@@ -9,7 +9,6 @@ interface CourseCardProps {
   endDate: string;
   location: string;
   courseType: string;
-  registrationOpen: boolean;
   districtName: string;
 }
 
@@ -20,7 +19,6 @@ export default function CourseCard({
   endDate,
   location,
   courseType,
-  registrationOpen,
   districtName,
 }: CourseCardProps) {
   const start = new Date(startDate);
@@ -33,6 +31,11 @@ export default function CourseCard({
 
   const districtColor = getDistrictColor(districtName);
   const spotsAvailable = getSpotsAvailable(id);
+  const course = getCourseById(id);
+  const registrationOpen =
+    course &&
+    course.registrationDeadline &&
+    new Date() < new Date(course.registrationDeadline);
 
   return (
     <Link href={`/termine/course/${id}`} className="block h-full group">
