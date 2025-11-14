@@ -283,13 +283,13 @@ export default function CourseRegistrationForm({
                   >
                     {step.num}
                   </div>
-                  <span className="mt-2 text-xs opacity-90 whitespace-nowrap">
+                  <span className="mt-1 text-[10px] sm:text-xs opacity-90 whitespace-nowrap">
                     {step.label}
                   </span>
                 </div>
                 {index < 3 && (
                   <div
-                    className={`flex-1 h-1 mx-2 mt-4 transition-colors ${
+                    className={`flex-1 h-1 mx-1 sm:mx-2 mt-4 transition-colors ${
                       currentStep > step.num ? "bg-white" : "bg-white/20"
                     }`}
                   />
@@ -1129,18 +1129,18 @@ export default function CourseRegistrationForm({
         </div>
 
         {/* Footer / Navigation */}
-        <div className="sticky bottom-0 bg-gray-50 border-t p-6 rounded-b-xl flex justify-between items-center gap-4">
+        <div className="sticky bottom-0 bg-gray-50 border-t p-4 sm:p-6 rounded-b-xl flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
           <button
             onClick={() =>
               currentStep > 1 && setCurrentStep((currentStep - 1) as Step)
             }
             disabled={currentStep === 1}
-            className="px-6 py-2 border-2 border-gray-300 text-dark font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 border-2 border-gray-300 text-dark font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-2 sm:order-1"
           >
             Zurück
           </button>
 
-          <div className="flex-1 text-center text-sm text-gray-600">
+          <div className="text-center text-sm text-gray-600 order-1 sm:order-2 sm:flex-1 whitespace-nowrap">
             Schritt {currentStep} von 4
           </div>
 
@@ -1148,14 +1148,14 @@ export default function CourseRegistrationForm({
             <button
               onClick={() => setCurrentStep((currentStep + 1) as Step)}
               disabled={!canProceed}
-              className="px-6 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-3"
             >
               Weiter
             </button>
           ) : (
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+              className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors order-3"
             >
               Verbindlich anmelden
             </button>
