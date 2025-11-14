@@ -106,9 +106,10 @@ export default function ChorFindenPage() {
                     Persönliche Beratung gewünscht?
                   </h2>
                   <p className="text-gray-600 mb-6 leading-relaxed">
-                    Unsere Bezirksposaunenwarte helfen dir gerne bei der Suche
-                    nach dem passenden Chor in deiner Region. Sie kennen die
-                    Chöre vor Ort und können dich individuell beraten.
+                    Unsere Regionalposaunenwarte und Bezirksobleute helfen dir
+                    gerne bei der Suche nach dem passenden Chor in deiner
+                    Region. Sie kennen die Chöre vor Ort und können dich
+                    individuell beraten.
                   </p>
                   <Link
                     href="/kontakt"

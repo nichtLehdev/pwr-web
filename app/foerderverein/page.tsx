@@ -25,7 +25,7 @@ export default function FoerdervereinPage() {
       </section>
 
       {/* Sonderaktionen 2025 */}
-      <section className="py-12 md:py-16 lg:py-20 bg-primary/10">
+      <section className="py-12 md:py-16 lg:py-20 bg-background-secondary">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
@@ -434,7 +434,7 @@ export default function FoerdervereinPage() {
               {/* CD */}
               <div className="bg-white rounded-lg shadow-lg p-8">
                 <h3 className="text-2xl font-bold text-dark mb-4">
-                  CD `&quot;`Unter Sternen und Satelliten`&quot;`
+                  CD &quot;Unter Sternen und Satelliten&quot;
                 </h3>
                 <p className="text-gray-600 mb-4 leading-relaxed">
                   Unsere Ensembles haben eine wunderbare CD eingespielt – mit
