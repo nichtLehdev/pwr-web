@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import NewsCard from "@/components/NewsCard";
 import { mockPosts } from "@/lib/mockData";
 import PageHeader from "@/components/PageHeader";
@@ -14,6 +14,14 @@ type FilterCategory =
   | "Other";
 
 export default function AktuellesPage() {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => {
+      document.body.style.overflow = "unset";
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] =
     useState<FilterCategory>("all");

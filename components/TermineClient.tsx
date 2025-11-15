@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EventCard from "@/components/EventCard";
 import CourseCard from "@/components/CourseCard";
 import CalendarView from "@/components/CalendarView";
@@ -14,8 +14,15 @@ type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
 
 export default function TermineClient() {
-  // Read type, district and category from params or default to 'all'
   const params = useSearchParams();
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    const timer = setTimeout(() => {
+      document.body.style.overflow = "unset";
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filterType, setFilterType] = useState<FilterType>(
