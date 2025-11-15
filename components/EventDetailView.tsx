@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Event } from "@/types/strapi";
 import { getDistrictColor } from "@/lib/districtColors";
 import PageHeader from "./PageHeader";
+import Image from "next/image";
 
 interface EventDetailViewProps {
   event: Event;
@@ -119,13 +120,31 @@ END:VCALENDAR`;
           {/* Event Info */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-4 flex-wrap">
                 <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full">
                   {event.category}
                 </span>
                 {event.districtInfo.name !== "All Districts" && (
                   <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full">
                     {event.districtInfo.name}
+                  </span>
+                )}
+                {event.openToParticipants && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    Mitspielen möglich!
                   </span>
                 )}
                 {isPast && (
@@ -336,28 +355,87 @@ END:VCALENDAR`;
                     </svg>
                     Mitwirkende
                   </h2>
-                  <div>
-                    <p className="font-semibold text-dark mb-1">
-                      {event.performingEnsemble.name}
+                  {typeof event.performingEnsemble !== "string" && (
+                    <div className="flex">
+                      <div>
+                        <p className="font-semibold text-dark mb-1">
+                          {event.performingEnsemble.name}
+                        </p>
+                        {event.performingEnsemble.description && (
+                          <p className="text-gray-600 text-sm">
+                            {event.performingEnsemble.description}
+                          </p>
+                        )}
+                        {event.performingEnsemble.conductor && (
+                          <p className="text-sm text-gray-500 mt-2">
+                            Leitung:{" "}
+                            {event.performingEnsemble.conductor.displayName}
+                          </p>
+                        )}
+                      </div>
+                      {event.performingEnsemble.image && (
+                        <Image
+                          src={event.performingEnsemble.image.url}
+                          alt={event.performingEnsemble.name}
+                          width={200}
+                          height={150}
+                          className="ml-auto rounded-md object-cover *:w-32 *:h-24"
+                        />
+                      )}
+                    </div>
+                  )}
+                  {typeof event.performingEnsemble === "string" && (
+                    <p className="font-semibold text-dark">
+                      {event.performingEnsemble}
                     </p>
-                    {event.performingEnsemble.description && (
-                      <p className="text-gray-600 text-sm">
-                        {event.performingEnsemble.description}
-                      </p>
-                    )}
-                    {event.performingEnsemble.conductor && (
-                      <p className="text-sm text-gray-500 mt-2">
-                        Leitung:{" "}
-                        {event.performingEnsemble.conductor.displayName}
-                      </p>
-                    )}
-                  </div>
+                  )}
+                  {event.leitung && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Leitung: {event.leitung}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Sidebar */}
             <div className="space-y-6">
+              {/* Mitmachangebot - Prominent! */}
+              {event.openToParticipants && (
+                <div className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-lg shadow-xl p-6 sticky top-20">
+                  <div className="flex items-start gap-3 mb-4">
+                    <svg
+                      className="w-8 h-8 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
+                    </svg>
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">
+                        Mitspielen möglich!
+                      </h3>
+                      <p className="text-sm text-green-50">
+                        {event.participationInfo ||
+                          "Bei dieser Veranstaltung können Sie gerne mitspielen!"}
+                      </p>
+                    </div>
+                  </div>
+                  {!event.participationInfo && (
+                    <p className="text-xs text-green-100 mt-4 pt-4 border-t border-green-400">
+                      Kontaktieren Sie die Veranstalter für weitere
+                      Informationen.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Ticket Info */}
               {!event.isFree && event.priceOptions && (
                 <div className="bg-white rounded-lg shadow-md p-6 sticky top-20">

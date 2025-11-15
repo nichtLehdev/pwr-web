@@ -368,6 +368,7 @@ export default function TerminePage() {
                             location={item.location.city}
                             category={item.category}
                             district={item.districtInfo.name}
+                            openToParticipants={item.openToParticipants}
                           />
                         ) : (
                           <CourseCard

@@ -8,6 +8,7 @@ interface EventCardProps {
   location: string;
   category: string;
   district: string;
+  openToParticipants?: boolean;
 }
 
 export default function EventCard({
@@ -17,6 +18,7 @@ export default function EventCard({
   location,
   category,
   district,
+  openToParticipants,
 }: EventCardProps) {
   const districtColor = getDistrictColor(district);
 
@@ -27,9 +29,29 @@ export default function EventCard({
         style={{ borderLeftColor: districtColor }}
       >
         <div className="flex items-start justify-between mb-4">
-          <span className="text-xs text-gray-500">{category}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500">{category}</span>
+            {openToParticipants && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 border-2 border-green-300 px-2 py-1 rounded-full">
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                Mitspielen möglich
+              </span>
+            )}
+          </div>
           <span
-            className="text-xs font-semibold text-white px-3 py-1 rounded-full"
+            className="text-xs font-semibold text-white px-3 py-1 rounded-full shrink-0"
             style={{ backgroundColor: districtColor }}
           >
             {district}

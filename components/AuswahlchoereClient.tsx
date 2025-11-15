@@ -4,7 +4,9 @@ import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { AuswahlChor } from "@/types/general";
+import { AuswahlChor, Event } from "@/types/strapi";
+import { getUpcomingEventsByAuswahlchor } from "@/lib/mockData";
+import ConcertCard from "./ConcertCard";
 
 function getRandomImagePaths(
   slug: string,
@@ -30,8 +32,10 @@ function getRandomImagePaths(
   );
 }
 
+type ChorWithField = AuswahlChor & { imageCount: number };
+
 interface AuswahlchoereClientProps {
-  ensembles: AuswahlChor[];
+  ensembles: ChorWithField[];
 }
 
 export default function AuswahlchoereClient({
@@ -41,18 +45,9 @@ export default function AuswahlchoereClient({
     ensembles.map((ensemble) => ({
       ...ensemble,
       randomImages: getRandomImagePaths(ensemble.slug, ensemble.imageCount, 2),
+      concerts: getUpcomingEventsByAuswahlchor(ensemble.name),
     }))
   );
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("de-DE", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   return (
     <div>
@@ -194,7 +189,7 @@ export default function AuswahlchoereClient({
                     </svg>
                     <span className="font-semibold">{ensemble.members}</span>
                   </div>
-                  {ensemble.director && (
+                  {ensemble.conductor && (
                     <div className="flex items-center gap-2 text-gray-600">
                       <svg
                         className="w-5 h-5"
@@ -209,7 +204,11 @@ export default function AuswahlchoereClient({
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      <span className="font-semibold">{ensemble.director}</span>
+                      <span className="font-semibold">
+                        {ensemble.conductor.displayRole &&
+                          `${ensemble.conductor.displayRole} `}
+                        {ensemble.conductor.displayName}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -225,65 +224,13 @@ export default function AuswahlchoereClient({
                       Kommende Termine
                     </h3>
                     <div className="space-y-4">
-                      {ensemble.concerts.map((concert, i) => (
-                        <div
+                      {ensemble.concerts.map((concert: Event, i: number) => (
+                        <ConcertCard
                           key={i}
-                          className="border-l-4 pl-4 py-2"
-                          style={{ borderColor: ensemble.colorHex }}
-                        >
-                          <div className="flex items-start justify-between gap-4 flex-wrap">
-                            <div className="flex-1 min-w-[200px]">
-                              <h4 className="font-bold text-dark mb-1">
-                                {concert.title}
-                              </h4>
-                              <div className="text-sm text-gray-600 space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                    />
-                                  </svg>
-                                  {formatDate(concert.date)}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                  </svg>
-                                  {concert.location}
-                                </div>
-                              </div>
-                            </div>
-                            <span
-                              className={`text-xs font-semibold px-3 py-1 rounded-full ${ensemble.color} text-white shrink-0`}
-                            >
-                              {concert.type}
-                            </span>
-                          </div>
-                        </div>
+                          concert={concert}
+                          ensemble={ensemble}
+                          i={i}
+                        />
                       ))}
                     </div>
                   </div>

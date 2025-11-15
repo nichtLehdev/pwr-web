@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Shared Components
 export interface Location {
-  venue: string;
+  venue?: string;
   street?: string;
   zipCode?: string;
   city: string;
@@ -67,6 +67,7 @@ export interface User {
   username: string;
   email: string;
   displayName: string;
+  displayRole?: string;
   roleType?: string;
   district?: string;
   bio?: string;
@@ -95,7 +96,10 @@ export interface Event {
   location: Location;
   districtInfo: DistrictInfo;
   category: "Concert" | "Service" | "Rehearsal" | "Other";
-  performingEnsemble?: Ensemble;
+  performingEnsemble?: Ensemble | AuswahlChor | string;
+  leitung?: string;
+  openToParticipants: boolean; // Mitmachangebot
+  participationInfo?: string; // Zusätzliche Infos fürs Mitspielen
   isFree: boolean;
   priceOptions?: PriceOption[];
   priceInfo?: string;
@@ -119,7 +123,12 @@ export interface Course {
   endDate: string;
   location: Location;
   districtInfo: DistrictInfo;
-  courseType: "D-Course" | "C-Course" | "Workshop" | "Training" | "Other";
+  courseType:
+    | "Lehrgang"
+    | "Freizeit"
+    | "Workshop"
+    | "Komponistenportrait"
+    | "Other";
   targetAudience?: "Beginners" | "Advanced" | "Conductors" | "Youth" | "All";
   instructors?: User[];
   registrationOpen: boolean;
@@ -165,6 +174,20 @@ export interface CourseRegistration {
   invoiceGenerated: boolean;
   invoiceId?: number;
   invoiceDate?: string;
+}
+
+export interface AuswahlChor {
+  name: string;
+  slug: string;
+  subtitle: string;
+  founded: string;
+  members: string;
+  conductor: User;
+  description: string;
+  color: string;
+  colorHex: string;
+  showApplication?: boolean;
+  image: StrapiMedia;
 }
 
 // Post (News)

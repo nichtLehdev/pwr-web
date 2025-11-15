@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -260,6 +261,10 @@ export default function CalendarView({ items }: CalendarViewProps) {
               const events = getEventsForDay(day);
               const courseStatus = getCourseStatusForDay(day);
               const hasEvents = events.length > 0;
+              const hasOpenToParticipants = events.some(
+                (e) =>
+                  e.type === "event" && (e.data as Event).openToParticipants
+              );
               const today = isToday(day);
               const selected = isSelected(day);
 
@@ -285,6 +290,16 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       : "hover:bg-gray-100"
                   }`}
                 >
+                  {/* Mitmachangebot-Indicator oben rechts */}
+                  {hasOpenToParticipants && (
+                    <div
+                      className={`absolute top-0.5 right-0.5 w-2 h-2 rounded-full ${
+                        selected ? "bg-green-300" : "bg-green-500"
+                      } shadow-sm`}
+                      title="Mitmachangebot"
+                    />
+                  )}
+
                   {/* Multi-day course indicator */}
                   {courseStatus && (
                     <div
@@ -325,6 +340,20 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 </button>
               );
             })}
+          </div>
+
+          {/* Legende */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span>Mitspielen möglich</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-0.5 bg-primary rounded-full"></div>
+                <span>Mehrtägige Veranstaltung</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -369,6 +398,11 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 }
                 type={item.type}
                 districtName={(item.data as any).districtInfo.name}
+                openToParticipants={
+                  item.type === "event"
+                    ? (item.data as Event).openToParticipants
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -408,6 +442,11 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   }
                   type={item.type}
                   districtName={(item.data as any).districtInfo.name}
+                  openToParticipants={
+                    item.type === "event"
+                      ? (item.data as Event).openToParticipants
+                      : undefined
+                  }
                 />
               ))}
             </div>
