@@ -45,12 +45,23 @@ export default function CourseCard({
         style={{ borderLeftColor: districtColor }}
       >
         <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
-          <span
-            className="text-xs font-semibold text-white px-3 py-1 rounded-full"
-            style={{ backgroundColor: districtColor }}
-          >
-            {courseType}
-          </span>
+          <div className="flex gap-2">
+            <span
+              className="text-xs font-semibold text-white px-3 py-1 rounded-full"
+              style={{ backgroundColor: districtColor }}
+            >
+              {courseType}
+            </span>
+            {course?.targetAudience && (
+              <span
+                className="text-xs font-semibold text-white px-3 py-1 rounded-full"
+                style={{ backgroundColor: districtColor }}
+              >
+                {course.targetAudience}
+              </span>
+            )}
+          </div>
+
           <div className="flex gap-2">
             {!isSameDay && (
               <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">

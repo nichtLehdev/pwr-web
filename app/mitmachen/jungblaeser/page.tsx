@@ -211,7 +211,7 @@ export default function JungblaserPage() {
 
             <div className="mt-10 text-center">
               <Link
-                href="/termine"
+                href="/termine?type=courses&category=Beginners"
                 className="inline-flex items-center px-8 py-4 bg-district-9 text-white font-bold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
               >
                 <svg

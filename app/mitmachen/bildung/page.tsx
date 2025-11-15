@@ -206,7 +206,7 @@ export default function BildungPage() {
                 Lehrgänge anmelden.
               </p>
               <Link
-                href="/termine"
+                href="/termine?type=courses"
                 className="inline-flex items-center px-8 py-4 bg-district-2 text-white font-bold rounded-lg hover:opacity-90 transition-opacity shadow-lg"
               >
                 <svg

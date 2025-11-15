@@ -8,15 +8,25 @@ import CalendarView from "@/components/CalendarView";
 import DesktopCalendarView from "@/components/DesktopCalendarView";
 import { mockEvents, mockCourses } from "@/lib/mockData";
 import PageHeader from "@/components/PageHeader";
+import { useSearchParams } from "next/navigation";
 
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
 
 export default function TerminePage() {
+  // Read type, district and category from params or default to 'all'
+  const params = useSearchParams();
+
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [filterType, setFilterType] = useState<FilterType>(
+    (params.get("type") as FilterType) || "all"
+  );
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(
+    params.get("district") || "all"
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    params.get("category") || "all"
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const now = new Date();
@@ -54,7 +64,11 @@ export default function TerminePage() {
     if (selectedCategory !== "all") {
       if (item.type === "event" && item.category !== selectedCategory)
         return false;
-      if (item.type === "course" && item.courseType !== selectedCategory)
+      if (
+        item.type === "course" &&
+        item.courseType !== selectedCategory &&
+        item.targetAudience !== selectedCategory
+      )
         return false;
     }
 
@@ -107,11 +121,18 @@ export default function TerminePage() {
   ];
   const eventCategories = ["Concert", "Service", "Rehearsal", "Other"];
   const courseCategories = [
-    "D-Course",
-    "C-Course",
+    "Lehrgang",
+    "Freizeit",
     "Workshop",
-    "Training",
+    "Komponistenportrait",
     "Other",
+  ];
+  const courseTargetAudiences = [
+    "Beginners",
+    "Advanced",
+    "Conductors",
+    "Youth",
+    "All",
   ];
 
   return (
@@ -258,7 +279,7 @@ export default function TerminePage() {
                         : "bg-gray-100 text-dark hover:bg-gray-200"
                     }`}
                   >
-                    Events
+                    Termine
                   </button>
                   <button
                     onClick={() => setFilterType("courses")}
@@ -268,7 +289,7 @@ export default function TerminePage() {
                         : "bg-gray-100 text-dark hover:bg-gray-200"
                     }`}
                   >
-                    Kurse
+                    Lehrgänge
                   </button>
                 </div>
               </div>
@@ -313,13 +334,22 @@ export default function TerminePage() {
                       </optgroup>
                     )}
                     {filterType !== "events" && (
-                      <optgroup label="Kurse">
-                        {courseCategories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </optgroup>
+                      <>
+                        <optgroup label="Lehrgänge">
+                          {courseCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Für wen?">
+                          {courseTargetAudiences.map((audience) => (
+                            <option key={audience} value={audience}>
+                              {audience}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </>
                     )}
                   </select>
                 </div>
