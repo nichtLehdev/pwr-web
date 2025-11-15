@@ -39,6 +39,7 @@ export default function Navigation() {
       label: "Über uns",
       dropdown: [
         { href: "/ueber-uns/struktur", label: "Struktur & Geschichte" },
+        { href: "/foerderverein", label: "Förderverein" },
         { href: "/ueber-uns/vorstand", label: "Vorstand" },
         { href: "/ueber-uns/posaunenwarte", label: "Posaunenwarte" },
         { href: "/ueber-uns/auswahlchoere", label: "Auswahlchöre" },

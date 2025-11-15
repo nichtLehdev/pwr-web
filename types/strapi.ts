@@ -95,7 +95,7 @@ export interface Event {
   eventDate: string;
   location: Location;
   districtInfo: DistrictInfo;
-  category: "Concert" | "Service" | "Rehearsal" | "Other";
+  category: "Konzert" | "Gottesdienst" | "Probe" | "Andere";
   performingEnsemble?: Ensemble | AuswahlChor | string;
   leitung?: string;
   openToParticipants: boolean; // Mitmachangebot
@@ -129,7 +129,12 @@ export interface Course {
     | "Workshop"
     | "Komponistenportrait"
     | "Other";
-  targetAudience?: "Beginners" | "Advanced" | "Conductors" | "Youth" | "All";
+  targetAudience?:
+    | "Anfänger"
+    | "Fortgeschrittene"
+    | "Dirigenten"
+    | "Jugend"
+    | "Alle";
   instructors?: User[];
   registrationOpen: boolean;
   registrationDeadline?: string;
@@ -197,7 +202,7 @@ export interface Post {
   content: string;
   excerpt?: string;
   coverImage?: StrapiMedia;
-  category: "Magazine" | "Event" | "Education" | "Districts" | "Other";
+  category: "Magazin" | "Event" | "Ausbildung" | "Bezirke" | "Andere";
   districtInfo: DistrictInfo;
   author?: User;
   pinned: boolean;

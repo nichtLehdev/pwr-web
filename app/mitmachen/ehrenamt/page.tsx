@@ -355,7 +355,7 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Erfahrungsbericht */}
-      <section className="py-12 md:py-16 lg:py-20 bg-primary/10">
+      <section className="py-12 md:py-16 lg:py-20 bg-background-secondary">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-8 md:p-10">
@@ -386,7 +386,7 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Kontakt CTA */}
-      <section className="py-12 md:py-16 lg:py-20 bg-background-secondary">
+      <section className="py-12 md:py-16 lg:py-20 bg-background">
         <div className="container">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-dark mb-6">

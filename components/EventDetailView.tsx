@@ -42,6 +42,8 @@ END:VCALENDAR`;
     link.click();
   };
 
+  const deviceWidth = typeof window !== "undefined" ? window.innerWidth : 0;
+
   // Share Function
   const shareEvent = async () => {
     const shareData = {
@@ -366,7 +368,7 @@ END:VCALENDAR`;
                     Mitwirkende
                   </h2>
                   {typeof event.performingEnsemble !== "string" && (
-                    <div className="flex">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
                       <div>
                         <p className="font-semibold text-dark mb-1">
                           {event.performingEnsemble.name}
@@ -387,9 +389,9 @@ END:VCALENDAR`;
                         <Image
                           src={event.performingEnsemble.image.url}
                           alt={event.performingEnsemble.name}
-                          width={200}
-                          height={150}
-                          className="ml-auto rounded-md object-cover *:w-32 *:h-24"
+                          width={deviceWidth > 768 ? 200 : 600}
+                          height={deviceWidth > 768 ? 150 : 450}
+                          className="ml-auto rounded-md object-cover *:w-32 *:h-24 md:w-full md:h-auto"
                         />
                       )}
                     </div>

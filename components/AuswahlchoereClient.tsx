@@ -146,7 +146,7 @@ export default function AuswahlchoereClient({
 
               {/* Content */}
               <div className="w-full lg:w-1/2">
-                <h2 className="text-3xl md:text-4xl font-bold text-dark mb-2">
+                <h2 className="text-3xl md:text-4xl font-bold text-dark mb-2 wrap-break-word">
                   {ensemble.name}
                 </h2>
                 <p className="text-xl text-primary font-semibold mb-6">
