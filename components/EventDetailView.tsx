@@ -130,7 +130,7 @@ END:VCALENDAR`;
                   </span>
                 )}
                 {event.openToParticipants && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-full shadow-lg">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-green-700 text-white px-3 py-1.5 rounded-full shadow-lg">
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -402,7 +402,7 @@ END:VCALENDAR`;
             <div className="space-y-6">
               {/* Mitmachangebot - Prominent! */}
               {event.openToParticipants && (
-                <div className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-lg shadow-xl p-6 sticky top-20">
+                <div className="bg-linear-to-br from-green-500 to-green-700 text-white rounded-lg shadow-xl p-6 sticky top-20">
                   <div className="flex items-start gap-3 mb-4">
                     <svg
                       className="w-8 h-8 shrink-0"
