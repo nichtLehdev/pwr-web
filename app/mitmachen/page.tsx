@@ -523,7 +523,7 @@ export default function MitmachenPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-dark mb-3 md:mb-4 break-words">
+                  <h2 className="text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold text-dark mb-3 md:mb-4 wrap-break-word">
                     Instrumenten&shy;versicherung
                   </h2>
                   <p className="text-base md:text-lg text-gray-600 leading-relaxed">

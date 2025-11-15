@@ -17,7 +17,7 @@ async function getImageCount(slug: string): Promise<number> {
       /\.(jpg|jpeg|png|webp)$/i.test(file)
     );
     return imageFiles.length;
-  } catch (error) {
+  } catch {
     return 0;
   }
 }

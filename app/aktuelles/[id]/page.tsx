@@ -26,12 +26,12 @@ export default function NewsDetailPage({ params }: PageProps) {
     const container = document.querySelector(".article-content");
     if (!container) return;
 
-    const handleContainerClick = (event) => {
-      if (event.target && event.target.tagName === "IMG") {
-        const img = event.target as HTMLImageElement; // Cast to image
+    const handleContainerClick = (event: Event) => {
+      const target = event.target as HTMLImageElement | null;
+      if (target && target.tagName === "IMG") {
         setLightboxImage({
-          src: img.getAttribute("src") || "",
-          alt: img.getAttribute("alt") || "",
+          src: target.getAttribute("src") || "",
+          alt: target.getAttribute("alt") || "",
         });
       }
     };
