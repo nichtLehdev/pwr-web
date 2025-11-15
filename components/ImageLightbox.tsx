@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect } from "react";
 
 interface ImageLightboxProps {
@@ -61,9 +62,11 @@ export default function ImageLightbox({
         className="max-w-7xl max-h-[90vh] relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <Image
           src={src}
           alt={alt}
+          width={1920}
+          height={1080}
           className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg"
         />
       </div>
