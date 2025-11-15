@@ -12,6 +12,41 @@ const MAX_VISIBLE_WHEN_OVERFLOW = 3;
 const MULTI_DAY_ROW_HEIGHT = 24; // px
 const EVENT_START_TOP_WITHOUT_COURSES = 32; // px
 
+// Helper: Style für Event-Kategorie
+const getEventCategoryStyle = (category: string) => {
+  switch (category) {
+    case "Konzert":
+      return {
+        borderClass: "border-2", // Dicker Border
+        bgOpacity: 0.2, // 20% für Hintergrund
+      };
+    case "Probe":
+      return {
+        borderClass: "border border-dashed", // Gestrichelt
+        bgOpacity: 0.15,
+      };
+    case "Gottesdienst":
+      return {
+        borderClass: "border", // Dünner Border
+        bgOpacity: 0.15,
+      };
+    case "Andere":
+    default:
+      return {
+        borderClass: "border border-dotted", // Gepunktet
+        bgOpacity: 0.1,
+      };
+  }
+};
+
+// Helper: Hex zu RGB mit Opacity
+const hexToRgba = (hex: string, opacity: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 interface CalendarItem {
   type: "event" | "course";
   data: Event | Course;
@@ -462,7 +497,7 @@ export default function DesktopCalendarView({
                 } ${today ? "bg-primary/5" : "hover:bg-gray-50"}`}
               >
                 {/* Datum */}
-                <div className="absolute top-2 left-2 z-10">
+                <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
                   <span
                     className={`text-sm font-semibold ${
                       today
@@ -577,20 +612,48 @@ export default function DesktopCalendarView({
                                 minute: "2-digit",
                               }
                             );
+                            const categoryStyle = getEventCategoryStyle(
+                              eventData.category
+                            );
+                            const hasOpenToParticipants =
+                              eventData.openToParticipants;
+                            const districtColor = getDistrictColor(
+                              eventData.districtInfo.name
+                            );
 
                             return (
                               <button
                                 key={idx}
                                 onClick={() => setSelectedEvent(event)}
-                                className="w-full text-left text-[11px] px-2 py-1 rounded truncate hover:opacity-90 transition-opacity text-white font-medium"
+                                className={`w-full text-left text-[11px] px-2 py-0.5 cursor-pointer rounded truncate hover:brightness-95 transition-all text-gray-900 font-medium flex items-center gap-1 ${categoryStyle.borderClass}`}
                                 style={{
-                                  backgroundColor: getDistrictColor(
-                                    eventData.districtInfo.name
+                                  backgroundColor: hexToRgba(
+                                    districtColor,
+                                    categoryStyle.bgOpacity
                                   ),
+                                  borderColor: districtColor,
                                 }}
                                 title={`${time} ${eventData.title}`}
                               >
-                                {time} {eventData.title}
+                                {hasOpenToParticipants && (
+                                  <svg
+                                    className="w-3 h-3 shrink-0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    style={{ color: districtColor }}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                  </svg>
+                                )}
+                                <span className="truncate">
+                                  {time} {eventData.title}
+                                </span>
                               </button>
                             );
                           })}
@@ -613,6 +676,49 @@ export default function DesktopCalendarView({
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Legende */}
+      <div className="mt-6 bg-white rounded-lg shadow-md p-4 border border-gray-200">
+        <h3 className="text-sm font-bold text-gray-900 mb-3">Legende</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+          <div className="flex items-center gap-2">
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              />
+            </svg>
+            <span>= Mitspielen möglich</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 bg-blue-500/20 rounded border-2 border-blue-500"></div>
+            <span>Konzert (dicker Rand)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 bg-blue-500/15 rounded border border-blue-500"></div>
+            <span>Gottesdienst (dünner Rand)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 bg-blue-500/15 rounded border border-blue-500 border-dashed"></div>
+            <span>Probe (gestrichelt)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 bg-blue-500/10 rounded border border-blue-500 border-dotted"></div>
+            <span>Sonstiges (gepunktet)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-3 bg-primary rounded"></div>
+            <span>Mehrtägige Veranstaltung</span>
+          </div>
         </div>
       </div>
 
@@ -699,8 +805,28 @@ export default function DesktopCalendarView({
                           ),
                         }}
                       >
-                        <div className="font-semibold text-dark">
-                          {eventData.title}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-semibold text-dark flex-1">
+                            {eventData.title}
+                          </div>
+                          {!isCourse && eventData.openToParticipants && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded shrink-0">
+                              <svg
+                                className="w-2.5 h-2.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                              </svg>
+                              Mitspielen
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-gray-600 mt-1">
                           {isCourse ? (
@@ -717,8 +843,8 @@ export default function DesktopCalendarView({
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
-                              <span className="ml-2 text-xs bg-secondary/10 text-secondary px-2 py-0.5 rounded">
-                                Event
+                              <span className="ml-2 text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                                {eventData.category}
                               </span>
                             </>
                           )}
