@@ -8,6 +8,7 @@ import { mockPosts } from "@/lib/mockData";
 import { getDistrictColor } from "@/lib/districtColors";
 import ImageLightbox from "@/components/ImageLightbox";
 import "../../article-content.css";
+import NewsCard from "@/components/NewsCard";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,22 +22,24 @@ export default function NewsDetailPage({ params }: PageProps) {
     alt: string;
   } | null>(null);
 
-  // Add click handlers to images after content is rendered
   useEffect(() => {
-    const images = document.querySelectorAll(".article-content img");
-    images.forEach((img) => {
-      img.addEventListener("click", () => {
+    const container = document.querySelector(".article-content");
+    if (!container) return;
+
+    const handleContainerClick = (event) => {
+      if (event.target && event.target.tagName === "IMG") {
+        const img = event.target as HTMLImageElement; // Cast to image
         setLightboxImage({
           src: img.getAttribute("src") || "",
           alt: img.getAttribute("alt") || "",
         });
-      });
-    });
+      }
+    };
+
+    container.addEventListener("click", handleContainerClick);
 
     return () => {
-      images.forEach((img) => {
-        img.removeEventListener("click", () => {});
-      });
+      container.removeEventListener("click", handleContainerClick);
     };
   }, [post]);
 
@@ -317,68 +320,17 @@ export default function NewsDetailPage({ params }: PageProps) {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedPosts.map((relatedPost) => {
-                const relatedDistrictColor = getDistrictColor(
-                  relatedPost.districtInfo.name
-                );
                 return (
-                  <article
+                  <NewsCard
                     key={relatedPost.id}
-                    className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow overflow-hidden border-l-4"
-                    style={{ borderLeftColor: relatedDistrictColor }}
-                  >
-                    {relatedPost.coverImage?.url && (
-                      <div className="relative w-full h-48 bg-gray-200">
-                        <Image
-                          src={relatedPost.coverImage.url}
-                          alt={relatedPost.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-semibold text-primary">
-                          {relatedPost.category}
-                        </span>
-                        <time className="text-xs text-gray-500">
-                          {new Date(
-                            relatedPost.publishedAt || relatedPost.createdAt
-                          ).toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </time>
-                      </div>
-                      <h3 className="text-lg font-bold text-dark mb-2 line-clamp-2">
-                        {relatedPost.title}
-                      </h3>
-                      {relatedPost.excerpt && (
-                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                          {relatedPost.excerpt}
-                        </p>
-                      )}
-                      <Link
-                        href={`/aktuelles/${relatedPost.id}`}
-                        className="inline-flex items-center text-primary hover:text-primary-dark font-semibold text-sm"
-                      >
-                        Weiterlesen
-                        <svg
-                          className="w-4 h-4 ml-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </Link>
-                    </div>
-                  </article>
+                    id={relatedPost.id}
+                    category={relatedPost.category}
+                    date={relatedPost.publishedAt || relatedPost.createdAt}
+                    title={relatedPost.title}
+                    excerpt={relatedPost.excerpt || ""}
+                    image={relatedPost.coverImage?.url}
+                    district={relatedPost.districtInfo.name}
+                  />
                 );
               })}
             </div>

@@ -112,7 +112,7 @@ export default function AktuellesPage() {
       </section>
 
       {/* Filter Bar */}
-      <section className="bg-white border-b sticky top-16 z-40 shadow-sm">
+      <section className="bg-white border-b sticky top-28 md:top-36 z-40 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
