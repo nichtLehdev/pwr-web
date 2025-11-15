@@ -78,6 +78,7 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
   // NEUE FUNKTION: ICS-Datei herunterladen
   const handleDownloadIcs = () => {
     // Generiere eine eindeutige ID (simuliert)
+    // eslint-disable-next-line react-hooks/purity
     const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
     // Formatiere die Daten
