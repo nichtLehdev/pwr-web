@@ -11,6 +11,23 @@ interface CourseDetailViewProps {
   course: Course;
 }
 
+// Hilfsfunktion zur Formatierung eines Datums für ICS (YYYYMMDDTHHMMSSZ)
+// Wichtig: ICS verwendet UTC-Zeit. Dies ist eine vereinfachte Konvertierung.
+// In einer Produktionsanwendung müsstest du Zeitzonen sorgfältiger behandeln.
+const formatIcsDate = (date: Date): string => {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hour = pad(date.getHours());
+  const minute = pad(date.getMinutes());
+  const second = pad(date.getSeconds());
+  // Hinzufügen des 'Z' für UTC wird hier weggelassen,
+  // da die JS Date-Objekte lokal sind. Für präzise ICS-Dateien
+  // sollten die Zeiten zuerst in UTC konvertiert werden.
+  return `${year}${month}${day}T${hour}${minute}${second}`;
+};
+
 export default function CourseDetailView({ course }: CourseDetailViewProps) {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
@@ -57,6 +74,53 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
           | "district-11"
           | "district-12"
           | "district-13");
+
+  // NEUE FUNKTION: ICS-Datei herunterladen
+  const handleDownloadIcs = () => {
+    // Generiere eine eindeutige ID (simuliert)
+    const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+    // Formatiere die Daten
+    const icsStartDate = formatIcsDate(startDate);
+    const icsEndDate = formatIcsDate(endDate);
+
+    const location =
+      course.location.venue ||
+      `${course.location.street}, ${course.location.city}`;
+
+    // Erstelle den ICS-Inhalt
+    const icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//MyCompany//NONSGML Course Calendar//EN",
+      "BEGIN:VEVENT",
+      `UID:${uid}`,
+      `DTSTAMP:${formatIcsDate(new Date())}`, // Aktueller Zeitstempel
+      // Verwende DTSTART;VALUE=DATE wenn es ein ganztägiges Event ist.
+      `DTSTART:${icsStartDate}`,
+      `DTEND:${icsEndDate}`,
+      `SUMMARY:${course.title}`,
+      `DESCRIPTION:${
+        course.motto ? course.motto + "\\n\\n" : ""
+      }Weitere Informationen: [Deine Kurs-URL hier]`,
+      `LOCATION:${location}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\n");
+
+    // Erstelle und löse den Download aus
+    const blob = new Blob([icsContent], {
+      type: "text/calendar;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${course.title.replace(/ /g, "_")}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -255,6 +319,33 @@ export default function CourseDetailView({ course }: CourseDetailViewProps) {
                       </p>
                     </>
                   )}
+                  <div className="pt-4">
+                    <button
+                      onClick={handleDownloadIcs}
+                      className="w-full px-4 py-2 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 text-sm"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 14l2-2-2-2M12 14v4"
+                        />
+                      </svg>
+                      Zum Kalender hinzufügen (ICS)
+                    </button>
+                  </div>
                 </div>
               </div>
 

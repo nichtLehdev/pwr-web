@@ -16,7 +16,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const isPast = eventDate < new Date();
 
   // ICS Download Function
-  const downloadICS = () => {
+  const handleDownloadIcs = () => {
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Posaunenwerk Rheinland//Event//DE
@@ -167,25 +167,6 @@ END:VCALENDAR`;
             {/* Action Buttons */}
             <div className="flex gap-2">
               <button
-                onClick={downloadICS}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="hidden sm:inline">Speichern</span>
-              </button>
-              <button
                 onClick={shareEvent}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center gap-2"
               >
@@ -217,22 +198,24 @@ END:VCALENDAR`;
             <div className="lg:col-span-2 space-y-6">
               {/* Date & Time */}
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-dark mb-4 flex items-center gap-2">
-                  <svg
-                    className="w-6 h-6 text-primary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Datum & Uhrzeit
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-dark flex items-center gap-2">
+                    <svg
+                      className="w-6 h-6 text-primary"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Datum & Uhrzeit
+                  </h2>
+                </div>
                 <div className="space-y-2">
                   <p className="text-lg font-semibold text-dark">
                     {eventDate.toLocaleDateString("de-DE", {
@@ -249,6 +232,33 @@ END:VCALENDAR`;
                     })}{" "}
                     Uhr
                   </p>
+                </div>
+                <div className="pt-4">
+                  <button
+                    onClick={handleDownloadIcs}
+                    className="w-full px-4 py-2 border-2 border-primary text-primary font-semibold rounded-lg hover:bg-primary/10 transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 14l2-2-2-2M12 14v4"
+                      />
+                    </svg>
+                    Zum Kalender hinzufügen (ICS)
+                  </button>
                 </div>
               </div>
 

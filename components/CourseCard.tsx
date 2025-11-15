@@ -34,6 +34,7 @@ export default function CourseCard({
   const course = getCourseById(id);
   const registrationOpen =
     course &&
+    course.registrationOpen &&
     course.registrationDeadline &&
     new Date() < new Date(course.registrationDeadline);
 
