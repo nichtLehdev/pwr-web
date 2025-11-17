@@ -11,7 +11,7 @@ export default function VorstandPage() {
       {/* Hero Section */}
       <section className="py-12 md:py-16 lg:py-20 bg-district-1 text-white">
         <div className="container">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Der Vorstand des Posaunenwerks
             </h1>
