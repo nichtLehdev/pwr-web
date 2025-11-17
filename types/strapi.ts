@@ -20,6 +20,22 @@ export interface ContactInfo {
   website?: string;
 }
 
+export interface Bezirk {
+  id: number;
+  name: string;
+  shortName: string;
+  obleute?: {
+    name: string;
+    title: string;
+    address?: string;
+    phone?: string;
+    mobile?: string;
+    email?: string;
+    image?: string;
+  }[];
+  color: string;
+}
+
 export interface PriceOption {
   price: number;
   label: string;

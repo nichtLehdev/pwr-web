@@ -37,20 +37,20 @@ export default function UeberUnsPage() {
       color: "district-2",
     },
     {
-      title: "Obleute",
+      title: "Bezirke & Obleute",
       description:
-        "Informationen und Ressourcen speziell für Obleute und Chorleiter.",
-      href: "/ueber-uns/obleute",
+        "Informationen zu unseren Bezirken und deren Ansprechpartner*innen.",
+      href: "/ueber-uns/bezirke",
       icon: "document" as const,
       color: "district-5",
     },
     {
-      title: "Namibia-Partnerschaft",
+      title: "Posaunenwarte",
       description:
-        "Seit vielen Jahren verbindet uns eine besondere Partnerschaft mit Namibia.",
-      href: "/ueber-uns/namibia",
-      icon: "globe" as const,
-      color: "foerderverein",
+        "Die Posaunenwarte leiten das Posaunenwerk in musikalischer Hinsicht.",
+      href: "/ueber-uns/posaunenwarte",
+      icon: "users" as const,
+      color: "primary",
     },
   ];
 

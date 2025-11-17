@@ -42,6 +42,7 @@ export default function Navigation() {
         { href: "/foerderverein", label: "Förderverein" },
         { href: "/ueber-uns/vorstand", label: "Vorstand" },
         { href: "/ueber-uns/posaunenwarte", label: "Posaunenwarte" },
+        { href: "/ueber-uns/bezirke", label: "Bezirke & Obleute" },
         { href: "/ueber-uns/auswahlchoere", label: "Auswahlchöre" },
         { href: "/ueber-uns/posaunenrat", label: "Posaunenrat" },
       ],

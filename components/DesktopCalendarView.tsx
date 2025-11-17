@@ -430,7 +430,7 @@ export default function DesktopCalendarView({
         </div>
 
         {/* Kalender Grid */}
-        <div className="grid grid-cols-7" style={{ gridAutoRows: "140px" }}>
+        <div className="grid grid-cols-7" style={{ gridAutoRows: "150px" }}>
           {/* Leere Zellen */}
           {Array.from({ length: startingDayOfWeek }).map((_, i) => {
             const isLastColumn = i === 6;

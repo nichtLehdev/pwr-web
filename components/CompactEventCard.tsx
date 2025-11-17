@@ -43,7 +43,7 @@ export default function CompactEventCard({
 
   return (
     <Link
-      href={`/termine/${id}`}
+      href={`/termine/${type}/${id}`}
       className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-primary hover:shadow-md transition-all"
     >
       {/* Date Badge */}

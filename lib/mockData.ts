@@ -175,7 +175,7 @@ export const mockEvents: Event[] = [
     performingEnsemble: mockAuswahlchore[0],
     openToParticipants: true,
     participationInfo:
-      "Das Programm und die Noten werden ab dem 1. Dezember zur Verfügung stehen und können bei Jörg Häusler oder Gerald Münster angefordert werden. Die Probe für das gemeinsame Konzert findet am Donnerstag, den 8. Januar 2026 um 19:30 Uhr in der Evangelischen Kreuzkirche (In den Bänden 69, 47229 Duisburg) statt. Am darauffolgenden Sonntag, den 11. Januar wird es um 13:30 Uhr eine gemeinsame Anspielprobe im Dom zu Xanten geben. Nach einer Kaffeepause folgt um 15:30 Uhr das Konzert.",
+      "Um beim Konzert mitzuwirken, ist die Teilnahme an der Probe am 8. Januar in Duisburg erforderlich. Das Programm und die Noten werden ab dem 1. Dezember zur Verfügung stehen und können bei Jörg Häusler oder Gerald Münster angefordert werden.",
     category: "Konzert",
     isFree: true,
     pendingReview: false,
@@ -436,6 +436,28 @@ export const mockEvents: Event[] = [
     participationInfo:
       "Das Programm und die Noten werden ab dem 1. Dezember zur Verfügung stehen und können bei Jörg Häusler oder Gerald Münster angefordert werden. Die Probe für das gemeinsame Konzert findet am Donnerstag, den 8. Januar 2026 um 19:30 Uhr in der Evangelischen Kreuzkirche (In den Bänden 69, 47229 Duisburg) statt. Am darauffolgenden Sonntag, den 11. Januar wird es um 13:30 Uhr eine gemeinsame Anspielprobe im Dom zu Xanten geben. Nach einer Kaffeepause folgt um 15:30 Uhr das Konzert.",
     category: "Probe",
+    isFree: true,
+    pendingReview: false,
+    approved: true,
+    publishedAt: "2026-01-01T10:00:00.000Z",
+    createdAt: "2025-12-25T14:20:00.000Z",
+    updatedAt: "2026-01-01T10:00:00.000Z",
+  },
+  {
+    id: 25,
+    title: "Adventsblasen im Kölner Dom",
+    description:
+      "Am Montag nach dem ersten Advent, also am 1. Dezember findet wieder das Adventsblasen unter bewährter Leitung von Gerhard Heywang statt. Die genaue Reihenfolge findet ihr in der entsprechenden Information auf unserer Homepage oder könnt sie direkt bei Gerhard Heywang unter pos-altenberg@web.de anfragen.",
+    eventDate: "2025-12-01T18:10:00.000Z",
+    location: {
+      venue: "Kölner Dom",
+      city: "Köln",
+    },
+    districtInfo: { name: "All Districts" },
+    openToParticipants: true,
+    participationInfo:
+      "Eine vorherige Probe gibt es nicht. Gespielt werden Adventslieder aus dem Choralbuch und freie Stücke.",
+    category: "Andere",
     isFree: true,
     pendingReview: false,
     approved: true,

@@ -7,7 +7,7 @@ export default function BildungPage() {
       id: "blaeser",
       title: "Bläserkurse",
       description:
-        "Von Anfänger bis Fortgeschrittene – D-Kurse, C-Kurse und mehr",
+        "Von Anfänger bis Fortgeschrittene, von Jung bis Alt – Lehrgänge für alle Leistungsstufen",
       icon: (
         <path
           strokeLinecap="round"

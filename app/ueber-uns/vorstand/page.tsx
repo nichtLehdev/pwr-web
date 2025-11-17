@@ -1,61 +1,9 @@
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
 import Image from "next/image";
+import { vorstandMembers } from "@/lib/generalData";
 
 export default function VorstandPage() {
-  const vorstandMembers = [
-    {
-      name: "Friedemann Schmidt-Eggert",
-      position: "Landesobmann",
-      description:
-        "Der Landesobmann vertritt das Posaunenwerk nach außen und innen und leitet den Vorstand. Er koordiniert die Arbeit und ist Ansprechpartner für überregionale Themen.",
-      email: "landesobmann@posaunenwerk-rheinland.de",
-      phone: "02644-9990785",
-      image: "/images/vorstand/schmidt-eggert.jpg",
-      color: "bg-primary",
-    },
-    {
-      name: "Beate Ising",
-      position: "Stellvertretende Landesobfrau",
-      description:
-        "Unterstützt den Landesobmann in allen Belangen und vertritt ihn bei Bedarf. Koordiniert spezielle Projekte und Arbeitskreise.",
-      email: "stellv.landesobfrau@posaunenwerk-rheinland.de",
-      phone: "02297-7221",
-      image: "/images/vorstand/ising.jpg",
-      color: "bg-district-1",
-    },
-    {
-      name: "Dietmar Persian",
-      position: "Stellvertretender Landesobmann",
-      description:
-        "Unterstützt den Landesobmann in allen Belangen und vertritt ihn bei Bedarf. Koordiniert spezielle Projekte und Arbeitskreise.",
-      email: "stellv.landesobmann@posaunenwerk-rheinland.de",
-      phone: "02192-7491",
-      image: "/images/vorstand/persian.jpg",
-      color: "bg-district-2",
-    },
-    {
-      name: "Frank Beekmann",
-      position: "Schatzmeister",
-      description:
-        "Verwaltet die Finanzen des Posaunenwerks, erstellt den Haushaltsplan und sorgt für die ordnungsgemäße Buchführung.",
-      email: "schatzmeister@posaunenwerk-rheinland.de",
-      phone: "0228-85098516",
-      image: "/images/vorstand/beekmann.jpg",
-      color: "bg-district-3",
-    },
-    {
-      name: "Tim Neuhaus",
-      position: "Geschäftsführer",
-      description:
-        "Verantwortlich für die operative Geschäftsführung und Koordination der täglichen Abläufe im Posaunenwerk.",
-      email: "geschaeftsfuehrer@posaunenwerk-rheinland.de",
-      phone: "0176-72213949",
-      image: "/images/vorstand/neuhaus.png",
-      color: "bg-district-5",
-    },
-  ];
-
   return (
     <div>
       <PageHeader title="Vorstand" color="district-1" />

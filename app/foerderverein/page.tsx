@@ -282,7 +282,7 @@ export default function FoerdervereinPage() {
                     />
                   </svg>
                   <p className="text-gray-700">
-                    <strong>Günstiger Jahresbeitrag für Chöre: nur 36 €</strong>
+                    <strong>Günstiger Jahresbeitrag: nur 36 €</strong>
                   </p>
                 </div>
                 <div className="flex items-start gap-3">

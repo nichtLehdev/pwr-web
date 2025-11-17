@@ -105,7 +105,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <div className="text-3xl font-bold mb-2">36 €</div>
-                <p className="text-sm opacity-90">Jahresbeitrag für Chöre</p>
+                <p className="text-sm opacity-90">Jahresbeitrag</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <div className="text-3xl font-bold mb-2">2025</div>
