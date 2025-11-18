@@ -233,7 +233,7 @@ export const bezirke = [
         email: "christine.haeusler@ekir.de",
         mobile: "",
         phone: "",
-        image: "/images/bezirke/haeusler-christine.jpg",
+        image: "/images/bezirke/haeusler.jpg",
       },
     ],
     color: "bg-district-13",
