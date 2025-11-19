@@ -1,15 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Navigation() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(
     null
   );
+
+  // Check if a link or its children are active
+  const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
+    // Exact match for home
+    if (href === "/" && pathname === "/") return true;
+
+    // For other pages, check if pathname starts with href (and href is not "/")
+    if (href !== "/" && pathname.startsWith(href)) return true;
+
+    // Check if any dropdown item is active
+    if (dropdown) {
+      return dropdown.some((item) => pathname.startsWith(item.href));
+    }
+
+    return false;
+  };
 
   const navLinks = [
     { href: "/", label: "Start" },
@@ -111,7 +129,11 @@ export default function Navigation() {
                   <>
                     <Link
                       href={link.href}
-                      className="text-dark hover:text-primary transition-colors font-medium flex items-center gap-1"
+                      className={`font-medium flex items-center gap-1 transition-colors ${
+                        isActive(link.href, link.dropdown)
+                          ? "text-primary"
+                          : "text-dark hover:text-primary"
+                      }`}
                     >
                       {link.label}
                       <svg
@@ -140,7 +162,11 @@ export default function Navigation() {
                           <Link
                             key={sublink.href}
                             href={sublink.href}
-                            className="block px-4 py-2 text-dark hover:bg-primary/10 hover:text-primary transition-colors"
+                            className={`block px-4 py-2 transition-colors ${
+                              pathname === sublink.href
+                                ? "bg-primary/10 text-primary font-semibold"
+                                : "text-dark hover:bg-primary/10 hover:text-primary"
+                            }`}
                           >
                             {sublink.label}
                           </Link>
@@ -151,7 +177,11 @@ export default function Navigation() {
                 ) : (
                   <Link
                     href={link.href}
-                    className="text-dark hover:text-primary transition-colors font-medium"
+                    className={`font-medium transition-colors ${
+                      isActive(link.href)
+                        ? "text-primary"
+                        : "text-dark hover:text-primary"
+                    }`}
                   >
                     {link.label}
                   </Link>
@@ -232,7 +262,11 @@ export default function Navigation() {
                         <Link
                           href={link.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="flex-1 px-4 py-2 text-dark hover:bg-gray-100 hover:text-primary rounded-md transition-colors"
+                          className={`flex-1 px-4 py-2 rounded-md transition-colors ${
+                            isActive(link.href, link.dropdown)
+                              ? "text-primary font-semibold bg-primary/10"
+                              : "text-dark hover:bg-gray-100 hover:text-primary"
+                          }`}
                         >
                           {link.label}
                         </Link>
@@ -265,7 +299,11 @@ export default function Navigation() {
                               key={sublink.href}
                               href={sublink.href}
                               onClick={() => setMobileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-primary rounded-md transition-colors"
+                              className={`block px-4 py-2 text-sm rounded-md transition-colors ${
+                                pathname === sublink.href
+                                  ? "text-primary font-semibold bg-primary/10"
+                                  : "text-gray-600 hover:bg-gray-100 hover:text-primary"
+                              }`}
                             >
                               {sublink.label}
                             </Link>
@@ -277,7 +315,11 @@ export default function Navigation() {
                     <Link
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-2 text-dark hover:bg-gray-100 hover:text-primary rounded-md transition-colors"
+                      className={`block px-4 py-2 rounded-md transition-colors ${
+                        isActive(link.href)
+                          ? "text-primary font-semibold bg-primary/10"
+                          : "text-dark hover:bg-gray-100 hover:text-primary"
+                      }`}
                     >
                       {link.label}
                     </Link>

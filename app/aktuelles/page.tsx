@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import NewsCard from "@/components/NewsCard";
 import { mockPosts } from "@/lib/mockData";
 import PageHeader from "@/components/PageHeader";
+import Link from "next/link";
 
 type FilterCategory =
   | "all"
@@ -110,6 +111,13 @@ export default function AktuellesPage() {
       {/* Header */}
       <section className="bg-primary text-white py-6 md:py-12 lg:py-16">
         <div className="container mx-auto px-4">
+          <nav className="text-sm mb-4 flex items-center gap-2 opacity-90">
+            <Link href="/" className="hover:text-white transition-colors">
+              Start
+            </Link>
+            <span>/</span>
+            <span>Aktuelles</span>
+          </nav>
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">
             Aktuelles
           </h1>

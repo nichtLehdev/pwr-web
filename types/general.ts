@@ -41,3 +41,43 @@ export interface HistoryEvent {
     | "modernization"
     | "partnership";
 }
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  email?: string;
+  phone?: string;
+  image?: string;
+  responsibilities?: string[];
+  socials?: {
+    platform:
+      | "website"
+      | "linkedin"
+      | "github"
+      | "twitter"
+      | "facebook"
+      | "instagram"
+      | "xing";
+    url: string;
+    label?: string;
+  }[];
+}
+
+export interface ContactInfo {
+  type: "geschaeftsstelle" | "internet-team";
+  title: string;
+  description: string;
+  email: string;
+  phone?: string;
+  address?: {
+    street: string;
+    zip: string;
+    city: string;
+  };
+  openingHours?: {
+    mondayToThursday: string;
+    friday: string;
+    note?: string;
+  };
+  members: TeamMember[];
+}

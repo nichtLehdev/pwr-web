@@ -12,6 +12,20 @@ export default function FoerdervereinPage() {
       {/* Hero Section */}
       <section className="bg-foerderverein text-white py-16 md:py-24">
         <div className="container">
+          <nav className="text-sm mb-4 flex items-center gap-2 opacity-90">
+            <Link href="/" className="hover:text-white transition-colors">
+              Start
+            </Link>
+            <span>/</span>
+            <Link
+              href="/ueber-uns"
+              className="hover:text-white transition-colors"
+            >
+              Über Uns
+            </Link>
+            <span>/</span>
+            <span>Förderverein</span>
+          </nav>
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Förderverein Rheinisches Posaunenwerk

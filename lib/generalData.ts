@@ -1,4 +1,4 @@
-import { HistoryEvent, PosaunenratMember } from "@/types/general";
+import { ContactInfo, HistoryEvent, PosaunenratMember } from "@/types/general";
 
 export const bezirke = [
   {
@@ -438,3 +438,82 @@ export const historyTimeline: HistoryEvent[] = [
     image: "/images/geschichte/2025.jpg",
   },
 ];
+
+// Geschäftsstelle
+export const geschaeftsstelle: ContactInfo = {
+  type: "geschaeftsstelle",
+  title: "Geschäftsstelle",
+  description: "Für allgemeine Anfragen und Verwaltung",
+  email: "info@posaunenwerk-rheinland.de",
+  phone: "0261 300 00 11",
+  address: {
+    street: "Rudolf-Harbig-Str. 20",
+    zip: "56179",
+    city: "Vallendar",
+  },
+  openingHours: {
+    mondayToThursday: "Nach Vereinbarung",
+    friday: "Nach Vereinbarung",
+    note: "Die Geschäftsstelle und das Telefon sind nicht jeden Tag besetzt. Bitte senden Sie uns eine E-Mail oder hinterlassen Sie bei einem Anruf gerne Ihre Nachricht auf dem Anrufbeantworter. Sie erhalten dann so schnell wie möglich eine Rückmeldung.",
+  },
+  members: [
+    {
+      name: "Sinika Häusler",
+      role: "Geschäftsstelle",
+      email: "info@posaunenwerk-rheinland.de",
+      phone: "0261 300 00 11",
+      image: "/images/team/haeusler-sinika.jpg",
+      responsibilities: ["Allgemeine Anfragen", "Verwaltung", "Koordination"],
+    },
+  ],
+};
+
+// Internet-Team
+export const internetTeam: ContactInfo = {
+  type: "internet-team",
+  title: "Internet-Team",
+  description: "Für Website-Fragen und technischen Support",
+  email: "webmaster@posaunenwerk-rheinland.de",
+  members: [
+    {
+      name: "Lars Lehmann",
+      role: "Web-Entwicklung, Administration, Design & Content Management",
+      email: "lars.lehmann@posaunenwerk-rheinland.de",
+      image: "/images/team/lehmann.jpg",
+      socials: [
+        {
+          platform: "github",
+          url: "https://github.com/nichtLehdev",
+        },
+        {
+          platform: "instagram",
+          url: "https://instagram.com/lars_trp",
+        },
+      ],
+      responsibilities: [
+        "Technische Entwicklung",
+        "Server-Administration",
+        "Bugfixes & Updates",
+        "Design & Layout",
+        "Inhalte pflegen",
+        "User Support",
+      ],
+    },
+    {
+      name: "Heide Neuland-Neuhaus",
+      role: "Content Management",
+      email: "heide.neuland@posaunenwerk-rheinland.de",
+      image: "/images/team/neuland-neuhaus.jpg",
+      responsibilities: ["Inhalte pflegen", "User Support"],
+    },
+  ],
+};
+
+// Allgemeine Kontakt-Informationen
+export const generalContact = {
+  organization:
+    "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
+  legalName: "Evangelisches Posaunenwerk Rheinland",
+  registrationCourt: "Amtsgericht Musterstadt",
+  registrationNumber: "VR 12345",
+};

@@ -67,6 +67,20 @@ export default function ChorFindenPage() {
       {/* Hero Section */}
       <section className="bg-primary text-white py-16 md:py-24">
         <div className="container">
+          <nav className="text-sm mb-4 flex items-center gap-2 opacity-90">
+            <Link href="/" className="hover:text-white transition-colors">
+              Start
+            </Link>
+            <span>/</span>
+            <Link
+              href="/mitmachen"
+              className="hover:text-white transition-colors"
+            >
+              Mitmachen
+            </Link>
+            <span>/</span>
+            <span>Chor Finden</span>
+          </nav>
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Finde deinen Posaunenchor

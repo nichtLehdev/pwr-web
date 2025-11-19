@@ -61,6 +61,13 @@ export default function UeberUnsPage() {
       {/* Hero Section */}
       <section className="py-12 md:py-16 lg:py-20 bg-primary text-white">
         <div className="container">
+          <nav className="text-sm mb-4 flex items-center gap-2 opacity-90">
+            <Link href="/" className="hover:text-white transition-colors">
+              Start
+            </Link>
+            <span>/</span>
+            <span>Förderverein</span>
+          </nav>
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Über das Posaunenwerk Rheinland

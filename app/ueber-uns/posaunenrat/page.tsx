@@ -36,6 +36,20 @@ export default function PosaunenratPage() {
       {/* Hero Section */}
       <section className="py-12 md:py-16 lg:py-20 bg-district-2 text-white">
         <div className="container">
+          <nav className="text-sm mb-4 flex items-center gap-2 opacity-90">
+            <Link href="/" className="hover:text-white transition-colors">
+              Start
+            </Link>
+            <span>/</span>
+            <Link
+              href="/ueber-uns"
+              className="hover:text-white transition-colors"
+            >
+              Über Uns
+            </Link>
+            <span>/</span>
+            <span>Posaunenrat</span>
+          </nav>
           <div className="max-w-3xl">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
               Landesposaunenrat
