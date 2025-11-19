@@ -50,3 +50,25 @@ export function getSocialIcon(platform: string) {
 
   return icons[platform];
 }
+
+// Helper: Get file icon
+export function getFileIcon(fileType: string) {
+  const icons: Record<string, string> = {
+    pdf: "📄",
+    docx: "📝",
+    xlsx: "📊",
+    zip: "📦",
+    mp3: "🎵",
+  };
+  return icons[fileType] || "📄";
+}
+
+// Helper: Format date
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}

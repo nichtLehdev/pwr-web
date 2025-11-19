@@ -1,4 +1,9 @@
-import { ContactInfo, HistoryEvent, PosaunenratMember } from "@/types/general";
+import {
+  Blaeserheft,
+  ContactInfo,
+  HistoryEvent,
+  PosaunenratMember,
+} from "@/types/general";
 
 export const bezirke = [
   {
@@ -517,3 +522,208 @@ export const generalContact = {
   registrationCourt: "Amtsgericht Musterstadt",
   registrationNumber: "VR 12345",
 };
+
+export const downloadCategories = {
+  blechblatt: {
+    name: "Rheinisches Blechblatt",
+    description: "Aktuelle und ältere Ausgaben unseres Magazins",
+    icon: "document",
+    color: "primary",
+  },
+  noten: {
+    name: "Noten & Choräle",
+    description: "Notenmaterial für Posaunenchöre",
+    icon: "music",
+    color: "district-2",
+  },
+  uebungen: {
+    name: "Übungen & Tipps",
+    description: "Praktische Übungen und Anleitungen",
+    icon: "education",
+    color: "district-4",
+  },
+  formulare: {
+    name: "Formulare & Vorlagen",
+    description: "Downloads für Organisation und Verwaltung",
+    icon: "document",
+    color: "district-6",
+  },
+  sonstiges: {
+    name: "Sonstiges",
+    description: "Weitere hilfreiche Materialien",
+    icon: "gift",
+    color: "dark",
+  },
+};
+
+export const blaesherhefte: Blaeserheft[] = [
+  {
+    id: "nordamerika-2025",
+    title: "Musik aus Nordamerika",
+    subtitle: "Rheinisches Bläserheft 2025",
+    year: 2025,
+    description:
+      "In den ersten beiden Kapiteln des Heftes finden sich Werke amerikanischer Komponisten. Das erste Kapitel umfasst textungebundene, eher weltliche Musik von Benjamin Carr bis Leonard Bernstein, das zweite Kapitel liturgische, insbesondere auch für den gottesdienstlichen Rahmen geeignete Musik von William Bilings bis René Clausen.",
+    chapters: [
+      "Weltliche Musik amerikanischer Komponisten (Benjamin Carr bis Leonard Bernstein)",
+      "Liturgische Musik (William Bilings bis René Clausen)",
+      "Neue Kompositionen zu Gesangbuchmelodien und Spiritual-Arrangements",
+      "Auftragskompositionen (Uhlenhoff, Bucher, Mey, Thöne, Hahn)",
+      "Werke aus Musicals, Filmen und Popmusik",
+    ],
+    highlights: [
+      'Jens Uhlenhoff: „Let Freedom Ring" - Auseinandersetzung mit Martin Luther King',
+      "Matthias Bucher: Vier Bilder von Edward Hopper",
+      "Stefan Mey: Fünf Denkmäler und Bauten in Amerika",
+      "Raphael D. Thöne: Drei verschiedene Tanzformen",
+      "Jürgen Hahn: Drei musikalische Strömungen aus New Orleans",
+    ],
+    image: "/images/blaeserhefte/nordamerika-2025.jpg",
+    prices: {
+      blaeserheft: 17,
+      beiheft: 10,
+      trompeten: 17,
+      cd: 17,
+    },
+    available: {
+      blaeserheft: true,
+      beiheft: true,
+      trompeten: true,
+      cd: true,
+    },
+  },
+  {
+    id: "frankreich-2021",
+    title: "Musik aus Frankreich",
+    subtitle: "Rheinisches Bläserheft 2021",
+    year: 2021,
+    description:
+      "Das Bläserheft umfasst sechs Kapitel. Das erste Kapitel stellt große französische Komponisten von Josquin des Pres über Marc Antoine Charpentier, Cesar Franck, Alexandre Guilmant bis hin zu Maurice Ravel vor.",
+    chapters: [
+      "Große französische Komponisten (Josquin des Pres bis Maurice Ravel)",
+      "Gesangbuchlieder mit französischen Wurzeln",
+      "Geistliche Kompositionen der Romantik",
+      "Drei Werke für Orgel und Bläser",
+      "Auftragskompositionen (Mey, Uhlenhoff, Wendel)",
+      "Chansons und Filmmelodien",
+    ],
+    highlights: [
+      "Stefan Mey: Tour de France durch verschiedene Regionen",
+      "Jens Uhlenhoff: Chagalls Bilder (Arche Noah, Opferung Isaaks, Brennender Dornbusch)",
+      "Dieter Wendel: Der Kleine Prinz von Antoine de Saint-Exupéry",
+      "Neue Vorspiele und Begleitsätze zu Gesangbuchliedern",
+    ],
+    image: "/images/blaeserhefte/frankreich-2021.jpg",
+    prices: {
+      blaeserheft: 13,
+      beiheft: 10,
+      trompeten: 10,
+      cd: 17,
+    },
+    available: {
+      blaeserheft: true,
+      beiheft: true,
+      trompeten: true,
+      cd: true,
+    },
+    audioSample: "/audio/frankreich-2021-sample.mp3",
+  },
+  {
+    id: "italien-2017",
+    title: "Musik aus Italien",
+    subtitle: "Rheinisches Bläserheft 2017",
+    year: 2017,
+    description:
+      'Im Mittelpunkt des Heftes stehen Gesangbuchlieder, die in irgendeiner Weise mit Italien verbunden sind. Dazu gehören Bearbeitungen zu „In dir ist Freude", „O du fröhliche" oder „Laudato si".',
+    highlights: [
+      "Stefan Mey: Miniaturen",
+      "Tobias Wember: Zum Sündenfall von Michelangelo",
+      "Ulf Pankoke: Harlekin",
+      "Bearbeitungen von Gabrieli, Corelli, Marcello, Rossini",
+      "Italienische Opernhighlights",
+    ],
+    image: "/images/blaeserhefte/italien-2017.jpg",
+    prices: {
+      blaeserheft: 16,
+      beiheft: 8,
+      cd: 15,
+    },
+    available: {
+      blaeserheft: true,
+      beiheft: true,
+      cd: true,
+    },
+  },
+  {
+    id: "osteuropa-2013",
+    title: "Musik aus dem östlichen Europa",
+    subtitle: "Rheinisches Bläserheft 2013",
+    year: 2013,
+    description:
+      'In diesem Heft wird Musik aus Polen, Tschechien, Ungarn, Rumänien, Bulgarien, Russland und dem Baltikum vorgestellt. Dazu gehören Bearbeitungen zu „Seht die gute Zeit ist da", „Du schöner Lebensbaum" aus Ungarn oder „Unfriede herrscht auf der Erde".',
+    highlights: [
+      "Dieter Wendel: Krabat - sorbisches Märchen",
+      'Ulf Pankoke: Collage zu Mussorskys „Bilder einer Ausstellung"',
+      "Arrangements von Dvorak, Schostakowitsch, Rachmaninow, Tschaikowsky, Borodin",
+    ],
+    image: "/images/blaeserhefte/osteuropa-2013.jpg",
+    prices: {
+      blaeserheft: 12,
+      beiheft: 8,
+      cd: 15,
+    },
+    available: {
+      blaeserheft: true,
+      beiheft: true,
+      cd: true,
+    },
+  },
+  {
+    id: "skandinavien-2009",
+    title: "Musik aus Skandinavien",
+    subtitle: "Rheinisches Bläserheft 2009",
+    year: 2009,
+    description:
+      "In diesem Heft gibt es sowohl vertraute als auch neue Klänge aus dem europäischen Norden. Dazu gehören Werke von Edvard Grieg oder Jean Sibelius, aber auch eher unbekannte Komponisten wie Niels Wilhelm Gade oder Trygve Madsen.",
+    highlights: [
+      "Werke von Edvard Grieg und Jean Sibelius",
+      'Choralgebundene Musik: „Herr deine Liebe", „Bewahre uns Gott", „Strahlen brechen viele"',
+      "Volkstümliche Musik und ABBA-Songs",
+    ],
+    image: "/images/blaeserhefte/skandinavien-2009.jpg",
+    prices: {
+      beiheft: 8,
+      cd: 15,
+    },
+    available: {
+      blaeserheft: false,
+      beiheft: true,
+      cd: true,
+    },
+  },
+  {
+    id: "england-2005",
+    title: "Musik aus England",
+    subtitle: "Rheinisches Bläserheft 2005",
+    year: 2005,
+    description:
+      'Anlässlich des Rheinischen Kirchenmusikfestes 2005, welches unter dem Motto „Musik aus England" steht, ist das erste Heft aus der beliebten Reihe „Musik aus ...." entstanden. Aufgabe war es insbesondere, Musik für den gottesdienstlichen Gebrauch und für musikalische Feierstunden und Konzerte zu erstellen.',
+    highlights: [
+      'Bearbeitungen von Chorälen: „Die Kirche steht gegründet", „Lobe den Herren", „Herbei o ihr Gläub`gen"',
+      "Henry Purcell: Festliche Musik",
+      "Traugott Fünfgeld: Suite im englischen Stil",
+      '„Streets of London" von McTell',
+      '„Jesus Christ – Superstar" von Andrew Lloyd Webber',
+      "Beatles-Songs",
+    ],
+    image: "/images/blaeserhefte/england-2005.jpg",
+    prices: {
+      cd: 12,
+    },
+    available: {
+      blaeserheft: false,
+      beiheft: false,
+      cd: true,
+    },
+  },
+];

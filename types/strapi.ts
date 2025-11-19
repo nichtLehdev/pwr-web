@@ -77,6 +77,18 @@ export interface StrapiMedia {
   };
 }
 
+export interface Download {
+  id: number;
+  title: string;
+  description?: string;
+  category: "blechblatt" | "noten" | "uebungen" | "formulare" | "sonstiges";
+  fileType: "pdf" | "docx" | "xlsx" | "zip" | "mp3";
+  fileSize: string;
+  downloadUrl: string;
+  uploadDate: string;
+  tags?: string[];
+}
+
 // User
 export interface User {
   id: number;

@@ -6,6 +6,7 @@ import type {
   User,
   CourseRegistration,
   AuswahlChor,
+  Download,
 } from "@/types/strapi";
 
 // Mock Users
@@ -1019,6 +1020,164 @@ export const mockPosts: Post[] = [
     publishedAt: "2025-01-15T14:00:00.000Z",
     createdAt: "2025-01-14T10:30:00.000Z",
     updatedAt: "2025-01-15T14:00:00.000Z",
+  },
+];
+
+export const mockDownloads: Download[] = [
+  // Blechblätter
+  {
+    id: 1,
+    title: "Rheinisches Blechblatt 2025/01",
+    description:
+      "Ausgabe Januar 2025 mit Artikeln zu Neujahrsblasen und Ausbildungsterminen",
+    category: "blechblatt",
+    fileType: "pdf",
+    fileSize: "4.2 MB",
+    downloadUrl: "/downloads/blechblatt-2025-01.pdf",
+    uploadDate: "2025-01-15",
+    tags: ["Blechblatt", "2025", "Magazin"],
+  },
+  {
+    id: 2,
+    title: "Rheinisches Blechblatt 2024/12",
+    description: "Ausgabe Dezember 2024 - Weihnachtskonzerte und Rückblick",
+    category: "blechblatt",
+    fileType: "pdf",
+    fileSize: "3.8 MB",
+    downloadUrl: "/downloads/blechblatt-2024-12.pdf",
+    uploadDate: "2024-12-10",
+    tags: ["Blechblatt", "2024", "Weihnachten"],
+  },
+  {
+    id: 3,
+    title: "Rheinisches Blechblatt 2024/11",
+    description: "Ausgabe November 2024",
+    category: "blechblatt",
+    fileType: "pdf",
+    fileSize: "3.5 MB",
+    downloadUrl: "/downloads/blechblatt-2024-11.pdf",
+    uploadDate: "2024-11-12",
+    tags: ["Blechblatt", "2024"],
+  },
+
+  // Noten
+  {
+    id: 4,
+    title: "Choralbuch - Adventslieder",
+    description:
+      "Sammlung traditioneller und moderner Adventslieder für Posaunenchor",
+    category: "noten",
+    fileType: "pdf",
+    fileSize: "2.1 MB",
+    downloadUrl: "/downloads/noten-adventslieder.pdf",
+    uploadDate: "2024-11-01",
+    tags: ["Noten", "Advent", "Weihnachten"],
+  },
+  {
+    id: 5,
+    title: "Osterchoräle",
+    description: "Noten für die Osterzeit",
+    category: "noten",
+    fileType: "pdf",
+    fileSize: "1.8 MB",
+    downloadUrl: "/downloads/noten-osterchoraele.pdf",
+    uploadDate: "2024-03-15",
+    tags: ["Noten", "Ostern"],
+  },
+
+  // Übungen
+  {
+    id: 6,
+    title: "Atemübungen für Blechbläser",
+    description: "Praktische Übungen zur Verbesserung der Atemtechnik",
+    category: "uebungen",
+    fileType: "pdf",
+    fileSize: "850 KB",
+    downloadUrl: "/downloads/atemuebungen.pdf",
+    uploadDate: "2024-09-20",
+    tags: ["Übungen", "Technik", "Ausbildung"],
+  },
+  {
+    id: 7,
+    title: "Tonleiterübungen - Alle Tonarten",
+    description: "Systematische Tonleiterübungen für alle Blechblasinstrumente",
+    category: "uebungen",
+    fileType: "pdf",
+    fileSize: "1.2 MB",
+    downloadUrl: "/downloads/tonleitern.pdf",
+    uploadDate: "2024-08-10",
+    tags: ["Übungen", "Tonleitern", "Technik"],
+  },
+  {
+    id: 8,
+    title: "Ansatzübungen für Fortgeschrittene",
+    description: "Übungen zur Verbesserung des Ansatzes",
+    category: "uebungen",
+    fileType: "pdf",
+    fileSize: "950 KB",
+    downloadUrl: "/downloads/ansatzuebungen.pdf",
+    uploadDate: "2024-07-15",
+    tags: ["Übungen", "Ansatz", "Fortgeschritten"],
+  },
+
+  // Formulare
+  {
+    id: 9,
+    title: "Anmeldeformular D-Kurs",
+    description: "Anmeldung für den D-Kurs 2025",
+    category: "formulare",
+    fileType: "pdf",
+    fileSize: "320 KB",
+    downloadUrl: "/downloads/anmeldung-d-kurs.pdf",
+    uploadDate: "2024-10-05",
+    tags: ["Formular", "D-Kurs", "Ausbildung"],
+  },
+  {
+    id: 10,
+    title: "Chorgründung - Checkliste",
+    description:
+      "Praktische Checkliste für die Gründung eines neuen Posaunenchors",
+    category: "formulare",
+    fileType: "pdf",
+    fileSize: "280 KB",
+    downloadUrl: "/downloads/checkliste-chorgruendung.pdf",
+    uploadDate: "2024-09-01",
+    tags: ["Checkliste", "Chorgründung"],
+  },
+  {
+    id: 11,
+    title: "Instrumentenverleih - Vertrag",
+    description: "Mustervertrag für den Verleih von Instrumenten",
+    category: "formulare",
+    fileType: "docx",
+    fileSize: "45 KB",
+    downloadUrl: "/downloads/instrumentenverleih-vertrag.docx",
+    uploadDate: "2024-06-20",
+    tags: ["Formular", "Vertrag", "Instrumente"],
+  },
+
+  // Sonstiges
+  {
+    id: 12,
+    title: "Jahresprogramm 2025",
+    description: "Übersicht aller Termine und Veranstaltungen 2025",
+    category: "sonstiges",
+    fileType: "pdf",
+    fileSize: "1.5 MB",
+    downloadUrl: "/downloads/jahresprogramm-2025.pdf",
+    uploadDate: "2024-12-01",
+    tags: ["Jahresprogramm", "2025", "Termine"],
+  },
+  {
+    id: 13,
+    title: "Leitfaden Jugendarbeit",
+    description: "Praktischer Leitfaden für die Arbeit mit Jungbläsern",
+    category: "sonstiges",
+    fileType: "pdf",
+    fileSize: "2.8 MB",
+    downloadUrl: "/downloads/leitfaden-jugendarbeit.pdf",
+    uploadDate: "2024-05-10",
+    tags: ["Jugendarbeit", "Jungbläser", "Leitfaden"],
   },
 ];
 

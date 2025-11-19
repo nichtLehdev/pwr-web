@@ -63,6 +63,30 @@ export interface TeamMember {
   }[];
 }
 
+export interface Blaeserheft {
+  id: string;
+  title: string;
+  subtitle: string;
+  year: number;
+  description: string;
+  chapters?: string[];
+  highlights?: string[];
+  image: string;
+  prices: {
+    blaeserheft?: number;
+    beiheft?: number;
+    trompeten?: number;
+    cd?: number;
+  };
+  available: {
+    blaeserheft: boolean;
+    beiheft: boolean;
+    trompeten?: boolean;
+    cd: boolean;
+  };
+  audioSample?: string;
+}
+
 export interface ContactInfo {
   type: "geschaeftsstelle" | "internet-team";
   title: string;
