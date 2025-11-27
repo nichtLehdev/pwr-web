@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { signOut, useSession } from "@/lib/auth";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -12,6 +14,10 @@ export default function Navigation() {
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(
     null,
   );
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Use Better Auth's useSession hook directly
+  const { data: session } = useSession();
 
   // Check if a link or its children are active
   const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
@@ -84,6 +90,19 @@ export default function Navigation() {
       setOpenDropdown(null);
     }, 300); // 300ms delay before closing
     setDropdownTimeout(timeout);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    setUserMenuOpen(false);
+  };
+
+  const getInitials = (name: string) => {
+    const parts = name.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0]![0]}${parts[1]![0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -189,7 +208,7 @@ export default function Navigation() {
               </div>
             ))}
 
-            {/* Suche & Login */}
+            {/* Suche & Login/User Menu */}
             <div className="ml-4 flex items-center space-x-4">
               <button
                 className="text-dark hover:text-primary transition-colors"
@@ -210,12 +229,72 @@ export default function Navigation() {
                 </svg>
               </button>
 
-              <Link
-                href="/login"
-                className="bg-primary hover:bg-primary-dark rounded-md px-4 py-2 text-white transition-colors"
-              >
-                Login
-              </Link>
+              {session?.user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
+                  >
+                    <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
+                      {getInitials(session.user.name || session.user.email)}
+                    </div>
+                    <span className="text-dark text-sm font-medium">
+                      Hi,{" "}
+                      {(session.user as any).firstName ||
+                        session.user.name?.split(" ")[0] ||
+                        "User"}
+                    </span>
+                    <svg
+                      className={`text-dark h-4 w-4 transition-transform ${
+                        userMenuOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {userMenuOpen && (
+                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl">
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="text-dark hover:bg-primary/10 hover:text-primary block px-4 py-2 transition-colors"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="text-dark hover:bg-primary/10 hover:text-primary block px-4 py-2 transition-colors"
+                      >
+                        Einstellungen
+                      </Link>
+                      <hr className="my-2 border-gray-200" />
+                      <button
+                        onClick={handleLogout}
+                        className="text-dark hover:bg-primary/10 hover:text-primary block w-full px-4 py-2 text-left transition-colors"
+                      >
+                        Abmelden
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="bg-primary hover:bg-primary-dark rounded-md px-4 py-2 text-white transition-colors"
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
 
@@ -327,7 +406,7 @@ export default function Navigation() {
                 </div>
               ))}
 
-              {/* Mobile Suche & Login */}
+              {/* Mobile Suche & Login/User Menu */}
               <div className="space-y-2 border-t border-gray-200 px-4 pt-4">
                 <button className="text-dark flex w-full items-center rounded-md px-4 py-2 hover:bg-gray-100">
                   <svg
@@ -346,12 +425,51 @@ export default function Navigation() {
                   Suchen
                 </button>
 
-                <Link
-                  href="/login"
-                  className="bg-primary hover:bg-primary-dark block w-full rounded-md px-4 py-2 text-center text-white transition-colors"
-                >
-                  Login
-                </Link>
+                {session?.user ? (
+                  <>
+                    <div className="flex items-center gap-2 px-4 py-2">
+                      <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
+                        {getInitials(session.user.name || session.user.email)}
+                      </div>
+                      <span className="text-dark text-sm font-medium">
+                        Hi,{" "}
+                        {(session.user as any).firstName ||
+                          session.user.name?.split(" ")[0] ||
+                          "User"}
+                      </span>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                    >
+                      Einstellungen
+                    </Link>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                    >
+                      Abmelden
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="bg-primary hover:bg-primary-dark block w-full rounded-md px-4 py-2 text-center text-white transition-colors"
+                  >
+                    Login
+                  </Link>
+                )}
               </div>
             </div>
           </div>

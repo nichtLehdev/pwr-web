@@ -5,6 +5,7 @@
 import "dotenv/config";
 import { type ContactType, type UserRole } from "~/generated/prisma/client";
 import { db } from "@/server/db";
+import { auth } from "@/server/better-auth/config";
 import { bezirkeData } from "./seed-data/bezirke";
 import { usersData } from "./seed-data/users";
 import { auswahlchoereData } from "./seed-data/auswahlchoere";
@@ -375,6 +376,9 @@ async function seedUsers(bezirke: any[], media: any) {
 
   const createdUsers: Record<string, any> = {};
 
+  const defaultPassword = "password123";
+  console.log(`  🔐 Using default password: ${defaultPassword}`);
+
   for (const u of usersData) {
     let obleuteBezirkId = null;
     if (u.obleuteBezirk !== null) {
@@ -393,12 +397,24 @@ async function seedUsers(bezirke: any[], media: any) {
       profileImageId = image?.id || null;
     }
 
-    const created = await db.user.create({
+    // Use Better Auth's signUpEmail to create user with correct password hash
+    const signUpResult = await auth.api.signUpEmail({
+      body: {
+        email: u.email,
+        username: u.username,
+        password: defaultPassword,
+        name: u.displayName,
+      },
+    });
+
+    // Update the created user with additional fields
+    const created = await db.user.update({
+      where: { id: signUpResult.user.id },
       data: {
+        emailVerified: true,
+        displayName: u.displayName,
         firstName: u.firstName,
         lastName: u.lastName,
-        displayName: u.displayName,
-        email: u.email,
         role: u.role as UserRole,
         displayRole: u.displayRole,
         username: u.username,
@@ -408,6 +424,7 @@ async function seedUsers(bezirke: any[], media: any) {
         profileImageId: profileImageId,
       },
     });
+
     createdUsers[u.username] = created;
     console.log(
       `  ✓ Created user: ${created.email}${

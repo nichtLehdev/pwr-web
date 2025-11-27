@@ -679,6 +679,22 @@ export const usersRouter = createTRPCRouter({
     }),
 
   /**
+   * Get email from username for login
+   */
+  getEmailByUsername: publicProcedure
+    .input(z.object({ username: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { username: input.username },
+        select: { email: true },
+      });
+
+      return {
+        email: user?.email ?? null,
+      };
+    }),
+
+  /**
    * Check if email is available
    */
   checkEmail: publicProcedure

@@ -260,7 +260,7 @@ export const usersData = [
   // VORSTAND MEMBERS (need user accounts)
   // ============================================================================
   {
-    username: "friedemann.schmidt-eggert",
+    username: "friedemann.schmidt_eggert",
     email: "landesobmann@posaunenwerk-rheinland.de",
     firstName: "Friedemann",
     lastName: "Schmidt-Eggert",

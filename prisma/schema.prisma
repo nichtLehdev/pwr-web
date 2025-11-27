@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -13,8 +14,8 @@ model User {
   displayName   String?
   firstName     String?
   lastName      String?
-  email         String?   @unique
-  emailVerified DateTime?
+  email         String    @unique
+  emailVerified Boolean? @default(false)
   phone         String?
   street        String?
   zipCode       String?
@@ -64,7 +65,10 @@ model User {
   updatedAt           DateTime             @updatedAt
   courseRegistrations CourseRegistration[]
 
+  displayUsername String?
+
   @@index([role])
+  @@map("user")
 }
 
 model Session {
@@ -80,6 +84,7 @@ model Session {
 
   @@unique([token])
   @@map("session")
+  @@index([userId])
 }
 
 model Account {
@@ -99,6 +104,7 @@ model Account {
   updatedAt             DateTime  @updatedAt
 
   @@map("account")
+  @@index([userId])
 }
 
 model Verification {
@@ -110,10 +116,11 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+  @@index([identifier])
 }
 
-
 // --------- Enums ---------
+
 enum UserRole {
   USER // Regular user
   OBLEUTE // Can create events/posts (needs approval)
@@ -240,6 +247,7 @@ enum ContentStatus {
 }
 
 // --------- Models ---------
+
 model Event {
   id          String  @id @default(uuid())
   title       String
@@ -409,16 +417,14 @@ model CourseRegistration {
   registrantEmail     String
   registrantPhone     String?
   registrantId        String?
-  
-
-  useSeparateBilling Boolean  @default(false)
-  billingCompany     String?
-  billingFirstName   String?
-  billingLastName    String?
-  billingStreet      String?
-  billingZipCode     String?
-  billingCity        String?
-  billingEmail       String?
+  useSeparateBilling  Boolean @default(false)
+  billingCompany      String?
+  billingFirstName    String?
+  billingLastName     String?
+  billingStreet       String?
+  billingZipCode      String?
+  billingCity         String?
+  billingEmail        String?
 
   // Payment & Status
   totalPrice         Float
@@ -432,7 +438,7 @@ model CourseRegistration {
 
   // Relations
   participants Participant[]
-  registrant          User?    @relation(fields: [registrantId], references: [id], onDelete: SetNull)
+  registrant   User?         @relation(fields: [registrantId], references: [id], onDelete: SetNull)
 
   // Meta
   notes     String?
