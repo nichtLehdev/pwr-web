@@ -89,11 +89,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
+    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-dark mb-2 text-3xl font-bold">Anmelden</h1>
-          <p className="text-gray-600">
+          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
+            Anmelden
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Noch kein Konto?{" "}
             <Link
               href="/register"
@@ -104,10 +106,10 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-lg md:p-8">
+        <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
           {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           )}
 
@@ -115,7 +117,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="emailOrUsername"
-                className="text-dark mb-1 block text-sm font-medium"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
               >
                 E-Mail oder Benutzername
               </label>
@@ -127,14 +129,14 @@ export default function LoginPage() {
                 required
                 value={emailOrUsername}
                 onChange={(e) => setEmailOrUsername(e.target.value)}
-                className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="text-dark mb-1 block text-sm font-medium"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
               >
                 Passwort
               </label>
@@ -146,7 +148,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
             </div>
 
@@ -161,7 +163,7 @@ export default function LoginPage() {
               />
               <label
                 htmlFor="rememberMe"
-                className="text-dark ml-2 block text-sm"
+                className="text-dark dark:text-dark-text ml-2 block text-sm"
               >
                 Angemeldet bleiben
               </label>
@@ -170,7 +172,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-primary hover:bg-primary-dark w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
             >
               {isLoading ? "Wird angemeldet..." : "Anmelden"}
             </button>
@@ -178,10 +180,12 @@ export default function LoginPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="dark:border-dark-border w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-3 text-gray-500">Oder</span>
+              <span className="dark:bg-dark-surface bg-white px-3 text-gray-500 dark:text-gray-400">
+                Oder
+              </span>
             </div>
           </div>
 
@@ -189,7 +193,7 @@ export default function LoginPage() {
             type="button"
             onClick={handleGitHubLogin}
             disabled={isLoading}
-            className="text-dark flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 font-semibold shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 font-semibold shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
               <path

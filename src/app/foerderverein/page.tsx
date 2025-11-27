@@ -36,7 +36,7 @@ export default async function FoerdervereinPage() {
       />
 
       {/* Hero Section */}
-      <section className="bg-foerderverein py-16 text-white md:py-24">
+      <section className="bg-foerderverein dark:bg-foerderverein-dark py-16 text-white md:py-24">
         <div className="container">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -65,14 +65,14 @@ export default async function FoerdervereinPage() {
       </section>
 
       {/* Sonderaktionen 2025 */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="mb-8 text-center">
-              <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
                 Sonderaktionen 2025
               </h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gray-600 dark:text-gray-400">
                 Jetzt Mitglied werden und von exklusiven Vorteilen profitieren!
               </p>
             </div>
@@ -81,7 +81,7 @@ export default async function FoerdervereinPage() {
               {sonderaktionen.map((aktion, i) => (
                 <div
                   key={i}
-                  className="border-foerderverein rounded-lg border-l-4 bg-white p-6 shadow-lg"
+                  className="border-foerderverein dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-l-4 bg-white p-6 shadow-lg"
                 >
                   <div className="mb-4 flex items-start gap-3">
                     <svg
@@ -98,12 +98,14 @@ export default async function FoerdervereinPage() {
                       />
                     </svg>
                     <div>
-                      <h3 className="text-dark mb-2 text-xl font-bold">
+                      <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         {aktion.title}
                       </h3>
-                      <p className="mb-3 text-gray-600">{aktion.description}</p>
+                      <p className="mb-3 text-gray-600 dark:text-gray-400">
+                        {aktion.description}
+                      </p>
                       {aktion.options && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-500">
                           Auswahl: {aktion.options.join(", ")}
                           <br />
                           <em>
@@ -112,7 +114,7 @@ export default async function FoerdervereinPage() {
                         </p>
                       )}
                       {aktion.subtitle && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-500">
                           {aktion.subtitle}
                         </p>
                       )}
@@ -148,13 +150,13 @@ export default async function FoerdervereinPage() {
       </section>
 
       {/* Was wir tun */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Was wir tun
             </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg leading-relaxed text-gray-600">
+            <p className="mx-auto mb-12 max-w-3xl text-center text-lg leading-relaxed text-gray-600 dark:text-gray-400">
               Seit 2008 unterstützt der Förderverein das Posaunenwerk bei seinen
               Aufgaben. Durch zweckgebundene Spenden bauen wir einen
               Vermögensstock auf, mit dessen Erträgen wir die Arbeit des
@@ -162,7 +164,7 @@ export default async function FoerdervereinPage() {
             </p>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -178,17 +180,17 @@ export default async function FoerdervereinPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Auswahlchorarbeit
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Förderung junger, talentierter Bläserinnen und Bläser in
                   unseren Auswahlensembles wie dem Landesjugendposaunenchor und
                   ConSpirito.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -204,16 +206,16 @@ export default async function FoerdervereinPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Geschwisterermäßigung
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   25 € Ermäßigung pro weiteres Geschwisterkind bei Lehrgängen
                   des Posaunenwerks – der Förderverein gleicht den Betrag aus.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -229,16 +231,16 @@ export default async function FoerdervereinPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Lehrgangskosten
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Bis zu 1.000 € pro Jahr zur Reduzierung der Teilnehmerbeiträge
                   für Lehrgänge – das hilft allen Teilnehmenden.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -254,10 +256,10 @@ export default async function FoerdervereinPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Projektförderung
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   CD-Produktionen, Drucksachen, Werbemittel und weitere Projekte
                   des Posaunenwerks – finanziert aus Mitteln des Fördervereins.
                 </p>
@@ -268,20 +270,20 @@ export default async function FoerdervereinPage() {
       </section>
 
       {/* Mitglied werden */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Mitglied werden
             </h2>
-            <p className="mb-12 text-center text-lg leading-relaxed text-gray-600">
+            <p className="mb-12 text-center text-lg leading-relaxed text-gray-600 dark:text-gray-400">
               Unterstützen Sie die Arbeit des Posaunenwerks kontinuierlich und
               werden Sie Teil unserer Gemeinschaft. Ihre Beiträge fließen direkt
               in Förderprojekte, Werbemittel und weitere wichtige Aufgaben.
             </p>
 
-            <div className="rounded-lg bg-white p-8 shadow-xl md:p-12">
-              <h3 className="text-dark mb-6 text-2xl font-bold">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-xl md:p-12">
+              <h3 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold">
                 Ihre Vorteile als Mitglied:
               </h3>
 
@@ -300,7 +302,7 @@ export default async function FoerdervereinPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <strong>Günstiger Jahresbeitrag: nur 36 €</strong>
                   </p>
                 </div>
@@ -318,7 +320,7 @@ export default async function FoerdervereinPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     Einladung zur jährlichen Mitgliederversammlung mit Berichten
                     und Zukunftsplanungen
                   </p>
@@ -337,7 +339,7 @@ export default async function FoerdervereinPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     Flexible Kündigung möglich bis 3 Monate vor Jahresende
                   </p>
                 </div>
@@ -355,7 +357,7 @@ export default async function FoerdervereinPage() {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <p className="text-gray-700">
+                  <p className="text-gray-700 dark:text-gray-300">
                     <strong>2025:</strong> Geschenk-CD für Neumitglieder!
                   </p>
                 </div>
@@ -409,30 +411,30 @@ export default async function FoerdervereinPage() {
       </section>
 
       {/* Spenden & CD */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Weitere Unterstützungsmöglichkeiten
             </h2>
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               {/* Spenden */}
-              <div className="rounded-lg bg-white p-8 shadow-lg">
-                <h3 className="text-dark mb-4 text-2xl font-bold">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
                   Spenden & Kollekten
                 </h3>
-                <p className="mb-6 leading-relaxed text-gray-600">
+                <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                   Gerne werden wir bei freudigen oder traurigen Anlässen als
                   Spendenempfänger benannt. Wir stellen Spendenbescheinigungen
                   aus und sind als steuerbegünstigt anerkannt.
                 </p>
 
-                <div className="bg-background-secondary mb-6 rounded-lg p-4">
-                  <p className="text-dark mb-2 font-semibold">
+                <div className="bg-background-secondary dark:bg-dark-background-secondary mb-6 rounded-lg p-4">
+                  <p className="text-dark dark:text-dark-text mb-2 font-semibold">
                     Bankverbindung:
                   </p>
-                  <p className="text-sm leading-relaxed text-gray-700">
+                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                     Förderverein Rheinisches Posaunenwerk e.V.
                     <br />
                     KD-Bank Dortmund
@@ -443,7 +445,7 @@ export default async function FoerdervereinPage() {
                   </p>
                 </div>
 
-                <p className="text-sm text-gray-500 italic">
+                <p className="text-sm text-gray-500 italic dark:text-gray-500">
                   Das Finanzamt Essen-Süd hat den Förderverein als
                   steuerbegünstigt anerkannt und berechtigt,
                   Spendenbescheinigungen auszustellen.
@@ -451,23 +453,25 @@ export default async function FoerdervereinPage() {
               </div>
 
               {/* CD */}
-              <div className="rounded-lg bg-white p-8 shadow-lg">
-                <h3 className="text-dark mb-4 text-2xl font-bold">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
                   CD &quot;Unter Sternen und Satelliten&quot;
                 </h3>
-                <p className="mb-4 leading-relaxed text-gray-600">
+                <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                   Unsere Ensembles haben eine wunderbare CD eingespielt – mit
                   Trompeter <strong>Markus Stockhausen</strong> als Solist.
                   Komplett vom Förderverein finanziert!
                 </p>
-                <p className="mb-6 text-gray-600">
+                <p className="mb-6 text-gray-600 dark:text-gray-400">
                   Die CD wurde bereits auf dem Deutschen Evangelischen
                   Posaunentag präsentiert und erhielt viel Applaus.
                 </p>
 
-                <div className="bg-foerderverein/10 mb-6 rounded-lg p-4">
-                  <p className="text-dark mb-1 text-2xl font-bold">15 €</p>
-                  <p className="text-sm text-gray-600">
+                <div className="bg-foerderverein/10 dark:bg-foerderverein/20 mb-6 rounded-lg p-4">
+                  <p className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
+                    15 €
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     zzgl. 2 € Versandkostenpauschale
                   </p>
                 </div>
@@ -498,14 +502,14 @@ export default async function FoerdervereinPage() {
       </section>
 
       {/* Vorstand */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Unser Vorstand
             </h2>
 
-            <div className="rounded-lg bg-white p-8 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
               <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                 {boardMembers.map((member) => (
                   <PeopleCard
@@ -522,11 +526,16 @@ export default async function FoerdervereinPage() {
                 ))}
               </div>
 
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-dark mb-3 font-bold">Beisitzer</h3>
+              <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                <h3 className="text-dark dark:text-dark-text mb-3 font-bold">
+                  Beisitzer
+                </h3>
                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   {beisitzMembers.map((member) => (
-                    <p key={member.id} className="text-gray-700">
+                    <p
+                      key={member.id}
+                      className="text-gray-700 dark:text-gray-300"
+                    >
                       {member.name}{" "}
                       {member.user?.city && `(${member.user.city})`}
                     </p>
@@ -534,8 +543,8 @@ export default async function FoerdervereinPage() {
                 </div>
               </div>
 
-              <div className="mt-6 border-t border-gray-200 pt-6">
-                <p className="text-sm text-gray-600">
+              <div className="dark:border-dark-border mt-6 border-t border-gray-200 pt-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   <strong>Sitz des Fördervereins:</strong> Zweigertstraße 52,
                   45130 Essen
                   <br />

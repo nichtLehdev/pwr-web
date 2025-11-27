@@ -26,12 +26,14 @@ export default function EventCard({
   return (
     <Link href={`/termine/event/${id}`} className="group block h-full">
       <article
-        className="flex h-full cursor-pointer flex-col rounded-lg border-l-4 bg-white p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-        style={{ borderLeftColor: districtColor }}
+        className="dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        style={{
+          borderLeftColor: districtColor,
+        }}
       >
         <div className="mb-4 flex items-start justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {capitalizeFirstLetter(category)}
             </span>
             {openToParticipants && (
@@ -61,11 +63,11 @@ export default function EventCard({
           </span>
         </div>
 
-        <h3 className="text-dark group-hover:text-primary mb-2 text-xl font-bold transition-colors">
+        <h3 className="text-dark group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white">
           {title}
         </h3>
 
-        <div className="mb-4 grow space-y-2 text-sm text-gray-600">
+        <div className="mb-4 grow space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-2">
             <svg
               className="h-4 w-4"

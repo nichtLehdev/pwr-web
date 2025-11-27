@@ -48,7 +48,9 @@ export default async function AuswahlchoerePage() {
         <section
           key={ensemble.name}
           className={`py-12 md:py-16 lg:py-20 ${
-            index % 2 === 0 ? "bg-background" : "bg-background-secondary"
+            index % 2 === 0
+              ? "bg-background dark:bg-dark-background"
+              : "bg-background-secondary dark:bg-dark-background-secondary"
           }`}
         >
           <div className="container">
@@ -95,7 +97,7 @@ export default async function AuswahlchoerePage() {
 
               {/* Content */}
               <div className="w-full lg:w-1/2">
-                <h2 className="text-dark mb-2 text-3xl font-bold wrap-break-word md:text-4xl">
+                <h2 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold wrap-break-word md:text-4xl">
                   {ensemble.name}
                 </h2>
                 <p className="text-primary mb-6 text-xl font-semibold">
@@ -104,7 +106,7 @@ export default async function AuswahlchoerePage() {
 
                 {/* Metadaten */}
                 <div className="mb-6 flex flex-wrap gap-4">
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -122,7 +124,7 @@ export default async function AuswahlchoerePage() {
                       Seit {ensemble.founded}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -139,7 +141,7 @@ export default async function AuswahlchoerePage() {
                     <span className="font-semibold">{ensemble.members}</span>
                   </div>
                   {ensemble.conductor && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <svg
                         className="h-5 w-5"
                         fill="none"
@@ -162,14 +164,14 @@ export default async function AuswahlchoerePage() {
                   )}
                 </div>
 
-                <p className="mb-6 leading-relaxed text-gray-600">
+                <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                   {ensemble.description}
                 </p>
 
                 {/* Kommende Konzerte */}
                 {ensemble.events && ensemble.events.length > 0 && (
-                  <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
-                    <h3 className="text-dark mb-4 text-lg font-bold">
+                  <div className="dark:bg-dark-surface dark:shadow-dark-border mb-6 rounded-lg bg-white p-6 shadow-md">
+                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                       Kommende Termine
                     </h3>
                     <div className="space-y-4">
@@ -188,10 +190,10 @@ export default async function AuswahlchoerePage() {
                 {/* Bewerbung für LaJuPo */}
                 {ensemble.showApplication && (
                   <div className={`p-6 ${ensemble.color}/10 rounded-lg`}>
-                    <h3 className="text-dark mb-3 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                       Interesse am LaJuPo?
                     </h3>
-                    <p className="mb-4 text-gray-600">
+                    <p className="mb-4 text-gray-600 dark:text-gray-400">
                       Teilnehmen kann, wer 15-25 Jahre alt ist. Die Teilnahme
                       erfolgt über ein Vorspiel, das alle 2 Jahre stattfindet.
                       Mit der Teilnahme verpflichtet man sich für 2 Jahre bei
@@ -225,7 +227,7 @@ export default async function AuswahlchoerePage() {
         </section>
       ))}
 
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20"></section>
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20"></section>
 
       <section className="bg-primary py-12 text-white md:py-16 lg:py-20"></section>
     </div>

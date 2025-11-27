@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #faa619;
   --color-primary-light: #fbb847;
@@ -11,6 +13,15 @@
   --color-foerderverein: #78a8da;
   --color-foerderverein-dark: #5a8fc4;
   --color-foerderverein-light: #9bc2e8;
+
+  /* Dark Mode Colors */
+  --color-dark-background: #0f1419;
+  --color-dark-background-secondary: #1a1f27;
+  --color-dark-surface: #252b36;
+  --color-dark-border: #2d3340;
+  --color-dark-text: #e4e6eb;
+  --color-dark-text-secondary: #b0b3ba;
+  --color-dark-text-muted: #8a8d93;
 
   /* Bezirks-Farben */
   --color-district-all: #faa619;

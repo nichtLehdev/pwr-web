@@ -1,7 +1,7 @@
 // app/aktuelles/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
@@ -21,6 +21,16 @@ type PostWithRelations = Post & {
 };
 
 export default function AktuellesPage() {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    const timer = setTimeout(() => {
+      document.body.style.overflow = "unset";
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] =
     useState<FilterCategory>("all");
@@ -136,21 +146,21 @@ export default function AktuellesPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="bg-background min-h-screen">
+      <div className="bg-background dark:bg-dark-background min-h-screen">
         <PageHeader title="Aktuelles" color="primary" />
         <div className="flex items-center justify-center py-12">
-          <p className="text-gray-600">Lade Beiträge...</p>
+          <p className="text-gray-600 dark:text-gray-400">Lade Beiträge...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background dark:bg-dark-background min-h-screen">
       <PageHeader title="Aktuelles" color="primary" />
 
       {/* Header */}
-      <section className="bg-primary py-6 text-white md:py-12 lg:py-16">
+      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
         <div className="container mx-auto px-4">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -169,13 +179,13 @@ export default function AktuellesPage() {
       </section>
 
       {/* Filter Bar */}
-      <section className="sticky top-28 z-20 border-b bg-white shadow-sm md:top-36">
+      <section className="dark:bg-dark-surface dark:border-dark-border sticky top-28 z-20 border-b bg-white shadow-sm md:top-36">
         <div className="container mx-auto px-4 py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
             {/* Left: Results Count */}
             <div className="flex-1">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {totalFiltered} {totalFiltered === 1 ? "Beitrag" : "Beiträge"}
                 {hasActiveFilters && (
                   <span className="text-primary ml-1 font-semibold">
@@ -196,7 +206,7 @@ export default function AktuellesPage() {
                   aria-label="Filter zurücksetzen"
                 >
                   <svg
-                    className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600"
+                    className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -215,7 +225,7 @@ export default function AktuellesPage() {
                 className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
                   filtersOpen
                     ? "bg-primary text-white"
-                    : "text-dark bg-gray-100 hover:bg-gray-200"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
                 }`}
                 aria-label="Filter öffnen"
               >
@@ -245,7 +255,7 @@ export default function AktuellesPage() {
             <div className="animate-in slide-in-from-top-2 mt-3 space-y-3 border-t pt-4">
               {/* Category Filter */}
               <div>
-                <label className="mb-2 block text-xs font-semibold text-gray-700">
+                <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Kategorie
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -255,8 +265,8 @@ export default function AktuellesPage() {
                       onClick={() => setSelectedCategory(cat)}
                       className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                         selectedCategory === cat
-                          ? "bg-dark text-white"
-                          : "text-dark bg-gray-100 hover:bg-gray-200"
+                          ? "bg-dark dark:bg-primary text-white"
+                          : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
                       }`}
                     >
                       {categoryLabels[cat]}
@@ -267,13 +277,13 @@ export default function AktuellesPage() {
 
               {/* District Filter */}
               <div>
-                <label className="mb-2 block text-xs font-semibold text-gray-700">
+                <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Bezirk
                 </label>
                 <select
                   value={selectedDistrict}
                   onChange={(e) => setSelectedDistrict(e.target.value)}
-                  className="focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-surface text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
                 >
                   <option value="all">Alle Bezirke</option>
                   {districtSelectOptions.slice(1).map((district) => (
@@ -291,7 +301,7 @@ export default function AktuellesPage() {
                     setSelectedCategory("all");
                     setSelectedDistrict("all");
                   }}
-                  className="text-primary hover:text-primary-dark w-full px-3 py-2 text-sm font-semibold transition-colors"
+                  className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary w-full px-3 py-2 text-sm font-semibold transition-colors"
                 >
                   Filter zurücksetzen
                 </button>
@@ -307,9 +317,9 @@ export default function AktuellesPage() {
           {/* Pinned Posts */}
           {filteredPinned.length > 0 && (
             <div className="mb-12">
-              <h2 className="text-dark border-primary mb-4 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
+              <h2 className="text-dark dark:text-dark-text border-primary mb-4 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
                 <svg
-                  className="text-primary h-5 w-5 md:h-6 md:w-6"
+                  className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -339,7 +349,7 @@ export default function AktuellesPage() {
           {sortedRegular.length > 0 && (
             <div>
               {filteredPinned.length > 0 && (
-                <h2 className="text-dark mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
+                <h2 className="text-dark dark:text-dark-text dark:border-dark-border mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
                   Alle Beiträge
                 </h2>
               )}
@@ -377,7 +387,7 @@ export default function AktuellesPage() {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="mb-4 text-base text-gray-600 md:text-lg">
+              <p className="mb-4 text-base text-gray-600 md:text-lg dark:text-gray-400">
                 Keine Beiträge gefunden.
               </p>
               {hasActiveFilters && (
@@ -386,7 +396,7 @@ export default function AktuellesPage() {
                     setSelectedCategory("all");
                     setSelectedDistrict("all");
                   }}
-                  className="text-primary hover:text-primary-dark font-semibold"
+                  className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary font-semibold"
                 >
                   Filter zurücksetzen
                 </button>

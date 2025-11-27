@@ -49,8 +49,10 @@ export default function CourseCard({
   return (
     <Link href={`/termine/course/${id}`} className="group block h-full">
       <article
-        className="flex h-full cursor-pointer flex-col rounded-lg border-l-4 bg-white p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-        style={{ borderLeftColor: districtColor }}
+        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        style={{
+          borderLeftColor: districtColor,
+        }}
       >
         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div className="flex gap-2">
@@ -90,11 +92,11 @@ export default function CourseCard({
           </div>
         </div>
 
-        <h3 className="text-dark group-hover:text-primary mb-2 text-xl font-bold transition-colors">
+        <h3 className="text-dark group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white">
           {title}
         </h3>
 
-        <div className="mb-4 flex-col space-y-2 text-sm text-gray-600">
+        <div className="mb-4 flex-col space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-2">
             <svg
               className="h-4 w-4 shrink-0"

@@ -26,13 +26,15 @@ const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
     <Link href={`/termine/event/${concert.id}`}>
       <div
         key={i}
-        className="mb-4 rounded-md border-l-4 bg-white py-2 pl-4 transition-all hover:shadow-md"
+        className="dark:bg-dark-surface dark:hover:shadow-dark-border mb-4 rounded-md border-l-4 bg-white py-2 pl-4 transition-all hover:shadow-md"
         style={{ borderColor: ensemble.colorHex }}
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-[200px] flex-1">
-            <h4 className="text-dark mb-1 font-bold">{concert.title}</h4>
-            <div className="space-y-1 text-sm text-gray-600">
+            <h4 className="text-dark dark:text-dark-text mb-1 font-bold">
+              {concert.title}
+            </h4>
+            <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
               {/* Date Information */}
               <div className="flex items-center gap-2">
                 <svg

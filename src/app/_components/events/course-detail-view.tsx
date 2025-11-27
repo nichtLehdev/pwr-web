@@ -145,7 +145,7 @@ export default function CourseDetailView({
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background dark:bg-dark-background min-h-screen">
       <PageHeader title={course.title} color={district} />
       {/* Header */}
       <section
@@ -282,8 +282,8 @@ export default function CourseDetailView({
             {/* Main Content */}
             <div className="space-y-6 lg:col-span-2">
               {/* Date & Time */}
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <h2 className="text-dark mb-4 flex items-center gap-2 text-xl font-bold">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                   <svg
                     className="text-primary h-6 w-6"
                     fill="none"
@@ -302,7 +302,7 @@ export default function CourseDetailView({
                 <div className="space-y-2">
                   {isSameDay ? (
                     <>
-                      <p className="text-dark text-lg font-semibold">
+                      <p className="text-dark dark:text-dark-text text-lg font-semibold">
                         {startDate.toLocaleDateString("de-DE", {
                           weekday: "long",
                           day: "numeric",
@@ -310,7 +310,7 @@ export default function CourseDetailView({
                           year: "numeric",
                         })}
                       </p>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400">
                         {startDate.toLocaleTimeString("de-DE", {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -325,7 +325,7 @@ export default function CourseDetailView({
                     </>
                   ) : (
                     <>
-                      <p className="text-dark text-lg font-semibold">
+                      <p className="text-dark dark:text-dark-text text-lg font-semibold">
                         {startDate.toLocaleDateString("de-DE", {
                           day: "numeric",
                           month: "long",
@@ -337,7 +337,7 @@ export default function CourseDetailView({
                           year: "numeric",
                         })}
                       </p>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 dark:text-gray-400">
                         {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
                       </p>
                     </>
@@ -374,8 +374,8 @@ export default function CourseDetailView({
 
               {/* Location */}
               {course.location && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark mb-4 flex items-center gap-2 text-xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                     <svg
                       className="text-primary h-6 w-6"
                       fill="none"
@@ -399,19 +399,21 @@ export default function CourseDetailView({
                   </h2>
                   <div className="space-y-2">
                     {course.location.name && (
-                      <p className="text-dark font-semibold">
+                      <p className="text-dark dark:text-dark-text font-semibold">
                         {course.location.name}
                       </p>
                     )}
                     {course.location.street && (
-                      <p className="text-gray-600">{course.location.street}</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {course.location.street}
+                      </p>
                     )}
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       {course.location.zipCode && `${course.location.zipCode} `}
                       {course.location.city}
                     </p>
                     {course.location.additionalInfo && (
-                      <p className="mt-2 text-sm text-gray-500">
+                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
                         {course.location.additionalInfo}
                       </p>
                     )}
@@ -421,12 +423,12 @@ export default function CourseDetailView({
 
               {/* Description */}
               {course.description && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark mb-4 text-xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
                     Beschreibung
                   </h2>
                   <div
-                    className="prose max-w-none text-gray-700"
+                    className="prose max-w-none text-gray-700 dark:text-gray-300"
                     dangerouslySetInnerHTML={{ __html: course.description }}
                   />
                 </div>
@@ -434,8 +436,8 @@ export default function CourseDetailView({
 
               {/* Prerequisites */}
               {course.prerequisites && (
-                <div className="rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-6">
-                  <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900">
+                <div className="rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-6 dark:bg-blue-900/30">
+                  <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900 dark:text-blue-200">
                     <svg
                       className="h-5 w-5"
                       fill="none"
@@ -451,14 +453,16 @@ export default function CourseDetailView({
                     </svg>
                     Voraussetzungen
                   </h3>
-                  <p className="text-blue-800">{course.prerequisites}</p>
+                  <p className="text-blue-800 dark:text-blue-300">
+                    {course.prerequisites}
+                  </p>
                 </div>
               )}
 
               {/* What to Bring */}
               {course.whatToBring && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark mb-3 flex items-center gap-2 text-lg font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h3 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 text-lg font-bold">
                     <svg
                       className="text-primary h-5 w-5"
                       fill="none"
@@ -474,14 +478,16 @@ export default function CourseDetailView({
                     </svg>
                     Mitzubringen
                   </h3>
-                  <p className="text-gray-700">{course.whatToBring}</p>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {course.whatToBring}
+                  </p>
                 </div>
               )}
 
               {/* Instructors */}
               {course.instructors && course.instructors.length > 0 && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark mb-4 flex items-center gap-2 text-xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                     <svg
                       className="text-primary h-6 w-6"
                       fill="none"
@@ -515,11 +521,11 @@ export default function CourseDetailView({
                           />
                         )}
                         <div>
-                          <p className="text-dark font-semibold">
+                          <p className="text-dark dark:text-dark-text font-semibold">
                             {instructor.displayName}
                           </p>
                           {instructor.bio && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               {instructor.bio}
                             </p>
                           )}
@@ -535,21 +541,21 @@ export default function CourseDetailView({
             <div className="space-y-6">
               {/* Registration CTA */}
               {canRegister && (
-                <div className="sticky top-20 rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark mb-4 text-lg font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border sticky top-20 rounded-lg bg-white p-6 shadow-md">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Anmeldung
                   </h3>
 
                   {spots.isFull && course.allowWaitingList ? (
-                    <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3">
-                      <p className="text-sm font-semibold text-orange-800">
+                    <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/30">
+                      <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
                         Der Kurs ist ausgebucht. Sie können sich auf die
                         Warteliste setzen lassen.
                       </p>
                     </div>
                   ) : (
                     <div className="mb-4">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Noch <strong>{spots.availableSlots}</strong>{" "}
                         {spots.availableSlots === 1 ? "Platz" : "Plätze"}{" "}
                         verfügbar
@@ -576,8 +582,8 @@ export default function CourseDetailView({
               )}
 
               {/* Price Info */}
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <h3 className="text-dark mb-4 text-lg font-bold">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                   {course.isFree ? "Kostenlos" : "Preise"}
                 </h3>
                 {course.isFree ? (
@@ -602,14 +608,14 @@ export default function CourseDetailView({
                     {course.priceOptions.map((option, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
+                        className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
                       >
                         <div>
-                          <p className="text-dark font-semibold">
+                          <p className="text-dark dark:text-dark-text font-semibold">
                             {option.label}
                           </p>
                           {option.description && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
                               {option.description}
                             </p>
                           )}
@@ -622,7 +628,7 @@ export default function CourseDetailView({
                   </div>
                 )}
                 {course.priceInfo && (
-                  <p className="mt-4 text-xs text-gray-500">
+                  <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
                     {course.priceInfo}
                   </p>
                 )}
@@ -631,7 +637,7 @@ export default function CourseDetailView({
               {/* Back to Overview */}
               <Link
                 href="/termine"
-                className="text-dark block w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-center font-semibold transition-colors hover:bg-gray-50"
+                className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-surface block w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-center font-semibold transition-colors hover:bg-gray-50"
               >
                 ← Zurück zur Übersicht
               </Link>

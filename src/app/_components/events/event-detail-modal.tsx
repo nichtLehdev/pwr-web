@@ -49,8 +49,10 @@ export default function EventDetailModal({
   // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
     return () => {
       document.body.style.overflow = "unset";
+      document.body.classList.remove("modal-open");
     };
   }, []);
 
@@ -64,7 +66,7 @@ export default function EventDetailModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-2xl"
+        className="dark:bg-dark-surface dark:shadow-dark-border max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with color */}
@@ -122,11 +124,17 @@ export default function EventDetailModal({
               />
             </svg>
             <div>
-              <p className="text-dark font-semibold">{startDate}</p>
+              <p className="text-dark dark:text-dark-text font-semibold">
+                {startDate}
+              </p>
               {isMultiDay ? (
-                <p className="text-sm text-gray-600">bis {endDate}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  bis {endDate}
+                </p>
               ) : (
-                <p className="text-sm text-gray-600">{startTime} Uhr</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {startTime} Uhr
+                </p>
               )}
             </div>
           </div>
@@ -154,15 +162,15 @@ export default function EventDetailModal({
                 />
               </svg>
               <div>
-                <p className="text-dark font-semibold">
+                <p className="text-dark dark:text-dark-text font-semibold">
                   {event.location.name || event.location.city}
                 </p>
                 {event.location.street && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {event.location.street}
                   </p>
                 )}
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {event.location.zipCode && `${event.location.zipCode} `}
                   {event.location.city}
                 </p>
@@ -187,17 +195,19 @@ export default function EventDetailModal({
                 />
               </svg>
               <div>
-                <p className="text-dark font-semibold">{event.bezirk.name}</p>
+                <p className="text-dark dark:text-dark-text font-semibold">
+                  {event.bezirk.name}
+                </p>
               </div>
             </div>
           )}
 
           {/* Participation offer - only for events */}
           {event.type === "event" && event.openToParticipants && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
               <div className="flex items-start gap-3">
                 <svg
-                  className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
+                  className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -210,10 +220,10 @@ export default function EventDetailModal({
                   />
                 </svg>
                 <div>
-                  <h3 className="mb-1 font-semibold text-green-900">
+                  <h3 className="mb-1 font-semibold text-green-900 dark:text-green-100">
                     Mitmachangebot
                   </h3>
-                  <p className="text-sm text-green-800">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     {event.participationInfo ||
                       "Bei dieser Veranstaltung können Sie gerne mitspielen! Kontaktieren Sie die Veranstalter für weitere Informationen."}
                   </p>
@@ -225,8 +235,10 @@ export default function EventDetailModal({
           {/* Description */}
           {event.description && (
             <div>
-              <h3 className="text-dark mb-2 font-semibold">Beschreibung</h3>
-              <div className="whitespace-pre-wrap text-gray-600">
+              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+                Beschreibung
+              </h3>
+              <div className="whitespace-pre-wrap text-gray-600 dark:text-gray-400">
                 {event.description}
               </div>
             </div>
@@ -235,16 +247,24 @@ export default function EventDetailModal({
           {/* Ensemble info - only for events */}
           {event.type === "event" && event.performingEnsembleName && (
             <div>
-              <h3 className="text-dark mb-2 font-semibold">Mitwirkende</h3>
-              <p className="text-gray-600">{event.performingEnsembleName}</p>
+              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+                Mitwirkende
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {event.performingEnsembleName}
+              </p>
             </div>
           )}
 
           {/* Conductor */}
           {event.type === "event" && event.leitung && (
             <div>
-              <h3 className="text-dark mb-2 font-semibold">Leitung</h3>
-              <p className="text-gray-600">{event.leitung}</p>
+              <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+                Leitung
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {event.leitung}
+              </p>
             </div>
           )}
 
@@ -253,24 +273,30 @@ export default function EventDetailModal({
             <>
               {event.prerequisites && (
                 <div>
-                  <h3 className="text-dark mb-2 font-semibold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
                     Voraussetzungen
                   </h3>
-                  <p className="text-gray-600">{event.prerequisites}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {event.prerequisites}
+                  </p>
                 </div>
               )}
 
               {event.targetAudience && (
                 <div>
-                  <h3 className="text-dark mb-2 font-semibold">Zielgruppe</h3>
-                  <p className="text-gray-600">{event.targetAudience}</p>
+                  <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
+                    Zielgruppe
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {event.targetAudience}
+                  </p>
                 </div>
               )}
 
               {event.maxParticipants && (
-                <div className="rounded-lg bg-gray-50 p-4">
+                <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-dark font-semibold">
+                    <span className="text-dark dark:text-dark-text font-semibold">
                       Max. Teilnehmer
                     </span>
                     <span className="text-primary text-lg font-bold">
@@ -283,7 +309,7 @@ export default function EventDetailModal({
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 border-t pt-4">
+          <div className="dark:border-dark-border flex gap-3 border-t border-gray-200 pt-4">
             <Link
               href={`/termine/${event.id}`}
               className="bg-primary hover:bg-primary-dark flex-1 rounded-lg px-6 py-3 text-center font-semibold text-white transition-colors"
@@ -293,7 +319,7 @@ export default function EventDetailModal({
             </Link>
             <button
               onClick={onClose}
-              className="rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+              className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
             >
               Schließen
             </button>

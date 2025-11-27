@@ -64,7 +64,7 @@ export default function MitmachenPage() {
       <PageHeader title="Mitmachen im Posaunenwerk" color="primary" />
 
       {/* Hero Section */}
-      <section className="bg-primary py-16 text-white md:py-24">
+      <section className="bg-primary dark:bg-primary-dark py-16 text-white md:py-24">
         <div className="container">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -87,7 +87,7 @@ export default function MitmachenPage() {
       </section>
 
       {/* Einstiegsmöglichkeiten */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
             title="Deine Einstiegsmöglichkeiten"
@@ -111,10 +111,10 @@ export default function MitmachenPage() {
       </section>
 
       {/* Förderverein CTA Banner */}
-      <section className="bg-foerderverein/5 py-12 md:py-16 lg:py-20">
+      <section className="bg-foerderverein/5 dark:bg-foerderverein/10 py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <div className="bg-foerderverein relative overflow-hidden rounded-2xl p-8 text-white shadow-2xl md:p-12">
+            <div className="bg-foerderverein dark:bg-foerderverein-dark relative overflow-hidden rounded-2xl p-8 text-white shadow-2xl md:p-12">
               {/* Dekorative Elemente - subtiler */}
               <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5"></div>
               <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-white/5"></div>
@@ -218,16 +218,16 @@ export default function MitmachenPage() {
       </section>
 
       {/* Warum Posaunenchor? */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Warum Posaunenchor?
             </h2>
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-md">
+                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -242,17 +242,17 @@ export default function MitmachenPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Gemeinsam Musik machen
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Erlebe die Freude am gemeinsamen Musizieren in einer starken
                   Gemeinschaft von über 11.000 Bläserinnen und Bläsern.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -267,17 +267,17 @@ export default function MitmachenPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Glauben leben
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Verbinde deine Musikalität mit deinem Glauben und gestalte
                   Gottesdienste und kirchliche Feste aktiv mit.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -292,17 +292,17 @@ export default function MitmachenPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Persönlich wachsen
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Entwickle deine musikalischen Fähigkeiten durch regelmäßiges
                   Üben, Workshops und die Begleitung erfahrener Chorleiter.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
                     fill="none"
@@ -317,10 +317,10 @@ export default function MitmachenPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-xl font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Teil einer Bewegung
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Werde Teil einer über 150 Jahre alten Tradition mit mehr als
                   330 Posaunenchören im Rheinland.
                 </p>
@@ -332,12 +332,12 @@ export default function MitmachenPage() {
 
       {/* Mitgliedschaft im Posaunenwerk */}
       <section
-        className="bg-background py-12 md:py-16 lg:py-20"
+        className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20"
         id="mitgliedschaft"
       >
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <div className="border-primary rounded-lg border-t-4 bg-white p-8 shadow-xl md:p-12">
+            <div className="border-primary dark:bg-dark-surface rounded-lg border-t-4 bg-white p-8 shadow-xl md:p-12">
               <div className="mb-6 flex items-start gap-4">
                 <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -355,10 +355,10 @@ export default function MitmachenPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
                     Mitgliedschaft im Posaunenwerk
                   </h2>
-                  <p className="mb-6 text-lg leading-relaxed text-gray-600">
+                  <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
                     Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk
                     Rheinland freuen wir uns sehr.
                   </p>
@@ -367,11 +367,11 @@ export default function MitmachenPage() {
 
               <div className="space-y-6">
                 {/* Einzelmitgliedschaft */}
-                <div className="bg-background-secondary rounded-lg p-6">
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     Einzelmitgliedschaft
                   </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600">
+                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                     Da das Posaunenwerk im Kern ein Verbund von Posaunenchören
                     ist, ist eine Einzelmitgliedschaft nur in besonderen und eng
                     begrenzten Ausnahmefällen möglich. Wir freuen uns, dass Sie
@@ -393,21 +393,21 @@ export default function MitmachenPage() {
                 </div>
 
                 {/* Chormitgliedschaft */}
-                <div className="bg-background-secondary rounded-lg p-6">
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     Mitgliedschaft für Posaunenchöre
                   </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600">
+                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                     Die Mitgliedschaft eines Posaunenchores im Posaunenwerk der
                     Ev. Kirche im Rheinland e.V. kann schriftlich bei der
                     Geschäftsstelle beantragt werden.
                   </p>
 
-                  <div className="mb-4 rounded-lg bg-white p-4">
-                    <h4 className="text-dark mb-3 font-bold">
+                  <div className="dark:bg-dark-surface mb-4 rounded-lg bg-white p-4">
+                    <h4 className="text-dark dark:text-dark-text mb-3 font-bold">
                       Jährliche Mitgliedsbeiträge:
                     </h4>
-                    <ul className="space-y-2 text-gray-600">
+                    <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                       <li className="flex items-center gap-2">
                         <span className="bg-primary h-2 w-2 shrink-0 rounded-full"></span>
                         <span>
@@ -476,9 +476,11 @@ export default function MitmachenPage() {
                 </div>
 
                 {/* Ehrungen */}
-                <div className="bg-primary-light/10 border-primary rounded-lg border-l-4 p-6">
-                  <h3 className="text-dark mb-2 text-lg font-bold">Ehrungen</h3>
-                  <p className="mb-3 text-gray-600">
+                <div className="bg-primary-light/10 dark:bg-primary-light/20 border-primary rounded-lg border-l-4 p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
+                    Ehrungen
+                  </h3>
+                  <p className="mb-3 text-gray-600 dark:text-gray-400">
                     Informationen zu Ehrungen finden sich in der{" "}
                     <a
                       href="/downloads/ehrenordnung.pdf"
@@ -490,7 +492,7 @@ export default function MitmachenPage() {
                     </a>
                     .
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
                     beantwortet gerne die{" "}
                     <Link
@@ -509,10 +511,10 @@ export default function MitmachenPage() {
       </section>
 
       {/* Instrumentenversicherung */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <div className="border-district-6 rounded-lg border-t-4 bg-white p-6 shadow-xl md:p-12">
+            <div className="border-district-6 dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-t-4 bg-white p-6 shadow-xl md:p-12">
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
                 <div className="bg-district-6 flex h-12 w-12 shrink-0 items-center justify-center rounded-full md:h-14 md:w-14">
                   <svg
@@ -530,10 +532,10 @@ export default function MitmachenPage() {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-dark mb-3 text-xl font-bold wrap-break-word md:mb-4 md:text-2xl lg:text-3xl xl:text-4xl">
+                  <h2 className="text-dark dark:text-dark-text mb-3 text-xl font-bold wrap-break-word md:mb-4 md:text-2xl lg:text-3xl xl:text-4xl">
                     Instrumenten&shy;versicherung
                   </h2>
-                  <p className="text-base leading-relaxed text-gray-600 md:text-lg">
+                  <p className="text-base leading-relaxed text-gray-600 md:text-lg dark:text-gray-400">
                     Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
                     günstigen Rahmen&shy;versicherung.
                   </p>
@@ -542,11 +544,11 @@ export default function MitmachenPage() {
 
               <div className="space-y-6">
                 {/* Rahmenvertrag */}
-                <div className="bg-background-secondary rounded-lg p-4 md:p-6">
-                  <h3 className="text-dark mb-3 text-lg font-bold md:text-xl">
+                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-4 md:p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold md:text-xl">
                     Unser Rahmen&shy;vertrag
                   </h3>
-                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base">
+                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base dark:text-gray-400">
                     Das Posaunenwerk der Ev. Kirche im Rheinland e.V. hat einen
                     Rahmenvertrag über eine preisgünstige
                     Musik&shy;instrumenten&shy;versicherung mit der{" "}
@@ -557,15 +559,15 @@ export default function MitmachenPage() {
                     <strong>ECCLESIA</strong> - Versicherungs&shy;dienst GmbH in
                     32754 Detmold.
                   </p>
-                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base">
+                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base dark:text-gray-400">
                     Innerhalb dieses Rahmens können unsere Mitglieds&shy;chöre
                     Versicherungen abschließen, die durch uns vermittelt und
                     deren Versicherungs&shy;beiträge durch uns eingezogen
                     werden.
                   </p>
 
-                  <div className="bg-primary-light/10 border-primary rounded-lg border-l-4 p-3 md:p-4">
-                    <p className="text-sm leading-relaxed text-gray-700 md:text-base">
+                  <div className="bg-primary-light/10 dark:bg-primary-light/20 border-primary rounded-lg border-l-4 p-3 md:p-4">
+                    <p className="text-sm leading-relaxed text-gray-700 md:text-base dark:text-gray-300">
                       <strong>Hinweis:</strong> Die Versicherung verlängert sich
                       automatisch zu den gleichen Bedingungen um ein weiteres
                       Jahr, wenn uns bis zum{" "}
@@ -578,8 +580,8 @@ export default function MitmachenPage() {
                 </div>
 
                 {/* Im Schadenfall */}
-                <div className="bg-district-6/10 rounded-lg p-4 md:p-6">
-                  <h3 className="text-dark mb-3 flex items-start gap-2 text-lg font-bold md:text-xl">
+                <div className="bg-district-6/10 dark:bg-district-6/20 rounded-lg p-4 md:p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 flex items-start gap-2 text-lg font-bold md:text-xl">
                     <svg
                       className="text-district-6 mt-0.5 h-5 w-5 shrink-0 md:h-6 md:w-6"
                       fill="none"
@@ -595,7 +597,7 @@ export default function MitmachenPage() {
                     </svg>
                     <span>Im Schadensfall</span>
                   </h3>
-                  <p className="mb-4 text-sm leading-relaxed text-gray-600 md:text-base">
+                  <p className="mb-4 text-sm leading-relaxed text-gray-600 md:text-base dark:text-gray-400">
                     Ansprechpartner beim Posaunenwerk für die Meldung und
                     Abwicklung eines unter den Versicherungs&shy;schutz
                     fallenden Schadens ist die{" "}
@@ -608,11 +610,11 @@ export default function MitmachenPage() {
                     .
                   </p>
 
-                  <div className="rounded-lg bg-white p-3 md:p-4">
-                    <h4 className="text-dark mb-3 text-base font-bold md:text-lg">
+                  <div className="dark:bg-dark-surface rounded-lg bg-white p-3 md:p-4">
+                    <h4 className="text-dark dark:text-dark-text mb-3 text-base font-bold md:text-lg">
                       Benötigte Unterlagen:
                     </h4>
-                    <ul className="space-y-2 text-sm text-gray-600 md:text-base">
+                    <ul className="space-y-2 text-sm text-gray-600 md:text-base dark:text-gray-400">
                       <li className="flex items-start gap-2">
                         <span className="bg-district-6 mt-2 h-2 w-2 shrink-0 rounded-full"></span>
                         <span>
@@ -664,13 +666,13 @@ export default function MitmachenPage() {
       </section>
 
       {/* Kontakt & Beratung */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
               Noch Fragen?
             </h2>
-            <p className="mb-8 text-lg text-gray-600">
+            <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
               Wir beraten dich gerne persönlich zu allen Möglichkeiten des
               Mitmachens. Nimm einfach Kontakt mit uns auf!
             </p>
@@ -694,7 +696,7 @@ export default function MitmachenPage() {
       </section>
 
       {/* Newsletter CTA */}
-      <section className="bg-dark py-12 text-white md:py-16">
+      <section className="bg-dark dark:bg-dark-background-secondary py-12 text-white md:py-16">
         <div className="container">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="mb-4 text-2xl font-bold md:text-3xl">

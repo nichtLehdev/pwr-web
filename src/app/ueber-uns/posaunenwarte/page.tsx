@@ -55,9 +55,9 @@ export default async function PosaunenwartePage() {
       </section>
 
       {/* Landesposaunenwart */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Landesposaunenwart
           </h2>
 
@@ -66,7 +66,7 @@ export default async function PosaunenwartePage() {
             .map((pw) => (
               <div
                 key={pw.name}
-                className="mx-auto max-w-5xl overflow-hidden rounded-lg bg-white shadow-xl"
+                className="dark:bg-dark-surface dark:shadow-dark-border mx-auto max-w-5xl overflow-hidden rounded-lg bg-white shadow-xl"
               >
                 <div className="flex flex-col lg:flex-row">
                   {/* Bild */}
@@ -90,17 +90,17 @@ export default async function PosaunenwartePage() {
                       </span>
                     </div>
 
-                    <h3 className="text-dark mb-4 text-3xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-4 text-3xl font-bold">
                       {pw.name}
                     </h3>
 
                     <div className="mb-6">
-                      <span className="bg-primary/10 text-primary inline-block rounded-full px-3 py-1 text-sm font-semibold">
+                      <span className="bg-primary/10 dark:bg-primary/20 text-primary inline-block rounded-full px-3 py-1 text-sm font-semibold">
                         Alle Bezirke
                       </span>
                     </div>
 
-                    <p className="mb-6 leading-relaxed text-gray-600">
+                    <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                       {pw.bio}
                     </p>
 
@@ -130,7 +130,7 @@ export default async function PosaunenwartePage() {
                       {pw.phone && (
                         <a
                           href={`tel:${pw.phone.replace(/\s/g, "")}`}
-                          className="hover:text-primary flex items-center text-gray-600"
+                          className="hover:text-primary flex items-center text-gray-600 dark:text-gray-400"
                         >
                           <svg
                             className="mr-2 h-5 w-5"
@@ -157,9 +157,9 @@ export default async function PosaunenwartePage() {
       </section>
 
       {/* Regionalposaunenwarte */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Regionalposaunenwarte
           </h2>
 
@@ -169,7 +169,7 @@ export default async function PosaunenwartePage() {
               .map((pw) => (
                 <article
                   key={pw.name}
-                  className="overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                  className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
                 >
                   {/* Bild */}
                   <div className={`${pw.color} relative h-64`}>
@@ -191,13 +191,13 @@ export default async function PosaunenwartePage() {
                       </span>
                     </div>
 
-                    <h3 className="text-dark mb-3 text-2xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
                       {pw.name}
                     </h3>
 
                     {/* Bezirke */}
                     <div className="mb-4">
-                      <p className="mb-2 text-sm font-semibold text-gray-700">
+                      <p className="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Betreute Bezirke:
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -215,7 +215,7 @@ export default async function PosaunenwartePage() {
                       </div>
                     </div>
 
-                    <p className="mb-6 line-clamp-16 leading-relaxed text-gray-600">
+                    <p className="mb-6 line-clamp-16 leading-relaxed text-gray-600 dark:text-gray-400">
                       {pw.bio}
                     </p>
 
@@ -245,7 +245,7 @@ export default async function PosaunenwartePage() {
                       {pw.phone && (
                         <a
                           href={`tel:${pw.phone.replace(/\s/g, "")}`}
-                          className="hover:text-primary flex items-center text-sm text-gray-600"
+                          className="hover:text-primary flex items-center text-sm text-gray-600 dark:text-gray-400"
                         >
                           <svg
                             className="mr-2 h-4 w-4"
@@ -272,14 +272,14 @@ export default async function PosaunenwartePage() {
       </section>
 
       {/* Aufgaben */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Aufgaben der Posaunenwarte
           </h2>
 
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -295,16 +295,16 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Weiterbildung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Weiterbildung der Bläser und Posaunenchorleiter durch Lehrgänge,
                 Workshops und persönliche Betreuung.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -320,14 +320,16 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">Chorbesuche</h3>
-              <p className="text-gray-600">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
+                Chorbesuche
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Regelmäßige Besuche der Mitgliedschöre zur musikalischen
                 Unterstützung und Beratung vor Ort.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -343,16 +345,16 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Lehrgänge & Freizeiten
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Organisation und Durchführung von Lehrgängen, Workshops und
                 musikalischen Freizeiten.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-3 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -368,14 +370,16 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">Beratung</h3>
-              <p className="text-gray-600">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
+                Beratung
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Beratung zu musikalischen, organisatorischen und technischen
                 Fragen der Posaunenchorarbeit.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -391,16 +395,16 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Musikalische Leitung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Leitung des Posaunenwerks in allen musikalischen Belangen und
                 Pflege des musikalischen Standards.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-6 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -416,10 +420,10 @@ export default async function PosaunenwartePage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Nachwuchsförderung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Besondere Förderung der Jungbläserarbeit und des musikalischen
                 Nachwuchses in den Bezirken.
               </p>

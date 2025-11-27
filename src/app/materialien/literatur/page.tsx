@@ -46,17 +46,17 @@ export default async function LiteraturPage() {
       <section className="bg-background py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-6 shadow-lg md:p-8">
-              <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
+              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
                 Rheinische Bläserhefte
               </h2>
-              <p className="mb-4 leading-relaxed text-gray-600">
+              <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                 Die Rheinischen Bläserhefte erscheinen regelmäßig und bieten
                 jeweils eine umfangreiche Sammlung von Musik aus einem
                 bestimmten Land oder einer Region. Jedes Heft umfasst mehrere
                 Kapitel mit verschiedenen musikalischen Schwerpunkten:
               </p>
-              <ul className="mb-6 space-y-2 text-gray-600">
+              <ul className="mb-6 space-y-2 text-gray-600 dark:text-gray-400">
                 <li className="flex items-start gap-2">
                   <svg
                     className="text-district-2 mt-0.5 h-5 w-5 shrink-0"
@@ -122,7 +122,7 @@ export default async function LiteraturPage() {
                   Populäre Melodien aus Film, Musical und Popmusik
                 </li>
               </ul>
-              <p className="leading-relaxed text-gray-600">
+              <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                 Ergänzend zu jedem Bläserheft erscheinen Beihefte mit
                 Kurzandachten, ausgearbeiteten Gottesdiensten und
                 Konzertbausteinen sowie CDs mit Einspielungen durch unser
@@ -137,7 +137,7 @@ export default async function LiteraturPage() {
       <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Unsere Bläserhefte
             </h2>
 
@@ -145,12 +145,12 @@ export default async function LiteraturPage() {
               {blaesherhefte.map((heft, index) => (
                 <div
                   key={heft.id}
-                  className={`overflow-hidden rounded-lg bg-white shadow-lg ${
+                  className={`dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-lg ${
                     index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
                   } flex flex-col md:flex`}
                 >
                   {/* Bild */}
-                  <div className="relative h-64 bg-gray-200 md:h-auto md:w-1/3">
+                  <div className="dark:bg-dark-background-secondary relative h-64 bg-gray-200 md:h-auto md:w-1/3">
                     <Image
                       src={heft.image.url}
                       alt={heft.image.alt || heft.title || "Bläserheft Cover"}
@@ -173,7 +173,7 @@ export default async function LiteraturPage() {
                   <div className="p-6 md:w-2/3 md:p-8">
                     <div className="mb-4 flex items-start justify-between">
                       <div>
-                        <h3 className="text-dark mb-1 text-2xl font-bold md:text-3xl">
+                        <h3 className="text-dark dark:text-dark-text mb-1 text-2xl font-bold md:text-3xl">
                           {heft.title}
                         </h3>
                         <p className="text-district-2 text-lg font-semibold">
@@ -182,21 +182,21 @@ export default async function LiteraturPage() {
                       </div>
                     </div>
 
-                    <p className="mb-4 leading-relaxed text-gray-600">
+                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                       {heft.description}
                     </p>
 
                     {/* Chapters */}
                     {heft.chapters && heft.chapters.length > 0 && (
                       <div className="mb-4">
-                        <h4 className="text-dark mb-2 text-sm font-semibold">
+                        <h4 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
                           Kapitel:
                         </h4>
                         <ul className="space-y-1">
                           {heft.chapters.map((chapter, idx) => (
                             <li
                               key={idx}
-                              className="relative pl-4 text-sm text-gray-600 before:absolute before:left-0 before:content-['•']"
+                              className="relative pl-4 text-sm text-gray-600 before:absolute before:left-0 before:content-['•'] dark:text-gray-400"
                             >
                               {chapter}
                             </li>
@@ -208,14 +208,14 @@ export default async function LiteraturPage() {
                     {/* Highlights */}
                     {heft.highlights && heft.highlights.length > 0 && (
                       <div className="mb-6">
-                        <h4 className="text-dark mb-2 text-sm font-semibold">
+                        <h4 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
                           Besondere Highlights:
                         </h4>
                         <ul className="space-y-1">
                           {heft.highlights.map((highlight, idx) => (
                             <li
                               key={idx}
-                              className="before:text-district-2 relative pl-4 text-sm text-gray-600 before:absolute before:left-0 before:content-['★']"
+                              className="before:text-district-2 relative pl-4 text-sm text-gray-600 before:absolute before:left-0 before:content-['★'] dark:text-gray-400"
                             >
                               {highlight}
                             </li>
@@ -227,7 +227,7 @@ export default async function LiteraturPage() {
                     {/* Audio Sample */}
                     {heft.audioSample && (
                       <div className="mb-6">
-                        <h4 className="text-dark mb-2 text-sm font-semibold">
+                        <h4 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
                           Hörprobe:
                         </h4>
                         <audio controls className="w-full max-w-md">
@@ -238,45 +238,47 @@ export default async function LiteraturPage() {
                     )}
 
                     {/* Preise */}
-                    <div className="border-t border-gray-200 pt-4">
-                      <h4 className="text-dark mb-3 font-semibold">
+                    <div className="dark:border-dark-border border-t border-gray-200 pt-4">
+                      <h4 className="text-dark dark:text-dark-text mb-3 font-semibold">
                         Verfügbar:
                       </h4>
                       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         {heft.availableBlaeserheft && heft.priceBlaeserheft && (
-                          <div className="bg-district-2/5 rounded-lg p-3 text-center">
-                            <p className="mb-1 text-sm text-gray-600">
+                          <div className="bg-district-2/5 dark:bg-district-2/10 rounded-lg p-3 text-center">
+                            <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
                               Bläserheft
                             </p>
-                            <p className="text-dark text-lg font-bold">
+                            <p className="text-dark dark:text-dark-text text-lg font-bold">
                               {heft.priceBlaeserheft} €
                             </p>
                           </div>
                         )}
                         {heft.availableBeiheft && heft.priceBeiheft && (
-                          <div className="bg-district-2/5 rounded-lg p-3 text-center">
-                            <p className="mb-1 text-sm text-gray-600">
+                          <div className="bg-district-2/5 dark:bg-district-2/10 rounded-lg p-3 text-center">
+                            <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
                               Beiheft
                             </p>
-                            <p className="text-dark text-lg font-bold">
+                            <p className="text-dark dark:text-dark-text text-lg font-bold">
                               {heft.priceBeiheft} €
                             </p>
                           </div>
                         )}
                         {heft.availableTrompeten && heft.priceTrompeten && (
-                          <div className="bg-district-2/5 rounded-lg p-3 text-center">
-                            <p className="mb-1 text-sm text-gray-600">
+                          <div className="bg-district-2/5 dark:bg-district-2/10 rounded-lg p-3 text-center">
+                            <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
                               Trompeten in B
                             </p>
-                            <p className="text-dark text-lg font-bold">
+                            <p className="text-dark dark:text-dark-text text-lg font-bold">
                               {heft.priceTrompeten} €
                             </p>
                           </div>
                         )}
                         {heft.availableCd && heft.priceCd && (
-                          <div className="bg-district-2/5 rounded-lg p-3 text-center">
-                            <p className="mb-1 text-sm text-gray-600">CD</p>
-                            <p className="text-dark text-lg font-bold">
+                          <div className="bg-district-2/5 dark:bg-district-2/10 rounded-lg p-3 text-center">
+                            <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
+                              CD
+                            </p>
+                            <p className="text-dark dark:text-dark-text text-lg font-bold">
                               {heft.priceCd} €
                             </p>
                           </div>

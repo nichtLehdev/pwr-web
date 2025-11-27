@@ -66,10 +66,10 @@ export default function MaterialienPage() {
       </section>
 
       {/* Unterseiten-Navigation */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Unsere Material-Bereiche
             </h2>
 
@@ -101,24 +101,24 @@ export default function MaterialienPage() {
       </section>
 
       {/* Downloads-Bereich */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Downloads
             </h2>
-            <p className="mb-8 text-center text-lg text-gray-600">
+            <p className="mb-8 text-center text-lg text-gray-600 dark:text-gray-400">
               Alle verfügbaren Materialien zum Download
             </p>
 
             {/* Filter & Suche */}
-            <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border mb-8 rounded-lg bg-white p-6 shadow-md">
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {/* Suche */}
                 <div>
                   <label
                     htmlFor="search"
-                    className="text-dark mb-2 block text-sm font-semibold"
+                    className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
                   >
                     Suche
                   </label>
@@ -129,7 +129,7 @@ export default function MaterialienPage() {
                       placeholder="Titel, Beschreibung oder Tags durchsuchen..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="focus:ring-district-4 w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 outline-none focus:border-transparent focus:ring-2"
+                      className="focus:ring-district-4 dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 outline-none placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
                     />
                     <svg
                       className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
@@ -151,7 +151,7 @@ export default function MaterialienPage() {
                 <div>
                   <label
                     htmlFor="category"
-                    className="text-dark mb-2 block text-sm font-semibold"
+                    className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
                   >
                     Kategorie
                   </label>
@@ -159,7 +159,7 @@ export default function MaterialienPage() {
                     id="category"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="focus:ring-district-4 w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:border-transparent focus:ring-2"
+                    className="focus:ring-district-4 dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 outline-none focus:border-transparent focus:ring-2"
                   >
                     <option value="all">Alle Kategorien</option>
                     {Object.entries(DownloadCategory).map(([key, category]) => (
@@ -202,7 +202,7 @@ export default function MaterialienPage() {
                     </span>
                   )}
                   {searchQuery && (
-                    <span className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                    <span className="dark:bg-dark-background-secondary inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
                       Suche: &quot;{searchQuery}&quot;
                       <button
                         onClick={() => setSearchQuery("")}
@@ -245,7 +245,7 @@ export default function MaterialienPage() {
               <>
                 {/* Ergebnisse */}
                 <div className="mb-6">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     {filteredDownloads.length}{" "}
                     {filteredDownloads.length === 1 ? "Datei" : "Dateien"}{" "}
                     gefunden
@@ -258,7 +258,7 @@ export default function MaterialienPage() {
                     {filteredDownloads.map((download) => (
                       <div
                         key={download.id}
-                        className="rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+                        className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div className="flex items-start gap-4">
                           {/* File Icon */}
@@ -268,17 +268,17 @@ export default function MaterialienPage() {
 
                           {/* Content */}
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-dark mb-1 line-clamp-2 font-bold">
+                            <h3 className="text-dark dark:text-dark-text mb-1 line-clamp-2 font-bold">
                               {download.title}
                             </h3>
                             {download.description && (
-                              <p className="mb-2 line-clamp-2 text-sm text-gray-600">
+                              <p className="mb-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
                                 {download.description}
                               </p>
                             )}
 
                             {/* Meta */}
-                            <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                               <span className="inline-flex items-center gap-1">
                                 <svg
                                   className="h-4 w-4"
@@ -326,7 +326,7 @@ export default function MaterialienPage() {
                                 {download.tags.map((tag, idx) => (
                                   <span
                                     key={idx}
-                                    className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600"
+                                    className="dark:bg-dark-background-secondary rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:text-gray-400"
                                   >
                                     {tag}
                                   </span>
@@ -363,7 +363,7 @@ export default function MaterialienPage() {
                 ) : (
                   <div className="py-12 text-center">
                     <svg
-                      className="mx-auto mb-4 h-16 w-16 text-gray-400"
+                      className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -375,10 +375,10 @@ export default function MaterialienPage() {
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Keine Downloads gefunden
                     </h3>
-                    <p className="mb-4 text-gray-600">
+                    <p className="mb-4 text-gray-600 dark:text-gray-400">
                       Versuchen Sie es mit anderen Suchbegriffen oder Filtern.
                     </p>
                     <button

@@ -16,7 +16,7 @@ export default function PeopleCard({
   email,
 }: PeopleCardProps) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+    <div className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start gap-3">
         {image && (
           <div className="relative my-auto h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
@@ -29,12 +29,12 @@ export default function PeopleCard({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-dark font-semibold">{name}</p>
-          <p className="text-sm text-gray-600">{subtitle}</p>
+          <p className="text-dark dark:text-dark-text font-semibold">{name}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
           {email && (
             <Link
               href={`mailto:${email}`}
-              className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors"
+              className="hover:text-primary dark:hover:text-primary-light flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
             >
               <svg
                 className="mr-2 h-4 w-4 shrink-0"

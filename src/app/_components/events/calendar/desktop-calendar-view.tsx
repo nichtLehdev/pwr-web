@@ -49,6 +49,17 @@ const hexToRgba = (hex: string, opacity: number) => {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
+// Helper to determine if we're in dark mode (for inline styles)
+const getEventBackgroundStyle = (
+  districtColor: string,
+  bgOpacity: number,
+  isDarkMode: boolean,
+) => {
+  // In dark mode, use higher opacity for better visibility
+  const adjustedOpacity = isDarkMode ? Math.min(bgOpacity * 2, 0.4) : bgOpacity;
+  return hexToRgba(districtColor, adjustedOpacity);
+};
+
 // ✅ FIXED: Separate internal types for events and courses
 type CalendarEventInternal = CalendarEventItem & {
   date: Date;
@@ -75,6 +86,25 @@ export default function DesktopCalendarView({
   const [showMoreEventsDay, setShowMoreEventsDay] = useState<number | null>(
     null,
   );
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+
+    checkDarkMode();
+
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -376,14 +406,16 @@ export default function DesktopCalendarView({
 
   return (
     <>
-      <div className="overflow-hidden rounded-lg bg-white shadow-lg">
+      <div className="dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface overflow-hidden rounded-lg shadow-lg">
         {/* Header */}
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-dark text-2xl font-bold">{monthName}</h2>
+        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
+          <h2 className="text-dark text-2xl font-bold dark:text-white">
+            {monthName}
+          </h2>
           <div className="flex gap-2">
             <button
               onClick={goToPreviousMonth}
-              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+              className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Vorheriger Monat"
             >
               <svg
@@ -409,7 +441,7 @@ export default function DesktopCalendarView({
             </button>
             <button
               onClick={goToNextMonth}
-              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+              className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Nächster Monat"
             >
               <svg
@@ -430,11 +462,11 @@ export default function DesktopCalendarView({
         </div>
 
         {/* Week days */}
-        <div className="grid grid-cols-7 border-b bg-gray-50">
+        <div className="dark:border-dark-border bg-background-tertiary dark:bg-dark-background-secondary grid grid-cols-7 border-b border-gray-200">
           {weekDays.map((day) => (
             <div
               key={day}
-              className="px-2 py-3 text-center text-sm font-semibold text-gray-600"
+              className="px-2 py-3 text-center text-sm font-semibold text-gray-600 dark:text-gray-300"
             >
               {day}
             </div>
@@ -451,8 +483,10 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={`empty-${i}`}
-                className={`bg-gray-50/50 ${!isLastColumn ? "border-r" : ""} ${
-                  !isLastRow ? "border-b" : ""
+                className={`bg-background-tertiary dark:bg-dark-background-secondary opacity-50 ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                  !isLastRow
+                    ? "dark:border-dark-border border-b border-gray-200"
+                    : ""
                 }`}
               ></div>
             );
@@ -502,9 +536,15 @@ export default function DesktopCalendarView({
             return (
               <div
                 key={day}
-                className={`relative ${!isLastColumn ? "border-r" : ""} ${
-                  !isLastRow ? "border-b" : ""
-                } ${today ? "bg-primary/5" : "hover:bg-gray-50"}`}
+                className={`relative ${!isLastColumn ? "dark:border-dark-border border-r border-gray-200" : ""} ${
+                  !isLastRow
+                    ? "dark:border-dark-border border-b border-gray-200"
+                    : ""
+                } ${
+                  today
+                    ? "bg-primary/5 dark:bg-primary/10"
+                    : "dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                }`}
               >
                 {/* Date */}
                 <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5">
@@ -512,7 +552,7 @@ export default function DesktopCalendarView({
                     className={`text-sm font-semibold ${
                       today
                         ? "bg-primary flex h-6 w-6 items-center justify-center rounded-full text-white"
-                        : "text-gray-700"
+                        : "text-gray-700 dark:text-gray-200"
                     }`}
                   >
                     {day}
@@ -571,6 +611,7 @@ export default function DesktopCalendarView({
                           }`}
                           style={{
                             backgroundColor: districtColor,
+                            textShadow: "0 1px 2px rgba(0,0,0,0.3)",
                           }}
                           onClick={() => setSelectedEvent(course)}
                           title={course.title}
@@ -630,11 +671,12 @@ export default function DesktopCalendarView({
                               <button
                                 key={idx}
                                 onClick={() => setSelectedEvent(event)}
-                                className={`flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium text-gray-900 transition-all hover:brightness-95 ${categoryStyle.borderClass}`}
+                                className={`text-dark dark:text-dark-text flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${categoryStyle.borderClass}`}
                                 style={{
-                                  backgroundColor: hexToRgba(
+                                  backgroundColor: getEventBackgroundStyle(
                                     districtColor,
                                     categoryStyle.bgOpacity,
+                                    isDarkMode,
                                   ),
                                   borderColor: districtColor,
                                 }}
@@ -684,9 +726,11 @@ export default function DesktopCalendarView({
       </div>
 
       {/* Legend */}
-      <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-md">
-        <h3 className="mb-3 text-sm font-bold text-gray-900">Legende</h3>
-        <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 md:grid-cols-2">
+      <div className="dark:border-dark-border dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface mt-6 rounded-lg border border-gray-200 p-4 shadow-md">
+        <h3 className="text-dark dark:text-dark-text mb-3 text-sm font-bold">
+          Legende
+        </h3>
+        <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 md:grid-cols-2 dark:text-gray-300">
           <div className="flex items-center gap-2">
             <svg
               className="h-3 w-3"
@@ -754,13 +798,13 @@ export default function DesktopCalendarView({
               aria-labelledby="more-events-title"
             >
               <div
-                className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl"
+                className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border max-h-[80vh] w-full max-w-md overflow-hidden rounded-lg shadow-xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between border-b p-4">
+                <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
                   <h3
                     id="more-events-title"
-                    className="text-dark text-lg font-bold"
+                    className="text-dark dark:text-dark-text text-lg font-bold"
                   >
                     Events am {day}.{" "}
                     {currentMonth.toLocaleDateString("de-DE", {
@@ -770,7 +814,7 @@ export default function DesktopCalendarView({
                   </h3>
                   <button
                     onClick={() => setShowMoreEventsDay(null)}
-                    className="rounded p-1 transition-colors hover:bg-gray-100"
+                    className="dark:hover:bg-dark-background-secondary rounded p-1 transition-colors hover:bg-gray-100"
                     aria-label="Modal schließen"
                   >
                     <svg
@@ -801,20 +845,20 @@ export default function DesktopCalendarView({
                           setSelectedEvent(item);
                           setShowMoreEventsDay(null);
                         }}
-                        className="w-full rounded-lg border border-gray-200 p-3 text-left transition-colors hover:bg-gray-50"
+                        className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background w-full rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50"
                         style={{
                           borderLeftWidth: "4px",
                           borderLeftColor: districtColor,
                         }}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-dark flex-1 font-semibold">
+                          <div className="text-dark dark:text-dark-text flex-1 font-semibold">
                             {item.title}
                           </div>
                           {!isCourse &&
                             item.type === "event" &&
                             item.openToParticipants && (
-                              <span className="inline-flex shrink-0 items-center gap-1 rounded bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600">
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600 dark:bg-green-900/20 dark:text-green-400">
                                 <svg
                                   className="h-2.5 w-2.5"
                                   fill="none"
@@ -832,7 +876,7 @@ export default function DesktopCalendarView({
                               </span>
                             )}
                         </div>
-                        <div className="mt-1 text-sm text-gray-600">
+                        <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                           {isCourse ? (
                             <>
                               {item.date.toLocaleDateString("de-DE")} -{" "}
@@ -847,13 +891,13 @@ export default function DesktopCalendarView({
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })}
-                              <span className="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                              <span className="bg-background-tertiary dark:bg-dark-background-secondary text-dark dark:text-dark-text ml-2 rounded px-2 py-0.5 text-xs">
                                 {item.type === "event" && item.category}
                               </span>
                             </>
                           )}
                         </div>
-                        <div className="mt-1 text-xs text-gray-500">
+                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                           {item.bezirk?.name || ""}
                         </div>
                       </button>

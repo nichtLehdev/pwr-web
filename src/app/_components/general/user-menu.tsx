@@ -1,14 +1,15 @@
 "use client";
 
+import { signOut } from "@/lib/auth";
+import type { Session } from "@/server/better-auth/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/server/better-auth/client";
 
-export function UserMenu({ session }: { session: any }) {
+export function UserMenu({ session }: { session: Session }) {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await authClient.signOut();
+    await signOut();
     router.push("/login");
     router.refresh();
   };

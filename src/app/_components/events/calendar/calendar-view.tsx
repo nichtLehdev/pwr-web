@@ -178,13 +178,15 @@ export default function CalendarView({ items }: CalendarViewProps) {
       {/* Mobile Kalender (< lg) */}
       <div className="lg:hidden">
         {/* Kalender Header */}
-        <div className="rounded-lg bg-white p-4 shadow-md">
+        <div className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border rounded-lg p-4 shadow-md">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-dark text-xl font-bold">{monthName}</h2>
+            <h2 className="text-dark text-xl font-bold dark:text-white">
+              {monthName}
+            </h2>
             <div className="flex gap-2">
               <button
                 onClick={goToPreviousMonth}
-                className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                className="dark:hover:bg-dark-background rounded-lg p-2 transition-colors hover:bg-gray-100"
                 aria-label="Vorheriger Monat"
               >
                 <svg
@@ -209,7 +211,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
               </button>
               <button
                 onClick={goToNextMonth}
-                className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                 aria-label="Nächster Monat"
               >
                 <svg
@@ -234,7 +236,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
             {weekDays.map((day) => (
               <div
                 key={day}
-                className="py-2 text-center text-xs font-semibold text-gray-600"
+                className="py-2 text-center text-xs font-semibold text-gray-600 dark:text-gray-300"
               >
                 {day}
               </div>
@@ -279,7 +281,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                         ? "bg-primary/20 text-primary font-bold"
                         : courseStatus
                           ? "bg-primary/5"
-                          : "hover:bg-gray-100"
+                          : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
                   {/* Mitmachangebot-Indicator oben rechts */}
@@ -296,7 +298,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   {courseStatus && (
                     <div
                       className={`absolute top-0 right-0 left-0 h-0.5 ${
-                        selected ? "bg-white" : "bg-primary"
+                        selected ? "bg-white dark:bg-[#1a1614]" : "bg-primary"
                       } ${
                         courseStatus === "start"
                           ? "rounded-l-full"
@@ -335,8 +337,8 @@ export default function CalendarView({ items }: CalendarViewProps) {
           </div>
 
           {/* Legende */}
-          <div className="mt-4 border-t border-gray-200 pt-4">
-            <div className="flex flex-wrap gap-4 text-xs text-gray-600">
+          <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4">
+            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-300">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-green-500"></div>
                 <span>Mitspielen möglich</span>
@@ -353,7 +355,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
 
       {/* Events für den ausgewählten Tag - nur Mobile */}
       <div className="lg:hidden">
-        <h3 className="text-dark mb-3 text-lg font-bold">
+        <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
           {selectedDate.toLocaleDateString("de-DE", {
             weekday: "long",
             day: "numeric",
@@ -386,7 +388,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
             ))}
           </div>
         ) : (
-          <p className="mb-6 rounded-lg bg-gray-50 py-4 text-center text-sm text-gray-600">
+          <p className="bg-background-secondary dark:bg-dark-background-secondary text-dark dark:text-dark-text mb-6 rounded-lg py-4 text-center text-sm">
             Keine Termine an diesem Tag
           </p>
         )}
@@ -394,7 +396,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
         {/* Nächste Termine */}
         {upcomingItems.length > 0 && (
           <>
-            <h4 className="text-dark mt-6 mb-3 text-base font-bold">
+            <h4 className="text-dark dark:text-dark-text mt-6 mb-3 text-base font-bold">
               Nächste Termine
             </h4>
             <div className="space-y-2">
@@ -420,7 +422,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
         )}
 
         {todayItems.length === 0 && upcomingItems.length === 0 && (
-          <p className="py-8 text-center text-gray-600">
+          <p className="py-8 text-center text-gray-600 dark:text-gray-300">
             Keine weiteren Termine geplant.
           </p>
         )}

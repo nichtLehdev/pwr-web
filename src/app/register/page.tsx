@@ -156,11 +156,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="bg-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
+    <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-dark mb-2 text-3xl font-bold">Konto erstellen</h1>
-          <p className="text-gray-600">
+          <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
+            Konto erstellen
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Bereits ein Konto?{" "}
             <Link
               href="/login"
@@ -171,10 +173,10 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        <div className="rounded-lg bg-white p-6 shadow-lg md:p-8">
+        <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
           {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           )}
 
@@ -183,7 +185,7 @@ export default function RegisterPage() {
               <div>
                 <label
                   htmlFor="firstName"
-                  className="text-dark mb-1 block text-sm font-medium"
+                  className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
                 >
                   Vorname
                 </label>
@@ -194,14 +196,14 @@ export default function RegisterPage() {
                   required
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="lastName"
-                  className="text-dark mb-1 block text-sm font-medium"
+                  className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
                 >
                   Nachname
                 </label>
@@ -212,7 +214,7 @@ export default function RegisterPage() {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>
@@ -220,7 +222,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="username"
-                className="text-dark mb-1 block text-sm font-medium"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
               >
                 Benutzername
               </label>
@@ -233,16 +235,18 @@ export default function RegisterPage() {
                 value={formData.username}
                 onChange={handleChange}
                 onBlur={checkUsernameAvailability}
-                className={`focus:border-primary focus:ring-primary block w-full rounded-md border px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
+                className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
                   usernameStatus.available === true
                     ? "border-green-500"
                     : usernameStatus.available === false
                       ? "border-red-500"
-                      : "border-gray-300"
+                      : "dark:border-dark-border border-gray-300"
                 }`}
               />
               {usernameStatus.checking ? (
-                <p className="mt-1 text-xs text-gray-500">Überprüfe...</p>
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Überprüfe...
+                </p>
               ) : usernameStatus.message ? (
                 <p
                   className={`mt-1 text-xs ${
@@ -252,7 +256,7 @@ export default function RegisterPage() {
                   {usernameStatus.message}
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   Wird automatisch aus Vor- und Nachname generiert
                 </p>
               )}
@@ -261,7 +265,7 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="text-dark mb-1 block text-sm font-medium"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
               >
                 E-Mail-Adresse
               </label>
@@ -273,14 +277,14 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="text-dark mb-1 block text-sm font-medium"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
               >
                 Passwort
               </label>
@@ -292,9 +296,11 @@ export default function RegisterPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="focus:border-primary focus:ring-primary block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
-              <p className="mt-1 text-xs text-gray-500">Mindestens 8 Zeichen</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Mindestens 8 Zeichen
+              </p>
             </div>
 
             <button
@@ -308,10 +314,12 @@ export default function RegisterPage() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="dark:border-dark-border w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-3 text-gray-500">Oder</span>
+              <span className="dark:bg-dark-surface bg-white px-3 text-gray-500 dark:text-gray-400">
+                Oder
+              </span>
             </div>
           </div>
 
@@ -319,7 +327,7 @@ export default function RegisterPage() {
             type="button"
             onClick={handleGitHubSignUp}
             disabled={isLoading}
-            className="text-dark flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 font-semibold shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
+            className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-2.5 font-semibold shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-50"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
               <path

@@ -100,7 +100,7 @@ END:VCALENDAR`;
         | undefined);
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background dark:bg-dark-background min-h-screen">
       <PageHeader title={event.title} color={district} />
       {/* Header */}
       <section
@@ -204,9 +204,9 @@ END:VCALENDAR`;
             {/* Main Content */}
             <div className="space-y-6 lg:col-span-2">
               {/* Date & Time */}
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-dark flex items-center gap-2 text-xl font-bold">
+                  <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-xl font-bold">
                     <svg
                       className="text-primary h-6 w-6"
                       fill="none"
@@ -224,7 +224,7 @@ END:VCALENDAR`;
                   </h2>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-dark text-lg font-semibold">
+                  <p className="text-dark dark:text-dark-text text-lg font-semibold">
                     {eventDate.toLocaleDateString("de-DE", {
                       weekday: "long",
                       day: "numeric",
@@ -232,7 +232,7 @@ END:VCALENDAR`;
                       year: "numeric",
                     })}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-400">
                     {eventDate.toLocaleTimeString("de-DE", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -270,8 +270,8 @@ END:VCALENDAR`;
               </div>
 
               {/* Location */}
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <h2 className="text-dark mb-4 flex items-center gap-2 text-xl font-bold">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                   <svg
                     className="text-primary h-6 w-6"
                     fill="none"
@@ -296,19 +296,21 @@ END:VCALENDAR`;
                 {event.location && (
                   <div className="space-y-2">
                     {event.location.name && (
-                      <p className="text-dark font-semibold">
+                      <p className="text-dark dark:text-dark-text font-semibold">
                         {event.location.name}
                       </p>
                     )}
                     {event.location.street && (
-                      <p className="text-gray-600">{event.location.street}</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {event.location.street}
+                      </p>
                     )}
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       {event.location.zipCode && `${event.location.zipCode} `}
                       {event.location.city}
                     </p>
                     {event.location.additionalInfo && (
-                      <p className="mt-2 text-sm text-gray-500">
+                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
                         {event.location.additionalInfo}
                       </p>
                     )}
@@ -346,12 +348,12 @@ END:VCALENDAR`;
 
               {/* Description */}
               {event.description && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark mb-4 text-xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
                     Beschreibung
                   </h2>
                   <div
-                    className="prose max-w-none text-gray-700"
+                    className="prose max-w-none text-gray-700 dark:text-gray-300"
                     dangerouslySetInnerHTML={{ __html: event.description }}
                   />
                 </div>
@@ -359,8 +361,8 @@ END:VCALENDAR`;
 
               {/* Performing Ensemble */}
               {event.performingEnsembleType && (
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h2 className="text-dark mb-4 flex items-center gap-2 text-xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                     <svg
                       className="text-primary h-6 w-6"
                       fill="none"
@@ -380,16 +382,16 @@ END:VCALENDAR`;
                     event.auswahlChor && (
                       <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <div>
-                          <p className="text-dark mb-1 font-semibold">
+                          <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                             {event.auswahlChor.name}
                           </p>
                           {event.auswahlChor.description && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               {event.auswahlChor.description}
                             </p>
                           )}
                           {event.auswahlChor.conductor && (
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
                               Leitung: {event.auswahlChor.conductor.displayName}
                             </p>
                           )}
@@ -412,16 +414,16 @@ END:VCALENDAR`;
                     event.ensemble && (
                       <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <div>
-                          <p className="text-dark mb-1 font-semibold">
+                          <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                             {event.ensemble.name}
                           </p>
                           {event.ensemble.description && (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                               {event.ensemble.description}
                             </p>
                           )}
                           {event.ensemble.conductor && (
-                            <p className="mt-2 text-sm text-gray-500">
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
                               Leitung: {event.ensemble.conductor.displayName}
                             </p>
                           )}
@@ -441,12 +443,12 @@ END:VCALENDAR`;
                     )}
                   {event.performingEnsembleType === "CUSTOM" &&
                     event.performingEnsembleName && (
-                      <p className="text-dark font-semibold">
+                      <p className="text-dark dark:text-dark-text font-semibold">
                         {event.performingEnsembleName}
                       </p>
                     )}
                   {event.leitung && (
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
                       Leitung: {event.leitung}
                     </p>
                   )}
@@ -494,22 +496,22 @@ END:VCALENDAR`;
 
               {/* Ticket Info */}
               {!event.isFree && event.priceOptions && (
-                <div className="sticky top-20 rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark mb-4 text-lg font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border sticky top-20 rounded-lg bg-white p-6 shadow-md">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Eintrittspreise
                   </h3>
                   <div className="space-y-3">
                     {event.priceOptions.map((option, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
+                        className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
                       >
                         <div>
-                          <p className="text-dark font-semibold">
+                          <p className="text-dark dark:text-dark-text font-semibold">
                             {option.label}
                           </p>
                           {option.description && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-500">
                               {option.description}
                             </p>
                           )}
@@ -523,7 +525,7 @@ END:VCALENDAR`;
                     ))}
                   </div>
                   {event.priceInfo && (
-                    <p className="mt-4 text-xs text-gray-500">
+                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
                       {event.priceInfo}
                     </p>
                   )}
@@ -531,8 +533,8 @@ END:VCALENDAR`;
               )}
 
               {event.isFree && (
-                <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6">
-                  <p className="flex items-center gap-2 text-lg font-bold text-green-800">
+                <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/30">
+                  <p className="flex items-center gap-2 text-lg font-bold text-green-800 dark:text-green-400">
                     <svg
                       className="h-6 w-6"
                       fill="none"
@@ -554,7 +556,7 @@ END:VCALENDAR`;
               {/* Back to Overview */}
               <Link
                 href="/termine"
-                className="text-dark block w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-center font-semibold transition-colors hover:bg-gray-50"
+                className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-surface block w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-center font-semibold transition-colors hover:bg-gray-50"
               >
                 ← Zurück zur Übersicht
               </Link>

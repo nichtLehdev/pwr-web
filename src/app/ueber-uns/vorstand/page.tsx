@@ -48,9 +48,9 @@ export default async function VorstandPage() {
       </section>
 
       {/* Vorstandsmitglieder */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Die Vorstandsmitglieder
           </h2>
 
@@ -58,7 +58,7 @@ export default async function VorstandPage() {
             {vorstandMembers.map((member, index) => (
               <div key={index}>
                 {member.user && (
-                  <article className="flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
+                  <article className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
                     <div className={`h-64 ${member.color} relative`}>
                       <Image
                         src={
@@ -87,7 +87,7 @@ export default async function VorstandPage() {
                       <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
                         <Link
                           href={`mailto:${member.user.email}`}
-                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors"
+                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
                           <svg
                             className="mr-2 h-4 w-4 shrink-0"
@@ -110,7 +110,7 @@ export default async function VorstandPage() {
                               (member.user?.phone || member.phone) ??
                               ""
                             ).replace(/[^0-9+]/g, "")}`}
-                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors"
+                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
                             <svg
                               className="mr-2 h-4 w-4 shrink-0"
@@ -135,7 +135,7 @@ export default async function VorstandPage() {
                 {!member.user && (
                   <article
                     key={index}
-                    className="flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                    className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
                   >
                     <div className={`h-64 ${member.color} relative`}>
                       <Image
@@ -154,7 +154,7 @@ export default async function VorstandPage() {
 
                     {/* Content */}
                     <div className="flex flex-1 flex-col p-6">
-                      <h3 className="text-dark mb-1 text-2xl font-bold">
+                      <h3 className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
                         {member.name}
                       </h3>
                       <p className="text-primary mb-3 text-sm font-semibold">
@@ -164,7 +164,7 @@ export default async function VorstandPage() {
                       <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
                         <Link
                           href={`mailto:${member.email}`}
-                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors"
+                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
                           <svg
                             className="mr-2 h-4 w-4 shrink-0"
@@ -184,7 +184,7 @@ export default async function VorstandPage() {
                         {member.phone && (
                           <Link
                             href={`tel:${member.phone.replace(/[^0-9+]/g, "")}`}
-                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors"
+                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
                             <svg
                               className="mr-2 h-4 w-4 shrink-0"
@@ -210,7 +210,7 @@ export default async function VorstandPage() {
             ))}
           </div>
 
-          <div className="bg-primary/10 mx-auto mt-12 max-w-3xl rounded-lg p-6">
+          <div className="bg-primary/10 dark:bg-primary/20 mx-auto mt-12 max-w-3xl rounded-lg p-6">
             <div className="flex items-start gap-4">
               <svg
                 className="text-primary mt-1 h-6 w-6 shrink-0"
@@ -226,10 +226,10 @@ export default async function VorstandPage() {
                 />
               </svg>
               <div>
-                <h3 className="text-dark mb-2 font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-2 font-bold">
                   Kontakt zum Vorstand
                 </h3>
-                <p className="leading-relaxed text-gray-600">
+                <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                   Bei Fragen oder Anliegen an den Vorstand wenden Sie sich gerne
                   per E-Mail an{" "}
                   <a
@@ -254,14 +254,14 @@ export default async function VorstandPage() {
       </section>
 
       {/* Aufgaben des Vorstands */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Aufgaben des Vorstands
           </h2>
 
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -277,16 +277,16 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Geschäftsführung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Führt die laufenden Geschäfte des Posaunenwerkes im Auftrag des
                 Landesposaunenrates.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -302,16 +302,16 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Beschlussumsetzung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Setzt die Beschlüsse der Vertreterversammlung und des
                 Posaunenrates um und berichtet darüber.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -327,16 +327,16 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Eilentscheidungen
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Trifft unaufschiebbare Entscheidungen, wenn dies notwendig ist,
                 bis zur nächsten Sitzung.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-3 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -352,16 +352,16 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Vertretung nach außen
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Der Landesobmann vertritt das Posaunenwerk nach außen und innen
                 gegenüber allen Institutionen.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -377,16 +377,16 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Berichterstattung
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Erstattet regelmäßig Bericht an den Posaunenrat über die Arbeit
                 und Entwicklung des Posaunenwerks.
               </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <svg
                   className="h-6 w-6 text-white"
@@ -402,10 +402,10 @@ export default async function VorstandPage() {
                   />
                 </svg>
               </div>
-              <h3 className="text-dark mb-3 text-lg font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Ehrenamtliche Arbeit
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Alle Vorstandsmitglieder arbeiten ehrenamtlich und engagieren
                 sich aus Überzeugung für die Posaunenchorarbeit.
               </p>
@@ -415,24 +415,24 @@ export default async function VorstandPage() {
       </section>
 
       {/* Organisationsstruktur Info */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Organisationsstruktur
             </h2>
 
-            <div className="rounded-lg bg-white p-8 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                     <span className="text-sm font-bold text-white">1</span>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Vertreterversammlung
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Oberstes Organ des Posaunenwerkes. Kommt mindestens einmal
                       jährlich zusammen, beschließt über die Satzung und wählt
                       die Sachverständigen in den Posaunenrat.
@@ -445,10 +445,10 @@ export default async function VorstandPage() {
                     <span className="text-sm font-bold text-white">2</span>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Landesposaunenrat
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Leitet das Posaunenwerk und trifft Entscheidungen über
                       Grundsätze und Ziele. Berät den Vorstand und kontrolliert
                       die Ausführung der Beschlüsse.
@@ -461,10 +461,10 @@ export default async function VorstandPage() {
                     <span className="text-sm font-bold text-white">3</span>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Vorstand
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Führt die laufenden Geschäfte des Posaunenwerkes und setzt
                       die Beschlüsse um. Der Landesobmann vertritt das
                       Posaunenwerk nach außen.
@@ -477,10 +477,10 @@ export default async function VorstandPage() {
                     <span className="text-sm font-bold text-white">4</span>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Posaunenwarte
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Leiten das Posaunenwerk in musikalischer Hinsicht mit
                       Schwerpunkt auf Weiterbildung der Bläser und
                       Posaunenchorleiter.
@@ -489,7 +489,7 @@ export default async function VorstandPage() {
                 </div>
               </div>
 
-              <div className="mt-8 border-t border-gray-200 pt-8">
+              <div className="dark:border-dark-border mt-8 border-t border-gray-200 pt-8">
                 <div className="flex flex-col justify-center gap-4 sm:flex-row">
                   <Link
                     href="/ueber-uns/posaunenrat"
@@ -524,7 +524,7 @@ export default async function VorstandPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
             Interesse an einer Mitarbeit?

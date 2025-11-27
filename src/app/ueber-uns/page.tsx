@@ -59,7 +59,7 @@ export default function UeberUnsPage() {
       <PageHeader title="Über uns" color="primary" />
 
       {/* Hero Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -91,7 +91,7 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Sections Grid */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {sections.map((section) => (
@@ -109,24 +109,24 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Geschichte Section */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Unsere Geschichte
           </h2>
 
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-8 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-16 w-16 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white">
                     1949
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Gründung des Posaunenwerks
                     </h3>
-                    <p className="leading-relaxed text-gray-600">
+                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                       Das Posaunenwerk Rheinland entstand durch den
                       Zusammenschluss der Posaunenchöre auf dem Gebiet der
                       Evangelischen Kirche im Rheinland. Damit begann eine neue
@@ -141,10 +141,10 @@ export default function UeberUnsPage() {
                     1986
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Rechtliche Selbständigkeit
                     </h3>
-                    <p className="leading-relaxed text-gray-600">
+                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                       Das Posaunenwerk wurde rechtlich selbständig und als
                       Verein organisiert. Diese Struktur ermöglicht es uns bis
                       heute, flexibel und eigenverantwortlich zu agieren.
@@ -157,10 +157,10 @@ export default function UeberUnsPage() {
                     2016
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       UNESCO-Weltkulturerbe
                     </h3>
-                    <p className="leading-relaxed text-gray-600">
+                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                       Ein historischer Moment: Posaunenchöre wurden in die
                       UNESCO-Liste des immateriellen Weltkulturerbes
                       aufgenommen. Diese Anerkennung würdigt die besondere
@@ -174,10 +174,10 @@ export default function UeberUnsPage() {
                     2019
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       70 Jahre Posaunenwerk
                     </h3>
-                    <p className="leading-relaxed text-gray-600">
+                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                       Zum 70-jährigen Bestehen veranstaltete das Posaunenwerk
                       vom 24. bis 26. Mai den Landesposaunentag in Trier mit
                       rund 400 Teilnehmenden unter dem Motto
@@ -191,10 +191,10 @@ export default function UeberUnsPage() {
                     EPiD
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Teil einer großen Bewegung
                     </h3>
-                    <p className="leading-relaxed text-gray-600">
+                    <p className="leading-relaxed text-gray-600 dark:text-gray-400">
                       Das Posaunenwerk Rheinland gehört zum Evangelischen
                       Posaunendienst in Deutschland (EPiD) mit mehr als 100.000
                       Posaunenbläser*innen. Der EPiD organisierte große
@@ -205,10 +205,10 @@ export default function UeberUnsPage() {
                 </div>
               </div>
 
-              <div className="mt-8 border-t border-gray-200 pt-8">
+              <div className="dark:border-dark-border mt-8 border-t border-gray-200 pt-8">
                 <Link
                   href="/ueber-uns/struktur"
-                  className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
+                  className="text-primary hover:text-primary-dark dark:hover:text-primary-light inline-flex items-center font-semibold"
                 >
                   Mehr zur Geschichte und Struktur
                   <svg
@@ -232,45 +232,49 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Zahlen & Fakten */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Zahlen & Fakten
           </h2>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg bg-white p-6 text-center shadow-lg">
-              <div className="text-primary mb-2 text-4xl font-bold md:text-5xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 text-center shadow-lg">
+              <div className="text-primary dark:text-primary-light mb-2 text-4xl font-bold md:text-5xl">
                 ~200
               </div>
-              <p className="text-gray-600">Posaunenchöre</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Posaunenenchöre
+              </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 text-center shadow-lg">
-              <div className="text-primary mb-2 text-4xl font-bold md:text-5xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 text-center shadow-lg">
+              <div className="text-primary dark:text-primary-light mb-2 text-4xl font-bold md:text-5xl">
                 ~2.000
               </div>
-              <p className="text-gray-600">Aktive Mitglieder</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Aktive Bläserinnen & Bläser
+              </p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 text-center shadow-lg">
-              <div className="text-primary mb-2 text-4xl font-bold md:text-5xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 text-center shadow-lg">
+              <div className="text-primary dark:text-primary-light mb-2 text-4xl font-bold md:text-5xl">
                 13
               </div>
-              <p className="text-gray-600">Bezirke</p>
+              <p className="text-gray-600 dark:text-gray-400">Bezirke</p>
             </div>
 
-            <div className="rounded-lg bg-white p-6 text-center shadow-lg">
-              <div className="text-primary mb-2 text-4xl font-bold md:text-5xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 text-center shadow-lg">
+              <div className="text-primary dark:text-primary-light mb-2 text-4xl font-bold md:text-5xl">
                 1949
               </div>
-              <p className="text-gray-600">Gründungsjahr</p>
+              <p className="text-gray-600 dark:text-gray-400">Gründungsjahr</p>
             </div>
           </div>
 
           {/* Zusätzliche Info-Karten */}
           <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -288,10 +292,10 @@ export default function UeberUnsPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-dark mb-2 text-lg font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                     UNESCO-Weltkulturerbe
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     2016 wurden Posaunenchöre in die UNESCO-Liste des
                     immateriellen Weltkulturerbes aufgenommen.
                   </p>
@@ -299,7 +303,7 @@ export default function UeberUnsPage() {
               </div>
             </div>
 
-            <div className="rounded-lg bg-white p-6 shadow-lg">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-district-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -317,10 +321,10 @@ export default function UeberUnsPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-dark mb-2 text-lg font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                     Teil des EPiD
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     Mitglied im Evangelischen Posaunendienst in Deutschland mit
                     über 100.000 Bläser*innen.
                   </p>
@@ -332,24 +336,24 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Kontakt Section */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
-          <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Kontakt
           </h2>
 
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-2">
             {/* Kontakt-Informationen */}
-            <div className="rounded-lg bg-white p-8 shadow-lg">
-              <h3 className="text-dark mb-6 text-xl font-bold">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
+              <h3 className="text-dark dark:text-dark-text mb-6 text-xl font-bold">
                 Geschäftsstelle
               </h3>
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 shrink-0 rounded-lg p-3">
+                  <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
                     <svg
-                      className="text-primary h-6 w-6"
+                      className="text-primary dark:text-primary-light h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -369,8 +373,10 @@ export default function UeberUnsPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-dark mb-1 font-semibold">Adresse</p>
-                    <p className="text-gray-600">
+                    <p className="text-dark dark:text-dark-text mb-1 font-semibold">
+                      Adresse
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400">
                       Evangelisches Posaunenwerk Rheinland
                       <br />
                       Hans-Böckler-Straße 7<br />
@@ -380,9 +386,9 @@ export default function UeberUnsPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 shrink-0 rounded-lg p-3">
+                  <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
                     <svg
-                      className="text-primary h-6 w-6"
+                      className="text-primary dark:text-primary-light h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -396,10 +402,12 @@ export default function UeberUnsPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-dark mb-1 font-semibold">Telefon</p>
+                    <p className="text-dark dark:text-dark-text mb-1 font-semibold">
+                      Telefon
+                    </p>
                     <a
                       href="tel:+492118957370"
-                      className="hover:text-primary text-gray-600 transition-colors"
+                      className="hover:text-primary dark:hover:text-primary-light text-gray-600 transition-colors dark:text-gray-400"
                     >
                       +49 211 89 57 370
                     </a>
@@ -407,9 +415,9 @@ export default function UeberUnsPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 shrink-0 rounded-lg p-3">
+                  <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
                     <svg
-                      className="text-primary h-6 w-6"
+                      className="text-primary dark:text-primary-light h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -423,10 +431,12 @@ export default function UeberUnsPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-dark mb-1 font-semibold">E-Mail</p>
+                    <p className="text-dark dark:text-dark-text mb-1 font-semibold">
+                      E-Mail
+                    </p>
                     <a
                       href="mailto:info@posaunenwerk-rheinland.de"
-                      className="hover:text-primary text-gray-600 transition-colors"
+                      className="hover:text-primary dark:hover:text-primary-light text-gray-600 transition-colors dark:text-gray-400"
                     >
                       info@posaunenwerk-rheinland.de
                     </a>
@@ -434,9 +444,9 @@ export default function UeberUnsPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 shrink-0 rounded-lg p-3">
+                  <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
                     <svg
-                      className="text-primary h-6 w-6"
+                      className="text-primary dark:text-primary-light h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -450,10 +460,10 @@ export default function UeberUnsPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-dark mb-1 font-semibold">
+                    <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                       Öffnungszeiten
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Mo - Fr: 9:00 - 16:00 Uhr
                       <br />
                       oder nach Vereinbarung
@@ -464,12 +474,12 @@ export default function UeberUnsPage() {
             </div>
 
             {/* Schnellkontakt */}
-            <div className="rounded-lg bg-white p-8 shadow-lg">
-              <h3 className="text-dark mb-6 text-xl font-bold">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
+              <h3 className="text-dark dark:text-dark-text mb-6 text-xl font-bold">
                 Schnellkontakt
               </h3>
 
-              <p className="mb-6 text-gray-600">
+              <p className="mb-6 text-gray-600 dark:text-gray-400">
                 Haben Sie Fragen oder möchten Sie mehr erfahren? Nutzen Sie
                 unser Kontaktformular oder wenden Sie sich direkt an uns.
               </p>
@@ -500,7 +510,7 @@ export default function UeberUnsPage() {
                     href="https://facebook.com/posaunenwerkrheinland"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-dark inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
+                    className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
                     aria-label="Facebook"
                   >
                     <svg
@@ -516,7 +526,7 @@ export default function UeberUnsPage() {
                     href="https://www.instagram.com/posaunenwerk_rheinland/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-dark inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
+                    className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
                     aria-label="Instagram"
                   >
                     <svg
@@ -532,7 +542,7 @@ export default function UeberUnsPage() {
                     href="https://www.youtube.com/@PWRheinland"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-dark inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
+                    className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border inline-flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-4 py-3 transition-colors hover:bg-gray-200"
                     aria-label="YouTube"
                   >
                     <svg
@@ -546,14 +556,14 @@ export default function UeberUnsPage() {
                 </div>
               </div>
 
-              <div className="bg-primary/10 mt-6 rounded-lg p-4">
-                <p className="text-sm text-gray-700">
+              <div className="bg-primary/10 dark:bg-primary/20 mt-6 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   <strong>Tipp:</strong> Abonnieren Sie unseren Newsletter für
                   aktuelle Informationen und Termine!
                 </p>
                 <Link
                   href="/newsletter"
-                  className="text-primary hover:text-primary-dark mt-2 inline-flex items-center text-sm font-semibold"
+                  className="text-primary hover:text-primary-dark dark:hover:text-primary-light mt-2 inline-flex items-center text-sm font-semibold"
                 >
                   Newsletter abonnieren
                   <svg
@@ -577,7 +587,7 @@ export default function UeberUnsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
             Teil unserer Gemeinschaft werden?

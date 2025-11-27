@@ -11,7 +11,7 @@ export default async function StrukturGeschichtePage() {
       <PageHeader title="Struktur & Geschichte" color="primary" />
 
       {/* Hero Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -41,16 +41,16 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* Organisatorische Struktur */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Organisatorische Struktur
             </h2>
 
             <div className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <p className="mb-6 leading-relaxed text-gray-600">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                   Das Evangelische Posaunenwerk in der Evangelischen Kirche im
                   Rheinland ist die Dachorganisation für mehr als 200
                   Posaunenchöre mit über 2.000 aktiven Bläserinnen und Bläsern.
@@ -66,29 +66,37 @@ export default async function StrukturGeschichtePage() {
                 </p>
               </div>
 
-              <div className="bg-primary/5 border-primary rounded-lg border-l-4 p-6">
-                <h3 className="text-dark mb-4 text-xl font-bold">
+              <div className="bg-primary/5 dark:bg-primary/10 border-primary rounded-lg border-l-4 p-6">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
                   Kernzahlen im Überblick
                 </h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Posaunenchöre</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Posaunenchöre
+                    </span>
                     <span className="text-primary text-2xl font-bold">
                       200+
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Aktive Bläser</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Aktive Bläser
+                    </span>
                     <span className="text-primary text-2xl font-bold">
                       2.000+
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Bezirke</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Bezirke
+                    </span>
                     <span className="text-primary text-2xl font-bold">13</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Auswahlchöre</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Auswahlchöre
+                    </span>
                     <span className="text-primary text-2xl font-bold">3</span>
                   </div>
                 </div>
@@ -96,8 +104,8 @@ export default async function StrukturGeschichtePage() {
             </div>
 
             {/* Hierarchie-Darstellung */}
-            <div className="rounded-lg bg-white p-6 shadow-lg lg:p-8">
-              <h3 className="text-dark mb-8 text-center text-xl font-bold md:text-2xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg lg:p-8">
+              <h3 className="text-dark dark:text-dark-text mb-8 text-center text-xl font-bold md:text-2xl">
                 Organisatorischer Aufbau
               </h3>
 
@@ -110,7 +118,7 @@ export default async function StrukturGeschichtePage() {
                       Strategische Führung
                     </div>
                   </div>
-                  <div className="h-8 w-0.5 bg-gray-300"></div>
+                  <div className="dark:bg-dark-border h-8 w-0.5 bg-gray-300"></div>
                 </div>
 
                 {/* Vorstand */}
@@ -121,7 +129,7 @@ export default async function StrukturGeschichtePage() {
                       Leitung & Koordination
                     </div>
                   </div>
-                  <div className="h-8 w-0.5 bg-gray-300"></div>
+                  <div className="dark:bg-dark-border h-8 w-0.5 bg-gray-300"></div>
                 </div>
 
                 {/* Landesposaunenwarte */}
@@ -134,7 +142,7 @@ export default async function StrukturGeschichtePage() {
                       Operative Leitung & Ausbildung
                     </div>
                   </div>
-                  <div className="h-8 w-0.5 bg-gray-300"></div>
+                  <div className="dark:bg-dark-border h-8 w-0.5 bg-gray-300"></div>
                 </div>
 
                 {/* Bezirke */}
@@ -147,7 +155,7 @@ export default async function StrukturGeschichtePage() {
                       Regionale Koordination
                     </div>
                   </div>
-                  <div className="h-8 w-0.5 bg-gray-300"></div>
+                  <div className="dark:bg-dark-border h-8 w-0.5 bg-gray-300"></div>
                 </div>
 
                 {/* Posaunenchöre */}
@@ -164,39 +172,39 @@ export default async function StrukturGeschichtePage() {
               </div>
 
               {/* Links zu Unterseiten */}
-              <div className="mt-8 grid grid-cols-1 gap-4 border-t border-gray-200 pt-8 md:grid-cols-3">
+              <div className="dark:border-dark-border mt-8 grid grid-cols-1 gap-4 border-t border-gray-200 pt-8 md:grid-cols-3">
                 <Link
                   href="/ueber-uns/posaunenrat"
-                  className="bg-primary/5 hover:bg-primary/10 group rounded-lg p-4 text-center transition-colors"
+                  className="bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 group rounded-lg p-4 text-center transition-colors"
                 >
                   <div className="text-primary mb-1 font-semibold group-hover:underline">
                     Posaunenrat
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Aufgaben & Mitglieder
                   </div>
                 </Link>
 
                 <Link
                   href="/ueber-uns/vorstand"
-                  className="bg-primary/5 hover:bg-primary/10 group rounded-lg p-4 text-center transition-colors"
+                  className="bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 group rounded-lg p-4 text-center transition-colors"
                 >
                   <div className="text-primary mb-1 font-semibold group-hover:underline">
                     Vorstand
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Personen & Kontakt
                   </div>
                 </Link>
 
                 <Link
                   href="/ueber-uns/bezirke"
-                  className="bg-primary/5 hover:bg-primary/10 group rounded-lg p-4 text-center transition-colors"
+                  className="bg-primary/5 dark:bg-primary/10 hover:bg-primary/10 dark:hover:bg-primary/20 group rounded-lg p-4 text-center transition-colors"
                 >
                   <div className="text-primary mb-1 font-semibold group-hover:underline">
                     Bezirke
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Obleute & Regionen
                   </div>
                 </Link>
@@ -207,7 +215,7 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* Förderverein */}
-      <section className="bg-foerderverein py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-foerderverein dark:bg-foerderverein-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
@@ -357,13 +365,13 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* Geschichte */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
-            <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
               Unsere Geschichte
             </h2>
-            <p className="mb-12 text-lg text-gray-600">
+            <p className="mb-12 text-lg text-gray-600 dark:text-gray-400">
               Über 140 Jahre Posaunenchorarbeit im Rheinland – eine Geschichte
               von Tradition, Innovation und gelebter Gemeinschaft. Erleben Sie
               die wichtigsten Meilensteine unserer Entwicklung.
@@ -375,7 +383,7 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* Vision & Mission */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <h2 className="mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
@@ -444,13 +452,13 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-background-secondary py-12 md:py-16">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
               Teil unserer Geschichte werden?
             </h2>
-            <p className="mb-8 text-lg text-gray-600">
+            <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
               Finden Sie einen Posaunenchor in Ihrer Nähe und werden Sie Teil
               dieser lebendigen Tradition.
             </p>

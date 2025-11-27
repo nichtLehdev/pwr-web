@@ -132,10 +132,10 @@ export default function BildungPage() {
       </section>
 
       {/* Hinweis: Offen für alle */}
-      <section className="bg-primary/10 py-8">
+      <section className="bg-primary/10 dark:bg-primary/20 py-8">
         <div className="container">
           <div className="mx-auto max-w-4xl text-center">
-            <p className="text-lg text-gray-700">
+            <p className="text-lg text-gray-700 dark:text-gray-300">
               <strong>Wichtig:</strong> Unser Angebot richtet sich nicht
               ausschließlich an Mitglieder des Posaunenwerks, sondern steht{" "}
               <strong>allen Interessierten offen</strong>!
@@ -145,13 +145,13 @@ export default function BildungPage() {
       </section>
 
       {/* Kurs-Kategorien */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Unsere Bildungsangebote
             </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600">
+            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
               Von Anfängerkursen bis zur Dirigenten-Ausbildung – finde das
               passende Angebot für dein musikalisches Weiterkommen.
             </p>
@@ -160,7 +160,7 @@ export default function BildungPage() {
               {courseCategories.map((category) => (
                 <div
                   key={category.id}
-                  className="rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+                  className="dark:bg-dark-surface dark:border-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl dark:border dark:shadow-none"
                   style={{
                     borderTopColor: `var(--color-${category.color.replace(
                       "bg-",
@@ -180,10 +180,12 @@ export default function BildungPage() {
                       {category.icon}
                     </svg>
                   </div>
-                  <h3 className="text-dark mb-2 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                     {category.title}
                   </h3>
-                  <p className="text-gray-600">{category.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {category.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -192,10 +194,10 @@ export default function BildungPage() {
       </section>
 
       {/* Aktuelle Lehrgänge */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-8 text-center shadow-xl md:p-10">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 text-center shadow-xl md:p-10 dark:border dark:shadow-none">
               <div className="bg-district-2 mb-6 inline-block rounded-full p-3">
                 <svg
                   className="h-12 w-12 text-white"
@@ -211,10 +213,10 @@ export default function BildungPage() {
                   />
                 </svg>
               </div>
-              <h2 className="text-dark mb-4 text-2xl font-bold md:text-3xl">
+              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
                 Aktuelle Lehrgänge & Anmeldung
               </h2>
-              <p className="mb-8 text-lg leading-relaxed text-gray-600">
+              <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
                 Das aktuelle Angebot und Anmeldemöglichkeiten findest du in
                 unserer Terminübersicht. Dort kannst du dich direkt für die
                 Lehrgänge anmelden.
@@ -244,14 +246,14 @@ export default function BildungPage() {
       </section>
 
       {/* Leistungsstufen & Stempel */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Leistungsstufen & Stempel
             </h2>
 
-            <div className="mb-6 rounded-lg bg-white p-8 shadow-lg">
+            <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
               <div className="mb-6 flex items-start gap-4">
                 <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -269,16 +271,16 @@ export default function BildungPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     Aufbauende Ausbildung
                   </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600">
+                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                     Begleitend zur Ausbildung eines (Jung-)Bläsers können
                     aufeinander aufbauende Leistungsstufen (Stempel) erworben
                     werden. Hierzu werden durch den Jungbläserausbilder,
                     Chorleiter oder Posaunenwart kleine Prüfungen abgehalten.
                   </p>
-                  <p className="mb-6 leading-relaxed text-gray-600">
+                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                     Die erreichte Leistungsstufe wird auf dem Mitgliedsausweis
                     durch einen Stempel dokumentiert.
                   </p>
@@ -311,22 +313,22 @@ export default function BildungPage() {
       </section>
 
       {/* Jungbläserausbildung */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Jungbläserausbildung
             </h2>
 
-            <div className="rounded-lg bg-white p-8 shadow-lg">
-              <p className="mb-6 leading-relaxed text-gray-600">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
+              <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                 Eine vom Landesposaunenwart und den Regionalposaunenwarten
                 zusammengestellte Arbeitshilfe zum Thema Jungbläserausbildung
                 versucht Antworten auf die vielen Fragen rund um das Thema zu
                 geben:
               </p>
 
-              <ul className="mb-6 space-y-2 text-gray-700">
+              <ul className="mb-6 space-y-2 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start gap-2">
                   <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
                   <span>Wie generiere ich neue BläserInnen?</span>
@@ -374,10 +376,10 @@ export default function BildungPage() {
       </section>
 
       {/* Fördermöglichkeiten */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="bg-foerderverein/10 border-foerderverein rounded-lg border-l-4 p-8">
+            <div className="bg-foerderverein/10 dark:bg-foerderverein/20 border-foerderverein rounded-lg border-l-4 p-8">
               <div className="flex items-start gap-4">
                 <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -395,10 +397,10 @@ export default function BildungPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     Fördermöglichkeiten durch den Förderverein
                   </h3>
-                  <p className="mb-4 leading-relaxed text-gray-700">
+                  <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
                     Der Förderverein unterstützt die Bildungsarbeit des
                     Posaunenwerks! Geschwisterkinder erhalten eine Ermäßigung
                     von 25 € pro weiterem Kind bei der Anmeldung für Lehrgänge.
@@ -419,20 +421,20 @@ export default function BildungPage() {
       </section>
 
       {/* Downloads & Wichtige Hinweise */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Wichtige Hinweise & Downloads
             </h2>
 
-            <div className="rounded-lg bg-white p-8 shadow-lg">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-dark mb-2 text-lg font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                     Für minderjährige Teilnehmer
                   </h3>
-                  <p className="mb-4 text-gray-600">
+                  <p className="mb-4 text-gray-600 dark:text-gray-400">
                     Minderjährige Lehrgangsteilnehmer müssen vorab eine
                     ausgefüllte und unterzeichnete Zusatzerklärung einreichen.
                   </p>
@@ -459,11 +461,11 @@ export default function BildungPage() {
                   </a>
                 </div>
 
-                <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-dark mb-2 text-lg font-bold">
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                     Fragen zur Ausbildung?
                   </h3>
-                  <p className="mb-4 text-gray-600">
+                  <p className="mb-4 text-gray-600 dark:text-gray-400">
                     Unser Bildungsreferat berät dich gerne zu allen Fragen rund
                     um Aus- und Weiterbildung.
                   </p>

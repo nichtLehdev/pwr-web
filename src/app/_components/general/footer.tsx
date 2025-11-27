@@ -30,19 +30,21 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-dark text-white">
+    <footer className="bg-dark dark:bg-dark-background-secondary text-white">
       {/* Main Footer Content */}
       <div className="container py-12 md:py-16">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-4">
           {/* Über uns */}
           <div>
-            <h3 className="text-primary mb-4 text-lg font-bold">Über uns</h3>
+            <h3 className="text-primary dark:text-primary-light mb-4 text-lg font-bold">
+              Über uns
+            </h3>
             <ul className="space-y-2">
               {footerLinks.about.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="hover:text-primary text-sm text-gray-300 transition-colors"
+                    className="hover:text-primary dark:hover:text-primary-light text-sm text-gray-300 transition-colors dark:text-gray-400"
                   >
                     {link.label}
                   </Link>
@@ -53,13 +55,15 @@ export default function Footer() {
 
           {/* Mitmachen */}
           <div>
-            <h3 className="text-primary mb-4 text-lg font-bold">Mitmachen</h3>
+            <h3 className="text-primary dark:text-primary-light mb-4 text-lg font-bold">
+              Mitmachen
+            </h3>
             <ul className="space-y-2">
               {footerLinks.participate.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="hover:text-primary text-sm text-gray-300 transition-colors"
+                    className="hover:text-primary dark:hover:text-primary-light text-sm text-gray-300 transition-colors dark:text-gray-400"
                   >
                     {link.label}
                   </Link>
@@ -70,13 +74,15 @@ export default function Footer() {
 
           {/* Ressourcen */}
           <div>
-            <h3 className="text-primary mb-4 text-lg font-bold">Ressourcen</h3>
+            <h3 className="text-primary dark:text-primary-light mb-4 text-lg font-bold">
+              Ressourcen
+            </h3>
             <ul className="space-y-2">
               {footerLinks.resources.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="hover:text-primary text-sm text-gray-300 transition-colors"
+                    className="hover:text-primary dark:hover:text-primary-light text-sm text-gray-300 transition-colors dark:text-gray-400"
                   >
                     {link.label}
                   </Link>
@@ -87,11 +93,11 @@ export default function Footer() {
 
           {/* Kontakt & Social */}
           <div>
-            <h3 className="text-primary mb-4 text-lg font-bold">
+            <h3 className="text-primary dark:text-primary-light mb-4 text-lg font-bold">
               Bleib in Kontakt
             </h3>
             <div className="space-y-4">
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-gray-300 dark:text-gray-400">
                 Evangelisches Posaunenwerk
                 <br />
                 in der Evangelischen Kirche
@@ -105,7 +111,7 @@ export default function Footer() {
                   href="https://facebook.com/posaunenwerkrheinland"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary text-gray-300 transition-colors"
+                  className="hover:text-primary dark:hover:text-primary-light text-gray-300 transition-colors dark:text-gray-400"
                   aria-label="Facebook"
                 >
                   <svg
@@ -121,7 +127,7 @@ export default function Footer() {
                   href="https://www.instagram.com/posaunenwerk_rheinland/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary text-gray-300 transition-colors"
+                  className="hover:text-primary dark:hover:text-primary-light text-gray-300 transition-colors dark:text-gray-400"
                   aria-label="Instagram"
                 >
                   <svg
@@ -137,7 +143,7 @@ export default function Footer() {
                   href="https://www.youtube.com/@PWRheinland"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-primary text-gray-300 transition-colors"
+                  className="hover:text-primary dark:hover:text-primary-light text-gray-300 transition-colors dark:text-gray-400"
                   aria-label="YouTube"
                 >
                   <svg
@@ -154,7 +160,7 @@ export default function Footer() {
               <div>
                 <Link
                   href="/newsletter"
-                  className="text-primary hover:text-primary-light inline-block text-sm font-semibold"
+                  className="text-primary hover:text-primary-light dark:text-primary-light dark:hover:text-primary inline-block text-sm font-semibold"
                 >
                   Newsletter abonnieren →
                 </Link>
@@ -165,9 +171,9 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-700">
+      <div className="dark:border-dark-border border-t border-gray-700">
         <div className="container py-6">
-          <div className="flex flex-col items-center justify-between gap-4 text-sm text-gray-400 md:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 text-sm text-gray-400 md:flex-row dark:text-gray-500">
             <p>
               © {currentYear} Posaunenwerk Rheinland. Alle Rechte vorbehalten.
             </p>
@@ -177,7 +183,7 @@ export default function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="hover:text-primary transition-colors"
+                  className="hover:text-primary dark:hover:text-primary-light transition-colors"
                 >
                   {link.label}
                 </Link>

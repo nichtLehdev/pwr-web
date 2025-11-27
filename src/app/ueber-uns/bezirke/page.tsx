@@ -259,7 +259,7 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
       </div>
       {/* Info Panel */}
       <div className="my-auto w-full lg:sticky lg:top-24 lg:w-1/3">
-        <div className="flex min-h-[200px] items-center justify-center rounded-lg border-2 border-gray-200 bg-gray-50 p-6">
+        <div className="dark:border-dark-border dark:bg-dark-surface flex min-h-[200px] items-center justify-center rounded-lg border-2 border-gray-200 bg-gray-50 p-6">
           {currentBezirk ? (
             <div className="text-center">
               <div
@@ -267,18 +267,18 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
               >
                 {String(currentBezirk.number).padStart(2, "0")}
               </div>
-              <h3 className="text-dark mb-2 text-xl font-bold">
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                 {currentBezirk.shortName}
               </h3>
-              <p className="mb-4 text-sm text-gray-600">
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                 {getBezirkInfo(currentBezirk.number)}
               </p>
               {currentBezirk.obleute && currentBezirk.obleute[0] && (
-                <div className="border-t border-gray-300 pt-4">
-                  <p className="mb-1 text-xs text-gray-500">
+                <div className="dark:border-dark-border border-t border-gray-300 pt-4">
+                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
                     {currentBezirk.obleute[0].obleuteRole}
                   </p>
-                  <p className="text-dark font-semibold">
+                  <p className="text-dark dark:text-dark-text font-semibold">
                     {currentBezirk.obleute[0].displayName}
                   </p>
                 </div>
@@ -349,7 +349,7 @@ export default function BezirkePage() {
       </section>
 
       {!bezirke.data ? (
-        <div className="bg-background py-12 md:py-16 lg:py-20">
+        <div className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
           <div className="container">
             <LoadingSpinner text={"Lade Bezirke..."} />
           </div>
@@ -357,18 +357,18 @@ export default function BezirkePage() {
       ) : (
         <>
           {/* Map Section */}
-          <section className="bg-background py-12 md:py-16 lg:py-20">
+          <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
             <div className="container">
               <div className="mx-auto max-w-6xl">
-                <h2 className="text-dark mb-8 text-center text-2xl font-bold md:text-3xl">
+                <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl">
                   Übersichtskarte der Bezirke
                 </h2>
 
                 {/* Desktop: Interactive Map */}
                 <div className="hidden md:block">
-                  <div className="rounded-lg bg-white p-6 shadow-lg">
+                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
                     <BezirkeMap bezirke={bezirke.data} />
-                    <p className="mt-4 text-center text-sm text-gray-600">
+                    <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                       Klicken Sie auf einen Bezirk, um zu den Kontaktdaten zu
                       springen
                     </p>
@@ -380,7 +380,7 @@ export default function BezirkePage() {
                   {bezirke.data.map((bezirk) => (
                     <div
                       key={bezirk.id}
-                      className="rounded-lg bg-white p-4 shadow-md"
+                      className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-4 shadow-md"
                     >
                       <div className="mb-2 flex items-center gap-3">
                         <div
@@ -388,11 +388,11 @@ export default function BezirkePage() {
                         >
                           {String(bezirk.number).padStart(2, "0")}
                         </div>
-                        <h3 className="text-dark font-bold">
+                        <h3 className="text-dark dark:text-dark-text font-bold">
                           {bezirk.shortName}
                         </h3>
                       </div>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {getBezirkInfo(bezirk.number)}
                       </p>
                     </div>
@@ -403,20 +403,20 @@ export default function BezirkePage() {
           </section>
 
           {/* Info Section */}
-          <section className="bg-background-secondary py-12 md:py-16">
+          <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
             <div className="container">
               <div className="mx-auto max-w-4xl">
-                <div className="rounded-lg bg-white p-8 shadow-lg">
-                  <h2 className="text-dark mb-4 text-2xl font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
                     Ihre Ansprechpartner vor Ort
                   </h2>
-                  <p className="mb-4 leading-relaxed text-gray-600">
+                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                     Geleitet werden die Bezirke von einer Bezirksobfrau oder
                     einem Bezirksobmann. Sprechen Sie die Bezirksobleute an,
                     wenn Sie einen Posaunenchor in Ihrem Bereich suchen oder
                     Fragen zu den besonderen Angeboten haben.
                   </p>
-                  <div className="bg-primary/10 flex items-start gap-3 rounded-lg p-4">
+                  <div className="bg-primary/10 dark:bg-primary/20 flex items-start gap-3 rounded-lg p-4">
                     <svg
                       className="text-primary mt-1 h-6 w-6 shrink-0"
                       fill="none"
@@ -431,10 +431,10 @@ export default function BezirkePage() {
                       />
                     </svg>
                     <div>
-                      <p className="text-dark mb-1 font-semibold">
+                      <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                         Posaunenchor in der Nähe suchen
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         Vorbeikommen und mitspielen! Herzliche Einladung dazu!
                       </p>
                     </div>
@@ -445,14 +445,14 @@ export default function BezirkePage() {
           </section>
 
           {/* Bezirke Grid */}
-          <section className="bg-background py-12 md:py-16 lg:py-20">
+          <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
             <div className="container">
               <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2">
                 {bezirke.data.map((bezirk) => (
                   <article
                     key={bezirk.id}
                     id={`bezirk-card-${bezirk.number}`}
-                    className="scroll-mt-24 overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                    className="dark:bg-dark-surface dark:shadow-dark-border scroll-mt-24 overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
                   >
                     {/* Header */}
                     <div className={`bg-district-${bezirk.number} p-6`}>
@@ -474,7 +474,9 @@ export default function BezirkePage() {
                             <div
                               key={idx}
                               className={`flex ${
-                                idx > 0 ? "border-t border-gray-200 pt-6" : ""
+                                idx > 0
+                                  ? "dark:border-dark-border border-t border-gray-200 pt-6"
+                                  : ""
                               }`}
                             >
                               <div className="my-auto mr-6 h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-32 md:w-32">
@@ -500,7 +502,7 @@ export default function BezirkePage() {
                                     {obmann.obleuteRole}
                                   </span>
                                 </div>
-                                <h4 className="text-dark mb-4 text-lg font-bold">
+                                <h4 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                                   {obmann.displayName}
                                 </h4>
 

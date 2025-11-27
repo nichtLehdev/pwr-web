@@ -28,7 +28,7 @@ export default function PostCard({
   return (
     <Link href={`/aktuelles/${id}`} className="group block h-full">
       <article
-        className="flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 bg-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        className="dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 bg-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
         style={{ borderLeftColor: districtColor || "transparent" }}
       >
         {/* Beitragsbild */}
@@ -69,7 +69,7 @@ export default function PostCard({
                   {`Bezirk ${district}`}
                 </span>
               )}
-              <time className="text-xs text-gray-500">
+              <time className="text-xs text-gray-500 dark:text-gray-400">
                 {new Date(date).toLocaleDateString("de-DE", {
                   day: "2-digit",
                   month: "long",
@@ -79,11 +79,13 @@ export default function PostCard({
             </div>
           </div>
 
-          <h3 className="text-dark group-hover:text-primary mb-3 text-xl font-bold transition-colors">
+          <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-3 text-xl font-bold transition-colors">
             {title}
           </h3>
 
-          <p className="mb-4 line-clamp-3 grow text-gray-600">{excerpt}</p>
+          <p className="mb-4 line-clamp-3 grow text-gray-600 dark:text-gray-400">
+            {excerpt}
+          </p>
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Weiterlesen

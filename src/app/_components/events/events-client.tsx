@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type {
@@ -31,6 +31,16 @@ export default function EventsClient({
   initialCourses,
   bezirke,
 }: EventsClientProps) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    const timer = setTimeout(() => {
+      document.body.style.overflow = "unset";
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const params = useSearchParams();
 
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -204,11 +214,11 @@ export default function EventsClient({
   ];
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background dark:bg-dark-background min-h-screen">
       <PageHeader title="Termine" color="primary" />
 
       {/* Header */}
-      <section className="bg-primary py-6 text-white md:py-12 lg:py-16">
+      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
         <div className="container mx-auto px-4">
           <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
             <Link href="/" className="transition-colors hover:text-white">
@@ -227,7 +237,7 @@ export default function EventsClient({
       </section>
 
       {/* Filter & View Toggle */}
-      <section className="sticky top-28 z-20 border-b bg-white shadow-sm md:top-36">
+      <section className="dark:border-dark-border dark:bg-dark-surface sticky top-28 z-20 border-b border-gray-200 bg-white shadow-sm md:top-36">
         <div className="container mx-auto px-4 py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
@@ -238,7 +248,7 @@ export default function EventsClient({
                 className={`cursor-pointer rounded-lg p-2 transition-colors ${
                   viewMode === "list"
                     ? "bg-primary text-white"
-                    : "text-dark bg-gray-100 hover:bg-gray-200"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                 }`}
                 aria-label="Listenansicht"
               >
@@ -261,7 +271,7 @@ export default function EventsClient({
                 className={`cursor-pointer rounded-lg p-2 transition-colors ${
                   viewMode === "calendar"
                     ? "bg-primary text-white"
-                    : "text-dark bg-gray-100 hover:bg-gray-200"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                 }`}
                 aria-label="Kalenderansicht"
               >
@@ -283,7 +293,7 @@ export default function EventsClient({
 
             {/* Center: Active Filters Count */}
             <div className="flex-1 text-center">
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
                 {sortedItems.length}{" "}
                 {sortedItems.length === 1 ? "Termin" : "Termine"}
                 {(filterType !== "all" ||
@@ -330,7 +340,7 @@ export default function EventsClient({
                 className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
                   filtersOpen
                     ? "bg-primary text-white"
-                    : "text-dark bg-gray-100 hover:bg-gray-200"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                 }`}
                 aria-label="Filter öffnen"
               >
@@ -359,10 +369,10 @@ export default function EventsClient({
 
           {/* Collapsible Filter Panel */}
           {filtersOpen && (
-            <div className="animate-in slide-in-from-top-2 mt-3 space-y-3 border-t pt-4">
+            <div className="animate-in slide-in-from-top-2 dark:border-dark-border mt-3 space-y-3 border-t border-gray-200 pt-4">
               {/* Type Filter */}
               <div>
-                <label className="mb-2 block text-xs font-semibold text-gray-700">
+                <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                   Typ
                 </label>
                 <div className="flex gap-2">
@@ -370,8 +380,8 @@ export default function EventsClient({
                     onClick={() => setFilterType("all")}
                     className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                       filterType === "all"
-                        ? "bg-dark text-white"
-                        : "text-dark bg-gray-100 hover:bg-gray-200"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                     }`}
                   >
                     Alle
@@ -380,8 +390,8 @@ export default function EventsClient({
                     onClick={() => setFilterType("events")}
                     className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                       filterType === "events"
-                        ? "bg-dark text-white"
-                        : "text-dark bg-gray-100 hover:bg-gray-200"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                     }`}
                   >
                     Termine
@@ -390,8 +400,8 @@ export default function EventsClient({
                     onClick={() => setFilterType("courses")}
                     className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                       filterType === "courses"
-                        ? "bg-dark text-white"
-                        : "text-dark bg-gray-100 hover:bg-gray-200"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                     }`}
                   >
                     Lehrgänge
@@ -402,13 +412,13 @@ export default function EventsClient({
               {/* District & Category */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700">
+                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Bezirk
                   </label>
                   <select
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
                   >
                     <option value="all">Alle Termine</option>
                     {districtSelectOptions.slice(1).map((district) => (
@@ -420,13 +430,13 @@ export default function EventsClient({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-xs font-semibold text-gray-700">
+                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                     Kategorie
                   </label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
                   >
                     <option value="all">Alle</option>
                     {filterType !== "courses" && (
@@ -489,7 +499,7 @@ export default function EventsClient({
               {Object.entries(groupedByMonth).map(
                 ([monthKey, { label, items }]) => (
                   <div key={monthKey}>
-                    <h2 className="text-dark mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
+                    <h2 className="text-dark dark:text-dark-text dark:border-dark-border mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
                       {label}
                     </h2>
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
@@ -525,7 +535,7 @@ export default function EventsClient({
 
               {sortedItems.length === 0 && (
                 <div className="py-8 text-center md:py-12">
-                  <p className="text-base text-gray-600 md:text-lg">
+                  <p className="text-base text-gray-600 md:text-lg dark:text-gray-400">
                     Keine Termine gefunden.
                   </p>
                 </div>

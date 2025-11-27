@@ -128,7 +128,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
             className="flex min-w-max items-center gap-2 px-4"
           >
             {/* Timeline-Linie */}
-            <div className="absolute top-8 right-0 left-0 mx-4 h-0.5 bg-gray-300"></div>
+            <div className="dark:bg-dark-border absolute top-8 right-0 left-0 mx-4 h-0.5 bg-gray-300"></div>
 
             {events.map((evt, index) => {
               const isSelected = index === selectedEvent;
@@ -156,7 +156,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
                     className={`flex h-12 w-12 items-center justify-center rounded-full shadow-md transition-all ${
                       isSelected
                         ? `${evtConfig.color} ring-primary/20 text-white ring-4`
-                        : "border-2 border-gray-300 bg-white text-gray-400"
+                        : "dark:border-dark-border dark:bg-dark-surface border-2 border-gray-300 bg-white text-gray-400 dark:text-gray-500"
                     }`}
                   >
                     <svg
@@ -180,8 +180,8 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
         </div>
 
         {/* Scroll-Hinweise */}
-        <div className="from-background pointer-events-none absolute top-0 bottom-4 left-0 w-8 bg-linear-to-r to-transparent"></div>
-        <div className="from-background pointer-events-none absolute top-0 right-0 bottom-4 w-8 bg-linear-to-l to-transparent"></div>
+        <div className="from-background dark:from-dark-background pointer-events-none absolute top-0 bottom-4 left-0 w-8 bg-linear-to-r to-transparent"></div>
+        <div className="from-background dark:from-dark-background pointer-events-none absolute top-0 right-0 bottom-4 w-8 bg-linear-to-l to-transparent"></div>
       </div>
 
       {/* Event Details */}
@@ -232,11 +232,11 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
               </span>
             </div>
 
-            <h3 className="text-dark mb-4 text-2xl font-bold md:text-3xl">
+            <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
               {event.title}
             </h3>
 
-            <p className="text-lg leading-relaxed text-gray-600">
+            <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-400">
               {event.description}
             </p>
 
@@ -245,7 +245,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
               <button
                 onClick={() => setSelectedEvent(Math.max(0, selectedEvent - 1))}
                 disabled={selectedEvent === 0}
-                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
               >
                 <svg
                   className="h-5 w-5"
@@ -293,7 +293,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
       </div>
 
       {/* Progress Indicator */}
-      <div className="text-center text-sm text-gray-500">
+      <div className="text-center text-sm text-gray-500 dark:text-gray-400">
         {selectedEvent + 1} von {events.length} Ereignissen
       </div>
     </div>

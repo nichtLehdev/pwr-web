@@ -135,7 +135,7 @@ export default function ChorFindenPage() {
         <button
           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Vorherige Seite"
         >
           <svg
@@ -155,7 +155,10 @@ export default function ChorFindenPage() {
 
         {getPageNumbers().map((page, index) =>
           page === "..." ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+            <span
+              key={`ellipsis-${index}`}
+              className="px-2 text-gray-500 dark:text-gray-400"
+            >
               ...
             </span>
           ) : (
@@ -165,7 +168,7 @@ export default function ChorFindenPage() {
               className={`rounded-lg border px-4 py-2 transition-colors ${
                 currentPage === page
                   ? "bg-primary border-primary text-white"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  : "dark:border-dark-border dark:hover:bg-dark-background-secondary border-gray-300 text-gray-700 hover:bg-gray-50 dark:text-gray-300"
               }`}
             >
               {page}
@@ -176,7 +179,7 @@ export default function ChorFindenPage() {
         <button
           onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Nächste Seite"
         >
           <svg
@@ -232,10 +235,10 @@ export default function ChorFindenPage() {
       </section>
 
       {/* Kontakt-Info */}
-      <section className="bg-background-secondary py-12 md:py-16">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-8 shadow-lg md:p-10">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="flex items-start gap-6">
                 <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
                   <svg
@@ -253,10 +256,10 @@ export default function ChorFindenPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-dark mb-3 text-2xl font-bold">
+                  <h2 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
                     Persönliche Beratung gewünscht?
                   </h2>
-                  <p className="mb-6 leading-relaxed text-gray-600">
+                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
                     Unsere Regionalposaunenwarte und Bezirksobleute helfen dir
                     gerne bei der Suche nach dem passenden Chor in deiner
                     Region. Sie kennen die Chöre vor Ort und können dich
@@ -289,10 +292,10 @@ export default function ChorFindenPage() {
       </section>
 
       {/* Chor-Liste mit Filter */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-7xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Alle Posaunenchöre
             </h2>
 
@@ -300,15 +303,17 @@ export default function ChorFindenPage() {
               {/* Left Column: Filters */}
               <div className="space-y-6 lg:col-span-1">
                 {/* Traditional Filters */}
-                <div className="rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark mb-4 text-lg font-bold">Filter</h3>
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                    Filter
+                  </h3>
 
                   <div className="space-y-4">
                     {/* Bezirk-Filter */}
                     <div>
                       <label
                         htmlFor="district"
-                        className="text-dark mb-2 block text-sm font-semibold"
+                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
                       >
                         Bezirk
                       </label>
@@ -323,7 +328,7 @@ export default function ChorFindenPage() {
                           );
                           setCurrentPage(1);
                         }}
-                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       >
                         <option value="all">Alle Bezirke</option>
                         {allBezirke.map((bezirk) => (
@@ -341,7 +346,7 @@ export default function ChorFindenPage() {
                     <div>
                       <label
                         htmlFor="search"
-                        className="text-dark mb-2 block text-sm font-semibold"
+                        className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
                       >
                         Suche
                       </label>
@@ -354,13 +359,13 @@ export default function ChorFindenPage() {
                           setCurrentPage(1);
                         }}
                         placeholder="Stadt, PLZ oder Chorname"
-                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
                       />
                     </div>
 
                     {/* Results count */}
                     <div className="flex items-center justify-between pt-2">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-semibold">
                           {filteredChoirs.length}
                         </span>{" "}
@@ -379,7 +384,7 @@ export default function ChorFindenPage() {
 
                     {/* Pagination info */}
                     {filteredChoirs.length > CHOIRS_PER_PAGE && (
-                      <div className="border-t pt-2 text-sm text-gray-600">
+                      <div className="dark:border-dark-border border-t pt-2 text-sm text-gray-600 dark:text-gray-400">
                         Zeige {startIndex + 1} bis{" "}
                         {Math.min(endIndex, filteredChoirs.length)} von{" "}
                         {filteredChoirs.length}
@@ -389,11 +394,11 @@ export default function ChorFindenPage() {
                 </div>
 
                 {/* Map placeholder - you can add your interactive map here */}
-                <div className="hidden rounded-lg bg-white p-6 shadow-md lg:block">
-                  <h3 className="text-dark mb-4 text-lg font-bold">
+                <div className="dark:bg-dark-surface dark:shadow-dark-border hidden rounded-lg bg-white p-6 shadow-md lg:block">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Bezirk auf Karte wählen
                   </h3>
-                  <p className="mb-4 text-sm text-gray-600">
+                  <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                     Klicken Sie auf einen Bezirk, um Chöre zu filtern
                   </p>
                   {/* Add your SVG map here */}
@@ -634,14 +639,14 @@ export default function ChorFindenPage() {
                       {paginatedChoirs.map((choir) => (
                         <div
                           key={choir.id}
-                          className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+                          className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
                         >
                           <div className="mb-4 flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="text-dark mb-2 text-xl font-bold">
+                              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                                 {choir.name}
                               </h3>
-                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center gap-1">
                                   <svg
                                     className="h-4 w-4"
@@ -800,6 +805,7 @@ export default function ChorFindenPage() {
                     </div>
 
                     {/* Pagination */}
+                    {/* eslint-disable-next-line react-hooks/static-components */}
                     <Pagination
                       totalPages={totalPages}
                       currentPage={currentPage}
@@ -808,9 +814,9 @@ export default function ChorFindenPage() {
                   </>
                 ) : (
                   !ensembles.isLoading && (
-                    <div className="rounded-lg bg-white p-12 text-center shadow-md">
+                    <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
                       <svg
-                        className="mx-auto mb-4 h-16 w-16 text-gray-300"
+                        className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -822,10 +828,10 @@ export default function ChorFindenPage() {
                           d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                         />
                       </svg>
-                      <h3 className="text-dark mb-2 text-xl font-bold">
+                      <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         Keine Chöre gefunden
                       </h3>
-                      <p className="mb-6 text-gray-600">
+                      <p className="mb-6 text-gray-600 dark:text-gray-400">
                         {hasActiveFilters
                           ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
                           : "Es konnten keine Chöre geladen werden."}

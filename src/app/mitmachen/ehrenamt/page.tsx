@@ -158,13 +158,13 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Möglichkeiten */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Wo kannst du dich engagieren?
             </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600">
+            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
               Es gibt vielfältige Möglichkeiten, das Posaunenwerk mit deinen
               Fähigkeiten und deiner Zeit zu unterstützen.
             </p>
@@ -173,7 +173,7 @@ export default function EhrenamtPage() {
               {opportunities.map((opportunity) => (
                 <div
                   key={opportunity.id}
-                  className="rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl"
                   style={{
                     borderTopColor: `var(--color-${opportunity.color.replace(
                       "bg-",
@@ -193,10 +193,12 @@ export default function EhrenamtPage() {
                       {opportunity.icon}
                     </svg>
                   </div>
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     {opportunity.title}
                   </h3>
-                  <p className="text-gray-600">{opportunity.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {opportunity.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -205,16 +207,19 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Vorteile */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Warum ehrenamtlich engagieren?
             </h2>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {benefits.map((benefit, index) => (
-                <div key={index} className="rounded-lg bg-white p-6 shadow-md">
+                <div
+                  key={index}
+                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md"
+                >
                   <div className="flex items-start gap-3">
                     <div className="bg-district-5 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                       <svg
@@ -232,10 +237,12 @@ export default function EhrenamtPage() {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-dark mb-2 text-lg font-bold">
+                      <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                         {benefit.title}
                       </h3>
-                      <p className="text-gray-600">{benefit.description}</p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {benefit.description}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -246,11 +253,11 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Unterstützung */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-8 shadow-xl md:p-10">
-              <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-xl md:p-10">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
                 Wir unterstützen dich!
               </h2>
 
@@ -272,10 +279,10 @@ export default function EhrenamtPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Aus- und Weiterbildung
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Wir bieten Schulungen und Fortbildungen an, damit du für
                       deine Aufgabe gut gerüstet bist.
                     </p>
@@ -299,10 +306,10 @@ export default function EhrenamtPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Vernetzung
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Tausche dich mit anderen Ehrenamtlichen aus und profitiere
                       von ihren Erfahrungen.
                     </p>
@@ -326,10 +333,10 @@ export default function EhrenamtPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Begleitung
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Du bist nicht allein! Wir stehen dir mit Rat und Tat zur
                       Seite.
                     </p>
@@ -353,10 +360,10 @@ export default function EhrenamtPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-dark mb-2 text-lg font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                       Anerkennung
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-400">
                       Dein Engagement wird wertgeschätzt und gewürdigt –
                       persönlich und bei besonderen Anlässen.
                     </p>
@@ -369,10 +376,10 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Erfahrungsbericht */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <div className="rounded-lg bg-white p-8 shadow-lg md:p-10">
+            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="mb-6 flex items-start gap-4">
                 <svg
                   className="text-primary h-12 w-12 shrink-0"
@@ -382,14 +389,14 @@ export default function EhrenamtPage() {
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                 </svg>
                 <div>
-                  <p className="mb-4 text-lg leading-relaxed text-gray-700 italic">
+                  <p className="mb-4 text-lg leading-relaxed text-gray-700 italic dark:text-gray-300">
                     &quot;Die Arbeit als Chorleiter erfüllt mich sehr. Es ist
                     wunderbar zu sehen, wie sich die Bläserinnen und Bläser
                     entwickeln und gemeinsam Musik machen. Die Unterstützung
                     durch das Posaunenwerk gibt mir Sicherheit und hilft mir,
                     immer besser zu werden.&quot;
                   </p>
-                  <p className="text-dark font-semibold">
+                  <p className="text-dark dark:text-dark-text font-semibold">
                     Michael K., Chorleiter seit 2018
                   </p>
                 </div>
@@ -400,13 +407,13 @@ export default function EhrenamtPage() {
       </section>
 
       {/* Kontakt CTA */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
               Bereit, dich einzubringen?
             </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-600">
+            <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
               Wir freuen uns auf dein Engagement! Kontaktiere uns und lass uns
               gemeinsam herausfinden, wo und wie du dich am besten einbringen
               kannst.

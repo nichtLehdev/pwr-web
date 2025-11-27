@@ -51,7 +51,7 @@ export default function PostDetailView({
   const publishDate = new Date(post.publishedAt || post.createdAt);
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background dark:bg-dark-background min-h-screen">
       {/* Header with Image */}
       {post.coverImage?.url ? (
         <section className="relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
@@ -192,7 +192,7 @@ export default function PostDetailView({
           <div className="mx-auto max-w-4xl">
             {/* Author Info */}
             {post.createdBy && (
-              <div className="mb-8 flex items-center gap-4 border-b pb-8">
+              <div className="dark:border-dark-border mb-8 flex items-center gap-4 border-b pb-8">
                 {post.createdBy.profileImage?.url && (
                   <Image
                     src={post.createdBy.profileImage.url}
@@ -207,11 +207,11 @@ export default function PostDetailView({
                   />
                 )}
                 <div>
-                  <p className="text-dark font-semibold">
+                  <p className="text-dark dark:text-dark-text font-semibold">
                     {post.createdBy.displayName}
                   </p>
                   {post.createdBy.bio && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       {post.createdBy.bio}
                     </p>
                   )}
@@ -221,7 +221,7 @@ export default function PostDetailView({
 
             {/* Excerpt */}
             {post.excerpt && (
-              <div className="mb-8 border-b pb-8 text-xl leading-relaxed font-medium text-gray-700">
+              <div className="dark:border-dark-border mb-8 border-b pb-8 text-xl leading-relaxed font-medium text-gray-700 dark:text-gray-300">
                 {post.excerpt}
               </div>
             )}
@@ -233,7 +233,7 @@ export default function PostDetailView({
             />
 
             {/* Share & Back */}
-            <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t pt-8 sm:flex-row sm:items-center">
+            <div className="dark:border-dark-border mt-12 flex flex-col items-start justify-between gap-4 border-t pt-8 sm:flex-row sm:items-center">
               <Link
                 href="/aktuelles"
                 className="text-primary hover:text-primary-dark inline-flex items-center font-semibold transition-colors"
@@ -256,13 +256,15 @@ export default function PostDetailView({
 
               {/* Share Buttons */}
               <div className="flex items-center gap-2">
-                <span className="mr-2 text-sm text-gray-600">Teilen:</span>
+                <span className="mr-2 text-sm text-gray-600 dark:text-gray-400">
+                  Teilen:
+                </span>
                 <button
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                  className="dark:hover:bg-dark-surface rounded-lg p-2 transition-colors hover:bg-gray-100"
                   aria-label="Auf Facebook teilen"
                 >
                   <svg
-                    className="h-5 w-5 text-gray-600"
+                    className="h-5 w-5 text-gray-600 dark:text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -270,11 +272,11 @@ export default function PostDetailView({
                   </svg>
                 </button>
                 <button
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                  className="dark:hover:bg-dark-surface rounded-lg p-2 transition-colors hover:bg-gray-100"
                   aria-label="Auf Twitter teilen"
                 >
                   <svg
-                    className="h-5 w-5 text-gray-600"
+                    className="h-5 w-5 text-gray-600 dark:text-gray-400"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >
@@ -282,11 +284,11 @@ export default function PostDetailView({
                   </svg>
                 </button>
                 <button
-                  className="rounded-lg p-2 transition-colors hover:bg-gray-100"
+                  className="dark:hover:bg-dark-surface rounded-lg p-2 transition-colors hover:bg-gray-100"
                   aria-label="Per E-Mail teilen"
                 >
                   <svg
-                    className="h-5 w-5 text-gray-600"
+                    className="h-5 w-5 text-gray-600 dark:text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -307,9 +309,9 @@ export default function PostDetailView({
 
       {/* Similar Posts */}
       {relatedPosts.length > 0 && (
-        <section className="bg-gray-50 py-12">
+        <section className="dark:bg-dark-background-secondary bg-gray-50 py-12">
           <div className="container mx-auto px-4">
-            <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
               Ähnliche Beiträge
             </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

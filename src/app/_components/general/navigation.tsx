@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth";
+import ThemeToggle from "./theme-toggle";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -117,7 +118,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="fixed top-0 right-0 left-0 z-50 w-full bg-white shadow-md">
+    <nav className="dark:bg-dark-surface dark:shadow-dark-border fixed top-0 right-0 left-0 z-50 w-full bg-white shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between lg:h-20">
           {/* Logo - immer sichtbar */}
@@ -162,7 +163,7 @@ export default function Navigation() {
                       className={`flex items-center gap-1 font-medium transition-colors ${
                         isActive(link.href, link.dropdown)
                           ? "text-primary"
-                          : "text-dark hover:text-primary"
+                          : "text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary"
                       }`}
                     >
                       {link.label}
@@ -182,7 +183,7 @@ export default function Navigation() {
                     </Link>
                     {openDropdown === link.label && (
                       <div
-                        className="absolute top-full left-0 z-50 mt-2 w-64 rounded-lg border border-gray-100 bg-white py-2 shadow-xl"
+                        className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-50 mt-2 w-64 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl"
                         onMouseEnter={() =>
                           link.dropdown && handleMouseEnter(link.label)
                         }
@@ -195,7 +196,7 @@ export default function Navigation() {
                             className={`block px-4 py-2 transition-colors ${
                               pathname === sublink.href
                                 ? "bg-primary/10 text-primary font-semibold"
-                                : "text-dark hover:bg-primary/10 hover:text-primary"
+                                : "text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary"
                             }`}
                           >
                             {sublink.label}
@@ -210,7 +211,7 @@ export default function Navigation() {
                     className={`font-medium transition-colors ${
                       isActive(link.href)
                         ? "text-primary"
-                        : "text-dark hover:text-primary"
+                        : "text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary"
                     }`}
                   >
                     {link.label}
@@ -221,8 +222,9 @@ export default function Navigation() {
 
             {/* Suche & Login/User Menu */}
             <div className="ml-4 flex items-center space-x-4">
+              <ThemeToggle />
               <button
-                className="text-dark hover:text-primary transition-colors"
+                className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary transition-colors"
                 aria-label="Suchen"
               >
                 <svg
@@ -244,19 +246,19 @@ export default function Navigation() {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
+                    className="dark:hover:bg-dark-background-secondary flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
                   >
                     <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
                       {getInitials(session.user.name || session.user.email)}
                     </div>
-                    <span className="text-dark text-sm font-medium">
+                    <span className="text-dark dark:text-dark-text text-sm font-medium">
                       Hi,{" "}
                       {(session.user as any).firstName ||
                         session.user.name?.split(" ")[0] ||
                         "User"}
                     </span>
                     <svg
-                      className={`text-dark h-4 w-4 transition-transform ${
+                      className={`text-dark dark:text-dark-text h-4 w-4 transition-transform ${
                         userMenuOpen ? "rotate-180" : ""
                       }`}
                       fill="none"
@@ -273,25 +275,25 @@ export default function Navigation() {
                   </button>
 
                   {userMenuOpen && (
-                    <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl">
+                    <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
                       <Link
                         href="/dashboard"
                         onClick={() => setUserMenuOpen(false)}
-                        className="text-dark hover:bg-primary/10 hover:text-primary block px-4 py-2 transition-colors"
+                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
                       >
                         Dashboard
                       </Link>
                       <Link
                         href="/settings"
                         onClick={() => setUserMenuOpen(false)}
-                        className="text-dark hover:bg-primary/10 hover:text-primary block px-4 py-2 transition-colors"
+                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
                       >
                         Einstellungen
                       </Link>
-                      <hr className="my-2 border-gray-200" />
+                      <hr className="dark:border-dark-border my-2 border-gray-200" />
                       <button
                         onClick={handleLogout}
-                        className="text-dark hover:bg-primary/10 hover:text-primary block w-full px-4 py-2 text-left transition-colors"
+                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block w-full px-4 py-2 text-left transition-colors"
                       >
                         Abmelden
                       </button>
@@ -301,7 +303,7 @@ export default function Navigation() {
               ) : (
                 <Link
                   href="/login"
-                  className="bg-primary hover:bg-primary-dark rounded-md px-4 py-2 text-white transition-colors"
+                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary rounded-md px-4 py-2 text-white transition-colors"
                 >
                   Login
                 </Link>
@@ -310,39 +312,42 @@ export default function Navigation() {
           </div>
 
           {/* Mobile Menu Button - nur auf Mobile */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="text-dark rounded-md p-2 hover:bg-gray-100 lg:hidden"
-            aria-label="Menü öffnen"
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-2 lg:hidden">
+            <ThemeToggle />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-2 hover:bg-gray-100"
+              aria-label="Menü öffnen"
             >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {mobileMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu - slide down */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 top-16 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden">
+          <div className="dark:border-dark-border dark:bg-dark-surface fixed inset-0 top-16 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden">
             <div className="flex flex-col space-y-1 px-4">
               {navLinks.map((link) => (
                 <div key={link.href}>
@@ -355,14 +360,14 @@ export default function Navigation() {
                           className={`flex-1 rounded-md px-4 py-3 transition-colors ${
                             isActive(link.href, link.dropdown)
                               ? "text-primary bg-primary/10 font-semibold"
-                              : "text-dark hover:text-primary hover:bg-gray-100"
+                              : "text-dark dark:text-dark-text hover:text-primary dark:hover:bg-dark-background-secondary hover:bg-gray-100"
                           }`}
                         >
                           {link.label}
                         </Link>
                         <button
                           onClick={() => toggleDropdown(link.label)}
-                          className="text-dark rounded-md p-3 transition-colors hover:bg-gray-100"
+                          className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-3 transition-colors hover:bg-gray-100"
                           aria-label={`${link.label} Untermenü öffnen`}
                         >
                           <svg
@@ -392,7 +397,7 @@ export default function Navigation() {
                               className={`block rounded-md px-4 py-3 text-sm transition-colors ${
                                 pathname === sublink.href
                                   ? "text-primary bg-primary/10 font-semibold"
-                                  : "hover:text-primary text-gray-600 hover:bg-gray-100"
+                                  : "hover:text-primary dark:hover:bg-dark-background-secondary text-gray-600 hover:bg-gray-100 dark:text-gray-400"
                               }`}
                             >
                               {sublink.label}
@@ -408,7 +413,7 @@ export default function Navigation() {
                       className={`block rounded-md px-4 py-3 transition-colors ${
                         isActive(link.href)
                           ? "text-primary bg-primary/10 font-semibold"
-                          : "text-dark hover:text-primary hover:bg-gray-100"
+                          : "text-dark dark:text-dark-text hover:text-primary dark:hover:bg-dark-background-secondary hover:bg-gray-100"
                       }`}
                     >
                       {link.label}
@@ -418,8 +423,8 @@ export default function Navigation() {
               ))}
 
               {/* Mobile Suche & Login/User Menu */}
-              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
-                <button className="text-dark flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100">
+              <div className="dark:border-dark-border mt-4 space-y-2 border-t border-gray-200 pt-4">
+                <button className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100">
                   <svg
                     className="mr-2 h-5 w-5"
                     fill="none"
@@ -442,7 +447,7 @@ export default function Navigation() {
                       <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
                         {getInitials(session.user.name || session.user.email)}
                       </div>
-                      <span className="text-dark text-sm font-medium">
+                      <span className="text-dark dark:text-dark-text text-sm font-medium">
                         Hi,{" "}
                         {(session.user as any).firstName ||
                           session.user.name?.split(" ")[0] ||
@@ -452,14 +457,14 @@ export default function Navigation() {
                     <Link
                       href="/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
+                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Dashboard
                     </Link>
                     <Link
                       href="/settings"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
+                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Einstellungen
                     </Link>
@@ -468,7 +473,7 @@ export default function Navigation() {
                         handleLogout();
                         setMobileMenuOpen(false);
                       }}
-                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
+                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Abmelden
                     </button>
@@ -477,7 +482,7 @@ export default function Navigation() {
                   <Link
                     href="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="bg-primary hover:bg-primary-dark block w-full rounded-md px-4 py-3 text-center text-white transition-colors"
+                    className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary block w-full rounded-md px-4 py-3 text-center text-white transition-colors"
                   >
                     Login
                   </Link>

@@ -43,42 +43,42 @@ export default function CompactEventCard({
   return (
     <Link
       href={`/termine/${type}/${id}`}
-      className="hover:border-primary flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:shadow-md"
+      className="hover:border-primary dark:border-dark-border dark:bg-dark-surface dark:hover:shadow-dark-border flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:shadow-md"
     >
       {/* Date Badge */}
       <div
         className={`shrink-0 ${
           isMultiDay ? "min-w-20" : "w-12"
-        } flex h-12 rounded-lg bg-gray-100 ${
+        } dark:bg-dark-background-secondary flex h-12 rounded-lg bg-gray-100 ${
           isMultiDay ? "flex-row" : "flex-col"
         } items-center justify-center gap-1 px-2`}
       >
         {isMultiDay ? (
           <>
             <div className="flex flex-col items-center">
-              <span className="text-xs leading-tight font-semibold text-gray-600 uppercase">
+              <span className="text-xs leading-tight font-semibold text-gray-600 uppercase dark:text-gray-400">
                 {dateStr.split(" ")[1]}
               </span>
-              <span className="text-dark text-base leading-tight font-bold">
+              <span className="text-dark dark:text-dark-text text-base leading-tight font-bold">
                 {(dateStr.split(" ")[0] ?? "").replace(".", "")}
               </span>
             </div>
-            <span className="text-sm text-gray-400">→</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500">→</span>
             <div className="flex flex-col items-center">
-              <span className="text-[10px] leading-tight font-semibold text-gray-500 uppercase">
+              <span className="text-[10px] leading-tight font-semibold text-gray-500 uppercase dark:text-gray-400">
                 {endDateStr?.split(" ")[1]}
               </span>
-              <span className="text-sm leading-tight font-bold text-gray-600">
+              <span className="text-sm leading-tight font-bold text-gray-600 dark:text-gray-300">
                 {(endDateStr?.split(" ")[0] ?? "").replace(".", "")}
               </span>
             </div>
           </>
         ) : (
           <>
-            <span className="text-xs font-semibold text-gray-600 uppercase">
+            <span className="text-xs font-semibold text-gray-600 uppercase dark:text-gray-400">
               {dateStr.split(" ")[1]}
             </span>
-            <span className="text-dark text-lg font-bold">
+            <span className="text-dark dark:text-dark-text text-lg font-bold">
               {(dateStr.split(" ")[0] ?? "").replace(".", "")}
             </span>
           </>
@@ -92,13 +92,13 @@ export default function CompactEventCard({
             className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
               type === "course"
                 ? "bg-primary/10 text-primary"
-                : "bg-dark/10 text-dark"
+                : "bg-dark/10 dark:bg-dark-text/10 text-dark dark:text-dark-text"
             }`}
           >
             {category}
           </span>
           {openToParticipants && (
-            <span className="inline-flex items-center gap-1 rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600">
+            <span className="inline-flex items-center gap-1 rounded bg-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 dark:bg-green-900/20 dark:text-green-400">
               <svg
                 className="h-2.5 w-2.5"
                 fill="none"
@@ -116,10 +116,10 @@ export default function CompactEventCard({
             </span>
           )}
         </div>
-        <h3 className="text-dark mb-1 line-clamp-2 text-sm font-bold">
+        <h3 className="text-dark dark:text-dark-text mb-1 line-clamp-2 text-sm font-bold">
           {title}
         </h3>
-        <div className="flex items-center gap-3 text-xs text-gray-600">
+        <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
           <span className="flex items-center gap-1">
             <svg
               className="h-3 w-3"
@@ -157,7 +157,7 @@ export default function CompactEventCard({
 
       {/* Arrow */}
       <svg
-        className="h-5 w-5 shrink-0 text-gray-400"
+        className="h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

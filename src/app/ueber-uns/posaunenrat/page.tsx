@@ -83,13 +83,13 @@ export default async function PosaunenratPage() {
       </section>
 
       {/* Zusammensetzung */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
               Zusammensetzung des Posaunenrats
             </h2>
-            <p className="mb-8 text-lg leading-relaxed text-gray-600">
+            <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
               Dem Landesposaunenrat gehören die Vorstandsmitglieder, die
               Bezirksobleute, der Landeskirchenmusikdirektor und etwa zehn
               Sachverständige an – Theologen, Musiker, Pädagogen,
@@ -101,7 +101,7 @@ export default async function PosaunenratPage() {
             <div className="space-y-12">
               {/* Vorstandsmitglieder */}
               <div>
-                <h3 className="text-dark mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
+                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Vorstandsmitglieder
                 </h3>
@@ -115,7 +115,7 @@ export default async function PosaunenratPage() {
                     />
                   ))}
                 </div>
-                <p className="mb-4 text-gray-600">
+                <p className="mb-4 text-gray-600 dark:text-gray-400">
                   Details zu den Vorstandsmitgliedern finden Sie auf der{" "}
                   <Link
                     href="/ueber-uns/vorstand"
@@ -128,7 +128,7 @@ export default async function PosaunenratPage() {
 
               {/* Bezirksobleute */}
               <div>
-                <h3 className="text-dark mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
+                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Bezirksobleute
                 </h3>
@@ -142,7 +142,7 @@ export default async function PosaunenratPage() {
                     />
                   ))}
                 </div>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Ausführliche Informationen zu den Bezirksobfrauen und
                   -obmännern finden Sie auf der{" "}
                   <Link
@@ -157,7 +157,7 @@ export default async function PosaunenratPage() {
               {/* Landeskirchenmusikdirektor */}
               {lkmd && (
                 <div>
-                  <h3 className="text-dark mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
+                  <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
                     <div className="bg-primary h-8 w-1 rounded-full"></div>
                     Landeskirchenmusikdirektor
                   </h3>
@@ -171,7 +171,7 @@ export default async function PosaunenratPage() {
 
               {/* Sachverständige */}
               <div>
-                <h3 className="text-dark mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
+                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Sachverständige
                 </h3>
@@ -179,15 +179,15 @@ export default async function PosaunenratPage() {
                   {sachverstaendige.map((member, index) => (
                     <div
                       key={index}
-                      className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                      className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <p className="text-dark text-center font-semibold">
+                      <p className="text-dark dark:text-dark-text text-center font-semibold">
                         {member.name}
                       </p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-6 text-sm text-gray-600">
+                <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
                   Die Sachverständigen sind Theologen, Musiker, Pädagogen,
                   Verwaltungsfachleute und sonstige in der Posaunenarbeit
                   erfahrene Persönlichkeiten, die den Posaunenrat mit ihrer
@@ -200,15 +200,15 @@ export default async function PosaunenratPage() {
       </section>
 
       {/* Aufgaben und Verantwortung */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Aufgaben und Verantwortung
             </h2>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -224,16 +224,16 @@ export default async function PosaunenratPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-lg font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Strategische Führung
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Entscheidungen über Grundsätze und Ziele der Geschäftsführung
                   des Posaunenwerkes sowie Beratung des Vorstands.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -249,16 +249,16 @@ export default async function PosaunenratPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-lg font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Personalentscheidungen
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Anstellung und Entlassung von Landesposaunenwarten sowie Wahl
                   des Vorstands zu Beginn der Wahlperiode.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -274,16 +274,16 @@ export default async function PosaunenratPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-lg font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Finanzverwaltung
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Jährliche Verabschiedung des Haushaltsplans und Kontrolle über
                   die sachgemäße Verwaltung der Finanzen.
                 </p>
               </div>
 
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                   <svg
                     className="h-6 w-6 text-white"
@@ -299,10 +299,10 @@ export default async function PosaunenratPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-dark mb-3 text-lg font-bold">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Beschlusskontrolle
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Überwachung der Ausführung gefasster Beschlüsse und Sicherung
                   der satzungsgemäßen Arbeit.
                 </p>

@@ -45,7 +45,7 @@ export default async function Home() {
         </div>
       </section>
       {/* Termine Section */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
             title="Kommende Termine"
@@ -68,13 +68,15 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">Aktuell keine Termine verfügbar.</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Aktuell keine Termine verfügbar.
+            </p>
           )}
         </div>
       </section>
 
       {/* News Section */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
             title="Aktuelles"
@@ -99,13 +101,15 @@ export default async function Home() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">Aktuell keine News verfügbar.</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Aktuell keine News verfügbar.
+            </p>
           )}
         </div>
       </section>
 
       {/* Förderverein Teaser */}
-      <section className="bg-foerderverein py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-foerderverein dark:bg-foerderverein-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-block rounded-full bg-white/10 p-3">
@@ -183,10 +187,10 @@ export default async function Home() {
       </section>
 
       {/* Spacing Section für sanfteren Übergang */}
-      <section className="bg-background py-8 md:py-12"></section>
+      <section className="bg-background dark:bg-dark-background py-8 md:py-12"></section>
 
       {/* CTA Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
         <div className="container text-center">
           <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
             Lust auf Posaunenchor?
@@ -197,7 +201,7 @@ export default async function Home() {
           </p>
           <Link
             href="/mitmachen"
-            className="text-dark inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100"
+            className="text-dark dark:text-dark-background dark:bg-dark-text inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100 dark:hover:bg-gray-200"
           >
             Mehr erfahren
           </Link>

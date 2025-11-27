@@ -157,13 +157,13 @@ export default function JungblaserPage() {
       </section>
 
       {/* Was ist Jungbläserarbeit */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
               Was ist Jungbläserarbeit?
             </h2>
-            <div className="prose prose-lg max-w-none leading-relaxed text-gray-600">
+            <div className="prose prose-lg max-w-none leading-relaxed text-gray-600 dark:text-gray-400">
               <p className="mb-4">
                 Jungbläserarbeit umfasst alle Angebote und Aktivitäten für
                 Kinder und Jugendliche, die ein Blechblasinstrument erlernen
@@ -188,13 +188,13 @@ export default function JungblaserPage() {
       </section>
 
       {/* Unsere Angebote */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-6xl">
-            <h2 className="text-dark mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Unsere Angebote für Jungbläser
             </h2>
-            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600">
+            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
               Vielfältige Möglichkeiten für Kinder und Jugendliche, die Welt der
               Blechblasinstrumente zu entdecken.
             </p>
@@ -203,7 +203,7 @@ export default function JungblaserPage() {
               {offerings.map((offering) => (
                 <div
                   key={offering.id}
-                  className="rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
+                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
                 >
                   <div className="bg-district-9 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                     <svg
@@ -215,10 +215,12 @@ export default function JungblaserPage() {
                       {offering.icon}
                     </svg>
                   </div>
-                  <h3 className="text-dark mb-2 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                     {offering.title}
                   </h3>
-                  <p className="text-gray-600">{offering.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {offering.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -249,16 +251,19 @@ export default function JungblaserPage() {
       </section>
 
       {/* Warum Jungbläserarbeit */}
-      <section className="bg-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Warum Jungbläserarbeit?
             </h2>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {benefits.map((benefit, index) => (
-                <div key={index} className="rounded-lg bg-white p-6 shadow-md">
+                <div
+                  key={index}
+                  className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md"
+                >
                   <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                     <svg
                       className="h-6 w-6 text-white"
@@ -269,10 +274,12 @@ export default function JungblaserPage() {
                       {benefit.icon}
                     </svg>
                   </div>
-                  <h3 className="text-dark mb-3 text-xl font-bold">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     {benefit.title}
                   </h3>
-                  <p className="text-gray-600">{benefit.description}</p>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {benefit.description}
+                  </p>
                 </div>
               ))}
             </div>
@@ -281,16 +288,16 @@ export default function JungblaserPage() {
       </section>
 
       {/* Für Chorleiter & Ausbilder */}
-      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
               Für Chorleiter & Ausbilder
             </h2>
 
             <div className="space-y-6">
               {/* Arbeitshilfe */}
-              <div className="rounded-lg bg-white p-8 shadow-lg">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-district-9 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                     <svg
@@ -308,10 +315,10 @@ export default function JungblaserPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-dark mb-3 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                       Arbeitshilfe Jungbläserausbildung
                     </h3>
-                    <p className="mb-4 leading-relaxed text-gray-600">
+                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                       Eine umfassende Arbeitshilfe mit praktischen Tipps und
                       Anleitungen für alle, die in der Jungbläserausbildung
                       tätig sind oder es werden wollen.
@@ -342,7 +349,7 @@ export default function JungblaserPage() {
               </div>
 
               {/* Leistungsstempel */}
-              <div className="rounded-lg bg-white p-8 shadow-lg">
+              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
                     <svg
@@ -360,10 +367,10 @@ export default function JungblaserPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-dark mb-3 text-xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                       Leistungsstempel-System
                     </h3>
-                    <p className="mb-4 leading-relaxed text-gray-600">
+                    <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
                       Mit aufeinander aufbauenden Leistungsstufen können Sie den
                       Fortschritt Ihrer Jungbläser dokumentieren und motivieren.
                     </p>
@@ -378,11 +385,11 @@ export default function JungblaserPage() {
               </div>
 
               {/* Unterstützung */}
-              <div className="bg-primary/10 border-primary rounded-lg border-l-4 p-8">
-                <h3 className="text-dark mb-3 text-xl font-bold">
+              <div className="bg-primary/10 dark:bg-primary/20 border-primary rounded-lg border-l-4 p-8">
+                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Beratung & Unterstützung
                 </h3>
-                <p className="mb-4 leading-relaxed text-gray-700">
+                <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
                   Unser Referent für Jungbläserarbeit steht Ihnen bei allen
                   Fragen rund um die Ausbildung junger Bläserinnen und Bläser
                   zur Seite. Von der Konzeption bis zur praktischen Umsetzung –

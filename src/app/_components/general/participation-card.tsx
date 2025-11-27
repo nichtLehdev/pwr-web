@@ -134,7 +134,7 @@ export default function ParticipationCard({
 
   return (
     <Link href={href} className="group block h-full">
-      <article className="hover:border-primary flex h-full cursor-pointer flex-col rounded-lg border-t-4 border-transparent bg-white p-6 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+      <article className="hover:border-primary dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col rounded-lg border-t-4 border-transparent bg-white p-6 shadow-md transition-all duration-300 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-2xl">
         {/* Icon */}
         <div
           className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full transition-all group-hover:scale-110 ${getColorClass(
@@ -152,11 +152,13 @@ export default function ParticipationCard({
         </div>
 
         {/* Content */}
-        <h3 className="text-dark group-hover:text-primary mb-3 text-xl font-bold transition-colors">
+        <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-3 text-xl font-bold transition-colors">
           {title}
         </h3>
 
-        <p className="mb-4 grow text-gray-600">{description}</p>
+        <p className="mb-4 grow text-gray-600 dark:text-gray-400">
+          {description}
+        </p>
 
         {/* Link */}
         <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
