@@ -292,6 +292,64 @@ export const usersRouter = createTRPCRouter({
     }),
 
   /**
+   * Update own profile with all fields
+   */
+  updateProfile: protectedProcedure
+    .input(
+      z.object({
+        firstName: z.string().optional(),
+        lastName: z.string().optional(),
+        displayName: z.string().optional(),
+        username: z.string().min(3).max(30).optional(),
+        phone: z.string().optional(),
+        street: z.string().optional(),
+        zipCode: z.string().optional(),
+        city: z.string().optional(),
+        bio: z.string().max(500).optional(),
+        profileImageId: z.string().optional().nullable(),
+        preferences: z.string().optional(), // JSON string
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Check if username is already taken
+      if (input.username) {
+        const existing = await ctx.db.user.findFirst({
+          where: {
+            username: input.username,
+            NOT: { id: ctx.session.user.id },
+          },
+        });
+
+        if (existing) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Benutzername bereits vergeben",
+          });
+        }
+      }
+
+      return await ctx.db.user.update({
+        where: { id: ctx.session.user.id },
+        data: {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          displayName: input.displayName,
+          username: input.username,
+          phone: input.phone,
+          street: input.street,
+          zipCode: input.zipCode,
+          city: input.city,
+          bio: input.bio,
+          profileImageId: input.profileImageId,
+          preferences: input.preferences,
+        },
+        include: {
+          profileImage: true,
+        },
+      });
+    }),
+
+  /**
    * Update own preferences
    */
   updateMyPreferences: protectedProcedure

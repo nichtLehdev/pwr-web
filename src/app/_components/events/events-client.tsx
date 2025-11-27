@@ -11,6 +11,8 @@ import type {
   CalendarCourseItem,
 } from "@/lib/types/calendar";
 import type { Bezirk } from "~/generated/prisma/client";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
 import PageHeader from "../general/page-header";
 import EventCard from "./event-card";
 import CourseCard from "./course-card";
@@ -31,6 +33,34 @@ export default function EventsClient({
   initialCourses,
   bezirke,
 }: EventsClientProps) {
+  const { data: session } = useSession();
+
+  // Get user preferences for default view
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
+
+  // Parse user's default view preference
+  const userDefaultView = useMemo((): ViewMode => {
+    if (profile?.preferences) {
+      try {
+        const prefs =
+          typeof profile.preferences === "string"
+            ? JSON.parse(profile.preferences)
+            : profile.preferences;
+        if (
+          prefs.termineDefaultView === "calendar" ||
+          prefs.termineDefaultView === "list"
+        ) {
+          return prefs.termineDefaultView;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+    return "list";
+  }, [profile?.preferences]);
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
@@ -43,7 +73,22 @@ export default function EventsClient({
 
   const params = useSearchParams();
 
+  // Track if user has manually changed the view
+  const [userHasChangedView, setUserHasChangedView] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  // Update view mode when user preference loads (only if user hasn't manually changed it)
+  const prevUserDefaultView = useMemo(() => userDefaultView, [userDefaultView]);
+  if (!userHasChangedView && viewMode !== prevUserDefaultView && profile) {
+    setViewMode(prevUserDefaultView);
+  }
+
+  // Wrapper to track manual view changes
+  const handleSetViewMode = (mode: ViewMode) => {
+    setUserHasChangedView(true);
+    setViewMode(mode);
+  };
+
   const [filterType, setFilterType] = useState<FilterType>(
     (params.get("type") as FilterType) || "all",
   );
@@ -244,7 +289,7 @@ export default function EventsClient({
             {/* Left: View Toggle */}
             <div className="flex gap-1">
               <button
-                onClick={() => setViewMode("list")}
+                onClick={() => handleSetViewMode("list")}
                 className={`cursor-pointer rounded-lg p-2 transition-colors ${
                   viewMode === "list"
                     ? "bg-primary text-white"
@@ -267,7 +312,7 @@ export default function EventsClient({
                 </svg>
               </button>
               <button
-                onClick={() => setViewMode("calendar")}
+                onClick={() => handleSetViewMode("calendar")}
                 className={`cursor-pointer rounded-lg p-2 transition-colors ${
                   viewMode === "calendar"
                     ? "bg-primary text-white"

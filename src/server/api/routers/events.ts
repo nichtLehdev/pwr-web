@@ -194,6 +194,86 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
+  // Get events for dashboard based on user role
+  getDashboardEvents: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        status: z.nativeEnum(ContentStatus).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Build where clause based on role
+      let where: Record<string, unknown> = {};
+
+      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+        // Admin and LPW can see all events
+        if (input.status) {
+          where.status = input.status;
+        }
+      } else if (userRole === UserRole.RPW) {
+        // RPW can see all events except DRAFT status (unless they created it)
+        if (input.status) {
+          if (input.status === ContentStatus.DRAFT) {
+            // For DRAFT, only show their own
+            where = {
+              status: ContentStatus.DRAFT,
+              createdById: userId,
+            };
+          } else {
+            where.status = input.status;
+          }
+        } else {
+          // No status filter: show all non-draft OR own drafts
+          where = {
+            OR: [
+              { status: { not: ContentStatus.DRAFT } },
+              { createdById: userId },
+            ],
+          };
+        }
+      } else {
+        // OBLEUTE, regular users, vorstand, posaunenrat members - only their own events
+        where = {
+          createdById: userId,
+          ...(input.status && { status: input.status }),
+        };
+      }
+
+      const [events, total] = await Promise.all([
+        ctx.db.event.findMany({
+          where,
+          include: {
+            coverImage: true,
+            location: true,
+            bezirk: true,
+            createdBy: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+            reviewer: { select: { id: true, displayName: true } },
+            priceOptions: true,
+          },
+          skip: (input.page - 1) * input.limit,
+          take: input.limit,
+          orderBy: { eventDate: "desc" },
+        }),
+        ctx.db.event.count({ where }),
+      ]);
+
+      return {
+        events,
+        total,
+        pages: Math.ceil(total / input.limit),
+      };
+    }),
+
   // Get events pending review (for reviewers)
   getPendingReview: reviewerProcedure
     .input(
