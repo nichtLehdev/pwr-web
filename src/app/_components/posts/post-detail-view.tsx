@@ -192,7 +192,7 @@ export default function PostDetailView({
           <div className="mx-auto max-w-4xl">
             {/* Author Info */}
             {post.createdBy && (
-              <div className="dark:border-dark-border mb-8 flex items-center gap-4 border-b pb-8">
+              <div className="dark:border-dark-border mb-8 flex items-center gap-4 border-b border-gray-200 pb-8">
                 {post.createdBy.profileImage?.url && (
                   <Image
                     src={post.createdBy.profileImage.url}
@@ -221,7 +221,7 @@ export default function PostDetailView({
 
             {/* Excerpt */}
             {post.excerpt && (
-              <div className="dark:border-dark-border mb-8 border-b pb-8 text-xl leading-relaxed font-medium text-gray-700 dark:text-gray-300">
+              <div className="dark:border-dark-border mb-8 border-b border-gray-200 pb-8 text-xl leading-relaxed font-medium text-gray-700 dark:text-gray-300">
                 {post.excerpt}
               </div>
             )}
@@ -233,7 +233,7 @@ export default function PostDetailView({
             />
 
             {/* Share & Back */}
-            <div className="dark:border-dark-border mt-12 flex flex-col items-start justify-between gap-4 border-t pt-8 sm:flex-row sm:items-center">
+            <div className="dark:border-dark-border mt-12 flex flex-col items-start justify-between gap-4 border-t border-gray-200 pt-8 sm:flex-row sm:items-center">
               <Link
                 href="/aktuelles"
                 className="text-primary hover:text-primary-dark inline-flex items-center font-semibold transition-colors"

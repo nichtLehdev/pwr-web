@@ -274,7 +274,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       ),
                     )
                   }
-                  className={`relative flex aspect-square flex-col items-center justify-center rounded-lg transition-colors ${
+                  className={`relative flex aspect-square flex-col items-center justify-center rounded-lg transition-colors dark:text-white ${
                     selected
                       ? "bg-primary font-bold text-white"
                       : today

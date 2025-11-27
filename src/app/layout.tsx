@@ -39,12 +39,23 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 
-                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  const theme = localStorage.getItem('theme');
+                  const root = document.documentElement;
+                  
                   if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
+                    root.classList.add('dark');
+                  } else if (theme === 'light') {
+                    root.classList.add('light');
+                  } else {
+                    // System preference
+                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
+                      ? 'dark' 
+                      : 'light';
+                    root.classList.add(systemTheme);
                   }
-                } catch (e) {}
+                } catch (e) {
+                  console.error('Theme initialization error:', e);
+                }
               })();
             `,
           }}

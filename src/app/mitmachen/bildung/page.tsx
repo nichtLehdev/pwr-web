@@ -132,7 +132,7 @@ export default function BildungPage() {
       </section>
 
       {/* Hinweis: Offen für alle */}
-      <section className="bg-primary/10 dark:bg-primary/20 py-8">
+      <section className="bg-primary/10 dark:bg-dark-background-secondary py-8">
         <div className="container">
           <div className="mx-auto max-w-4xl text-center">
             <p className="text-lg text-gray-700 dark:text-gray-300">
