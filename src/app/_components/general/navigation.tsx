@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,6 +18,17 @@ export default function Navigation() {
 
   // Use Better Auth's useSession hook directly
   const { data: session } = useSession();
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
+    } else {
+      document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
+    }
+  }, [mobileMenuOpen]);
 
   // Check if a link or its children are active
   const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
@@ -331,8 +342,8 @@ export default function Navigation() {
 
         {/* Mobile Menu - slide down */}
         {mobileMenuOpen && (
-          <div className="border-t border-gray-200 py-4 lg:hidden">
-            <div className="flex flex-col space-y-1">
+          <div className="fixed inset-0 top-16 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden">
+            <div className="flex flex-col space-y-1 px-4">
               {navLinks.map((link) => (
                 <div key={link.href}>
                   {link.dropdown ? (
@@ -341,7 +352,7 @@ export default function Navigation() {
                         <Link
                           href={link.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`flex-1 rounded-md px-4 py-2 transition-colors ${
+                          className={`flex-1 rounded-md px-4 py-3 transition-colors ${
                             isActive(link.href, link.dropdown)
                               ? "text-primary bg-primary/10 font-semibold"
                               : "text-dark hover:text-primary hover:bg-gray-100"
@@ -351,7 +362,7 @@ export default function Navigation() {
                         </Link>
                         <button
                           onClick={() => toggleDropdown(link.label)}
-                          className="text-dark rounded-md p-2 transition-colors hover:bg-gray-100"
+                          className="text-dark rounded-md p-3 transition-colors hover:bg-gray-100"
                           aria-label={`${link.label} Untermenü öffnen`}
                         >
                           <svg
@@ -378,7 +389,7 @@ export default function Navigation() {
                               key={sublink.href}
                               href={sublink.href}
                               onClick={() => setMobileMenuOpen(false)}
-                              className={`block rounded-md px-4 py-2 text-sm transition-colors ${
+                              className={`block rounded-md px-4 py-3 text-sm transition-colors ${
                                 pathname === sublink.href
                                   ? "text-primary bg-primary/10 font-semibold"
                                   : "hover:text-primary text-gray-600 hover:bg-gray-100"
@@ -394,7 +405,7 @@ export default function Navigation() {
                     <Link
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`block rounded-md px-4 py-2 transition-colors ${
+                      className={`block rounded-md px-4 py-3 transition-colors ${
                         isActive(link.href)
                           ? "text-primary bg-primary/10 font-semibold"
                           : "text-dark hover:text-primary hover:bg-gray-100"
@@ -407,8 +418,8 @@ export default function Navigation() {
               ))}
 
               {/* Mobile Suche & Login/User Menu */}
-              <div className="space-y-2 border-t border-gray-200 px-4 pt-4">
-                <button className="text-dark flex w-full items-center rounded-md px-4 py-2 hover:bg-gray-100">
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
+                <button className="text-dark flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100">
                   <svg
                     className="mr-2 h-5 w-5"
                     fill="none"
@@ -427,7 +438,7 @@ export default function Navigation() {
 
                 {session?.user ? (
                   <>
-                    <div className="flex items-center gap-2 px-4 py-2">
+                    <div className="flex items-center gap-2 px-4 py-3">
                       <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
                         {getInitials(session.user.name || session.user.email)}
                       </div>
@@ -441,14 +452,14 @@ export default function Navigation() {
                     <Link
                       href="/dashboard"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Dashboard
                     </Link>
                     <Link
                       href="/settings"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Einstellungen
                     </Link>
@@ -457,7 +468,7 @@ export default function Navigation() {
                         handleLogout();
                         setMobileMenuOpen(false);
                       }}
-                      className="text-dark block w-full rounded-md px-4 py-2 text-left hover:bg-gray-100"
+                      className="text-dark block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Abmelden
                     </button>
@@ -465,7 +476,8 @@ export default function Navigation() {
                 ) : (
                   <Link
                     href="/login"
-                    className="bg-primary hover:bg-primary-dark block w-full rounded-md px-4 py-2 text-center text-white transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="bg-primary hover:bg-primary-dark block w-full rounded-md px-4 py-3 text-center text-white transition-colors"
                   >
                     Login
                   </Link>
