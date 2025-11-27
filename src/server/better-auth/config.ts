@@ -12,6 +12,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  trustedOrigins: ["http://localhost:3000", "http://192.168.4.136:3000"],
   plugins: [username()],
   socialProviders: {
     github: {
