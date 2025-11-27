@@ -29,13 +29,10 @@ export default function LoginPage() {
       console.log("Login attempt:", { emailOrUsername, isEmail });
 
       if (!isEmail) {
-        // Username provided - look up the email
         try {
           const result = await utils.users.getEmailByUsername.fetch({
             username: emailOrUsername,
           });
-
-          console.log("Username lookup result:", result);
 
           if (!result.email) {
             setError("Benutzername nicht gefunden");
@@ -45,7 +42,6 @@ export default function LoginPage() {
 
           loginEmail = result.email;
         } catch (err) {
-          console.error("Error fetching email by username:", err);
           setError("Benutzername nicht gefunden");
           setIsLoading(false);
           return;
@@ -60,12 +56,15 @@ export default function LoginPage() {
         rememberMe,
       });
 
-      console.log("Sign in result:", signInResult);
+      if (signInResult.error) {
+        setError("Ungültige Anmeldedaten");
+        setIsLoading(false);
+        return;
+      }
 
-      router.push("/");
-      router.refresh();
-    } catch (err) {
-      console.error("Login error:", err);
+      console.log("Sign in successful:", signInResult);
+      router.push(signInResult.data.url || "/");
+    } catch {
       setError("Ungültige Anmeldedaten");
     } finally {
       setIsLoading(false);

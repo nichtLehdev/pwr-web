@@ -259,6 +259,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
               const hasOpenToParticipants = events.some(
                 (e) => e.type === "event" && e.openToParticipants,
               );
+              const hasCancelledEvent = events.some(
+                (e) => e.type === "event" && e.cancelled,
+              );
               const today = isToday(day);
               const selected = isSelected(day);
 
@@ -284,6 +287,30 @@ export default function CalendarView({ items }: CalendarViewProps) {
                           : "hover:bg-gray-100 dark:hover:bg-gray-700"
                   }`}
                 >
+                  {/* Cancelled Indicator oben links */}
+                  {hasCancelledEvent && (
+                    <div
+                      className={`absolute top-0.5 left-0.5 flex h-3 w-3 items-center justify-center rounded-full ${
+                        selected ? "bg-red-300" : "bg-red-500"
+                      } shadow-sm`}
+                      title="Abgesagt"
+                    >
+                      <svg
+                        className="h-2 w-2 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </div>
+                  )}
+
                   {/* Mitmachangebot-Indicator oben rechts */}
                   {hasOpenToParticipants && (
                     <div
@@ -344,6 +371,24 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 <span>Mitspielen möglich</span>
               </div>
               <div className="flex items-center gap-2">
+                <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
+                  <svg
+                    className="h-2 w-2 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+                <span>Abgesagt</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <div className="bg-primary h-0.5 w-3 rounded-full"></div>
                 <span>Mehrtägige Veranstaltung</span>
               </div>
@@ -384,6 +429,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 openToParticipants={
                   item.type === "event" ? item.openToParticipants : undefined
                 }
+                cancelled={item.type === "event" ? item.cancelled : undefined}
               />
             ))}
           </div>
@@ -415,6 +461,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                   openToParticipants={
                     item.type === "event" ? item.openToParticipants : undefined
                   }
+                  cancelled={item.type === "event" ? item.cancelled : undefined}
                 />
               ))}
             </div>

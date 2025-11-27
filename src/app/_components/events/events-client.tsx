@@ -514,6 +514,7 @@ export default function EventsClient({
                             category={item.category}
                             district={item.bezirk?.number}
                             openToParticipants={item.openToParticipants}
+                            cancelled={item.cancelled}
                           />
                         ) : (
                           <CourseCard

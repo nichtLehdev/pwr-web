@@ -663,6 +663,7 @@ export default function DesktopCalendarView({
                             );
                             const hasOpenToParticipants =
                               event.openToParticipants;
+                            const isCancelled = event.cancelled;
                             const districtColor = getDistrictColor(
                               event.bezirk?.number,
                             );
@@ -671,18 +672,42 @@ export default function DesktopCalendarView({
                               <button
                                 key={idx}
                                 onClick={() => setSelectedEvent(event)}
-                                className={`text-dark dark:text-dark-text flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${categoryStyle.borderClass}`}
-                                style={{
-                                  backgroundColor: getEventBackgroundStyle(
-                                    districtColor,
-                                    categoryStyle.bgOpacity,
-                                    isDarkMode,
-                                  ),
-                                  borderColor: districtColor,
-                                }}
-                                title={`${time} ${event.title}`}
+                                className={`flex w-full cursor-pointer items-center gap-1 truncate rounded px-2 py-0.5 text-left text-[11px] font-medium transition-all hover:brightness-95 ${
+                                  isCancelled
+                                    ? "border-2 border-red-500 bg-red-100 text-gray-500 line-through dark:bg-red-900/30 dark:text-gray-400"
+                                    : `text-dark dark:text-dark-text ${categoryStyle.borderClass}`
+                                }`}
+                                style={
+                                  isCancelled
+                                    ? {}
+                                    : {
+                                        backgroundColor:
+                                          getEventBackgroundStyle(
+                                            districtColor,
+                                            categoryStyle.bgOpacity,
+                                            isDarkMode,
+                                          ),
+                                        borderColor: districtColor,
+                                      }
+                                }
+                                title={`${isCancelled ? "[ABGESAGT] " : ""}${time} ${event.title}`}
                               >
-                                {hasOpenToParticipants && (
+                                {isCancelled && (
+                                  <svg
+                                    className="h-3 w-3 shrink-0 text-red-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                )}
+                                {!isCancelled && hasOpenToParticipants && (
                                   <svg
                                     className="h-3 w-3 shrink-0"
                                     fill="none"
@@ -746,6 +771,24 @@ export default function DesktopCalendarView({
               />
             </svg>
             <span>= Mitspielen möglich</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex h-3 w-8 items-center justify-center rounded border-2 border-red-500 bg-red-100 dark:bg-red-900/30">
+              <svg
+                className="h-2.5 w-2.5 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            <span>Abgesagt</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="h-3 w-8 rounded border-2 border-blue-500 bg-blue-500/20"></div>
@@ -836,6 +879,7 @@ export default function DesktopCalendarView({
                 <div className="max-h-[calc(80vh-80px)] space-y-2 overflow-y-auto p-4">
                   {allEventsForDay.map((item, idx) => {
                     const isCourse = item.type === "course";
+                    const isCancelled = item.type === "event" && item.cancelled;
                     const districtColor = getDistrictColor(item.bezirk?.number);
 
                     return (
@@ -845,17 +889,48 @@ export default function DesktopCalendarView({
                           setSelectedEvent(item);
                           setShowMoreEventsDay(null);
                         }}
-                        className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background w-full rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50"
+                        className={`w-full rounded-lg border p-3 text-left transition-colors ${
+                          isCancelled
+                            ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+                            : "dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background border-gray-200 bg-white hover:bg-gray-50"
+                        }`}
                         style={{
                           borderLeftWidth: "4px",
-                          borderLeftColor: districtColor,
+                          borderLeftColor: isCancelled
+                            ? "#dc2626"
+                            : districtColor,
                         }}
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="text-dark dark:text-dark-text flex-1 font-semibold">
+                          <div
+                            className={`flex-1 font-semibold ${
+                              isCancelled
+                                ? "text-gray-500 line-through dark:text-gray-400"
+                                : "text-dark dark:text-dark-text"
+                            }`}
+                          >
                             {item.title}
                           </div>
-                          {!isCourse &&
+                          {isCancelled && (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                              <svg
+                                className="h-2.5 w-2.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                              Abgesagt
+                            </span>
+                          )}
+                          {!isCancelled &&
+                            !isCourse &&
                             item.type === "event" &&
                             item.openToParticipants && (
                               <span className="inline-flex shrink-0 items-center gap-1 rounded bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-600 dark:bg-green-900/20 dark:text-green-400">

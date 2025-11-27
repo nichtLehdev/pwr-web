@@ -10,6 +10,7 @@ interface EventCardProps {
   category: string;
   district?: number;
   openToParticipants?: boolean;
+  cancelled?: boolean;
 }
 
 export default function EventCard({
@@ -20,18 +21,45 @@ export default function EventCard({
   category,
   district,
   openToParticipants,
+  cancelled,
 }: EventCardProps) {
   const districtColor = getDistrictColor(district);
 
   return (
     <Link href={`/termine/event/${id}`} className="group block h-full">
       <article
-        className="dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        className={`dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface relative flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+          cancelled ? "opacity-75" : ""
+        }`}
         style={{
           borderLeftColor: districtColor,
         }}
       >
-        <div className="mb-4 flex items-start justify-between">
+        {/* Cancelled Banner */}
+        {cancelled && (
+          <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-center rounded-t-lg bg-red-600 py-2">
+            <svg
+              className="mr-2 h-5 w-5 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span className="text-sm font-bold tracking-wider text-white uppercase">
+              Abgesagt
+            </span>
+          </div>
+        )}
+
+        <div
+          className={`mb-4 flex items-start justify-between ${cancelled ? "mt-8" : ""}`}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {capitalizeFirstLetter(category)}
@@ -63,11 +91,23 @@ export default function EventCard({
           </span>
         </div>
 
-        <h3 className="text-dark group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white">
+        <h3
+          className={`group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white ${
+            cancelled
+              ? "text-gray-500 line-through dark:text-gray-400"
+              : "text-dark"
+          }`}
+        >
           {title}
         </h3>
 
-        <div className="mb-4 grow space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        <div
+          className={`mb-4 grow space-y-2 text-sm ${
+            cancelled
+              ? "text-gray-400 dark:text-gray-500"
+              : "text-gray-600 dark:text-gray-300"
+          }`}
+        >
           <div className="flex items-center gap-2">
             <svg
               className="h-4 w-4"

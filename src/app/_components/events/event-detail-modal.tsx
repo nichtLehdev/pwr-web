@@ -72,14 +72,43 @@ export default function EventDetailModal({
         {/* Header with color */}
         <div
           className="p-6 text-white"
-          style={{ backgroundColor: districtColor }}
+          style={{
+            backgroundColor:
+              event.type === "event" && event.cancelled
+                ? "#dc2626"
+                : districtColor,
+          }}
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <span className="text-sm font-semibold opacity-90">
-                {categoryLabel}
-              </span>
-              <h2 className="mt-1 text-2xl font-bold">{event.title}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                {event.type === "event" && event.cancelled && (
+                  <span className="inline-flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-bold uppercase">
+                    <svg
+                      className="h-3 w-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Abgesagt
+                  </span>
+                )}
+                <span className="text-sm font-semibold opacity-90">
+                  {categoryLabel}
+                </span>
+              </div>
+              <h2
+                className={`mt-1 text-2xl font-bold ${event.type === "event" && event.cancelled ? "line-through opacity-75" : ""}`}
+              >
+                {event.title}
+              </h2>
               {event.motto && (
                 <p className="mt-1 text-sm italic opacity-90">{event.motto}</p>
               )}
@@ -108,6 +137,35 @@ export default function EventDetailModal({
 
         {/* Content */}
         <div className="space-y-6 p-6">
+          {/* Cancelled Warning */}
+          {event.type === "event" && event.cancelled && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div>
+                  <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
+                    Veranstaltung abgesagt
+                  </h3>
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    Diese Veranstaltung findet nicht mehr statt.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Date & Time */}
           <div className="flex items-start gap-3">
             <svg

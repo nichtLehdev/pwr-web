@@ -6,9 +6,22 @@ export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Initialize theme state from DOM
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsDark(document.documentElement.classList.contains("dark"));
+    // Check current dark mode state
+    const checkDarkMode = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Watch for changes (syncs multiple ThemeToggle instances)
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const toggleTheme = () => {

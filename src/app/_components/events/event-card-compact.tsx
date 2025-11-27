@@ -9,6 +9,7 @@ interface CompactEventCardProps {
   category: string;
   type: "event" | "course";
   openToParticipants?: boolean;
+  cancelled?: boolean;
 }
 
 export default function CompactEventCard({
@@ -20,6 +21,7 @@ export default function CompactEventCard({
   category,
   type,
   openToParticipants,
+  cancelled,
 }: CompactEventCardProps) {
   const dateObj = new Date(date);
   const time = dateObj.toLocaleTimeString("de-DE", {
@@ -43,15 +45,21 @@ export default function CompactEventCard({
   return (
     <Link
       href={`/termine/${type}/${id}`}
-      className="hover:border-primary dark:border-dark-border dark:bg-dark-surface dark:hover:shadow-dark-border flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:shadow-md"
+      className={`flex items-center gap-3 rounded-lg border p-3 transition-all ${
+        cancelled
+          ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+          : "hover:border-primary dark:border-dark-border dark:bg-dark-surface dark:hover:shadow-dark-border border-gray-200 bg-white hover:shadow-md"
+      }`}
     >
       {/* Date Badge */}
       <div
         className={`shrink-0 ${
           isMultiDay ? "min-w-20" : "w-12"
-        } dark:bg-dark-background-secondary flex h-12 rounded-lg bg-gray-100 ${
-          isMultiDay ? "flex-row" : "flex-col"
-        } items-center justify-center gap-1 px-2`}
+        } flex h-12 rounded-lg ${
+          cancelled
+            ? "bg-red-100 dark:bg-red-900/30"
+            : "dark:bg-dark-background-secondary bg-gray-100"
+        } ${isMultiDay ? "flex-row" : "flex-col"} items-center justify-center gap-1 px-2`}
       >
         {isMultiDay ? (
           <>
@@ -88,6 +96,24 @@ export default function CompactEventCard({
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex flex-wrap items-start gap-2">
+          {cancelled && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded bg-red-600 px-2 py-0.5 text-xs font-bold text-white">
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Abgesagt
+            </span>
+          )}
           <span
             className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
               type === "course"
@@ -116,7 +142,13 @@ export default function CompactEventCard({
             </span>
           )}
         </div>
-        <h3 className="text-dark dark:text-dark-text mb-1 line-clamp-2 text-sm font-bold">
+        <h3
+          className={`mb-1 line-clamp-2 text-sm font-bold ${
+            cancelled
+              ? "text-gray-500 line-through dark:text-gray-400"
+              : "text-dark dark:text-dark-text"
+          }`}
+        >
           {title}
         </h3>
         <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">

@@ -128,6 +128,24 @@ END:VCALENDAR`;
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex-1">
               <div className="mb-4 flex flex-wrap items-center gap-3">
+                {event.cancelled && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    ABGESAGT
+                  </span>
+                )}
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
                   {event.category}
                 </span>
@@ -161,7 +179,9 @@ END:VCALENDAR`;
                 )}
               </div>
 
-              <h1 className="mb-2 text-2xl font-bold md:text-4xl lg:text-5xl">
+              <h1
+                className={`mb-2 text-2xl font-bold md:text-4xl lg:text-5xl ${event.cancelled ? "line-through opacity-75" : ""}`}
+              >
                 {event.title}
               </h1>
               {event.motto && (
@@ -203,6 +223,38 @@ END:VCALENDAR`;
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Main Content */}
             <div className="space-y-6 lg:col-span-2">
+              {/* Cancelled Warning */}
+              {event.cancelled && (
+                <div className="rounded-lg border-2 border-red-500 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/50">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
+                      <svg
+                        className="h-6 w-6 text-red-600 dark:text-red-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-red-800 dark:text-red-300">
+                        Diese Veranstaltung wurde abgesagt
+                      </h2>
+                      <p className="mt-1 text-red-700 dark:text-red-400">
+                        Bitte beachten Sie, dass dieses Event nicht mehr
+                        stattfindet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Date & Time */}
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="mb-4 flex items-center justify-between">

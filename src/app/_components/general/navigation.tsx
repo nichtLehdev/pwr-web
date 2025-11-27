@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth";
 import ThemeToggle from "./theme-toggle";
 
@@ -16,9 +15,29 @@ export default function Navigation() {
     null,
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Use Better Auth's useSession hook directly
   const { data: session } = useSession();
+
+  // Track dark mode changes
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+
+    // Initial check
+    checkDarkMode();
+
+    // Watch for changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -125,22 +144,26 @@ export default function Navigation() {
           <Link href="/" className="shrink-0">
             <div className="relative h-10 lg:h-14">
               {/* Desktop: Komplettes Logo mit Text */}
-              <Image
-                src="/images/logo-horizontal.svg"
-                alt="Posaunenwerk Rheinland"
-                width={250}
-                height={56}
-                className="hidden h-full w-auto lg:block"
-                priority
+              <object
+                data={
+                  isDarkMode
+                    ? "/images/logo-horizontal-dark.svg"
+                    : "/images/logo-horizontal.svg"
+                }
+                type="image/svg+xml"
+                className="pointer-events-none hidden h-full w-auto lg:block"
+                aria-label="Posaunenwerk Rheinland"
               />
-              {/* Mobile: Nur Icon (optional, falls vorhanden) */}
-              <Image
-                src="/images/logo-icon.svg"
-                alt="Posaunenwerk Rheinland"
-                width={40}
-                height={40}
-                className="h-full w-auto lg:hidden"
-                priority
+              {/* Mobile: Nur Icon */}
+              <object
+                data={
+                  isDarkMode
+                    ? "/images/logo-icon-dark.svg"
+                    : "/images/logo-icon.svg"
+                }
+                type="image/svg+xml"
+                className="pointer-events-none h-full w-auto lg:hidden"
+                aria-label="Posaunenwerk Rheinland"
               />
             </div>
           </Link>
