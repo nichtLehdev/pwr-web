@@ -1,0 +1,208 @@
+import Link from "next/link";
+import SectionHeader from "./_components/section-header";
+import EventCard from "./_components/events/event-card";
+import PostCard from "./_components/posts/post-card";
+import { api } from "@/trpc/server";
+
+export default async function Home() {
+  const upcomingEvents = await api.events.getAll({
+    page: 1,
+    limit: 4,
+    startDate: new Date(),
+  });
+  const latestPosts = await api.posts.getAll({
+    page: 1,
+    limit: 3,
+  });
+
+  return (
+    <div>
+      <section className="bg-primary relative flex h-[50vh] items-center justify-center md:h-[60vh] lg:h-[70vh]">
+        {/* Gradient Overlay für bessere Lesbarkeit */}
+        <div className="absolute inset-0 bg-linear-to-b from-black/30 to-black/50" />
+
+        <div className="relative z-10 container px-4 text-center text-white">
+          <h1 className="mb-4 text-3xl font-bold md:mb-6 md:text-5xl lg:text-6xl">
+            Posaunenwerk Rheinland
+          </h1>
+          <p className="mx-auto mb-6 max-w-2xl text-lg md:mb-8 md:text-xl lg:text-2xl">
+            Gemeinsam Musik machen, Glauben leben
+          </p>
+          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+            <Link
+              href="/mitmachen"
+              className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-3 font-semibold text-white shadow-lg"
+            >
+              Jetzt mitmachen
+            </Link>
+            <Link
+              href="/termine"
+              className="rounded-lg border-2 border-white bg-transparent px-6 py-3 font-semibold text-white shadow-lg hover:bg-white/10"
+            >
+              Termine ansehen
+            </Link>
+          </div>
+        </div>
+      </section>
+      {/* Termine Section */}
+      <section className="bg-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <SectionHeader
+            title="Kommende Termine"
+            linkText="Alle Termine"
+            linkHref="/termine"
+          />
+
+          {upcomingEvents.events.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {upcomingEvents.events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  title={event.title}
+                  date={event.eventDate}
+                  location={event.location?.city || ""}
+                  category={event.category}
+                  district={event.bezirk?.number}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-600">Aktuell keine Termine verfügbar.</p>
+          )}
+        </div>
+      </section>
+
+      {/* News Section */}
+      <section className="bg-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <SectionHeader
+            title="Aktuelles"
+            linkText="Alle News"
+            linkHref="/aktuelles"
+          />
+
+          {latestPosts.posts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+              {latestPosts.posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  id={post.id}
+                  title={post.title}
+                  excerpt={post.excerpt || ""}
+                  date={post.publishedAt || post.createdAt}
+                  category={post.category}
+                  image={post.coverImage?.url}
+                  pinned={post.pinned}
+                  district={post.bezirk?.number}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-600">Aktuell keine News verfügbar.</p>
+          )}
+        </div>
+      </section>
+
+      {/* Förderverein Teaser */}
+      <section className="bg-foerderverein py-12 text-white md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-6 inline-block rounded-full bg-white/10 p-3">
+              <svg
+                className="h-12 w-12"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+                />
+              </svg>
+            </div>
+            <h2 className="mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Förderverein – Gemeinsam stark für die Posaunenchormusik
+            </h2>
+            <p className="mx-auto mb-8 max-w-3xl text-lg leading-relaxed opacity-95 md:text-xl">
+              Seit 2008 unterstützt unser Förderverein die Arbeit des
+              Posaunenwerks: von Auswahlchören über Lehrgänge bis zu
+              CD-Produktionen. Werden Sie Teil unserer Gemeinschaft!
+            </p>
+
+            <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
+                <div className="mb-2 text-3xl font-bold">36 €</div>
+                <p className="text-sm opacity-90">Jahresbeitrag</p>
+              </div>
+              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
+                <div className="mb-2 text-3xl font-bold">2025</div>
+                <p className="text-sm opacity-90">
+                  Geschenk-CD für Neumitglieder
+                </p>
+              </div>
+              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
+                <div className="mb-2 text-3xl font-bold">1.000 €</div>
+                <p className="text-sm opacity-90">
+                  p.a. für Lehrgangsförderung
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <Link
+                href="/foerderverein"
+                className="text-foerderverein inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 font-bold shadow-lg transition-colors hover:bg-gray-100"
+              >
+                Mehr erfahren
+                <svg
+                  className="ml-2 h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </Link>
+              <a
+                href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white/10"
+              >
+                Mitglied werden
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Spacing Section für sanfteren Übergang */}
+      <section className="bg-background py-8 md:py-12"></section>
+
+      {/* CTA Section */}
+      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
+        <div className="container text-center">
+          <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+            Lust auf Posaunenchor?
+          </h2>
+          <p className="mx-auto mb-8 max-w-2xl text-lg md:text-xl">
+            Finde einen Chor in deiner Nähe oder erfahre mehr über unsere Aus-
+            und Weiterbildungsangebote
+          </p>
+          <Link
+            href="/mitmachen"
+            className="text-dark inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100"
+          >
+            Mehr erfahren
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

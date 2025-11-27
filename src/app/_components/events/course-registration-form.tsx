@@ -1,0 +1,1231 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
+import { useState, useEffect } from "react";
+import type { RouterInputs, RouterOutputs } from "@/trpc/react";
+import { api } from "@/trpc/react";
+import type { User } from "~/generated/prisma/client";
+// Use the actual return types from your tRPC router
+type CourseWithRelations = RouterOutputs["courses"]["getById"];
+type RegistrationData = Omit<
+  RouterInputs["registrations"]["create"],
+  "courseId" | "totalPrice"
+>;
+
+interface CourseRegistrationFormProps {
+  course: CourseWithRelations;
+  onClose: () => void;
+  onSuccess: () => void;
+  isWaitlist: boolean;
+  currentUser?: User | null; // Optional: Logged in user
+}
+
+type Step = 1 | 2 | 3 | 4;
+
+export default function CourseRegistrationForm({
+  course,
+  onClose,
+  onSuccess,
+  isWaitlist,
+  currentUser,
+}: CourseRegistrationFormProps) {
+  const registrationMutation = api.registrations.create.useMutation();
+  const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [registrationData, setRegistrationData] = useState<RegistrationData>({
+    registrantEmail: currentUser?.email || "",
+    registrantFirstName: currentUser?.firstName || "",
+    registrantLastName: currentUser?.lastName || "",
+    registrantPhone: currentUser?.phone || "",
+    useSeparateBilling: false,
+    billingStreet: "",
+    billingZipCode: "",
+    billingCity: "",
+    billingCompany: "",
+    billingFirstName: "",
+    billingLastName: "",
+    billingEmail: "",
+    participants: [],
+  });
+
+  // Prevent body scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
+    return () => {
+      document.body.style.overflow = "unset";
+      document.body.classList.remove("modal-open");
+    };
+  }, []);
+
+  // Close on ESC
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
+  // Add new participant
+  const addParticipant = () => {
+    if (!course.priceOptions) {
+      console.error("Course price options are not defined.");
+      return;
+    }
+    setRegistrationData({
+      ...registrationData,
+      participants: [
+        ...registrationData.participants,
+        {
+          firstName: "",
+          lastName: "",
+          birthDate: new Date(),
+          city: "",
+          instrument: "",
+          priceOption: course.priceOptions?.[0]?.label || undefined,
+          customFields: {},
+        },
+      ],
+    });
+  };
+
+  // Add registrant as participant
+  const addMyselfAsParticipant = () => {
+    setRegistrationData({
+      ...registrationData,
+      participants: [
+        ...registrationData.participants,
+        {
+          firstName: currentUser?.firstName || "",
+          lastName: currentUser?.lastName || "",
+          birthDate: currentUser?.birthDate || new Date(),
+          city: "",
+          instrument: "",
+          priceOption: course.priceOptions[0]?.label || "",
+          customFields: {},
+        },
+      ],
+    });
+  };
+
+  // Remove participant
+  const removeParticipant = (index: number) => {
+    setRegistrationData({
+      ...registrationData,
+      participants: registrationData.participants.filter((_, i) => i !== index),
+    });
+  };
+
+  // Update participant
+  const updateParticipant = (
+    index: number,
+    field: string,
+    value: string | Record<string, any>,
+  ) => {
+    const updated = [...registrationData.participants];
+    if (field === "customFields") {
+      if (updated[index]) {
+        updated[index].customFields = value as Record<string, any>;
+      }
+    } else {
+      (updated[index] as any)[field] = value;
+    }
+    setRegistrationData({ ...registrationData, participants: updated });
+  };
+
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    return registrationData.participants.reduce((sum, participant) => {
+      const priceOption = course.priceOptions.find(
+        (p) => p.label === participant.priceOption,
+      );
+      return sum + (priceOption?.price || 0);
+    }, 0);
+  };
+
+  // Validate current step
+  const validateStep = (step: Step): boolean => {
+    switch (step) {
+      case 1:
+        const { firstName, lastName, email, phone } = currentUser || {};
+        const basicValid = !!(firstName && lastName && email && phone);
+
+        // Validate billing address if separate billing is enabled
+        if (registrationData.useSeparateBilling) {
+          const { billingStreet, billingZipCode, billingCity } =
+            registrationData;
+          return (
+            basicValid && !!(billingStreet && billingZipCode && billingCity)
+          );
+        }
+
+        return basicValid;
+      case 2:
+        return registrationData.participants.length > 0;
+      case 3:
+        return registrationData.participants.every(
+          (p) =>
+            p.firstName && p.lastName && p.birthDate && p.city && p.priceOption,
+        );
+      case 4:
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const canProceed = validateStep(currentStep);
+
+  // Submit registration
+  const handleSubmit = async () => {
+    console.log("Registration submitted:", {
+      course: course.id,
+      ...registrationData,
+      totalPrice: calculateTotalPrice(),
+      isWaitlist,
+    });
+
+    registrationMutation.mutate({
+      courseId: course.id,
+      participants: registrationData.participants.map((p) => ({
+        firstName: p.firstName,
+        lastName: p.lastName,
+        birthDate: p.birthDate,
+        city: p.city,
+        instrument: p.instrument,
+        priceOption: p.priceOption,
+        customFields: JSON.stringify(p.customFields),
+      })),
+      registrantFirstName:
+        registrationData.registrantFirstName || currentUser?.firstName || "",
+      registrantLastName:
+        registrationData.registrantLastName || currentUser?.lastName || "",
+      registrantEmail:
+        registrationData.registrantEmail || currentUser?.email || "",
+      registrantPhone:
+        registrationData.registrantPhone || currentUser?.phone || "",
+      totalPrice: calculateTotalPrice(),
+    });
+
+    alert(
+      isWaitlist
+        ? "Sie wurden auf die Warteliste gesetzt."
+        : "Ihre Anmeldung war erfolgreich.",
+    );
+    onSuccess();
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="my-8 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-primary sticky top-0 z-10 rounded-t-xl p-6 text-white">
+          <div className="mb-4 flex items-start justify-between">
+            <div className="flex-1">
+              <h2 className="mb-1 text-2xl font-bold">
+                {isWaitlist ? "Warteliste" : "Anmeldung"}
+              </h2>
+              <p className="text-sm opacity-90">{course.title}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-2 transition-colors hover:bg-white/20"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Progress Steps */}
+          <div className="flex items-start justify-between">
+            {[
+              { num: 1, label: "Anmelder" },
+              { num: 2, label: "Teilnehmer" },
+              { num: 3, label: "Details" },
+              { num: 4, label: "Übersicht" },
+            ].map((step, index) => (
+              <div key={step.num} className="flex flex-1 items-start">
+                <div className="flex w-full flex-col items-center">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                      currentStep >= step.num
+                        ? "text-primary bg-white"
+                        : "bg-white/20 text-white/60"
+                    }`}
+                  >
+                    {step.num}
+                  </div>
+                  <span className="mt-1 text-[10px] whitespace-nowrap opacity-90 sm:text-xs">
+                    {step.label}
+                  </span>
+                </div>
+                {index < 3 && (
+                  <div
+                    className={`mx-2 mt-4 hidden h-1 flex-1 transition-colors sm:block ${
+                      currentStep > step.num ? "bg-white" : "bg-white/20"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Step 1: Registrant Info */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <h3 className="text-dark mb-4 text-xl font-bold">
+                Ihre Kontaktdaten
+              </h3>
+              <p className="mb-6 text-gray-600">
+                Als Anmelder erhalten Sie die Bestätigung und alle weiteren
+                Informationen per E-Mail.
+              </p>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Vorname *
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      registrationData.registrantFirstName ||
+                      currentUser?.firstName ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantFirstName: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="Max"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Nachname *
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      registrationData.registrantLastName ||
+                      currentUser?.lastName ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantLastName: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="Mustermann"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    E-Mail *
+                  </label>
+                  <input
+                    type="email"
+                    value={
+                      registrationData.registrantEmail ||
+                      currentUser?.email ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantEmail: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="max@example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Telefon *
+                  </label>
+                  <input
+                    type="tel"
+                    value={
+                      registrationData.registrantPhone ||
+                      currentUser?.phone ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantPhone: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="0211 123456"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Straße und Hausnummer{" "}
+                    {!registrationData.useSeparateBilling && "*"}
+                  </label>
+                  <input
+                    type="text"
+                    value={registrationData.registrantStreet}
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantStreet: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="Musterstraße 1"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    PLZ {!registrationData.useSeparateBilling && "*"}
+                  </label>
+                  <input
+                    type="text"
+                    value={registrationData.registrantZipCode}
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantZipCode: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="12345"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-gray-700">
+                    Ort {!registrationData.useSeparateBilling && "*"}
+                  </label>
+                  <input
+                    type="text"
+                    value={registrationData.registrantCity}
+                    onChange={(e) =>
+                      setRegistrationData({
+                        ...registrationData,
+                        registrantCity: e.target.value,
+                      })
+                    }
+                    className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                    placeholder="Düsseldorf"
+                  />
+                </div>
+              </div>
+              {/* Billing Address Section */}
+              <div className="mt-8 border-t border-gray-200 pt-8">
+                <h3 className="text-dark mb-4 text-lg font-bold">
+                  Rechnungsadresse
+                </h3>
+
+                <div className="mb-4">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-gray-50 p-4 transition-colors hover:bg-gray-100">
+                    <input
+                      type="checkbox"
+                      checked={registrationData.useSeparateBilling}
+                      onChange={(e) =>
+                        setRegistrationData({
+                          ...registrationData,
+                          useSeparateBilling: e.target.checked,
+                        })
+                      }
+                      className="text-primary focus:ring-primary h-5 w-5 rounded"
+                    />
+                    <div>
+                      <span className="text-dark font-semibold">
+                        Abweichende Rechnungsadresse
+                      </span>
+                      <p className="text-sm text-gray-600">
+                        z.B. für Kirchengemeinde oder Institution
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {registrationData.useSeparateBilling && (
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Firma / Institution / Kirchengemeinde
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingCompany}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingCompany: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Evangelische Kirchengemeinde Düsseldorf"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Vorname
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingFirstName}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingFirstName: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Max"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Nachname
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingLastName}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingLastName: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Mustermann"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Straße und Hausnummer *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingStreet}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingStreet: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Musterstraße 123"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        PLZ *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingZipCode}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingZipCode: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="40210"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Stadt *
+                      </label>
+                      <input
+                        type="text"
+                        value={registrationData.billingCity}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingCity: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Düsseldorf"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        E-Mail für Rechnung
+                      </label>
+                      <input
+                        type="email"
+                        value={registrationData.billingEmail}
+                        onChange={(e) =>
+                          setRegistrationData({
+                            ...registrationData,
+                            billingEmail: e.target.value,
+                          })
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="rechnung@gemeinde.de"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Falls abweichend von Ihrer E-Mail-Adresse
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Add Participants */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h3 className="text-dark text-xl font-bold">Teilnehmer</h3>
+                  <p className="text-sm text-gray-600">
+                    Sie können mehrere Personen gleichzeitig anmelden
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={addMyselfAsParticipant}
+                    className="flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-white transition-colors hover:bg-gray-700"
+                    title="Mich selbst als Teilnehmer hinzufügen"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    <span className="hidden sm:inline">Mich selbst</span>
+                  </button>
+                  <button
+                    onClick={addParticipant}
+                    className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span className="hidden sm:inline">Hinzufügen</span>
+                  </button>
+                </div>
+              </div>
+
+              {registrationData.participants.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-12 text-center">
+                  <svg
+                    className="mx-auto mb-4 h-16 w-16 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <p className="mb-4 text-gray-600">
+                    Noch keine Teilnehmer hinzugefügt
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <button
+                      onClick={addMyselfAsParticipant}
+                      className="flex items-center gap-2 rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+                    >
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      Mich selbst hinzufügen
+                    </button>
+                    <button
+                      onClick={addParticipant}
+                      className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-2 text-white transition-colors"
+                    >
+                      Andere Person hinzufügen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {registrationData.participants.map((participant, index) => {
+                    // Check if this participant has the same name as registrant
+                    const isRegistrant =
+                      participant.firstName ===
+                        registrationData.registrantFirstName &&
+                      participant.lastName ===
+                        registrationData.registrantLastName;
+
+                    return (
+                      <div
+                        key={index}
+                        className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+                      >
+                        <div className="mb-3 flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-dark font-semibold">
+                              Teilnehmer {index + 1}
+                            </h4>
+                            {isRegistrant && (
+                              <span className="bg-primary/10 text-primary flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold">
+                                <svg
+                                  className="h-3 w-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                  />
+                                </svg>
+                                Ich
+                              </span>
+                            )}
+                          </div>
+                          {registrationData.participants.length > 1 && (
+                            <button
+                              onClick={() => removeParticipant(index)}
+                              className="p-1 text-red-600 hover:text-red-700"
+                            >
+                              <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+
+                        <p className="mb-3 text-xs text-gray-500">
+                          Grundlegende Informationen zur Person
+                        </p>
+
+                        <div className="text-sm text-gray-600">
+                          {participant.firstName || participant.lastName ? (
+                            <p className="font-semibold">
+                              {participant.firstName} {participant.lastName}
+                            </p>
+                          ) : (
+                            <p className="text-gray-400 italic">
+                              Noch keine Daten eingegeben
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Participant Details */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <h3 className="text-dark mb-4 text-xl font-bold">
+                Details der Teilnehmer
+              </h3>
+
+              {registrationData.participants.map((participant, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-6"
+                >
+                  <h4 className="text-dark mb-4 font-bold">
+                    Teilnehmer {index + 1}
+                  </h4>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Vorname *
+                      </label>
+                      <input
+                        type="text"
+                        value={participant.firstName}
+                        onChange={(e) =>
+                          updateParticipant(index, "firstName", e.target.value)
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Nachname *
+                      </label>
+                      <input
+                        type="text"
+                        value={participant.lastName}
+                        onChange={(e) =>
+                          updateParticipant(index, "lastName", e.target.value)
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Geburtsdatum *
+                      </label>
+                      <input
+                        type="date"
+                        value={
+                          participant.birthDate.toISOString().split("T")[0]
+                        }
+                        onChange={(e) =>
+                          updateParticipant(
+                            index,
+                            "birthDate",
+                            new Date(e.target.value),
+                          )
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Wohnort *
+                      </label>
+                      <input
+                        type="text"
+                        value={participant.city}
+                        onChange={(e) =>
+                          updateParticipant(index, "city", e.target.value)
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Düsseldorf"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Instrument
+                      </label>
+                      <input
+                        type="text"
+                        value={participant.instrument || ""}
+                        onChange={(e) =>
+                          updateParticipant(index, "instrument", e.target.value)
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                        placeholder="Trompete"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-gray-700">
+                        Preisoption *
+                      </label>
+                      <select
+                        value={participant.priceOption}
+                        onChange={(e) =>
+                          updateParticipant(
+                            index,
+                            "priceOption",
+                            e.target.value,
+                          )
+                        }
+                        className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                      >
+                        {course.priceOptions.map((option) => (
+                          <option key={option.label} value={option.label}>
+                            {option.label} - {option.price.toFixed(2)} €
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Custom Fields */}
+                    {course.customFields?.map((field) => {
+                      return (
+                        <div key={field.fieldName} className="md:col-span-2">
+                          <label className="mb-1 block text-sm font-semibold text-gray-700">
+                            {field.fieldName}
+                            {field.isRequired && " *"}
+                          </label>
+                          {field.fieldType === "SELECT" && field.options ? (
+                            <select
+                              value={
+                                (participant.customFields &&
+                                typeof participant.customFields === "object" &&
+                                field.fieldName in participant.customFields
+                                  ? (
+                                      participant.customFields as Record<
+                                        string,
+                                        any
+                                      >
+                                    )[field.fieldName]
+                                  : "") || ""
+                              }
+                              onChange={(e) =>
+                                updateParticipant(index, "customFields", {
+                                  ...(typeof participant.customFields ===
+                                    "object" &&
+                                  participant.customFields !== null
+                                    ? participant.customFields
+                                    : {}),
+                                  [field.fieldName]: e.target.value,
+                                })
+                              }
+                              className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                            >
+                              <option value="">Bitte wählen</option>
+                              {typeof field.options === "string" &&
+                                field.options.split(",").map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                            </select>
+                          ) : field.fieldType === "TEXTAREA" ? (
+                            <textarea
+                              value={
+                                typeof participant.customFields === "object" &&
+                                participant.customFields !== null &&
+                                field.fieldName in participant.customFields
+                                  ? (
+                                      participant.customFields as Record<
+                                        string,
+                                        any
+                                      >
+                                    )[field.fieldName]
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                updateParticipant(index, "customFields", {
+                                  ...(typeof participant.customFields ===
+                                    "object" &&
+                                  participant.customFields !== null
+                                    ? participant.customFields
+                                    : {}),
+                                  [field.fieldName]: e.target.value,
+                                })
+                              }
+                              rows={3}
+                              className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                              placeholder={field.helpText ? field.helpText : ""}
+                            />
+                          ) : (
+                            <input
+                              type={
+                                field.fieldType === "NUMBER" ? "number" : "text"
+                              }
+                              value={
+                                typeof participant.customFields === "object" &&
+                                participant.customFields !== null &&
+                                field.fieldName in participant.customFields
+                                  ? (
+                                      participant.customFields as Record<
+                                        string,
+                                        any
+                                      >
+                                    )[field.fieldName]
+                                  : ""
+                              }
+                              onChange={(e) =>
+                                updateParticipant(index, "customFields", {
+                                  ...(typeof participant.customFields ===
+                                    "object" &&
+                                  participant.customFields !== null
+                                    ? participant.customFields
+                                    : {}),
+                                  [field.fieldName]: e.target.value,
+                                })
+                              }
+                              className="focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2"
+                              placeholder={field.helpText ? field.helpText : ""}
+                            />
+                          )}
+                          {field.helpText && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              {field.helpText}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Step 4: Summary */}
+          {currentStep === 4 && (
+            <div className="space-y-6">
+              <h3 className="text-dark mb-4 text-xl font-bold">
+                Zusammenfassung
+              </h3>
+
+              {/* Course Info */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+                <h4 className="text-dark mb-3 font-bold">Lehrgang</h4>
+                <p className="text-lg font-semibold">{course.title}</p>
+                <p className="text-sm text-gray-600">
+                  {new Date(course.startDate).toLocaleDateString("de-DE")} -{" "}
+                  {new Date(course.endDate).toLocaleDateString("de-DE")}
+                </p>
+                {course.location && (
+                  <p className="text-sm text-gray-600">
+                    {course.location.name}, {course.location.city}
+                  </p>
+                )}
+              </div>
+
+              {/* Registrant Info */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+                <h4 className="text-dark mb-3 font-bold">Anmelder</h4>
+                <p className="font-semibold">
+                  {registrationData.registrantFirstName}{" "}
+                  {registrationData.registrantLastName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {registrationData.registrantEmail}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {registrationData.registrantPhone}
+                </p>
+              </div>
+
+              {/* Billing Address */}
+              {registrationData.useSeparateBilling && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+                  <h4 className="text-dark mb-3 flex items-center gap-2 font-bold">
+                    <svg
+                      className="h-5 w-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Rechnungsadresse
+                  </h4>
+                  {registrationData.billingCompany && (
+                    <p className="text-dark font-semibold">
+                      {registrationData.billingCompany}
+                    </p>
+                  )}
+                  {(registrationData.billingFirstName ||
+                    registrationData.billingLastName) && (
+                    <p className="text-sm text-gray-700">
+                      {registrationData.billingFirstName}{" "}
+                      {registrationData.billingLastName}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-700">
+                    {registrationData.billingStreet}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {registrationData.billingZipCode}{" "}
+                    {registrationData.billingCity}
+                  </p>
+                  {registrationData.billingEmail && (
+                    <p className="mt-2 text-sm text-gray-700">
+                      Rechnung an: {registrationData.billingEmail}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Participants List */}
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-6">
+                <h4 className="text-dark mb-3 font-bold">
+                  Teilnehmer ({registrationData.participants.length})
+                </h4>
+                <div className="space-y-3">
+                  {registrationData.participants.map((participant, index) => {
+                    const priceOption = course.priceOptions.find(
+                      (p) => p.label === participant.priceOption,
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-start justify-between border-b border-gray-200 pb-3 last:border-0"
+                      >
+                        <div>
+                          <p className="font-semibold">
+                            {participant.firstName} {participant.lastName}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(participant.birthDate).toLocaleDateString(
+                              "de-DE",
+                            )}
+                            {participant.instrument &&
+                              ` • ${participant.instrument}`}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {participant.priceOption}
+                          </p>
+                        </div>
+                        <p className="text-primary font-bold">
+                          {priceOption?.price.toFixed(2)} €
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Total Price */}
+              <div className="bg-primary rounded-lg p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold">Gesamtpreis</span>
+                  <span className="text-3xl font-bold">
+                    {calculateTotalPrice().toFixed(2)} €
+                  </span>
+                </div>
+              </div>
+
+              {/* Terms */}
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    required
+                    className="text-primary focus:ring-primary mt-1 h-4 w-4"
+                  />
+                  <span className="text-sm text-gray-700">
+                    Ich akzeptiere die{" "}
+                    <a href="#" className="text-primary font-semibold">
+                      Allgemeinen Geschäftsbedingungen
+                    </a>{" "}
+                    und die{" "}
+                    <a href="#" className="text-primary font-semibold">
+                      Datenschutzerklärung
+                    </a>
+                    .
+                  </span>
+                </label>
+              </div>
+
+              {isWaitlist && (
+                <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                  <p className="text-sm text-orange-800">
+                    <strong>Hinweis:</strong> Der Kurs ist bereits ausgebucht.
+                    Sie werden auf die Warteliste gesetzt und bei einem
+                    freigewordenen Platz benachrichtigt.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer / Navigation */}
+        <div className="sticky bottom-0 flex flex-col items-stretch justify-between gap-3 rounded-b-xl border-t bg-gray-50 p-4 sm:flex-row sm:items-center sm:gap-4 sm:p-6">
+          <button
+            onClick={() =>
+              currentStep > 1 && setCurrentStep((currentStep - 1) as Step)
+            }
+            disabled={currentStep === 1}
+            className="text-dark order-2 rounded-lg border-2 border-gray-300 px-6 py-2 font-semibold transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:order-1"
+          >
+            Zurück
+          </button>
+
+          <div className="order-1 text-center text-sm whitespace-nowrap text-gray-600 sm:order-2 sm:flex-1">
+            Schritt {currentStep} von 4
+          </div>
+
+          {currentStep < 4 ? (
+            <button
+              onClick={() => setCurrentStep((currentStep + 1) as Step)}
+              disabled={!canProceed}
+              className="bg-primary hover:bg-primary-dark order-3 rounded-lg px-6 py-2 font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Weiter
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              className="order-3 rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition-colors hover:bg-green-700"
+            >
+              Verbindlich anmelden
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

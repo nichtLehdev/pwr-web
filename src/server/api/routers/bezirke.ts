@@ -1,0 +1,285 @@
+import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, publicProcedure, adminProcedure } from "../trpc";
+
+export const bezirkeRouter = createTRPCRouter({
+  // Public: Get all districts
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    const bezirke = await ctx.db.bezirk.findMany({
+      include: {
+        obleute: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            displayName: true,
+            phone: true,
+            email: true,
+            profileImage: true,
+            obleuteRole: true,
+            street: true,
+            zipCode: true,
+            city: true,
+          },
+        },
+        _count: {
+          select: {
+            ensembles: { where: { isActive: true } },
+            events: {
+              where: {
+                status: "APPROVED",
+                eventDate: { gte: new Date() },
+              },
+            },
+            courses: {
+              where: {
+                status: "APPROVED",
+                endDate: { gte: new Date() },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { number: "asc" },
+    });
+
+    return bezirke.map((bezirk) => ({
+      ...bezirk,
+      obleute: bezirk.obleute.map((obleute) => ({
+        ...obleute,
+        displayName:
+          obleute.displayName || `${obleute.firstName} ${obleute.lastName}`,
+        firstName: undefined,
+        lastName: undefined,
+        address:
+          obleute.street || obleute.zipCode || obleute.city
+            ? `${obleute.street}, ${obleute.zipCode} ${obleute.city}`
+            : undefined,
+      })),
+    }));
+  }),
+
+  // Get single district by ID
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const bezirk = await ctx.db.bezirk.findUnique({
+        where: { id: input.id },
+        include: {
+          obleute: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              obleuteRole: true,
+              bio: true,
+            },
+          },
+          ensembles: {
+            where: { isActive: true },
+            include: {
+              image: true,
+              conductor: {
+                select: {
+                  id: true,
+                  displayName: true,
+                },
+              },
+            },
+            orderBy: { name: "asc" },
+          },
+          events: {
+            where: {
+              status: "APPROVED",
+              eventDate: { gte: new Date() },
+            },
+            take: 10,
+            orderBy: { eventDate: "asc" },
+            include: {
+              coverImage: true,
+              location: true,
+            },
+          },
+          courses: {
+            where: {
+              status: "APPROVED",
+              endDate: { gte: new Date() },
+            },
+            take: 5,
+            orderBy: { startDate: "asc" },
+            include: {
+              location: true,
+            },
+          },
+          posts: {
+            where: {
+              status: "APPROVED",
+            },
+            take: 5,
+            orderBy: { publishedAt: "desc" },
+            include: {
+              coverImage: true,
+              createdBy: {
+                select: {
+                  id: true,
+                  displayName: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!bezirk) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Bezirk not found",
+        });
+      }
+
+      return bezirk;
+    }),
+
+  // Get district by number
+  getByNumber: publicProcedure
+    .input(z.object({ number: z.number().min(1).max(13) }))
+    .query(async ({ ctx, input }) => {
+      const bezirk = await ctx.db.bezirk.findUnique({
+        where: { number: input.number },
+        include: {
+          obleute: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              obleuteRole: true,
+            },
+          },
+          _count: {
+            select: {
+              ensembles: { where: { isActive: true } },
+              events: { where: { status: "APPROVED" } },
+              courses: { where: { status: "APPROVED" } },
+            },
+          },
+        },
+      });
+
+      if (!bezirk) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Bezirk not found",
+        });
+      }
+
+      return bezirk;
+    }),
+
+  // Create district (admin only)
+  create: adminProcedure
+    .input(
+      z.object({
+        number: z.number().min(1).max(13),
+        name: z.string().min(1),
+        shortName: z.string().min(1),
+        color: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const bezirk = await ctx.db.bezirk.create({
+        data: input,
+      });
+
+      return bezirk;
+    }),
+
+  // Update district (admin only)
+  update: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        number: z.number().min(1).max(13).optional(),
+        name: z.string().min(1).optional(),
+        shortName: z.string().min(1).optional(),
+        color: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...updateData } = input;
+
+      return await ctx.db.bezirk.update({
+        where: { id },
+        data: updateData,
+      });
+    }),
+
+  // Delete district (admin only)
+  delete: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.bezirk.delete({
+        where: { id: input.id },
+      });
+
+      return { success: true };
+    }),
+
+  // Get district statistics
+  getStatistics: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const bezirk = await ctx.db.bezirk.findUnique({
+        where: { id: input.id },
+        include: {
+          _count: {
+            select: {
+              ensembles: { where: { isActive: true } },
+              events: { where: { status: "APPROVED" } },
+              courses: { where: { status: "APPROVED" } },
+              posts: { where: { status: "APPROVED" } },
+              obleute: true,
+            },
+          },
+        },
+      });
+
+      if (!bezirk) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Bezirk not found",
+        });
+      }
+
+      // Get upcoming events count
+      const upcomingEvents = await ctx.db.event.count({
+        where: {
+          bezirkId: input.id,
+          status: "APPROVED",
+          eventDate: { gte: new Date() },
+        },
+      });
+
+      // Get active courses count
+      const activeCourses = await ctx.db.course.count({
+        where: {
+          bezirkId: input.id,
+          status: "APPROVED",
+          endDate: { gte: new Date() },
+        },
+      });
+
+      return {
+        totalEnsembles: bezirk._count.ensembles,
+        totalEvents: bezirk._count.events,
+        upcomingEvents,
+        totalCourses: bezirk._count.courses,
+        activeCourses,
+        totalPosts: bezirk._count.posts,
+        totalObleute: bezirk._count.obleute,
+      };
+    }),
+});

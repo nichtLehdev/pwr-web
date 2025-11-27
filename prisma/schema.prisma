@@ -1,0 +1,891 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  username      String?   @unique
+  displayName   String?
+  firstName     String?
+  lastName      String?
+  email         String?   @unique
+  emailVerified DateTime?
+  phone         String?
+  street        String?
+  zipCode       String?
+  city          String?
+  birthDate     DateTime?
+
+  profileImageId String?
+  profileImage   Media?  @relation("UserProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
+
+  // Role & Permissions
+  role        UserRole @default(USER)
+  roleType    String?
+  displayRole String?
+
+  // Obleute-specific
+  obleuteRole     String?
+  obleuteBezirkId String?
+
+  // Bio & Preferences
+  bio         String?
+  preferences Json?
+
+  // Relations
+  accounts                      Account[]
+  sessions                      Session[]
+  obleuteBezirk                 Bezirk?                      @relation("BezirkObleute", fields: [obleuteBezirkId], references: [id], onDelete: SetNull)
+  uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
+  posaunenwarteResponsibilities PosaunenwartResponsibility[]
+  createdEvents                 Event[]                      @relation("EventCreator")
+  createdCourses                Course[]                     @relation("CourseCreator")
+  createdPosts                  Post[]                       @relation("PostCreator")
+  reviewedEvents                Event[]                      @relation("EventReviewer")
+  reviewedCourses               Course[]                     @relation("CourseReviewer")
+  reviewedPosts                 Post[]                       @relation("PostReviewer")
+  instructedCourses             Course[]                     @relation("CourseInstructors")
+  conductedEnsembles            Ensemble[]                   @relation("EnsembleConductor")
+  representedEnsembles          Ensemble[]                   @relation("EnsembleRepresentative")
+  conductedAuswahlChors         AuswahlChor[]                @relation("AuswahlChorConductor")
+
+  // Organization membership relations
+  teamMember          TeamMember?          @relation("TeamMemberUser")
+  posaunenratMember   PosaunenratMember?   @relation("PosaunenratMemberUser")
+  vorstandMember      VorstandMember?      @relation("VorstandMemberUser")
+  foerdervereinMember FoerdervereinMember? @relation("FoerdervereinMemberUser")
+
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  courseRegistrations CourseRegistration[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String? //@db.Text
+  userAgent String? //@db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String //@db.Text
+  providerId            String //@db.Text
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String? //@db.Text
+  refreshToken          String? //@db.Text
+  idToken               String? //@db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String? //@db.Text
+  password              String? //@db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String //@db.Text
+  value      String //@db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+
+// --------- Enums ---------
+enum UserRole {
+  USER // Regular user
+  OBLEUTE // Can create events/posts (needs approval)
+  RPW // Regional Posaunenwart - can approve for their Bezirk
+  LPW // Landesposaunenwart - can approve everything
+  ADMIN // Full admin access
+}
+
+enum EventEnsembleType {
+  AUSWAHLCHOR
+  ENSEMBLE
+  CUSTOM
+}
+
+enum EventCategory {
+  KONZERT // Concert
+  GOTTESDIENST // Church service
+  PROBE // Rehearsal
+  ANDERE // Other
+}
+
+enum CourseType {
+  LEHRGANG // Course/Training
+  FREIZEIT // Retreat
+  WORKSHOP
+  KOMPONISTENPORTRAIT // Composer Portrait
+  OTHER
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  SELECT
+  CHECKBOX
+  TEXTAREA
+}
+
+enum PostCategory {
+  MAGAZIN // Magazine
+  EVENT // Event
+  AUSBILDUNG // Education/Training
+  BEZIRKE // Districts
+  ANDERE // Other
+}
+
+enum TargetAudience {
+  ANFAENGER // Beginners
+  FORTGESCHRITTENE // Advanced
+  DIRIGENTEN // Conductors
+  JUGEND // Youth
+  ALLE // All
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+enum RegistrationStatus {
+  CONFIRMED
+  WAITLIST
+  CANCELLED
+}
+
+enum PosaunenwartRoleType {
+  LPW // Landesposaunenwart (responsible for all Bezirke)
+  RPW // Regionalposaunenwart (responsible for multiple Bezirke)
+}
+
+enum ContactType {
+  GESCHAEFTSSTELLE
+  INTERNET_TEAM
+}
+
+enum PosaunenratRole {
+  VORSTAND
+  BEZIRKSOBMANN
+  BEZIRKSOBFRAU
+  LANDESKIRCHENMUSIKDIREKTOR
+  SACHVERSTAENDIGER
+  SACHVERSTAENDIGE
+}
+
+enum FoerdervereinRole {
+  VORSITZENDER // Chairman
+  STELLVERTRETER // Vice Chairman
+  SCHATZMEISTER // Treasurer
+  SCHRIFTFUEHRER // Secretary
+  BEISITZER // Board Member
+  MITGLIED // Regular Member
+}
+
+enum HistoryCategory {
+  FOUNDING
+  MILESTONE
+  EXPANSION
+  MODERNIZATION
+  PARTNERSHIP
+}
+
+enum DownloadCategory {
+  BLECHBLATT // Rheinisches Blechblatt
+  NOTEN // Sheet music
+  UEBUNGEN // Exercises
+  FORMULARE // Forms
+  SONSTIGES // Other
+}
+
+enum FileType {
+  PDF
+  DOCX
+  XLSX
+  ZIP
+  MP3
+}
+
+enum ContentStatus {
+  DRAFT // Being worked on
+  PENDING // Submitted, waiting for approval
+  APPROVED // Approved and published
+  REJECTED // Rejected, needs revision
+  ARCHIVED // No longer active
+}
+
+// --------- Models ---------
+model Event {
+  id          String  @id @default(uuid())
+  title       String
+  motto       String?
+  description String?
+
+  coverImageId String?
+  coverImage   Media?  @relation("EventCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+
+  // Date & Time
+  eventDate DateTime
+
+  // Location - use new Location model
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Category & Classification
+  category     EventCategory
+  bezirkId     String?
+  districtName String?
+
+  // Performance Details
+  performingEnsembleType EventEnsembleType?
+  ensembleId             String?
+  auswahlChorId          String?
+  performingEnsembleName String?
+  leitung                String?
+
+  // Participation
+  openToParticipants Boolean @default(false)
+  participationInfo  String?
+
+  // Pricing
+  isFree    Boolean @default(true)
+  priceInfo String?
+
+  // Approval Workflow — single source of truth
+  status      ContentStatus @default(PENDING)
+  reviewNotes String?
+  reviewDate  DateTime?
+
+  // Relations
+  ensemble     Ensemble?          @relation(fields: [ensembleId], references: [id], onDelete: SetNull)
+  auswahlChor  AuswahlChor?       @relation(fields: [auswahlChorId], references: [id], onDelete: SetNull)
+  bezirk       Bezirk?            @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+  priceOptions EventPriceOption[]
+
+  // Meta
+  createdById String?
+  createdBy   User?     @relation("EventCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewerId  String?
+  reviewer    User?     @relation("EventReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([eventDate])
+  @@index([status])
+  @@index([category])
+  @@index([bezirkId])
+}
+
+model EventPriceOption {
+  id      String @id @default(uuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  price       Float
+  label       String
+  description String?
+}
+
+model Course {
+  id          String  @id @default(uuid())
+  title       String
+  motto       String?
+  description String
+
+  // Dates
+  startDate DateTime
+  endDate   DateTime
+
+  // Location - use new Location model
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Classification
+  courseType     CourseType
+  targetAudience TargetAudience?
+  bezirkId       String?
+
+  // Registration
+  registrationOpen     Boolean   @default(false)
+  registrationDeadline DateTime?
+  maxParticipants      Int? // optional hard cap
+  allowWaitingList     Boolean   @default(false)
+
+  // Pricing
+  isFree    Boolean @default(false)
+  priceInfo String?
+
+  // Additional Info
+  prerequisites String?
+  whatToBring   String?
+
+  // Approval Workflow
+  status      ContentStatus @default(PENDING)
+  reviewNotes String?
+  reviewDate  DateTime?
+
+  // Relations
+  instructors   User[]               @relation("CourseInstructors")
+  bezirk        Bezirk?              @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+  priceOptions  CoursePriceOption[] // Each can have their own maxParticipants
+  customFields  CourseCustomField[]
+  registrations CourseRegistration[]
+
+  // Meta
+  createdById String?
+  createdBy   User?     @relation("CourseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewerId  String?
+  reviewer    User?     @relation("CourseReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([startDate])
+  @@index([courseType])
+  @@index([bezirkId])
+}
+
+model CoursePriceOption {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  price           Float
+  label           String
+  description     String?
+  maxParticipants Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CourseCustomField {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  fieldName  String
+  fieldType  CustomFieldType
+  options    Json? // JSON for select options
+  isRequired Boolean         @default(false)
+  helpText   String?
+  sortOrder  Int             @default(0)
+}
+
+model CourseRegistration {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  // Registrant Info
+  registrantFirstName String
+  registrantLastName  String
+  registrantEmail     String
+  registrantPhone     String?
+  registrantId        String?
+  
+
+  useSeparateBilling Boolean  @default(false)
+  billingCompany     String?
+  billingFirstName   String?
+  billingLastName    String?
+  billingStreet      String?
+  billingZipCode     String?
+  billingCity        String?
+  billingEmail       String?
+
+  // Payment & Status
+  totalPrice         Float
+  paymentStatus      PaymentStatus      @default(PENDING)
+  registrationStatus RegistrationStatus @default(CONFIRMED)
+
+  // Invoice
+  invoiceGenerated Boolean   @default(false)
+  invoiceId        String?
+  invoiceDate      DateTime?
+
+  // Relations
+  participants Participant[]
+  registrant          User?    @relation(fields: [registrantId], references: [id], onDelete: SetNull)
+
+  // Meta
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([paymentStatus])
+  @@index([registrationStatus])
+}
+
+model Participant {
+  id             String             @id @default(uuid())
+  registrationId String
+  registration   CourseRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  city         String
+  instrument   String?
+  priceOption  String? // Which price option was selected
+  customFields Json? // JSON for custom field values
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Location {
+  id             String  @id @default(uuid())
+  name           String? // e.g., "Gemeindehaus Köln-Deutz"
+  street         String?
+  zipCode        String?
+  city           String
+  additionalInfo String? // e.g., "Eingang über den Hinterhof"
+
+  // Coordinates for map display
+  latitude  Float?
+  longitude Float?
+
+  // Usage tracking
+  events    Event[]
+  courses   Course[]
+  ensembles Ensemble[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city])
+  @@index([zipCode])
+}
+
+model Post {
+  id      String  @id @default(uuid())
+  title   String
+  excerpt String?
+  content String // Rich text/Markdown
+
+  // Media
+  coverImageId String?
+  coverImage   Media?  @relation("PostCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+
+  // Classification
+  category PostCategory
+  bezirkId String?
+  bezirk   Bezirk?      @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+
+  // Pinning
+  pinned Boolean @default(false)
+
+  // Approval Workflow
+  status      ContentStatus @default(PENDING)
+  reviewNotes String?
+  reviewDate  DateTime?
+
+  // Meta
+  createdById String?
+  createdBy   User?     @relation("PostCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewerId  String?
+  reviewer    User?     @relation("PostReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([bezirkId])
+  @@index([status])
+}
+
+model Ensemble {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  // District
+  bezirkId String?
+  bezirk   Bezirk? @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+
+  // Image
+  imageId String?
+  image   Media?  @relation("EnsembleImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Location - new relation
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  // Rehearsal schedule
+  rehearsalDay  String? // e.g., "Montag", "Dienstag", etc.
+  rehearsalTime String? // e.g., "19:30", "20:00-21:30"
+
+  // Contact
+  contactEmail   String?
+  contactPhone   String?
+  contactWebsite String?
+
+  // Representative (defaults to conductor)
+  representativeId String?
+  representative   User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Relations
+  conductorId String?
+  conductor   User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  events      Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bezirkId])
+  @@index([isActive])
+}
+
+model AuswahlChor {
+  id       String @id @default(uuid())
+  name     String
+  slug     String @unique
+  subtitle String
+
+  // Details
+  founded     String
+  members     String
+  description String
+
+  // Styling
+  color    String
+  colorHex String
+
+  imageId String?
+  image   Media?  @relation("AuswahlChorImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Application
+  showApplication Boolean @default(false)
+
+  // Relations
+  conductorId String?
+  conductor   User?   @relation("AuswahlChorConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  events      Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Bezirk {
+  id        String @id @default(uuid())
+  number    Int    @unique // 1-13
+  name      String // "Bezirk 01 - Unterer Niederrhein"
+  shortName String // "Unterer Niederrhein"
+
+  // Relations
+  obleute                       User[]                       @relation("BezirkObleute")
+  events                        Event[] // Events in this district
+  courses                       Course[] // Courses in this district
+  posts                         Post[] // Posts for this district
+  ensembles                     Ensemble[]
+  posaunenwarteResponsibilities PosaunenwartResponsibility[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([number])
+}
+
+model PosaunenwartResponsibility {
+  id String @id @default(uuid())
+
+  // The Posaunenwart (User with role LPW or RPW)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The Bezirk they're responsible for
+  bezirkId String
+  bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
+
+  // Type of responsibility
+  roleType PosaunenwartRoleType
+
+  // Optional notes (e.g., "Hauptverantwortlich", "Stellvertretung")
+  notes String?
+
+  // Priority/order (lower number = higher priority)
+  priority Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // A user can only have one type of responsibility per Bezirk
+  @@unique([userId, bezirkId])
+  @@index([userId])
+  @@index([bezirkId])
+  @@index([roleType])
+}
+
+model TeamMember {
+  id String @id @default(uuid())
+
+  // Team-specific info (name, email, phone, image come from User)
+  role             String? // "Landesposaunenwart", "Geschäftsführer", etc.
+  responsibilities Json? // JSON array of responsibilities
+  socials          Json? // JSON array of social links
+  contactType      ContactType?
+  sortOrder        Int          @default(0)
+
+  // Required link to User (all team members must have accounts)
+  userId String @unique
+  user   User   @relation("TeamMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model VorstandMember {
+  id String @id @default(uuid())
+
+  // Vorstand-specific fields (only if not linked to user)
+  name  String?
+  email String?
+  phone String?
+
+  // Vorstand-specific info
+  position    String // "Landesobmann", "Stellvertretender Landesobmann", etc.
+  description String? @db.Text // Detailed role description
+  color       String? // Tailwind color class for UI display
+  sortOrder   Int     @default(0)
+
+  // Relations
+  userId  String? @unique
+  user    User?   @relation("VorstandMemberUser", fields: [userId], references: [id], onDelete: SetNull)
+  imageId String? @unique
+  image   Media?  @relation("VorstandMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+}
+
+model PosaunenratMember {
+  id String @id @default(uuid())
+
+  // These fields are ONLY used if there's no linked user
+  name    String?
+  email   String?
+  imageId String?
+  image   Media?  @relation("PosaunenratMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Posaunenrat-specific info
+  role      PosaunenratRole
+  district  String? // Which district (for Bezirksobleute)
+  sortOrder Int             @default(0)
+
+  // Optional link to User (some Posaunenrat members have accounts)
+  userId String? @unique
+  user   User?   @relation("PosaunenratMemberUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([sortOrder])
+}
+
+model FoerdervereinMember {
+  id String @id @default(uuid())
+
+  // Fields only if not linked to user
+  name    String?
+  email   String?
+  phone   String?
+  imageId String?
+  image   Media?  @relation("FoerdervereinMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Förderverein-specific info
+  position    String? // "Vorsitzender", "Stellvertreter", "Schatzmeister", etc.
+  role        FoerdervereinRole @default(MITGLIED)
+  memberSince DateTime?
+  description String?           @db.Text
+  sortOrder   Int               @default(0)
+
+  // Optional link to User
+  userId String? @unique
+  user   User?   @relation("FoerdervereinMemberUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([sortOrder])
+}
+
+model HistoryEvent {
+  id          String           @id @default(uuid())
+  year        Int
+  title       String
+  description String
+  category    HistoryCategory?
+
+  imageId  String?
+  image    Media?  @relation("HistoryEventImage", fields: [imageId], references: [id], onDelete: SetNull)
+  imageAlt String?
+
+  // Sorting
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([year])
+}
+
+model Download {
+  id          String           @id @default(uuid())
+  title       String
+  description String?
+  category    DownloadCategory
+
+  // File Info
+  fileUrl  String
+  fileType FileType
+  fileSize Int? // bytes (changed from string to int)
+
+  // Tags
+  tags Json? // JSON array
+
+  // Visibility
+  isPublic Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+model Blaeserheft {
+  id          String @id @default(uuid())
+  title       String
+  subtitle    String
+  year        Int
+  description String
+
+  // Details
+  chapters   Json? // JSON array
+  highlights Json? // JSON array
+
+  imageId     String
+  image       Media   @relation("BlaeserheftImage", fields: [imageId], references: [id], onDelete: Cascade)
+  audioSample String?
+
+  // Prices
+  priceBlaeserheft Float?
+  priceBeiheft     Float?
+  priceTrompeten   Float?
+  priceCd          Float?
+
+  // Availability
+  availableBlaeserheft Boolean @default(true)
+  availableBeiheft     Boolean @default(true)
+  availableTrompeten   Boolean @default(false)
+  availableCd          Boolean @default(true)
+
+  // Sorting
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([year])
+}
+
+model Media {
+  id String @id @default(uuid())
+
+  // File Info
+  name     String // Original filename
+  filename String @unique // Stored filename (with timestamp/hash)
+  url      String // Public URL to access file
+  path     String // Storage path
+
+  // File Details
+  mimeType  String // image/jpeg, application/pdf, etc.
+  size      Int // Size in bytes
+  extension String // jpg, png, pdf, etc.
+
+  // Image-specific (nullable for non-images)
+  width  Int?
+  height Int?
+
+  // Metadata
+  alt     String? // Alt text for images
+  caption String? // Caption/description
+  title   String? // Title
+
+  // Organization
+  folder String? // Folder path (e.g., "events/2025", "news")
+  tags   Json? // JSON array of tags
+
+  // Usage tracking
+  isPublic Boolean @default(true)
+
+  // Relations - primary usages (kept explicit)
+  usersProfile            User[]                @relation("UserProfileImage")
+  eventsCover             Event[]               @relation("EventCoverImage")
+  postsCover              Post[]                @relation("PostCoverImage")
+  ensembleImages          Ensemble[]            @relation("EnsembleImage")
+  auswahlChorImages       AuswahlChor[]         @relation("AuswahlChorImage")
+  vorstandMemberImages    VorstandMember[]      @relation("VorstandMemberImage")
+  posaunenratMemberImages PosaunenratMember[]   @relation("PosaunenratMemberImage")
+  foerdervereinMemberImgs FoerdervereinMember[] @relation("FoerdervereinMemberImage")
+  historyEventImages      HistoryEvent[]        @relation("HistoryEventImage")
+  blaeserheftImages       Blaeserheft[]         @relation("BlaeserheftImage")
+
+  // Uploaded by
+  uploadedById String?
+  uploadedBy   User?   @relation("MediaUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mimeType])
+  @@index([folder])
+  @@index([uploadedById])
+}
+
+model NewsletterSubscriber {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  name     String?
+  isActive Boolean @default(true)
+
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+}

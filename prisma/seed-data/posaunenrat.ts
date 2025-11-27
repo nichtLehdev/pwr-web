@@ -1,0 +1,143 @@
+export const posaunenratData = [
+  // Vorstand
+  {
+    username: "joerg.haeusler", // Has a user account
+    name: "Jörg Häusler",
+    role: "VORSTAND",
+    district: null,
+    email: "joerg.haeusler@posaunenwerk-rheinland.de",
+    sortOrder: 1,
+  },
+  {
+    username: "beate.ising", // Has a user account (stellv. Landesobfrau)
+    name: "Beate Ising",
+    role: "VORSTAND",
+    district: null,
+    email: "beate.ising@posaunenwerk-rheinland.de",
+    sortOrder: 2,
+  },
+  {
+    username: null, // No user account
+    name: "Dr. Burkhard Mueller",
+    role: "LANDESKIRCHENMUSIKDIREKTOR",
+    district: null,
+    email: "burkhard.mueller@ekir.de",
+    sortOrder: 3,
+  },
+
+  // Bezirksobleute (all have user accounts)
+  {
+    username: "doris.haetzel",
+    name: "Doris Hätzel",
+    role: "BEZIRKSOBFRAU",
+    district: "Bezirk 01 - Unterer Niederrhein",
+    email: "doris.haetzel@posaunenwerk-rheinland.de",
+    sortOrder: 10,
+  },
+  {
+    username: "tim.neuhaus",
+    name: "Tim Neuhaus",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 02 - Rhein-Lippe",
+    email: "tim.neuhaus@ekir.de",
+    sortOrder: 11,
+  },
+  {
+    username: "dietmar.schruck",
+    name: "Dietmar Schruck",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 03 - Essen-Mülheim",
+    email: "dietmar.schruck@posaunenwerk-rheinland.de",
+    sortOrder: 12,
+  },
+  {
+    username: "joerg.schroeder",
+    name: "Jörg Schröder",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 04 - Düsseldorf-Krefeld-Niederberg",
+    email: "joerg.schroeder@posaunenwerk-rheinland.de",
+    sortOrder: 13,
+  },
+  {
+    username: "martin.weidner",
+    name: "Dr. Martin Weidner",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 05 - Bergisches Land",
+    email: "martin.weidner@posaunenwerk-rheinland.de",
+    sortOrder: 14,
+  },
+  {
+    username: "gerhard.heywang",
+    name: "Dr. Gerhard Heywang",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 06 - Köln",
+    email: "gerhard.heywang@posaunenwerk-rheinland.de",
+    sortOrder: 15,
+  },
+  {
+    username: "birgit.engelmann",
+    name: "Birgit Engelmann",
+    role: "BEZIRKSOBFRAU",
+    district: "Bezirk 07 - Aachen-Jülich",
+    email: "birgit.engel@posaunenwerk-rheinland.de",
+    sortOrder: 16,
+  },
+  {
+    username: "michael.geffert",
+    name: "Dr. Michael Geffert",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 08 - Bonn",
+    email: "michael.geffert@posaunenwerk-rheinland.de",
+    sortOrder: 17,
+  },
+  {
+    username: "klaus.groth",
+    name: "Klaus Groth",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 10 - Wied",
+    email: "klaus.groth@ekir.de",
+    sortOrder: 18,
+  },
+  {
+    username: "jochen.conrad",
+    name: "Jochen Conrad",
+    role: "BEZIRKSOBMANN",
+    district: "Bezirk 11 - An Nahe und Glan",
+    email: "jochen.conrad@posaunenwerk-rheinland.de",
+    sortOrder: 19,
+  },
+  {
+    username: "andrea.lehmann",
+    name: "Andrea Lehmann",
+    role: "BEZIRKSOBFRAU",
+    district: "Bezirk 12 - Saarland",
+    email: "andrea.lehmann@posaunenwerk-rheinland.de",
+    sortOrder: 20,
+  },
+  {
+    username: "ursula.doering",
+    name: "Dr. Ursula Doering",
+    role: "BEZIRKSOBFRAU",
+    district: "Bezirk 13 - An Sieg und Rhein",
+    email: "ursula.doering@posaunenwerk-rheinland.de",
+    sortOrder: 21,
+  },
+
+  // Sachverständige (some without user accounts)
+  {
+    username: null,
+    name: "Prof. Dr. Martin Schmidt",
+    role: "SACHVERSTAENDIGER",
+    district: null,
+    email: "martin.schmidt@musikhochschule.de",
+    sortOrder: 30,
+  },
+  {
+    username: null,
+    name: "Anna Weber",
+    role: "SACHVERSTAENDIGE",
+    district: null,
+    email: "anna.weber@ekir.de",
+    sortOrder: 31,
+  },
+];
