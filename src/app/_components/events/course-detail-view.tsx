@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import PageHeader from "../general/page-header";
 import CourseRegistrationForm from "./course-registration-form";
@@ -41,6 +43,10 @@ export default function CourseDetailView({
 }: CourseDetailViewProps) {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const router = useRouter();
+  const { data: session } = useSession();
+  const { data: userProfile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
 
   const districtColor = getDistrictColor(course.bezirk?.number);
   const startDate = new Date(course.startDate);
@@ -653,6 +659,7 @@ export default function CourseDetailView({
           onClose={handleCloseRegistrationForm}
           onSuccess={handleRegistrationSuccess}
           isWaitlist={spots.isFull && course.allowWaitingList}
+          currentUser={userProfile || null}
         />
       )}
     </div>

@@ -178,9 +178,24 @@ export const registrationsRouter = createTRPCRouter({
               title: true,
               startDate: true,
               endDate: true,
-            },
-            include: {
-              location: true,
+              registrationDeadline: true,
+              registrationOpen: true,
+              maxParticipants: true,
+              allowWaitingList: true,
+              priceOptions: {
+                select: {
+                  id: true,
+                  label: true,
+                  price: true,
+                  maxParticipants: true,
+                },
+              },
+              location: {
+                select: {
+                  name: true,
+                  city: true,
+                },
+              },
             },
           },
         },
@@ -194,6 +209,296 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       return registration;
+    }),
+
+  // Get user's own registrations (protected)
+  getMyRegistrations: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        status: z.nativeEnum(RegistrationStatus).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const where = {
+        registrantEmail: ctx.session.user.email,
+        ...(input.status && { registrationStatus: input.status }),
+      };
+
+      const [registrations, total] = await Promise.all([
+        ctx.db.courseRegistration.findMany({
+          where,
+          include: {
+            participants: true,
+            course: {
+              select: {
+                id: true,
+                title: true,
+                startDate: true,
+                endDate: true,
+                registrationDeadline: true,
+                registrationOpen: true,
+                maxParticipants: true,
+                allowWaitingList: true,
+                priceOptions: {
+                  select: {
+                    id: true,
+                    label: true,
+                    price: true,
+                    maxParticipants: true,
+                  },
+                },
+                location: {
+                  select: {
+                    name: true,
+                    city: true,
+                  },
+                },
+              },
+            },
+          },
+          skip: (input.page - 1) * input.limit,
+          take: input.limit,
+          orderBy: { createdAt: "desc" },
+        }),
+        ctx.db.courseRegistration.count({ where }),
+      ]);
+
+      return {
+        registrations,
+        total,
+        page: input.page,
+        limit: input.limit,
+        pages: Math.ceil(total / input.limit),
+      };
+    }),
+
+  // Update user's own registration (protected)
+  updateMyRegistration: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        registrantPhone: z.string().optional(),
+        useSeparateBilling: z.boolean().optional(),
+        billingCompany: z.string().optional(),
+        billingFirstName: z.string().optional(),
+        billingLastName: z.string().optional(),
+        billingStreet: z.string().optional(),
+        billingZipCode: z.string().optional(),
+        billingCity: z.string().optional(),
+        billingEmail: z.string().email().optional(),
+        totalPrice: z.number().min(0),
+        notes: z.string().optional(),
+        participants: z.array(
+          z.object({
+            id: z.string().optional(), // existing participant
+            firstName: z.string().min(1),
+            lastName: z.string().min(1),
+            birthDate: z.date(),
+            city: z.string().min(1),
+            instrument: z.string().optional(),
+            priceOption: z.string().optional(),
+            customFields: z.json().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, participants, ...registrationData } = input;
+
+      // Get the current registration
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id },
+        include: {
+          participants: true,
+          course: {
+            include: {
+              priceOptions: true,
+              _count: {
+                select: {
+                  registrations: {
+                    where: {
+                      registrationStatus: RegistrationStatus.CONFIRMED,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      // Verify user owns this registration
+      if (registration.registrantEmail !== ctx.session.user.email) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot edit registration of another user",
+        });
+      }
+
+      // Check if registration can be edited (deadline)
+      if (
+        registration.course.registrationDeadline &&
+        new Date() > registration.course.registrationDeadline
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration edit deadline has passed",
+        });
+      }
+
+      // Check if registration is cancelled
+      if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot edit a cancelled registration",
+        });
+      }
+
+      const course = registration.course;
+
+      // Validate total price
+      const expectedTotal = participants.reduce((sum, participant) => {
+        const priceOption = course.priceOptions.find(
+          (p) => p.label === participant.priceOption,
+        );
+        return sum + (priceOption?.price ?? 0);
+      }, 0);
+
+      if (expectedTotal !== input.totalPrice) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Total price does not match the sum of price options",
+        });
+      }
+
+      // Calculate current participants (excluding this registration)
+      const currentParticipantsExcludingThis =
+        (await ctx.db.participant.count({
+          where: {
+            registration: {
+              courseId: course.id,
+              registrationStatus: RegistrationStatus.CONFIRMED,
+              id: { not: id },
+            },
+          },
+        }));
+
+      // Check course capacity
+      const newTotalParticipants =
+        currentParticipantsExcludingThis + participants.length;
+      const maxParticipants = course.maxParticipants ?? Infinity;
+
+      if (newTotalParticipants > maxParticipants) {
+        if (!course.allowWaitingList) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cannot add more participants - course is full",
+          });
+        }
+      }
+
+      // Check price option capacities
+      const priceOptionCounts: Record<string, number> = {};
+      for (const participant of participants) {
+        if (participant.priceOption) {
+          priceOptionCounts[participant.priceOption] =
+            (priceOptionCounts[participant.priceOption] ?? 0) + 1;
+        }
+      }
+
+      for (const [optionLabel, count] of Object.entries(priceOptionCounts)) {
+        const priceOption = course.priceOptions.find(
+          (p) => p.label === optionLabel,
+        );
+        if (priceOption?.maxParticipants) {
+          // Count current registrations for this price option (excluding this registration)
+          const currentCount = await ctx.db.participant.count({
+            where: {
+              priceOption: optionLabel,
+              registration: {
+                courseId: course.id,
+                registrationStatus: RegistrationStatus.CONFIRMED,
+                id: { not: id },
+              },
+            },
+          });
+
+          if (currentCount + count > priceOption.maxParticipants) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Price option "${optionLabel}" is full`,
+            });
+          }
+        }
+      }
+
+      // Get IDs of existing participants to keep or update
+      const existingParticipantIds = participants
+        .filter((p) => p.id)
+        .map((p) => p.id!);
+
+      // Delete participants that are no longer in the list
+      await ctx.db.participant.deleteMany({
+        where: {
+          registrationId: id,
+          id: { notIn: existingParticipantIds },
+        },
+      });
+
+      // Update existing participants and create new ones
+      for (const participant of participants) {
+        const { id: participantId, ...participantData } = participant;
+
+        if (participantId) {
+          // Update existing
+          await ctx.db.participant.update({
+            where: { id: participantId },
+            data: {
+              ...participantData,
+              customFields: JSON.stringify(participantData.customFields ?? {}),
+            },
+          });
+        } else {
+          // Create new
+          await ctx.db.participant.create({
+            data: {
+              ...participantData,
+              customFields: JSON.stringify(participantData.customFields ?? {}),
+              registrationId: id,
+            },
+          });
+        }
+      }
+
+      // Update the registration
+      const updatedRegistration = await ctx.db.courseRegistration.update({
+        where: { id },
+        data: {
+          ...registrationData,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      return updatedRegistration;
     }),
 
   // Update registration status (admin/instructor)

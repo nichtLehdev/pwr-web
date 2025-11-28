@@ -89,6 +89,7 @@ export default function SettingsPage() {
     zipCode: "",
     city: "",
     bio: "",
+    birthDate: "",
     profileImageId: null as string | null,
   });
   const [preferences, setPreferences] =
@@ -140,6 +141,9 @@ export default function SettingsPage() {
         zipCode: profile.zipCode || "",
         city: profile.city || "",
         bio: profile.bio || "",
+        birthDate: profile.birthDate
+          ? new Date(profile.birthDate).toISOString().split("T")[0]
+          : "",
         profileImageId: profile.profileImageId || null,
       });
       // Parse preferences from JSON
@@ -240,6 +244,7 @@ export default function SettingsPage() {
         zipCode: formData.zipCode || undefined,
         city: formData.city || undefined,
         bio: formData.bio || undefined,
+        birthDate: formData.birthDate ? new Date(formData.birthDate) : undefined,
         profileImageId: formData.profileImageId || undefined,
         preferences: JSON.stringify(preferences),
       });
@@ -388,6 +393,23 @@ export default function SettingsPage() {
                     name="lastName"
                     type="text"
                     value={formData.lastName}
+                    onChange={handleChange}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="birthDate"
+                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
+                  >
+                    Geburtsdatum
+                  </label>
+                  <input
+                    id="birthDate"
+                    name="birthDate"
+                    type="date"
+                    value={formData.birthDate}
                     onChange={handleChange}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />

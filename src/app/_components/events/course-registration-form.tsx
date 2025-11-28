@@ -36,6 +36,9 @@ export default function CourseRegistrationForm({
     registrantFirstName: currentUser?.firstName || "",
     registrantLastName: currentUser?.lastName || "",
     registrantPhone: currentUser?.phone || "",
+    registrantStreet: currentUser?.street || "",
+    registrantZipCode: currentUser?.zipCode || "",
+    registrantCity: currentUser?.city || "",
     useSeparateBilling: false,
     billingStreet: "",
     billingZipCode: "",
@@ -98,8 +101,8 @@ export default function CourseRegistrationForm({
         {
           firstName: currentUser?.firstName || "",
           lastName: currentUser?.lastName || "",
-          birthDate: currentUser?.birthDate || new Date(),
-          city: "",
+          birthDate: currentUser?.birthDate ? new Date(currentUser.birthDate) : ("" as any),
+          city: currentUser?.city || "",
           instrument: "",
           priceOption: course.priceOptions[0]?.label || "",
           customFields: {},
@@ -147,8 +150,22 @@ export default function CourseRegistrationForm({
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 1:
-        const { firstName, lastName, email, phone } = currentUser || {};
-        const basicValid = !!(firstName && lastName && email && phone);
+        const {
+          registrantFirstName,
+          registrantLastName,
+          registrantEmail,
+          registrantPhone,
+          registrantStreet,
+          registrantZipCode,
+          registrantCity,
+        } = registrationData;
+        
+        const basicValid = !!(
+          registrantFirstName &&
+          registrantLastName &&
+          registrantEmail &&
+          registrantPhone
+        );
 
         // Validate billing address if separate billing is enabled
         if (registrationData.useSeparateBilling) {
@@ -159,7 +176,11 @@ export default function CourseRegistrationForm({
           );
         }
 
-        return basicValid;
+        // If no separate billing, registrant address is required
+        return (
+          basicValid &&
+          !!(registrantStreet && registrantZipCode && registrantCity)
+        );
       case 2:
         return registrationData.participants.length > 0;
       case 3:
@@ -309,11 +330,7 @@ export default function CourseRegistrationForm({
                   </label>
                   <input
                     type="text"
-                    value={
-                      registrationData.registrantFirstName ||
-                      currentUser?.firstName ||
-                      ""
-                    }
+                    value={registrationData.registrantFirstName}
                     onChange={(e) =>
                       setRegistrationData({
                         ...registrationData,
@@ -331,11 +348,7 @@ export default function CourseRegistrationForm({
                   </label>
                   <input
                     type="text"
-                    value={
-                      registrationData.registrantLastName ||
-                      currentUser?.lastName ||
-                      ""
-                    }
+                    value={registrationData.registrantLastName}
                     onChange={(e) =>
                       setRegistrationData({
                         ...registrationData,
@@ -353,11 +366,7 @@ export default function CourseRegistrationForm({
                   </label>
                   <input
                     type="email"
-                    value={
-                      registrationData.registrantEmail ||
-                      currentUser?.email ||
-                      ""
-                    }
+                    value={registrationData.registrantEmail}
                     onChange={(e) =>
                       setRegistrationData({
                         ...registrationData,
@@ -375,11 +384,7 @@ export default function CourseRegistrationForm({
                   </label>
                   <input
                     type="tel"
-                    value={
-                      registrationData.registrantPhone ||
-                      currentUser?.phone ||
-                      ""
-                    }
+                    value={registrationData.registrantPhone}
                     onChange={(e) =>
                       setRegistrationData({
                         ...registrationData,
@@ -392,8 +397,7 @@ export default function CourseRegistrationForm({
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Straße und Hausnummer{" "}
-                    {!registrationData.useSeparateBilling && "*"}
+                    Straße und Hausnummer *
                   </label>
                   <input
                     type="text"
@@ -406,11 +410,12 @@ export default function CourseRegistrationForm({
                     }
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Musterstraße 1"
+                    required={!registrationData.useSeparateBilling}
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    PLZ {!registrationData.useSeparateBilling && "*"}
+                    PLZ *
                   </label>
                   <input
                     type="text"
@@ -423,11 +428,12 @@ export default function CourseRegistrationForm({
                     }
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="12345"
+                    required={!registrationData.useSeparateBilling}
                   />
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Ort {!registrationData.useSeparateBilling && "*"}
+                    Ort *
                   </label>
                   <input
                     type="text"
@@ -440,6 +446,7 @@ export default function CourseRegistrationForm({
                     }
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Düsseldorf"
+                    required={!registrationData.useSeparateBilling}
                   />
                 </div>
               </div>
@@ -846,13 +853,15 @@ export default function CourseRegistrationForm({
                       <input
                         type="date"
                         value={
-                          participant.birthDate.toISOString().split("T")[0]
+                          participant.birthDate
+                            ? new Date(participant.birthDate).toISOString().split("T")[0]
+                            : ""
                         }
                         onChange={(e) =>
                           updateParticipant(
                             index,
                             "birthDate",
-                            new Date(e.target.value),
+                            e.target.value ? new Date(e.target.value) : ("" as any),
                           )
                         }
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"

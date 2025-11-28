@@ -325,6 +325,13 @@ export default function Navigation() {
                         Dashboard
                       </Link>
                       <Link
+                        href="/registrations"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
+                      >
+                        Meine Anmeldungen
+                      </Link>
+                      <Link
                         href="/settings"
                         onClick={() => setUserMenuOpen(false)}
                         className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
@@ -512,6 +519,13 @@ export default function Navigation() {
                       className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
                     >
                       Dashboard
+                    </Link>
+                    <Link
+                      href="/registrations"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
+                    >
+                      Meine Anmeldungen
                     </Link>
                     <Link
                       href="/settings"
