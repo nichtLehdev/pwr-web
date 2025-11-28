@@ -1,0 +1,12 @@
+# Uploads Directory
+
+This directory stores user-uploaded files.
+
+## Profiles
+- User profile images are stored in `profiles/`
+- Images are automatically renamed with user ID and timestamp
+- Maximum file size: 5MB
+- Supported formats: JPEG, PNG, WebP
+
+## Note
+This directory is excluded from git via .gitignore to prevent committing user uploads.

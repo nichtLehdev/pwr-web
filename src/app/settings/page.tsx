@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import ProfileImageUpload from "./_components/profile-image-upload";
 
 // Collapsible Section Component
 function CollapsibleSection({
@@ -88,6 +89,7 @@ export default function SettingsPage() {
     zipCode: "",
     city: "",
     bio: "",
+    profileImageId: null as string | null,
   });
   const [preferences, setPreferences] =
     useState<UserPreferences>(defaultPreferences);
@@ -138,6 +140,7 @@ export default function SettingsPage() {
         zipCode: profile.zipCode || "",
         city: profile.city || "",
         bio: profile.bio || "",
+        profileImageId: profile.profileImageId || null,
       });
       // Parse preferences from JSON
       if (profile.preferences) {
@@ -237,6 +240,7 @@ export default function SettingsPage() {
         zipCode: formData.zipCode || undefined,
         city: formData.city || undefined,
         bio: formData.bio || undefined,
+        profileImageId: formData.profileImageId || undefined,
         preferences: JSON.stringify(preferences),
       });
     } finally {
@@ -303,6 +307,37 @@ export default function SettingsPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Section: Profile Image */}
+            <CollapsibleSection
+              title="Profilbild"
+              defaultOpen={true}
+              icon={
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              }
+            >
+              <ProfileImageUpload
+                currentImage={profile?.profileImage}
+                onImageUploaded={(mediaId) => {
+                  setFormData((prev) => ({ ...prev, profileImageId: mediaId }));
+                }}
+                onImageRemoved={() => {
+                  setFormData((prev) => ({ ...prev, profileImageId: null }));
+                }}
+              />
+            </CollapsibleSection>
+
             {/* Section: Personal Data */}
             <CollapsibleSection
               title="Persönliche Daten"

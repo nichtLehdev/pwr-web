@@ -4,7 +4,9 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
 import ThemeToggle from "./theme-toggle";
 
 export default function Navigation() {
@@ -19,6 +21,11 @@ export default function Navigation() {
 
   // Use Better Auth's useSession hook directly
   const { data: session } = useSession();
+
+  // Fetch user profile if logged in
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
 
   // Track dark mode changes
   useEffect(() => {
@@ -271,8 +278,19 @@ export default function Navigation() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="dark:hover:bg-dark-background-secondary flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
                   >
-                    <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
-                      {getInitials(session.user.name || session.user.email)}
+                    <div className="bg-primary relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold text-white">
+                      {profile?.profileImage?.url ? (
+                        <Image
+                          src={profile.profileImage.url}
+                          alt={profile.profileImage.alt || "Profilbild"}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          {getInitials(session.user.name || session.user.email)}
+                        </div>
+                      )}
                     </div>
                     <span className="text-dark dark:text-dark-text text-sm font-medium">
                       Hi,{" "}
@@ -467,8 +485,19 @@ export default function Navigation() {
                 {session?.user ? (
                   <>
                     <div className="flex items-center gap-2 px-4 py-3">
-                      <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white">
-                        {getInitials(session.user.name || session.user.email)}
+                      <div className="bg-primary relative h-8 w-8 overflow-hidden rounded-full text-sm font-semibold text-white">
+                        {profile?.profileImage?.url ? (
+                          <Image
+                            src={profile.profileImage.url}
+                            alt={profile.profileImage.alt || "Profilbild"}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            {getInitials(session.user.name || session.user.email)}
+                          </div>
+                        )}
                       </div>
                       <span className="text-dark dark:text-dark-text text-sm font-medium">
                         Hi,{" "}
