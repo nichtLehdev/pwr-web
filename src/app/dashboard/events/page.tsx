@@ -6,13 +6,22 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
+import { UserRole } from "~/generated/prisma/enums";
+
+// Roles that have access to the dashboard
+const DASHBOARD_ROLES: UserRole[] = [
+  UserRole.ADMIN,
+  UserRole.LPW,
+  UserRole.RPW,
+  UserRole.OBLEUTE,
+];
 
 export default function DashboardEventsPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
 
   // Fetch user profile for extended fields
-  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+  const { data: profile, isLoading: profileLoading } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
 
@@ -23,7 +32,17 @@ export default function DashboardEventsPage() {
     }
   }, [isPending, session]);
 
-  if (isPending) {
+  // Redirect if user doesn't have dashboard access
+  useEffect(() => {
+    if (!profileLoading && profile && !hasRedirected.current) {
+      if (!DASHBOARD_ROLES.includes(profile.role)) {
+        hasRedirected.current = true;
+        redirect("/");
+      }
+    }
+  }, [profile, profileLoading]);
+
+  if (isPending || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
@@ -31,12 +50,12 @@ export default function DashboardEventsPage() {
     );
   }
 
-  if (!session) {
+  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
     return null;
   }
 
   // Get role from profile
-  const userRole = profile?.role ?? "USER";
+  const userRole = profile.role;
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-dark-background">

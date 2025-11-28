@@ -292,12 +292,7 @@ export default function Navigation() {
                         </div>
                       )}
                     </div>
-                    <span className="text-dark dark:text-dark-text text-sm font-medium">
-                      Hi,{" "}
-                      {(session.user as any).firstName ||
-                        session.user.name?.split(" ")[0] ||
-                        "User"}
-                    </span>
+                    
                     <svg
                       className={`text-dark dark:text-dark-text h-4 w-4 transition-transform ${
                         userMenuOpen ? "rotate-180" : ""

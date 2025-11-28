@@ -551,7 +551,7 @@ export const eventsRouter = createTRPCRouter({
           status: ContentStatus.APPROVED,
           reviewerId: ctx.session.user.id,
           reviewDate: new Date(),
-          reviewNotes: input.reviewNotes,
+          reviewNotes: input.reviewNotes ?? null, // Clear old rejection notes if no new notes provided
           publishedAt: new Date(),
         },
       });
