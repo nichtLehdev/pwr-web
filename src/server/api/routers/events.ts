@@ -201,6 +201,8 @@ export const eventsRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         status: z.nativeEnum(ContentStatus).optional(),
+        sortBy: z.enum(["eventDate", "title", "createdAt", "status"]).default("eventDate"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -262,7 +264,7 @@ export const eventsRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: { eventDate: "desc" },
+          orderBy: { [input.sortBy]: input.sortOrder },
         }),
         ctx.db.event.count({ where }),
       ]);

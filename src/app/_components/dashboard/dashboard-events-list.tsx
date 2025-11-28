@@ -18,19 +18,36 @@ const statusFilters: { value: ContentStatus | "all"; label: string }[] = [
   { value: "ARCHIVED", label: "Archiviert" },
 ];
 
+const sortOptions: {
+  value: "eventDate" | "title" | "createdAt" | "status";
+  label: string;
+}[] = [
+  { value: "eventDate", label: "Datum" },
+  { value: "title", label: "Titel" },
+  { value: "createdAt", label: "Erstellt am" },
+  { value: "status", label: "Status" },
+];
+
 export default function DashboardEventsList({
   userRole,
 }: DashboardEventsListProps) {
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
   );
+  const [sortBy, setSortBy] = useState<
+    "eventDate" | "title" | "createdAt" | "status"
+  >("eventDate");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const limit = 12;
 
   const { data, isLoading, error } = api.events.getDashboardEvents.useQuery({
     page,
     limit,
     status: statusFilter === "all" ? undefined : statusFilter,
+    sortBy,
+    sortOrder,
   });
 
   // Filter status options based on role
@@ -47,6 +64,11 @@ export default function DashboardEventsList({
     return true;
   });
 
+  const toggleSortOrder = () => {
+    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    setPage(1);
+  };
+
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
@@ -59,7 +81,7 @@ export default function DashboardEventsList({
 
   return (
     <div className="space-y-6">
-      {/* Header with Filter */}
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-dark dark:text-dark-text text-xl font-bold">
@@ -70,26 +92,210 @@ export default function DashboardEventsList({
           </p>
         </div>
 
-        {/* Status Filter */}
-        <div className="flex flex-wrap gap-2">
-          {availableFilters.map((filter) => (
-            <button
-              key={filter.value}
-              onClick={() => {
-                setStatusFilter(filter.value);
+        {/* Mobile Filter Toggle */}
+        <button
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-gray-700 sm:hidden"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+            />
+          </svg>
+          Filter & Sortierung
+          {(statusFilter !== "all" || sortBy !== "eventDate") && (
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white">
+              {(statusFilter !== "all" ? 1 : 0) +
+                (sortBy !== "eventDate" ? 1 : 0)}
+            </span>
+          )}
+        </button>
+
+        {/* Desktop Filters - Always visible */}
+        <div className="hidden sm:flex sm:items-center sm:gap-4">
+          {/* Status Filter */}
+          <div className="flex flex-wrap gap-2">
+            {availableFilters.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => {
+                  setStatusFilter(filter.value);
+                  setPage(1);
+                }}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  statusFilter === filter.value
+                    ? "bg-primary text-white"
+                    : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 border-l border-gray-200 pl-4 dark:border-dark-border">
+            <select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(
+                  e.target.value as "eventDate" | "title" | "createdAt" | "status",
+                );
                 setPage(1);
               }}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                statusFilter === filter.value
-                  ? "bg-primary text-white"
-                  : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-              }`}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
             >
-              {filter.label}
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={toggleSortOrder}
+              className="rounded-lg border border-gray-200 bg-white p-1.5 text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-gray-700"
+              title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
+            >
+              {sortOrder === "asc" ? (
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                  />
+                </svg>
+              )}
             </button>
-          ))}
+          </div>
         </div>
       </div>
+
+      {/* Mobile Filters Panel */}
+      {filtersOpen && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-border dark:bg-dark-surface sm:hidden">
+          {/* Status Filter */}
+          <div className="mb-4">
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-dark-text">
+              Status
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {availableFilters.map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => {
+                    setStatusFilter(filter.value);
+                    setPage(1);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    statusFilter === filter.value
+                      ? "bg-primary text-white"
+                      : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort Controls */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-dark-text">
+              Sortierung
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(
+                    e.target.value as
+                      | "eventDate"
+                      | "title"
+                      | "createdAt"
+                      | "status",
+                  );
+                  setPage(1);
+                }}
+                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={toggleSortOrder}
+                className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+              >
+                {sortOrder === "asc" ? (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                      />
+                    </svg>
+                    Aufsteigend
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4"
+                      />
+                    </svg>
+                    Absteigend
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading State */}
       {isLoading && (
@@ -118,6 +324,9 @@ export default function DashboardEventsList({
               status={event.status}
               cancelled={event.cancelled}
               createdBy={event.createdBy}
+              createdAt={new Date(event.createdAt)}
+              reviewer={event.reviewer}
+              reviewDate={event.reviewDate ? new Date(event.reviewDate) : null}
             />
           ))}
         </div>
