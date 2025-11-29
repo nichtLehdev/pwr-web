@@ -87,7 +87,7 @@ export default function MitmachenPage() {
       </section>
 
       {/* Einstiegsmöglichkeiten */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
             title="Deine Einstiegsmöglichkeiten"
@@ -111,7 +111,7 @@ export default function MitmachenPage() {
       </section>
 
       {/* Förderverein CTA Banner */}
-      <section className="bg-foerderverein/5 dark:bg-foerderverein/10 py-12 md:py-16 lg:py-20">
+      <section className="bg-foerderverein/5 dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-5xl">
             <div className="bg-foerderverein dark:bg-foerderverein-dark relative overflow-hidden rounded-2xl p-8 text-white shadow-2xl md:p-12">

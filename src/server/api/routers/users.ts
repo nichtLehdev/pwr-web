@@ -382,7 +382,7 @@ export const usersRouter = createTRPCRouter({
         role: z.nativeEnum(UserRole).optional(),
         search: z.string().optional(),
         sortBy: z
-          .enum(["name", "email", "role", "createdAt"])
+          .enum(["displayName", "email", "role", "createdAt"])
           .default("createdAt"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
@@ -392,7 +392,12 @@ export const usersRouter = createTRPCRouter({
         ...(input.role && { role: input.role }),
         ...(input.search && {
           OR: [
-            { name: { contains: input.search, mode: "insensitive" as const } },
+            {
+              displayName: {
+                contains: input.search,
+                mode: "insensitive" as const,
+              },
+            },
             {
               email: { contains: input.search, mode: "insensitive" as const },
             },

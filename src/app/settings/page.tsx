@@ -244,9 +244,7 @@ export default function SettingsPage() {
         zipCode: formData.zipCode || undefined,
         city: formData.city || undefined,
         bio: formData.bio || undefined,
-        birthDate: formData.birthDate
-          ? new Date(formData.birthDate)
-          : undefined,
+        birthDate: formData.birthDate || undefined,
         profileImageId: formData.profileImageId || undefined,
         preferences: JSON.stringify(preferences),
       });

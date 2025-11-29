@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
-import type {
-  ContentStatus,
-  CourseType,
-  RegistrationStatus,
-} from "~/generated/prisma/enums";
+import type { ContentStatus, CourseType } from "~/generated/prisma/enums";
 
 interface DashboardCourseCardProps {
   id: string;

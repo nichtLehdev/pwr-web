@@ -232,7 +232,7 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Zahlen & Fakten */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Zahlen & Fakten
@@ -336,7 +336,7 @@ export default function UeberUnsPage() {
       </section>
 
       {/* Kontakt Section */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
             Kontakt

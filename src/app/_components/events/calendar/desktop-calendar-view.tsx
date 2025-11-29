@@ -72,7 +72,9 @@ export type CalendarCourseInternal = CalendarCourseItem & {
   endDate: Date; // Courses always have endDate
 };
 
-export type CalendarItemInternal = CalendarEventInternal | CalendarCourseInternal;
+export type CalendarItemInternal =
+  | CalendarEventInternal
+  | CalendarCourseInternal;
 
 interface DesktopCalendarViewProps {
   items: CalendarItem[];
