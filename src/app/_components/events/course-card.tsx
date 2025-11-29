@@ -92,7 +92,7 @@ export default function CourseCard({
           </div>
         </div>
 
-        <h3 className="text-dark group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white">
+        <h3 className="text-dark group-hover:text-primary dark:group-hover:text-primary mb-2 line-clamp-2 text-xl font-bold transition-colors dark:text-white">
           {title}
         </h3>
 

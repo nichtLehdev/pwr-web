@@ -31,7 +31,7 @@ const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
       >
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-[200px] flex-1">
-            <h4 className="text-dark dark:text-dark-text mb-1 font-bold">
+            <h4 className="text-dark dark:text-dark-text mb-1 line-clamp-2 font-bold">
               {concert.title}
             </h4>
             <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">

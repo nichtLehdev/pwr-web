@@ -232,7 +232,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
               </span>
             </div>
 
-            <h3 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
+            <h3 className="text-dark dark:text-dark-text mb-4 line-clamp-2 text-2xl font-bold md:text-3xl">
               {event.title}
             </h3>
 

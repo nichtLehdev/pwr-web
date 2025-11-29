@@ -214,7 +214,7 @@ export default function CourseDetailView({
                 )}
               </div>
 
-              <h1 className="mb-2 text-2xl font-bold md:text-4xl lg:text-5xl">
+              <h1 className="mb-2 text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl">
                 {course.title}
               </h1>
               {course.motto && (
@@ -584,6 +584,48 @@ export default function CourseDetailView({
                       {registrationDeadline.toLocaleDateString("de-DE")} möglich
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Registration Closed Notice */}
+              {!canRegister && !isPast && (
+                <div className="dark:bg-dark-surface dark:shadow-dark-border sticky top-20 rounded-lg bg-white p-6 shadow-md">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                    Anmeldung
+                  </h3>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <div className="flex items-start gap-3">
+                      <svg
+                        className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <div>
+                        <p className="font-semibold text-gray-700 dark:text-gray-300">
+                          {isDeadlinePassed
+                            ? "Anmeldefrist abgelaufen"
+                            : spots.isFull && !course.allowWaitingList
+                              ? "Kurs ausgebucht"
+                              : "Anmeldung geschlossen"}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                          {isDeadlinePassed
+                            ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
+                            : spots.isFull && !course.allowWaitingList
+                              ? "Alle Plätze sind belegt und es gibt keine Warteliste."
+                              : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 

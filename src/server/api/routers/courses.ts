@@ -278,7 +278,9 @@ export const coursesRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         status: z.nativeEnum(ContentStatus).optional(),
-        sortBy: z.enum(["startDate", "title", "createdAt", "status"]).default("startDate"),
+        sortBy: z
+          .enum(["startDate", "title", "createdAt", "status"])
+          .default("startDate"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
@@ -457,11 +459,6 @@ export const coursesRouter = createTRPCRouter({
         startDate: z.date(),
         endDate: z.date(),
         locationId: z.string().optional(),
-        locationVenue: z.string().optional(),
-        locationStreet: z.string().optional(),
-        locationZipCode: z.string().optional(),
-        locationCity: z.string().optional(),
-        locationAdditionalInfo: z.string().optional(),
         courseType: z.enum(CourseType),
         targetAudience: z.enum(TargetAudience).optional(),
         bezirkId: z.string().optional(),
@@ -544,11 +541,6 @@ export const coursesRouter = createTRPCRouter({
         startDate: z.date().optional(),
         endDate: z.date().optional(),
         locationId: z.string().optional().nullable(),
-        locationVenue: z.string().optional(),
-        locationStreet: z.string().optional(),
-        locationZipCode: z.string().optional(),
-        locationCity: z.string().optional(),
-        locationAdditionalInfo: z.string().optional(),
         courseType: z.enum(CourseType).optional(),
         targetAudience: z.enum(TargetAudience).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
@@ -572,10 +564,24 @@ export const coursesRouter = createTRPCRouter({
             }),
           )
           .optional(),
+        customFields: z
+          .array(
+            z.object({
+              id: z.string().optional(),
+              fieldName: z.string(),
+              fieldType: z.enum(CustomFieldType),
+              options: z.string().optional(),
+              isRequired: z.boolean().default(false),
+              helpText: z.string().optional(),
+              sortOrder: z.number().default(0),
+            }),
+          )
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, priceOptions, instructorIds, ...updateData } = input;
+      const { id, priceOptions, customFields, instructorIds, ...updateData } =
+        input;
 
       const course = await ctx.db.course.findUnique({
         where: { id },
@@ -626,6 +632,25 @@ export const coursesRouter = createTRPCRouter({
             label: option.label,
             description: option.description,
             maxParticipants: option.maxParticipants,
+          })),
+        });
+      }
+
+      // Update custom fields if provided
+      if (customFields) {
+        await ctx.db.courseCustomField.deleteMany({
+          where: { courseId: id },
+        });
+
+        await ctx.db.courseCustomField.createMany({
+          data: customFields.map((field) => ({
+            courseId: id,
+            fieldName: field.fieldName,
+            fieldType: field.fieldType,
+            options: field.options,
+            isRequired: field.isRequired,
+            helpText: field.helpText,
+            sortOrder: field.sortOrder,
           })),
         });
       }
@@ -904,5 +929,220 @@ export const coursesRouter = createTRPCRouter({
         total,
         pages: Math.ceil(total / input.limit),
       };
+    }),
+
+  // Bulk delete courses
+  bulkDelete: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all courses to check permissions
+      const courses = await ctx.db.course.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only courses user can delete
+      const canDeleteIds = courses
+        .filter(
+          (course) =>
+            course.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((c) => c.id);
+
+      if (canDeleteIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to delete any of the selected courses",
+        });
+      }
+
+      await ctx.db.course.deleteMany({
+        where: { id: { in: canDeleteIds } },
+      });
+
+      return { success: true, deletedCount: canDeleteIds.length };
+    }),
+
+  // Duplicate course
+  duplicate: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const original = await ctx.db.course.findUnique({
+        where: { id: input.id },
+        include: {
+          priceOptions: true,
+          customFields: true,
+        },
+      });
+
+      if (!original) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course not found",
+        });
+      }
+
+      // Create new course as draft
+      const newCourse = await ctx.db.course.create({
+        data: {
+          title: `${original.title} (Kopie)`,
+          description: original.description,
+          motto: original.motto,
+          startDate: original.startDate,
+          endDate: original.endDate,
+          courseType: original.courseType,
+          locationId: original.locationId,
+          bezirkId: original.bezirkId,
+          targetAudience: original.targetAudience,
+          prerequisites: original.prerequisites,
+          maxParticipants: original.maxParticipants,
+          registrationOpen: false,
+          registrationDeadline: original.registrationDeadline,
+          status: ContentStatus.DRAFT,
+          createdById: ctx.session.user.id,
+          priceOptions: {
+            create: original.priceOptions.map((po) => ({
+              label: po.label,
+              price: po.price,
+              description: po.description,
+            })),
+          },
+          customFields: {
+            create: original.customFields.map((cf) => ({
+              fieldName: cf.fieldName,
+              fieldType: cf.fieldType,
+              options: cf.options ?? undefined,
+              isRequired: cf.isRequired,
+              helpText: cf.helpText,
+              sortOrder: cf.sortOrder,
+            })),
+          },
+        },
+      });
+
+      return newCourse;
+    }),
+
+  // Bulk duplicate courses
+  bulkDuplicate: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const originals = await ctx.db.course.findMany({
+        where: { id: { in: input.ids } },
+        include: {
+          priceOptions: true,
+          customFields: true,
+        },
+      });
+
+      if (originals.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No courses found",
+        });
+      }
+
+      // Create duplicates for each course
+      const newCourses = await Promise.all(
+        originals.map((original) =>
+          ctx.db.course.create({
+            data: {
+              title: `[DUPLIKAT] ${original.title}`,
+              description: original.description,
+              motto: original.motto,
+              startDate: original.startDate,
+              endDate: original.endDate,
+              courseType: original.courseType,
+              locationId: original.locationId,
+              bezirkId: original.bezirkId,
+              targetAudience: original.targetAudience,
+              prerequisites: original.prerequisites,
+              maxParticipants: original.maxParticipants,
+              registrationOpen: false,
+              registrationDeadline: original.registrationDeadline,
+              status: ContentStatus.DRAFT,
+              createdById: ctx.session.user.id,
+              priceOptions: {
+                create: original.priceOptions.map((po) => ({
+                  label: po.label,
+                  price: po.price,
+                  description: po.description,
+                })),
+              },
+              customFields: {
+                create: original.customFields.map((cf) => ({
+                  fieldName: cf.fieldName,
+                  fieldType: cf.fieldType,
+                  options: cf.options ?? undefined,
+                  isRequired: cf.isRequired,
+                  helpText: cf.helpText,
+                  sortOrder: cf.sortOrder,
+                })),
+              },
+            },
+          }),
+        ),
+      );
+
+      return { success: true, duplicatedCount: newCourses.length };
+    }),
+
+  // Bulk change status
+  bulkStatusChange: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()).min(1),
+        status: z.nativeEnum(ContentStatus),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all courses to check permissions
+      const courses = await ctx.db.course.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only courses user can update
+      const canUpdateIds = courses
+        .filter(
+          (course) =>
+            course.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((c) => c.id);
+
+      if (canUpdateIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to update any of the selected courses",
+        });
+      }
+
+      // Special handling for APPROVED status - set publishedAt
+      const updateData: { status: ContentStatus; publishedAt?: Date | null } = {
+        status: input.status,
+      };
+
+      if (input.status === ContentStatus.APPROVED) {
+        updateData.publishedAt = new Date();
+      } else if (input.status === ContentStatus.DRAFT) {
+        updateData.publishedAt = null;
+      }
+
+      await ctx.db.course.updateMany({
+        where: { id: { in: canUpdateIds } },
+        data: updateData,
+      });
+
+      return { success: true, updatedCount: canUpdateIds.length };
     }),
 });

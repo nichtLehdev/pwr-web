@@ -92,7 +92,7 @@ export default function EventCard({
         </div>
 
         <h3
-          className={`group-hover:text-primary dark:group-hover:text-primary mb-2 text-xl font-bold transition-colors dark:text-white ${
+          className={`group-hover:text-primary dark:group-hover:text-primary mb-2 line-clamp-2 text-xl font-bold transition-colors dark:text-white ${
             cancelled
               ? "text-gray-500 line-through dark:text-gray-400"
               : "text-dark"

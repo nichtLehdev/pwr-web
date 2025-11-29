@@ -101,7 +101,9 @@ export default function CourseRegistrationForm({
         {
           firstName: currentUser?.firstName || "",
           lastName: currentUser?.lastName || "",
-          birthDate: currentUser?.birthDate ? new Date(currentUser.birthDate) : ("" as any),
+          birthDate: currentUser?.birthDate
+            ? new Date(currentUser.birthDate)
+            : ("" as any),
           city: currentUser?.city || "",
           instrument: "",
           priceOption: course.priceOptions[0]?.label || "",
@@ -159,7 +161,7 @@ export default function CourseRegistrationForm({
           registrantZipCode,
           registrantCity,
         } = registrationData;
-        
+
         const basicValid = !!(
           registrantFirstName &&
           registrantLastName &&
@@ -215,7 +217,7 @@ export default function CourseRegistrationForm({
         city: p.city,
         instrument: p.instrument,
         priceOption: p.priceOption,
-        customFields: JSON.stringify(p.customFields),
+        customFields: p.customFields,
       })),
       registrantFirstName:
         registrationData.registrantFirstName || currentUser?.firstName || "",
@@ -249,11 +251,11 @@ export default function CourseRegistrationForm({
         {/* Header */}
         <div className="bg-primary sticky top-0 z-10 rounded-t-xl p-6 text-white">
           <div className="mb-4 flex items-start justify-between">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <h2 className="mb-1 text-2xl font-bold">
                 {isWaitlist ? "Warteliste" : "Anmeldung"}
               </h2>
-              <p className="text-sm opacity-90">{course.title}</p>
+              <p className="truncate text-sm opacity-90">{course.title}</p>
             </div>
             <button
               onClick={onClose}
@@ -854,14 +856,18 @@ export default function CourseRegistrationForm({
                         type="date"
                         value={
                           participant.birthDate
-                            ? new Date(participant.birthDate).toISOString().split("T")[0]
+                            ? new Date(participant.birthDate)
+                                .toISOString()
+                                .split("T")[0]
                             : ""
                         }
                         onChange={(e) =>
                           updateParticipant(
                             index,
                             "birthDate",
-                            e.target.value ? new Date(e.target.value) : ("" as any),
+                            e.target.value
+                              ? new Date(e.target.value)
+                              : ("" as any),
                           )
                         }
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"

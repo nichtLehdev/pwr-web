@@ -105,7 +105,7 @@ export default function EventDetailModal({
                 </span>
               </div>
               <h2
-                className={`mt-1 text-2xl font-bold ${event.type === "event" && event.cancelled ? "line-through opacity-75" : ""}`}
+                className={`mt-1 text-2xl font-bold wrap-break-word ${event.type === "event" && event.cancelled ? "line-through opacity-75" : ""}`}
               >
                 {event.title}
               </h2>

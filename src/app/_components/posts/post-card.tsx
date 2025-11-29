@@ -79,7 +79,7 @@ export default function PostCard({
             </div>
           </div>
 
-          <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-3 text-xl font-bold transition-colors">
+          <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-3 line-clamp-2 text-xl font-bold transition-colors">
             {title}
           </h3>
 

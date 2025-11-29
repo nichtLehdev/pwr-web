@@ -180,7 +180,7 @@ END:VCALENDAR`;
               </div>
 
               <h1
-                className={`mb-2 text-2xl font-bold md:text-4xl lg:text-5xl ${event.cancelled ? "line-through opacity-75" : ""}`}
+                className={`mb-2 text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl ${event.cancelled ? "line-through opacity-75" : ""}`}
               >
                 {event.title}
               </h1>

@@ -18,8 +18,10 @@ const registrationStatusLabels: Record<RegistrationStatus, string> = {
 };
 
 const registrationStatusColors: Record<RegistrationStatus, string> = {
-  CONFIRMED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  CONFIRMED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  WAITLIST:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
@@ -30,7 +32,8 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
 };
 
 const paymentStatusColors: Record<PaymentStatus, string> = {
-  PENDING: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  PENDING:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
 };
@@ -44,11 +47,28 @@ const DASHBOARD_ROLES: UserRole[] = [
 ];
 
 // Helper to get custom field value from participant
-function getCustomFieldValue(participant: { customFields?: unknown }, fieldName: string): string {
-  if (!participant.customFields || typeof participant.customFields !== "object") {
+function getCustomFieldValue(
+  participant: { customFields?: unknown },
+  fieldName: string,
+): string {
+  if (!participant.customFields) {
     return "–";
   }
-  const fields = participant.customFields as Record<string, unknown>;
+
+  // Handle if customFields is a string (JSON)
+  let fields: Record<string, unknown>;
+  if (typeof participant.customFields === "string") {
+    try {
+      fields = JSON.parse(participant.customFields) as Record<string, unknown>;
+    } catch {
+      return "–";
+    }
+  } else if (typeof participant.customFields === "object") {
+    fields = participant.customFields as Record<string, unknown>;
+  } else {
+    return "–";
+  }
+
   const value = fields[fieldName];
   if (value === undefined || value === null || value === "") {
     return "–";
@@ -67,36 +87,45 @@ export default function CourseParticipantsPage() {
   const hasRedirected = useRef(false);
 
   // View mode state
-  const [viewMode, setViewMode] = useState<"participants" | "registrations">("participants");
+  const [viewMode, setViewMode] = useState<"participants" | "registrations">(
+    "participants",
+  );
+  const [showCustomFields, setShowCustomFields] = useState(true);
 
   // Filter state
-  const [statusFilter, setStatusFilter] = useState<RegistrationStatus | "ALL">("ALL");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    RegistrationStatus | "ALL" | "ACTIVE"
+  >("ACTIVE");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "ALL">(
+    "ALL",
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch user profile for role
-  const { data: profile, isLoading: profileLoading } = api.users.getMyProfile.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { data: profile, isLoading: profileLoading } =
+    api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
   // Fetch course data
-  const { data: course, isLoading: courseLoading } = api.courses.getById.useQuery(
-    { id: courseId },
-    { enabled: !!courseId && !!session?.user },
-  );
+  const { data: course, isLoading: courseLoading } =
+    api.courses.getById.useQuery(
+      { id: courseId },
+      { enabled: !!courseId && !!session?.user },
+    );
 
   // Fetch registrations
-  const { data: registrationsData, isLoading: registrationsLoading } = api.courses.getRegistrations.useQuery(
-    { courseId, page: 1, limit: 100 },
-    { enabled: !!courseId && !!session?.user },
-  );
+  const { data: registrationsData, isLoading: registrationsLoading } =
+    api.courses.getRegistrations.useQuery(
+      { courseId, page: 1, limit: 100 },
+      { enabled: !!courseId && !!session?.user },
+    );
 
   // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(`/login?callbackUrl=/dashboard/courses/${courseId}/participants`);
+      router.push(
+        `/login?callbackUrl=/dashboard/courses/${courseId}/participants`,
+      );
     }
   }, [session, sessionLoading, router, courseId]);
 
@@ -113,22 +142,22 @@ export default function CourseParticipantsPage() {
   // Loading state
   if (sessionLoading || profileLoading || courseLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !course) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-dark-text">
+          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="mt-4 inline-block text-primary hover:underline"
+            className="text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -139,22 +168,28 @@ export default function CourseParticipantsPage() {
 
   const userRole = profile.role;
   const isOwner = course.createdById === session.user.id;
-  const isInstructor = course.instructors?.some((i) => i.id === session.user.id);
-  const canViewParticipants = isOwner || isInstructor || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const isInstructor = course.instructors?.some(
+    (i) => i.id === session.user.id,
+  );
+  const canViewParticipants =
+    isOwner ||
+    isInstructor ||
+    userRole === UserRole.ADMIN ||
+    userRole === UserRole.LPW;
 
   if (!canViewParticipants) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-dark-text">
+          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
             Keine Berechtigung
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-dark-muted">
+          <p className="dark:text-dark-muted mt-2 text-gray-600">
             Du hast keine Berechtigung, die Teilnehmer dieses Kurses zu sehen.
           </p>
           <Link
             href="/dashboard/courses"
-            className="mt-4 inline-block text-primary hover:underline"
+            className="text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -164,53 +199,70 @@ export default function CourseParticipantsPage() {
   }
 
   // Filter registrations
-  const filteredRegistrations = registrationsData?.registrations.filter((registration) => {
-    // Status filter
-    if (statusFilter !== "ALL" && registration.registrationStatus !== statusFilter) {
-      return false;
-    }
-    // Payment filter
-    if (paymentFilter !== "ALL" && registration.paymentStatus !== paymentFilter) {
-      return false;
-    }
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const registrantMatch =
-        registration.registrantFirstName.toLowerCase().includes(query) ||
-        registration.registrantLastName.toLowerCase().includes(query) ||
-        registration.registrantEmail.toLowerCase().includes(query);
-      const participantMatch = registration.participants.some(
-        (p) =>
-          p.firstName.toLowerCase().includes(query) ||
-          p.lastName.toLowerCase().includes(query) ||
-          p.city?.toLowerCase().includes(query) ||
-          p.instrument?.toLowerCase().includes(query)
-      );
-      return registrantMatch || participantMatch;
-    }
-    return true;
-  }) ?? [];
+  const filteredRegistrations =
+    registrationsData?.registrations.filter((registration) => {
+      // Status filter
+      if (statusFilter === "ACTIVE") {
+        // Show only confirmed and waitlist (exclude cancelled)
+        if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
+          return false;
+        }
+      } else if (
+        statusFilter !== "ALL" &&
+        registration.registrationStatus !== statusFilter
+      ) {
+        return false;
+      }
+      // Payment filter
+      if (
+        paymentFilter !== "ALL" &&
+        registration.paymentStatus !== paymentFilter
+      ) {
+        return false;
+      }
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const registrantMatch =
+          registration.registrantFirstName.toLowerCase().includes(query) ||
+          registration.registrantLastName.toLowerCase().includes(query) ||
+          registration.registrantEmail.toLowerCase().includes(query);
+        const participantMatch = registration.participants.some(
+          (p) =>
+            p.firstName.toLowerCase().includes(query) ||
+            p.lastName.toLowerCase().includes(query) ||
+            p.city?.toLowerCase().includes(query) ||
+            p.instrument?.toLowerCase().includes(query),
+        );
+        return registrantMatch || participantMatch;
+      }
+      return true;
+    }) ?? [];
 
   // Calculate stats
-  const confirmedCount = registrationsData?.registrations
-    .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
-    .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
-  const waitlistCount = registrationsData?.registrations
-    .filter((r) => r.registrationStatus === RegistrationStatus.WAITLIST)
-    .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
-  const cancelledCount = registrationsData?.registrations
-    .filter((r) => r.registrationStatus === RegistrationStatus.CANCELLED)
-    .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
-  const totalRevenue = registrationsData?.registrations
-    .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
-    .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
-  const paidRevenue = registrationsData?.registrations
-    .filter((r) => r.paymentStatus === PaymentStatus.PAID)
-    .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
+  const confirmedCount =
+    registrationsData?.registrations
+      .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
+      .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
+  const waitlistCount =
+    registrationsData?.registrations
+      .filter((r) => r.registrationStatus === RegistrationStatus.WAITLIST)
+      .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
+  const cancelledCount =
+    registrationsData?.registrations
+      .filter((r) => r.registrationStatus === RegistrationStatus.CANCELLED)
+      .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
+  const totalRevenue =
+    registrationsData?.registrations
+      .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
+      .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
+  const paidRevenue =
+    registrationsData?.registrations
+      .filter((r) => r.paymentStatus === PaymentStatus.PAID)
+      .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-dark-background">
+    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
@@ -218,50 +270,60 @@ export default function CourseParticipantsPage() {
             <li>
               <Link
                 href="/dashboard"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Dashboard
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
             <li>
               <Link
                 href="/dashboard/courses"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Kurse
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
             <li>
               <Link
                 href={`/dashboard/courses/${courseId}`}
-                className="max-w-[150px] truncate text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary max-w-[150px] truncate text-gray-500"
               >
                 {course.title}
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
-            <li className="text-gray-900 dark:text-dark-text">Teilnehmer</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li className="dark:text-dark-text text-gray-900">Teilnehmer</li>
           </ol>
         </nav>
 
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text sm:text-3xl">
+            <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900 sm:text-3xl">
               Teilnehmer
             </h1>
-            <p className="mt-1 text-gray-600 dark:text-dark-muted">
+            <p className="dark:text-dark-muted mt-1 truncate text-gray-600">
               {course.title}
             </p>
           </div>
           <Link
             href={`/dashboard/courses/${courseId}`}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-gray-700"
+            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             Zurück zum Kurs
           </Link>
@@ -269,81 +331,129 @@ export default function CourseParticipantsPage() {
 
         {/* Stats */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {confirmedCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Bestätigt</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Bestätigt
+            </div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
               {waitlistCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Warteliste</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Warteliste
+            </div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               {cancelledCount}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Storniert</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Storniert
+            </div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {totalRevenue.toFixed(2)} €
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Gesamtumsatz</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Gesamtumsatz
+            </div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {paidRevenue.toFixed(2)} €
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Bezahlt</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Bezahlt
+            </div>
           </div>
         </div>
 
         {/* View Mode Toggle & Filters */}
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-          <div className="mb-4 flex items-center justify-between border-b border-gray-200 pb-4 dark:border-dark-border">
-            <span className="text-sm font-medium text-gray-700 dark:text-dark-text">Ansicht:</span>
-            <div className="inline-flex rounded-lg bg-gray-100 p-1 dark:bg-dark-background-secondary">
-              <button
-                onClick={() => setViewMode("participants")}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === "participants"
-                    ? "bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-dark-text"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Teilnehmer
-                </span>
-              </button>
-              <button
-                onClick={() => setViewMode("registrations")}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  viewMode === "registrations"
-                    ? "bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-dark-text"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Anmeldungen
-                </span>
-              </button>
+        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="dark:border-dark-border mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
+            <div className="flex items-center gap-4">
+              <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                Ansicht:
+              </span>
+              <div className="dark:bg-dark-background-secondary inline-flex rounded-lg bg-gray-100 p-1">
+                <button
+                  onClick={() => setViewMode("participants")}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    viewMode === "participants"
+                      ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
+                    </svg>
+                    Teilnehmer
+                  </span>
+                </button>
+                <button
+                  onClick={() => setViewMode("registrations")}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    viewMode === "registrations"
+                      ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Anmeldungen
+                  </span>
+                </button>
+              </div>
             </div>
+            {/* Custom Fields Toggle */}
+            {course.customFields && course.customFields.length > 0 && (
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showCustomFields}
+                  onChange={(e) => setShowCustomFields(e.target.checked)}
+                  className="text-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary h-4 w-4 rounded border-gray-300"
+                />
+                <span className="dark:text-dark-text text-sm text-gray-700">
+                  Zusatzfelder anzeigen
+                </span>
+              </label>
+            )}
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
                 <svg
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                  className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -360,21 +470,26 @@ export default function CourseParticipantsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Suche nach Name, E-Mail, Ort, Instrument..."
-                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-sm text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-dark-text">
+              <label className="dark:text-dark-text text-sm font-medium text-gray-700">
                 Status:
               </label>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as RegistrationStatus | "ALL")}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as RegistrationStatus | "ALL" | "ACTIVE",
+                  )
+                }
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
               >
+                <option value="ACTIVE">Aktiv (ohne Stornierte)</option>
                 <option value="ALL">Alle</option>
                 <option value={RegistrationStatus.CONFIRMED}>Bestätigt</option>
                 <option value={RegistrationStatus.WAITLIST}>Warteliste</option>
@@ -384,13 +499,15 @@ export default function CourseParticipantsPage() {
 
             {/* Payment Filter */}
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-dark-text">
+              <label className="dark:text-dark-text text-sm font-medium text-gray-700">
                 Zahlung:
               </label>
               <select
                 value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value as PaymentStatus | "ALL")}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                onChange={(e) =>
+                  setPaymentFilter(e.target.value as PaymentStatus | "ALL")
+                }
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
               >
                 <option value="ALL">Alle</option>
                 <option value={PaymentStatus.PENDING}>Ausstehend</option>
@@ -402,10 +519,10 @@ export default function CourseParticipantsPage() {
         </div>
 
         {/* Content based on view mode */}
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-border dark:bg-dark-surface">
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
           {registrationsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+              <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
             </div>
           ) : filteredRegistrations.length === 0 ? (
             <div className="py-12 text-center">
@@ -422,11 +539,13 @@ export default function CourseParticipantsPage() {
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-dark-text">
+              <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
                 Keine Anmeldungen gefunden
               </h3>
               <p className="mt-2 text-gray-500 dark:text-gray-400">
-                {searchQuery || statusFilter !== "ALL" || paymentFilter !== "ALL"
+                {searchQuery ||
+                statusFilter !== "ALL" ||
+                paymentFilter !== "ALL"
                   ? "Versuche andere Filtereinstellungen."
                   : "Noch keine Anmeldungen für diesen Kurs vorhanden."}
               </p>
@@ -434,89 +553,103 @@ export default function CourseParticipantsPage() {
           ) : viewMode === "participants" ? (
             /* Participants Table View */
             <div className="overflow-x-auto">
-              <table className="w-full divide-y divide-gray-200 dark:divide-dark-border">
-                <thead className="bg-gray-50 dark:bg-dark-background-secondary">
+              <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
+                <thead className="dark:bg-dark-background-secondary bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Ort
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Instrument
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Preiskategorie
                     </th>
                     {/* Custom Fields Headers */}
-                    {course.customFields?.map((field) => (
-                      <th
-                        key={field.id}
-                        className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                      >
-                        {field.fieldName}
-                      </th>
-                    ))}
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    {showCustomFields &&
+                      course.customFields?.map((field) => (
+                        <th
+                          key={field.id}
+                          className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                        >
+                          {field.fieldName}
+                        </th>
+                      ))}
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Anmelder
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white dark:divide-dark-border dark:bg-dark-surface">
+                <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
                   {filteredRegistrations.flatMap((registration) =>
                     registration.participants.map((participant) => (
-                      <tr key={participant.id} className="hover:bg-gray-50 dark:hover:bg-dark-background-secondary">
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 dark:text-dark-text">
+                      <tr
+                        key={participant.id}
+                        className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                      >
+                        <td className="dark:text-dark-text px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
                           {participant.firstName} {participant.lastName}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                           {participant.city || "–"}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                           {participant.instrument || "–"}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                           {participant.priceOption || "–"}
                         </td>
                         {/* Custom Fields Values */}
-                        {course.customFields?.map((field) => (
-                          <td
-                            key={field.id}
-                            className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400"
-                          >
-                            {getCustomFieldValue(participant, field.fieldName)}
-                          </td>
-                        ))}
-                        <td className="whitespace-nowrap px-6 py-4">
+                        {showCustomFields &&
+                          course.customFields?.map((field) => (
+                            <td
+                              key={field.id}
+                              className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                            >
+                              {getCustomFieldValue(
+                                participant,
+                                field.fieldName,
+                              )}
+                            </td>
+                          ))}
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
                           >
-                            {registrationStatusLabels[registration.registrationStatus]}
+                            {
+                              registrationStatusLabels[
+                                registration.registrationStatus
+                              ]
+                            }
                           </span>
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                          {registration.registrantFirstName} {registration.registrantLastName}
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {registration.registrantFirstName}{" "}
+                          {registration.registrantLastName}
                         </td>
                       </tr>
-                    ))
+                    )),
                   )}
                 </tbody>
               </table>
             </div>
           ) : (
             /* Registrations List View */
-            <div className="divide-y divide-gray-200 dark:divide-dark-border">
+            <div className="dark:divide-dark-border divide-y divide-gray-200">
               {filteredRegistrations.map((registration) => (
                 <div key={registration.id} className="p-4 sm:p-6">
                   {/* Registration Header */}
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-dark-text">
-                        {registration.registrantFirstName} {registration.registrantLastName}
+                      <h3 className="dark:text-dark-text text-lg font-medium text-gray-900">
+                        {registration.registrantFirstName}{" "}
+                        {registration.registrantLastName}
                       </h3>
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                         <a
@@ -539,7 +672,11 @@ export default function CourseParticipantsPage() {
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
                       >
-                        {registrationStatusLabels[registration.registrationStatus]}
+                        {
+                          registrationStatusLabels[
+                            registration.registrationStatus
+                          ]
+                        }
                       </span>
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
@@ -551,57 +688,62 @@ export default function CourseParticipantsPage() {
 
                   {/* Participants Table */}
                   {registration.participants.length > 0 && (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-dark-border">
-                      <table className="w-full divide-y divide-gray-200 dark:divide-dark-border">
-                        <thead className="bg-gray-50 dark:bg-dark-background-secondary">
+                    <div className="dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200">
+                      <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
+                        <thead className="dark:bg-dark-background-secondary bg-gray-50">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                               Name
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                               Ort
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                               Instrument
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                               Preiskategorie
                             </th>
                             {/* Custom Fields Headers */}
-                            {course.customFields?.map((field) => (
-                              <th
-                                key={field.id}
-                                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                              >
-                                {field.fieldName}
-                              </th>
-                            ))}
+                            {showCustomFields &&
+                              course.customFields?.map((field) => (
+                                <th
+                                  key={field.id}
+                                  className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
+                                >
+                                  {field.fieldName}
+                                </th>
+                              ))}
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 bg-white dark:divide-dark-border dark:bg-dark-surface">
+                        <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
                           {registration.participants.map((participant) => (
                             <tr key={participant.id}>
-                              <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-dark-text">
+                              <td className="dark:text-dark-text px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900">
                                 {participant.firstName} {participant.lastName}
                               </td>
-                              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                 {participant.city || "–"}
                               </td>
-                              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                 {participant.instrument || "–"}
                               </td>
-                              <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                 {participant.priceOption || "–"}
                               </td>
                               {/* Custom Fields Values */}
-                              {course.customFields?.map((field) => (
-                                <td
-                                  key={field.id}
-                                  className="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
-                                >
-                                  {getCustomFieldValue(participant, field.fieldName)}
-                                </td>
-                              ))}
+                              {showCustomFields &&
+                                course.customFields?.map((field) => (
+                                  <td
+                                    key={field.id}
+                                    className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                                  >
+                                    {getCustomFieldValue(
+                                      participant,
+                                      field.fieldName,
+                                    )}
+                                  </td>
+                                ))}
                             </tr>
                           ))}
                         </tbody>
@@ -613,24 +755,28 @@ export default function CourseParticipantsPage() {
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span className="text-gray-500 dark:text-gray-400">
                       Angemeldet am{" "}
-                      {new Date(registration.createdAt).toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(registration.createdAt).toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </span>
-                    <span className="font-semibold text-gray-900 dark:text-dark-text">
+                    <span className="dark:text-dark-text font-semibold text-gray-900">
                       Gesamt: {registration.totalPrice.toFixed(2)} €
                     </span>
                   </div>
 
                   {/* Notes */}
                   {registration.notes && (
-                    <div className="mt-3 rounded-lg bg-gray-50 p-3 dark:bg-dark-background-secondary">
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded-lg bg-gray-50 p-3">
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Anmerkungen:</span> {registration.notes}
+                        <span className="font-medium">Anmerkungen:</span>{" "}
+                        {registration.notes}
                       </p>
                     </div>
                   )}
@@ -643,9 +789,14 @@ export default function CourseParticipantsPage() {
         {/* Results count */}
         {filteredRegistrations.length > 0 && (
           <div className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            {filteredRegistrations.length} von {registrationsData?.registrations.length ?? 0} Anmeldungen
+            {filteredRegistrations.length} von{" "}
+            {registrationsData?.registrations.length ?? 0} Anmeldungen
             {" • "}
-            {filteredRegistrations.reduce((sum, r) => sum + r.participants.length, 0)} Teilnehmer
+            {filteredRegistrations.reduce(
+              (sum, r) => sum + r.participants.length,
+              0,
+            )}{" "}
+            Teilnehmer
           </div>
         )}
       </div>

@@ -74,7 +74,7 @@ export default function DashboardEventCard({
 
   return (
     <div
-      className={`dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
+      className={`dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
         cancelled ? "opacity-75" : ""
       }`}
     >
@@ -107,7 +107,7 @@ export default function DashboardEventCard({
 
       {/* Title */}
       <h3
-        className={`text-dark dark:text-dark-text mb-2 text-lg font-bold ${
+        className={`text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-bold ${
           cancelled ? "text-gray-500 line-through dark:text-gray-400" : ""
         }`}
       >

@@ -8,6 +8,7 @@ import { api } from "@/trpc/react";
 import {
   ContentStatus,
   CourseType,
+  CustomFieldType,
   TargetAudience,
   UserRole,
   RegistrationStatus,
@@ -40,8 +41,10 @@ const statusLabels: Record<ContentStatus, string> = {
 
 const statusColors: Record<ContentStatus, string> = {
   DRAFT: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-  PENDING: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  PENDING:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  APPROVED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
 };
@@ -53,8 +56,10 @@ const registrationStatusLabels: Record<RegistrationStatus, string> = {
 };
 
 const registrationStatusColors: Record<RegistrationStatus, string> = {
-  CONFIRMED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  WAITLIST: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  CONFIRMED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  WAITLIST:
+    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
@@ -62,6 +67,14 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   PENDING: "Ausstehend",
   PAID: "Bezahlt",
   REFUNDED: "Erstattet",
+};
+
+const customFieldTypeLabels: Record<CustomFieldType, string> = {
+  TEXT: "Text",
+  NUMBER: "Zahl",
+  SELECT: "Auswahl",
+  CHECKBOX: "Checkbox",
+  TEXTAREA: "Mehrzeiliger Text",
 };
 
 // Roles that can review courses
@@ -83,18 +96,18 @@ export default function CourseDetailPage() {
   const hasRedirected = useRef(false);
 
   // View state
-  const [activeTab, setActiveTab] = useState<"details" | "participants">("details");
-  
+  const [activeTab, setActiveTab] = useState<"details" | "participants">(
+    "details",
+  );
+
   // Review state
   const [reviewNotes, setReviewNotes] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Fetch user profile for role
-  const { data: profile, isLoading: profileLoading } = api.users.getMyProfile.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { data: profile, isLoading: profileLoading } =
+    api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
   // Fetch course data
   const {
@@ -107,10 +120,13 @@ export default function CourseDetailPage() {
   );
 
   // Fetch registrations
-  const { data: registrationsData, isLoading: registrationsLoading } = api.courses.getRegistrations.useQuery(
-    { courseId, page: 1, limit: 100 },
-    { enabled: !!courseId && !!session?.user && activeTab === "participants" },
-  );
+  const { data: registrationsData, isLoading: registrationsLoading } =
+    api.courses.getRegistrations.useQuery(
+      { courseId, page: 1, limit: 100 },
+      {
+        enabled: !!courseId && !!session?.user && activeTab === "participants",
+      },
+    );
 
   // Mutations
   const approveMutation = api.courses.approve.useMutation({
@@ -154,22 +170,22 @@ export default function CourseDetailPage() {
   // Loading state
   if (sessionLoading || profileLoading || courseLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
 
   if (!session || !profile || !course) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-dark-text">
+          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
             Kurs nicht gefunden
           </h1>
           <Link
             href="/dashboard/courses"
-            className="mt-4 inline-block text-primary hover:underline"
+            className="text-primary mt-4 inline-block hover:underline"
           >
             Zurück zur Übersicht
           </Link>
@@ -181,11 +197,19 @@ export default function CourseDetailPage() {
   const userRole = profile.role;
   const isReviewer = REVIEWER_ROLES.includes(userRole);
   const isOwner = course.createdById === session.user.id;
-  const isInstructor = course.instructors?.some((i) => i.id === session.user.id);
-  const canEdit = isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
-  const canDelete = isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const isInstructor = course.instructors?.some(
+    (i) => i.id === session.user.id,
+  );
+  const canEdit =
+    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const canDelete =
+    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
-  const canViewParticipants = isOwner || isInstructor || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const canViewParticipants =
+    isOwner ||
+    isInstructor ||
+    userRole === UserRole.ADMIN ||
+    userRole === UserRole.LPW;
 
   // Format dates
   const startDate = new Date(course.startDate);
@@ -228,7 +252,7 @@ export default function CourseDetailPage() {
   const confirmedCount = course._count?.participants ?? 0;
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-dark-background">
+    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
@@ -236,22 +260,22 @@ export default function CourseDetailPage() {
             <li>
               <Link
                 href="/dashboard"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Dashboard
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
             <li>
               <Link
                 href="/dashboard/courses"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Kurse
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
-            <li className="max-w-[200px] truncate text-gray-900 dark:text-dark-text">
+            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li className="dark:text-dark-text max-w-[200px] truncate text-gray-900">
               {course.title}
             </li>
           </ol>
@@ -271,17 +295,18 @@ export default function CourseDetailPage() {
                   Anmeldung offen
                 </span>
               )}
-              {course.maxParticipants && confirmedCount >= course.maxParticipants && (
-                <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                  Ausgebucht
-                </span>
-              )}
+              {course.maxParticipants &&
+                confirmedCount >= course.maxParticipants && (
+                  <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                    Ausgebucht
+                  </span>
+                )}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-dark-text sm:text-3xl">
+            <h1 className="dark:text-dark-text text-2xl font-bold wrap-break-word text-gray-900 sm:text-3xl">
               {course.title}
             </h1>
             {course.motto && (
-              <p className="mt-1 text-lg text-gray-600 dark:text-dark-muted">
+              <p className="dark:text-dark-muted mt-1 text-lg text-gray-600">
                 {course.motto}
               </p>
             )}
@@ -292,10 +317,20 @@ export default function CourseDetailPage() {
             {canEdit && (
               <Link
                 href={`/dashboard/courses/${courseId}/edit`}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-gray-700"
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
                 Bearbeiten
               </Link>
@@ -303,10 +338,20 @@ export default function CourseDetailPage() {
             {canDelete && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-dark-surface dark:text-red-400 dark:hover:bg-red-900/20"
+                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
                 Löschen
               </button>
@@ -316,7 +361,7 @@ export default function CourseDetailPage() {
 
         {/* Tabs */}
         {canViewParticipants && (
-          <div className="mb-6 border-b border-gray-200 dark:border-dark-border">
+          <div className="dark:border-dark-border mb-6 border-b border-gray-200">
             <nav className="-mb-px flex gap-4">
               <button
                 onClick={() => setActiveTab("details")}
@@ -354,13 +399,14 @@ export default function CourseDetailPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                      Anmerkungen (optional bei Genehmigung, erforderlich bei Ablehnung)
+                      Anmerkungen (optional bei Genehmigung, erforderlich bei
+                      Ablehnung)
                     </label>
                     <textarea
                       value={reviewNotes}
                       onChange={(e) => setReviewNotes(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-yellow-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-yellow-800 dark:bg-dark-background-secondary dark:text-dark-text"
+                      className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-yellow-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none dark:border-yellow-800"
                       placeholder="Anmerkungen zur Prüfung..."
                     />
                   </div>
@@ -370,7 +416,9 @@ export default function CourseDetailPage() {
                       disabled={approveMutation.isPending}
                       className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                     >
-                      {approveMutation.isPending ? "Wird genehmigt..." : "Genehmigen"}
+                      {approveMutation.isPending
+                        ? "Wird genehmigt..."
+                        : "Genehmigen"}
                     </button>
                     <button
                       onClick={() => setShowRejectModal(true)}
@@ -389,7 +437,9 @@ export default function CourseDetailPage() {
                 <h2 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
                   Ablehnungsgrund
                 </h2>
-                <p className="text-red-700 dark:text-red-400">{course.reviewNotes}</p>
+                <p className="text-red-700 dark:text-red-400">
+                  {course.reviewNotes}
+                </p>
                 {course.reviewer && (
                   <p className="mt-2 text-sm text-red-600 dark:text-red-500">
                     Abgelehnt von {course.reviewer.displayName} am{" "}
@@ -402,8 +452,8 @@ export default function CourseDetailPage() {
             )}
 
             {/* Course Info */}
-            <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Kursinformationen
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
@@ -411,7 +461,7 @@ export default function CourseDetailPage() {
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Kurstyp
                   </dt>
-                  <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
                     {courseTypeLabels[course.courseType]}
                   </dd>
                 </div>
@@ -420,7 +470,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Zielgruppe
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {targetAudienceLabels[course.targetAudience]}
                     </dd>
                   </div>
@@ -429,7 +479,7 @@ export default function CourseDetailPage() {
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Beginn
                   </dt>
-                  <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
                     {formattedStartDate}
                   </dd>
                 </div>
@@ -437,7 +487,7 @@ export default function CourseDetailPage() {
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Ende
                   </dt>
-                  <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
                     {formattedEndDate}
                   </dd>
                 </div>
@@ -446,7 +496,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Bezirk
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {course.bezirk.name}
                     </dd>
                   </div>
@@ -456,7 +506,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Veranstaltungsort
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {course.location.name && `${course.location.name}, `}
                       {course.location.city}
                       {course.location.street && (
@@ -472,11 +522,13 @@ export default function CourseDetailPage() {
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Teilnehmer
                   </dt>
-                  <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
                     {confirmedCount}
                     {course.maxParticipants && ` / ${course.maxParticipants}`}
                     {course.allowWaitingList && (
-                      <span className="ml-2 text-sm text-gray-500">(Warteliste aktiviert)</span>
+                      <span className="ml-2 text-sm text-gray-500">
+                        (Warteliste aktiviert)
+                      </span>
                     )}
                   </dd>
                 </div>
@@ -485,8 +537,10 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Anmeldeschluss
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
-                      {new Date(course.registrationDeadline).toLocaleDateString("de-DE")}
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {new Date(course.registrationDeadline).toLocaleDateString(
+                        "de-DE",
+                      )}
                     </dd>
                   </div>
                 )}
@@ -495,8 +549,8 @@ export default function CourseDetailPage() {
 
             {/* Description */}
             {course.description && (
-              <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+              <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                   Beschreibung
                 </h2>
                 <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
@@ -509,8 +563,8 @@ export default function CourseDetailPage() {
 
             {/* Instructors */}
             {course.instructors && course.instructors.length > 0 && (
-              <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+              <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                   Dozenten
                 </h2>
                 <ul className="space-y-2">
@@ -524,12 +578,22 @@ export default function CourseDetailPage() {
                         />
                       ) : (
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                          <svg className="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <svg
+                            className="h-5 w-5 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
                           </svg>
                         </div>
                       )}
-                      <span className="text-gray-900 dark:text-dark-text">
+                      <span className="dark:text-dark-text text-gray-900">
                         {instructor.displayName}
                       </span>
                     </li>
@@ -540,8 +604,8 @@ export default function CourseDetailPage() {
 
             {/* Prerequisites & What to Bring */}
             {(course.prerequisites || course.whatToBring) && (
-              <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-                <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+              <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                   Weitere Informationen
                 </h2>
                 <div className="space-y-4">
@@ -550,7 +614,7 @@ export default function CourseDetailPage() {
                       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Voraussetzungen
                       </h3>
-                      <p className="mt-1 text-gray-900 dark:text-dark-text">
+                      <p className="dark:text-dark-text mt-1 text-gray-900">
                         {course.prerequisites}
                       </p>
                     </div>
@@ -560,7 +624,7 @@ export default function CourseDetailPage() {
                       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                         Mitzubringen
                       </h3>
-                      <p className="mt-1 text-gray-900 dark:text-dark-text">
+                      <p className="dark:text-dark-text mt-1 text-gray-900">
                         {course.whatToBring}
                       </p>
                     </div>
@@ -569,44 +633,120 @@ export default function CourseDetailPage() {
               </section>
             )}
 
+            {/* Custom Fields */}
+            {course.customFields && course.customFields.length > 0 && (
+              <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Zusätzliche Felder bei Anmeldung
+                </h2>
+                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                  Diese Felder werden bei der Anmeldung von den Teilnehmern
+                  abgefragt.
+                </p>
+                <div className="space-y-3">
+                  {course.customFields
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((field) => (
+                      <div
+                        key={field.id}
+                        className="dark:border-dark-border rounded-lg border border-gray-100 p-4"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="dark:text-dark-text font-medium text-gray-900">
+                                {field.fieldName}
+                              </span>
+                              {field.isRequired && (
+                                <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                  Pflichtfeld
+                                </span>
+                              )}
+                            </div>
+                            {field.helpText && (
+                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                {field.helpText}
+                              </p>
+                            )}
+                          </div>
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                            {customFieldTypeLabels[field.fieldType]}
+                          </span>
+                        </div>
+                        {field.fieldType === CustomFieldType.SELECT &&
+                          field.options && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Optionen:
+                              </span>
+                              {(typeof field.options === "string"
+                                ? field.options
+                                    .split(",")
+                                    .map((o) => o.trim())
+                                    .filter(Boolean)
+                                : Array.isArray(field.options)
+                                  ? field.options
+                                  : []
+                              ).map((option: string, idx: number) => (
+                                <span
+                                  key={idx}
+                                  className="rounded bg-gray-50 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                                >
+                                  {option}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
             {/* Pricing */}
-            <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Preise
               </h2>
               {course.isFree ? (
-                <p className="text-gray-900 dark:text-dark-text">Kostenlos</p>
+                <p className="dark:text-dark-text text-gray-900">Kostenlos</p>
               ) : course.priceOptions && course.priceOptions.length > 0 ? (
                 <div className="space-y-2">
                   {course.priceOptions.map((option) => (
                     <div
                       key={option.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-100 p-3 dark:border-dark-border"
+                      className="dark:border-dark-border flex items-center justify-between rounded-lg border border-gray-100 p-3"
                     >
                       <div>
-                        <span className="font-medium text-gray-900 dark:text-dark-text">
+                        <span className="dark:text-dark-text font-medium text-gray-900">
                           {option.label}
                         </span>
                         {option.description && (
-                          <p className="text-sm text-gray-500">{option.description}</p>
+                          <p className="text-sm text-gray-500">
+                            {option.description}
+                          </p>
                         )}
                       </div>
-                      <span className="font-semibold text-gray-900 dark:text-dark-text">
+                      <span className="dark:text-dark-text font-semibold text-gray-900">
                         {option.price.toFixed(2)} €
                       </span>
                     </div>
                   ))}
                 </div>
               ) : course.priceInfo ? (
-                <p className="text-gray-900 dark:text-dark-text">{course.priceInfo}</p>
+                <p className="dark:text-dark-text text-gray-900">
+                  {course.priceInfo}
+                </p>
               ) : (
-                <p className="text-gray-500">Keine Preisinformationen verfügbar</p>
+                <p className="text-gray-500">
+                  Keine Preisinformationen verfügbar
+                </p>
               )}
             </section>
 
             {/* Meta Info */}
-            <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Metadaten
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
@@ -615,7 +755,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Erstellt von
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {course.createdBy.displayName}
                     </dd>
                   </div>
@@ -624,7 +764,7 @@ export default function CourseDetailPage() {
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Erstellt am
                   </dt>
-                  <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
                     {new Date(course.createdAt).toLocaleDateString("de-DE")}
                   </dd>
                 </div>
@@ -633,7 +773,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Geprüft von
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {course.reviewer.displayName}
                     </dd>
                   </div>
@@ -643,7 +783,7 @@ export default function CourseDetailPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                       Geprüft am
                     </dt>
-                    <dd className="mt-1 text-gray-900 dark:text-dark-text">
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
                       {new Date(course.reviewDate).toLocaleDateString("de-DE")}
                     </dd>
                   </div>
@@ -656,17 +796,43 @@ export default function CourseDetailPage() {
         {/* Participants Tab */}
         {activeTab === "participants" && canViewParticipants && (
           <div className="space-y-6">
+            {/* Link to full participants page */}
+            <div className="flex justify-end">
+              <Link
+                href={`/dashboard/courses/${courseId}/participants`}
+                className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Zur Teilnehmerverwaltung
+              </Link>
+            </div>
+
             {/* Summary */}
-            <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Übersicht
               </h2>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
                   <div className="text-2xl font-bold text-green-700 dark:text-green-400">
-                    {registrationsData?.registrations.filter(
-                      (r) => r.registrationStatus === RegistrationStatus.CONFIRMED
-                    ).reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
+                    {registrationsData?.registrations
+                      .filter(
+                        (r) =>
+                          r.registrationStatus === RegistrationStatus.CONFIRMED,
+                      )
+                      .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                   </div>
                   <div className="text-sm text-green-600 dark:text-green-500">
                     Bestätigte Teilnehmer
@@ -674,9 +840,12 @@ export default function CourseDetailPage() {
                 </div>
                 <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                   <div className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                    {registrationsData?.registrations.filter(
-                      (r) => r.registrationStatus === RegistrationStatus.WAITLIST
-                    ).reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
+                    {registrationsData?.registrations
+                      .filter(
+                        (r) =>
+                          r.registrationStatus === RegistrationStatus.WAITLIST,
+                      )
+                      .reduce((sum, r) => sum + r.participants.length, 0) ?? 0}
                   </div>
                   <div className="text-sm text-yellow-600 dark:text-yellow-500">
                     Auf Warteliste
@@ -694,13 +863,13 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Registrations List */}
-            <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Anmeldungen
               </h2>
               {registrationsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+                  <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
                 </div>
               ) : registrationsData?.registrations.length === 0 ? (
                 <p className="py-8 text-center text-gray-500 dark:text-gray-400">
@@ -711,34 +880,43 @@ export default function CourseDetailPage() {
                   {registrationsData?.registrations.map((registration) => (
                     <div
                       key={registration.id}
-                      className="rounded-lg border border-gray-200 p-4 dark:border-dark-border"
+                      className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
                     >
                       {/* Registration Header */}
                       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <h3 className="font-medium text-gray-900 dark:text-dark-text">
-                            {registration.registrantFirstName} {registration.registrantLastName}
+                          <h3 className="dark:text-dark-text font-medium text-gray-900">
+                            {registration.registrantFirstName}{" "}
+                            {registration.registrantLastName}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             {registration.registrantEmail}
-                            {registration.registrantPhone && ` • ${registration.registrantPhone}`}
+                            {registration.registrantPhone &&
+                              ` • ${registration.registrantPhone}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                              registrationStatusColors[registration.registrationStatus]
+                              registrationStatusColors[
+                                registration.registrationStatus
+                              ]
                             }`}
                           >
-                            {registrationStatusLabels[registration.registrationStatus]}
+                            {
+                              registrationStatusLabels[
+                                registration.registrationStatus
+                              ]
+                            }
                           </span>
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                               registration.paymentStatus === PaymentStatus.PAID
                                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                : registration.paymentStatus === PaymentStatus.REFUNDED
-                                ? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : registration.paymentStatus ===
+                                    PaymentStatus.REFUNDED
+                                  ? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
                             }`}
                           >
                             {paymentStatusLabels[registration.paymentStatus]}
@@ -756,11 +934,12 @@ export default function CourseDetailPage() {
                             {registration.participants.map((participant) => (
                               <div
                                 key={participant.id}
-                                className="flex items-center justify-between rounded bg-gray-50 px-3 py-2 text-sm dark:bg-dark-background-secondary"
+                                className="dark:bg-dark-background-secondary flex items-center justify-between rounded bg-gray-50 px-3 py-2 text-sm"
                               >
                                 <div>
-                                  <span className="font-medium text-gray-900 dark:text-dark-text">
-                                    {participant.firstName} {participant.lastName}
+                                  <span className="dark:text-dark-text font-medium text-gray-900">
+                                    {participant.firstName}{" "}
+                                    {participant.lastName}
                                   </span>
                                   {participant.city && (
                                     <span className="ml-2 text-gray-500">
@@ -774,7 +953,9 @@ export default function CourseDetailPage() {
                                   )}
                                 </div>
                                 {participant.priceOption && (
-                                  <span className="text-gray-500">{participant.priceOption}</span>
+                                  <span className="text-gray-500">
+                                    {participant.priceOption}
+                                  </span>
                                 )}
                               </div>
                             ))}
@@ -786,9 +967,11 @@ export default function CourseDetailPage() {
                       <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3 text-sm dark:border-gray-700">
                         <span className="text-gray-500 dark:text-gray-400">
                           Angemeldet am{" "}
-                          {new Date(registration.createdAt).toLocaleDateString("de-DE")}
+                          {new Date(registration.createdAt).toLocaleDateString(
+                            "de-DE",
+                          )}
                         </span>
-                        <span className="font-medium text-gray-900 dark:text-dark-text">
+                        <span className="dark:text-dark-text font-medium text-gray-900">
                           {registration.totalPrice.toFixed(2)} €
                         </span>
                       </div>
@@ -803,18 +986,19 @@ export default function CourseDetailPage() {
         {/* Reject Modal */}
         {showRejectModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Kurs ablehnen
               </h2>
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Bitte gib einen Grund für die Ablehnung an. Dieser wird dem Ersteller angezeigt.
+                Bitte gib einen Grund für die Ablehnung an. Dieser wird dem
+                Ersteller angezeigt.
               </p>
               <textarea
                 value={reviewNotes}
                 onChange={(e) => setReviewNotes(e.target.value)}
                 rows={4}
-                className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                 placeholder="Ablehnungsgrund..."
               />
               <div className="flex justify-end gap-3">
@@ -823,7 +1007,7 @@ export default function CourseDetailPage() {
                     setShowRejectModal(false);
                     setReviewNotes("");
                   }}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:text-dark-text dark:hover:bg-gray-700"
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Abbrechen
                 </button>
@@ -842,18 +1026,18 @@ export default function CourseDetailPage() {
         {/* Delete Modal */}
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg bg-white p-6 dark:bg-dark-surface">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Kurs löschen
               </h2>
               <p className="mb-4 text-gray-600 dark:text-gray-400">
-                Bist du sicher, dass du diesen Kurs löschen möchtest? Diese Aktion kann nicht
-                rückgängig gemacht werden.
+                Bist du sicher, dass du diesen Kurs löschen möchtest? Diese
+                Aktion kann nicht rückgängig gemacht werden.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-dark-border dark:text-dark-text dark:hover:bg-gray-700"
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Abbrechen
                 </button>

@@ -29,8 +29,12 @@ export default function PeopleCard({
           </div>
         )}
         <div className="min-w-0">
-          <p className="text-dark dark:text-dark-text font-semibold">{name}</p>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
+          <p className="text-dark dark:text-dark-text truncate font-semibold">
+            {name}
+          </p>
+          <p className="truncate text-sm text-gray-600 dark:text-gray-400">
+            {subtitle}
+          </p>
           {email && (
             <Link
               href={`mailto:${email}`}

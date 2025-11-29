@@ -201,7 +201,9 @@ export const eventsRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         status: z.nativeEnum(ContentStatus).optional(),
-        sortBy: z.enum(["eventDate", "title", "createdAt", "status"]).default("eventDate"),
+        sortBy: z
+          .enum(["eventDate", "title", "createdAt", "status"])
+          .default("eventDate"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
@@ -417,6 +419,7 @@ export const eventsRouter = createTRPCRouter({
           )
           .optional(),
         status: z.enum(ContentStatus).optional(),
+        cancelled: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -575,5 +578,242 @@ export const eventsRouter = createTRPCRouter({
           reviewNotes: input.reviewNotes,
         },
       });
+    }),
+
+  // Bulk delete events
+  bulkDelete: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all events to check permissions
+      const events = await ctx.db.event.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only events user can delete
+      const canDeleteIds = events
+        .filter(
+          (event) =>
+            event.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((e) => e.id);
+
+      if (canDeleteIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to delete any of the selected events",
+        });
+      }
+
+      await ctx.db.event.deleteMany({
+        where: { id: { in: canDeleteIds } },
+      });
+
+      return { success: true, deletedCount: canDeleteIds.length };
+    }),
+
+  // Bulk cancel events
+  bulkCancel: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all events to check permissions
+      const events = await ctx.db.event.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only events user can update
+      const canUpdateIds = events
+        .filter(
+          (event) =>
+            event.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((e) => e.id);
+
+      if (canUpdateIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to cancel any of the selected events",
+        });
+      }
+
+      await ctx.db.event.updateMany({
+        where: { id: { in: canUpdateIds } },
+        data: { cancelled: true },
+      });
+
+      return { success: true, cancelledCount: canUpdateIds.length };
+    }),
+
+  // Duplicate event
+  duplicate: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const original = await ctx.db.event.findUnique({
+        where: { id: input.id },
+        include: {
+          priceOptions: true,
+        },
+      });
+
+      if (!original) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event not found",
+        });
+      }
+
+      // Create new event as draft
+      const newEvent = await ctx.db.event.create({
+        data: {
+          title: `${original.title} (Kopie)`,
+          description: original.description,
+          motto: original.motto,
+          eventDate: original.eventDate,
+          category: original.category,
+          locationId: original.locationId,
+          bezirkId: original.bezirkId,
+          ensembleId: original.ensembleId,
+          auswahlChorId: original.auswahlChorId,
+          performingEnsembleType: original.performingEnsembleType,
+          performingEnsembleName: original.performingEnsembleName,
+          leitung: original.leitung,
+          openToParticipants: original.openToParticipants,
+          participationInfo: original.participationInfo,
+          coverImageId: original.coverImageId,
+          status: ContentStatus.DRAFT,
+          createdById: ctx.session.user.id,
+          cancelled: false,
+          priceOptions: {
+            create: original.priceOptions.map((po) => ({
+              label: po.label,
+              price: po.price,
+              description: po.description,
+            })),
+          },
+        },
+      });
+
+      return newEvent;
+    }),
+
+  // Bulk duplicate events
+  bulkDuplicate: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const originals = await ctx.db.event.findMany({
+        where: { id: { in: input.ids } },
+        include: {
+          priceOptions: true,
+        },
+      });
+
+      if (originals.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No events found",
+        });
+      }
+
+      // Create duplicates for each event
+      const newEvents = await Promise.all(
+        originals.map((original) =>
+          ctx.db.event.create({
+            data: {
+              title: `[DUPLIKAT] ${original.title}`,
+              description: original.description,
+              motto: original.motto,
+              eventDate: original.eventDate,
+              category: original.category,
+              locationId: original.locationId,
+              bezirkId: original.bezirkId,
+              ensembleId: original.ensembleId,
+              auswahlChorId: original.auswahlChorId,
+              performingEnsembleType: original.performingEnsembleType,
+              performingEnsembleName: original.performingEnsembleName,
+              leitung: original.leitung,
+              openToParticipants: original.openToParticipants,
+              participationInfo: original.participationInfo,
+              coverImageId: original.coverImageId,
+              status: ContentStatus.DRAFT,
+              createdById: ctx.session.user.id,
+              cancelled: false,
+              priceOptions: {
+                create: original.priceOptions.map((po) => ({
+                  label: po.label,
+                  price: po.price,
+                  description: po.description,
+                })),
+              },
+            },
+          }),
+        ),
+      );
+
+      return { success: true, duplicatedCount: newEvents.length };
+    }),
+
+  // Bulk change status
+  bulkStatusChange: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()).min(1),
+        status: z.nativeEnum(ContentStatus),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all events to check permissions
+      const events = await ctx.db.event.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only events user can update
+      const canUpdateIds = events
+        .filter(
+          (event) =>
+            event.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((e) => e.id);
+
+      if (canUpdateIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to update any of the selected events",
+        });
+      }
+
+      // Special handling for APPROVED status - set publishedAt
+      const updateData: { status: ContentStatus; publishedAt?: Date | null } = {
+        status: input.status,
+      };
+
+      if (input.status === ContentStatus.APPROVED) {
+        updateData.publishedAt = new Date();
+      } else if (input.status === ContentStatus.DRAFT) {
+        updateData.publishedAt = null;
+      }
+
+      await ctx.db.event.updateMany({
+        where: { id: { in: canUpdateIds } },
+        data: updateData,
+      });
+
+      return { success: true, updatedCount: canUpdateIds.length };
     }),
 });

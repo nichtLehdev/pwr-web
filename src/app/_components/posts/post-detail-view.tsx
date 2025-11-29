@@ -121,7 +121,7 @@ export default function PostDetailView({
               </div>
 
               {/* Title */}
-              <h1 className="max-w-4xl text-2xl font-bold md:text-4xl lg:text-5xl">
+              <h1 className="max-w-4xl text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl">
                 {post.title}
               </h1>
             </div>
@@ -179,7 +179,7 @@ export default function PostDetailView({
             </div>
 
             {/* Title */}
-            <h1 className="max-w-4xl text-2xl font-bold md:text-4xl lg:text-5xl">
+            <h1 className="max-w-4xl text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl">
               {post.title}
             </h1>
           </div>

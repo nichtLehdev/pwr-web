@@ -143,7 +143,7 @@ export const registrationsRouter = createTRPCRouter({
           participants: {
             create: participants.map((participant) => ({
               ...participant,
-              customFields: JSON.stringify(participant.customFields || {}),
+              customFields: participant.customFields || {},
             })),
           },
         },
@@ -381,16 +381,15 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       // Calculate current participants (excluding this registration)
-      const currentParticipantsExcludingThis =
-        (await ctx.db.participant.count({
-          where: {
-            registration: {
-              courseId: course.id,
-              registrationStatus: RegistrationStatus.CONFIRMED,
-              id: { not: id },
-            },
+      const currentParticipantsExcludingThis = await ctx.db.participant.count({
+        where: {
+          registration: {
+            courseId: course.id,
+            registrationStatus: RegistrationStatus.CONFIRMED,
+            id: { not: id },
           },
-        }));
+        },
+      });
 
       // Check course capacity
       const newTotalParticipants =
@@ -464,7 +463,7 @@ export const registrationsRouter = createTRPCRouter({
             where: { id: participantId },
             data: {
               ...participantData,
-              customFields: JSON.stringify(participantData.customFields ?? {}),
+              customFields: participantData.customFields ?? {},
             },
           });
         } else {
@@ -472,7 +471,7 @@ export const registrationsRouter = createTRPCRouter({
           await ctx.db.participant.create({
             data: {
               ...participantData,
-              customFields: JSON.stringify(participantData.customFields ?? {}),
+              customFields: participantData.customFields ?? {},
               registrationId: id,
             },
           });

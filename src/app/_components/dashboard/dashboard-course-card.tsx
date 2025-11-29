@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
-import type { ContentStatus, CourseType, RegistrationStatus } from "~/generated/prisma/enums";
+import type {
+  ContentStatus,
+  CourseType,
+  RegistrationStatus,
+} from "~/generated/prisma/enums";
 
 interface DashboardCourseCardProps {
   id: string;
@@ -12,6 +16,7 @@ interface DashboardCourseCardProps {
   district?: number;
   status: ContentStatus;
   registrationOpen: boolean;
+  registrationDeadline?: Date | null;
   maxParticipants?: number | null;
   confirmedCount: number;
   createdBy?: {
@@ -75,6 +80,7 @@ export default function DashboardCourseCard({
   district,
   status,
   registrationOpen,
+  registrationDeadline,
   maxParticipants,
   confirmedCount,
   createdBy,
@@ -85,6 +91,10 @@ export default function DashboardCourseCard({
   const districtColor = getDistrictColor(district);
   const statusInfo = statusConfig[status];
   const isFull = maxParticipants ? confirmedCount >= maxParticipants : false;
+  const isDeadlinePassed = registrationDeadline
+    ? new Date(registrationDeadline) < new Date()
+    : false;
+  const isEffectivelyOpen = registrationOpen && !isDeadlinePassed;
 
   // Format date range
   const formatDateRange = () => {
@@ -103,7 +113,7 @@ export default function DashboardCourseCard({
   };
 
   return (
-    <div className="relative flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-dark-border dark:bg-dark-surface">
+    <div className="dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md">
       {/* Top Row: Status & District */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -115,13 +125,13 @@ export default function DashboardCourseCard({
           </span>
 
           {/* Registration Status */}
-          {registrationOpen ? (
+          {isEffectivelyOpen ? (
             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-              Anmeldung offen
+              Offen
             </span>
           ) : (
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-              Anmeldung geschlossen
+              {isDeadlinePassed ? "Frist vorbei" : "Geschlossen"}
             </span>
           )}
 
@@ -142,7 +152,7 @@ export default function DashboardCourseCard({
       </div>
 
       {/* Title */}
-      <h3 className="mb-2 text-lg font-bold text-dark dark:text-dark-text">
+      <h3 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-bold">
         {title}
       </h3>
 
@@ -296,7 +306,7 @@ export default function DashboardCourseCard({
       <div className="mt-auto flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
         <Link
           href={`/dashboard/courses/${id}`}
-          className="inline-flex items-center text-sm font-medium text-primary transition-colors hover:text-primary-dark"
+          className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium transition-colors"
         >
           <svg
             className="mr-1 h-4 w-4"
