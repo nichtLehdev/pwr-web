@@ -90,7 +90,6 @@ export default function DashboardPage() {
               description="Kurse & Anmeldungen"
               icon={<AcademicCapIcon />}
               href="/dashboard/courses"
-              comingSoon
             />
             <DashboardCard
               title="Beiträge"

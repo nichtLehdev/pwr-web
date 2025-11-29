@@ -55,7 +55,7 @@ export const coursesRouter = createTRPCRouter({
         }),
       };
 
-      const [courses, total] = await Promise.all([
+      const [coursesRaw, total] = await Promise.all([
         ctx.db.course.findMany({
           where,
           include: {
@@ -70,12 +70,13 @@ export const coursesRouter = createTRPCRouter({
             },
             priceOptions: true,
             customFields: true,
-            _count: {
-              select: {
-                registrations: {
-                  where: {
-                    registrationStatus: RegistrationStatus.CONFIRMED,
-                  },
+            registrations: {
+              where: {
+                registrationStatus: RegistrationStatus.CONFIRMED,
+              },
+              include: {
+                _count: {
+                  select: { participants: true },
                 },
               },
             },
@@ -86,6 +87,22 @@ export const coursesRouter = createTRPCRouter({
         }),
         ctx.db.course.count({ where }),
       ]);
+
+      // Transform courses to include participant count
+      const courses = coursesRaw.map((course) => {
+        const participantCount = course.registrations.reduce(
+          (sum, reg) => sum + reg._count.participants,
+          0,
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { registrations, ...courseWithoutRegistrations } = course;
+        return {
+          ...courseWithoutRegistrations,
+          _count: {
+            participants: participantCount,
+          },
+        };
+      });
 
       return {
         courses,
@@ -98,7 +115,7 @@ export const coursesRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const course = await ctx.db.course.findUnique({
+      const courseRaw = await ctx.db.course.findUnique({
         where: { id: input.id },
         include: {
           location: true,
@@ -130,19 +147,20 @@ export const coursesRouter = createTRPCRouter({
               displayName: true,
             },
           },
-          _count: {
-            select: {
-              registrations: {
-                where: {
-                  registrationStatus: RegistrationStatus.CONFIRMED,
-                },
+          registrations: {
+            where: {
+              registrationStatus: RegistrationStatus.CONFIRMED,
+            },
+            include: {
+              _count: {
+                select: { participants: true },
               },
             },
           },
         },
       });
 
-      if (!course) {
+      if (!courseRaw) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Course not found",
@@ -150,7 +168,7 @@ export const coursesRouter = createTRPCRouter({
       }
 
       // Only show non-approved courses to authorized users
-      if (course.status !== ContentStatus.APPROVED) {
+      if (courseRaw.status !== ContentStatus.APPROVED) {
         if (!ctx.session?.user) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
@@ -160,7 +178,7 @@ export const coursesRouter = createTRPCRouter({
         const role = ctx.session.user.role;
 
         const canView =
-          course.createdById === ctx.session.user.id ||
+          courseRaw.createdById === ctx.session.user.id ||
           role == UserRole.ADMIN ||
           role == UserRole.LPW ||
           role == UserRole.RPW;
@@ -173,7 +191,21 @@ export const coursesRouter = createTRPCRouter({
         }
       }
 
-      return course;
+      // Calculate participant count from confirmed registrations
+      const participantCount = courseRaw.registrations.reduce(
+        (sum, reg) => sum + reg._count.participants,
+        0,
+      );
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { registrations, ...courseWithoutRegistrations } = courseRaw;
+
+      return {
+        ...courseWithoutRegistrations,
+        _count: {
+          participants: participantCount,
+        },
+      };
     }),
 
   // Get courses created by current user
@@ -191,15 +223,22 @@ export const coursesRouter = createTRPCRouter({
         ...(input.status && { status: input.status }),
       };
 
-      const [courses, total] = await Promise.all([
+      const [coursesRaw, total] = await Promise.all([
         ctx.db.course.findMany({
           where,
           include: {
             location: true,
             bezirk: true,
             priceOptions: true,
-            _count: {
-              select: { registrations: true },
+            registrations: {
+              where: {
+                registrationStatus: RegistrationStatus.CONFIRMED,
+              },
+              include: {
+                _count: {
+                  select: { participants: true },
+                },
+              },
             },
           },
           skip: (input.page - 1) * input.limit,
@@ -208,6 +247,129 @@ export const coursesRouter = createTRPCRouter({
         }),
         ctx.db.course.count({ where }),
       ]);
+
+      // Transform courses to include participant count
+      const courses = coursesRaw.map((course) => {
+        const participantCount = course.registrations.reduce(
+          (sum, reg) => sum + reg._count.participants,
+          0,
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { registrations, ...courseWithoutRegistrations } = course;
+        return {
+          ...courseWithoutRegistrations,
+          _count: {
+            participants: participantCount,
+          },
+        };
+      });
+
+      return {
+        courses,
+        total,
+        pages: Math.ceil(total / input.limit),
+      };
+    }),
+
+  // Get courses for dashboard based on user role
+  getDashboardCourses: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        status: z.nativeEnum(ContentStatus).optional(),
+        sortBy: z.enum(["startDate", "title", "createdAt", "status"]).default("startDate"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Build where clause based on role
+      let where: Record<string, unknown> = {};
+
+      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+        // Admin and LPW can see all courses
+        if (input.status) {
+          where.status = input.status;
+        }
+      } else if (userRole === UserRole.RPW) {
+        // RPW can see all courses except DRAFT status (unless they created it)
+        if (input.status) {
+          if (input.status === ContentStatus.DRAFT) {
+            // For DRAFT, only show their own
+            where = {
+              status: ContentStatus.DRAFT,
+              createdById: userId,
+            };
+          } else {
+            where.status = input.status;
+          }
+        } else {
+          // No status filter: show all non-draft OR own drafts
+          where = {
+            OR: [
+              { status: { not: ContentStatus.DRAFT } },
+              { createdById: userId },
+            ],
+          };
+        }
+      } else {
+        // OBLEUTE, regular users - only their own courses
+        where = {
+          createdById: userId,
+          ...(input.status && { status: input.status }),
+        };
+      }
+
+      const [coursesRaw, total] = await Promise.all([
+        ctx.db.course.findMany({
+          where,
+          include: {
+            location: true,
+            bezirk: true,
+            createdBy: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+            reviewer: { select: { id: true, displayName: true } },
+            priceOptions: true,
+            registrations: {
+              where: {
+                registrationStatus: RegistrationStatus.CONFIRMED,
+              },
+              include: {
+                _count: {
+                  select: { participants: true },
+                },
+              },
+            },
+          },
+          skip: (input.page - 1) * input.limit,
+          take: input.limit,
+          orderBy: { [input.sortBy]: input.sortOrder },
+        }),
+        ctx.db.course.count({ where }),
+      ]);
+
+      // Transform courses to include participant count instead of registration count
+      const courses = coursesRaw.map((course) => {
+        const participantCount = course.registrations.reduce(
+          (sum, reg) => sum + reg._count.participants,
+          0,
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { registrations, ...courseWithoutRegistrations } = course;
+        return {
+          ...courseWithoutRegistrations,
+          _count: {
+            participants: participantCount,
+          },
+        };
+      });
 
       return {
         courses,
@@ -237,15 +399,22 @@ export const coursesRouter = createTRPCRouter({
       if (input.bezirkId) {
         where.bezirkId = input.bezirkId;
       }
-      const [courses, total] = await Promise.all([
+      const [coursesRaw, total] = await Promise.all([
         ctx.db.course.findMany({
           where,
           include: {
             location: true,
             bezirk: true,
             priceOptions: true,
-            _count: {
-              select: { registrations: true },
+            registrations: {
+              where: {
+                registrationStatus: RegistrationStatus.CONFIRMED,
+              },
+              include: {
+                _count: {
+                  select: { participants: true },
+                },
+              },
             },
           },
           skip: (input.page - 1) * input.limit,
@@ -254,6 +423,23 @@ export const coursesRouter = createTRPCRouter({
         }),
         ctx.db.course.count({ where }),
       ]);
+
+      // Transform courses to include participant count
+      const courses = coursesRaw.map((course) => {
+        const participantCount = course.registrations.reduce(
+          (sum, reg) => sum + reg._count.participants,
+          0,
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { registrations, ...courseWithoutRegistrations } = course;
+        return {
+          ...courseWithoutRegistrations,
+          _count: {
+            participants: participantCount,
+          },
+        };
+      });
+
       return {
         courses,
         total,
