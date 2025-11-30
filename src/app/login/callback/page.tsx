@@ -48,7 +48,7 @@ export default function LoginCallbackPage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
       <div className="text-center">
-        <div className="border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent mx-auto" />
+        <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
         <p className="text-gray-600 dark:text-gray-400">
           Anmeldung wird abgeschlossen...
         </p>

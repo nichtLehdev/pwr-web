@@ -19,7 +19,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Support both 'redirect' and 'callbackUrl' parameter names
-  const redirectTo = searchParams.get("redirect") ?? searchParams.get("callbackUrl") ?? "/";
+  const redirectTo =
+    searchParams.get("redirect") ?? searchParams.get("callbackUrl") ?? "/";
 
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -79,7 +80,7 @@ function LoginForm() {
 
       // Fetch user profile to check role
       const profile = await utils.users.getMyProfile.fetch();
-      
+
       // Redirect based on role
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
         router.push("/dashboard");
@@ -100,7 +101,7 @@ function LoginForm() {
     try {
       // Store the redirect URL in sessionStorage for after OAuth callback
       sessionStorage.setItem("loginRedirect", redirectTo);
-      
+
       await signIn.social({
         provider: "github",
         callbackURL: "/login/callback",
@@ -239,7 +240,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
         </div>
       }
     >
