@@ -1,13 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
+import { UserRole } from "~/generated/prisma/enums";
 
-export default function LoginPage() {
+// Roles that should be redirected to dashboard after login
+const DASHBOARD_ROLES: UserRole[] = [
+  UserRole.ADMIN,
+  UserRole.LPW,
+  UserRole.RPW,
+  UserRole.OBLEUTE,
+];
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Support both 'redirect' and 'callbackUrl' parameter names
+  const redirectTo = searchParams.get("redirect") ?? searchParams.get("callbackUrl") ?? "/";
+
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -41,7 +54,7 @@ export default function LoginPage() {
           }
 
           loginEmail = result.email;
-        } catch (err) {
+        } catch {
           setError("Benutzername nicht gefunden");
           setIsLoading(false);
           return;
@@ -63,7 +76,16 @@ export default function LoginPage() {
       }
 
       console.log("Sign in successful:", signInResult);
-      router.push(signInResult.data.url || "/");
+
+      // Fetch user profile to check role
+      const profile = await utils.users.getMyProfile.fetch();
+      
+      // Redirect based on role
+      if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
+        router.push("/dashboard");
+      } else {
+        router.push(redirectTo);
+      }
     } catch {
       setError("Ungültige Anmeldedaten");
     } finally {
@@ -76,9 +98,12 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Store the redirect URL in sessionStorage for after OAuth callback
+      sessionStorage.setItem("loginRedirect", redirectTo);
+      
       await signIn.social({
         provider: "github",
-        callbackURL: "/",
+        callbackURL: "/login/callback",
       });
     } catch (err) {
       setError("Anmeldung mit GitHub fehlgeschlagen");
@@ -206,5 +231,19 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

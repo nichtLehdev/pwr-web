@@ -23,7 +23,6 @@ export default function EditUserPage() {
   const userId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -38,35 +37,23 @@ export default function EditUserPage() {
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
   // Form state
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [role, setRole] = useState<UserRole>(UserRole.USER);
-  const [displayRole, setDisplayRole] = useState("");
-  const [obleuteBezirkId, setObleuteBezirkId] = useState<string | null>(null);
-  const [obleuteRole, setObleuteRole] = useState("");
-  const [bio, setBio] = useState("");
+  const [name, setName] = useState(
+    user?.displayName ??
+      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ??
+      "",
+  );
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [role, setRole] = useState<UserRole>(user?.role ?? UserRole.USER);
+  const [displayRole, setDisplayRole] = useState(user?.displayRole ?? "");
+  const [obleuteBezirkId, setObleuteBezirkId] = useState<string | null>(
+    user?.obleuteBezirkId ?? null,
+  );
+  const [obleuteRole, setObleuteRole] = useState(user?.obleuteRole ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Initialize form
-  useEffect(() => {
-    if (user && !isInitialized) {
-      setName(
-        user.displayName ??
-          `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
-      );
-      setEmail(user.email);
-      setUsername(user.username ?? "");
-      setRole(user.role);
-      setDisplayRole(user.displayRole ?? "");
-      setObleuteBezirkId(user.obleuteBezirkId ?? null);
-      setObleuteRole(user.obleuteRole ?? "");
-      setBio(user.bio ?? "");
-      setIsInitialized(true);
-    }
-  }, [user, isInitialized]);
 
   const utils = api.useUtils();
 
