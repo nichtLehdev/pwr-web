@@ -43,7 +43,8 @@ function getExtension(filename: string, mimeType: string): string {
     "image/gif": "gif",
     "application/pdf": "pdf",
     "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
     "application/vnd.ms-excel": "xls",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
     "application/zip": "zip",
@@ -77,13 +78,16 @@ export async function POST(request: Request) {
     }
 
     // Get valid types and max size for the folder
-    const validTypes = validTypesByFolder[folder] || validTypesByFolder.profiles;
+    const validTypes =
+      validTypesByFolder[folder] || validTypesByFolder.profiles;
     const maxSize = maxSizeByFolder[folder] || maxSizeByFolder.profiles;
 
     // Validate file type
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: `Invalid file type: ${file.type}. Allowed types for ${folder}: ${validTypes.join(", ")}` },
+        {
+          error: `Invalid file type: ${file.type}. Allowed types for ${folder}: ${validTypes.join(", ")}`,
+        },
         { status: 400 },
       );
     }
@@ -91,7 +95,9 @@ export async function POST(request: Request) {
     // Validate file size
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: `File too large. Maximum size is ${maxSize / (1024 * 1024)}MB.` },
+        {
+          error: `File too large. Maximum size is ${maxSize / (1024 * 1024)}MB.`,
+        },
         { status: 400 },
       );
     }
@@ -103,13 +109,13 @@ export async function POST(request: Request) {
     const timestamp = Date.now();
     const userId = session.user.id;
     const extension = getExtension(file.name, file.type);
-    
+
     // Create a sanitized base name from original filename
     const baseName = file.name
       .replace(/\.[^/.]+$/, "") // Remove extension
       .replace(/[^a-zA-Z0-9-_]/g, "-") // Replace special chars
       .substring(0, 50); // Limit length
-    
+
     const filename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
     // Ensure upload directory exists

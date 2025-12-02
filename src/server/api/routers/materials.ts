@@ -85,7 +85,12 @@ export const materialsRouter = createTRPCRouter({
           orderBy: { createdAt: "desc" },
           include: {
             uploadedBy: {
-              select: { id: true, displayName: true, firstName: true, lastName: true },
+              select: {
+                id: true,
+                displayName: true,
+                firstName: true,
+                lastName: true,
+              },
             },
           },
         }),

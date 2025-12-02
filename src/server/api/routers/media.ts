@@ -106,10 +106,7 @@ export const mediaRouter = createTRPCRouter({
         // Default: show approved + own uploads
         where.AND = [
           {
-            OR: [
-              { status: ContentStatus.APPROVED },
-              { uploadedById: userId },
-            ],
+            OR: [{ status: ContentStatus.APPROVED }, { uploadedById: userId }],
           },
         ];
       }

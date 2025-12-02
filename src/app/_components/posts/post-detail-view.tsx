@@ -359,9 +359,11 @@ export default function PostDetailView({
                     href={download.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary group flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:border-primary hover:shadow-md"
+                    className="dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary group hover:border-primary flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
                   >
-                    <span className="text-3xl">{fileTypeIcons[download.fileType]}</span>
+                    <span className="text-3xl">
+                      {fileTypeIcons[download.fileType]}
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="dark:text-dark-text group-hover:text-primary truncate font-medium text-gray-900 transition-colors">
                         {download.title}
@@ -373,11 +375,12 @@ export default function PostDetailView({
                       )}
                       <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
                         {fileTypeLabels[download.fileType]}
-                        {download.fileSize && ` • ${formatFileSize(download.fileSize)}`}
+                        {download.fileSize &&
+                          ` • ${formatFileSize(download.fileSize)}`}
                       </p>
                     </div>
                     <svg
-                      className="h-5 w-5 shrink-0 text-gray-400 transition-colors group-hover:text-primary"
+                      className="group-hover:text-primary h-5 w-5 shrink-0 text-gray-400 transition-colors"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"

@@ -77,15 +77,13 @@ export default function PostDetailPage() {
   );
 
   // Fetch attached content for reviewers
-  const {
-    data: attachedContent,
-    refetch: refetchAttachedContent,
-  } = api.posts.getAttachedContent.useQuery(
-    { postId },
-    {
-      enabled: !!postId && !!profile && REVIEWER_ROLES.includes(profile.role),
-    },
-  );
+  const { data: attachedContent, refetch: refetchAttachedContent } =
+    api.posts.getAttachedContent.useQuery(
+      { postId },
+      {
+        enabled: !!postId && !!profile && REVIEWER_ROLES.includes(profile.role),
+      },
+    );
 
   // Mutations
   const approveMutation = api.posts.approve.useMutation({
@@ -178,14 +176,18 @@ export default function PostDetailPage() {
   const canReview = isReviewer && post.status === ContentStatus.PENDING;
 
   // Check if all attached content is approved
-  const hasPendingDownloads = attachedContent?.downloads.some(
-    (d) => d.status !== ContentStatus.APPROVED
-  ) ?? false;
-  const hasPendingMedia = attachedContent?.media.some(
-    (m) => m.status !== ContentStatus.APPROVED
-  ) ?? false;
-  const hasPendingCoverImage = post.coverImage?.status !== ContentStatus.APPROVED && post.coverImage?.status !== undefined;
-  const hasUnapprovedContent = hasPendingDownloads || hasPendingMedia || hasPendingCoverImage;
+  const hasPendingDownloads =
+    attachedContent?.downloads.some(
+      (d) => d.status !== ContentStatus.APPROVED,
+    ) ?? false;
+  const hasPendingMedia =
+    attachedContent?.media.some((m) => m.status !== ContentStatus.APPROVED) ??
+    false;
+  const hasPendingCoverImage =
+    post.coverImage?.status !== ContentStatus.APPROVED &&
+    post.coverImage?.status !== undefined;
+  const hasUnapprovedContent =
+    hasPendingDownloads || hasPendingMedia || hasPendingCoverImage;
 
   const handleApprove = () => {
     approveMutation.mutate({
@@ -325,15 +327,26 @@ export default function PostDetailPage() {
               {/* Warning if there's unapproved content */}
               {hasUnapprovedContent && (
                 <div className="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
-                  <svg className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <svg
+                    className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    />
                   </svg>
                   <div>
                     <p className="text-sm font-medium text-red-800 dark:text-red-300">
                       Nicht alle Inhalte sind freigegeben
                     </p>
                     <p className="mt-1 text-sm text-red-700 dark:text-red-400">
-                      Bitte gib zuerst alle angehängten Downloads, Medien und das Titelbild frei, bevor du den Beitrag genehmigst.
+                      Bitte gib zuerst alle angehängten Downloads, Medien und
+                      das Titelbild frei, bevor du den Beitrag genehmigst.
                     </p>
                   </div>
                 </div>
@@ -355,7 +368,11 @@ export default function PostDetailPage() {
                 <button
                   onClick={handleApprove}
                   disabled={approveMutation.isPending || hasUnapprovedContent}
-                  title={hasUnapprovedContent ? "Alle Inhalte müssen zuerst freigegeben werden" : undefined}
+                  title={
+                    hasUnapprovedContent
+                      ? "Alle Inhalte müssen zuerst freigegeben werden"
+                      : undefined
+                  }
                   className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg
@@ -406,11 +423,12 @@ export default function PostDetailPage() {
               Angehängte Inhalte
             </h2>
 
-            {attachedContent.downloads.length === 0 && attachedContent.media.length === 0 && (
-              <p className="dark:text-dark-muted text-sm text-gray-500">
-                Keine Downloads oder Medien im Inhalt gefunden.
-              </p>
-            )}
+            {attachedContent.downloads.length === 0 &&
+              attachedContent.media.length === 0 && (
+                <p className="dark:text-dark-muted text-sm text-gray-500">
+                  Keine Downloads oder Medien im Inhalt gefunden.
+                </p>
+              )}
 
             {/* Downloads */}
             {attachedContent.downloads.length > 0 && (
@@ -426,11 +444,17 @@ export default function PostDetailPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-lg">
-                          {download.fileType === "PDF" ? "📄" :
-                           download.fileType === "DOCX" ? "📝" :
-                           download.fileType === "XLSX" ? "📊" :
-                           download.fileType === "ZIP" ? "📦" :
-                           download.fileType === "MP3" ? "🎵" : "📁"}
+                          {download.fileType === "PDF"
+                            ? "📄"
+                            : download.fileType === "DOCX"
+                              ? "📝"
+                              : download.fileType === "XLSX"
+                                ? "📊"
+                                : download.fileType === "ZIP"
+                                  ? "📦"
+                                  : download.fileType === "MP3"
+                                    ? "🎵"
+                                    : "📁"}
                         </span>
                         <div>
                           <p className="dark:text-dark-text text-sm font-medium text-gray-900">
@@ -450,8 +474,18 @@ export default function PostDetailPage() {
                           className="inline-flex items-center gap-1 rounded bg-gray-600 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700"
                           title="Herunterladen"
                         >
-                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          <svg
+                            className="h-3 w-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
                           </svg>
                           Öffnen
                         </a>
@@ -462,12 +496,27 @@ export default function PostDetailPage() {
                         </span>
                         {download.status === ContentStatus.PENDING && (
                           <button
-                            onClick={() => approveDownloadMutation.mutate({ id: download.id, status: ContentStatus.APPROVED })}
+                            onClick={() =>
+                              approveDownloadMutation.mutate({
+                                id: download.id,
+                                status: ContentStatus.APPROVED,
+                              })
+                            }
                             disabled={approveDownloadMutation.isPending}
                             className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                           >
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                             Freigeben
                           </button>
@@ -509,8 +558,18 @@ export default function PostDetailPage() {
                                 className="rounded object-cover transition-opacity group-hover:opacity-75"
                               />
                               <span className="absolute inset-0 flex items-center justify-center rounded bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                <svg
+                                  className="h-6 w-6 text-white"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                  />
                                 </svg>
                               </span>
                             </a>
@@ -541,12 +600,27 @@ export default function PostDetailPage() {
                           </span>
                           {media.status === ContentStatus.PENDING && (
                             <button
-                              onClick={() => approveMediaMutation.mutate({ id: media.id, status: ContentStatus.APPROVED })}
+                              onClick={() =>
+                                approveMediaMutation.mutate({
+                                  id: media.id,
+                                  status: ContentStatus.APPROVED,
+                                })
+                              }
                               disabled={approveMediaMutation.isPending}
                               className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                             >
-                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              <svg
+                                className="h-3 w-3"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
                               </svg>
                               Freigeben
                             </button>
@@ -626,12 +700,27 @@ export default function PostDetailPage() {
                     </span>
                     {post.coverImage.status === ContentStatus.PENDING && (
                       <button
-                        onClick={() => approveMediaMutation.mutate({ id: post.coverImage!.id, status: ContentStatus.APPROVED })}
+                        onClick={() =>
+                          approveMediaMutation.mutate({
+                            id: post.coverImage!.id,
+                            status: ContentStatus.APPROVED,
+                          })
+                        }
                         disabled={approveMediaMutation.isPending}
                         className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                       >
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="h-3 w-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                         Freigeben
                       </button>

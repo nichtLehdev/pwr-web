@@ -171,25 +171,28 @@ export const postsRouter = createTRPCRouter({
 
       // Extract attached downloads from content
       const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
-      const downloadUrls = [...new Set(rawPost.content.match(downloadUrlPattern) ?? [])];
-      
-      const attachedDownloads = downloadUrls.length > 0
-        ? await ctx.db.download.findMany({
-            where: { 
-              fileUrl: { in: downloadUrls },
-              status: ContentStatus.APPROVED, // Only show approved downloads publicly
-            },
-            select: {
-              id: true,
-              title: true,
-              description: true,
-              fileUrl: true,
-              fileType: true,
-              fileSize: true,
-              category: true,
-            },
-          })
-        : [];
+      const downloadUrls = [
+        ...new Set(rawPost.content.match(downloadUrlPattern) ?? []),
+      ];
+
+      const attachedDownloads =
+        downloadUrls.length > 0
+          ? await ctx.db.download.findMany({
+              where: {
+                fileUrl: { in: downloadUrls },
+                status: ContentStatus.APPROVED, // Only show approved downloads publicly
+              },
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                fileUrl: true,
+                fileType: true,
+                fileSize: true,
+                category: true,
+              },
+            })
+          : [];
 
       // Convert markdown content to HTML and add attachments
       const postWithHtml = await addContentHtml(rawPost);
@@ -218,43 +221,47 @@ export const postsRouter = createTRPCRouter({
       // Extract download URLs from content
       // Content is stored as Markdown, downloads are inserted as: [📥 Title (TYPE)](/uploads/downloads/file.pdf)
       // We need to match both the markdown link format and any plain URLs
-      
+
       // Match any URL containing /downloads/ - covers markdown [text](url) and plain URLs
       const allUrlsPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
-      const downloadUrls = [...new Set(post.content.match(allUrlsPattern) ?? [])];
+      const downloadUrls = [
+        ...new Set(post.content.match(allUrlsPattern) ?? []),
+      ];
 
       // Extract media URLs from content (images in markdown: ![alt](url))
       const allMediaPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(allMediaPattern) ?? [])];
 
       // Find downloads by URL
-      const downloads = downloadUrls.length > 0
-        ? await ctx.db.download.findMany({
-            where: { fileUrl: { in: downloadUrls } },
-            select: {
-              id: true,
-              title: true,
-              fileUrl: true,
-              fileType: true,
-              status: true,
-              uploadedBy: { select: { id: true, displayName: true } },
-            },
-          })
-        : [];
+      const downloads =
+        downloadUrls.length > 0
+          ? await ctx.db.download.findMany({
+              where: { fileUrl: { in: downloadUrls } },
+              select: {
+                id: true,
+                title: true,
+                fileUrl: true,
+                fileType: true,
+                status: true,
+                uploadedBy: { select: { id: true, displayName: true } },
+              },
+            })
+          : [];
 
       // Find media by URL
-      const media = mediaUrls.length > 0
-        ? await ctx.db.media.findMany({
-            where: { url: { in: mediaUrls } },
-            select: {
-              id: true,
-              name: true,
-              url: true,
-              mimeType: true,
-              status: true,
-            },
-          })
-        : [];
+      const media =
+        mediaUrls.length > 0
+          ? await ctx.db.media.findMany({
+              where: { url: { in: mediaUrls } },
+              select: {
+                id: true,
+                name: true,
+                url: true,
+                mimeType: true,
+                status: true,
+              },
+            })
+          : [];
 
       return { downloads, media };
     }),
@@ -586,8 +593,10 @@ export const postsRouter = createTRPCRouter({
 
       // Check if all attached downloads are approved
       const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
-      const downloadUrls = [...new Set(post.content.match(downloadUrlPattern) ?? [])];
-      
+      const downloadUrls = [
+        ...new Set(post.content.match(downloadUrlPattern) ?? []),
+      ];
+
       if (downloadUrls.length > 0) {
         const pendingDownloads = await ctx.db.download.findMany({
           where: {
@@ -596,9 +605,9 @@ export const postsRouter = createTRPCRouter({
           },
           select: { title: true },
         });
-        
+
         if (pendingDownloads.length > 0) {
-          const titles = pendingDownloads.map(d => d.title).join(", ");
+          const titles = pendingDownloads.map((d) => d.title).join(", ");
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: `Folgende Downloads müssen zuerst freigegeben werden: ${titles}`,
@@ -609,7 +618,7 @@ export const postsRouter = createTRPCRouter({
       // Check if all attached media are approved
       const mediaUrlPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(mediaUrlPattern) ?? [])];
-      
+
       if (mediaUrls.length > 0) {
         const pendingMedia = await ctx.db.media.findMany({
           where: {
@@ -618,9 +627,9 @@ export const postsRouter = createTRPCRouter({
           },
           select: { name: true },
         });
-        
+
         if (pendingMedia.length > 0) {
-          const names = pendingMedia.map(m => m.name).join(", ");
+          const names = pendingMedia.map((m) => m.name).join(", ");
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: `Folgende Medien müssen zuerst freigegeben werden: ${names}`,
