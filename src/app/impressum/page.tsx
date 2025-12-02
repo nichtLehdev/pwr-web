@@ -662,8 +662,8 @@ export default function ImpressumPage() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <strong>0BSD</strong> - "Zero-Clause" BSD-Lizenz, Public
-                      Domain äquivalent
+                      <strong>0BSD</strong> - &ldquo;Zero-Clause&rdquo;
+                      BSD-Lizenz, Public Domain äquivalent
                     </li>
                   </ul>
                 </div>
