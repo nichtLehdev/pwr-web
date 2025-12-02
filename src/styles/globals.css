@@ -65,3 +65,16 @@ body {
   width: 100%;
   overflow-x: hidden;
 }
+
+/* TipTap Editor Placeholder */
+.tiptap p.is-editor-empty:first-child::before {
+  color: #9ca3af;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.dark .tiptap p.is-editor-empty:first-child::before {
+  color: #6b7280;
+}

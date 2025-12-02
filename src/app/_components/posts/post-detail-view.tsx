@@ -8,9 +8,33 @@ import type { RouterOutputs } from "@/trpc/react";
 import { getDistrictColor } from "@/lib/district-color";
 import ImageLightbox from "./image-lightbox";
 import PostCard from "./post-card";
+import type { FileType } from "~/generated/prisma/enums";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
 type PostListItem = RouterOutputs["posts"]["getAll"]["posts"][number];
+
+const fileTypeLabels: Record<FileType, string> = {
+  PDF: "PDF",
+  DOCX: "Word",
+  XLSX: "Excel",
+  ZIP: "ZIP",
+  MP3: "Audio",
+};
+
+const fileTypeIcons: Record<FileType, string> = {
+  PDF: "📄",
+  DOCX: "📝",
+  XLSX: "📊",
+  ZIP: "📦",
+  MP3: "🎵",
+};
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 interface PostDetailViewProps {
   post: PostWithRelations;
@@ -229,7 +253,7 @@ export default function PostDetailView({
             {/* Main Content */}
             <div
               className="article-content"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
             />
 
             {/* Share & Back */}
@@ -306,6 +330,75 @@ export default function PostDetailView({
           </div>
         </div>
       </article>
+
+      {/* Attached Downloads */}
+      {post.attachedDownloads && post.attachedDownloads.length > 0 && (
+        <section className="dark:border-dark-border border-t border-gray-200 py-8 md:py-12">
+          <div className="container mx-auto px-4">
+            <div className="mx-auto max-w-4xl">
+              <h2 className="text-dark dark:text-dark-text mb-6 flex items-center gap-2 text-xl font-bold md:text-2xl">
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                Downloads
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {post.attachedDownloads.map((download) => (
+                  <a
+                    key={download.id}
+                    href={download.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary group hover:border-primary flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+                  >
+                    <span className="text-3xl">
+                      {fileTypeIcons[download.fileType]}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="dark:text-dark-text group-hover:text-primary truncate font-medium text-gray-900 transition-colors">
+                        {download.title}
+                      </p>
+                      {download.description && (
+                        <p className="mt-0.5 truncate text-sm text-gray-500 dark:text-gray-400">
+                          {download.description}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        {fileTypeLabels[download.fileType]}
+                        {download.fileSize &&
+                          ` • ${formatFileSize(download.fileSize)}`}
+                      </p>
+                    </div>
+                    <svg
+                      className="group-hover:text-primary h-5 w-5 shrink-0 text-gray-400 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Similar Posts */}
       {relatedPosts.length > 0 && (

@@ -3,6 +3,61 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/server/better-auth";
 
+// Valid file types by folder
+const validTypesByFolder: Record<string, string[]> = {
+  profiles: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
+  downloads: [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/zip",
+    "application/x-zip-compressed",
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/wav",
+    "audio/ogg",
+  ],
+  media: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
+};
+
+// Max file size by folder (in bytes)
+const maxSizeByFolder: Record<string, number> = {
+  profiles: 5 * 1024 * 1024, // 5MB
+  downloads: 50 * 1024 * 1024, // 50MB
+  media: 10 * 1024 * 1024, // 10MB
+};
+
+function getExtension(filename: string, mimeType: string): string {
+  // Try to get extension from filename
+  const fromFilename = filename.split(".").pop()?.toLowerCase();
+  if (fromFilename) return fromFilename;
+
+  // Fallback to mime type
+  const mimeToExt: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "application/pdf": "pdf",
+    "application/msword": "doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      "docx",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+    "application/zip": "zip",
+    "application/x-zip-compressed": "zip",
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/wav": "wav",
+    "audio/ogg": "ogg",
+  };
+
+  return mimeToExt[mimeType] || "bin";
+}
+
 export async function POST(request: Request) {
   try {
     // Check authentication
@@ -16,25 +71,33 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const folder = (formData.get("folder") as string) || "profiles";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Get valid types and max size for the folder
+    const validTypes =
+      validTypesByFolder[folder] || validTypesByFolder.profiles;
+    const maxSize = maxSizeByFolder[folder] || maxSizeByFolder.profiles;
+
     // Validate file type
-    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Only JPEG, PNG, and WebP are allowed." },
+        {
+          error: `Invalid file type: ${file.type}. Allowed types for ${folder}: ${validTypes.join(", ")}`,
+        },
         { status: 400 },
       );
     }
 
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    // Validate file size
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: "File too large. Maximum size is 5MB." },
+        {
+          error: `File too large. Maximum size is ${maxSize / (1024 * 1024)}MB.`,
+        },
         { status: 400 },
       );
     }
@@ -45,23 +108,38 @@ export async function POST(request: Request) {
     // Generate unique filename
     const timestamp = Date.now();
     const userId = session.user.id;
-    const extension = file.type.split("/")[1] || "jpg";
-    const filename = `profile-${userId}-${timestamp}.${extension}`;
+    const extension = getExtension(file.name, file.type);
+
+    // Create a sanitized base name from original filename
+    const baseName = file.name
+      .replace(/\.[^/.]+$/, "") // Remove extension
+      .replace(/[^a-zA-Z0-9-_]/g, "-") // Replace special chars
+      .substring(0, 50); // Limit length
+
+    const filename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
     // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), "public", "uploads", "profiles");
+    const uploadDir = join(process.cwd(), "public", "uploads", folder);
     await mkdir(uploadDir, { recursive: true });
 
     // Save file
     const filePath = join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    // Return file information
+    const url = `/uploads/${folder}/${filename}`;
+
+    // Return file information - unified format for all folders
     return NextResponse.json({
       success: true,
+      url,
+      filename,
+      size: buffer.length,
+      mimeType: file.type,
+      extension,
+      // Also include nested format for backwards compatibility
       file: {
         filename,
-        url: `/uploads/profiles/${filename}`,
+        url,
         size: buffer.length,
         mimeType: file.type,
       },

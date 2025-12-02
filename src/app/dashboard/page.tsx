@@ -97,7 +97,6 @@ export default function DashboardPage() {
               description="News & Artikel"
               icon={<DocumentTextIcon />}
               href="/dashboard/posts"
-              comingSoon
             />
             <DashboardCard
               title="Geschichte"
@@ -205,14 +204,12 @@ export default function DashboardPage() {
                 description="Bilder & Dateien"
                 icon={<PhotographIcon />}
                 href="/dashboard/media"
-                comingSoon
               />
               <DashboardCard
                 title="Downloads"
                 description="Downloadbare Dateien"
                 icon={<DownloadIcon />}
                 href="/dashboard/downloads"
-                comingSoon
               />
               <DashboardCard
                 title="Bläserhefte"

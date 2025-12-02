@@ -1,7 +1,16 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { UserRole } from "~/generated/prisma/client";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+  reviewerProcedure,
+} from "../trpc";
+import {
+  UserRole,
+  ContentStatus,
+  type Prisma,
+} from "~/generated/prisma/client";
 
 export const mediaRouter = createTRPCRouter({
   // Public: Get media by ID
@@ -48,24 +57,59 @@ export const mediaRouter = createTRPCRouter({
         folder: z.string().optional(),
         search: z.string().optional(),
         uploadedById: z.string().optional(),
+        includeAll: z.boolean().optional(), // Include pending media for reviewers
       }),
     )
     .query(async ({ ctx, input }) => {
-      const where = {
+      const userRole = ctx.session.user.role as UserRole;
+      const userId = ctx.session.user.id;
+      const isReviewer =
+        userRole === UserRole.RPW ||
+        userRole === UserRole.LPW ||
+        userRole === UserRole.ADMIN;
+
+      // Build base where clause
+      const where: Prisma.MediaWhereInput = {
         ...(input.mimeType && { mimeType: { contains: input.mimeType } }),
         ...(input.folder && { folder: input.folder }),
         ...(input.uploadedById && { uploadedById: input.uploadedById }),
-        ...(input.search && {
-          OR: [
-            { name: { contains: input.search, mode: "insensitive" as const } },
-            { alt: { contains: input.search, mode: "insensitive" as const } },
-            {
-              caption: { contains: input.search, mode: "insensitive" as const },
-            },
-            { title: { contains: input.search, mode: "insensitive" as const } },
-          ],
-        }),
       };
+
+      // Add search filter
+      if (input.search) {
+        where.OR = [
+          { name: { contains: input.search, mode: "insensitive" } },
+          { alt: { contains: input.search, mode: "insensitive" } },
+          { caption: { contains: input.search, mode: "insensitive" } },
+          { title: { contains: input.search, mode: "insensitive" } },
+        ];
+      }
+
+      // Add status filter based on user role
+      if (input.includeAll) {
+        if (isReviewer) {
+          // Reviewers see all statuses - no filter needed
+        } else if (userRole === UserRole.OBLEUTE) {
+          // Obleute can see approved + their own pending
+          where.AND = [
+            {
+              OR: [
+                { status: ContentStatus.APPROVED },
+                { status: ContentStatus.PENDING, uploadedById: userId },
+              ],
+            },
+          ];
+        } else {
+          where.status = ContentStatus.APPROVED;
+        }
+      } else {
+        // Default: show approved + own uploads
+        where.AND = [
+          {
+            OR: [{ status: ContentStatus.APPROVED }, { uploadedById: userId }],
+          },
+        ];
+      }
 
       const [media, total] = await Promise.all([
         ctx.db.media.findMany({
@@ -142,10 +186,19 @@ export const mediaRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role as UserRole;
+
+      // Reviewers (RPW, LPW, ADMIN) get auto-approved, Obleute need review
+      const isReviewer =
+        userRole === UserRole.RPW ||
+        userRole === UserRole.LPW ||
+        userRole === UserRole.ADMIN;
+
       const media = await ctx.db.media.create({
         data: {
           ...input,
           uploadedById: ctx.session.user.id,
+          status: isReviewer ? ContentStatus.APPROVED : ContentStatus.PENDING,
         },
       });
 
@@ -235,6 +288,36 @@ export const mediaRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  // Review media (approve/reject)
+  review: reviewerProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        status: z.enum([ContentStatus.APPROVED, ContentStatus.REJECTED]),
+        reviewNotes: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const media = await ctx.db.media.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!media) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Media not found",
+        });
+      }
+
+      return await ctx.db.media.update({
+        where: { id: input.id },
+        data: {
+          status: input.status,
+          reviewNotes: input.reviewNotes,
+        },
+      });
     }),
 
   // Get media by folder

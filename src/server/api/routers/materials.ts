@@ -5,15 +5,22 @@ import {
   lpwProcedure,
   publicProcedure,
   reviewerProcedure,
+  contentCreatorProcedure,
 } from "../trpc";
-import { DownloadCategory, FileType } from "~/generated/prisma/client";
+import {
+  DownloadCategory,
+  FileType,
+  ContentStatus,
+  UserRole,
+  type Prisma,
+} from "~/generated/prisma/client";
 
 export const materialsRouter = createTRPCRouter({
   // ============================================================================
   // DOWNLOADS
   // ============================================================================
 
-  // Public: Get all public downloads
+  // Public: Get all public downloads (only approved ones for public)
   getDownloads: publicProcedure
     .input(
       z.object({
@@ -22,25 +29,53 @@ export const materialsRouter = createTRPCRouter({
         category: z.nativeEnum(DownloadCategory).optional(),
         fileType: z.nativeEnum(FileType).optional(),
         search: z.string().optional(),
+        includeAll: z.boolean().optional(), // For dashboard - include pending
       }),
     )
     .query(async ({ ctx, input }) => {
-      const where = {
+      const userRole = ctx.session?.user?.role as UserRole | undefined;
+      const isReviewer =
+        userRole === UserRole.RPW ||
+        userRole === UserRole.LPW ||
+        userRole === UserRole.ADMIN;
+      const userId = ctx.session?.user?.id;
+
+      // Build base where clause
+      const where: Prisma.DownloadWhereInput = {
         isPublic: true,
         ...(input.category && { category: input.category }),
         ...(input.fileType && { fileType: input.fileType }),
-        ...(input.search && {
-          OR: [
-            { title: { contains: input.search, mode: "insensitive" as const } },
-            {
-              description: {
-                contains: input.search,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }),
       };
+
+      // Add search filter
+      if (input.search) {
+        where.OR = [
+          { title: { contains: input.search, mode: "insensitive" } },
+          { description: { contains: input.search, mode: "insensitive" } },
+        ];
+      }
+
+      // Add status filter based on user role
+      if (input.includeAll && ctx.session?.user) {
+        if (isReviewer) {
+          // Reviewers see all statuses - no filter needed
+        } else if (userRole === UserRole.OBLEUTE && userId) {
+          // Obleute can see approved + their own pending
+          where.AND = [
+            {
+              OR: [
+                { status: ContentStatus.APPROVED },
+                { status: ContentStatus.PENDING, uploadedById: userId },
+              ],
+            },
+          ];
+        } else {
+          where.status = ContentStatus.APPROVED;
+        }
+      } else {
+        // Public users only see approved
+        where.status = ContentStatus.APPROVED;
+      }
 
       const [downloads, total] = await Promise.all([
         ctx.db.download.findMany({
@@ -48,6 +83,16 @@ export const materialsRouter = createTRPCRouter({
           skip: (input.page - 1) * input.limit,
           take: input.limit,
           orderBy: { createdAt: "desc" },
+          include: {
+            uploadedBy: {
+              select: {
+                id: true,
+                displayName: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
         }),
         ctx.db.download.count({ where }),
       ]);
@@ -102,23 +147,35 @@ export const materialsRouter = createTRPCRouter({
       return downloads;
     }),
 
-  // Create download
-  createDownload: reviewerProcedure
+  // Create download (Obleute and above can create, but Obleute uploads need review)
+  createDownload: contentCreatorProcedure
     .input(
       z.object({
         title: z.string().min(1),
         description: z.string().optional(),
         category: z.enum(DownloadCategory),
-        fileUrl: z.string().url(),
+        fileUrl: z.string().min(1),
         fileType: z.enum(FileType),
         fileSize: z.int(),
-        tags: z.string().optional(),
+        tags: z.array(z.string()).optional(),
         isPublic: z.boolean().default(true),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role as UserRole;
+
+      // Reviewers (RPW, LPW, ADMIN) get auto-approved, Obleute need review
+      const isReviewer =
+        userRole === UserRole.RPW ||
+        userRole === UserRole.LPW ||
+        userRole === UserRole.ADMIN;
+
       return await ctx.db.download.create({
-        data: input,
+        data: {
+          ...input,
+          status: isReviewer ? ContentStatus.APPROVED : ContentStatus.PENDING,
+          uploadedById: ctx.session.user.id,
+        },
       });
     }),
 
@@ -130,10 +187,10 @@ export const materialsRouter = createTRPCRouter({
         title: z.string().min(1).optional(),
         description: z.string().optional(),
         category: z.enum(DownloadCategory).optional(),
-        fileUrl: z.string().url().optional(),
+        fileUrl: z.string().min(1).optional(),
         fileType: z.enum(FileType).optional(),
         fileSize: z.int().optional(),
-        tags: z.string().optional(),
+        tags: z.array(z.string()).optional(),
         isPublic: z.boolean().optional(),
       }),
     )
@@ -155,6 +212,36 @@ export const materialsRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  // Review download (approve/reject)
+  reviewDownload: reviewerProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        status: z.enum([ContentStatus.APPROVED, ContentStatus.REJECTED]),
+        reviewNotes: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const download = await ctx.db.download.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!download) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Download not found",
+        });
+      }
+
+      return await ctx.db.download.update({
+        where: { id: input.id },
+        data: {
+          status: input.status,
+          reviewNotes: input.reviewNotes,
+        },
+      });
     }),
 
   // ============================================================================

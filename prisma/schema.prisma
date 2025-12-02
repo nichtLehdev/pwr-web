@@ -43,6 +43,7 @@ model User {
   sessions                      Session[]
   obleuteBezirk                 Bezirk?                      @relation("BezirkObleute", fields: [obleuteBezirkId], references: [id], onDelete: SetNull)
   uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
+  uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
   posaunenwarteResponsibilities PosaunenwartResponsibility[]
   createdEvents                 Event[]                      @relation("EventCreator")
   createdCourses                Course[]                     @relation("CourseCreator")
@@ -788,13 +789,21 @@ model Download {
   // Tags
   tags Json? // JSON array
 
-  // Visibility
-  isPublic Boolean @default(true)
+  // Visibility & Review
+  isPublic    Boolean       @default(true)
+  status      ContentStatus @default(PENDING)
+  reviewNotes String?
+
+  // Uploaded by
+  uploadedById String?
+  uploadedBy   User?   @relation("DownloadUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([category])
+  @@index([status])
+  @@index([uploadedById])
 }
 
 model Blaeserheft {
@@ -860,8 +869,10 @@ model Media {
   folder String? // Folder path (e.g., "events/2025", "news")
   tags   Json? // JSON array of tags
 
-  // Usage tracking
-  isPublic Boolean @default(true)
+  // Usage tracking & Review
+  isPublic    Boolean       @default(true)
+  status      ContentStatus @default(APPROVED) // Default to APPROVED for backwards compatibility
+  reviewNotes String?
 
   // Relations - primary usages (kept explicit)
   usersProfile            User[]                @relation("UserProfileImage")
@@ -885,6 +896,7 @@ model Media {
   @@index([mimeType])
   @@index([folder])
   @@index([uploadedById])
+  @@index([status])
 }
 
 model NewsletterSubscriber {
