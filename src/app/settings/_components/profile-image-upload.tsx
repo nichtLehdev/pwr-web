@@ -1,0 +1,229 @@
+"use client";
+
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { api } from "@/trpc/react";
+
+interface ProfileImageUploadProps {
+  currentImage?: {
+    url: string;
+    alt?: string | null;
+  } | null;
+  onImageUploaded: (mediaId: string) => void;
+  onImageRemoved: () => void;
+}
+
+export default function ProfileImageUpload({
+  currentImage,
+  onImageUploaded,
+  onImageRemoved,
+}: ProfileImageUploadProps) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(
+    currentImage?.url ?? null,
+  );
+  const [error, setError] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Use tRPC mutation for creating media
+  const createMedia = api.media.create.useMutation();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      setError("Nur JPEG, PNG und WebP Dateien sind erlaubt");
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Die Datei ist zu groß. Maximale Größe: 5MB");
+      return;
+    }
+
+    setError("");
+    setUploading(true);
+
+    try {
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload file
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Upload fehlgeschlagen");
+      }
+
+      const data = await response.json();
+
+      // Create media record in database using tRPC
+      const extension = data.file.mimeType.split("/")[1] || "jpg";
+      
+      const media = await createMedia.mutateAsync({
+        name: file.name,
+        filename: data.file.filename,
+        url: data.file.url,
+        path: data.file.url,
+        mimeType: data.file.mimeType,
+        size: data.file.size,
+        extension: extension,
+        alt: "Profilbild",
+        folder: "profiles",
+        isPublic: false,
+      });
+
+      // Update preview with actual uploaded image
+      setPreview(data.file.url);
+      onImageUploaded(media.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload fehlgeschlagen");
+      setPreview(currentImage?.url ?? null);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = () => {
+    setPreview(null);
+    setError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    onImageRemoved();
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-6">
+        {/* Image Preview */}
+        <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+          {preview ? (
+            <Image
+              src={preview}
+              alt={currentImage?.alt || "Profilbild"}
+              fill
+              className="object-cover"
+              unoptimized={preview.startsWith("data:")}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <svg
+                className="text-primary h-16 w-16"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+            </div>
+          )}
+          {uploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Upload Controls */}
+        <div className="flex-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={uploading}
+          />
+
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleClick}
+                disabled={uploading}
+                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 disabled:opacity-50"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                {preview ? "Bild ändern" : "Bild hochladen"}
+              </button>
+
+              {preview && (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={uploading}
+                  className="focus:ring-red-500 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                  Entfernen
+                </button>
+              )}
+            </div>
+
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              <p>Empfohlen: Quadratisches Bild, mindestens 400x400 Pixel</p>
+              <p>Erlaubte Formate: JPEG, PNG, WebP (max. 5MB)</p>
+            </div>
+
+            {error && (
+              <div className="rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-900 dark:bg-red-950/30">
+                <p className="text-sm text-red-800 dark:text-red-400">
+                  {error}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

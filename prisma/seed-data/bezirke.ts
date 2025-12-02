@@ -1,0 +1,80 @@
+export const bezirkeData = [
+  {
+    number: 1,
+    name: "Bezirk 01 - Unterer Niederrhein",
+    shortName: "Unterer Niederrhein",
+    color: "bg-district-1",
+  },
+  {
+    number: 2,
+    name: "Bezirk 02 - Rhein-Lippe",
+    shortName: "Rhein-Lippe",
+    color: "bg-district-2",
+  },
+  {
+    number: 3,
+    name: "Bezirk 03 - Essen-Mülheim",
+    shortName: "Essen-Mülheim",
+    color: "bg-district-3",
+  },
+  {
+    number: 4,
+    name: "Bezirk 04 - Düsseldorf-Krefeld-Niederberg",
+    shortName: "Düsseldorf-Krefeld-Niederberg",
+    color: "bg-district-4",
+  },
+  {
+    number: 5,
+    name: "Bezirk 05 - Bergisches Land",
+    shortName: "Bergisches Land",
+    color: "bg-district-5",
+  },
+  {
+    number: 6,
+    name: "Bezirk 06 - Köln",
+    shortName: "Köln",
+    color: "bg-district-6",
+  },
+  {
+    number: 7,
+    name: "Bezirk 07 - Aachen-Jülich",
+    shortName: "Aachen-Jülich",
+    color: "bg-district-7",
+  },
+  {
+    number: 8,
+    name: "Bezirk 08 - Bonn",
+    shortName: "Bonn",
+    color: "bg-district-8",
+  },
+  {
+    number: 9,
+    name: "Bezirk 09 - Oberbergisches Land",
+    shortName: "Oberbergisches Land",
+    color: "bg-district-9",
+  },
+  {
+    number: 10,
+    name: "Bezirk 10 - Wied",
+    shortName: "Wied",
+    color: "bg-district-10",
+  },
+  {
+    number: 11,
+    name: "Bezirk 11 - An Nahe und Glan",
+    shortName: "An Nahe und Glan",
+    color: "bg-district-11",
+  },
+  {
+    number: 12,
+    name: "Bezirk 12 - Saarland",
+    shortName: "Saarland",
+    color: "bg-district-12",
+  },
+  {
+    number: 13,
+    name: "Bezirk 13 - An Sieg und Rhein",
+    shortName: "An Sieg und Rhein",
+    color: "bg-district-13",
+  },
+];

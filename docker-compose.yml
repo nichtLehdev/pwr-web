@@ -1,0 +1,67 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: posaunenwerk-db
+    restart: unless-stopped
+    networks:
+      - posaunenwerk_network
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-posaunenwerk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-posaunenwerk_password}
+      POSTGRES_DB: ${POSTGRES_DB:-posaunenwerk}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-posaunenwerk}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: posaunenwerk-app
+    restart: unless-stopped
+    networks:
+      - Aliases
+      - posaunenwerk_network
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD:-posaunenwerk_password}@db:5432/${POSTGRES_DB:-posaunenwerk}
+
+      # Next.js
+      NODE_ENV: production
+      SKIP_ENV_VALIDATION: ${SKIP_ENV_VALIDATION:-false}
+
+      # Better Auth (required by env.js)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-this-in-production}
+      BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-dummy}
+      BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-dummy}
+
+      # Public URLs
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        pnpm prisma db push &&
+        pnpm tsx prisma/seed.ts &&
+        pnpm start
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  posaunenwerk_network:
+    driver: bridge
+  Aliases:

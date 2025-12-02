@@ -1,0 +1,499 @@
+import PageHeader from "@/app/_components/general/page-header";
+import Link from "next/link";
+
+export default function BildungPage() {
+  const courseCategories = [
+    {
+      id: "blaeser",
+      title: "Bläserkurse",
+      description:
+        "Von Anfänger bis Fortgeschrittene, von Jung bis Alt – Lehrgänge für alle Leistungsstufen",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+        />
+      ),
+      color: "bg-district-2",
+    },
+    {
+      id: "chorleitung",
+      title: "Chorleitung",
+      description: "Ausbildung für Chorleiter und angehende Dirigenten",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+        />
+      ),
+      color: "bg-district-5",
+    },
+    {
+      id: "workshops",
+      title: "Workshops",
+      description:
+        "Spezialthemen wie Improvisation, Arrangement, Registerarbeit",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+        />
+      ),
+      color: "bg-district-6",
+    },
+    {
+      id: "komponisten",
+      title: "Komponistenportraits",
+      description:
+        "Musikalische Reisen durch Leben und Werk großer Komponisten",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        />
+      ),
+      color: "bg-district-3",
+    },
+    {
+      id: "studienfahrten",
+      title: "Studienfahrten",
+      description:
+        "Musikalische Bildungsreisen zu besonderen Orten und Festivals",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      ),
+      color: "bg-primary",
+    },
+    {
+      id: "freizeiten",
+      title: "Bläserfreizeiten",
+      description:
+        "Gemeinsames Musizieren, Lernen und Erleben für alle Altersgruppen",
+      icon: (
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+        />
+      ),
+      color: "bg-district-9",
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader title="Aus- und Weiterbildung" color="district-2" />
+
+      {/* Hero Section */}
+      <section className="bg-district-2 py-16 text-white md:py-24">
+        <div className="container">
+          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
+            <Link href="/" className="transition-colors hover:text-white">
+              Start
+            </Link>
+            <span>/</span>
+            <Link
+              href="/mitmachen"
+              className="transition-colors hover:text-white"
+            >
+              Mitmachen
+            </Link>
+            <span>/</span>
+            <span>Aus- und Weiterbildung</span>
+          </nav>
+          <div className="max-w-3xl">
+            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
+              Aus- und Weiterbildung
+            </h1>
+            <p className="text-lg leading-relaxed md:text-xl">
+              Das Posaunenwerk bietet ein umfangreiches Aus- und
+              Weiterbildungsprogramm an. Verschiedene Workshops und ein- oder
+              mehrtägige Lehrgänge richten sich an die Bläserinnen und Bläser
+              und Chorleiter der Chöre im Rheinland. Ebenso gibt es spezielle
+              Lehrgänge für junge Bläser und junggebliebene Anfänger jeden
+              Alters.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Hinweis: Offen für alle */}
+      <section className="bg-primary/10 dark:bg-dark-background-secondary py-8">
+        <div className="container">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-lg text-gray-700 dark:text-gray-300">
+              <strong>Wichtig:</strong> Unser Angebot richtet sich nicht
+              ausschließlich an Mitglieder des Posaunenwerks, sondern steht{" "}
+              <strong>allen Interessierten offen</strong>!
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Kurs-Kategorien */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
+              Unsere Bildungsangebote
+            </h2>
+            <p className="mx-auto mb-12 max-w-3xl text-center text-lg text-gray-600 dark:text-gray-400">
+              Von Anfängerkursen bis zur Dirigenten-Ausbildung – finde das
+              passende Angebot für dein musikalisches Weiterkommen.
+            </p>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {courseCategories.map((category) => (
+                <div
+                  key={category.id}
+                  className="dark:bg-dark-surface dark:border-dark-border rounded-lg border-t-4 bg-white p-6 shadow-lg transition-all hover:shadow-xl dark:border dark:shadow-none"
+                  style={{
+                    borderTopColor: `var(--color-${category.color.replace(
+                      "bg-",
+                      "",
+                    )})`,
+                  }}
+                >
+                  <div
+                    className={`h-12 w-12 ${category.color} mb-4 flex items-center justify-center rounded-full`}
+                  >
+                    <svg
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      {category.icon}
+                    </svg>
+                  </div>
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                    {category.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {category.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Aktuelle Lehrgänge */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 text-center shadow-xl md:p-10 dark:border dark:shadow-none">
+              <div className="bg-district-2 mb-6 inline-block rounded-full p-3">
+                <svg
+                  className="h-12 w-12 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
+                Aktuelle Lehrgänge & Anmeldung
+              </h2>
+              <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
+                Das aktuelle Angebot und Anmeldemöglichkeiten findest du in
+                unserer Terminübersicht. Dort kannst du dich direkt für die
+                Lehrgänge anmelden.
+              </p>
+              <Link
+                href="/termine?type=courses"
+                className="bg-district-2 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
+              >
+                <svg
+                  className="mr-2 h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                Zu den Lehrgängen
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Leistungsstufen & Stempel */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Leistungsstufen & Stempel
+            </h2>
+
+            <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
+              <div className="mb-6 flex items-start gap-4">
+                <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                  <svg
+                    className="h-6 w-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
+                    Aufbauende Ausbildung
+                  </h3>
+                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
+                    Begleitend zur Ausbildung eines (Jung-)Bläsers können
+                    aufeinander aufbauende Leistungsstufen (Stempel) erworben
+                    werden. Hierzu werden durch den Jungbläserausbilder,
+                    Chorleiter oder Posaunenwart kleine Prüfungen abgehalten.
+                  </p>
+                  <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
+                    Die erreichte Leistungsstufe wird auf dem Mitgliedsausweis
+                    durch einen Stempel dokumentiert.
+                  </p>
+                  <a
+                    href="/downloads/leistungsstempel.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
+                  >
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Infos zu Leistungsstempeln herunterladen
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Jungbläserausbildung */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Jungbläserausbildung
+            </h2>
+
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
+              <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
+                Eine vom Landesposaunenwart und den Regionalposaunenwarten
+                zusammengestellte Arbeitshilfe zum Thema Jungbläserausbildung
+                versucht Antworten auf die vielen Fragen rund um das Thema zu
+                geben:
+              </p>
+
+              <ul className="mb-6 space-y-2 text-gray-700 dark:text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
+                  <span>Wie generiere ich neue BläserInnen?</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
+                  <span>Beispielhafter Ablauf einer ersten Kontaktstunde</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
+                  <span>Verschiedene Kooperationsmodelle zur Ausbildung</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"></span>
+                  <span>
+                    Wie integriere ich die jungen Menschen in den Posaunenchor?
+                  </span>
+                </li>
+              </ul>
+
+              <a
+                href="/downloads/arbeitshilfe-jungblaeser.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-district-9 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                <svg
+                  className="mr-2 h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                Arbeitshilfe Jungbläser herunterladen
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Fördermöglichkeiten */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="bg-foerderverein/10 dark:bg-foerderverein/20 border-foerderverein rounded-lg border-l-4 p-8">
+              <div className="flex items-start gap-4">
+                <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
+                  <svg
+                    className="h-6 w-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
+                    Fördermöglichkeiten durch den Förderverein
+                  </h3>
+                  <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
+                    Der Förderverein unterstützt die Bildungsarbeit des
+                    Posaunenwerks! Geschwisterkinder erhalten eine Ermäßigung
+                    von 25 € pro weiterem Kind bei der Anmeldung für Lehrgänge.
+                    Zusätzlich trägt der Förderverein weitere Kosten, um die
+                    Teilnehmerbeiträge für alle zu reduzieren.
+                  </p>
+                  <Link
+                    href="/foerderverein"
+                    className="text-foerderverein hover:text-foerderverein-dark inline-flex items-center font-semibold"
+                  >
+                    Mehr zum Förderverein →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Downloads & Wichtige Hinweise */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Wichtige Hinweise & Downloads
+            </h2>
+
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
+                    Für minderjährige Teilnehmer
+                  </h3>
+                  <p className="mb-4 text-gray-600 dark:text-gray-400">
+                    Minderjährige Lehrgangsteilnehmer müssen vorab eine
+                    ausgefüllte und unterzeichnete Zusatzerklärung einreichen.
+                  </p>
+                  <a
+                    href="/downloads/zusatzerklaerung-minderjaehrige.pdf"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
+                  >
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Zusatzerklärung herunterladen
+                  </a>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
+                    Fragen zur Ausbildung?
+                  </h3>
+                  <p className="mb-4 text-gray-600 dark:text-gray-400">
+                    Unser Bildungsreferat berät dich gerne zu allen Fragen rund
+                    um Aus- und Weiterbildung.
+                  </p>
+                  <Link
+                    href="/kontakt"
+                    className="bg-district-2 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Kontakt aufnehmen
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

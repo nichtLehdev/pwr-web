@@ -1,0 +1,608 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import type {
+  EventWithRelations,
+  CourseWithRelations,
+  CalendarItem,
+  CalendarEventItem,
+  CalendarCourseItem,
+} from "@/lib/types/calendar";
+import type { Bezirk } from "~/generated/prisma/client";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
+import PageHeader from "../general/page-header";
+import EventCard from "./event-card";
+import CourseCard from "./course-card";
+import CalendarView from "./calendar/calendar-view";
+import DesktopCalendarView from "./calendar/desktop-calendar-view";
+
+type ViewMode = "list" | "calendar";
+type FilterType = "all" | "events" | "courses";
+
+interface EventsClientProps {
+  initialEvents: EventWithRelations[];
+  initialCourses: CourseWithRelations[];
+  bezirke: Bezirk[];
+}
+
+export default function EventsClient({
+  initialEvents,
+  initialCourses,
+  bezirke,
+}: EventsClientProps) {
+  const { data: session } = useSession();
+
+  // Get user preferences for default view
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
+
+  // Parse user's default view preference
+  const userDefaultView = useMemo((): ViewMode => {
+    if (profile?.preferences) {
+      try {
+        const prefs =
+          typeof profile.preferences === "string"
+            ? JSON.parse(profile.preferences)
+            : profile.preferences;
+        if (
+          prefs.termineDefaultView === "calendar" ||
+          prefs.termineDefaultView === "list"
+        ) {
+          return prefs.termineDefaultView;
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+    return "list";
+  }, [profile?.preferences]);
+
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    const timer = setTimeout(() => {
+      document.body.style.overflow = "unset";
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const params = useSearchParams();
+
+  // Track if user has manually changed the view
+  const [userHasChangedView, setUserHasChangedView] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+
+  // Update view mode when user preference loads (only if user hasn't manually changed it)
+  const prevUserDefaultView = useMemo(() => userDefaultView, [userDefaultView]);
+  if (!userHasChangedView && viewMode !== prevUserDefaultView && profile) {
+    setViewMode(prevUserDefaultView);
+  }
+
+  // Wrapper to track manual view changes
+  const handleSetViewMode = (mode: ViewMode) => {
+    setUserHasChangedView(true);
+    setViewMode(mode);
+  };
+
+  const [filterType, setFilterType] = useState<FilterType>(
+    (params.get("type") as FilterType) || "all",
+  );
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(
+    params.get("district") || "all",
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    params.get("category") || "all",
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const now = useMemo(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, []);
+
+  // Combine Events and Courses
+  const allItems = useMemo<CalendarItem[]>(
+    () => [
+      ...initialEvents.map((e): CalendarEventItem => ({ ...e, type: "event" })),
+      ...initialCourses.map(
+        (c): CalendarCourseItem => ({ ...c, type: "course" }),
+      ),
+    ],
+    [initialEvents, initialCourses],
+  );
+
+  // Filter future items
+  const futureItems = useMemo(() => {
+    return allItems.filter((item) => {
+      const itemDate = new Date(
+        item.type === "event" ? item.eventDate : item.endDate,
+      );
+      itemDate.setHours(0, 0, 0, 0);
+      return itemDate >= now;
+    });
+  }, [allItems, now]);
+
+  // Apply filters
+  const filteredItems = useMemo(() => {
+    return futureItems.filter((item) => {
+      // Type Filter
+      if (filterType === "events" && item.type !== "event") return false;
+      if (filterType === "courses" && item.type !== "course") return false;
+
+      // District Filter
+      if (selectedDistrict !== "all") {
+        // Handle "Bezirksübergreifend" (multi-district events)
+        if (selectedDistrict === "Bezirksübergreifend") {
+          if (item.bezirk !== null) return false;
+        } else {
+          // Extract district number from selection like "Bezirk 1 (Saarbrücken)"
+          const match = selectedDistrict.match(/Bezirk (\d+)/);
+          if (match) {
+            const districtNumber = parseInt(match[1] ?? "", 10);
+            if (item.bezirk?.number !== districtNumber) return false;
+          }
+        }
+      }
+
+      // Category Filter
+      if (selectedCategory !== "all") {
+        if (item.type === "event") {
+          // Map display names to enum values
+          const categoryMap: Record<string, string> = {
+            Konzert: "KONZERT",
+            Gottesdienst: "GOTTESDIENST",
+            Probe: "PROBE",
+            Andere: "ANDERE",
+          };
+          const enumValue = categoryMap[selectedCategory];
+          if (enumValue && item.category !== enumValue) return false;
+        } else {
+          // For courses, check both courseType and targetAudience
+          const courseTypeMap: Record<string, string> = {
+            Lehrgang: "LEHRGANG",
+            Freizeit: "FREIZEIT",
+            Workshop: "WORKSHOP",
+            Komponistenportrait: "KOMPONISTENPORTRAIT",
+            Andere: "ANDERE",
+          };
+
+          const targetAudienceMap: Record<string, string> = {
+            Alle: "ALLE",
+            Anfänger: "ANFAENGER",
+            Fortgeschrittene: "FORTGESCHRITTENE",
+            Dirigenten: "DIRIGENTEN",
+            Jugend: "JUGEND",
+          };
+
+          const courseTypeEnum = courseTypeMap[selectedCategory];
+          const targetAudienceEnum = targetAudienceMap[selectedCategory];
+
+          if (courseTypeEnum && item.courseType !== courseTypeEnum) {
+            if (
+              targetAudienceEnum &&
+              item.targetAudience !== targetAudienceEnum
+            ) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [futureItems, filterType, selectedDistrict, selectedCategory]);
+
+  // Sort by date
+  const sortedItems = useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
+      const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [filteredItems]);
+
+  // Group by month
+  const groupedByMonth = useMemo(() => {
+    return sortedItems.reduce(
+      (acc, item) => {
+        const date = new Date(
+          item.type === "event" ? item.eventDate : item.startDate,
+        );
+        const monthKey = `${date.getFullYear()}-${String(
+          date.getMonth() + 1,
+        ).padStart(2, "0")}`;
+        const monthLabel = date.toLocaleDateString("de-DE", {
+          year: "numeric",
+          month: "long",
+        });
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = { label: monthLabel, items: [] };
+        }
+        acc[monthKey].items.push(item);
+        return acc;
+      },
+      {} as Record<string, { label: string; items: typeof sortedItems }>,
+    );
+  }, [sortedItems]);
+
+  // District select options
+  const districtSelectOptions = [
+    "all",
+    "Bezirksübergreifend",
+    ...bezirke
+      .sort((a, b) => a.number - b.number)
+      .map((b) => `Bezirk ${b.number} (${b.name})`),
+  ];
+
+  // Category options (display names)
+  const eventCategories = ["Konzert", "Gottesdienst", "Probe", "Andere"];
+  const courseCategories = [
+    "Lehrgang",
+    "Freizeit",
+    "Workshop",
+    "Komponistenportrait",
+    "Andere",
+  ];
+  const courseTargetAudiences = [
+    "Alle",
+    "Anfänger",
+    "Fortgeschrittene",
+    "Dirigenten",
+    "Jugend",
+  ];
+
+  return (
+    <div className="bg-background dark:bg-dark-background min-h-screen">
+      <PageHeader title="Termine" color="primary" />
+
+      {/* Header */}
+      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
+        <div className="container mx-auto px-4">
+          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
+            <Link href="/" className="transition-colors hover:text-white">
+              Start
+            </Link>
+            <span>/</span>
+            <span>Termine</span>
+          </nav>
+          <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
+            Termine
+          </h1>
+          <p className="max-w-2xl text-sm md:text-lg lg:text-xl">
+            Alle Konzerte, Gottesdienste und Lehrgänge
+          </p>
+        </div>
+      </section>
+
+      {/* Filter & View Toggle */}
+      <section className="dark:border-dark-border dark:bg-dark-surface sticky top-28 z-20 border-b border-gray-200 bg-white shadow-sm md:top-36">
+        <div className="container mx-auto px-4 py-3">
+          {/* Mobile: Compact Row */}
+          <div className="flex items-center justify-between gap-2">
+            {/* Left: View Toggle */}
+            <div className="flex gap-1">
+              <button
+                onClick={() => handleSetViewMode("list")}
+                className={`cursor-pointer rounded-lg p-2 transition-colors ${
+                  viewMode === "list"
+                    ? "bg-primary text-white"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                }`}
+                aria-label="Listenansicht"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => handleSetViewMode("calendar")}
+                className={`cursor-pointer rounded-lg p-2 transition-colors ${
+                  viewMode === "calendar"
+                    ? "bg-primary text-white"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                }`}
+                aria-label="Kalenderansicht"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Center: Active Filters Count */}
+            <div className="flex-1 text-center">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {sortedItems.length}{" "}
+                {sortedItems.length === 1 ? "Termin" : "Termine"}
+                {(filterType !== "all" ||
+                  selectedDistrict !== "all" ||
+                  selectedCategory !== "all") && (
+                  <span className="text-primary ml-1 font-semibold">
+                    (gefiltert)
+                  </span>
+                )}
+              </span>
+            </div>
+
+            {/* Right: Filter Toggle Button */}
+            <div className="flex gap-1">
+              {!filtersOpen &&
+                (filterType !== "all" ||
+                  selectedDistrict !== "all" ||
+                  selectedCategory !== "all") && (
+                  <button
+                    onClick={() => {
+                      setFilterType("all");
+                      setSelectedDistrict("all");
+                      setSelectedCategory("all");
+                    }}
+                    aria-label="Filter zurücksetzen"
+                  >
+                    <svg
+                      className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                )}
+              <button
+                onClick={() => setFiltersOpen(!filtersOpen)}
+                className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
+                  filtersOpen
+                    ? "bg-primary text-white"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                }`}
+                aria-label="Filter öffnen"
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+                {/* Active Filter Badge */}
+                {(filterType !== "all" ||
+                  selectedDistrict !== "all" ||
+                  selectedCategory !== "all") && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Collapsible Filter Panel */}
+          {filtersOpen && (
+            <div className="animate-in slide-in-from-top-2 dark:border-dark-border mt-3 space-y-3 border-t border-gray-200 pt-4">
+              {/* Type Filter */}
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Typ
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilterType("all")}
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      filterType === "all"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                    }`}
+                  >
+                    Alle
+                  </button>
+                  <button
+                    onClick={() => setFilterType("events")}
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      filterType === "events"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                    }`}
+                  >
+                    Termine
+                  </button>
+                  <button
+                    onClick={() => setFilterType("courses")}
+                    className={`flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      filterType === "courses"
+                        ? "bg-dark dark:bg-dark-text dark:text-dark-background text-white"
+                        : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                    }`}
+                  >
+                    Lehrgänge
+                  </button>
+                </div>
+              </div>
+
+              {/* District & Category */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Bezirk
+                  </label>
+                  <select
+                    value={selectedDistrict}
+                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                  >
+                    <option value="all">Alle Termine</option>
+                    {districtSelectOptions.slice(1).map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Kategorie
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
+                  >
+                    <option value="all">Alle</option>
+                    {filterType !== "courses" && (
+                      <optgroup label="Events">
+                        {eventCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {filterType !== "events" && (
+                      <>
+                        <optgroup label="Lehrgänge">
+                          {courseCategories.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Für wen?">
+                          {courseTargetAudiences.map((audience) => (
+                            <option key={audience} value={audience}>
+                              {audience}
+                            </option>
+                          ))}
+                        </optgroup>
+                      </>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {/* Reset Button */}
+              {(filterType !== "all" ||
+                selectedDistrict !== "all" ||
+                selectedCategory !== "all") && (
+                <button
+                  onClick={() => {
+                    setFilterType("all");
+                    setSelectedDistrict("all");
+                    setSelectedCategory("all");
+                  }}
+                  className="text-primary hover:text-primary-dark w-full px-3 py-2 text-sm font-semibold transition-colors"
+                >
+                  Filter zurücksetzen
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Content */}
+      <section className="py-6 md:py-12">
+        <div className="container mx-auto px-4">
+          {viewMode === "list" ? (
+            /* List View - Grouped by month */
+            <div className="space-y-8 md:space-y-12">
+              {Object.entries(groupedByMonth).map(
+                ([monthKey, { label, items }]) => (
+                  <div key={monthKey}>
+                    <h2 className="text-dark dark:text-dark-text dark:border-dark-border mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
+                      {label}
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+                      {items.map((item) =>
+                        item.type === "event" ? (
+                          <EventCard
+                            key={`event-${item.id}`}
+                            id={item.id}
+                            title={item.title}
+                            date={item.eventDate}
+                            location={item.location?.city || ""}
+                            category={item.category}
+                            district={item.bezirk?.number}
+                            openToParticipants={item.openToParticipants}
+                            cancelled={item.cancelled}
+                          />
+                        ) : (
+                          <CourseCard
+                            key={`course-${item.id}`}
+                            id={item.id}
+                            title={item.title}
+                            startDate={item.startDate}
+                            endDate={item.endDate}
+                            location={item.location?.city || ""}
+                            courseType={item.courseType}
+                            district={item.bezirk?.number}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ),
+              )}
+
+              {sortedItems.length === 0 && (
+                <div className="py-8 text-center md:py-12">
+                  <p className="text-base text-gray-600 md:text-lg dark:text-gray-400">
+                    Keine Termine gefunden.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Calendar View */
+            <>
+              {/* Mobile Calendar */}
+              <div className="lg:hidden">
+                <CalendarView items={sortedItems} />
+              </div>
+
+              {/* Desktop Calendar */}
+              <div className="hidden lg:block">
+                <DesktopCalendarView items={sortedItems} />
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
