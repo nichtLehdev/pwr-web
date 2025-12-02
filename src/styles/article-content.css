@@ -10,6 +10,19 @@
 }
 
 /* Headings */
+.article-content h1 {
+  font-size: 2.25rem !important;
+  font-weight: 700 !important;
+  color: #58595b !important;
+  margin-top: 2rem !important;
+  margin-bottom: 1.25rem !important;
+  line-height: 1.2 !important;
+}
+
+:root.dark .article-content h1 {
+  color: #e5e7eb !important;
+}
+
 .article-content h2 {
   font-size: 1.875rem !important;
   font-weight: 700 !important;

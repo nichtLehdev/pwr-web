@@ -229,7 +229,7 @@ export default function PostDetailView({
             {/* Main Content */}
             <div
               className="article-content"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
             />
 
             {/* Share & Back */}

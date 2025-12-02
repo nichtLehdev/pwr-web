@@ -97,7 +97,6 @@ export default function DashboardPage() {
               description="News & Artikel"
               icon={<DocumentTextIcon />}
               href="/dashboard/posts"
-              comingSoon
             />
             <DashboardCard
               title="Geschichte"

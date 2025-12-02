@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { marked } from "marked";
 import {
   createTRPCRouter,
   protectedProcedure,
@@ -11,6 +12,41 @@ import {
   ContentStatus,
   UserRole,
 } from "~/generated/prisma/client";
+
+// Configure marked for safe HTML output with GFM (tables, etc.)
+marked.use({
+  gfm: true, // GitHub Flavored Markdown (enables tables)
+  breaks: true, // Convert \n to <br>
+});
+
+/**
+ * Converts markdown content to HTML.
+ * The database stores markdown, but we return HTML to the client.
+ */
+async function markdownToHtml(markdown: string): Promise<string> {
+  return await marked.parse(markdown);
+}
+
+/**
+ * Adds contentHtml field to a post by converting markdown content to HTML.
+ */
+async function addContentHtml<T extends { content: string }>(
+  post: T,
+): Promise<T & { contentHtml: string }> {
+  return {
+    ...post,
+    contentHtml: await markdownToHtml(post.content),
+  };
+}
+
+/**
+ * Adds contentHtml field to an array of posts.
+ */
+async function addContentHtmlToMany<T extends { content: string }>(
+  posts: T[],
+): Promise<(T & { contentHtml: string })[]> {
+  return await Promise.all(posts.map(addContentHtml));
+}
 
 export const postsRouter = createTRPCRouter({
   // Public: Get all approved posts
@@ -44,7 +80,7 @@ export const postsRouter = createTRPCRouter({
         }),
       };
 
-      const [posts, total] = await Promise.all([
+      const [rawPosts, total] = await Promise.all([
         ctx.db.post.findMany({
           where,
           include: {
@@ -65,6 +101,9 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
+      // Convert markdown content to HTML for each post
+      const posts = await addContentHtmlToMany(rawPosts);
+
       return {
         posts,
         total,
@@ -76,7 +115,7 @@ export const postsRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const post = await ctx.db.post.findUnique({
+      const rawPost = await ctx.db.post.findUnique({
         where: { id: input.id },
         include: {
           coverImage: true,
@@ -98,7 +137,7 @@ export const postsRouter = createTRPCRouter({
         },
       });
 
-      if (!post) {
+      if (!rawPost) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Post not found",
@@ -106,7 +145,7 @@ export const postsRouter = createTRPCRouter({
       }
 
       // Only show non-approved posts to authorized users
-      if (post.status !== ContentStatus.APPROVED) {
+      if (rawPost.status !== ContentStatus.APPROVED) {
         if (!ctx.session?.user) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
@@ -115,12 +154,12 @@ export const postsRouter = createTRPCRouter({
         }
 
         const canView =
-          post.createdById === ctx.session.user.id ||
+          rawPost.createdById === ctx.session.user.id ||
           ctx.session.user.role === UserRole.ADMIN ||
           ctx.session.user.role === UserRole.LPW ||
           ctx.session.user.role === UserRole.RPW ||
           (ctx.session.user.role === UserRole.OBLEUTE &&
-            post.bezirkId === ctx.session.user.obleuteBezirkId);
+            rawPost.bezirkId === ctx.session.user.obleuteBezirkId);
 
         if (!canView) {
           throw new TRPCError({
@@ -130,7 +169,8 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      return post;
+      // Convert markdown content to HTML
+      return await addContentHtml(rawPost);
     }),
 
   // Get posts created by current user
@@ -148,7 +188,7 @@ export const postsRouter = createTRPCRouter({
         ...(input.status && { status: input.status }),
       };
 
-      const [posts, total] = await Promise.all([
+      const [rawPosts, total] = await Promise.all([
         ctx.db.post.findMany({
           where,
           include: {
@@ -162,6 +202,9 @@ export const postsRouter = createTRPCRouter({
         }),
         ctx.db.post.count({ where }),
       ]);
+
+      // Convert markdown content to HTML for each post
+      const posts = await addContentHtmlToMany(rawPosts);
 
       return {
         posts,
@@ -195,7 +238,7 @@ export const postsRouter = createTRPCRouter({
         where.bezirkId = ctx.session.user.obleuteBezirkId;
       }
 
-      const [posts, total] = await Promise.all([
+      const [rawPosts, total] = await Promise.all([
         ctx.db.post.findMany({
           where,
           include: {
@@ -209,6 +252,9 @@ export const postsRouter = createTRPCRouter({
         }),
         ctx.db.post.count({ where }),
       ]);
+
+      // Convert markdown content to HTML for each post
+      const posts = await addContentHtmlToMany(rawPosts);
 
       return {
         posts,
@@ -244,10 +290,25 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
+      // Only admins, LPW and RPW can directly set status to APPROVED
+      if (
+        input.status === ContentStatus.APPROVED &&
+        ctx.session.user.role !== UserRole.ADMIN &&
+        ctx.session.user.role !== UserRole.LPW &&
+        ctx.session.user.role !== UserRole.RPW
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Insufficient permissions to approve posts",
+        });
+      }
+
       const post = await ctx.db.post.create({
         data: {
           ...input,
           createdById: ctx.session.user.id,
+          publishedAt:
+            input.status === ContentStatus.APPROVED ? new Date() : null,
         },
         include: {
           coverImage: true,
@@ -270,6 +331,7 @@ export const postsRouter = createTRPCRouter({
         category: z.enum(PostCategory).optional(),
         bezirkId: z.string().optional().nullable(),
         pinned: z.boolean().optional(),
+        status: z.enum(ContentStatus).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -277,7 +339,7 @@ export const postsRouter = createTRPCRouter({
 
       const post = await ctx.db.post.findUnique({
         where: { id },
-        select: { createdById: true },
+        select: { createdById: true, status: true },
       });
 
       if (!post) {
@@ -312,9 +374,33 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
+      // Only admins and LPW can directly change status to APPROVED
+      if (
+        updateData.status === ContentStatus.APPROVED &&
+        ctx.session.user.role !== UserRole.ADMIN &&
+        ctx.session.user.role !== UserRole.LPW &&
+        ctx.session.user.role !== UserRole.RPW
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Insufficient permissions to approve posts",
+        });
+      }
+
+      // Handle publishedAt based on status change
+      const finalData: Record<string, unknown> = { ...updateData };
+      if (
+        updateData.status === ContentStatus.APPROVED &&
+        post.status !== ContentStatus.APPROVED
+      ) {
+        finalData.publishedAt = new Date();
+      } else if (updateData.status === ContentStatus.DRAFT) {
+        finalData.publishedAt = null;
+      }
+
       return await ctx.db.post.update({
         where: { id },
-        data: updateData,
+        data: finalData,
         include: {
           coverImage: true,
           bezirk: true,
@@ -409,5 +495,259 @@ export const postsRouter = createTRPCRouter({
           reviewNotes: input.reviewNotes,
         },
       });
+    }),
+
+  // Get posts for dashboard based on user role
+  getDashboardPosts: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(20),
+        status: z.enum(ContentStatus).optional(),
+        category: z.enum(PostCategory).optional(),
+        sortBy: z
+          .enum(["publishedAt", "title", "createdAt", "status"])
+          .default("createdAt"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Build where clause based on role
+      let where: Record<string, unknown> = {};
+
+      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+        // Admin and LPW can see all posts
+        if (input.status) {
+          where.status = input.status;
+        }
+        if (input.category) {
+          where.category = input.category;
+        }
+      } else if (userRole === UserRole.RPW) {
+        // RPW can see all posts except DRAFT status (unless they created it)
+        if (input.status) {
+          if (input.status === ContentStatus.DRAFT) {
+            // For DRAFT, only show their own
+            where = {
+              status: ContentStatus.DRAFT,
+              createdById: userId,
+            };
+          } else {
+            where.status = input.status;
+          }
+        } else {
+          // No status filter: show all non-draft OR own drafts
+          where = {
+            OR: [
+              { status: { not: ContentStatus.DRAFT } },
+              { createdById: userId },
+            ],
+          };
+        }
+        if (input.category) {
+          where.category = input.category;
+        }
+      } else {
+        // OBLEUTE, regular users - only their own posts
+        where = {
+          createdById: userId,
+          ...(input.status && { status: input.status }),
+          ...(input.category && { category: input.category }),
+        };
+      }
+
+      const [posts, total] = await Promise.all([
+        ctx.db.post.findMany({
+          where,
+          include: {
+            coverImage: true,
+            bezirk: true,
+            createdBy: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
+            reviewer: { select: { id: true, displayName: true } },
+          },
+          skip: (input.page - 1) * input.limit,
+          take: input.limit,
+          orderBy: { [input.sortBy]: input.sortOrder },
+        }),
+        ctx.db.post.count({ where }),
+      ]);
+
+      return {
+        posts,
+        total,
+        pages: Math.ceil(total / input.limit),
+      };
+    }),
+
+  // Bulk delete posts
+  bulkDelete: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all posts to check permissions
+      const posts = await ctx.db.post.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only posts user can delete
+      const canDeleteIds = posts
+        .filter(
+          (post) =>
+            post.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((p) => p.id);
+
+      if (canDeleteIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to delete any of the selected posts",
+        });
+      }
+
+      await ctx.db.post.deleteMany({
+        where: { id: { in: canDeleteIds } },
+      });
+
+      return { success: true, deletedCount: canDeleteIds.length };
+    }),
+
+  // Duplicate post
+  duplicate: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const original = await ctx.db.post.findUnique({
+        where: { id: input.id },
+      });
+
+      if (!original) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Post not found",
+        });
+      }
+
+      // Create new post as draft
+      const newPost = await ctx.db.post.create({
+        data: {
+          title: `${original.title} (Kopie)`,
+          excerpt: original.excerpt,
+          content: original.content,
+          coverImageId: original.coverImageId,
+          category: original.category,
+          bezirkId: original.bezirkId,
+          pinned: false,
+          status: ContentStatus.DRAFT,
+          createdById: ctx.session.user.id,
+        },
+      });
+
+      return newPost;
+    }),
+
+  // Bulk duplicate posts
+  bulkDuplicate: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const originals = await ctx.db.post.findMany({
+        where: { id: { in: input.ids } },
+      });
+
+      if (originals.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "No posts found",
+        });
+      }
+
+      // Create duplicates for each post
+      const newPosts = await Promise.all(
+        originals.map((original) =>
+          ctx.db.post.create({
+            data: {
+              title: `[DUPLIKAT] ${original.title}`,
+              excerpt: original.excerpt,
+              content: original.content,
+              coverImageId: original.coverImageId,
+              category: original.category,
+              bezirkId: original.bezirkId,
+              pinned: false,
+              status: ContentStatus.DRAFT,
+              createdById: ctx.session.user.id,
+            },
+          }),
+        ),
+      );
+
+      return { success: true, duplicatedCount: newPosts.length };
+    }),
+
+  // Bulk change status
+  bulkStatusChange: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()).min(1),
+        status: z.enum(ContentStatus),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userRole = ctx.session.user.role;
+      const userId = ctx.session.user.id;
+
+      // Get all posts to check permissions
+      const posts = await ctx.db.post.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, createdById: true },
+      });
+
+      // Filter to only posts user can update
+      const canUpdateIds = posts
+        .filter(
+          (post) =>
+            post.createdById === userId ||
+            userRole === UserRole.ADMIN ||
+            userRole === UserRole.LPW,
+        )
+        .map((p) => p.id);
+
+      if (canUpdateIds.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "No permission to update any of the selected posts",
+        });
+      }
+
+      // Special handling for APPROVED status - set publishedAt
+      const updateData: {
+        status: typeof input.status;
+        publishedAt?: Date | null;
+      } = {
+        status: input.status,
+      };
+
+      if (input.status === ContentStatus.APPROVED) {
+        updateData.publishedAt = new Date();
+      } else if (input.status === ContentStatus.DRAFT) {
+        updateData.publishedAt = null;
+      }
+
+      await ctx.db.post.updateMany({
+        where: { id: { in: canUpdateIds } },
+        data: updateData,
+      });
+
+      return { success: true, updatedCount: canUpdateIds.length };
     }),
 });
