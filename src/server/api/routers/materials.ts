@@ -157,7 +157,7 @@ export const materialsRouter = createTRPCRouter({
         fileUrl: z.string().min(1),
         fileType: z.enum(FileType),
         fileSize: z.int(),
-        tags: z.string().optional(),
+        tags: z.array(z.string()).optional(),
         isPublic: z.boolean().default(true),
       }),
     )
@@ -190,7 +190,7 @@ export const materialsRouter = createTRPCRouter({
         fileUrl: z.string().min(1).optional(),
         fileType: z.enum(FileType).optional(),
         fileSize: z.int().optional(),
-        tags: z.string().optional(),
+        tags: z.array(z.string()).optional(),
         isPublic: z.boolean().optional(),
       }),
     )

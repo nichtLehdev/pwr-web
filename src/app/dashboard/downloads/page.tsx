@@ -87,6 +87,7 @@ export default function DashboardDownloadsPage() {
   // Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState<string | null>(null);
 
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -95,9 +96,19 @@ export default function DashboardDownloadsPage() {
   const [newDescription, setNewDescription] = useState("");
   const [newCategory, setNewCategory] = useState<DownloadCategory>("SONSTIGES");
   const [newFileType, setNewFileType] = useState<FileType>("PDF");
+  const [newTags, setNewTags] = useState("");
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
   const [uploadedFileSize, setUploadedFileSize] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit state
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] =
+    useState<DownloadCategory>("SONSTIGES");
+  const [editTags, setEditTags] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editError, setEditError] = useState("");
 
   // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
@@ -144,6 +155,16 @@ export default function DashboardDownloadsPage() {
     },
   });
 
+  const updateMutation = api.materials.updateDownload.useMutation({
+    onSuccess: () => {
+      void utils.materials.getDownloads.invalidate();
+      setShowEditModal(null);
+    },
+    onError: (error) => {
+      setEditError(error.message);
+    },
+  });
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -165,6 +186,7 @@ export default function DashboardDownloadsPage() {
     setNewDescription("");
     setNewCategory("SONSTIGES");
     setNewFileType("PDF");
+    setNewTags("");
     setUploadedFileUrl("");
     setUploadedFileSize(0);
     setUploadError("");
@@ -172,6 +194,39 @@ export default function DashboardDownloadsPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const openEditModal = (
+    download: NonNullable<typeof data>["downloads"][number],
+  ) => {
+    setEditTitle(download.title);
+    setEditDescription(download.description ?? "");
+    setEditCategory(download.category);
+    setEditTags(download.tags?.join(", ") ?? "");
+    setEditIsPublic(download.isPublic);
+    setEditError("");
+    setShowEditModal(download.id);
+  };
+
+  const handleUpdate = () => {
+    if (!showEditModal || !editTitle) return;
+
+    // Convert comma-separated string to array
+    const tagsArray = editTags
+      ? editTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : undefined;
+
+    updateMutation.mutate({
+      id: showEditModal,
+      title: editTitle,
+      description: editDescription || undefined,
+      category: editCategory,
+      tags: tagsArray,
+      isPublic: editIsPublic,
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +290,14 @@ export default function DashboardDownloadsPage() {
   const handleCreate = () => {
     if (!uploadedFileUrl || !newTitle) return;
 
+    // Convert comma-separated string to array
+    const tagsArray = newTags
+      ? newTags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : undefined;
+
     createMutation.mutate({
       title: newTitle,
       description: newDescription || undefined,
@@ -242,6 +305,7 @@ export default function DashboardDownloadsPage() {
       fileUrl: uploadedFileUrl,
       fileType: newFileType,
       fileSize: uploadedFileSize,
+      tags: tagsArray,
       isPublic: true,
     });
   };
@@ -483,6 +547,29 @@ export default function DashboardDownloadsPage() {
                           </svg>
                         </a>
 
+                        {/* Edit button for reviewers */}
+                        {isReviewer && (
+                          <button
+                            onClick={() => openEditModal(download)}
+                            className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                            title="Bearbeiten"
+                          >
+                            <svg
+                              className="h-5 w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                          </button>
+                        )}
+
                         {/* Approve button for reviewers */}
                         {isReviewer &&
                           download.status === ContentStatus.PENDING && (
@@ -647,6 +734,23 @@ export default function DashboardDownloadsPage() {
                 </select>
               </div>
 
+              {/* Tags */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={newTags}
+                  onChange={(e) => setNewTags(e.target.value)}
+                  placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Mehrere Tags mit Komma trennen
+                </p>
+              </div>
+
               {uploadError && (
                 <p className="text-sm text-red-600">{uploadError}</p>
               )}
@@ -700,6 +804,117 @@ export default function DashboardDownloadsPage() {
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+              Download bearbeiten
+            </h2>
+
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Titel *
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Beschreibung
+                </label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={3}
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Kategorie
+                </label>
+                <select
+                  value={editCategory}
+                  onChange={(e) =>
+                    setEditCategory(e.target.value as DownloadCategory)
+                  }
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                >
+                  {Object.entries(categoryLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Mehrere Tags mit Komma trennen
+                </p>
+              </div>
+
+              {/* Public Toggle */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="editIsPublic"
+                  checked={editIsPublic}
+                  onChange={(e) => setEditIsPublic(e.target.checked)}
+                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                />
+                <label
+                  htmlFor="editIsPublic"
+                  className="dark:text-dark-text text-sm font-medium text-gray-700"
+                >
+                  Öffentlich sichtbar
+                </label>
+              </div>
+
+              {editError && <p className="text-sm text-red-600">{editError}</p>}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditModal(null)}
+                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={!editTitle || updateMutation.isPending}
+                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {updateMutation.isPending ? "Speichern..." : "Speichern"}
               </button>
             </div>
           </div>

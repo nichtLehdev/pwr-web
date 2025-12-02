@@ -74,6 +74,7 @@ export default function DashboardMediaPage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState<string | null>(null);
 
   // Upload state
   const [isUploading, setIsUploading] = useState(false);
@@ -88,6 +89,15 @@ export default function DashboardMediaPage() {
     extension: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit state
+  const [editName, setEditName] = useState("");
+  const [editAlt, setEditAlt] = useState("");
+  const [editCaption, setEditCaption] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editTags, setEditTags] = useState("");
+  const [editIsPublic, setEditIsPublic] = useState(true);
+  const [editError, setEditError] = useState("");
 
   // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
@@ -141,6 +151,16 @@ export default function DashboardMediaPage() {
     },
   });
 
+  const updateMutation = api.media.update.useMutation({
+    onSuccess: () => {
+      void utils.media.getAll.invalidate();
+      setShowEditModal(null);
+    },
+    onError: (error) => {
+      setEditError(error.message);
+    },
+  });
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -165,6 +185,30 @@ export default function DashboardMediaPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const openEditModal = (media: NonNullable<typeof data>["media"][number]) => {
+    setEditName(media.name);
+    setEditAlt(media.alt ?? "");
+    setEditCaption(media.caption ?? "");
+    setEditTitle(media.title ?? "");
+    setEditTags(typeof media.tags === "string" ? media.tags : "");
+    setEditIsPublic(media.isPublic);
+    setEditError("");
+    setShowEditModal(media.id);
+  };
+
+  const handleUpdate = () => {
+    if (!showEditModal) return;
+
+    updateMutation.mutate({
+      id: showEditModal,
+      alt: editAlt || undefined,
+      caption: editCaption || undefined,
+      title: editTitle || undefined,
+      tags: editTags || undefined,
+      isPublic: editIsPublic,
+    });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,6 +526,32 @@ export default function DashboardMediaPage() {
 
                 {/* Actions Overlay */}
                 <div className="absolute right-2 bottom-14 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  {/* Edit button for reviewers */}
+                  {isReviewer && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(media);
+                      }}
+                      className="rounded bg-gray-600 p-1.5 text-white shadow hover:bg-gray-700"
+                      title="Bearbeiten"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                    </button>
+                  )}
+
                   {/* Approve button for reviewers */}
                   {isReviewer && media.status === ContentStatus.PENDING && (
                     <button
@@ -763,6 +833,146 @@ export default function DashboardMediaPage() {
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+              Medium bearbeiten
+            </h2>
+
+            <div className="space-y-4">
+              {/* Preview */}
+              {(() => {
+                const editItem = data?.media.find(
+                  (m) => m.id === showEditModal,
+                );
+                if (editItem?.mimeType.startsWith("image/")) {
+                  return (
+                    <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-lg">
+                      <Image
+                        src={editItem.url}
+                        alt={editItem.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
+              {/* Name (read-only) */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  disabled
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-muted w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2"
+                />
+              </div>
+
+              {/* Alt Text */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Alt-Text
+                </label>
+                <input
+                  type="text"
+                  value={editAlt}
+                  onChange={(e) => setEditAlt(e.target.value)}
+                  placeholder="Beschreibung für Screenreader"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Titel
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Anzeigetitel"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Caption */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Bildunterschrift
+                </label>
+                <textarea
+                  value={editCaption}
+                  onChange={(e) => setEditCaption(e.target.value)}
+                  rows={2}
+                  placeholder="Optionale Bildunterschrift"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={editTags}
+                  onChange={(e) => setEditTags(e.target.value)}
+                  placeholder="Kommagetrennte Tags"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Mehrere Tags mit Komma trennen
+                </p>
+              </div>
+
+              {/* Public Toggle */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="editMediaIsPublic"
+                  checked={editIsPublic}
+                  onChange={(e) => setEditIsPublic(e.target.checked)}
+                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                />
+                <label
+                  htmlFor="editMediaIsPublic"
+                  className="dark:text-dark-text text-sm font-medium text-gray-700"
+                >
+                  Öffentlich sichtbar
+                </label>
+              </div>
+
+              {editError && <p className="text-sm text-red-600">{editError}</p>}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditModal(null)}
+                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={updateMutation.isPending}
+                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {updateMutation.isPending ? "Speichern..." : "Speichern"}
               </button>
             </div>
           </div>
