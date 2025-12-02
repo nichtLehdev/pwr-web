@@ -76,6 +76,17 @@ export default function PostDetailPage() {
     { enabled: !!postId && !!session?.user },
   );
 
+  // Fetch attached content for reviewers
+  const {
+    data: attachedContent,
+    refetch: refetchAttachedContent,
+  } = api.posts.getAttachedContent.useQuery(
+    { postId },
+    {
+      enabled: !!postId && !!profile && REVIEWER_ROLES.includes(profile.role),
+    },
+  );
+
   // Mutations
   const approveMutation = api.posts.approve.useMutation({
     onSuccess: () => {
@@ -94,6 +105,21 @@ export default function PostDetailPage() {
   const deleteMutation = api.posts.delete.useMutation({
     onSuccess: () => {
       router.push("/dashboard/posts");
+    },
+  });
+
+  // Mutations for approving attached content
+  const approveDownloadMutation = api.materials.reviewDownload.useMutation({
+    onSuccess: () => {
+      void refetchAttachedContent();
+      void refetchPost();
+    },
+  });
+
+  const approveMediaMutation = api.media.review.useMutation({
+    onSuccess: () => {
+      void refetchAttachedContent();
+      void refetchPost();
     },
   });
 
@@ -150,6 +176,16 @@ export default function PostDetailPage() {
   const canDelete =
     isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
   const canReview = isReviewer && post.status === ContentStatus.PENDING;
+
+  // Check if all attached content is approved
+  const hasPendingDownloads = attachedContent?.downloads.some(
+    (d) => d.status !== ContentStatus.APPROVED
+  ) ?? false;
+  const hasPendingMedia = attachedContent?.media.some(
+    (m) => m.status !== ContentStatus.APPROVED
+  ) ?? false;
+  const hasPendingCoverImage = post.coverImage?.status !== ContentStatus.APPROVED && post.coverImage?.status !== undefined;
+  const hasUnapprovedContent = hasPendingDownloads || hasPendingMedia || hasPendingCoverImage;
 
   const handleApprove = () => {
     approveMutation.mutate({
@@ -286,6 +322,22 @@ export default function PostDetailPage() {
               Prüfung
             </h2>
             <div className="space-y-4">
+              {/* Warning if there's unapproved content */}
+              {hasUnapprovedContent && (
+                <div className="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
+                  <svg className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                      Nicht alle Inhalte sind freigegeben
+                    </p>
+                    <p className="mt-1 text-sm text-red-700 dark:text-red-400">
+                      Bitte gib zuerst alle angehängten Downloads, Medien und das Titelbild frei, bevor du den Beitrag genehmigst.
+                    </p>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Anmerkungen (optional für Genehmigung, erforderlich für
@@ -302,8 +354,9 @@ export default function PostDetailPage() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleApprove}
-                  disabled={approveMutation.isPending}
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  disabled={approveMutation.isPending || hasUnapprovedContent}
+                  title={hasUnapprovedContent ? "Alle Inhalte müssen zuerst freigegeben werden" : undefined}
+                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <svg
                     className="h-4 w-4"
@@ -343,6 +396,168 @@ export default function PostDetailPage() {
                 </button>
               </div>
             </div>
+          </section>
+        )}
+
+        {/* Attached Content Section (for reviewers) */}
+        {isReviewer && attachedContent && (
+          <section className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Angehängte Inhalte
+            </h2>
+
+            {attachedContent.downloads.length === 0 && attachedContent.media.length === 0 && (
+              <p className="dark:text-dark-muted text-sm text-gray-500">
+                Keine Downloads oder Medien im Inhalt gefunden.
+              </p>
+            )}
+
+            {/* Downloads */}
+            {attachedContent.downloads.length > 0 && (
+              <div className="mb-4">
+                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                  Downloads ({attachedContent.downloads.length})
+                </h3>
+                <div className="space-y-2">
+                  {attachedContent.downloads.map((download) => (
+                    <div
+                      key={download.id}
+                      className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">
+                          {download.fileType === "PDF" ? "📄" :
+                           download.fileType === "DOCX" ? "📝" :
+                           download.fileType === "XLSX" ? "📊" :
+                           download.fileType === "ZIP" ? "📦" :
+                           download.fileType === "MP3" ? "🎵" : "📁"}
+                        </span>
+                        <div>
+                          <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                            {download.title}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {download.uploadedBy?.displayName ?? "Unbekannt"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Download button */}
+                        <a
+                          href={download.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded bg-gray-600 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700"
+                          title="Herunterladen"
+                        >
+                          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                          Öffnen
+                        </a>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[download.status]}`}
+                        >
+                          {statusLabels[download.status]}
+                        </span>
+                        {download.status === ContentStatus.PENDING && (
+                          <button
+                            onClick={() => approveDownloadMutation.mutate({ id: download.id, status: ContentStatus.APPROVED })}
+                            disabled={approveDownloadMutation.isPending}
+                            className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                          >
+                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Freigeben
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Media */}
+            {attachedContent.media.length > 0 && (
+              <div>
+                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                  Medien ({attachedContent.media.length})
+                </h3>
+                <div className="space-y-3">
+                  {attachedContent.media.map((media) => (
+                    <div
+                      key={media.id}
+                      className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          {media.mimeType.startsWith("image/") ? (
+                            <a
+                              href={media.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group relative block"
+                              title="Bild in neuem Tab öffnen"
+                            >
+                              <Image
+                                src={media.url}
+                                alt={media.name}
+                                width={80}
+                                height={80}
+                                className="rounded object-cover transition-opacity group-hover:opacity-75"
+                              />
+                              <span className="absolute inset-0 flex items-center justify-center rounded bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                              </span>
+                            </a>
+                          ) : (
+                            <span className="text-2xl">📎</span>
+                          )}
+                          <div>
+                            <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                              {media.name}
+                            </p>
+                            {media.mimeType.startsWith("image/") && (
+                              <a
+                                href={media.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:text-primary-dark text-xs underline"
+                              >
+                                In neuem Tab öffnen
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[media.status]}`}
+                          >
+                            {statusLabels[media.status]}
+                          </span>
+                          {media.status === ContentStatus.PENDING && (
+                            <button
+                              onClick={() => approveMediaMutation.mutate({ id: media.id, status: ContentStatus.APPROVED })}
+                              disabled={approveMediaMutation.isPending}
+                              className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                            >
+                              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Freigeben
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -398,9 +613,32 @@ export default function PostDetailPage() {
           {/* Cover Image */}
           {post.coverImage && (
             <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Titelbild
-              </h2>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Titelbild
+                </h2>
+                {isReviewer && post.coverImage.status && (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[post.coverImage.status]}`}
+                    >
+                      {statusLabels[post.coverImage.status]}
+                    </span>
+                    {post.coverImage.status === ContentStatus.PENDING && (
+                      <button
+                        onClick={() => approveMediaMutation.mutate({ id: post.coverImage!.id, status: ContentStatus.APPROVED })}
+                        disabled={approveMediaMutation.isPending}
+                        className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Freigeben
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                 <Image
                   src={post.coverImage.url}

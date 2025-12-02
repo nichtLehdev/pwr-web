@@ -34,7 +34,7 @@ export default function MediaPickerModal({
   const [newImageAlt, setNewImageAlt] = useState("");
   const [newImageTitle, setNewImageTitle] = useState("");
 
-  // Fetch media library
+  // Fetch media library (includeAll shows approved + user's own pending)
   const {
     data: mediaData,
     isLoading,
@@ -45,6 +45,7 @@ export default function MediaPickerModal({
       limit: 50,
       mimeType: "image",
       search: search || undefined,
+      includeAll: true,
     },
     { enabled: isOpen },
   );

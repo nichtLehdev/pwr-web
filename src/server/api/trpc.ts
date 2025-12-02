@@ -195,3 +195,27 @@ export const posaunenratProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next({ ctx });
 });
+
+/**
+ * Content Creator procedure (OBLEUTE, RPW, LPW, or Admin)
+ *
+ * Accessible to users who can create content (posts, uploads, etc.)
+ * Note: Content created by OBLEUTE needs review before being public
+ */
+export const contentCreatorProcedure = protectedProcedure.use(
+  ({ ctx, next }) => {
+    const role = ctx.session.user.role;
+    if (
+      role !== "OBLEUTE" &&
+      role !== "RPW" &&
+      role !== "LPW" &&
+      role !== "ADMIN"
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Content creator access required",
+      });
+    }
+    return next({ ctx });
+  },
+);

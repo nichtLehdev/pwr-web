@@ -63,7 +63,7 @@ export default function DownloadPickerModal({
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
   const [uploadedFileSize, setUploadedFileSize] = useState(0);
 
-  // Fetch downloads
+  // Fetch downloads (includeAll shows approved + user's own pending)
   const {
     data: downloadsData,
     isLoading,
@@ -74,6 +74,7 @@ export default function DownloadPickerModal({
       limit: 50,
       category: categoryFilter || undefined,
       search: search || undefined,
+      includeAll: true,
     },
     { enabled: isOpen },
   );

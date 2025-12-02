@@ -169,8 +169,94 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Convert markdown content to HTML
-      return await addContentHtml(rawPost);
+      // Extract attached downloads from content
+      const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      const downloadUrls = [...new Set(rawPost.content.match(downloadUrlPattern) ?? [])];
+      
+      const attachedDownloads = downloadUrls.length > 0
+        ? await ctx.db.download.findMany({
+            where: { 
+              fileUrl: { in: downloadUrls },
+              status: ContentStatus.APPROVED, // Only show approved downloads publicly
+            },
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              fileUrl: true,
+              fileType: true,
+              fileSize: true,
+              category: true,
+            },
+          })
+        : [];
+
+      // Convert markdown content to HTML and add attachments
+      const postWithHtml = await addContentHtml(rawPost);
+      return {
+        ...postWithHtml,
+        attachedDownloads,
+      };
+    }),
+
+  // Get attached downloads and media for a post (for review purposes)
+  getAttachedContent: reviewerProcedure
+    .input(z.object({ postId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const post = await ctx.db.post.findUnique({
+        where: { id: input.postId },
+        select: { content: true },
+      });
+
+      if (!post) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Post not found",
+        });
+      }
+
+      // Extract download URLs from content
+      // Content is stored as Markdown, downloads are inserted as: [📥 Title (TYPE)](/uploads/downloads/file.pdf)
+      // We need to match both the markdown link format and any plain URLs
+      
+      // Match any URL containing /downloads/ - covers markdown [text](url) and plain URLs
+      const allUrlsPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      const downloadUrls = [...new Set(post.content.match(allUrlsPattern) ?? [])];
+
+      // Extract media URLs from content (images in markdown: ![alt](url))
+      const allMediaPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
+      const mediaUrls = [...new Set(post.content.match(allMediaPattern) ?? [])];
+
+      // Find downloads by URL
+      const downloads = downloadUrls.length > 0
+        ? await ctx.db.download.findMany({
+            where: { fileUrl: { in: downloadUrls } },
+            select: {
+              id: true,
+              title: true,
+              fileUrl: true,
+              fileType: true,
+              status: true,
+              uploadedBy: { select: { id: true, displayName: true } },
+            },
+          })
+        : [];
+
+      // Find media by URL
+      const media = mediaUrls.length > 0
+        ? await ctx.db.media.findMany({
+            where: { url: { in: mediaUrls } },
+            select: {
+              id: true,
+              name: true,
+              url: true,
+              mimeType: true,
+              status: true,
+            },
+          })
+        : [];
+
+      return { downloads, media };
     }),
 
   // Get posts created by current user
@@ -339,7 +425,7 @@ export const postsRouter = createTRPCRouter({
 
       const post = await ctx.db.post.findUnique({
         where: { id },
-        select: { createdById: true, status: true },
+        select: { createdById: true, status: true, coverImageId: true },
       });
 
       if (!post) {
@@ -385,6 +471,24 @@ export const postsRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message: "Insufficient permissions to approve posts",
         });
+      }
+
+      // Check if coverImage is approved before approving post
+      if (updateData.status === ContentStatus.APPROVED) {
+        const coverImageId = updateData.coverImageId ?? post.coverImageId;
+        if (coverImageId) {
+          const coverImage = await ctx.db.media.findUnique({
+            where: { id: coverImageId },
+            select: { status: true },
+          });
+          if (coverImage && coverImage.status !== ContentStatus.APPROVED) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Das Titelbild muss zuerst freigegeben werden, bevor der Beitrag veröffentlicht werden kann.",
+            });
+          }
+        }
       }
 
       // Handle publishedAt based on status change
@@ -455,7 +559,7 @@ export const postsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const post = await ctx.db.post.findUnique({
         where: { id: input.id },
-        select: { bezirkId: true },
+        select: { bezirkId: true, coverImageId: true, content: true },
       });
 
       if (!post) {
@@ -463,6 +567,65 @@ export const postsRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Post not found",
         });
+      }
+
+      // Check if coverImage is approved before approving post
+      if (post.coverImageId) {
+        const coverImage = await ctx.db.media.findUnique({
+          where: { id: post.coverImageId },
+          select: { status: true },
+        });
+        if (coverImage && coverImage.status !== ContentStatus.APPROVED) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Das Titelbild muss zuerst freigegeben werden, bevor der Beitrag veröffentlicht werden kann.",
+          });
+        }
+      }
+
+      // Check if all attached downloads are approved
+      const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      const downloadUrls = [...new Set(post.content.match(downloadUrlPattern) ?? [])];
+      
+      if (downloadUrls.length > 0) {
+        const pendingDownloads = await ctx.db.download.findMany({
+          where: {
+            fileUrl: { in: downloadUrls },
+            status: { not: ContentStatus.APPROVED },
+          },
+          select: { title: true },
+        });
+        
+        if (pendingDownloads.length > 0) {
+          const titles = pendingDownloads.map(d => d.title).join(", ");
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Folgende Downloads müssen zuerst freigegeben werden: ${titles}`,
+          });
+        }
+      }
+
+      // Check if all attached media are approved
+      const mediaUrlPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
+      const mediaUrls = [...new Set(post.content.match(mediaUrlPattern) ?? [])];
+      
+      if (mediaUrls.length > 0) {
+        const pendingMedia = await ctx.db.media.findMany({
+          where: {
+            url: { in: mediaUrls },
+            status: { not: ContentStatus.APPROVED },
+          },
+          select: { name: true },
+        });
+        
+        if (pendingMedia.length > 0) {
+          const names = pendingMedia.map(m => m.name).join(", ");
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Folgende Medien müssen zuerst freigegeben werden: ${names}`,
+          });
+        }
       }
 
       return await ctx.db.post.update({
@@ -709,7 +872,7 @@ export const postsRouter = createTRPCRouter({
       // Get all posts to check permissions
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
-        select: { id: true, createdById: true },
+        select: { id: true, createdById: true, coverImageId: true },
       });
 
       // Filter to only posts user can update
@@ -727,6 +890,29 @@ export const postsRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message: "No permission to update any of the selected posts",
         });
+      }
+
+      // If approving, check that all cover images are approved
+      if (input.status === ContentStatus.APPROVED) {
+        const coverImageIds = posts
+          .filter((p) => canUpdateIds.includes(p.id) && p.coverImageId)
+          .map((p) => p.coverImageId as string);
+
+        if (coverImageIds.length > 0) {
+          const unapprovedImages = await ctx.db.media.count({
+            where: {
+              id: { in: coverImageIds },
+              status: { not: ContentStatus.APPROVED },
+            },
+          });
+
+          if (unapprovedImages > 0) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `${unapprovedImages} Beitrag(e) haben nicht freigegebene Titelbilder. Bitte geben Sie die Bilder zuerst frei.`,
+            });
+          }
+        }
       }
 
       // Special handling for APPROVED status - set publishedAt
