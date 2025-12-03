@@ -445,7 +445,7 @@ async function seedTeamMembers(users: any) {
       continue;
     }
 
-    const created = await db.teamMember.create({
+    await db.teamMember.create({
       data: {
         role: member.role,
         responsibilities: member.responsibilities,
@@ -494,7 +494,7 @@ async function seedPosaunenratMembers(users: any, media: any) {
       }
     }
 
-    const created = await db.posaunenratMember.create({
+    await db.posaunenratMember.create({
       data: {
         name: name,
         email: email,
@@ -550,7 +550,7 @@ async function seedFoerdervereinMembers(users: any, media: any) {
       }
     }
 
-    const created = await db.foerdervereinMember.create({
+    await db.foerdervereinMember.create({
       data: {
         name: name,
         email: email,
@@ -593,7 +593,7 @@ async function seedVorstandMembers(users: any, media: any) {
       imageId = vorstandImage.id;
     }
 
-    const created = await db.vorstandMember.create({
+    await db.vorstandMember.create({
       data: {
         position: member.position,
         description: member.description,
