@@ -365,7 +365,9 @@ export default function DashboardEnsemblesPage() {
                         {ensemble.rehearsalDay || ensemble.rehearsalTime ? (
                           <span className="dark:text-dark-muted text-sm text-gray-600">
                             {ensemble.rehearsalDay}
-                            {ensemble.rehearsalDay && ensemble.rehearsalTime && ", "}
+                            {ensemble.rehearsalDay &&
+                              ensemble.rehearsalTime &&
+                              ", "}
                             {ensemble.rehearsalTime}
                           </span>
                         ) : (
@@ -469,8 +471,8 @@ export default function DashboardEnsemblesPage() {
             {/* Pagination & Results count */}
             <div className="dark:border-dark-border flex flex-col items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 sm:flex-row">
               <div className="dark:text-dark-muted text-sm text-gray-500">
-                {ensemblesData?.total} Ensemble{ensemblesData?.total !== 1 && "s"}{" "}
-                gefunden
+                {ensemblesData?.total} Ensemble
+                {ensemblesData?.total !== 1 && "s"} gefunden
                 {ensemblesData && ensemblesData.pages > 1 && (
                   <span>
                     {" "}

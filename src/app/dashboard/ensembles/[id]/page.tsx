@@ -192,7 +192,7 @@ export default function EnsembleDetailPage() {
             <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
               Beschreibung
             </h2>
-            <p className="dark:text-dark-muted text-gray-600 whitespace-pre-wrap">
+            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
               {ensemble.description}
             </p>
           </div>
@@ -238,7 +238,7 @@ export default function EnsembleDetailPage() {
                     {ensemble.conductor.displayName}
                   </p>
                   {ensemble.conductor.bio && (
-                    <p className="dark:text-dark-muted mt-1 text-sm text-gray-500 line-clamp-2">
+                    <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
                       {ensemble.conductor.bio}
                     </p>
                   )}
@@ -262,7 +262,9 @@ export default function EnsembleDetailPage() {
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
                     <Image
                       src={ensemble.representative.profileImage.url}
-                      alt={ensemble.representative.displayName || "Ansprechpartner"}
+                      alt={
+                        ensemble.representative.displayName || "Ansprechpartner"
+                      }
                       fill
                       className="object-cover"
                     />
@@ -291,7 +293,7 @@ export default function EnsembleDetailPage() {
                   {ensemble.representative.email && (
                     <a
                       href={`mailto:${ensemble.representative.email}`}
-                      className="text-primary hover:underline text-sm"
+                      className="text-primary text-sm hover:underline"
                     >
                       {ensemble.representative.email}
                     </a>
@@ -336,7 +338,8 @@ export default function EnsembleDetailPage() {
                 {ensemble.location ? (
                   <span>
                     {ensemble.location.name}
-                    {ensemble.location.street && `, ${ensemble.location.street}`}
+                    {ensemble.location.street &&
+                      `, ${ensemble.location.street}`}
                     {ensemble.location.city && `, ${ensemble.location.city}`}
                   </span>
                 ) : (
