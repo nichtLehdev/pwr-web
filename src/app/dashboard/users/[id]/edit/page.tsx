@@ -53,6 +53,7 @@ export default function EditUserPage() {
   // Update form state when user data is loaded
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(
         user.displayName ??
           `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ??
