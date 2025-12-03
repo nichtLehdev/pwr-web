@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getSocialIcon } from "@/lib/utils";
+import { SocialIcon } from "@/app/_components/ui/social-icon";
 import { api } from "@/trpc/server";
 import PageHeader from "../_components/general/page-header";
 
@@ -268,14 +268,10 @@ export default async function KontaktPage() {
                                       className="hover:text-primary flex h-6 w-6 items-center justify-center text-gray-500 transition-colors dark:text-gray-400"
                                       title={social.label || social.type}
                                     >
-                                      <svg
+                                      <SocialIcon
+                                        type={social.type}
                                         className="h-4 w-4"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                      >
-                                        {getSocialIcon(social.type)}
-                                      </svg>
+                                      />
                                     </a>
                                   ),
                                 )}
@@ -504,14 +500,10 @@ export default async function KontaktPage() {
                                       className="hover:text-district-3 flex h-6 w-6 items-center justify-center text-gray-500 transition-colors dark:text-gray-400"
                                       title={social.label || social.type}
                                     >
-                                      <svg
+                                      <SocialIcon
+                                        type={social.type}
                                         className="h-4 w-4"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                      >
-                                        {getSocialIcon(social.type)}
-                                      </svg>
+                                      />
                                     </a>
                                   ),
                                 )}

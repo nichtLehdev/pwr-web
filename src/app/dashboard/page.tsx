@@ -165,14 +165,12 @@ export default function DashboardPage() {
                 description="Vorstandsmitglieder"
                 icon={<UserGroupIcon />}
                 href="/dashboard/vorstand"
-                comingSoon
               />
               <DashboardCard
                 title="Team"
                 description="Teammitglieder"
                 icon={<UsersIcon />}
                 href="/dashboard/team"
-                comingSoon
               />
               <DashboardCard
                 title="Posaunenrat"

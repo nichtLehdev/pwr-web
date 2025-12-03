@@ -291,12 +291,40 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.db.teamMember.create({
-        data: input,
+      // Parse responsibilities string into array (one per line)
+      const responsibilities = input.responsibilities
+        ? input.responsibilities
+            .split("\n")
+            .map((r) => r.trim())
+            .filter((r) => r.length > 0)
+        : undefined;
+
+      // Parse socials JSON string
+      const socials = input.socials ? JSON.parse(input.socials) : undefined;
+
+      const member = await ctx.db.teamMember.create({
+        data: {
+          userId: input.userId,
+          role: input.role,
+          responsibilities,
+          socials,
+          contactType: input.contactType,
+          sortOrder: input.sortOrder,
+        },
         include: {
           user: true,
         },
       });
+
+      return {
+        ...member,
+        responsibilities: member.responsibilities
+          ? (member.responsibilities as string[])
+          : [],
+        socials: member.socials
+          ? (member.socials as { type: string; url: string; label?: string }[])
+          : [],
+      };
     }),
 
   // Update team member
@@ -312,15 +340,83 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const {
+        id,
+        responsibilities: responsibilitiesStr,
+        socials: socialsStr,
+        ...rest
+      } = input;
 
-      return await ctx.db.teamMember.update({
+      // Parse responsibilities string into array (one per line)
+      const responsibilities = responsibilitiesStr
+        ? responsibilitiesStr
+            .split("\n")
+            .map((r) => r.trim())
+            .filter((r) => r.length > 0)
+        : undefined;
+
+      // Parse socials JSON string
+      const socials = socialsStr ? JSON.parse(socialsStr) : undefined;
+
+      const member = await ctx.db.teamMember.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...rest,
+          responsibilities,
+          socials,
+        },
         include: {
           user: true,
         },
       });
+
+      return {
+        ...member,
+        responsibilities: member.responsibilities
+          ? (member.responsibilities as string[])
+          : [],
+        socials: member.socials
+          ? (member.socials as { type: string; url: string; label?: string }[])
+          : [],
+      };
+    }),
+
+  // Get single team member
+  getTeamMember: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const member = await ctx.db.teamMember.findUnique({
+        where: { id: input.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              bio: true,
+              displayRole: true,
+            },
+          },
+        },
+      });
+
+      if (!member) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Team member not found",
+        });
+      }
+
+      return {
+        ...member,
+        responsibilities: member.responsibilities
+          ? (member.responsibilities as string[])
+          : [],
+        socials: member.socials
+          ? (member.socials as { type: string; url: string; label?: string }[])
+          : [],
+      };
     }),
 
   // Delete team member
