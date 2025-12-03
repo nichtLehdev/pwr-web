@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
@@ -8,7 +8,7 @@ import PageHeader from "@/app/_components/general/page-header";
 import { getDistrictColor } from "@/lib/district-color";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 
-export default function ChorFindenPage() {
+function ChorFindenContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const [selectedBezirk, setSelectedBezirk] = useState<number | null>(null);
@@ -862,5 +862,13 @@ export default function ChorFindenPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function ChorFindenPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner text="Laden..." />}>
+      <ChorFindenContent />
+    </Suspense>
   );
 }

@@ -685,7 +685,7 @@ export default function CourseDetailPage() {
                                     .map((o) => o.trim())
                                     .filter(Boolean)
                                 : Array.isArray(field.options)
-                                  ? field.options
+                                  ? (field.options as string[])
                                   : []
                               ).map((option: string, idx: number) => (
                                 <span

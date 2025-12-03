@@ -79,14 +79,16 @@ export async function POST(request: Request) {
 
     // Get valid types and max size for the folder
     const validTypes =
-      validTypesByFolder[folder] || validTypesByFolder.profiles;
-    const maxSize = maxSizeByFolder[folder] || maxSizeByFolder.profiles;
+      validTypesByFolder[folder] ?? validTypesByFolder.profiles;
+    const maxSize =
+      maxSizeByFolder[folder] ?? maxSizeByFolder.profiles ?? 5 * 1024 * 1024;
 
     // Validate file type
-    if (!validTypes.includes(file.type)) {
+    if (!validTypes?.includes(file.type)) {
+      const allowed = validTypes ? validTypes.join(", ") : "(none)";
       return NextResponse.json(
         {
-          error: `Invalid file type: ${file.type}. Allowed types for ${folder}: ${validTypes.join(", ")}`,
+          error: `Invalid file type: ${file.type}. Allowed types for ${folder}: ${allowed}`,
         },
         { status: 400 },
       );

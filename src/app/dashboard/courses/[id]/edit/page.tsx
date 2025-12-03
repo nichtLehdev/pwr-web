@@ -215,11 +215,16 @@ export default function EditCoursePage() {
 
       // Custom fields
       if (course.customFields && course.customFields.length > 0) {
-        const fields = course.customFields.map((cf) => ({
+        const fields: CustomField[] = course.customFields.map((cf) => ({
           id: cf.id,
           fieldName: cf.fieldName,
           fieldType: cf.fieldType,
-          options: cf.options || "",
+          options:
+            typeof cf.options === "string"
+              ? cf.options
+              : cf.options
+                ? JSON.stringify(cf.options)
+                : "",
           isRequired: cf.isRequired,
           helpText: cf.helpText || "",
           sortOrder: cf.sortOrder,
