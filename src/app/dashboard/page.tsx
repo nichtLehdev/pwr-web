@@ -126,7 +126,6 @@ export default function DashboardPage() {
                 description="Bläsergruppen"
                 icon={<UsersIcon />}
                 href="/dashboard/ensembles"
-                comingSoon
               />
               <DashboardCard
                 title="Auswahlchöre"
