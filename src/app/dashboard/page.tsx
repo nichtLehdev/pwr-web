@@ -120,7 +120,6 @@ export default function DashboardPage() {
                 description="Bezirke & Regionen"
                 icon={<MapIcon />}
                 href="/dashboard/bezirke"
-                comingSoon
               />
               <DashboardCard
                 title="Ensembles"
