@@ -47,7 +47,8 @@ export default async function AuswahlchoerePage() {
       {ensembles.map((ensemble, index) => (
         <section
           key={ensemble.name}
-          className={`py-12 md:py-16 lg:py-20 ${
+          id={ensemble.slug}
+          className={`scroll-mt-20 py-12 md:py-16 lg:py-20 ${
             index % 2 === 0
               ? "bg-background dark:bg-dark-background"
               : "bg-background-secondary dark:bg-dark-background-secondary"

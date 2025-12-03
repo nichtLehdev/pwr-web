@@ -8,6 +8,7 @@ import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import ThemeToggle from "./theme-toggle";
+import SearchModal from "./search-modal";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function Navigation() {
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Use Better Auth's useSession hook directly
   const { data: session } = useSession();
@@ -56,6 +58,19 @@ export default function Navigation() {
       document.body.classList.remove("modal-open");
     }
   }, [mobileMenuOpen]);
+
+  // Handle Cmd/Ctrl + K keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Check if a link or its children are active
   const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
@@ -254,7 +269,8 @@ export default function Navigation() {
             <div className="ml-4 flex items-center space-x-4">
               <ThemeToggle />
               <button
-                className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary transition-colors"
+                onClick={() => setSearchOpen(true)}
+                className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary flex items-center gap-2 transition-colors"
                 aria-label="Suchen"
               >
                 <svg
@@ -270,6 +286,9 @@ export default function Navigation() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
+                <kbd className="dark:border-dark-border hidden rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-400 xl:inline">
+                  ⌘K
+                </kbd>
               </button>
 
               {session?.user ? (
@@ -292,7 +311,7 @@ export default function Navigation() {
                         </div>
                       )}
                     </div>
-                    
+
                     <svg
                       className={`text-dark dark:text-dark-text h-4 w-4 transition-transform ${
                         userMenuOpen ? "rotate-180" : ""
@@ -467,7 +486,13 @@ export default function Navigation() {
 
               {/* Mobile Suche & Login/User Menu */}
               <div className="dark:border-dark-border mt-4 space-y-2 border-t border-gray-200 pt-4">
-                <button className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setSearchOpen(true);
+                  }}
+                  className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100"
+                >
                   <svg
                     className="mr-2 h-5 w-5"
                     fill="none"
@@ -497,7 +522,9 @@ export default function Navigation() {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center">
-                            {getInitials(session.user.name || session.user.email)}
+                            {getInitials(
+                              session.user.name || session.user.email,
+                            )}
                           </div>
                         )}
                       </div>
@@ -553,6 +580,9 @@ export default function Navigation() {
           </div>
         )}
       </div>
+
+      {/* Search Modal */}
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </nav>
   );
 }

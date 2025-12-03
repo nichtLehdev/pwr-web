@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import PageHeader from "@/app/_components/general/page-header";
@@ -8,8 +9,10 @@ import { getDistrictColor } from "@/lib/district-color";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 
 export default function ChorFindenPage() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
   const [selectedBezirk, setSelectedBezirk] = useState<number | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>(initialSearch);
   const [hoveredBezirk, setHoveredBezirk] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
     x: 0,
