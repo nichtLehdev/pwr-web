@@ -230,7 +230,9 @@ export default function DashboardDownloadsPage() {
     });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | File) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement> | File,
+  ) => {
     const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
 
@@ -705,7 +707,7 @@ export default function DashboardDownloadsPage() {
                       ? "border-primary bg-primary/5 dark:bg-primary/10"
                       : uploadedFileUrl
                         ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
-                        : "border-gray-300 hover:border-gray-400 dark:border-dark-border dark:hover:border-gray-500"
+                        : "dark:border-dark-border border-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
                   }`}
                 >
                   <input
@@ -718,7 +720,9 @@ export default function DashboardDownloadsPage() {
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-2">
                       <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Lädt hoch...</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Lädt hoch...
+                      </p>
                     </div>
                   ) : uploadedFileUrl ? (
                     <div className="flex flex-col items-center gap-2">
@@ -758,7 +762,9 @@ export default function DashboardDownloadsPage() {
                         />
                       </svg>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {isDragging ? "Datei hier ablegen" : "Datei hierher ziehen"}
+                        {isDragging
+                          ? "Datei hier ablegen"
+                          : "Datei hierher ziehen"}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         oder klicken zum Auswählen
