@@ -380,10 +380,10 @@ async function seedUsers(bezirke: any[], media: any) {
   console.log(`  🔐 Using default password: ${defaultPassword}`);
 
   for (const u of usersData) {
-    let obleuteBezirkId = null;
+    let bezirkId = null;
     if (u.obleuteBezirk !== null) {
       const bezirk = bezirke.find((b) => b.number === u.obleuteBezirk);
-      obleuteBezirkId = bezirk?.id || null;
+      bezirkId = bezirk?.id || null;
     }
 
     let profileImageId = null;
@@ -419,8 +419,7 @@ async function seedUsers(bezirke: any[], media: any) {
         displayRole: u.displayRole,
         username: u.username,
         bio: u.bio,
-        obleuteRole: u.obleuteRole,
-        obleuteBezirkId: obleuteBezirkId,
+        bezirkId: bezirkId,
         profileImageId: profileImageId,
       },
     });

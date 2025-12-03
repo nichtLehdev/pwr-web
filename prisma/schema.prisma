@@ -29,10 +29,10 @@ model User {
   role        UserRole @default(USER)
   roleType    String?
   displayRole String?
+  obleuteRole String?  // Legacy: "Bezirksobmann" or "Bezirksobfrau" for OBLEUTE users
 
-  // Obleute-specific
-  obleuteRole     String?
-  obleuteBezirkId String?
+  // Bezirk association (works for all roles - OBLEUTE, RPW, LPW, ADMIN can all have a Bezirk)
+  bezirkId String?
 
   // Bio & Preferences
   bio         String?
@@ -41,7 +41,7 @@ model User {
   // Relations
   accounts                      Account[]
   sessions                      Session[]
-  obleuteBezirk                 Bezirk?                      @relation("BezirkObleute", fields: [obleuteBezirkId], references: [id], onDelete: SetNull)
+  bezirk                        Bezirk?                      @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
   uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
   uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
   posaunenwarteResponsibilities PosaunenwartResponsibility[]
@@ -613,7 +613,7 @@ model Bezirk {
   shortName String // "Unterer Niederrhein"
 
   // Relations
-  obleute                       User[]                       @relation("BezirkObleute")
+  users                         User[]                       @relation("BezirkUsers")
   events                        Event[] // Events in this district
   courses                       Course[] // Courses in this district
   posts                         Post[] // Posts for this district

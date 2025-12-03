@@ -267,14 +267,14 @@ export default function UserDetailPage() {
                   {user.displayRole ?? "-"}
                 </dd>
               </div>
-              {user.obleuteBezirk && (
+              {user.bezirk && (
                 <div className="sm:col-span-2">
                   <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                     Obleute für Bezirk
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    Bezirk {user.obleuteBezirk.number} –{" "}
-                    {user.obleuteBezirk.name}
+                    Bezirk {user.bezirk.number} –{" "}
+                    {user.bezirk.name}
                     {user.obleuteRole && (
                       <span className="text-gray-500">
                         {" "}

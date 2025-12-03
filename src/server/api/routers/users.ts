@@ -31,7 +31,7 @@ export const usersRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           profileImage: true,
-          obleuteBezirk: true,
+          bezirk: true,
           teamMember: {
             include: {
               user: {
@@ -84,7 +84,7 @@ export const usersRouter = createTRPCRouter({
         where: { username: input.username },
         include: {
           profileImage: true,
-          obleuteBezirk: true,
+          bezirk: true,
           teamMember: true,
           posaunenratMember: true,
           vorstandMember: true,
@@ -164,10 +164,10 @@ export const usersRouter = createTRPCRouter({
         include: {
           profileImage: true,
           ...(input.includeBezirk && {
-            obleuteBezirk: true,
+            bezirk: true,
           }),
         },
-        orderBy: [{ obleuteBezirk: { number: "asc" } }, { displayName: "asc" }],
+        orderBy: [{ bezirk: { number: "asc" } }, { displayName: "asc" }],
       });
 
       return users;
@@ -224,7 +224,7 @@ export const usersRouter = createTRPCRouter({
       where: { id: ctx.session.user.id },
       include: {
         profileImage: true,
-        obleuteBezirk: true,
+        bezirk: true,
         teamMember: true,
         posaunenratMember: {
           include: {
@@ -338,7 +338,7 @@ export const usersRouter = createTRPCRouter({
           username: input.username,
           phone: input.phone,
           street: input.street,
-          birthDate: input.birthDate,
+          birthDate: input.birthDate ? new Date(input.birthDate) : undefined,
           zipCode: input.zipCode,
           city: input.city,
           bio: input.bio,
@@ -416,7 +416,7 @@ export const usersRouter = createTRPCRouter({
           where,
           include: {
             profileImage: true,
-            obleuteBezirk: true,
+            bezirk: true,
             teamMember: true,
             posaunenratMember: true,
             vorstandMember: true,
@@ -494,13 +494,20 @@ export const usersRouter = createTRPCRouter({
   create: adminProcedure
     .input(
       z.object({
-        name: z.string().min(1),
-        email: z.string().email(),
-        username: z.string().min(3).max(30).optional(),
+        firstName: z.string().min(1, "Vorname ist erforderlich"),
+        lastName: z.string().min(1, "Nachname ist erforderlich"),
+        displayName: z.string().optional(),
+        email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
+        username: z
+          .string()
+          .min(3, "Benutzername muss mindestens 3 Zeichen haben")
+          .max(30, "Benutzername darf maximal 30 Zeichen haben")
+          .optional(),
         role: z.nativeEnum(UserRole).default("USER"),
-        bio: z.string().optional(),
-        obleuteBezirkId: z.string().optional(),
+        displayRole: z.string().optional(),
         obleuteRole: z.string().optional(),
+        bio: z.string().optional(),
+        bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional(),
       }),
     )
@@ -513,7 +520,7 @@ export const usersRouter = createTRPCRouter({
       if (existingEmail) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Email already exists",
+          message: "Diese E-Mail-Adresse ist bereits registriert",
         });
       }
 
@@ -526,16 +533,29 @@ export const usersRouter = createTRPCRouter({
         if (existingUsername) {
           throw new TRPCError({
             code: "CONFLICT",
-            message: "Username already exists",
+            message: "Dieser Benutzername ist bereits vergeben",
           });
         }
       }
 
       return await ctx.db.user.create({
-        data: input,
+        data: {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          displayName:
+            input.displayName || `${input.firstName} ${input.lastName}`,
+          email: input.email,
+          username: input.username,
+          role: input.role,
+          displayRole: input.displayRole,
+          obleuteRole: input.obleuteRole,
+          bio: input.bio,
+          bezirkId: input.bezirkId,
+          profileImageId: input.profileImageId,
+        },
         include: {
           profileImage: true,
-          obleuteBezirk: true,
+          bezirk: true,
         },
       });
     }),
@@ -547,14 +567,14 @@ export const usersRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().min(1).optional(),
+        displayName: z.string().min(1).optional(),
         email: z.string().email().optional(),
         username: z.string().min(3).max(30).optional(),
         role: z.nativeEnum(UserRole).optional(),
         bio: z.string().optional(),
         displayRole: z.string().optional(),
-        obleuteBezirkId: z.string().optional().nullable(),
-        obleuteRole: z.string().optional().nullable(),
+        obleuteRole: z.string().optional(),
+        bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
       }),
     )
@@ -600,7 +620,7 @@ export const usersRouter = createTRPCRouter({
         data: updateData,
         include: {
           profileImage: true,
-          obleuteBezirk: true,
+          bezirk: true,
         },
       });
     }),
@@ -665,8 +685,7 @@ export const usersRouter = createTRPCRouter({
       z.object({
         userId: z.string(),
         role: z.nativeEnum(UserRole),
-        obleuteBezirkId: z.string().optional().nullable(),
-        obleuteRole: z.string().optional().nullable(),
+        bezirkId: z.string().optional().nullable(),
         displayRole: z.string().optional().nullable(),
       }),
     )
@@ -689,7 +708,7 @@ export const usersRouter = createTRPCRouter({
         where: { id: userId },
         data: updateData,
         include: {
-          obleuteBezirk: true,
+          bezirk: true,
         },
       });
     }),
@@ -763,7 +782,11 @@ export const usersRouter = createTRPCRouter({
    * Check if email is available
    */
   checkEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+    .input(
+      z.object({
+        email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
+      }),
+    )
     .query(async ({ ctx, input }) => {
       const existing = await ctx.db.user.findUnique({
         where: { email: input.email },

@@ -297,11 +297,8 @@ export const eventsRouter = createTRPCRouter({
       };
 
       // RPW can only review events in their district
-      if (
-        ctx.session.user.role === UserRole.RPW &&
-        ctx.session.user.obleuteBezirkId
-      ) {
-        where.bezirkId = ctx.session.user.obleuteBezirkId;
+      if (ctx.session.user.role === UserRole.RPW && ctx.session.user.bezirkId) {
+        where.bezirkId = ctx.session.user.bezirkId;
       }
 
       const [events, total] = await Promise.all([
@@ -540,7 +537,7 @@ export const eventsRouter = createTRPCRouter({
       // RPW can only approve events in their district
       if (
         ctx.session.user.role === UserRole.RPW &&
-        event.bezirkId !== ctx.session.user.obleuteBezirkId
+        event.bezirkId !== ctx.session.user.bezirkId
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",

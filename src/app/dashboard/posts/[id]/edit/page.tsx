@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   PostCategory,
   ContentStatus,
@@ -102,7 +103,7 @@ export default function EditPostPage() {
       router.push(`/dashboard/posts/${postId}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });

@@ -943,7 +943,7 @@ export const organizationRouter = createTRPCRouter({
       const obmann = await ctx.db.user.findFirst({
         where: {
           role: "OBLEUTE",
-          obleuteBezirkId: bezirk.id,
+          bezirkId: bezirk.id,
         },
         select: {
           id: true,

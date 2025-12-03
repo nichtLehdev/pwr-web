@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   CourseType,
   TargetAudience,
@@ -109,7 +110,7 @@ export default function NewCoursePage() {
 
   // District state
   const [bezirkId, setBezirkId] = useState<string>("");
-  const userBezirkId = profile?.obleuteBezirkId ?? null;
+  const userBezirkId = profile?.bezirkId ?? null;
 
   // Capacity state
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
@@ -165,7 +166,9 @@ export default function NewCoursePage() {
       });
     },
     onError: (err) => {
-      setError(err.message || "Fehler beim Erstellen des Veranstaltungsortes.");
+      setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
     },
   });
 
@@ -175,7 +178,7 @@ export default function NewCoursePage() {
       router.push(`/dashboard/courses/${course.id}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });

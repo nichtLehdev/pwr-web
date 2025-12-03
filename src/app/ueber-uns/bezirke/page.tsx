@@ -273,13 +273,13 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                 {getBezirkInfo(currentBezirk.number)}
               </p>
-              {currentBezirk.obleute && currentBezirk.obleute[0] && (
+              {currentBezirk.users && currentBezirk.users[0] && (
                 <div className="dark:border-dark-border border-t border-gray-300 pt-4">
                   <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                    {currentBezirk.obleute[0].obleuteRole}
+                    {currentBezirk.users[0].obleuteRole}
                   </p>
                   <p className="text-dark dark:text-dark-text font-semibold">
-                    {currentBezirk.obleute[0].displayName}
+                    {currentBezirk.users[0].displayName}
                   </p>
                 </div>
               )}
@@ -468,9 +468,9 @@ export default function BezirkePage() {
 
                     {/* Content */}
                     <div className="p-6">
-                      {bezirk.obleute && (
+                      {bezirk.users && (
                         <div className="space-y-6">
-                          {bezirk.obleute.map((obmann, idx) => (
+                          {bezirk.users.map((obmann, idx) => (
                             <div
                               key={idx}
                               className={`flex ${

@@ -379,9 +379,9 @@ export default function DashboardUsersList() {
                       </span>
                     </td>
                     <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      {user.obleuteBezirk ? (
+                      {user.bezirk ? (
                         <span className="dark:text-dark-text text-sm text-gray-900">
-                          Bezirk {user.obleuteBezirk.number}
+                          Bezirk {user.bezirk.number}
                         </span>
                       ) : (
                         <span className="dark:text-dark-muted text-sm text-gray-400">

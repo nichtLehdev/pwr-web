@@ -159,7 +159,7 @@ export const postsRouter = createTRPCRouter({
           ctx.session.user.role === UserRole.LPW ||
           ctx.session.user.role === UserRole.RPW ||
           (ctx.session.user.role === UserRole.OBLEUTE &&
-            rawPost.bezirkId === ctx.session.user.obleuteBezirkId);
+            rawPost.bezirkId === ctx.session.user.bezirkId);
 
         if (!canView) {
           throw new TRPCError({
@@ -324,11 +324,8 @@ export const postsRouter = createTRPCRouter({
         pendingReview: true,
       };
 
-      if (
-        ctx.session.user.role === UserRole.RPW &&
-        ctx.session.user.obleuteBezirkId
-      ) {
-        where.bezirkId = ctx.session.user.obleuteBezirkId;
+      if (ctx.session.user.role === UserRole.RPW && ctx.session.user.bezirkId) {
+        where.bezirkId = ctx.session.user.bezirkId;
       }
 
       const [rawPosts, total] = await Promise.all([

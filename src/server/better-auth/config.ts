@@ -12,7 +12,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: ["http://localhost:3000", "http://192.168.4.136:3000", "http://192.168.6.244:3000"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://192.168.4.136:3000",
+    "http://192.168.6.244:3000",
+  ],
   plugins: [username()],
   socialProviders: {
     github: {
@@ -81,11 +85,7 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
-      obleuteRole: {
-        type: "string",
-        required: false,
-      },
-      obleuteBezirkId: {
+      bezirkId: {
         type: "string",
         required: false,
       },

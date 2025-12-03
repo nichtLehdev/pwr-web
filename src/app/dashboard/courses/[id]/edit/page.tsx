@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   CourseType,
   TargetAudience,
@@ -159,7 +160,7 @@ export default function EditCoursePage() {
   });
 
   const isHigherRole = profile && HIGHER_ROLES.includes(profile.role);
-  const userBezirkId = profile?.obleuteBezirkId ?? null;
+  const userBezirkId = profile?.bezirkId ?? null;
 
   // Initialize form from course data
   useEffect(() => {
@@ -245,7 +246,7 @@ export default function EditCoursePage() {
       router.push(`/dashboard/courses/${courseId}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });
@@ -269,7 +270,9 @@ export default function EditCoursePage() {
       });
     },
     onError: (err) => {
-      setError(err.message || "Fehler beim Erstellen des Veranstaltungsortes.");
+      setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
     },
   });
 
@@ -306,8 +309,8 @@ export default function EditCoursePage() {
       const isHigherRoleUser = HIGHER_ROLES.includes(profile.role);
       const isObleuteForDistrict =
         profile.role === UserRole.OBLEUTE &&
-        profile.obleuteBezirkId &&
-        course.bezirkId === profile.obleuteBezirkId;
+        profile.bezirkId &&
+        course.bezirkId === profile.bezirkId;
 
       const canEdit = isCreator || isHigherRoleUser || isObleuteForDistrict;
 

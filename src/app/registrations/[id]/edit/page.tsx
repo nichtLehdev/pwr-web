@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
+import { getErrorMessage } from "@/lib/utils";
 
 interface Participant {
   id: string;
@@ -77,7 +78,7 @@ export default function EditRegistrationPage() {
       }, 1500);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setSuccess("");
       setIsSubmitting(false);
     },
@@ -156,8 +157,7 @@ export default function EditRegistrationPage() {
   };
 
   // Check if user owns this registration
-  const isOwner =
-    registration?.registrantEmail === session?.user?.email;
+  const isOwner = registration?.registrantEmail === session?.user?.email;
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("de-DE", {
@@ -292,9 +292,7 @@ export default function EditRegistrationPage() {
         !billingData.billingCity ||
         !billingData.billingEmail
       ) {
-        setError(
-          "Bitte fülle alle Pflichtfelder der Rechnungsadresse aus.",
-        );
+        setError("Bitte fülle alle Pflichtfelder der Rechnungsadresse aus.");
         setIsSubmitting(false);
         return;
       }
@@ -409,7 +407,7 @@ export default function EditRegistrationPage() {
           <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
               href="/registrations"
-              className="transition-colors hover:text-primary"
+              className="hover:text-primary transition-colors"
             >
               Meine Anmeldungen
             </Link>
@@ -970,11 +968,14 @@ export default function EditRegistrationPage() {
                 Anmeldung stornieren?
               </h3>
               <p className="mb-6 text-gray-600 dark:text-gray-400">
-                Bist du sicher, dass du diese Anmeldung stornieren möchtest? Diese Aktion kann nicht rückgängig gemacht werden.
+                Bist du sicher, dass du diese Anmeldung stornieren möchtest?
+                Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
               {cancelError && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                  <p className="text-sm text-red-800 dark:text-red-300">{cancelError}</p>
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    {cancelError}
+                  </p>
                 </div>
               )}
               <div className="flex gap-3">
@@ -992,7 +993,9 @@ export default function EditRegistrationPage() {
                   disabled={cancelMutation.isPending}
                   className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
-                  {cancelMutation.isPending ? "Wird storniert..." : "Stornieren"}
+                  {cancelMutation.isPending
+                    ? "Wird storniert..."
+                    : "Stornieren"}
                 </button>
               </div>
             </div>

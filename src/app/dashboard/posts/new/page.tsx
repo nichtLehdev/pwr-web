@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   PostCategory,
   ContentStatus,
@@ -37,7 +38,7 @@ export default function NewPostPage() {
   // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
-  const userBezirkId = profile?.obleuteBezirkId ?? null;
+  const userBezirkId = profile?.bezirkId ?? null;
 
   // Form state
   const [title, setTitle] = useState("");
@@ -68,7 +69,7 @@ export default function NewPostPage() {
       router.push(`/dashboard/posts/${post.id}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });

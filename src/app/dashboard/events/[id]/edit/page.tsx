@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   EventCategory,
   EventEnsembleType,
@@ -222,7 +223,7 @@ export default function EditEventPage() {
       router.push(`/dashboard/events/${eventId}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });
@@ -244,7 +245,9 @@ export default function EditEventPage() {
       });
     },
     onError: (err) => {
-      setError(err.message || "Fehler beim Erstellen des Veranstaltungsortes.");
+      setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
     },
   });
 

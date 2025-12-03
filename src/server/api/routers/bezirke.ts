@@ -7,7 +7,7 @@ export const bezirkeRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     const bezirke = await ctx.db.bezirk.findMany({
       include: {
-        obleute: {
+        users: {
           select: {
             id: true,
             firstName: true,
@@ -45,15 +45,14 @@ export const bezirkeRouter = createTRPCRouter({
 
     return bezirke.map((bezirk) => ({
       ...bezirk,
-      obleute: bezirk.obleute.map((obleute) => ({
-        ...obleute,
-        displayName:
-          obleute.displayName || `${obleute.firstName} ${obleute.lastName}`,
+      users: bezirk.users.map((user) => ({
+        ...user,
+        displayName: user.displayName || `${user.firstName} ${user.lastName}`,
         firstName: undefined,
         lastName: undefined,
         address:
-          obleute.street || obleute.zipCode || obleute.city
-            ? `${obleute.street}, ${obleute.zipCode} ${obleute.city}`
+          user.street || user.zipCode || user.city
+            ? `${user.street}, ${user.zipCode} ${user.city}`
             : undefined,
       })),
     }));
@@ -66,7 +65,7 @@ export const bezirkeRouter = createTRPCRouter({
       const bezirk = await ctx.db.bezirk.findUnique({
         where: { id: input.id },
         include: {
-          obleute: {
+          users: {
             select: {
               id: true,
               firstName: true,
@@ -150,7 +149,7 @@ export const bezirkeRouter = createTRPCRouter({
       const bezirk = await ctx.db.bezirk.findUnique({
         where: { number: input.number },
         include: {
-          obleute: {
+          users: {
             select: {
               id: true,
               displayName: true,
@@ -241,7 +240,7 @@ export const bezirkeRouter = createTRPCRouter({
               events: { where: { status: "APPROVED" } },
               courses: { where: { status: "APPROVED" } },
               posts: { where: { status: "APPROVED" } },
-              obleute: true,
+              users: true,
             },
           },
         },
@@ -279,7 +278,7 @@ export const bezirkeRouter = createTRPCRouter({
         totalCourses: bezirk._count.courses,
         activeCourses,
         totalPosts: bezirk._count.posts,
-        totalObleute: bezirk._count.obleute,
+        totalObleute: bezirk._count.users,
       };
     }),
 });

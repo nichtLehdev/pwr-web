@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { getErrorMessage } from "@/lib/utils";
 import {
   EventCategory,
   EventEnsembleType,
@@ -41,15 +42,13 @@ export default function NewEventPage() {
   const hasRedirected = useRef(false);
 
   // Fetch user profile for role and bezirk
-  const { data: profile, isLoading: profileLoading } = api.users.getMyProfile.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { data: profile, isLoading: profileLoading } =
+    api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
   // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
-  const userBezirkId = profile?.obleuteBezirkId ?? null;
+  const userBezirkId = profile?.bezirkId ?? null;
 
   // Form state
   const [title, setTitle] = useState("");
@@ -134,7 +133,7 @@ export default function NewEventPage() {
       router.push(`/dashboard/events/${event.id}`);
     },
     onError: (err) => {
-      setError(err.message || "Ein Fehler ist aufgetreten.");
+      setError(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });
@@ -143,7 +142,9 @@ export default function NewEventPage() {
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: (location) => {
       setLocationId(location.id);
-      setLocationSearch(`${location.name ? location.name + ", " : ""}${location.city}`);
+      setLocationSearch(
+        `${location.name ? location.name + ", " : ""}${location.city}`,
+      );
       setShowNewLocationForm(false);
       setNewLocation({
         name: "",
@@ -154,7 +155,9 @@ export default function NewEventPage() {
       });
     },
     onError: (err) => {
-      setError(err.message || "Fehler beim Erstellen des Veranstaltungsortes.");
+      setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
     },
   });
 
@@ -205,7 +208,9 @@ export default function NewEventPage() {
     city: string;
   }) => {
     setLocationId(location.id);
-    setLocationSearch(`${location.name ? location.name + ", " : ""}${location.city}`);
+    setLocationSearch(
+      `${location.name ? location.name + ", " : ""}${location.city}`,
+    );
     setShowLocationDropdown(false);
   };
 
@@ -288,7 +293,9 @@ export default function NewEventPage() {
       districtName: districtName.trim() || undefined,
       performingEnsembleType: performingEnsembleType ?? undefined,
       ensembleId:
-        performingEnsembleType === "ENSEMBLE" ? ensembleId || undefined : undefined,
+        performingEnsembleType === "ENSEMBLE"
+          ? ensembleId || undefined
+          : undefined,
       auswahlChorId:
         performingEnsembleType === "AUSWAHLCHOR"
           ? auswahlChorId || undefined
@@ -313,8 +320,8 @@ export default function NewEventPage() {
 
   if (sessionLoading || profileLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
+      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }
@@ -326,10 +333,12 @@ export default function NewEventPage() {
   // Get available ensemble types based on role
   const availableEnsembleTypes = isHigherRole
     ? Object.entries(ensembleTypeLabels)
-    : Object.entries(ensembleTypeLabels).filter(([value]) => value !== "AUSWAHLCHOR");
+    : Object.entries(ensembleTypeLabels).filter(
+        ([value]) => value !== "AUSWAHLCHOR",
+      );
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-dark-background">
+    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
@@ -337,31 +346,31 @@ export default function NewEventPage() {
             <li>
               <Link
                 href="/dashboard"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Dashboard
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
             <li>
               <Link
                 href="/dashboard/events"
-                className="text-gray-500 hover:text-primary dark:text-dark-muted dark:hover:text-primary"
+                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
                 Termine
               </Link>
             </li>
-            <li className="text-gray-400 dark:text-dark-muted">/</li>
-            <li className="text-gray-900 dark:text-dark-text">Neuer Termin</li>
+            <li className="dark:text-dark-muted text-gray-400">/</li>
+            <li className="dark:text-dark-text text-gray-900">Neuer Termin</li>
           </ol>
         </nav>
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text">
+          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
             Neuen Termin erstellen
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-dark-muted">
+          <p className="dark:text-dark-muted mt-2 text-gray-600">
             Erstelle einen neuen Termin für den Posaunenchor
           </p>
         </div>
@@ -376,13 +385,13 @@ export default function NewEventPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Grundinformationen
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Titel *
                 </label>
                 <input
@@ -390,13 +399,13 @@ export default function NewEventPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="z.B. Adventskonzert 2025"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Motto
                 </label>
                 <input
@@ -404,12 +413,12 @@ export default function NewEventPage() {
                   value={motto}
                   onChange={(e) => setMotto(e.target.value)}
                   placeholder="z.B. Musik zur Weihnachtszeit"
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Beschreibung
                 </label>
                 <textarea
@@ -417,18 +426,18 @@ export default function NewEventPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Beschreibe die Veranstaltung..."
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Kategorie *
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as EventCategory)}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 >
                   {Object.entries(categoryLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -441,32 +450,32 @@ export default function NewEventPage() {
           </section>
 
           {/* Date & Time */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Datum & Uhrzeit
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Datum *
                 </label>
                 <input
                   type="date"
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Uhrzeit *
                 </label>
                 <input
                   type="time"
                   value={eventTime}
                   onChange={(e) => setEventTime(e.target.value)}
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
               </div>
@@ -474,13 +483,13 @@ export default function NewEventPage() {
           </section>
 
           {/* Location */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Veranstaltungsort
             </h2>
             <div className="space-y-4">
               <div className="relative" data-dropdown>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Ort suchen
                 </label>
                 <input
@@ -493,13 +502,13 @@ export default function NewEventPage() {
                   }}
                   onFocus={() => setShowLocationDropdown(true)}
                   placeholder="Suche nach einem Ort..."
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
 
                 {/* Location Dropdown */}
                 {showLocationDropdown && locationsData && (
-                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface">
-                    <div 
+                  <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div
                       className="overflow-y-auto"
                       style={{ maxHeight: "240px" }}
                     >
@@ -512,7 +521,7 @@ export default function NewEventPage() {
                               onClick={() => handleLocationSelect(location)}
                               className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
-                              <span className="font-medium text-gray-900 dark:text-dark-text">
+                              <span className="dark:text-dark-text font-medium text-gray-900">
                                 {location.name || location.city}
                               </span>
                               {location.name && (
@@ -541,7 +550,7 @@ export default function NewEventPage() {
                         setShowLocationDropdown(false);
                         setShowNewLocationForm(true);
                       }}
-                      className="block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-primary hover:bg-gray-100 dark:border-dark-border dark:hover:bg-gray-700"
+                      className="text-primary dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       + Neuen Ort erstellen
                     </button>
@@ -551,8 +560,8 @@ export default function NewEventPage() {
 
               {/* New Location Form */}
               {showNewLocationForm && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-border dark:bg-dark-background-secondary">
-                  <h3 className="mb-3 font-medium text-gray-900 dark:text-dark-text">
+                <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <h3 className="dark:text-dark-text mb-3 font-medium text-gray-900">
                     Neuen Ort erstellen
                   </h3>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -561,10 +570,13 @@ export default function NewEventPage() {
                         type="text"
                         value={newLocation.name}
                         onChange={(e) =>
-                          setNewLocation({ ...newLocation, name: e.target.value })
+                          setNewLocation({
+                            ...newLocation,
+                            name: e.target.value,
+                          })
                         }
                         placeholder="Name (z.B. Gemeindehaus)"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                       />
                     </div>
                     <div className="sm:col-span-2">
@@ -572,10 +584,13 @@ export default function NewEventPage() {
                         type="text"
                         value={newLocation.street}
                         onChange={(e) =>
-                          setNewLocation({ ...newLocation, street: e.target.value })
+                          setNewLocation({
+                            ...newLocation,
+                            street: e.target.value,
+                          })
                         }
                         placeholder="Straße und Hausnummer"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -583,10 +598,13 @@ export default function NewEventPage() {
                         type="text"
                         value={newLocation.zipCode}
                         onChange={(e) =>
-                          setNewLocation({ ...newLocation, zipCode: e.target.value })
+                          setNewLocation({
+                            ...newLocation,
+                            zipCode: e.target.value,
+                          })
                         }
                         placeholder="PLZ"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                       />
                     </div>
                     <div>
@@ -594,10 +612,13 @@ export default function NewEventPage() {
                         type="text"
                         value={newLocation.city}
                         onChange={(e) =>
-                          setNewLocation({ ...newLocation, city: e.target.value })
+                          setNewLocation({
+                            ...newLocation,
+                            city: e.target.value,
+                          })
                         }
                         placeholder="Stadt *"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                         required
                       />
                     </div>
@@ -612,7 +633,7 @@ export default function NewEventPage() {
                           })
                         }
                         placeholder="Zusätzliche Info (z.B. Eingang über Hinterhof)"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -621,14 +642,16 @@ export default function NewEventPage() {
                       type="button"
                       onClick={handleCreateLocation}
                       disabled={createLocationMutation.isPending}
-                      className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+                      className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
                     >
-                      {createLocationMutation.isPending ? "Speichern..." : "Speichern"}
+                      {createLocationMutation.isPending
+                        ? "Speichern..."
+                        : "Speichern"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowNewLocationForm(false)}
-                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-dark-border dark:text-dark-text dark:hover:bg-gray-700"
+                      className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Abbrechen
                     </button>
@@ -640,15 +663,15 @@ export default function NewEventPage() {
 
           {/* District */}
           {/* District */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Bezirk
             </h2>
             <div className="space-y-4">
               {!isHigherRole && userBezirkId ? (
                 // Restricted users: show their assigned bezirk (locked)
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Dein Bezirk
                   </label>
                   <div className="flex items-center gap-2">
@@ -660,7 +683,7 @@ export default function NewEventPage() {
                           : "Wird geladen..."
                       }
                       disabled
-                      className="block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60 dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                      className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
                     />
                     <svg
                       className="h-5 w-5 shrink-0 text-gray-400"
@@ -684,21 +707,22 @@ export default function NewEventPage() {
                 // Restricted users without bezirk assignment
                 <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                    <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet. 
-                    Bitte wende dich an einen Administrator, um Termine erstellen zu können.
+                    <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
+                    Bitte wende dich an einen Administrator, um Termine
+                    erstellen zu können.
                   </p>
                 </div>
               ) : (
                 // Higher roles: full bezirk selection
                 <>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                       Bezirk auswählen
                     </label>
                     <select
                       value={bezirkId}
                       onChange={(e) => setBezirkId(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                     >
                       <option value="">Übergreifend / Kein Bezirk</option>
                       {bezirke?.map((bezirk) => (
@@ -711,7 +735,7 @@ export default function NewEventPage() {
 
                   {!bezirkId && (
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                         Oder Bezirksname eingeben
                       </label>
                       <input
@@ -719,7 +743,7 @@ export default function NewEventPage() {
                         value={districtName}
                         onChange={(e) => setDistrictName(e.target.value)}
                         placeholder="z.B. Köln-Bonn"
-                        className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                       />
                     </div>
                   )}
@@ -729,23 +753,25 @@ export default function NewEventPage() {
           </section>
 
           {/* Performing Ensemble */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Auftretendes Ensemble
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Ensemble-Typ
                 </label>
                 <select
                   value={performingEnsembleType ?? ""}
                   onChange={(e) =>
                     setPerformingEnsembleType(
-                      e.target.value ? (e.target.value as EventEnsembleType) : null,
+                      e.target.value
+                        ? (e.target.value as EventEnsembleType)
+                        : null,
                     )
                   }
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 >
                   <option value="">Kein Ensemble</option>
                   {availableEnsembleTypes.map(([value, label]) => (
@@ -756,14 +782,15 @@ export default function NewEventPage() {
                 </select>
                 {!isHigherRole && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Du kannst Ensembles aus deinem Bezirk auswählen oder einen benutzerdefinierten Namen eingeben.
+                    Du kannst Ensembles aus deinem Bezirk auswählen oder einen
+                    benutzerdefinierten Namen eingeben.
                   </p>
                 )}
               </div>
 
               {performingEnsembleType === "ENSEMBLE" && (
                 <div className="relative" data-dropdown>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Ensemble suchen
                   </label>
                   <input
@@ -776,19 +803,21 @@ export default function NewEventPage() {
                     }}
                     onFocus={() => setShowEnsembleDropdown(true)}
                     placeholder="Suche nach einem Ensemble..."
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
 
                   {/* Ensemble Dropdown */}
                   {showEnsembleDropdown && ensemblesData && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface">
+                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                       <div
                         className="overflow-y-auto"
                         style={{ maxHeight: "240px" }}
                       >
                         {ensemblesData.ensembles
                           ?.filter((e) =>
-                            e.name.toLowerCase().includes(ensembleSearch.toLowerCase())
+                            e.name
+                              .toLowerCase()
+                              .includes(ensembleSearch.toLowerCase()),
                           )
                           .map((ensemble) => (
                             <button
@@ -801,18 +830,21 @@ export default function NewEventPage() {
                               }}
                               className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
-                              <span className="font-medium text-gray-900 dark:text-dark-text">
+                              <span className="dark:text-dark-text font-medium text-gray-900">
                                 {ensemble.name}
                               </span>
                               {ensemble.bezirk && (
                                 <span className="text-gray-500 dark:text-gray-400">
-                                  {" "}– Bezirk {ensemble.bezirk.number}
+                                  {" "}
+                                  – Bezirk {ensemble.bezirk.number}
                                 </span>
                               )}
                             </button>
                           ))}
                         {ensemblesData.ensembles?.filter((e) =>
-                          e.name.toLowerCase().includes(ensembleSearch.toLowerCase())
+                          e.name
+                            .toLowerCase()
+                            .includes(ensembleSearch.toLowerCase()),
                         ).length === 0 && (
                           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                             Keine Ensembles gefunden
@@ -826,7 +858,7 @@ export default function NewEventPage() {
 
               {performingEnsembleType === "AUSWAHLCHOR" && (
                 <div className="relative" data-dropdown>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Auswahlchor suchen
                   </label>
                   <input
@@ -839,19 +871,21 @@ export default function NewEventPage() {
                     }}
                     onFocus={() => setShowAuswahlChorDropdown(true)}
                     placeholder="Suche nach einem Auswahlchor..."
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
 
                   {/* Auswahlchor Dropdown */}
                   {showAuswahlChorDropdown && auswahlchoereData && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-border dark:bg-dark-surface">
+                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                       <div
                         className="overflow-y-auto"
                         style={{ maxHeight: "240px" }}
                       >
                         {auswahlchoereData.auswahlchoere
                           ?.filter((c) =>
-                            c.name.toLowerCase().includes(auswahlChorSearch.toLowerCase())
+                            c.name
+                              .toLowerCase()
+                              .includes(auswahlChorSearch.toLowerCase()),
                           )
                           .map((chor) => (
                             <button
@@ -864,13 +898,15 @@ export default function NewEventPage() {
                               }}
                               className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                             >
-                              <span className="font-medium text-gray-900 dark:text-dark-text">
+                              <span className="dark:text-dark-text font-medium text-gray-900">
                                 {chor.name}
                               </span>
                             </button>
                           ))}
                         {auswahlchoereData.auswahlchoere?.filter((c) =>
-                          c.name.toLowerCase().includes(auswahlChorSearch.toLowerCase())
+                          c.name
+                            .toLowerCase()
+                            .includes(auswahlChorSearch.toLowerCase()),
                         ).length === 0 && (
                           <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                             Keine Auswahlchöre gefunden
@@ -884,7 +920,7 @@ export default function NewEventPage() {
 
               {performingEnsembleType === "CUSTOM" && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Ensemble-Name
                   </label>
                   <input
@@ -892,14 +928,14 @@ export default function NewEventPage() {
                     value={performingEnsembleName}
                     onChange={(e) => setPerformingEnsembleName(e.target.value)}
                     placeholder="z.B. Posaunenchor Beispielstadt"
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
               )}
 
               {performingEnsembleType && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Leitung
                   </label>
                   <input
@@ -907,7 +943,7 @@ export default function NewEventPage() {
                     value={leitung}
                     onChange={(e) => setLeitung(e.target.value)}
                     placeholder="Name der musikalischen Leitung"
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
               )}
@@ -915,8 +951,8 @@ export default function NewEventPage() {
           </section>
 
           {/* Participation */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Teilnahme
             </h2>
             <div className="space-y-4">
@@ -925,16 +961,16 @@ export default function NewEventPage() {
                   type="checkbox"
                   checked={openToParticipants}
                   onChange={(e) => setOpenToParticipants(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                 />
-                <span className="text-sm text-gray-700 dark:text-dark-text">
+                <span className="dark:text-dark-text text-sm text-gray-700">
                   Offen für externe Teilnehmer / Mitwirkende
                 </span>
               </label>
 
               {openToParticipants && (
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Teilnahme-Informationen
                   </label>
                   <textarea
@@ -942,7 +978,7 @@ export default function NewEventPage() {
                     onChange={(e) => setParticipationInfo(e.target.value)}
                     rows={3}
                     placeholder="Informationen zur Teilnahme, Anmeldung, etc."
-                    className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
               )}
@@ -950,8 +986,8 @@ export default function NewEventPage() {
           </section>
 
           {/* Pricing */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Eintritt
             </h2>
             <div className="space-y-4">
@@ -961,9 +997,9 @@ export default function NewEventPage() {
                     type="radio"
                     checked={isFree}
                     onChange={() => setIsFree(true)}
-                    className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                    className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
                   />
-                  <span className="text-sm text-gray-700 dark:text-dark-text">
+                  <span className="dark:text-dark-text text-sm text-gray-700">
                     Eintritt frei
                   </span>
                 </label>
@@ -972,16 +1008,16 @@ export default function NewEventPage() {
                     type="radio"
                     checked={!isFree}
                     onChange={() => setIsFree(false)}
-                    className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                    className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
                   />
-                  <span className="text-sm text-gray-700 dark:text-dark-text">
+                  <span className="dark:text-dark-text text-sm text-gray-700">
                     Mit Eintritt
                   </span>
                 </label>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-dark-text">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Preis-Informationen
                 </label>
                 <input
@@ -993,20 +1029,20 @@ export default function NewEventPage() {
                       ? "z.B. Um eine Spende wird gebeten"
                       : "z.B. Karten an der Abendkasse"
                   }
-                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
 
               {!isFree && (
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700 dark:text-dark-text">
+                    <label className="dark:text-dark-text text-sm font-medium text-gray-700">
                       Preiskategorien
                     </label>
                     <button
                       type="button"
                       onClick={addPriceOption}
-                      className="text-sm font-medium text-primary hover:text-primary/80"
+                      className="text-primary hover:text-primary/80 text-sm font-medium"
                     >
                       + Kategorie hinzufügen
                     </button>
@@ -1021,7 +1057,7 @@ export default function NewEventPage() {
                       {priceOptions.map((option) => (
                         <div
                           key={option.id}
-                          className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-dark-border"
+                          className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
                         >
                           <div className="flex-1 space-y-2">
                             <div className="grid gap-2 sm:grid-cols-2">
@@ -1029,10 +1065,14 @@ export default function NewEventPage() {
                                 type="text"
                                 value={option.label}
                                 onChange={(e) =>
-                                  updatePriceOption(option.id, "label", e.target.value)
+                                  updatePriceOption(
+                                    option.id,
+                                    "label",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="Bezeichnung (z.B. Erwachsene)"
-                                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />
                               <div className="flex items-center gap-1">
                                 <input
@@ -1047,7 +1087,7 @@ export default function NewEventPage() {
                                   }
                                   min="0"
                                   step="0.01"
-                                  className="w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                                 />
                                 <span className="text-sm text-gray-500">€</span>
                               </div>
@@ -1063,7 +1103,7 @@ export default function NewEventPage() {
                                 )
                               }
                               placeholder="Beschreibung (optional)"
-                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text"
+                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                             />
                           </div>
                           <button
@@ -1095,8 +1135,8 @@ export default function NewEventPage() {
           </section>
 
           {/* Submit Options */}
-          <section className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-dark-border dark:bg-dark-surface">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-dark-text">
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Veröffentlichung
             </h2>
             <div className="space-y-4">
@@ -1112,10 +1152,10 @@ export default function NewEventPage() {
                         setSubmitAsDraft(false);
                         setSubmitAsApproved(true);
                       }}
-                      className="mt-0.5 h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
                     />
                     <div>
-                      <span className="font-medium text-gray-700 dark:text-dark-text">
+                      <span className="dark:text-dark-text font-medium text-gray-700">
                         Direkt veröffentlichen
                       </span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -1132,14 +1172,15 @@ export default function NewEventPage() {
                         setSubmitAsDraft(false);
                         setSubmitAsApproved(false);
                       }}
-                      className="mt-0.5 h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
                     />
                     <div>
-                      <span className="font-medium text-gray-700 dark:text-dark-text">
+                      <span className="dark:text-dark-text font-medium text-gray-700">
                         Zur Prüfung einreichen
                       </span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Der Termin wird zur Prüfung durch einen Redakteur eingereicht.
+                        Der Termin wird zur Prüfung durch einen Redakteur
+                        eingereicht.
                       </p>
                     </div>
                   </label>
@@ -1152,14 +1193,15 @@ export default function NewEventPage() {
                         setSubmitAsDraft(true);
                         setSubmitAsApproved(false);
                       }}
-                      className="mt-0.5 h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4 border-gray-300"
                     />
                     <div>
-                      <span className="font-medium text-gray-700 dark:text-dark-text">
+                      <span className="dark:text-dark-text font-medium text-gray-700">
                         Als Entwurf speichern
                       </span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Der Termin wird noch nicht veröffentlicht und ist nur für dich sichtbar.
+                        Der Termin wird noch nicht veröffentlicht und ist nur
+                        für dich sichtbar.
                       </p>
                     </div>
                   </label>
@@ -1171,15 +1213,15 @@ export default function NewEventPage() {
                       type="checkbox"
                       checked={submitAsDraft}
                       onChange={(e) => setSubmitAsDraft(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
                     />
                     <div>
-                      <span className="font-medium text-gray-700 dark:text-dark-text">
+                      <span className="dark:text-dark-text font-medium text-gray-700">
                         Als Entwurf speichern
                       </span>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Der Termin wird noch nicht zur Prüfung eingereicht und ist nur
-                        für dich sichtbar.
+                        Der Termin wird noch nicht zur Prüfung eingereicht und
+                        ist nur für dich sichtbar.
                       </p>
                     </div>
                   </label>
@@ -1187,9 +1229,9 @@ export default function NewEventPage() {
                   {!submitAsDraft && (
                     <div className="rounded-lg bg-blue-50 p-3 dark:bg-blue-900/20">
                       <p className="text-sm text-blue-800 dark:text-blue-300">
-                        <strong>Hinweis:</strong> Nach dem Erstellen wird der Termin zur
-                        Prüfung eingereicht. Ein Redakteur wird den Termin prüfen und
-                        freigeben.
+                        <strong>Hinweis:</strong> Nach dem Erstellen wird der
+                        Termin zur Prüfung eingereicht. Ein Redakteur wird den
+                        Termin prüfen und freigeben.
                       </p>
                     </div>
                   )}
@@ -1202,14 +1244,14 @@ export default function NewEventPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/events"
-              className="rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-dark-border dark:text-dark-text dark:hover:bg-gray-700"
+              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen
             </Link>
             <button
               type="submit"
               disabled={isSubmitting || createEventMutation.isPending}
-              className="rounded-lg bg-primary px-6 py-2.5 font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
             >
               {isSubmitting || createEventMutation.isPending
                 ? "Wird erstellt..."

@@ -16,7 +16,7 @@ export default async function PosaunenratPage() {
 
   const obleute = bezirke.flatMap((bezirk) => {
     return [
-      ...bezirk.obleute.map((obleute) => ({
+      ...bezirk.users.map((obleute) => ({
         ...obleute,
         districtNumber: bezirk.number,
         districtName: bezirk.shortName,

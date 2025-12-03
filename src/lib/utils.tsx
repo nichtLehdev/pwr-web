@@ -84,3 +84,33 @@ export function formatDate(dateString: string): string {
     year: "numeric",
   });
 }
+
+/**
+ * Extracts a user-friendly error message from tRPC/Zod errors.
+ * Handles Zod validation errors that come as JSON arrays.
+ */
+export function getErrorMessage(
+  error: { message?: string } | unknown,
+  fallback = "Ein Fehler ist aufgetreten.",
+): string {
+  if (!error || typeof error !== "object") return fallback;
+
+  const err = error as { message?: string };
+  if (!err.message) return fallback;
+
+  try {
+    const parsed = JSON.parse(err.message) as unknown;
+    if (
+      Array.isArray(parsed) &&
+      parsed.length > 0 &&
+      typeof parsed[0] === "object" &&
+      parsed[0] !== null &&
+      "message" in parsed[0]
+    ) {
+      return (parsed[0] as { message: string }).message;
+    }
+    return err.message;
+  } catch {
+    return err.message || fallback;
+  }
+}

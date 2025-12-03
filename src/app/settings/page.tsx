@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { UserRole } from "~/generated/prisma/enums";
+import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
 
 // Collapsible Section Component
@@ -122,7 +124,7 @@ export default function SettingsPage() {
       setTimeout(() => setSuccess(""), 3000);
     },
     onError: (err) => {
-      setError(err.message || "Fehler beim Aktualisieren des Profils");
+      setError(getErrorMessage(err, "Fehler beim Aktualisieren des Profils"));
       setSuccess("");
     },
   });
@@ -341,6 +343,31 @@ export default function SettingsPage() {
                   setFormData((prev) => ({ ...prev, profileImageId: null }));
                 }}
               />
+              {profile?.role && profile.role !== UserRole.USER && (
+                <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                  <div className="flex items-start gap-2">
+                    <svg
+                      className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      <strong>Hinweis:</strong> Dein Profilbild wird auch auf
+                      öffentlichen Seiten angezeigt (z.B. Team, Bezirke,
+                      Posaunenrat). Eine Änderung hier aktualisiert das Bild
+                      automatisch auf allen Seiten.
+                    </p>
+                  </div>
+                </div>
+              )}
             </CollapsibleSection>
 
             {/* Section: Personal Data */}
@@ -789,23 +816,25 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Danger Zone */}
-        <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300">
-            Gefahrenzone
-          </h2>
-          <p className="mt-2 text-sm text-red-700 dark:text-red-400">
-            Diese Aktionen können nicht rückgängig gemacht werden.
-          </p>
-          <div className="mt-4">
-            <button
-              type="button"
-              className="rounded-lg border border-red-600 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-600 hover:text-white dark:border-red-500 dark:text-red-500 dark:hover:bg-red-600 dark:hover:text-white"
-            >
-              Konto löschen
-            </button>
+        {/* Danger Zone - Only show for regular users */}
+        {profile?.role === UserRole.USER && (
+          <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
+            <h2 className="text-lg font-semibold text-red-800 dark:text-red-300">
+              Gefahrenzone
+            </h2>
+            <p className="mt-2 text-sm text-red-700 dark:text-red-400">
+              Diese Aktionen können nicht rückgängig gemacht werden.
+            </p>
+            <div className="mt-4">
+              <button
+                type="button"
+                className="rounded-lg border border-red-600 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-600 hover:text-white dark:border-red-500 dark:text-red-500 dark:hover:bg-red-600 dark:hover:text-white"
+              >
+                Konto löschen
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
