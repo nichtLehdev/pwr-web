@@ -110,6 +110,36 @@ export const organizationRouter = createTRPCRouter({
     return grouped;
   }),
 
+  // Get single Posaunenrat member by ID
+  getPosaunenratMember: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const member = await ctx.db.posaunenratMember.findUnique({
+        where: { id: input.id },
+        include: {
+          image: true,
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              bio: true,
+            },
+          },
+        },
+      });
+
+      if (!member) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Posaunenratsmitglied nicht gefunden",
+        });
+      }
+
+      return member;
+    }),
+
   // Create Posaunenrat member
   createPosaunenratMember: adminProcedure
     .input(
@@ -781,13 +811,13 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional(),
-        email: z.email().optional(),
-        phone: z.string().optional(),
-        position: z.string().optional(),
+        name: z.string().optional().nullable(),
+        email: z.email().optional().nullable(),
+        phone: z.string().optional().nullable(),
+        position: z.string().optional().nullable(),
         role: z.enum(FoerdervereinRole).optional(),
         memberSince: z.date().optional().nullable(),
-        description: z.string().optional(),
+        description: z.string().optional().nullable(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
         imageId: z.string().optional().nullable(),

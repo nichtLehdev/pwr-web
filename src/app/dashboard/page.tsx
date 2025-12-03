@@ -177,14 +177,12 @@ export default function DashboardPage() {
                 description="Posaunenratsmitglieder"
                 icon={<BadgeCheckIcon />}
                 href="/dashboard/posaunenrat"
-                comingSoon
               />
               <DashboardCard
                 title="Förderverein"
                 description="Fördervereins-Mitglieder"
                 icon={<HeartIcon />}
                 href="/dashboard/foerderverein"
-                comingSoon
               />
             </div>
           </section>
