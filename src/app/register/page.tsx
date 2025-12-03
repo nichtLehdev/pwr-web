@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn, signUp } from "@/lib/auth";
+import { api } from "@/trpc/react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,15 +18,122 @@ export default function RegisterPage() {
   const [usernameEdited, setUsernameEdited] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [usernameStatus, setUsernameStatus] = useState<{
-    checking: boolean;
-    available: boolean | null;
-    message: string;
-  }>({
-    checking: false,
-    available: null,
-    message: "",
-  });
+
+  // Debounced values for API checks
+  const [debouncedUsername, setDebouncedUsername] = useState("");
+  const [debouncedEmail, setDebouncedEmail] = useState("");
+
+  // Email validation regex
+  const isValidEmail = (emailToCheck: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
+  };
+
+  // Debounce username
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.username.length >= 3) {
+        setDebouncedUsername(formData.username);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [formData.username]);
+
+  // Debounce email
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isValidEmail(formData.email)) {
+        setDebouncedEmail(formData.email);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [formData.email]);
+
+  // Check username availability via tRPC
+  const checkUsernameQuery = api.users.checkUsername.useQuery(
+    { username: debouncedUsername },
+    {
+      enabled: debouncedUsername.length >= 3,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Check email availability via tRPC
+  const checkEmailQuery = api.users.checkEmail.useQuery(
+    { email: debouncedEmail },
+    {
+      enabled: isValidEmail(debouncedEmail),
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Compute username status from query result
+  const usernameStatus = useMemo(() => {
+    if (formData.username.length < 3) {
+      return {
+        checking: false,
+        available: null as boolean | null,
+        message: formData.username.length > 0 ? "Mindestens 3 Zeichen" : "",
+      };
+    }
+    if (
+      formData.username !== debouncedUsername ||
+      checkUsernameQuery.isLoading
+    ) {
+      return {
+        checking: true,
+        available: null as boolean | null,
+        message: "Wird geprüft...",
+      };
+    }
+    if (checkUsernameQuery.data) {
+      return {
+        checking: false,
+        available: checkUsernameQuery.data.available,
+        message: checkUsernameQuery.data.available
+          ? "✓ Benutzername verfügbar"
+          : "✗ Benutzername bereits vergeben",
+      };
+    }
+    return { checking: false, available: null as boolean | null, message: "" };
+  }, [
+    formData.username,
+    debouncedUsername,
+    checkUsernameQuery.isLoading,
+    checkUsernameQuery.data,
+  ]);
+
+  // Compute email status from query result
+  const emailStatus = useMemo(() => {
+    if (!formData.email || !isValidEmail(formData.email)) {
+      return {
+        checking: false,
+        available: null as boolean | null,
+        message: "",
+      };
+    }
+    if (formData.email !== debouncedEmail || checkEmailQuery.isLoading) {
+      return {
+        checking: true,
+        available: null as boolean | null,
+        message: "Wird geprüft...",
+      };
+    }
+    if (checkEmailQuery.data) {
+      return {
+        checking: false,
+        available: checkEmailQuery.data.available,
+        message: checkEmailQuery.data.available
+          ? "✓ E-Mail verfügbar"
+          : "✗ E-Mail bereits registriert",
+      };
+    }
+    return { checking: false, available: null as boolean | null, message: "" };
+  }, [
+    formData.email,
+    debouncedEmail,
+    checkEmailQuery.isLoading,
+    checkEmailQuery.data,
+  ]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,10 +148,10 @@ export default function RegisterPage() {
 
         if (firstName && lastName) {
           updated.username =
-            `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(
-              /[^a-z0-9.]/g,
-              "",
-            );
+            `${firstName.toLowerCase()}.${lastName.toLowerCase()}`
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+              .replace(/[^a-z0-9.]/g, "");
         }
       }
 
@@ -52,49 +160,6 @@ export default function RegisterPage() {
 
     if (name === "username") {
       setUsernameEdited(true);
-      // Reset username status when typing
-      setUsernameStatus({
-        checking: false,
-        available: null,
-        message: "",
-      });
-    }
-  };
-
-  const checkUsernameAvailability = async () => {
-    if (!formData.username || formData.username.length < 3) {
-      setUsernameStatus({
-        checking: false,
-        available: false,
-        message: "Benutzername muss mindestens 3 Zeichen lang sein",
-      });
-      return;
-    }
-
-    setUsernameStatus({ checking: true, available: null, message: "" });
-
-    try {
-      const response = await fetch(
-        `/api/trpc/users.checkUsername?input=${encodeURIComponent(JSON.stringify({ username: formData.username }))}`,
-      );
-      const data = await response.json();
-
-      const available = data.result.data.available;
-
-      setUsernameStatus({
-        checking: false,
-        available,
-        message: available
-          ? "✓ Benutzername verfügbar"
-          : "✗ Benutzername bereits vergeben",
-      });
-    } catch (err) {
-      console.error("Error checking username:", err);
-      setUsernameStatus({
-        checking: false,
-        available: null,
-        message: "",
-      });
     }
   };
 
@@ -109,6 +174,11 @@ export default function RegisterPage() {
 
     if (usernameStatus.available === false) {
       setError("Bitte wähle einen verfügbaren Benutzernamen");
+      return;
+    }
+
+    if (emailStatus.available === false) {
+      setError("Diese E-Mail-Adresse ist bereits registriert");
       return;
     }
 
@@ -234,7 +304,6 @@ export default function RegisterPage() {
                 required
                 value={formData.username}
                 onChange={handleChange}
-                onBlur={checkUsernameAvailability}
                 className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
                   usernameStatus.available === true
                     ? "border-green-500"
@@ -243,16 +312,19 @@ export default function RegisterPage() {
                       : "dark:border-dark-border border-gray-300"
                 }`}
               />
-              {usernameStatus.checking ? (
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Überprüfe...
-                </p>
-              ) : usernameStatus.message ? (
+              {usernameStatus.message ? (
                 <p
-                  className={`mt-1 text-xs ${
-                    usernameStatus.available ? "text-green-600" : "text-red-600"
+                  className={`mt-1 flex items-center gap-1 text-xs ${
+                    usernameStatus.checking
+                      ? "text-gray-500 dark:text-gray-400"
+                      : usernameStatus.available
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
                   }`}
                 >
+                  {usernameStatus.checking && (
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  )}
                   {usernameStatus.message}
                 </p>
               ) : (
@@ -277,8 +349,30 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
+                  emailStatus.available === true
+                    ? "border-green-500"
+                    : emailStatus.available === false
+                      ? "border-red-500"
+                      : "dark:border-dark-border border-gray-300"
+                }`}
               />
+              {emailStatus.message && (
+                <p
+                  className={`mt-1 flex items-center gap-1 text-xs ${
+                    emailStatus.checking
+                      ? "text-gray-500 dark:text-gray-400"
+                      : emailStatus.available
+                        ? "text-green-600 dark:text-green-400"
+                        : "text-red-600 dark:text-red-400"
+                  }`}
+                >
+                  {emailStatus.checking && (
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  )}
+                  {emailStatus.message}
+                </p>
+              )}
             </div>
 
             <div>
