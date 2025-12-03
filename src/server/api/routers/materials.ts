@@ -140,12 +140,33 @@ export const materialsRouter = createTRPCRouter({
         where: {
           category: input.category,
           isPublic: true,
+          status: ContentStatus.APPROVED,
         },
         orderBy: { createdAt: "desc" },
       });
 
-      return downloads;
+      return downloads.map((download) => ({
+        ...download,
+        tags: (download.tags as string[]) || [],
+      }));
     }),
+
+  // Get Blechblatt editions (special endpoint for Blechblatt PDFs)
+  getBlechblattEditions: publicProcedure.query(async ({ ctx }) => {
+    const downloads = await ctx.db.download.findMany({
+      where: {
+        category: DownloadCategory.BLECHBLATT,
+        isPublic: true,
+        status: ContentStatus.APPROVED,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return downloads.map((download) => ({
+      ...download,
+      tags: (download.tags as string[]) || [],
+    }));
+  }),
 
   // Create download (Obleute and above can create, but Obleute uploads need review)
   createDownload: contentCreatorProcedure

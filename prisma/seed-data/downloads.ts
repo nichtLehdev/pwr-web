@@ -1,6 +1,63 @@
 import { DownloadCategory, FileType } from "~/generated/prisma/client";
 
 export const downloadsData = [
+  // Blechblatt editions
+  {
+    title: "Rheinisches Blechblatt - Ausgabe 4/2025",
+    description:
+      "Winter-Ausgabe mit Rückblick auf das Landesposaunenfest und Vorschau auf die Adventskonzerte 2025.",
+    category: "BLECHBLATT" as DownloadCategory,
+    fileUrl: "/downloads/blechblatt-2025-04.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 2500000,
+    tags: ["Blechblatt", "2025", "Winter"],
+    isPublic: true,
+  },
+  {
+    title: "Rheinisches Blechblatt - Ausgabe 3/2025",
+    description:
+      "Herbst-Ausgabe mit Berichten von den Sommerfreizeiten und dem Jubiläum des Bezirks Köln.",
+    category: "BLECHBLATT" as DownloadCategory,
+    fileUrl: "/downloads/blechblatt-2025-03.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 2800000,
+    tags: ["Blechblatt", "2025", "Herbst"],
+    isPublic: true,
+  },
+  {
+    title: "Rheinisches Blechblatt - Ausgabe 2/2025",
+    description:
+      "Sommer-Ausgabe mit dem Schwerpunkt 'Nachwuchsarbeit' und Vorstellung der neuen Bläserhefte.",
+    category: "BLECHBLATT" as DownloadCategory,
+    fileUrl: "/downloads/blechblatt-2025-02.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 3100000,
+    tags: ["Blechblatt", "2025", "Sommer"],
+    isPublic: true,
+  },
+  {
+    title: "Rheinisches Blechblatt - Ausgabe 1/2025",
+    description:
+      "Frühlings-Ausgabe mit Berichten vom Neujahrskonzert und Ankündigung der Lehrgänge 2025.",
+    category: "BLECHBLATT" as DownloadCategory,
+    fileUrl: "/downloads/blechblatt-2025-01.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 2600000,
+    tags: ["Blechblatt", "2025", "Frühling"],
+    isPublic: true,
+  },
+  {
+    title: "Rheinisches Blechblatt - Ausgabe 4/2024",
+    description:
+      "Jahresrückblick 2024 mit Highlights aus allen Bezirken und Ausblick auf das neue Jahr.",
+    category: "BLECHBLATT" as DownloadCategory,
+    fileUrl: "/downloads/blechblatt-2024-04.pdf",
+    fileType: "PDF" as FileType,
+    fileSize: 2900000,
+    tags: ["Blechblatt", "2024", "Jahresrückblick"],
+    isPublic: true,
+  },
+  // Other downloads
   {
     title: "Arbeitshilfe Jungbläser",
     description:
