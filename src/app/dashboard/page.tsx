@@ -184,6 +184,12 @@ export default function DashboardPage() {
                 icon={<HeartIcon />}
                 href="/dashboard/foerderverein"
               />
+              <DashboardCard
+                title="Posaunenwarte"
+                description="LPW & RPW verwalten"
+                icon={<MusicNoteIcon />}
+                href="/dashboard/posaunenwarte"
+              />
             </div>
           </section>
         )}
