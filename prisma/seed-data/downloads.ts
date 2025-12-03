@@ -3,7 +3,7 @@ import { DownloadCategory, FileType } from "~/generated/prisma/client";
 export const downloadsData = [
   // Blechblatt editions
   {
-    title: "Rheinisches Blechblatt - Ausgabe 4/2025",
+    title: "Blechblatt 2025/4",
     description:
       "Winter-Ausgabe mit Rückblick auf das Landesposaunenfest und Vorschau auf die Adventskonzerte 2025.",
     category: "BLECHBLATT" as DownloadCategory,
@@ -14,7 +14,7 @@ export const downloadsData = [
     isPublic: true,
   },
   {
-    title: "Rheinisches Blechblatt - Ausgabe 3/2025",
+    title: "Blechblatt 2025/3",
     description:
       "Herbst-Ausgabe mit Berichten von den Sommerfreizeiten und dem Jubiläum des Bezirks Köln.",
     category: "BLECHBLATT" as DownloadCategory,
@@ -25,7 +25,7 @@ export const downloadsData = [
     isPublic: true,
   },
   {
-    title: "Rheinisches Blechblatt - Ausgabe 2/2025",
+    title: "Blechblatt 2025/2",
     description:
       "Sommer-Ausgabe mit dem Schwerpunkt 'Nachwuchsarbeit' und Vorstellung der neuen Bläserhefte.",
     category: "BLECHBLATT" as DownloadCategory,
@@ -36,7 +36,7 @@ export const downloadsData = [
     isPublic: true,
   },
   {
-    title: "Rheinisches Blechblatt - Ausgabe 1/2025",
+    title: "Blechblatt 2025/1",
     description:
       "Frühlings-Ausgabe mit Berichten vom Neujahrskonzert und Ankündigung der Lehrgänge 2025.",
     category: "BLECHBLATT" as DownloadCategory,
@@ -47,7 +47,7 @@ export const downloadsData = [
     isPublic: true,
   },
   {
-    title: "Rheinisches Blechblatt - Ausgabe 4/2024",
+    title: "Blechblatt 2024/4",
     description:
       "Jahresrückblick 2024 mit Highlights aus allen Bezirken und Ausblick auf das neue Jahr.",
     category: "BLECHBLATT" as DownloadCategory,

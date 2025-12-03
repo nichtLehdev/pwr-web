@@ -159,7 +159,7 @@ export const materialsRouter = createTRPCRouter({
         isPublic: true,
         status: ContentStatus.APPROVED,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { title: "desc" },
     });
 
     return downloads.map((download) => ({

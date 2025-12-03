@@ -99,6 +99,7 @@ export default function DashboardDownloadsPage() {
   const [newTags, setNewTags] = useState("");
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
   const [uploadedFileSize, setUploadedFileSize] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Edit state
@@ -229,8 +230,8 @@ export default function DashboardDownloadsPage() {
     });
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    const file = e instanceof File ? e : e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 50 * 1024 * 1024) {
@@ -284,6 +285,29 @@ export default function DashboardDownloadsPage() {
       );
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      void handleFileUpload(file);
     }
   };
 
@@ -666,26 +690,85 @@ export default function DashboardDownloadsPage() {
             </h2>
 
             <div className="space-y-4">
-              {/* File Upload */}
+              {/* File Upload with Drag & Drop */}
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Datei
                 </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileUpload}
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
-                />
-                {isUploading && (
-                  <p className="mt-1 text-sm text-gray-500">Lädt hoch...</p>
-                )}
-                {uploadedFileUrl && (
-                  <p className="mt-1 text-sm text-green-600">
-                    ✓ Datei hochgeladen
-                  </p>
-                )}
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                    isDragging
+                      ? "border-primary bg-primary/5 dark:bg-primary/10"
+                      : uploadedFileUrl
+                        ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
+                        : "border-gray-300 hover:border-gray-400 dark:border-dark-border dark:hover:border-gray-500"
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileUpload}
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
+                    className="hidden"
+                  />
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Lädt hoch...</p>
+                    </div>
+                  ) : uploadedFileUrl ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        className="h-10 w-10 text-green-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                        Datei hochgeladen
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Klicken oder ziehen, um eine andere Datei auszuwählen
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <svg
+                        className={`h-10 w-10 ${isDragging ? "text-primary" : "text-gray-400"}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {isDragging ? "Datei hier ablegen" : "Datei hierher ziehen"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        oder klicken zum Auswählen
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                        PDF, Word, Excel, ZIP, Audio (max. 50MB)
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Title */}
