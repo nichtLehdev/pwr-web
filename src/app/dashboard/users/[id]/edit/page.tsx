@@ -3,10 +3,29 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
+import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+
+// User placeholder icon component
+const UserPlaceholderIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={1.5}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    />
+  </svg>
+);
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -46,6 +65,9 @@ export default function EditUserPage() {
   const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
+  const [profileImageId, setProfileImageId] = useState<string | null>(null);
+  const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +88,8 @@ export default function EditUserPage() {
       setBezirkId(user.bezirkId ?? null);
       setObleuteRole(user.obleuteRole ?? "");
       setBio(user.bio ?? "");
+      setProfileImageId(user.profileImageId ?? null);
+      setProfileImageUrl(user.profileImage?.url ?? null);
     }
   }, [user]);
 
@@ -125,6 +149,7 @@ export default function EditUserPage() {
           ? obleuteRole.trim() || undefined
           : undefined,
       bio: bio.trim() || undefined,
+      profileImageId,
     });
   };
 
@@ -212,6 +237,50 @@ export default function EditUserPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Profile Image */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Profilbild
+            </h2>
+            <div className="flex items-center gap-6">
+              {profileImageUrl ? (
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full">
+                  <Image
+                    src={profileImageUrl}
+                    alt="Profilbild"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="dark:bg-dark-background-secondary flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                  <UserPlaceholderIcon className="dark:text-dark-muted h-12 w-12 text-gray-400" />
+                </div>
+              )}
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsMediaPickerOpen(true)}
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                >
+                  {profileImageUrl ? "Bild ändern" : "Bild auswählen"}
+                </button>
+                {profileImageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileImageId(null);
+                      setProfileImageUrl(null);
+                    }}
+                    className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    Bild entfernen
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+
           {/* Basic Info */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
@@ -373,6 +442,19 @@ export default function EditUserPage() {
             </button>
           </div>
         </form>
+
+        {/* Media Picker Modal */}
+        <MediaPickerModal
+          isOpen={isMediaPickerOpen}
+          onClose={() => setIsMediaPickerOpen(false)}
+          onSelect={(url, _alt, mediaId) => {
+            if (mediaId) {
+              setProfileImageId(mediaId);
+            }
+            setProfileImageUrl(url);
+            setIsMediaPickerOpen(false);
+          }}
+        />
       </div>
     </main>
   );
