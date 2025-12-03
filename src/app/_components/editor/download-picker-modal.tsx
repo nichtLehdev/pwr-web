@@ -58,6 +58,7 @@ export default function DownloadPickerModal({
   const [newCategory, setNewCategory] = useState<DownloadCategory>("SONSTIGES");
   const [newFileType, setNewFileType] = useState<FileType>("PDF");
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
@@ -109,11 +110,8 @@ export default function DownloadPickerModal({
     setIsUploading(false);
   };
 
-  const handleFileSelect = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
+  const processFile = useCallback(
+    async (file: File) => {
       // Validate file size (max 50MB)
       if (file.size > 50 * 1024 * 1024) {
         setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
@@ -171,6 +169,40 @@ export default function DownloadPickerModal({
       }
     },
     [newTitle],
+  );
+
+  const handleFileSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      await processFile(file);
+    },
+    [processFile],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      await processFile(file);
+    },
+    [processFile],
   );
 
   const handleCreateDownload = () => {
@@ -428,10 +460,15 @@ export default function DownloadPickerModal({
                     onClick={() =>
                       !isUploading && fileInputRef.current?.click()
                     }
-                    className={`dark:border-dark-border cursor-pointer rounded-xl border-2 border-dashed border-gray-300 p-8 text-center transition-colors ${
-                      isUploading
-                        ? "cursor-not-allowed opacity-50"
-                        : "hover:border-primary dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
+                      isDragging
+                        ? "border-primary bg-primary/5 dark:bg-primary/10"
+                        : isUploading
+                          ? "dark:border-dark-border cursor-not-allowed border-gray-300 opacity-50"
+                          : "dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary border-gray-300 hover:bg-gray-50"
                     }`}
                   >
                     {isUploading ? (
@@ -441,6 +478,25 @@ export default function DownloadPickerModal({
                           Wird hochgeladen...
                         </p>
                       </div>
+                    ) : isDragging ? (
+                      <>
+                        <svg
+                          className="text-primary mx-auto h-10 w-10"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <p className="text-primary mt-2 font-medium">
+                          Datei hier ablegen
+                        </p>
+                      </>
                     ) : (
                       <>
                         <svg
@@ -457,10 +513,10 @@ export default function DownloadPickerModal({
                           />
                         </svg>
                         <p className="dark:text-dark-text mt-2 font-medium text-gray-700">
-                          Klicke zum Hochladen
+                          Datei hierher ziehen oder klicken
                         </p>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          PDF, Word, Excel, ZIP und mehr bis zu 50MB
+                          PDF, Word, Excel, ZIP, Audio und mehr bis zu 50MB
                         </p>
                       </>
                     )}

@@ -218,7 +218,6 @@ export default function DashboardPage() {
                 description="Notenhefte verwalten"
                 icon={<BookOpenIcon />}
                 href="/dashboard/blaeserhefte"
-                comingSoon
               />
               {profile.role === UserRole.ADMIN && (
                 <DashboardCard
