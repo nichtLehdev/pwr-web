@@ -1,0 +1,193 @@
+"use client";
+
+import { useRef, useEffect, useState, useCallback } from "react";
+
+interface SignatureCanvasProps {
+  onSignatureChange: (dataUrl: string | null) => void;
+  disabled?: boolean;
+}
+
+export function SignatureCanvas({
+  onSignatureChange,
+  disabled = false,
+}: SignatureCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [hasSignature, setHasSignature] = useState(false);
+
+  // Initialize canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Set up canvas for high DPI displays
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    // Set drawing styles
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // Fill with white background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+  }, []);
+
+  const getCoordinates = useCallback(
+    (
+      e: React.MouseEvent | React.TouchEvent,
+    ): { x: number; y: number } | null => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+
+      const rect = canvas.getBoundingClientRect();
+
+      if ("touches" in e) {
+        const touch = e.touches[0];
+        if (!touch) return null;
+        return {
+          x: touch.clientX - rect.left,
+          y: touch.clientY - rect.top,
+        };
+      } else {
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        };
+      }
+    },
+    [],
+  );
+
+  const startDrawing = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (disabled) return;
+
+      const coords = getCoordinates(e);
+      if (!coords) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!ctx) return;
+
+      setIsDrawing(true);
+      ctx.beginPath();
+      ctx.moveTo(coords.x, coords.y);
+    },
+    [disabled, getCoordinates],
+  );
+
+  const draw = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if (!isDrawing || disabled) return;
+
+      const coords = getCoordinates(e);
+      if (!coords) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!ctx) return;
+
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+      setHasSignature(true);
+    },
+    [isDrawing, disabled, getCoordinates],
+  );
+
+  const stopDrawing = useCallback(() => {
+    if (!isDrawing) return;
+
+    setIsDrawing(false);
+
+    const canvas = canvasRef.current;
+    if (!canvas || !hasSignature) return;
+
+    // Export signature as PNG
+    const dataUrl = canvas.toDataURL("image/png");
+    onSignatureChange(dataUrl);
+  }, [isDrawing, hasSignature, onSignatureChange]);
+
+  const clearCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!ctx || !canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    setHasSignature(false);
+    onSignatureChange(null);
+  }, [onSignatureChange]);
+
+  // Handle touch events to prevent scrolling while drawing
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const preventScroll = (e: TouchEvent) => {
+      if (isDrawing) {
+        e.preventDefault();
+      }
+    };
+
+    canvas.addEventListener("touchmove", preventScroll, { passive: false });
+    return () => {
+      canvas.removeEventListener("touchmove", preventScroll);
+    };
+  }, [isDrawing]);
+
+  return (
+    <div className="relative">
+      <canvas
+        ref={canvasRef}
+        className={`h-24 w-full rounded-md border-2 border-dashed border-gray-300 bg-white ${
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-crosshair"
+        }`}
+        style={{ touchAction: "none" }}
+        onMouseDown={startDrawing}
+        onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
+        onTouchStart={startDrawing}
+        onTouchMove={draw}
+        onTouchEnd={stopDrawing}
+      />
+      {hasSignature && !disabled && (
+        <button
+          type="button"
+          onClick={clearCanvas}
+          className="absolute top-2 right-2 rounded bg-white/80 p-1 text-gray-500 hover:bg-white hover:text-red-500"
+          title="Löschen"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      )}
+      {!hasSignature && !disabled && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <span className="text-sm text-gray-400">Hier unterschreiben</span>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { generateInvoice } from "@/lib/invoice-generator";
+import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
   UserRole,
   RegistrationStatus,
@@ -45,6 +47,17 @@ const DASHBOARD_ROLES: UserRole[] = [
   UserRole.RPW,
   UserRole.OBLEUTE,
 ];
+
+// Export format types
+type ExportFormat = "csv" | "excel" | "json";
+
+// Helper to escape CSV values
+function escapeCSVValue(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
 
 // Helper to get custom field value from participant
 function getCustomFieldValue(
@@ -100,6 +113,25 @@ export default function CourseParticipantsPage() {
     "ALL",
   );
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Export state
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        exportMenuRef.current &&
+        !exportMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowExportMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
@@ -261,6 +293,114 @@ export default function CourseParticipantsPage() {
       .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
+  // Export function
+  const handleExport = (format: ExportFormat) => {
+    setShowExportMenu(false);
+
+    // Prepare data for export
+    const customFieldNames = course.customFields?.map((f) => f.fieldName) ?? [];
+
+    // Build export data with all participants
+    const exportData = filteredRegistrations.flatMap((registration) =>
+      registration.participants.map((participant) => {
+        const customFieldValues: Record<string, string> = {};
+        customFieldNames.forEach((fieldName) => {
+          customFieldValues[fieldName] = getCustomFieldValue(
+            participant,
+            fieldName,
+          );
+        });
+
+        // Find the price for this participant's price option
+        const priceOption = course.priceOptions?.find(
+          (p) => p.label === participant.priceOption,
+        );
+        const participantPrice = priceOption?.price ?? 0;
+
+        return {
+          vorname: participant.firstName,
+          nachname: participant.lastName,
+          ort: participant.city || "",
+          instrument: participant.instrument || "",
+          preiskategorie: participant.priceOption || "",
+          preis: participantPrice.toFixed(2),
+          ...customFieldValues,
+          status: registrationStatusLabels[registration.registrationStatus],
+          anmelder_vorname: registration.registrantFirstName,
+          anmelder_nachname: registration.registrantLastName,
+          anmelder_email: registration.registrantEmail,
+          anmelder_telefon: registration.registrantPhone || "",
+          gesamtpreis: registration.totalPrice.toFixed(2),
+          anmeldedatum: new Date(registration.createdAt).toLocaleDateString(
+            "de-DE",
+          ),
+          anmerkungen: registration.notes || "",
+        };
+      }),
+    );
+
+    const filename = `${course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_teilnehmer_${new Date().toISOString().split("T")[0]}`;
+
+    if (format === "json") {
+      // JSON export
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      downloadBlob(blob, `${filename}.json`);
+    } else if (format === "csv") {
+      // CSV export
+      const headers = Object.keys(exportData[0] ?? {});
+      const csvContent = [
+        headers.map(escapeCSVValue).join(";"),
+        ...exportData.map((row) =>
+          headers
+            .map((header) =>
+              escapeCSVValue(String(row[header as keyof typeof row] ?? "")),
+            )
+            .join(";"),
+        ),
+      ].join("\n");
+
+      // Add BOM for Excel to recognize UTF-8
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csvContent], {
+        type: "text/csv;charset=utf-8",
+      });
+      downloadBlob(blob, `${filename}.csv`);
+    } else if (format === "excel") {
+      // Excel-compatible CSV with semicolon separator (works better in German Excel)
+      const headers = Object.keys(exportData[0] ?? {});
+      const csvContent = [
+        headers.map(escapeCSVValue).join(";"),
+        ...exportData.map((row) =>
+          headers
+            .map((header) =>
+              escapeCSVValue(String(row[header as keyof typeof row] ?? "")),
+            )
+            .join(";"),
+        ),
+      ].join("\r\n");
+
+      // Add BOM for Excel
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csvContent], {
+        type: "application/vnd.ms-excel;charset=utf-8",
+      });
+      downloadBlob(blob, `${filename}.xls`);
+    }
+  };
+
+  // Helper to download blob
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -308,25 +448,148 @@ export default function CourseParticipantsPage() {
               {course.title}
             </p>
           </div>
-          <Link
-            href={`/dashboard/courses/${courseId}`}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="flex items-center gap-2">
+            {/* Export Button */}
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                disabled={filteredRegistrations.length === 0}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Exportieren
+                <svg
+                  className={`h-4 w-4 transition-transform ${showExportMenu ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+              {showExportMenu && (
+                <div className="dark:border-dark-border dark:bg-dark-surface absolute right-0 z-10 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    onClick={() => handleExport("csv")}
+                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg
+                      className="h-4 w-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    CSV (.csv)
+                  </button>
+                  <button
+                    onClick={() => handleExport("excel")}
+                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg
+                      className="h-4 w-4 text-green-700"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Excel (.xls)
+                  </button>
+                  <button
+                    onClick={() => handleExport("json")}
+                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg
+                      className="h-4 w-4 text-yellow-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                      />
+                    </svg>
+                    JSON (.json)
+                  </button>
+                  <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
+                  <button
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      setShowBulkInvoiceModal(true);
+                    }}
+                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <svg
+                      className="h-4 w-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    Alle Rechnungen (ZIP)
+                  </button>
+                </div>
+              )}
+            </div>
+            {/* Back Button */}
+            <Link
+              href={`/dashboard/courses/${courseId}`}
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Zurück zum Kurs
-          </Link>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Zurück zum Kurs
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -766,9 +1029,33 @@ export default function CourseParticipantsPage() {
                         },
                       )}
                     </span>
-                    <span className="dark:text-dark-text font-semibold text-gray-900">
-                      Gesamt: {registration.totalPrice.toFixed(2)} €
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() =>
+                          void generateInvoice(course, registration)
+                        }
+                        className="text-primary hover:text-primary-dark inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+                        title="Rechnung herunterladen"
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Rechnung
+                      </button>
+                      <span className="dark:text-dark-text font-semibold text-gray-900">
+                        Gesamt: {registration.totalPrice.toFixed(2)} €
+                      </span>
+                    </div>
                   </div>
 
                   {/* Notes */}
@@ -800,6 +1087,14 @@ export default function CourseParticipantsPage() {
           </div>
         )}
       </div>
+
+      {/* Bulk Invoice Modal */}
+      <BulkInvoiceModal
+        isOpen={showBulkInvoiceModal}
+        onClose={() => setShowBulkInvoiceModal(false)}
+        course={course}
+        registrations={filteredRegistrations}
+      />
     </main>
   );
 }
