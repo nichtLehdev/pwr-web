@@ -161,18 +161,83 @@ prisma/
 | `OBLEUTE` | District representatives               |
 | `USER`    | Regular authenticated users            |
 
-## 🐳 Docker
+## 🐳 Docker Deployment
 
-A `docker-compose.yml` and `Dockerfile` are provided for containerized deployment:
+A `docker-compose.yml` and `Dockerfile` are provided for easy production deployment.
 
-```bash
-# Start with Docker Compose
-docker-compose up -d
+### Quick Start
 
-# Or build and run manually
-docker build -t posaunenwerk .
-docker run -p 3000:3000 posaunenwerk
+1. **Copy and configure environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` and fill in the required values:
+   - `BETTER_AUTH_SECRET` - Generate with: `openssl rand -base64 32`
+   - `BETTER_AUTH_GITHUB_CLIENT_ID` - From GitHub OAuth App
+   - `BETTER_AUTH_GITHUB_CLIENT_SECRET` - From GitHub OAuth App
+   - `POSTGRES_PASSWORD` - Choose a secure password
+
+2. **Build and start containers**
+
+   ```bash
+   docker compose up -d
+   ```
+
+   This will:
+   - Start PostgreSQL database
+   - Run database migrations automatically
+   - Start the Next.js application
+
+3. **(Optional) Seed the database with sample data**
+
+   ```bash
+   docker compose run --rm --profile seed db-seed
+   ```
+
+4. **Access the application**
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Docker Commands
+
+| Command                                          | Description                             |
+| ------------------------------------------------ | --------------------------------------- |
+| `docker compose up -d`                           | Start all services in background        |
+| `docker compose up -d --build`                   | Rebuild and start services              |
+| `docker compose down`                            | Stop all services                       |
+| `docker compose down -v`                         | Stop and remove volumes (deletes data!) |
+| `docker compose logs -f app`                     | Follow application logs                 |
+| `docker compose logs -f db`                      | Follow database logs                    |
+| `docker compose run --rm --profile seed db-seed` | Seed database                           |
+| `docker compose ps`                              | Show running containers                 |
+
+### Production Deployment
+
+For production, make sure to:
+
+1. **Use strong passwords** - Change `POSTGRES_PASSWORD` to a secure value
+2. **Set proper URLs** - Update `NEXT_PUBLIC_APP_URL` to your domain
+3. **Use HTTPS** - Set up a reverse proxy (nginx, traefik) with SSL
+4. **Backup database** - Set up regular backups of `postgres_data` volume
+
+Example production `.env`:
+
+```env
+POSTGRES_PASSWORD=your_very_secure_password_here
+BETTER_AUTH_SECRET=generated_secret_at_least_32_chars
+NEXT_PUBLIC_APP_URL=https://your-domain.com
 ```
+
+### Architecture
+
+The Docker setup consists of:
+
+- **db**: PostgreSQL 16 database with health checks
+- **db-migrate**: Init container that runs Prisma migrations on startup
+- **db-seed**: (Optional) Seeds the database with sample data
+- **app**: Next.js application (depends on successful migration)
 
 ## 🤝 Contributing
 

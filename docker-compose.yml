@@ -4,8 +4,6 @@ services:
     image: postgres:16-alpine
     container_name: posaunenwerk-db
     restart: unless-stopped
-    networks:
-      - posaunenwerk_network
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-posaunenwerk}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-posaunenwerk_password}
@@ -19,6 +17,59 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - posaunenwerk_network
+
+  # Database migration init container - runs once before app starts
+  db-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: posaunenwerk-migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD:-posaunenwerk_password}@db:5432/${POSTGRES_DB:-posaunenwerk}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Running database migrations...' &&
+        pnpm prisma db push &&
+        echo 'Migrations completed successfully!'
+      "
+    networks:
+      - posaunenwerk_network
+    restart: "no"
+
+  # Optional: Database seeding (run manually with: docker compose --profile seed run --rm db-seed)
+  db-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: posaunenwerk-seed
+    profiles:
+      - seed
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD:-posaunenwerk_password}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      SKIP_ENV_VALIDATION: "1"
+      # Dummy values for seed (auth is imported but not used for actual auth)
+      BETTER_AUTH_SECRET: seed-dummy-secret-not-used-for-auth
+      BETTER_AUTH_GITHUB_CLIENT_ID: dummy
+      BETTER_AUTH_GITHUB_CLIENT_SECRET: dummy
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    command: >
+      sh -c "
+        echo 'Seeding database...' &&
+        pnpm tsx prisma/seed.ts &&
+        echo 'Seeding completed successfully!'
+      "
+    networks:
+      - posaunenwerk_network
+    restart: "no"
 
   # Next.js Application
   app:
@@ -27,9 +78,6 @@ services:
       dockerfile: Dockerfile
     container_name: posaunenwerk-app
     restart: unless-stopped
-    networks:
-      - Aliases
-      - posaunenwerk_network
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
@@ -38,24 +86,36 @@ services:
 
       # Next.js
       NODE_ENV: production
-      SKIP_ENV_VALIDATION: ${SKIP_ENV_VALIDATION:-false}
 
-      # Better Auth (required by env.js)
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-this-in-production}
-      BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-dummy}
-      BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-dummy}
+      # Better Auth (REQUIRED - set these in .env file!)
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID}
+      BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET}
 
       # Public URLs
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
-    command: >
-      sh -c "
-        pnpm prisma db push &&
-        pnpm tsx prisma/seed.ts &&
-        pnpm start
-      "
+      db-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    networks:
+      - posaunenwerk_network
+      - Aliases
 
 volumes:
   postgres_data:
@@ -65,3 +125,4 @@ networks:
   posaunenwerk_network:
     driver: bridge
   Aliases:
+    external: true
