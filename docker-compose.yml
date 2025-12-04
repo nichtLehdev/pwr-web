@@ -78,8 +78,6 @@ services:
       dockerfile: Dockerfile
     container_name: posaunenwerk-app
     restart: unless-stopped
-    ports:
-      - "${APP_PORT:-3000}:3000"
     environment:
       # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD:-posaunenwerk_password}@db:5432/${POSTGRES_DB:-posaunenwerk}
