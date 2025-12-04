@@ -98,7 +98,7 @@ export async function createInvoicePdf(
   registration: InvoiceRegistration,
   options: InvoiceOptions = {},
   logoBase64?: string,
-): Promise<{ blob: Blob; filename: string }> {
+): Promise<{ blob: Blob; filename: string; invoiceNumber: string }> {
   const opts = { ...defaultOptions, ...options };
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -420,7 +420,7 @@ export async function createInvoicePdf(
   const filename = `Rechnung_${invoiceNumber}_${registration.registrantLastName}.pdf`;
   const blob = doc.output("blob");
 
-  return { blob, filename };
+  return { blob, filename, invoiceNumber };
 }
 
 /**
@@ -459,6 +459,7 @@ export async function generateInvoice(
 
 /**
  * Generates multiple invoices and downloads them as a ZIP file
+ * Also includes an Excel summary file for bookkeeping
  */
 export async function generateBulkInvoices(
   course: InvoiceCourse,
@@ -476,6 +477,20 @@ export async function generateBulkInvoices(
     // Continue without logo
   }
 
+  // Track invoice data for Excel summary
+  interface InvoiceSummaryRow {
+    invoiceNumber: string;
+    registrantName: string;
+    billingName: string;
+    billingCompany: string;
+    billingStreet: string;
+    billingZipCity: string;
+    billingEmail: string;
+    registrantEmail: string;
+    totalAmount: string;
+  }
+  const summaryData: InvoiceSummaryRow[] = [];
+
   // Generate all invoices
   for (let i = 0; i < registrations.length; i++) {
     const registration = registrations[i];
@@ -483,7 +498,7 @@ export async function generateBulkInvoices(
 
     onProgress?.(i + 1, registrations.length);
 
-    const { blob, filename } = await createInvoicePdf(
+    const { blob, filename, invoiceNumber } = await createInvoicePdf(
       course,
       registration,
       options,
@@ -491,12 +506,95 @@ export async function generateBulkInvoices(
     );
 
     zip.file(filename, blob);
+
+    // Build summary row
+    const useBilling =
+      registration.useSeparateBilling &&
+      (registration.billingFirstName || registration.billingLastName);
+
+    const billingName = useBilling
+      ? `${registration.billingFirstName ?? ""} ${registration.billingLastName ?? ""}`.trim()
+      : `${registration.registrantFirstName} ${registration.registrantLastName}`;
+
+    const billingCompany = useBilling
+      ? (registration.billingCompany ?? "")
+      : "";
+
+    const billingStreet = useBilling ? (registration.billingStreet ?? "") : "";
+
+    const billingZipCity = useBilling
+      ? `${registration.billingZipCode ?? ""} ${registration.billingCity ?? ""}`.trim()
+      : "";
+
+    const billingEmail =
+      useBilling && registration.billingEmail
+        ? registration.billingEmail
+        : registration.registrantEmail;
+
+    summaryData.push({
+      invoiceNumber,
+      registrantName: `${registration.registrantFirstName} ${registration.registrantLastName}`,
+      billingName,
+      billingCompany,
+      billingStreet,
+      billingZipCity,
+      billingEmail,
+      registrantEmail: registration.registrantEmail,
+      totalAmount: registration.totalPrice.toFixed(2).replace(".", ","),
+    });
   }
+
+  // Create Excel summary file (CSV with semicolon for German Excel)
+  const excelHeaders = [
+    "Rechnungsnummer",
+    "Anmelder",
+    "Rechnungsempfänger",
+    "Firma",
+    "Straße",
+    "PLZ Ort",
+    "Rechnungs-E-Mail",
+    "Anmelder-E-Mail",
+    "Betrag (€)",
+  ];
+
+  const escapeExcelValue = (value: string): string => {
+    if (value.includes(";") || value.includes('"') || value.includes("\n")) {
+      return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+  };
+
+  const excelContent = [
+    excelHeaders.map(escapeExcelValue).join(";"),
+    ...summaryData.map((row) =>
+      [
+        row.invoiceNumber,
+        row.registrantName,
+        row.billingName,
+        row.billingCompany,
+        row.billingStreet,
+        row.billingZipCity,
+        row.billingEmail,
+        row.registrantEmail,
+        row.totalAmount,
+      ]
+        .map(escapeExcelValue)
+        .join(";"),
+    ),
+  ].join("\r\n");
+
+  // Add BOM for Excel UTF-8 recognition
+  const bom = "\uFEFF";
+  const excelBlob = new Blob([bom + excelContent], {
+    type: "application/vnd.ms-excel;charset=utf-8",
+  });
+
+  const dateStr = new Date().toISOString().split("T")[0];
+  zip.file(`Rechnungsübersicht_${dateStr}.xls`, excelBlob);
 
   // Generate ZIP and download
   const zipBlob = await zip.generateAsync({ type: "blob" });
   const courseSlug = course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_");
-  const dateStr = new Date().toISOString().split("T")[0];
   const zipFilename = `Rechnungen_${courseSlug}_${dateStr}.zip`;
 
   const url = URL.createObjectURL(zipBlob);
