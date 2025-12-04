@@ -209,6 +209,10 @@ export default function CourseParticipantsPage() {
     userRole === UserRole.ADMIN ||
     userRole === UserRole.LPW;
 
+  // Only LPW, Admins, or Team Members (instructors) can create invoices
+  const canCreateInvoices =
+    isInstructor || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+
   if (!canViewParticipants) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -543,29 +547,33 @@ export default function CourseParticipantsPage() {
                     </svg>
                     JSON (.json)
                   </button>
-                  <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
-                  <button
-                    onClick={() => {
-                      setShowExportMenu(false);
-                      setShowBulkInvoiceModal(true);
-                    }}
-                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <svg
-                      className="h-4 w-4 text-blue-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    Alle Rechnungen (ZIP)
-                  </button>
+                  {canCreateInvoices && (
+                    <>
+                      <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
+                      <button
+                        onClick={() => {
+                          setShowExportMenu(false);
+                          setShowBulkInvoiceModal(true);
+                        }}
+                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <svg
+                          className="h-4 w-4 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        Alle Rechnungen (ZIP)
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1030,28 +1038,30 @@ export default function CourseParticipantsPage() {
                       )}
                     </span>
                     <div className="flex items-center gap-3">
-                      <button
-                        onClick={() =>
-                          void generateInvoice(course, registration)
-                        }
-                        className="text-primary hover:text-primary-dark inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
-                        title="Rechnung herunterladen"
-                      >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                      {canCreateInvoices && (
+                        <button
+                          onClick={() =>
+                            void generateInvoice(course, registration)
+                          }
+                          className="text-primary hover:text-primary-dark inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+                          title="Rechnung herunterladen"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        Rechnung
-                      </button>
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Rechnung
+                        </button>
+                      )}
                       <span className="dark:text-dark-text font-semibold text-gray-900">
                         Gesamt: {registration.totalPrice.toFixed(2)} €
                       </span>
