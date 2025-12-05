@@ -20,6 +20,9 @@ COPY prisma ./prisma
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
 
+# Copy .env file for build-time configuration
+COPY .env .env
+
 # Generate Prisma Client
 RUN pnpm prisma generate
 
@@ -68,6 +71,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
+COPY --from=builder --chown=nextjs:nodejs /app/.env .env
 
 # Switch to non-root user
 USER nextjs

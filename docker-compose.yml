@@ -19,7 +19,7 @@ services:
     container_name: posaunenwerk-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-posaunenwerk}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-posaunenwerk}
     volumes:
@@ -30,7 +30,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-posaunenwerk} -d ${POSTGRES_DB:-posaunenwerk}",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-posaunenwerk}",
         ]
       interval: 10s
       timeout: 5s
@@ -52,7 +52,7 @@ services:
     networks:
       - internal
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
     command: ["pnpm", "prisma", "migrate", "deploy"]
     restart: "no"
 
@@ -75,7 +75,7 @@ services:
     networks:
       - internal
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
     command: ["pnpm", "tsx", "prisma/seed.ts"]
     restart: "no"
 
@@ -100,7 +100,7 @@ services:
       - "3000"
     environment:
       # Database
-      DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
       # Application
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
