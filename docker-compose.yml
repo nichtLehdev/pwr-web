@@ -112,6 +112,8 @@ services:
       - Aliases
     expose:
       - "3000"
+    volumes:
+      - uploads_data:/app/public/uploads
     environment:
       # Database - override any build-time URL with runtime URL
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
@@ -138,3 +140,5 @@ networks:
 volumes:
   postgres_data:
     name: posaunenwerk_postgres_data
+  uploads_data:
+    name: posaunenwerk_uploads_data
