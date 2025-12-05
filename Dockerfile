@@ -26,9 +26,13 @@ RUN pnpm prisma generate
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with memory optimizations
+# - NODE_OPTIONS limits heap size to prevent OOM on shared servers
+# - Disable telemetry and source maps to reduce memory
 ENV SKIP_ENV_VALIDATION=1
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=1024"
 RUN pnpm build
 
 # ================================
@@ -36,7 +40,7 @@ RUN pnpm build
 # ================================
 FROM node:22-alpine AS runner
 
-# Install pnpm
+# Install pnpm (needed for prisma commands)
 RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
 
 # Install dependencies needed for runtime
@@ -52,28 +56,22 @@ RUN adduser --system --uid 1001 nextjs
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy all files from builder (includes node_modules with devDeps for tsx/prisma)
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-COPY --from=builder /app/node_modules ./node_modules
+# Copy standalone build (much smaller than full node_modules)
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy Prisma files
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/prisma.config.ts ./
-
-# Copy built application
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/src ./src
-
-# Copy config files needed at runtime
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/next.config.ts ./
-COPY --from=builder /app/tsconfig.json ./
-
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
+# Copy Prisma files for migrations (needed by db-migrate/db-seed services)
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm ./node_modules/.pnpm
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
 # Switch to non-root user
 USER nextjs
@@ -88,5 +86,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application
-CMD ["pnpm", "start"]
+# Start the application using standalone server
+CMD ["node", "server.js"]
