@@ -65,11 +65,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Copy Prisma files for migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+
+# Copy generated Prisma client (location depends on Prisma version)
+COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
 # Switch to non-root user
 USER nextjs
