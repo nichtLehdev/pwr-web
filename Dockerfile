@@ -21,7 +21,7 @@ COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
 # Copy .env file for build-time configuration
-COPY .env .env
+COPY ./.env ./.env
 
 # Generate Prisma Client
 RUN pnpm prisma generate
