@@ -1,0 +1,130 @@
+# =============================================================================
+# Posaunenwerk Docker Compose - Production (uses pre-built image)
+# =============================================================================
+#
+# This file is for production deployment using pre-built images from GHCR.
+# For local development, use docker-compose.yml instead.
+#
+# Quick Start:
+#   1. Copy .env.example to .env and configure values
+#   2. Run: docker compose -f docker-compose.prod.yml up -d
+#
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # PostgreSQL Database
+  # ===========================================================================
+  posaunenwerk-db:
+    image: postgres:16-alpine
+    container_name: posaunenwerk-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-posaunenwerk}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-posaunenwerk}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===========================================================================
+  # Database Migration (runs once on startup)
+  # ===========================================================================
+  db-migrate:
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    container_name: posaunenwerk-migrate
+    depends_on:
+      posaunenwerk-db:
+        condition: service_healthy
+    networks:
+      - internal
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
+      NODE_ENV: production
+    command: ["pnpm", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+  # ===========================================================================
+  # Database Seeding (optional, run manually)
+  # ===========================================================================
+  db-seed:
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    container_name: posaunenwerk-seed
+    profiles:
+      - seed
+    depends_on:
+      posaunenwerk-db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
+      NODE_ENV: production
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-}
+      BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-}
+      SKIP_ENV_VALIDATION: 1
+    command: ["pnpm", "tsx", "prisma/seed.ts"]
+    restart: "no"
+
+  # ===========================================================================
+  # Next.js Application
+  # ===========================================================================
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    container_name: posaunenwerk-app
+    restart: unless-stopped
+    depends_on:
+      posaunenwerk-db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    networks:
+      - internal
+      - Aliases
+    expose:
+      - "3000"
+    volumes:
+      - uploads_data:/app/public/uploads
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
+
+      # Application
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+
+      # Public URLs
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+
+      # Better Auth
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-}
+      BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-}
+
+networks:
+  internal:
+    driver: bridge
+  Aliases:
+    external: true
+
+volumes:
+  postgres_data:
+    name: posaunenwerk_postgres_data
+  uploads_data:
+    name: posaunenwerk_uploads_data
