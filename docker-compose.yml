@@ -4,7 +4,7 @@
 #
 # Quick Start:
 #   1. Copy .env.example to .env and configure values
-#   2. Uncomment DATABASE_URL in .env (set to use @db:5432)
+#   2. Update DATABASE_URL in .env to use @posaunenwerk-db:5432
 #   3. Run: docker compose up -d
 #   4. (Optional) Seed database: docker compose run --rm --profile seed db-seed
 #
@@ -14,7 +14,7 @@ services:
   # ===========================================================================
   # PostgreSQL Database
   # ===========================================================================
-  db:
+  posaunenwerk-db:
     image: postgres:16-alpine
     container_name: posaunenwerk-db
     restart: unless-stopped
@@ -22,8 +22,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: ${POSTGRES_DB:-posaunenwerk}
-      # Explicitly set authentication
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=trust"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -48,15 +46,15 @@ services:
       dockerfile: Dockerfile
       target: builder
       args:
-        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
     container_name: posaunenwerk-migrate
     depends_on:
-      db:
+      posaunenwerk-db:
         condition: service_healthy
     networks:
       - internal
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
     command: ["pnpm", "prisma", "migrate", "deploy"]
     restart: "no"
@@ -70,19 +68,19 @@ services:
       dockerfile: Dockerfile
       target: builder
       args:
-        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
     container_name: posaunenwerk-seed
     profiles:
       - seed
     depends_on:
-      db:
+      posaunenwerk-db:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
     networks:
       - internal
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
     command: ["pnpm", "tsx", "prisma/seed.ts"]
     restart: "no"
@@ -96,11 +94,11 @@ services:
       dockerfile: Dockerfile
       args:
         # Pass DATABASE_URL at build time for Prisma generation
-        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
     container_name: posaunenwerk-app
     restart: unless-stopped
     depends_on:
-      db:
+      posaunenwerk-db:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
@@ -111,7 +109,7 @@ services:
       - "3000"
     environment:
       # Database - override any build-time URL with runtime URL
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
 
       # Application
       NODE_ENV: production
