@@ -14,6 +14,17 @@ const config = {
     // Reduce memory usage during build
     webpackMemoryOptimizations: true,
   },
+
+  // Rewrite legacy /uploads/* URLs to /api/uploads/* for dynamic file serving
+  // This ensures files uploaded at runtime are served correctly
+  async rewrites() {
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: "/api/uploads/:path*",
+      },
+    ];
+  },
 };
 
 export default config;

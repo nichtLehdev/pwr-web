@@ -170,7 +170,9 @@ export const postsRouter = createTRPCRouter({
       }
 
       // Extract attached downloads from content
-      const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
+      const downloadUrlPattern =
+        /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
         ...new Set(rawPost.content.match(downloadUrlPattern) ?? []),
       ];
@@ -219,17 +221,20 @@ export const postsRouter = createTRPCRouter({
       }
 
       // Extract download URLs from content
-      // Content is stored as Markdown, downloads are inserted as: [📥 Title (TYPE)](/uploads/downloads/file.pdf)
+      // Content is stored as Markdown, downloads are inserted as: [📥 Title (TYPE)](/api/uploads/downloads/file.pdf)
       // We need to match both the markdown link format and any plain URLs
+      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
 
       // Match any URL containing /downloads/ - covers markdown [text](url) and plain URLs
-      const allUrlsPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      const allUrlsPattern = /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
         ...new Set(post.content.match(allUrlsPattern) ?? []),
       ];
 
       // Extract media URLs from content (images in markdown: ![alt](url))
-      const allMediaPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
+      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
+      const allMediaPattern =
+        /\/(?:api\/)?uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(allMediaPattern) ?? [])];
 
       // Find downloads by URL
@@ -589,7 +594,9 @@ export const postsRouter = createTRPCRouter({
       }
 
       // Check if all attached downloads are approved
-      const downloadUrlPattern = /\/uploads\/downloads\/[^\s"'<>)\]]+/g;
+      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
+      const downloadUrlPattern =
+        /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
         ...new Set(post.content.match(downloadUrlPattern) ?? []),
       ];
@@ -613,7 +620,9 @@ export const postsRouter = createTRPCRouter({
       }
 
       // Check if all attached media are approved
-      const mediaUrlPattern = /\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
+      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
+      const mediaUrlPattern =
+        /\/(?:api\/)?uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(mediaUrlPattern) ?? [])];
 
       if (mediaUrls.length > 0) {

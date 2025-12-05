@@ -128,7 +128,9 @@ export async function POST(request: Request) {
     const filePath = join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    const url = `/uploads/${folder}/${filename}`;
+    // Use /api/uploads/ path so files are served dynamically via API route
+    // (Next.js caches public folder at startup and won't see new files)
+    const url = `/api/uploads/${folder}/${filename}`;
 
     // Return file information - unified format for all folders
     return NextResponse.json({
