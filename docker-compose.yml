@@ -6,7 +6,7 @@
 #   1. Copy .env.example to .env and configure values
 #   2. Run: docker compose up -d
 #   3. (Optional) Seed database: docker compose run --rm db-seed
-#   4. Open: http://localhost:3000
+#   4. App is available via Cloudflare tunnel on the "Aliases" network
 #
 # =============================================================================
 
@@ -24,8 +24,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-posaunenwerk}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - internal
     healthcheck:
       test:
         [
@@ -49,6 +49,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - internal
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
     command: ["pnpm", "prisma", "migrate", "deploy"]
@@ -70,6 +72,8 @@ services:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
+    networks:
+      - internal
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
     command: ["pnpm", "tsx", "prisma/seed.ts"]
@@ -89,8 +93,11 @@ services:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    networks:
+      - internal
+      - Aliases
+    expose:
+      - "3000"
     environment:
       # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-posaunenwerk}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
@@ -104,6 +111,12 @@ services:
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-}
       BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-}
+
+networks:
+  internal:
+    driver: bridge
+  Aliases:
+    external: true
 
 volumes:
   postgres_data:
