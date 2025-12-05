@@ -13,15 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-posaunenwerk} -d ${POSTGRES_DB:-posaunenwerk} && psql -U ${POSTGRES_USER:-posaunenwerk} -d ${POSTGRES_DB:-posaunenwerk} -c 'SELECT 1'",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U posaunenwerk -d posaunenwerk"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 10s
+      retries: 30
+      start_period: 30s
     networks:
       - posaunenwerk_network
 
@@ -38,6 +34,8 @@ services:
         condition: service_healthy
     command: >
       sh -c "
+        echo 'Waiting for database to be fully ready...' &&
+        sleep 5 &&
         echo 'Running database migrations...' &&
         pnpm prisma db push &&
         echo 'Migrations completed successfully!'
@@ -102,6 +100,13 @@ services:
         condition: service_healthy
       db-migrate:
         condition: service_completed_successfully
+    command: >
+      sh -c "
+        echo 'Waiting for database to be fully ready...' &&
+        sleep 10 &&
+        echo 'Starting application...' &&
+        pnpm start
+      "
     healthcheck:
       test:
         [
