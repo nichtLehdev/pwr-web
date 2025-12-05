@@ -6,9 +6,6 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
-  // Enable standalone output for smaller Docker images
-  output: "standalone",
-
   // Disable source maps in production to reduce memory usage during build
   productionBrowserSourceMaps: false,
 

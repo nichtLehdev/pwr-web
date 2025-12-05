@@ -42,7 +42,7 @@ RUN pnpm build
 # ================================
 FROM node:22-alpine AS runner
 
-# Install pnpm (needed for prisma commands)
+# Install pnpm (needed for running the app)
 RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
 
 # Install dependencies needed for runtime
@@ -58,17 +58,17 @@ RUN adduser --system --uid 1001 nextjs
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy standalone build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Copy the full build output (non-standalone)
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
 # Copy Prisma files for migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
-# Copy generated Prisma client (location depends on Prisma version)
+# Copy generated Prisma client
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
 # Switch to non-root user
@@ -83,5 +83,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application using next start
+CMD ["pnpm", "start"]
