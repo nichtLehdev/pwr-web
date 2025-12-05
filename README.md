@@ -68,11 +68,58 @@ prisma/
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - pnpm 10+
-- PostgreSQL database
+- PostgreSQL 16+ (or Docker)
 
-### Installation
+### Option 1: Docker (Recommended)
+
+The easiest way to run the project is using Docker Compose:
+
+1. **Clone and configure**
+
+   ```bash
+   git clone https://github.com/your-org/posaunenwerk.git
+   cd posaunenwerk
+   cp .env.example .env
+   ```
+
+2. **Configure environment variables** in `.env`:
+
+   ```bash
+   # Generate a secure password
+   POSTGRES_PASSWORD=your_secure_password
+
+   # Generate auth secret (Linux/macOS)
+   openssl rand -base64 32
+   # Or Windows PowerShell:
+   [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
+   ```
+
+   Set `BETTER_AUTH_SECRET` to the generated value.
+
+3. **Start the application**
+
+   ```bash
+   docker compose up -d
+   ```
+
+   This will:
+   - Start PostgreSQL database
+   - Run database migrations automatically
+   - Start the Next.js application
+
+4. **(Optional) Seed with sample data**
+
+   ```bash
+   docker compose run --rm --profile seed db-seed
+   ```
+
+5. **Open the application**
+
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+### Option 2: Local Development
 
 1. **Clone the repository**
 
@@ -93,20 +140,28 @@ prisma/
    cp .env.example .env
    ```
 
-   Configure the following variables:
+   Configure the required variables (see `.env.example` for details).
 
-   ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/posaunenwerk"
-   BETTER_AUTH_SECRET="your-secret-key"
-   BETTER_AUTH_URL="http://localhost:3000"
-   ```
+4. **Start the database**
 
-4. **Set up the database**
+   Using the provided script:
 
    ```bash
-   # Generate Prisma client
-   pnpm postinstall
+   ./start-database.sh
+   ```
 
+   Or using Docker directly:
+
+   ```bash
+   docker run -d --name posaunenwerk-db \
+     -e POSTGRES_PASSWORD=password \
+     -e POSTGRES_DB=posaunenwerk \
+     -p 5432:5432 postgres:16-alpine
+   ```
+
+5. **Set up the database**
+
+   ```bash
    # Run migrations
    pnpm db:migrate
 
@@ -114,7 +169,7 @@ prisma/
    pnpm tsx prisma/seed.ts
    ```
 
-5. **Start the development server**
+6. **Start the development server**
 
    ```bash
    pnpm dev
@@ -161,46 +216,18 @@ prisma/
 | `OBLEUTE` | District representatives               |
 | `USER`    | Regular authenticated users            |
 
-## 🐳 Docker Deployment
+## 🐳 Docker Reference
 
-A `docker-compose.yml` and `Dockerfile` are provided for easy production deployment.
+### Services
 
-### Quick Start
+| Service      | Description                                        |
+| ------------ | -------------------------------------------------- |
+| `db`         | PostgreSQL 16 database with health checks          |
+| `db-migrate` | Runs Prisma migrations on startup (init container) |
+| `db-seed`    | Seeds the database with sample data (optional)     |
+| `app`        | Next.js application (production build)             |
 
-1. **Copy and configure environment variables**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit `.env` and fill in the required values:
-   - `BETTER_AUTH_SECRET` - Generate with: `openssl rand -base64 32`
-   - `BETTER_AUTH_GITHUB_CLIENT_ID` - From GitHub OAuth App
-   - `BETTER_AUTH_GITHUB_CLIENT_SECRET` - From GitHub OAuth App
-   - `POSTGRES_PASSWORD` - Choose a secure password
-
-2. **Build and start containers**
-
-   ```bash
-   docker compose up -d
-   ```
-
-   This will:
-   - Start PostgreSQL database
-   - Run database migrations automatically
-   - Start the Next.js application
-
-3. **(Optional) Seed the database with sample data**
-
-   ```bash
-   docker compose run --rm --profile seed db-seed
-   ```
-
-4. **Access the application**
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Docker Commands
+### Commands
 
 | Command                                          | Description                             |
 | ------------------------------------------------ | --------------------------------------- |
@@ -210,17 +237,18 @@ A `docker-compose.yml` and `Dockerfile` are provided for easy production deploym
 | `docker compose down -v`                         | Stop and remove volumes (deletes data!) |
 | `docker compose logs -f app`                     | Follow application logs                 |
 | `docker compose logs -f db`                      | Follow database logs                    |
-| `docker compose run --rm --profile seed db-seed` | Seed database                           |
+| `docker compose run --rm --profile seed db-seed` | Seed database with sample data          |
 | `docker compose ps`                              | Show running containers                 |
+| `docker compose exec db psql -U posaunenwerk`    | Connect to database                     |
 
 ### Production Deployment
 
-For production, make sure to:
+For production environments:
 
-1. **Use strong passwords** - Change `POSTGRES_PASSWORD` to a secure value
+1. **Use strong passwords** - Generate a secure `POSTGRES_PASSWORD`
 2. **Set proper URLs** - Update `NEXT_PUBLIC_APP_URL` to your domain
-3. **Use HTTPS** - Set up a reverse proxy (nginx, traefik) with SSL
-4. **Backup database** - Set up regular backups of `postgres_data` volume
+3. **Use HTTPS** - Set up a reverse proxy (nginx, traefik, caddy) with SSL
+4. **Backup database** - Set up regular backups of the `posaunenwerk_postgres_data` volume
 
 Example production `.env`:
 
@@ -228,16 +256,8 @@ Example production `.env`:
 POSTGRES_PASSWORD=your_very_secure_password_here
 BETTER_AUTH_SECRET=generated_secret_at_least_32_chars
 NEXT_PUBLIC_APP_URL=https://your-domain.com
+BETTER_AUTH_URL=https://your-domain.com
 ```
-
-### Architecture
-
-The Docker setup consists of:
-
-- **db**: PostgreSQL 16 database with health checks
-- **db-migrate**: Init container that runs Prisma migrations on startup
-- **db-seed**: (Optional) Seeds the database with sample data
-- **app**: Next.js application (depends on successful migration)
 
 ## 🤝 Contributing
 
