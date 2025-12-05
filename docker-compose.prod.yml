@@ -42,7 +42,7 @@ services:
   # Database Migration (runs once on startup)
   # ===========================================================================
   db-migrate:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    image: ghcr.io/nichtlehdev/pwr-web:latest
     container_name: posaunenwerk-migrate
     depends_on:
       posaunenwerk-db:
@@ -59,7 +59,7 @@ services:
   # Database Seeding (optional, run manually)
   # ===========================================================================
   db-seed:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    image: ghcr.io/nichtlehdev/pwr-web:latest
     container_name: posaunenwerk-seed
     profiles:
       - seed
@@ -85,7 +85,7 @@ services:
   # Next.js Application
   # ===========================================================================
   app:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-username/posaunenwerk}:latest
+    image: ghcr.io/nichtlehdev/pwr-web:latest
     container_name: posaunenwerk-app
     restart: unless-stopped
     depends_on:
