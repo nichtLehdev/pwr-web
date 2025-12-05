@@ -16,26 +16,27 @@ COPY package.json pnpm-lock.yaml ./
 
 # Copy prisma schema for generation
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
 
+# Accept DATABASE_URL as build argument
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 
-# Generate Prisma Client
+# Generate Prisma Client with the DATABASE_URL
 RUN pnpm prisma generate
 
 # Copy source code
 COPY . .
 
 # Build the application with memory optimizations
-# - NODE_OPTIONS limits heap size to prevent OOM on shared servers
-# - Disable telemetry and source maps to reduce memory
 ENV SKIP_ENV_VALIDATION=1
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=1024"
+
 RUN pnpm build
 
 # ================================
@@ -59,25 +60,24 @@ RUN adduser --system --uid 1001 nextjs
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy standalone build (much smaller than full node_modules)
+# Copy standalone build
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copy Prisma files for migrations (needed by db-migrate/db-seed services)
+# Copy Prisma files for migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
-COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
 # Switch to non-root user
 USER nextjs
 
 # Expose port
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
@@ -85,5 +85,5 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application using standalone server
+# Start the application
 CMD ["node", "server.js"]
