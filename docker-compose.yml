@@ -13,11 +13,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U posaunenwerk -d posaunenwerk"]
+      test:
+        [
+          "CMD-SHELL",
+          "PGPASSWORD=$${POSTGRES_PASSWORD} psql -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB} -c 'SELECT 1' || exit 1",
+        ]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 30s
+      start_period: 10s
     networks:
       - posaunenwerk_network
 
