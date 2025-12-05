@@ -86,6 +86,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-posaunenwerk}
     container_name: posaunenwerk-app
     restart: unless-stopped
     depends_on:
