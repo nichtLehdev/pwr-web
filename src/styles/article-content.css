@@ -72,17 +72,6 @@
   color: #9ca3af !important;
 }
 
-/* First paragraph - Lead text */
-.article-content > p:first-of-type {
-  font-size: 1.125rem !important;
-  color: #374151 !important;
-  font-weight: 400 !important;
-}
-
-:root.dark .article-content > p:first-of-type {
-  color: #d1d5db !important;
-}
-
 /* Links */
 .article-content a {
   color: #faa619 !important;
