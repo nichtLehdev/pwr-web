@@ -18,15 +18,13 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-# Install all dependencies (including devDependencies for build)
-RUN pnpm install --frozen-lockfile
-
-# Accept DATABASE_URL as build argument
+# Accept DATABASE_URL as build argument - MUST be before install
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 
-# Generate Prisma Client with the DATABASE_URL
-RUN pnpm prisma generate
+# Install all dependencies (including devDependencies for build)
+# This will run prisma generate via postinstall hook
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
