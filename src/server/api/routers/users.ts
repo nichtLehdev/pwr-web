@@ -260,7 +260,7 @@ export const usersRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1).optional(),
         username: z.string().min(3).max(30).optional(),
-        bio: z.string().max(500).optional(),
+        bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
       }),
     )
@@ -306,7 +306,7 @@ export const usersRouter = createTRPCRouter({
         zipCode: z.string().optional(),
         city: z.string().optional(),
         birthDate: z.string().optional(),
-        bio: z.string().max(500).optional(),
+        bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
         preferences: z.string().optional(), // JSON string
       }),
