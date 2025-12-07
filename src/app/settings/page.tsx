@@ -686,11 +686,11 @@ export default function SettingsPage() {
                   value={formData.bio}
                   onChange={handleChange}
                   placeholder="Erzähl etwas über dich..."
-                  maxLength={500}
+                  maxLength={2000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full resize-none rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {formData.bio.length}/500 Zeichen
+                  {formData.bio.length}/2000 Zeichen
                 </p>
               </div>
             </CollapsibleSection>
