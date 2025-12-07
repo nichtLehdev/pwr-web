@@ -46,6 +46,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Validate Prisma schema
         run: pnpm prisma validate
@@ -62,6 +64,3 @@ jobs:
 
       - name: Generate Prisma Client
         run: pnpm prisma generate
-        env:
-          # Dummy DATABASE_URL for generation (not connecting to DB)
-          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
