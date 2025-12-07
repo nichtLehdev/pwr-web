@@ -273,8 +273,7 @@ export default function UserDetailPage() {
                     Obleute für Bezirk
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    Bezirk {user.bezirk.number} –{" "}
-                    {user.bezirk.name}
+                    Bezirk {user.bezirk.number} – {user.bezirk.name}
                     {user.obleuteRole && (
                       <span className="text-gray-500">
                         {" "}

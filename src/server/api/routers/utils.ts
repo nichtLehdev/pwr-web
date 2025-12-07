@@ -17,7 +17,7 @@ export const locationsRouter = createTRPCRouter({
         city: z.string().optional(),
         zipCode: z.string().optional(),
         search: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const where = {
@@ -118,7 +118,7 @@ export const locationsRouter = createTRPCRouter({
         additionalInfo: z.string().optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.location.create({
@@ -138,7 +138,7 @@ export const locationsRouter = createTRPCRouter({
         additionalInfo: z.string().optional(),
         latitude: z.number().optional().nullable(),
         longitude: z.number().optional().nullable(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
@@ -214,7 +214,7 @@ export const newsletterRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         name: z.string().optional(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       // Check if already subscribed
@@ -279,7 +279,7 @@ export const newsletterRouter = createTRPCRouter({
         limit: z.number().min(1).max(100).default(50),
         isActive: z.boolean().optional(),
         search: z.string().optional(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       const where = {
