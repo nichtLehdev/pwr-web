@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
+import { useToast } from "@/app/_components/ui/toast";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -13,6 +14,7 @@ export default function ViewRegistrationPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const registrationId = params.id as string;
   const utils = api.useUtils();
+  const toast = useToast();
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
@@ -29,11 +31,13 @@ export default function ViewRegistrationPage() {
     onSuccess: () => {
       setCancelModalOpen(false);
       setCancelError("");
+      toast.success("Anmeldung erfolgreich storniert");
       void utils.registrations.getMyRegistrations.invalidate();
       void utils.registrations.getById.invalidate({ id: registrationId });
     },
     onError: (err) => {
       setCancelError(err.message || "Ein Fehler ist aufgetreten.");
+      toast.error(err.message || "Ein Fehler ist aufgetreten.");
     },
   });
 
@@ -108,8 +112,7 @@ export default function ViewRegistrationPage() {
         "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
       WAITLIST:
         "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-      CANCELLED:
-        "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+      CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     };
     const labels: Record<RegistrationStatus, string> = {
       CONFIRMED: "Teilnahme Bestätigt",
@@ -181,7 +184,7 @@ export default function ViewRegistrationPage() {
           <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
               href="/registrations"
-              className="transition-colors hover:text-primary"
+              className="hover:text-primary transition-colors"
             >
               Meine Anmeldungen
             </Link>
@@ -222,7 +225,7 @@ export default function ViewRegistrationPage() {
               {canCancel() && (
                 <button
                   onClick={() => setCancelModalOpen(true)}
-                  className="inline-flex items-center gap-2 cursor-pointer rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100 hover:text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100 hover:text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
                 >
                   <svg
                     className="h-4 w-4"
@@ -621,7 +624,9 @@ export default function ViewRegistrationPage() {
                   disabled={cancelMutation.isPending}
                   className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
-                  {cancelMutation.isPending ? "Wird storniert..." : "Stornieren"}
+                  {cancelMutation.isPending
+                    ? "Wird storniert..."
+                    : "Stornieren"}
                 </button>
               </div>
             </div>

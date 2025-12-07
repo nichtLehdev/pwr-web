@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -21,6 +22,7 @@ const roleLabels: Record<UserRole, string> = {
 export default function NewUserPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -184,10 +186,13 @@ export default function NewUserPage() {
   const createUserMutation = api.users.create.useMutation({
     onSuccess: async (newUser) => {
       await utils.users.list.invalidate();
+      toast.success("Benutzer erfolgreich erstellt");
       router.push(`/dashboard/users/${newUser.id}`);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      toast.error("Fehler beim Erstellen: " + errorMessage);
       setIsSubmitting(false);
     },
   });

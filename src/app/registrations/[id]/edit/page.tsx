@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 
 interface Participant {
   id: string;
@@ -24,6 +25,7 @@ interface Participant {
 export default function EditRegistrationPage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const { data: session, isPending: sessionLoading } = useSession();
   const registrationId = params.id as string;
   const utils = api.useUtils();
@@ -67,7 +69,7 @@ export default function EditRegistrationPage() {
   // Update mutation
   const updateMutation = api.registrations.updateMyRegistration.useMutation({
     onSuccess: () => {
-      setSuccess("Die Änderungen wurden erfolgreich gespeichert.");
+      toast.success("Die Änderungen wurden erfolgreich gespeichert.");
       setError("");
       // Invalidate queries to refresh data
       void utils.registrations.getMyRegistrations.invalidate();
@@ -78,8 +80,8 @@ export default function EditRegistrationPage() {
       }, 1500);
     },
     onError: (err) => {
+      toast.error(getErrorMessage(err));
       setError(getErrorMessage(err));
-      setSuccess("");
       setIsSubmitting(false);
     },
   });
@@ -89,11 +91,13 @@ export default function EditRegistrationPage() {
     onSuccess: () => {
       setCancelModalOpen(false);
       setCancelError("");
+      toast.success("Anmeldung erfolgreich storniert");
       void utils.registrations.getMyRegistrations.invalidate();
       router.push("/registrations");
     },
     onError: (err) => {
       setCancelError(err.message || "Ein Fehler ist aufgetreten.");
+      toast.error(err.message || "Ein Fehler ist aufgetreten.");
     },
   });
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   EventCategory,
   EventEnsembleType,
@@ -57,6 +58,7 @@ export default function EditEventPage() {
   const params = useParams();
   const eventId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -220,11 +222,13 @@ export default function EditEventPage() {
     onSuccess: async () => {
       // Invalidate the event query to refetch fresh data on the view page
       await utils.events.getById.invalidate({ id: eventId });
+      toast.success("Termin erfolgreich aktualisiert");
       router.push(`/dashboard/events/${eventId}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Aktualisieren: " + getErrorMessage(err));
     },
   });
 
@@ -243,9 +247,13 @@ export default function EditEventPage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
+      toast.error(
         getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
       );
     },

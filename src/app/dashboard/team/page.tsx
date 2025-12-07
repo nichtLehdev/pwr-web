@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -20,6 +21,7 @@ const CONTACT_TYPE_LABELS: Record<string, string> = {
 export default function DashboardTeamPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -36,7 +38,12 @@ export default function DashboardTeamPage() {
 
   const deleteMutation = api.organization.deleteTeamMember.useMutation({
     onSuccess: () => {
+      toast.success("Teammitglied erfolgreich gelöscht");
       void refetch();
+      setDeletingId(null);
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
       setDeletingId(null);
     },
   });

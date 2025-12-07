@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole, ContactType } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -31,6 +32,7 @@ export default function EditTeamPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -98,11 +100,13 @@ export default function EditTeamPage() {
 
   const updateMutation = api.organization.updateTeamMember.useMutation({
     onSuccess: async () => {
+      toast.success("Teammitglied erfolgreich aktualisiert");
       await utils.organization.getTeam.invalidate();
       await utils.organization.getTeamMember.invalidate({ id: memberId });
       router.push(`/dashboard/team/${memberId}`);
     },
     onError: (err) => {
+      toast.error("Fehler beim Aktualisieren: " + err.message);
       setError(getErrorMessage(err));
       setIsSubmitting(false);
     },

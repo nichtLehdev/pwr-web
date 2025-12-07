@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -16,6 +17,7 @@ const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 export default function NewBlaeserheftPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -54,11 +56,13 @@ export default function NewBlaeserheftPage() {
   const createMutation = api.materials.createBlaserheft.useMutation({
     onSuccess: async (data) => {
       await utils.materials.getBlaserhefte.invalidate();
+      toast.success("Bläserheft erfolgreich erstellt");
       router.push(`/dashboard/blaeserhefte/${data.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 

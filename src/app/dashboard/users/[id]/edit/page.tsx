@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 
 // User placeholder icon component
@@ -42,6 +43,7 @@ export default function EditUserPage() {
   const params = useParams();
   const userId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -99,10 +101,13 @@ export default function EditUserPage() {
     onSuccess: async () => {
       await utils.users.getById.invalidate({ id: userId });
       await utils.users.list.invalidate();
+      toast.success("Benutzer erfolgreich aktualisiert");
       router.push(`/dashboard/users/${userId}`);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+      toast.error("Fehler beim Aktualisieren: " + errorMessage);
       setIsSubmitting(false);
     },
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
@@ -22,6 +23,7 @@ export default function TeamDetailPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -38,7 +40,12 @@ export default function TeamDetailPage() {
 
   const deleteMutation = api.organization.deleteTeamMember.useMutation({
     onSuccess: () => {
+      toast.success("Teammitglied erfolgreich gelöscht");
       router.push("/dashboard/team");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
+      setIsDeleting(false);
     },
   });
 

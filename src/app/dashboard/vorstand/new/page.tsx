@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -32,6 +33,7 @@ const UserPlaceholderIcon = ({ className }: { className?: string }) => (
 export default function NewVorstandPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -94,10 +96,12 @@ export default function NewVorstandPage() {
 
   const createMutation = api.organization.createVorstandMember.useMutation({
     onSuccess: async (data) => {
+      toast.success("Vorstandsmitglied erfolgreich erstellt");
       await utils.organization.getVorstand.invalidate();
       router.push(`/dashboard/vorstand/${data.id}`);
     },
     onError: (err) => {
+      toast.error("Fehler beim Erstellen: " + getErrorMessage(err));
       setError(getErrorMessage(err));
       setIsSubmitting(false);
     },

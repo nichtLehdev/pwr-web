@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -15,6 +16,7 @@ const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 export default function DashboardBlaeserheftePage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -33,6 +35,11 @@ export default function DashboardBlaeserheftePage() {
     onSuccess: () => {
       void refetch();
       setDeletingId(null);
+      toast.success("Bläserheft erfolgreich gelöscht");
+    },
+    onError: (error) => {
+      setDeletingId(null);
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 

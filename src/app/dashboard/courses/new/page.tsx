@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
   TargetAudience,
@@ -73,6 +74,7 @@ interface CustomField {
 export default function NewCoursePage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // Fetch user profile for role
@@ -164,9 +166,13 @@ export default function NewCoursePage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
+      toast.error(
         getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
       );
     },
@@ -175,11 +181,13 @@ export default function NewCoursePage() {
   // Create course mutation
   const createCourseMutation = api.courses.create.useMutation({
     onSuccess: (course) => {
+      toast.success("Kurs erfolgreich erstellt");
       router.push(`/dashboard/courses/${course.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Erstellen: " + getErrorMessage(err));
     },
   });
 

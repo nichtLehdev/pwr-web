@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
   EventCategory,
@@ -59,6 +60,7 @@ export default function EventDetailPage() {
   const params = useParams();
   const eventId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // Review state
@@ -84,6 +86,10 @@ export default function EventDetailPage() {
   const approveMutation = api.events.approve.useMutation({
     onSuccess: () => {
       void refetchEvent();
+      toast.success("Termin wurde freigegeben");
+    },
+    onError: (error) => {
+      toast.error("Fehler bei der Freigabe: " + error.message);
     },
   });
 
@@ -92,12 +98,20 @@ export default function EventDetailPage() {
       void refetchEvent();
       setShowRejectModal(false);
       setReviewNotes("");
+      toast.success("Termin wurde abgelehnt");
+    },
+    onError: (error) => {
+      toast.error("Fehler bei der Ablehnung: " + error.message);
     },
   });
 
   const deleteMutation = api.events.delete.useMutation({
     onSuccess: () => {
+      toast.success("Termin erfolgreich gelöscht");
       router.push("/dashboard/events");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 

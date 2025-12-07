@@ -14,6 +14,7 @@ import {
 } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { useToast } from "@/app/_components/ui/toast";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -44,6 +45,7 @@ const DASHBOARD_ROLES: UserRole[] = [
 
 export default function EditPostPage() {
   const router = useRouter();
+  const toast = useToast();
   const params = useParams();
   const postId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
@@ -100,10 +102,11 @@ export default function EditPostPage() {
     onSuccess: async () => {
       // Invalidate the post query to refetch fresh data on the view page
       await utils.posts.getById.invalidate({ id: postId });
+      toast.success("Änderungen gespeichert");
       router.push(`/dashboard/posts/${postId}`);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });

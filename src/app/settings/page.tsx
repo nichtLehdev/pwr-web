@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
+import { useToast } from "@/app/_components/ui/toast";
 
 // Collapsible Section Component
 function CollapsibleSection({
@@ -79,6 +80,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
   const utils = api.useUtils();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -97,8 +99,6 @@ export default function SettingsPage() {
   const [preferences, setPreferences] =
     useState<UserPreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState("");
-  const [error, setError] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<{
     checking: boolean;
     available: boolean | null;
@@ -118,14 +118,13 @@ export default function SettingsPage() {
   // Update profile mutation
   const updateProfile = api.users.updateProfile.useMutation({
     onSuccess: () => {
-      setSuccess("Profil erfolgreich aktualisiert");
-      setError("");
+      toast.success("Profil erfolgreich aktualisiert");
       void utils.users.getMyProfile.invalidate();
-      setTimeout(() => setSuccess(""), 3000);
     },
     onError: (err) => {
-      setError(getErrorMessage(err, "Fehler beim Aktualisieren des Profils"));
-      setSuccess("");
+      toast.error(
+        getErrorMessage(err, "Fehler beim Aktualisieren des Profils"),
+      );
     },
   });
 
@@ -221,15 +220,13 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (
       formData.username &&
       formData.username !== profile?.username &&
       usernameStatus.available === false
     ) {
-      setError("Bitte wähle einen verfügbaren Benutzernamen");
+      toast.error("Bitte wähle einen verfügbaren Benutzernamen");
       return;
     }
 
@@ -282,37 +279,6 @@ export default function SettingsPage() {
 
         {/* Profile Card */}
         <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
-          {/* Success Message */}
-          {success && (
-            <div className="mb-6 rounded-md border-l-4 border-green-500 bg-green-50 p-4 dark:bg-green-900/20">
-              <div className="flex items-center">
-                <svg
-                  className="mr-2 h-5 w-5 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <p className="text-sm font-medium text-green-800 dark:text-green-300">
-                  {success}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 rounded-md border-l-4 border-red-500 bg-red-50 p-4 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Section: Profile Image */}
             <CollapsibleSection

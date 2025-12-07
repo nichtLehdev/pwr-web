@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole, ContentStatus } from "~/generated/prisma/enums";
+import { useToast } from "@/app/_components/ui/toast";
 
 // Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
@@ -62,6 +63,7 @@ function getMimeTypeLabel(mimeType: string): string {
 export default function DashboardMediaPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
+  const toast = useToast();
 
   // Filters
   const [search, setSearch] = useState("");
@@ -131,9 +133,11 @@ export default function DashboardMediaPage() {
       void utils.media.getStatistics.invalidate();
       resetUploadForm();
       setShowUploadModal(false);
+      toast.success("Medium erfolgreich hochgeladen");
     },
     onError: (error) => {
       setUploadError(error.message);
+      toast.error(error.message);
     },
   });
 
@@ -142,12 +146,14 @@ export default function DashboardMediaPage() {
       void utils.media.getAll.invalidate();
       void utils.media.getStatistics.invalidate();
       setShowDeleteModal(null);
+      toast.success("Medium gelöscht");
     },
   });
 
   const reviewMutation = api.media.review.useMutation({
     onSuccess: () => {
       void utils.media.getAll.invalidate();
+      toast.success("Status aktualisiert");
     },
   });
 
@@ -155,9 +161,11 @@ export default function DashboardMediaPage() {
     onSuccess: () => {
       void utils.media.getAll.invalidate();
       setShowEditModal(null);
+      toast.success("Änderungen gespeichert");
     },
     onError: (error) => {
       setEditError(error.message);
+      toast.error(error.message);
     },
   });
 

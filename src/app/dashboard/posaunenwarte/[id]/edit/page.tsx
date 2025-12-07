@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
@@ -21,6 +22,7 @@ export default function DashboardPosaunenwarteEditPage() {
   const params = useParams();
   const id = params.id as string;
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const [saving, setSaving] = useState(false);
@@ -46,9 +48,11 @@ export default function DashboardPosaunenwarteEditPage() {
       onSuccess: () => {
         void utils.users.getById.invalidate({ id });
         void utils.organization.getPosaunenwarte.invalidate();
+        toast.success("Verantwortung erfolgreich hinzugefügt");
       },
       onError: (err) => {
         setError(err.message);
+        toast.error("Fehler: " + err.message);
       },
     });
 
@@ -57,9 +61,11 @@ export default function DashboardPosaunenwarteEditPage() {
       onSuccess: () => {
         void utils.users.getById.invalidate({ id });
         void utils.organization.getPosaunenwarte.invalidate();
+        toast.success("Verantwortung erfolgreich entfernt");
       },
       onError: (err) => {
         setError(err.message);
+        toast.error("Fehler: " + err.message);
       },
     });
 

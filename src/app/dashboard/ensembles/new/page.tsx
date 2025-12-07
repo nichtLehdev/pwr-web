@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -20,6 +21,7 @@ const ALLOWED_ROLES: UserRole[] = [
 export default function NewEnsemblePage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -105,11 +107,13 @@ export default function NewEnsemblePage() {
   const createMutation = api.ensembles.create.useMutation({
     onSuccess: async (data) => {
       await utils.ensembles.getAll.invalidate();
+      toast.success("Ensemble erfolgreich erstellt");
       router.push(`/dashboard/ensembles/${data.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 
@@ -128,9 +132,11 @@ export default function NewEnsemblePage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(getErrorMessage(err, "Fehler beim Erstellen des Ortes."));
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 
