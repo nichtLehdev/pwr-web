@@ -150,6 +150,7 @@ export default function BlechblattPage() {
                   </div>
                   <div className="relative w-full" style={{ height: "80vh" }}>
                     <object
+                      key={selectedEdition?.id}
                       data={pdfUrl}
                       type="application/pdf"
                       className="h-full w-full"
