@@ -60,7 +60,7 @@ jobs:
           # It will fail if there are schema changes without migrations
           pnpm prisma migrate diff \
             --from-migrations ./prisma/migrations \
-            --to-schema-datamodel ./prisma/schema.prisma \
+            --to-schema ./prisma/schema.prisma \
             --exit-code
         continue-on-error: false
         env:
