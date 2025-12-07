@@ -9,9 +9,11 @@ import { signOut, useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import ThemeToggle from "./theme-toggle";
 import SearchModal from "./search-modal";
+import { useBanner } from "../ui/banner-context";
 
 export default function Navigation() {
   const pathname = usePathname();
+  const { bannerHeight } = useBanner();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownTimeout, setDropdownTimeout] = useState<NodeJS.Timeout | null>(
@@ -159,7 +161,10 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="dark:bg-dark-surface dark:shadow-dark-border fixed top-0 right-0 left-0 z-50 w-full bg-white shadow-md">
+    <nav
+      className="dark:bg-dark-surface dark:shadow-dark-border fixed right-0 left-0 z-50 w-full bg-white shadow-md transition-[top] duration-200"
+      style={{ top: bannerHeight }}
+    >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between lg:h-20">
           {/* Logo - immer sichtbar */}
@@ -409,7 +414,10 @@ export default function Navigation() {
 
         {/* Mobile Menu - slide down */}
         {mobileMenuOpen && (
-          <div className="dark:border-dark-border dark:bg-dark-surface fixed inset-0 top-16 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden">
+          <div
+            className="dark:border-dark-border dark:bg-dark-surface fixed inset-x-0 bottom-0 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden"
+            style={{ top: bannerHeight + 64 }}
+          >
             <div className="flex flex-col space-y-1 px-4">
               {navLinks.map((link) => (
                 <div key={link.href}>

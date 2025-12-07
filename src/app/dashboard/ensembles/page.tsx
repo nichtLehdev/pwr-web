@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -28,6 +29,8 @@ export default function DashboardEnsemblesPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
+  const toast = useToast();
+
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -51,6 +54,11 @@ export default function DashboardEnsemblesPage() {
     onSuccess: () => {
       void refetch();
       setDeletingId(null);
+      toast.success("Ensemble erfolgreich gelöscht");
+    },
+    onError: (error) => {
+      setDeletingId(null);
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole, PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -25,6 +26,7 @@ const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
 export default function NewPosaunenratPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -83,11 +85,13 @@ export default function NewPosaunenratPage() {
   const createMutation = api.organization.createPosaunenratMember.useMutation({
     onSuccess: async (data) => {
       await utils.organization.getPosaunenrat.invalidate();
+      toast.success("Posaunenratsmitglied erfolgreich erstellt");
       router.push(`/dashboard/posaunenrat/${data.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 

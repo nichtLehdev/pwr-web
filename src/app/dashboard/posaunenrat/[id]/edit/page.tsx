@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole, PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -28,6 +29,7 @@ export default function EditPosaunenratPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -111,11 +113,13 @@ export default function EditPosaunenratPage() {
       await utils.organization.getPosaunenratMember.invalidate({
         id: memberId,
       });
+      toast.success("Posaunenratsmitglied erfolgreich aktualisiert");
       router.push(`/dashboard/posaunenrat/${memberId}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Aktualisieren: " + err.message);
     },
   });
 

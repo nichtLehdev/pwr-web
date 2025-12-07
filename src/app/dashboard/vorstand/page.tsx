@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -15,6 +16,7 @@ const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 export default function DashboardVorstandPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -31,7 +33,12 @@ export default function DashboardVorstandPage() {
 
   const deleteMutation = api.organization.deleteVorstandMember.useMutation({
     onSuccess: () => {
+      toast.success("Vorstandsmitglied erfolgreich gelöscht");
       void refetch();
+      setDeletingId(null);
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
       setDeletingId(null);
     },
   });

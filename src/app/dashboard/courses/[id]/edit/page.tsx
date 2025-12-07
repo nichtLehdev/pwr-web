@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
   TargetAudience,
@@ -81,6 +82,7 @@ export default function EditCoursePage() {
   const params = useParams();
   const courseId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // Form state
@@ -248,11 +250,13 @@ export default function EditCoursePage() {
   const updateCourseMutation = api.courses.update.useMutation({
     onSuccess: async () => {
       await utils.courses.getById.invalidate({ id: courseId });
+      toast.success("Kurs erfolgreich aktualisiert");
       router.push(`/dashboard/courses/${courseId}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Aktualisieren: " + getErrorMessage(err));
     },
   });
 
@@ -273,9 +277,13 @@ export default function EditCoursePage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
+      toast.error(
         getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
       );
     },

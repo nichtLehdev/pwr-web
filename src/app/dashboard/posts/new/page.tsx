@@ -14,6 +14,7 @@ import {
 } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { useToast } from "@/app/_components/ui/toast";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -28,6 +29,7 @@ const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
 export default function NewPostPage() {
   const router = useRouter();
+  const toast = useToast();
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
 
@@ -66,10 +68,11 @@ export default function NewPostPage() {
   // Create post mutation
   const createPostMutation = api.posts.create.useMutation({
     onSuccess: (post) => {
+      toast.success("Beitrag erfolgreich erstellt");
       router.push(`/dashboard/posts/${post.id}`);
     },
     onError: (err) => {
-      setError(getErrorMessage(err));
+      toast.error(getErrorMessage(err));
       setIsSubmitting(false);
     },
   });

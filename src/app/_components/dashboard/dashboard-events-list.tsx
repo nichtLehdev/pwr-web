@@ -5,6 +5,7 @@ import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import DashboardEventCard from "./dashboard-event-card";
 import type { ContentStatus } from "~/generated/prisma/client";
+import { useToast } from "@/app/_components/ui/toast";
 
 interface DashboardEventsListProps {
   userRole: string;
@@ -33,6 +34,7 @@ export default function DashboardEventsList({
   userRole,
 }: DashboardEventsListProps) {
   const router = useRouter();
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
   );
@@ -66,10 +68,10 @@ export default function DashboardEventsList({
       setSelectedIds(new Set());
       setSelectionMode(false);
       setShowDeleteConfirm(false);
-      alert(`${result.deletedCount} Event(s) gelöscht`);
+      toast.success(`${result.deletedCount} Event(s) gelöscht`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 
@@ -79,20 +81,21 @@ export default function DashboardEventsList({
       setSelectedIds(new Set());
       setSelectionMode(false);
       setShowCancelConfirm(false);
-      alert(`${result.cancelledCount} Event(s) abgesagt`);
+      toast.success(`${result.cancelledCount} Event(s) abgesagt`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 
   const duplicateMutation = api.events.duplicate.useMutation({
     onSuccess: (newEvent) => {
       void utils.events.getDashboardEvents.invalidate();
+      toast.success("Event dupliziert");
       router.push(`/dashboard/events/${newEvent.id}/edit`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -101,10 +104,10 @@ export default function DashboardEventsList({
       void utils.events.getDashboardEvents.invalidate();
       setSelectedIds(new Set());
       setSelectionMode(false);
-      alert(`${result.duplicatedCount} Event(s) dupliziert`);
+      toast.success(`${result.duplicatedCount} Event(s) dupliziert`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -115,10 +118,10 @@ export default function DashboardEventsList({
       setSelectionMode(false);
       setShowStatusChange(false);
       setNewStatus(null);
-      alert(`${result.updatedCount} Event(s) aktualisiert`);
+      toast.success(`${result.updatedCount} Event(s) aktualisiert`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 

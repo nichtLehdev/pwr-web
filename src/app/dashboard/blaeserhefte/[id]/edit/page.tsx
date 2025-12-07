@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -18,6 +19,7 @@ export default function EditBlaeserheftPage() {
   const params = useParams();
   const heftId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -101,11 +103,13 @@ export default function EditBlaeserheftPage() {
     onSuccess: async () => {
       await utils.materials.getBlaserhefte.invalidate();
       await utils.materials.getBlaserheftById.invalidate({ id: heftId });
+      toast.success("Bläserheft erfolgreich aktualisiert");
       router.push(`/dashboard/blaeserhefte/${heftId}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Aktualisieren: " + err.message);
     },
   });
 

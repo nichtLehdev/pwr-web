@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
@@ -16,6 +17,7 @@ export default function VorstandDetailPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -32,7 +34,12 @@ export default function VorstandDetailPage() {
 
   const deleteMutation = api.organization.deleteVorstandMember.useMutation({
     onSuccess: () => {
+      toast.success("Vorstandsmitglied erfolgreich gelöscht");
       router.push("/dashboard/vorstand");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
+      setIsDeleting(false);
     },
   });
 

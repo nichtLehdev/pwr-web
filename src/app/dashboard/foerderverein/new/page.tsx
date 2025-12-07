@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole, FoerdervereinRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -25,6 +26,7 @@ const FOERDERVEREIN_ROLE_OPTIONS: {
 export default function NewFoerdervereinPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -89,11 +91,13 @@ export default function NewFoerdervereinPage() {
     {
       onSuccess: async (data) => {
         await utils.organization.getFoerderverein.invalidate();
+        toast.success("Fördervereinsmitglied erfolgreich erstellt");
         router.push(`/dashboard/foerderverein/${data.id}`);
       },
       onError: (err) => {
         setError(getErrorMessage(err));
         setIsSubmitting(false);
+        toast.error("Fehler beim Erstellen: " + err.message);
       },
     },
   );

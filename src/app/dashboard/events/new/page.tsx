@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   EventCategory,
   EventEnsembleType,
@@ -39,6 +40,7 @@ interface PriceOption {
 export default function NewEventPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // Fetch user profile for role and bezirk
@@ -130,11 +132,13 @@ export default function NewEventPage() {
   // Create event mutation
   const createEventMutation = api.events.create.useMutation({
     onSuccess: (event) => {
+      toast.success("Termin erfolgreich erstellt");
       router.push(`/dashboard/events/${event.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Erstellen: " + getErrorMessage(err));
     },
   });
 
@@ -153,9 +157,13 @@ export default function NewEventPage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(
+        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
+      );
+      toast.error(
         getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
       );
     },
