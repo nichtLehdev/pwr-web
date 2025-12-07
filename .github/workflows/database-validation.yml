@@ -1,0 +1,67 @@
+name: CI - Database Validation
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "prisma/**"
+      - "prisma.config.ts"
+  push:
+    branches: [main, develop]
+    paths:
+      - "prisma/**"
+      - "prisma.config.ts"
+
+jobs:
+  prisma-validate:
+    name: Validate Prisma Schema
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Prisma schema
+        run: pnpm prisma validate
+
+      - name: Check for pending migrations
+        run: |
+          # This checks if the schema is in sync with migrations
+          # It will fail if there are schema changes without migrations
+          pnpm prisma migrate diff \
+            --from-migrations ./prisma/migrations \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --exit-code
+        continue-on-error: false
+
+      - name: Generate Prisma Client
+        run: pnpm prisma generate
+        env:
+          # Dummy DATABASE_URL for generation (not connecting to DB)
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
