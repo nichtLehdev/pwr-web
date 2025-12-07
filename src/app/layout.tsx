@@ -5,6 +5,7 @@ import Navigation from "./_components/general/navigation";
 import Footer from "./_components/general/footer";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "./_components/general/theme-provider";
+import { ToastProvider, Toaster } from "./_components/ui/toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -63,11 +64,14 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider>
-          <TRPCReactProvider>
-            <Navigation />
-            <main className="pt-16 lg:pt-20">{children}</main>
-            <Footer />
-          </TRPCReactProvider>
+          <ToastProvider>
+            <TRPCReactProvider>
+              <Navigation />
+              <main className="pt-16 lg:pt-20">{children}</main>
+              <Footer />
+              <Toaster />
+            </TRPCReactProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
