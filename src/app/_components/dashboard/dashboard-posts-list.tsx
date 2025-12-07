@@ -5,6 +5,7 @@ import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
+import { useToast } from "@/app/_components/ui/toast";
 
 interface DashboardPostsListProps {
   userRole: string;
@@ -42,6 +43,7 @@ export default function DashboardPostsList({
   userRole,
 }: DashboardPostsListProps) {
   const router = useRouter();
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
   );
@@ -78,20 +80,21 @@ export default function DashboardPostsList({
       setSelectedIds(new Set());
       setSelectionMode(false);
       setShowDeleteConfirm(false);
-      alert(`${result.deletedCount} Beitrag/Beiträge gelöscht`);
+      toast.success(`${result.deletedCount} Beitrag/Beiträge gelöscht`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 
   const duplicateMutation = api.posts.duplicate.useMutation({
     onSuccess: (newPost) => {
       void utils.posts.getDashboardPosts.invalidate();
+      toast.success("Beitrag dupliziert");
       router.push(`/dashboard/posts/${newPost.id}/edit`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -100,10 +103,10 @@ export default function DashboardPostsList({
       void utils.posts.getDashboardPosts.invalidate();
       setSelectedIds(new Set());
       setSelectionMode(false);
-      alert(`${result.duplicatedCount} Beitrag/Beiträge dupliziert`);
+      toast.success(`${result.duplicatedCount} Beitrag/Beiträge dupliziert`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -114,10 +117,10 @@ export default function DashboardPostsList({
       setSelectionMode(false);
       setShowStatusChange(false);
       setNewStatus(null);
-      alert(`${result.updatedCount} Beitrag/Beiträge aktualisiert`);
+      toast.success(`${result.updatedCount} Beitrag/Beiträge aktualisiert`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 

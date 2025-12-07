@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -34,6 +35,7 @@ export default function EditVorstandPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -123,11 +125,13 @@ export default function EditVorstandPage() {
 
   const updateMutation = api.organization.updateVorstandMember.useMutation({
     onSuccess: async () => {
+      toast.success("Vorstandsmitglied erfolgreich aktualisiert");
       await utils.organization.getVorstand.invalidate();
       await utils.organization.getVorstandMember.invalidate({ id: memberId });
       router.push(`/dashboard/vorstand/${memberId}`);
     },
     onError: (err) => {
+      toast.error("Fehler beim Aktualisieren: " + getErrorMessage(err));
       setError(getErrorMessage(err));
       setIsSubmitting(false);
     },

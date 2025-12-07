@@ -5,6 +5,7 @@ import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import DashboardCourseCard from "./dashboard-course-card";
 import type { ContentStatus } from "~/generated/prisma/enums";
+import { useToast } from "@/app/_components/ui/toast";
 
 interface DashboardCoursesListProps {
   userRole: string;
@@ -33,6 +34,7 @@ export default function DashboardCoursesList({
   userRole,
 }: DashboardCoursesListProps) {
   const router = useRouter();
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
   );
@@ -65,20 +67,21 @@ export default function DashboardCoursesList({
       setSelectedIds(new Set());
       setSelectionMode(false);
       setShowDeleteConfirm(false);
-      alert(`${result.deletedCount} Kurs(e) gelöscht`);
+      toast.success(`${result.deletedCount} Kurs(e) gelöscht`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 
   const duplicateMutation = api.courses.duplicate.useMutation({
     onSuccess: (newCourse) => {
       void utils.courses.getDashboardCourses.invalidate();
+      toast.success("Kurs dupliziert");
       router.push(`/dashboard/courses/${newCourse.id}/edit`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -87,10 +90,10 @@ export default function DashboardCoursesList({
       void utils.courses.getDashboardCourses.invalidate();
       setSelectedIds(new Set());
       setSelectionMode(false);
-      alert(`${result.duplicatedCount} Kurs(e) dupliziert`);
+      toast.success(`${result.duplicatedCount} Kurs(e) dupliziert`);
     },
     onError: (error) => {
-      alert(`Fehler beim Duplizieren: ${error.message}`);
+      toast.error(`Fehler beim Duplizieren: ${error.message}`);
     },
   });
 
@@ -101,10 +104,10 @@ export default function DashboardCoursesList({
       setSelectionMode(false);
       setShowStatusChange(false);
       setNewStatus(null);
-      alert(`${result.updatedCount} Kurs(e) aktualisiert`);
+      toast.success(`${result.updatedCount} Kurs(e) aktualisiert`);
     },
     onError: (error) => {
-      alert(`Fehler: ${error.message}`);
+      toast.error(`Fehler: ${error.message}`);
     },
   });
 

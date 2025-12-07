@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -22,6 +23,7 @@ export default function EditEnsemblePage() {
   const params = useParams();
   const ensembleId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -155,11 +157,13 @@ export default function EditEnsemblePage() {
     onSuccess: async () => {
       await utils.ensembles.getAll.invalidate();
       await utils.ensembles.getById.invalidate({ id: ensembleId });
+      toast.success("Ensemble erfolgreich aktualisiert");
       router.push(`/dashboard/ensembles/${ensembleId}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
+      toast.error("Fehler beim Aktualisieren: " + err.message);
     },
   });
 
@@ -178,9 +182,11 @@ export default function EditEnsemblePage() {
         city: "",
         additionalInfo: "",
       });
+      toast.success("Veranstaltungsort erstellt");
     },
     onError: (err) => {
       setError(getErrorMessage(err, "Fehler beim Erstellen des Ortes."));
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 

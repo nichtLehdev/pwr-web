@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
@@ -25,6 +26,7 @@ export default function PosaunenratDetailPage() {
   const params = useParams();
   const memberId = params.id as string;
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -41,7 +43,12 @@ export default function PosaunenratDetailPage() {
 
   const deleteMutation = api.organization.deletePosaunenratMember.useMutation({
     onSuccess: () => {
+      toast.success("Posaunenratsmitglied erfolgreich gelöscht");
       router.push("/dashboard/posaunenrat");
+    },
+    onError: (error) => {
+      setIsDeleting(false);
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 

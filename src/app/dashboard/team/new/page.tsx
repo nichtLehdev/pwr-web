@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole, ContactType } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -29,6 +30,7 @@ type SocialLink = {
 export default function NewTeamPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
@@ -108,10 +110,12 @@ export default function NewTeamPage() {
 
   const createMutation = api.organization.createTeamMember.useMutation({
     onSuccess: async (data) => {
+      toast.success("Teammitglied erfolgreich erstellt");
       await utils.organization.getTeam.invalidate();
       router.push(`/dashboard/team/${data.id}`);
     },
     onError: (err) => {
+      toast.error("Fehler beim Erstellen: " + err.message);
       setError(getErrorMessage(err));
       setIsSubmitting(false);
     },

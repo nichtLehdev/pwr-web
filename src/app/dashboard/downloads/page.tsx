@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   UserRole,
   ContentStatus,
@@ -73,6 +74,7 @@ function formatFileSize(bytes: number | null): string {
 
 export default function DashboardDownloadsPage() {
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // Filters
@@ -137,9 +139,11 @@ export default function DashboardDownloadsPage() {
       void utils.materials.getDownloads.invalidate();
       resetUploadForm();
       setShowUploadModal(false);
+      toast.success("Download erfolgreich erstellt");
     },
     onError: (error) => {
       setUploadError(error.message);
+      toast.error("Fehler beim Erstellen: " + error.message);
     },
   });
 
@@ -147,12 +151,22 @@ export default function DashboardDownloadsPage() {
     onSuccess: () => {
       void utils.materials.getDownloads.invalidate();
       setShowDeleteModal(null);
+      toast.success("Download erfolgreich gelöscht");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 
   const reviewMutation = api.materials.reviewDownload.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       void utils.materials.getDownloads.invalidate();
+      const statusText =
+        variables.status === "APPROVED" ? "freigegeben" : "abgelehnt";
+      toast.success(`Download wurde ${statusText}`);
+    },
+    onError: (error) => {
+      toast.error("Fehler bei der Überprüfung: " + error.message);
     },
   });
 
@@ -160,9 +174,11 @@ export default function DashboardDownloadsPage() {
     onSuccess: () => {
       void utils.materials.getDownloads.invalidate();
       setShowEditModal(null);
+      toast.success("Download erfolgreich aktualisiert");
     },
     onError: (error) => {
       setEditError(error.message);
+      toast.error("Fehler beim Aktualisieren: " + error.message);
     },
   });
 

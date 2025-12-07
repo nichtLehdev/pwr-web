@@ -12,6 +12,7 @@ import {
   UserRole,
 } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
+import { useToast } from "@/app/_components/ui/toast";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -52,6 +53,7 @@ const DASHBOARD_ROLES: UserRole[] = [
 
 export default function PostDetailPage() {
   const router = useRouter();
+  const toast = useToast();
   const params = useParams();
   const postId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
@@ -88,12 +90,14 @@ export default function PostDetailPage() {
   // Mutations
   const approveMutation = api.posts.approve.useMutation({
     onSuccess: () => {
+      toast.success("Beitrag genehmigt");
       void refetchPost();
     },
   });
 
   const rejectMutation = api.posts.reject.useMutation({
     onSuccess: () => {
+      toast.warning("Beitrag abgelehnt");
       void refetchPost();
       setShowRejectModal(false);
       setReviewNotes("");
@@ -102,6 +106,7 @@ export default function PostDetailPage() {
 
   const deleteMutation = api.posts.delete.useMutation({
     onSuccess: () => {
+      toast.success("Beitrag gelöscht");
       router.push("/dashboard/posts");
     },
   });
@@ -109,6 +114,7 @@ export default function PostDetailPage() {
   // Mutations for approving attached content
   const approveDownloadMutation = api.materials.reviewDownload.useMutation({
     onSuccess: () => {
+      toast.success("Download freigegeben");
       void refetchAttachedContent();
       void refetchPost();
     },
@@ -116,6 +122,7 @@ export default function PostDetailPage() {
 
   const approveMediaMutation = api.media.review.useMutation({
     onSuccess: () => {
+      toast.success("Medium freigegeben");
       void refetchAttachedContent();
       void refetchPost();
     },

@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
   CourseType,
@@ -93,6 +94,7 @@ export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
 
   // View state
@@ -132,6 +134,10 @@ export default function CourseDetailPage() {
   const approveMutation = api.courses.approve.useMutation({
     onSuccess: () => {
       void refetchCourse();
+      toast.success("Kurs wurde freigegeben");
+    },
+    onError: (error) => {
+      toast.error("Fehler bei der Freigabe: " + error.message);
     },
   });
 
@@ -140,12 +146,20 @@ export default function CourseDetailPage() {
       void refetchCourse();
       setShowRejectModal(false);
       setReviewNotes("");
+      toast.success("Kurs wurde abgelehnt");
+    },
+    onError: (error) => {
+      toast.error("Fehler bei der Ablehnung: " + error.message);
     },
   });
 
   const deleteMutation = api.courses.delete.useMutation({
     onSuccess: () => {
+      toast.success("Kurs erfolgreich gelöscht");
       router.push("/dashboard/courses");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
     },
   });
 
