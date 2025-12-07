@@ -44,7 +44,7 @@ jobs:
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
 
       - name: Run ESLint
-        run: pnpm lint
+        run: pnpm run lint
 
       - name: Run TypeScript type check
         run: pnpm typecheck
