@@ -5,7 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { generateInvoice } from "@/lib/invoice-generator";
 import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
   UserRole,

@@ -1,4 +1,3 @@
-import { db } from "@/server/db";
 import { PosaunenwartRoleType } from "~/generated/prisma/client";
 
 // ============================================================================

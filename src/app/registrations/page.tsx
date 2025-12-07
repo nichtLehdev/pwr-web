@@ -97,32 +97,6 @@ export default function MyRegistrationsPage() {
     });
   };
 
-  // Check if registration can be edited (before deadline and course hasn't started)
-  const canEdit = (
-    registration: NonNullable<typeof data>["registrations"][0],
-  ) => {
-    const now = new Date();
-    const courseStart = new Date(registration.course.startDate);
-    const deadline = registration.course.registrationDeadline
-      ? new Date(registration.course.registrationDeadline)
-      : null;
-
-    // Cannot edit if course has started or registration is cancelled
-    if (
-      courseStart <= now ||
-      registration.registrationStatus === RegistrationStatus.CANCELLED
-    ) {
-      return false;
-    }
-
-    // Cannot edit if deadline has passed
-    if (deadline && deadline <= now) {
-      return false;
-    }
-
-    return true;
-  };
-
   // Get edit deadline info message
   const getEditDeadlineInfo = (
     registration: NonNullable<typeof data>["registrations"][0],

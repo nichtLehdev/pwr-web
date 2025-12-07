@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/trpc/server";
 import PageHeader from "@/app/_components/general/page-header";
 import PeopleCard from "@/app/_components/general/people-card";

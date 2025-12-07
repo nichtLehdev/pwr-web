@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
@@ -113,6 +113,7 @@ export default function EditRegistrationPage() {
   }, [session, sessionLoading, router]);
 
   // Initialize participants from registration
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (registration?.participants) {
       setParticipants(
@@ -125,8 +126,10 @@ export default function EditRegistrationPage() {
       );
     }
   }, [registration]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Initialize registrant and billing data from registration
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (registration) {
       setRegistrantPhone(registration.registrantPhone ?? "");
@@ -142,6 +145,7 @@ export default function EditRegistrationPage() {
       });
     }
   }, [registration]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Check if registration can be edited
   const canEditRegistration = () => {
@@ -207,6 +211,7 @@ export default function EditRegistrationPage() {
     return available > currentUsage;
   };
 
+  const participantIdCounter = useRef(0);
   const addParticipant = () => {
     if (!registration?.course?.priceOptions) return;
 
@@ -215,10 +220,11 @@ export default function EditRegistrationPage() {
       isPriceOptionAvailable(po.label),
     );
 
+    participantIdCounter.current += 1;
     setParticipants([
       ...participants,
       {
-        id: `new-${Date.now()}`,
+        id: `new-${participantIdCounter.current}`,
         firstName: "",
         lastName: "",
         birthDate: new Date(),

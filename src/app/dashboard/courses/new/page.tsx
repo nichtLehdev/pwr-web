@@ -11,7 +11,6 @@ import {
   CourseType,
   TargetAudience,
   CustomFieldType,
-  ContentStatus,
   UserRole,
 } from "~/generated/prisma/enums";
 
@@ -210,11 +209,13 @@ export default function NewCoursePage() {
   }, [profile, profileLoading, router]);
 
   // Set bezirk for restricted users when profile loads
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (!isHigherRole && userBezirkId && !bezirkId) {
       setBezirkId(userBezirkId);
     }
   }, [isHigherRole, userBezirkId, bezirkId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Close dropdowns when clicking outside
   useEffect(() => {
