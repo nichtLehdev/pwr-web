@@ -147,6 +147,7 @@ export default function EditEventPage() {
   );
 
   // Initialize form with event data
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (event && !isInitialized) {
       setTitle(event.title);
@@ -213,6 +214,7 @@ export default function EditEventPage() {
       setIsInitialized(true);
     }
   }, [event, isInitialized]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // tRPC utils for cache invalidation
   const utils = api.useUtils();

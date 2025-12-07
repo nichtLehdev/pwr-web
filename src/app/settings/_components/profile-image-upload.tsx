@@ -74,7 +74,7 @@ export default function ProfileImageUpload({
 
       // Create media record in database using tRPC
       const extension = data.file.mimeType.split("/")[1] || "jpg";
-      
+
       const media = await createMedia.mutateAsync({
         name: file.name,
         filename: data.file.filename,
@@ -166,7 +166,7 @@ export default function ProfileImageUpload({
                 type="button"
                 onClick={handleClick}
                 disabled={uploading}
-                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 disabled:opacity-50"
+                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:outline-none disabled:opacity-50"
               >
                 <svg
                   className="h-5 w-5"
@@ -189,7 +189,7 @@ export default function ProfileImageUpload({
                   type="button"
                   onClick={handleRemove}
                   disabled={uploading}
-                  className="focus:ring-red-500 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus:ring-2 disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
                 >
                   <svg
                     className="h-5 w-5"

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
@@ -585,9 +586,11 @@ export default function CourseDetailPage() {
                   {course.instructors.map((instructor) => (
                     <li key={instructor.id} className="flex items-center gap-3">
                       {instructor.profileImage?.url ? (
-                        <img
+                        <Image
                           src={instructor.profileImage.url}
                           alt={instructor.displayName || ""}
+                          width={40}
+                          height={40}
                           className="h-10 w-10 rounded-full object-cover"
                         />
                       ) : (

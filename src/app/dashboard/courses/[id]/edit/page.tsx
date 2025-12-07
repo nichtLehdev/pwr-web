@@ -121,15 +121,10 @@ export default function EditCoursePage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [pricesChanged, setPricesChanged] = useState(false);
   const [customFieldsChanged, setCustomFieldsChanged] = useState(false);
-  const [originalPriceOptions, setOriginalPriceOptions] = useState<
-    PriceOption[]
-  >([]);
   const [originalCustomFields, setOriginalCustomFields] = useState<
     CustomField[]
   >([]);
-  const [originalIsFree, setOriginalIsFree] = useState(true);
 
   // Refs for click outside handling
   const locationDropdownRef = useRef<HTMLDivElement>(null);
@@ -165,6 +160,7 @@ export default function EditCoursePage() {
   const userBezirkId = profile?.bezirkId ?? null;
 
   // Initialize form from course data
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (course && !isInitialized) {
       setTitle(course.title);
@@ -201,7 +197,6 @@ export default function EditCoursePage() {
 
       // Pricing
       setIsFree(course.isFree);
-      setOriginalIsFree(course.isFree);
       setPriceInfo(course.priceInfo || "");
       if (course.priceOptions && course.priceOptions.length > 0) {
         const options = course.priceOptions.map((opt) => ({
@@ -212,7 +207,6 @@ export default function EditCoursePage() {
           maxParticipants: opt.maxParticipants,
         }));
         setPriceOptions(options);
-        setOriginalPriceOptions(options);
       }
 
       // Custom fields
@@ -242,6 +236,7 @@ export default function EditCoursePage() {
       setIsInitialized(true);
     }
   }, [course, isInitialized]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // tRPC utils for cache invalidation
   const utils = api.useUtils();
@@ -353,30 +348,6 @@ export default function EditCoursePage() {
   const hasRegistrations = (course?._count?.participants ?? 0) > 0;
   const registrationCount = course?._count?.participants ?? 0;
 
-  // Check if prices have changed from original
-  const checkPricesChanged = (
-    newOptions: PriceOption[],
-    newIsFree: boolean,
-  ) => {
-    if (newIsFree !== originalIsFree) {
-      setPricesChanged(true);
-      return;
-    }
-    if (newOptions.length !== originalPriceOptions.length) {
-      setPricesChanged(true);
-      return;
-    }
-    const changed = newOptions.some((opt, index) => {
-      const original = originalPriceOptions[index];
-      return (
-        opt.label !== original?.label ||
-        opt.price !== original?.price ||
-        opt.maxParticipants !== original?.maxParticipants
-      );
-    });
-    setPricesChanged(changed);
-  };
-
   const addPriceOption = () => {
     const newOptions = [
       ...priceOptions,
@@ -388,9 +359,6 @@ export default function EditCoursePage() {
       },
     ];
     setPriceOptions(newOptions);
-    if (hasRegistrations) {
-      checkPricesChanged(newOptions, isFree);
-    }
   };
 
   const updatePriceOption = (
@@ -402,17 +370,11 @@ export default function EditCoursePage() {
       opt.id === id ? { ...opt, [field]: value } : opt,
     );
     setPriceOptions(newOptions);
-    if (hasRegistrations) {
-      checkPricesChanged(newOptions, isFree);
-    }
   };
 
   const removePriceOption = (id: string) => {
     const newOptions = priceOptions.filter((opt) => opt.id !== id);
     setPriceOptions(newOptions);
-    if (hasRegistrations) {
-      checkPricesChanged(newOptions, isFree);
-    }
   };
 
   // Custom field handlers
@@ -538,17 +500,6 @@ export default function EditCoursePage() {
           sortOrder,
         }),
       );
-
-    // If the course was approved/rejected and content is being changed, set status back to pending
-    let finalStatus = status;
-    if (
-      (course?.status === ContentStatus.APPROVED &&
-        status === ContentStatus.APPROVED) ||
-      (course?.status === ContentStatus.REJECTED &&
-        status === ContentStatus.REJECTED)
-    ) {
-      finalStatus = ContentStatus.PENDING;
-    }
 
     updateCourseMutation.mutate({
       id: courseId,
@@ -1162,9 +1113,6 @@ export default function EditCoursePage() {
                   checked={isFree}
                   onChange={(e) => {
                     setIsFree(e.target.checked);
-                    if (hasRegistrations) {
-                      checkPricesChanged(priceOptions, e.target.checked);
-                    }
                   }}
                   disabled={hasRegistrations}
                   className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"

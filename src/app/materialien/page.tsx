@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { capitalizeFirstLetter, formatDate, getFileIcon } from "@/lib/utils";
+import { capitalizeFirstLetter, getFileIcon } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";

@@ -123,11 +123,13 @@ export default function NewEventPage() {
   );
 
   // Set bezirk for restricted users when profile loads
+  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (!isHigherRole && userBezirkId && !bezirkId) {
       setBezirkId(userBezirkId);
     }
   }, [isHigherRole, userBezirkId, bezirkId]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Create event mutation
   const createEventMutation = api.events.create.useMutation({
