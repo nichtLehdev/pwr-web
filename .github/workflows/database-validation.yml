@@ -16,6 +16,8 @@ jobs:
   prisma-validate:
     name: Validate Prisma Schema
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
