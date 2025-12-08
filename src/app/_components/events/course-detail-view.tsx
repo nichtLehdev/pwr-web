@@ -91,10 +91,13 @@ export default function CourseDetailView({
   // NEUE FUNKTION: ICS-Datei herunterladen
   const handleDownloadIcs = () => {
     // Generiere eine eindeutige ID (simuliert)
-    // eslint-disable-next-line react-hooks/purity
+
     const array = new Uint32Array(2);
     window.crypto.getRandomValues(array);
-    const randomString = Array.from(array).map(num => num.toString(36)).join('');
+    const randomString = Array.from(array)
+      .map((num) => num.toString(36))
+      .join("");
+    // eslint-disable-next-line react-hooks/purity
     const uid = `${Date.now()}-${randomString}`;
 
     // Formatiere die Daten
