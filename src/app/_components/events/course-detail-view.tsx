@@ -92,7 +92,10 @@ export default function CourseDetailView({
   const handleDownloadIcs = () => {
     // Generiere eine eindeutige ID (simuliert)
     // eslint-disable-next-line react-hooks/purity
-    const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const array = new Uint32Array(2);
+    window.crypto.getRandomValues(array);
+    const randomString = Array.from(array).map(num => num.toString(36)).join('');
+    const uid = `${Date.now()}-${randomString}`;
 
     // Formatiere die Daten
     const icsStartDate = formatIcsDate(startDate);
