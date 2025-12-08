@@ -62,7 +62,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/turndown": "^5.0.6",
-    "baseline-browser-mapping": "^2.9.3",
+    "baseline-browser-mapping": "^2.9.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
