@@ -87,7 +87,7 @@ jobs:
 
     environment:
       name: production
-      url: https://posaunenwerk.de
+      url: https://pwr.lehdev.de
 
     steps:
       - name: Checkout repository

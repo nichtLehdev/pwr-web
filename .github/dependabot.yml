@@ -1,0 +1,91 @@
+version: 2
+updates:
+  # Enable version updates for npm (works with pnpm too)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group updates to reduce PR noise
+    groups:
+      # Group all Next.js related packages together
+      nextjs:
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      # Group all Prisma packages together
+      prisma:
+        patterns:
+          - "@prisma/*"
+          - "prisma"
+      # Group all tRPC packages together
+      trpc:
+        patterns:
+          - "@trpc/*"
+      # Group all React Query packages together
+      react-query:
+        patterns:
+          - "@tanstack/react-query*"
+      # Group all TipTap editor packages together
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      # Group React core packages
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      # Group TypeScript and ESLint tooling
+      dev-tools:
+        patterns:
+          - "typescript"
+          - "eslint"
+          - "@eslint/*"
+          - "typescript-eslint"
+          - "prettier"
+          - "prettier-plugin-*"
+      # Group Tailwind packages
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+    # Ignore specific updates if needed
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+
+  # Enable version updates for Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "docker"
+      - "automated"
