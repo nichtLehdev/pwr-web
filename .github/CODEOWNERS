@@ -1,0 +1,37 @@
+# CODEOWNERS file for Posaunenwerk Rheinland Website
+
+* @nichtLehdev
+
+# Database schema and migrations - critical changes
+/prisma/ @nichtLehdev
+prisma.config.ts @nichtLehdev
+
+# Authentication and security
+/src/server/auth/ @nichtLehdev
+/src/server/auth.ts @nichtLehdev
+
+# API routes and tRPC routers
+/src/server/api/ @nichtLehdev
+
+# Environment configuration
+/src/env.js @nichtLehdev
+.env.example @nichtLehdev
+
+# Docker and deployment configuration
+Dockerfile @nichtLehdev
+docker-compose.yml @nichtLehdev
+.dockerignore @nichtLehdev
+
+# CI/CD workflows
+/.github/workflows/ @nichtLehdev
+
+# Dependencies
+package.json @nichtLehdev
+pnpm-lock.yaml @nichtLehdev
+
+# Configuration files
+next.config.js @nichtLehdev
+tailwind.config.ts @nichtLehdev
+eslint.config.js @nichtLehdev
+tsconfig.json @nichtLehdev
+
