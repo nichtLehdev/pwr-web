@@ -395,7 +395,7 @@ export default function DesktopCalendarView({
           <div className="flex gap-2">
             <button
               onClick={goToPreviousMonth}
-              className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Vorheriger Monat"
             >
               <svg
@@ -421,7 +421,7 @@ export default function DesktopCalendarView({
             </button>
             <button
               onClick={goToNextMonth}
-              className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Nächster Monat"
             >
               <svg
