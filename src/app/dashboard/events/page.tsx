@@ -2,10 +2,11 @@
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
+import SocialMediaExportModal from "../../_components/social-media/social-media-export-modal";
 import { UserRole } from "~/generated/prisma/enums";
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -18,6 +19,7 @@ const DASHBOARD_ROLES: UserRole[] = [
 export default function DashboardEventsPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
+  const [showSocialMediaModal, setShowSocialMediaModal] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -83,29 +85,56 @@ export default function DashboardEventsPage() {
               Erstelle, bearbeite und verwalte deine Termine
             </p>
           </div>
-          <Link
-            href="/dashboard/events/new"
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowSocialMediaModal(true)}
+              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex items-center gap-2 rounded-md border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            Neuer Termin
-          </Link>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+              Instagram Posts
+            </button>
+            <Link
+              href="/dashboard/events/new"
+              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Neuer Termin
+            </Link>
+          </div>
         </div>
 
         {/* Events List */}
         <DashboardEventsList userRole={userRole} />
+
+        {/* Social Media Export Modal */}
+        <SocialMediaExportModal
+          isOpen={showSocialMediaModal}
+          onClose={() => setShowSocialMediaModal(false)}
+        />
       </div>
     </main>
   );

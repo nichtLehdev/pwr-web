@@ -776,4 +776,46 @@ export const eventsRouter = createTRPCRouter({
 
       return { success: true, updatedCount: canUpdateIds.length };
     }),
+
+  getEventsByMonth: protectedProcedure
+    .input(
+      z.object({
+        year: z.number().min(2000).max(2100),
+        month: z.number().min(1).max(12),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const startDate = new Date(input.year, input.month - 1, 1);
+      const endDate = new Date(input.year, input.month, 0, 23, 59, 59, 999);
+
+      const events = await ctx.db.event.findMany({
+        where: {
+          status: ContentStatus.APPROVED,
+          eventDate: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+        include: {
+          coverImage: true,
+          location: true,
+          bezirk: true,
+          ensemble: {
+            include: {
+              conductor: { select: { id: true, displayName: true } },
+              image: true,
+            },
+          },
+          auswahlChor: {
+            include: {
+              conductor: { select: { id: true, displayName: true } },
+              image: true,
+            },
+          },
+        },
+        orderBy: { eventDate: "asc" },
+      });
+
+      return events;
+    }),
 });
