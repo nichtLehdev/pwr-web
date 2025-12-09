@@ -19,6 +19,43 @@ import CourseCard from "./course-card";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
 
+// Inline chevron icons
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  );
+}
+
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
 
@@ -231,6 +268,122 @@ export default function EventsClient({
       {} as Record<string, { label: string; items: typeof sortedItems }>,
     );
   }, [sortedItems]);
+
+  // Filter and group past items
+  const pastItems = useMemo(() => {
+    return allItems
+      .filter((item) => {
+        const itemDate = new Date(
+          item.type === "event" ? item.eventDate : item.endDate,
+        );
+        itemDate.setHours(0, 0, 0, 0);
+        return itemDate < now;
+      })
+      .filter((item) => {
+        // Apply same filters as future items
+        if (filterType === "events" && item.type !== "event") return false;
+        if (filterType === "courses" && item.type !== "course") return false;
+
+        if (selectedDistrict !== "all") {
+          if (selectedDistrict === "Bezirksübergreifend") {
+            if (item.bezirk !== null) return false;
+          } else {
+            const match = selectedDistrict.match(/Bezirk (\d+)/);
+            if (match) {
+              const districtNumber = parseInt(match[1] ?? "", 10);
+              if (item.bezirk?.number !== districtNumber) return false;
+            }
+          }
+        }
+
+        if (selectedCategory !== "all") {
+          if (item.type === "event") {
+            const categoryMap: Record<string, string> = {
+              Konzert: "KONZERT",
+              Gottesdienst: "GOTTESDIENST",
+              Probe: "PROBE",
+              Andere: "ANDERE",
+            };
+            const enumValue = categoryMap[selectedCategory];
+            if (enumValue && item.category !== enumValue) return false;
+          }
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
+        const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
+        return dateB.getTime() - dateA.getTime(); // Most recent first for past events
+      });
+  }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
+
+  // Group past items by month
+  const pastGroupedByMonth = useMemo(() => {
+    return pastItems.reduce(
+      (acc, item) => {
+        const date = new Date(
+          item.type === "event" ? item.eventDate : item.startDate,
+        );
+        const monthKey = `${date.getFullYear()}-${String(
+          date.getMonth() + 1,
+        ).padStart(2, "0")}`;
+        const monthLabel = date.toLocaleDateString("de-DE", {
+          year: "numeric",
+          month: "long",
+        });
+
+        if (!acc[monthKey]) {
+          acc[monthKey] = { label: monthLabel, items: [] };
+        }
+        acc[monthKey].items.push(item);
+        return acc;
+      },
+      {} as Record<string, { label: string; items: typeof pastItems }>,
+    );
+  }, [pastItems]);
+
+  // State for collapsed months (all expanded by default, so we track which are collapsed)
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleMonth = (monthKey: string) => {
+    setCollapsedMonths((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
+
+  const isMonthExpanded = (monthKey: string) => !collapsedMonths.has(monthKey);
+
+  // State for past events section (collapsed by default)
+  const [pastEventsExpanded, setPastEventsExpanded] = useState(false);
+
+  // State for collapsed past months (all collapsed by default, so we track which are expanded)
+  const [expandedPastMonths, setExpandedPastMonths] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const togglePastMonth = (monthKey: string) => {
+    setExpandedPastMonths((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(monthKey)) {
+        newSet.delete(monthKey);
+      } else {
+        newSet.add(monthKey);
+      }
+      return newSet;
+    });
+  };
+
+  const isPastMonthExpanded = (monthKey: string) =>
+    expandedPastMonths.has(monthKey);
 
   // District select options
   const districtSelectOptions = [
@@ -540,41 +693,63 @@ export default function EventsClient({
         <div className="container mx-auto px-4">
           {viewMode === "list" ? (
             /* List View - Grouped by month */
-            <div className="space-y-8 md:space-y-12">
+            <div className="space-y-4 md:space-y-6">
+              {/* Upcoming Events */}
               {Object.entries(groupedByMonth).map(
                 ([monthKey, { label, items }]) => (
-                  <div key={monthKey}>
-                    <h2 className="text-dark dark:text-dark-text dark:border-dark-border mb-4 border-b-2 border-gray-200 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
-                      {label}
-                    </h2>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-                      {items.map((item) =>
-                        item.type === "event" ? (
-                          <EventCard
-                            key={`event-${item.id}`}
-                            id={item.id}
-                            title={item.title}
-                            date={item.eventDate}
-                            location={item.location?.city || ""}
-                            category={item.category}
-                            district={item.bezirk?.number}
-                            openToParticipants={item.openToParticipants}
-                            cancelled={item.cancelled}
-                          />
-                        ) : (
-                          <CourseCard
-                            key={`course-${item.id}`}
-                            id={item.id}
-                            title={item.title}
-                            startDate={item.startDate}
-                            endDate={item.endDate}
-                            location={item.location?.city || ""}
-                            courseType={item.courseType}
-                            district={item.bezirk?.number}
-                          />
-                        ),
+                  <div
+                    key={monthKey}
+                    className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200"
+                  >
+                    <button
+                      onClick={() => toggleMonth(monthKey)}
+                      className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
+                    >
+                      <h2 className="text-dark dark:text-dark-text text-lg font-bold md:text-2xl">
+                        {label}
+                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                          ({items.length}{" "}
+                          {items.length === 1 ? "Termin" : "Termine"})
+                        </span>
+                      </h2>
+                      {isMonthExpanded(monthKey) ? (
+                        <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      ) : (
+                        <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                       )}
-                    </div>
+                    </button>
+                    {isMonthExpanded(monthKey) && (
+                      <div className="p-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+                          {items.map((item) =>
+                            item.type === "event" ? (
+                              <EventCard
+                                key={`event-${item.id}`}
+                                id={item.id}
+                                title={item.title}
+                                date={item.eventDate}
+                                location={item.location?.city || ""}
+                                category={item.category}
+                                district={item.bezirk?.number}
+                                openToParticipants={item.openToParticipants}
+                                cancelled={item.cancelled}
+                              />
+                            ) : (
+                              <CourseCard
+                                key={`course-${item.id}`}
+                                id={item.id}
+                                title={item.title}
+                                startDate={item.startDate}
+                                endDate={item.endDate}
+                                location={item.location?.city || ""}
+                                courseType={item.courseType}
+                                district={item.bezirk?.number}
+                              />
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ),
               )}
@@ -582,8 +757,97 @@ export default function EventsClient({
               {sortedItems.length === 0 && (
                 <div className="py-8 text-center md:py-12">
                   <p className="text-base text-gray-600 md:text-lg dark:text-gray-400">
-                    Keine Termine gefunden.
+                    Keine kommenden Termine gefunden.
                   </p>
+                </div>
+              )}
+
+              {/* Past Events Section */}
+              {pastItems.length > 0 && (
+                <div className="mt-8 md:mt-12">
+                  <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-300">
+                    <button
+                      onClick={() => setPastEventsExpanded(!pastEventsExpanded)}
+                      className="dark:bg-dark-background-secondary dark:hover:bg-dark-surface flex w-full items-center justify-between bg-gray-100 px-4 py-4 text-left transition-colors hover:bg-gray-200"
+                    >
+                      <h2 className="text-dark dark:text-dark-text text-xl font-bold md:text-2xl">
+                        Vergangene Termine
+                        <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                          ({pastItems.length}{" "}
+                          {pastItems.length === 1 ? "Termin" : "Termine"})
+                        </span>
+                      </h2>
+                      {pastEventsExpanded ? (
+                        <ChevronDownIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                      ) : (
+                        <ChevronRightIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                      )}
+                    </button>
+                    {pastEventsExpanded && (
+                      <div className="space-y-4 p-4 md:space-y-6">
+                        {Object.entries(pastGroupedByMonth)
+                          .sort(([a], [b]) => b.localeCompare(a)) // Sort months descending (most recent first)
+                          .map(([monthKey, { label, items }]) => (
+                            <div
+                              key={monthKey}
+                              className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200"
+                            >
+                              <button
+                                onClick={() => togglePastMonth(monthKey)}
+                                className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
+                              >
+                                <h3 className="text-dark dark:text-dark-text text-base font-semibold md:text-lg">
+                                  {label}
+                                  <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                    ({items.length}{" "}
+                                    {items.length === 1 ? "Termin" : "Termine"})
+                                  </span>
+                                </h3>
+                                {isPastMonthExpanded(monthKey) ? (
+                                  <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                ) : (
+                                  <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                                )}
+                              </button>
+                              {isPastMonthExpanded(monthKey) && (
+                                <div className="p-4">
+                                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+                                    {items.map((item) =>
+                                      item.type === "event" ? (
+                                        <EventCard
+                                          key={`past-event-${item.id}`}
+                                          id={item.id}
+                                          title={item.title}
+                                          date={item.eventDate}
+                                          location={item.location?.city || ""}
+                                          category={item.category}
+                                          district={item.bezirk?.number}
+                                          openToParticipants={
+                                            item.openToParticipants
+                                          }
+                                          cancelled={item.cancelled}
+                                        />
+                                      ) : (
+                                        <CourseCard
+                                          key={`past-course-${item.id}`}
+                                          id={item.id}
+                                          title={item.title}
+                                          startDate={item.startDate}
+                                          endDate={item.endDate}
+                                          location={item.location?.city || ""}
+                                          courseType={item.courseType}
+                                          district={item.bezirk?.number}
+                                        />
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -592,12 +856,12 @@ export default function EventsClient({
             <>
               {/* Mobile Calendar */}
               <div className="lg:hidden">
-                <CalendarView items={sortedItems} />
+                <CalendarView items={allItems} />
               </div>
 
               {/* Desktop Calendar */}
               <div className="hidden lg:block">
-                <DesktopCalendarView items={sortedItems} />
+                <DesktopCalendarView items={allItems} />
               </div>
             </>
           )}
