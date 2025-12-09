@@ -194,14 +194,19 @@ export default function EventsClient({
           const courseTypeEnum = courseTypeMap[selectedCategory];
           const targetAudienceEnum = targetAudienceMap[selectedCategory];
 
-          // Check if the selected category is a course type
-          if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-            return false;
-          }
-
-          // Check if the selected category is a target audience
-          if (targetAudienceEnum && item.targetAudience !== targetAudienceEnum) {
-            return false;
+          // Filter by course type or target audience
+          // A course should be included if it matches either the courseType OR targetAudience
+          const matchesCourseType = courseTypeEnum ? item.courseType === courseTypeEnum : true;
+          const matchesTargetAudience = targetAudienceEnum ? item.targetAudience === targetAudienceEnum : true;
+          
+          // If the category exists in both maps (though currently it doesn't), include if it matches either
+          // If it exists in only one map, include only if it matches that field
+          if (courseTypeEnum && targetAudienceEnum) {
+            if (!matchesCourseType && !matchesTargetAudience) return false;
+          } else if (courseTypeEnum) {
+            if (!matchesCourseType) return false;
+          } else if (targetAudienceEnum) {
+            if (!matchesTargetAudience) return false;
           }
         }
       }
