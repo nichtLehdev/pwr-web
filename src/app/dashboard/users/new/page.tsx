@@ -32,7 +32,6 @@ export default function NewUserPage() {
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Form state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -46,12 +45,10 @@ export default function NewUserPage() {
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
 
-  // Email validation regex (more lenient for checking)
   const isValidEmail = (emailToCheck: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
   };
 
-  // Debounce email
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isValidEmail(email)) {
@@ -61,7 +58,6 @@ export default function NewUserPage() {
     return () => clearTimeout(timer);
   }, [email]);
 
-  // Debounce username
   useEffect(() => {
     const timer = setTimeout(() => {
       if (username.length >= 3) {
@@ -71,7 +67,6 @@ export default function NewUserPage() {
     return () => clearTimeout(timer);
   }, [username]);
 
-  // Check username availability
   const checkUsernameQuery = api.users.checkUsername.useQuery(
     { username: debouncedUsername },
     {
@@ -80,7 +75,6 @@ export default function NewUserPage() {
     },
   );
 
-  // Check email availability
   const checkEmailQuery = api.users.checkEmail.useQuery(
     { email: debouncedEmail },
     {
@@ -89,7 +83,6 @@ export default function NewUserPage() {
     },
   );
 
-  // Compute username status from query result (using useMemo to avoid setState in effect)
   const usernameStatus = useMemo(() => {
     if (username.length < 3) {
       return {
@@ -122,7 +115,6 @@ export default function NewUserPage() {
     checkUsernameQuery.data,
   ]);
 
-  // Compute email status from query result (using useMemo to avoid setState in effect)
   const emailStatus = useMemo(() => {
     if (!isValidEmail(email)) {
       return {
@@ -150,13 +142,12 @@ export default function NewUserPage() {
     return { checking: false, available: null as boolean | null, message: "" };
   }, [email, debouncedEmail, checkEmailQuery.isLoading, checkEmailQuery.data]);
 
-  // Auto-generate username from firstName.lastName
   const generateUsername = (first: string, last: string) => {
     if (!first || !last) return "";
     return `${first.toLowerCase().replace(/\s+/g, "")}.${last.toLowerCase().replace(/\s+/g, "")}`
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-      .replace(/[^a-z0-9.]/g, ""); // Keep only alphanumeric and dots
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9.]/g, "");
   };
 
   const handleFirstNameChange = (value: string) => {
@@ -197,7 +188,6 @@ export default function NewUserPage() {
     },
   });
 
-  // Redirects
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;

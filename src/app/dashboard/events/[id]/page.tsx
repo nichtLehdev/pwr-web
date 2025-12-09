@@ -44,10 +44,8 @@ const ensembleTypeLabels: Record<EventEnsembleType, string> = {
   CUSTOM: "Benutzerdefiniert",
 };
 
-// Roles that can review events
 const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -63,16 +61,13 @@ export default function EventDetailPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // Review state
   const [reviewNotes, setReviewNotes] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch event data
   const {
     data: event,
     isLoading: eventLoading,
@@ -82,7 +77,6 @@ export default function EventDetailPage() {
     { enabled: !!eventId && !!session?.user },
   );
 
-  // Mutations
   const approveMutation = api.events.approve.useMutation({
     onSuccess: () => {
       void refetchEvent();
@@ -115,7 +109,6 @@ export default function EventDetailPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -123,7 +116,6 @@ export default function EventDetailPage() {
     }
   }, [session, sessionLoading, router, eventId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -133,7 +125,6 @@ export default function EventDetailPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Loading state
   if (sessionLoading || profileLoading || eventLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -169,7 +160,6 @@ export default function EventDetailPage() {
     isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
   const canReview = isReviewer && event.status === ContentStatus.PENDING;
 
-  // Format date
   const eventDate = new Date(event.eventDate);
   const formattedDate = eventDate.toLocaleDateString("de-DE", {
     weekday: "long",
@@ -182,7 +172,6 @@ export default function EventDetailPage() {
     minute: "2-digit",
   });
 
-  // Get ensemble name
   const getEnsembleName = () => {
     if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
       return event.ensemble.name;

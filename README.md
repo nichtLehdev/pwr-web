@@ -79,8 +79,8 @@ The easiest way to run the project is using Docker Compose:
 1. **Clone and configure**
 
    ```bash
-   git clone https://github.com/your-org/posaunenwerk.git
-   cd posaunenwerk
+   git clone https://github.com/nichtLehdev/pwr-web.git
+   cd pwr-web
    cp .env.example .env
    ```
 
@@ -124,8 +124,8 @@ The easiest way to run the project is using Docker Compose:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/your-org/posaunenwerk.git
-   cd posaunenwerk
+   git clone https://github.com/nichtLehdev/pwr-web.git
+   cd pwr-web
    ```
 
 2. **Install dependencies**

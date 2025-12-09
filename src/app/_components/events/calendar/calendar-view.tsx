@@ -14,7 +14,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
-  // Parse items zu CalendarItems
   const calendarItems = items.map((item) => ({
     ...item,
     date: new Date(
@@ -22,21 +21,19 @@ export default function CalendarView({ items }: CalendarViewProps) {
     ),
   }));
 
-  // Kalender-Helper Funktionen
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Montag = 0
+    const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
 
     return { daysInMonth, startingDayOfWeek, firstDay, lastDay };
   };
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
-  // Events für einen Tag finden
   const getEventsForDay = (day: number) => {
     const date = new Date(
       currentMonth.getFullYear(),
@@ -49,18 +46,16 @@ export default function CalendarView({ items }: CalendarViewProps) {
     endOfDay.setHours(23, 59, 59, 999);
 
     return calendarItems.filter((item) => {
-      // Für Courses: prüfe ob der Tag zwischen Start und Ende liegt
       if (item.type === "course") {
         const course = item;
         const endDate = new Date(course.endDate);
         return item.date <= endOfDay && endDate >= startOfDay;
       }
-      // Für Events: nur der exakte Tag
+
       return item.date >= startOfDay && item.date <= endOfDay;
     });
   };
 
-  // Prüfe ob ein Course an diesem Tag startet oder endet
   const getCourseStatusForDay = (day: number) => {
     const date = new Date(
       currentMonth.getFullYear(),
@@ -78,15 +73,14 @@ export default function CalendarView({ items }: CalendarViewProps) {
       const startDate = course.date;
       const endDate = new Date(course.endDate);
 
-      // Startet an diesem Tag
       if (startDate >= startOfDay && startDate <= endOfDay) {
         return "start";
       }
-      // Endet an diesem Tag
+
       if (endDate >= startOfDay && endDate <= endOfDay) {
         return "end";
       }
-      // Läuft während diesem Tag
+
       if (startDate < startOfDay && endDate > endOfDay) {
         return "ongoing";
       }
@@ -95,7 +89,6 @@ export default function CalendarView({ items }: CalendarViewProps) {
     return null;
   };
 
-  // Items für den ausgewählten Tag
   const getItemsForSelectedDay = () => {
     const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -104,19 +97,17 @@ export default function CalendarView({ items }: CalendarViewProps) {
 
     return calendarItems
       .filter((item) => {
-        // Für Courses: prüfe ob der ausgewählte Tag zwischen Start und Ende liegt
         if (item.type === "course") {
           const course = item;
           const endDate = new Date(course.endDate);
           return item.date <= endOfDay && endDate >= startOfDay;
         }
-        // Für Events: nur der exakte Tag
+
         return item.date >= startOfDay && item.date <= endOfDay;
       })
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   };
 
-  // Items NACH dem ausgewählten Tag
   const getUpcomingItems = () => {
     const startOfNextDay = new Date(selectedDate);
     startOfNextDay.setDate(startOfNextDay.getDate() + 1);
@@ -125,13 +116,12 @@ export default function CalendarView({ items }: CalendarViewProps) {
     return calendarItems
       .filter((item) => item.date >= startOfNextDay)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 10); // Max 10 nächste Events
+      .slice(0, 10);
   };
 
   const todayItems = getItemsForSelectedDay();
   const upcomingItems = getUpcomingItems();
 
-  // Navigation
   const goToPreviousMonth = () => {
     setCurrentMonth(
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1),

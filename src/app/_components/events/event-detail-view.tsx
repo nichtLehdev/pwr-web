@@ -6,7 +6,6 @@ import PageHeader from "../general/page-header";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
 
-// Use the actual return types from your tRPC router
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
 interface EventDetailViewProps {
@@ -16,11 +15,10 @@ interface EventDetailViewProps {
 export default function EventDetailView({ event }: EventDetailViewProps) {
   const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
-  // set default duration to 2 hours if not provided
+
   const endDate = new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
   const isPast = eventDate < new Date();
 
-  // ICS Download Function
   const handleDownloadIcs = () => {
     const icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -49,7 +47,6 @@ END:VCALENDAR`;
 
   const deviceWidth = typeof window !== "undefined" ? window.innerWidth : 0;
 
-  // Share Function
   const shareEvent = async () => {
     const shareData = {
       title: event.title,
@@ -60,16 +57,13 @@ END:VCALENDAR`;
       url: typeof window !== "undefined" ? window.location.href : "",
     };
 
-    // Check if Web Share API is supported
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share(shareData);
       } catch (err) {
-        // User cancelled or error occurred
         console.log("Share cancelled or failed:", err);
       }
     } else {
-      // Fallback: Copy link to clipboard
       if (typeof navigator !== "undefined" && navigator.clipboard) {
         try {
           await navigator.clipboard.writeText(window.location.href);

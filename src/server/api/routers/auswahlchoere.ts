@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 
 export const auswahlchoereRouter = createTRPCRouter({
-  // Public: Get all Auswahlchöre
   getAll: publicProcedure
     .input(
       z.object({
@@ -56,7 +55,7 @@ export const auswahlchoereRouter = createTRPCRouter({
         pages: Math.ceil(total / input.limit),
       };
     }),
-  // Admin: Create Auswahlchor
+
   create: adminProcedure
     .input(
       z.object({
@@ -111,7 +110,7 @@ export const auswahlchoereRouter = createTRPCRouter({
       });
       return auswahlChor;
     }),
-  // Admin: Update Auswahlchor
+
   update: adminProcedure
     .input(
       z.object({
@@ -168,7 +167,7 @@ export const auswahlchoereRouter = createTRPCRouter({
       });
       return auswahlChor;
     }),
-  // Admin: Delete Auswahlchor
+
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {

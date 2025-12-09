@@ -91,7 +91,6 @@ export function SocialIcon({ type, className = "h-5 w-5" }: SocialIconProps) {
         </svg>
       );
     default:
-      // Generic link icon for unknown types
       return (
         <svg
           className={className}

@@ -15,11 +15,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const organizationRouter = createTRPCRouter({
-  // ============================================================================
-  // POSAUNENRAT
-  // ============================================================================
-
-  // Public: Get all Posaunenrat members
   getPosaunenrat: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.posaunenratMember.findMany({
       include: {
@@ -40,7 +35,6 @@ export const organizationRouter = createTRPCRouter({
     return members;
   }),
 
-  // Get Posaunenrat members by role
   getPosaunenratByRole: publicProcedure
     .input(
       z.object({
@@ -75,7 +69,6 @@ export const organizationRouter = createTRPCRouter({
       return members;
     }),
 
-  // Get Posaunenrat grouped by role
   getPosaunenratGrouped: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.posaunenratMember.findMany({
       include: {
@@ -93,7 +86,6 @@ export const organizationRouter = createTRPCRouter({
       orderBy: { sortOrder: "asc" },
     });
 
-    // Group by role
     const grouped = {
       landeskirchenmusikdirektor: members.filter(
         (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
@@ -110,7 +102,6 @@ export const organizationRouter = createTRPCRouter({
     return grouped;
   }),
 
-  // Get single Posaunenrat member by ID
   getPosaunenratMember: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -140,7 +131,6 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  // Create Posaunenrat member
   createPosaunenratMember: adminProcedure
     .input(
       z.object({
@@ -163,7 +153,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Update Posaunenrat member
   updatePosaunenratMember: adminProcedure
     .input(
       z.object({
@@ -190,7 +179,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Delete Posaunenrat member
   deletePosaunenratMember: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -201,11 +189,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // ============================================================================
-  // TEAM MEMBERS
-  // ============================================================================
-
-  // Public: Get all team members
   getTeam: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.teamMember.findMany({
       include: {
@@ -234,7 +217,6 @@ export const organizationRouter = createTRPCRouter({
     }));
   }),
 
-  // Get team members by contact type
   getTeamByContactType: publicProcedure
     .input(z.object({ contactType: z.enum(ContactType) }))
     .query(async ({ ctx, input }) => {
@@ -266,7 +248,6 @@ export const organizationRouter = createTRPCRouter({
       }));
     }),
 
-  // Get team grouped by contact type
   getTeamGrouped: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.teamMember.findMany({
       include: {
@@ -284,7 +265,6 @@ export const organizationRouter = createTRPCRouter({
       orderBy: { sortOrder: "asc" },
     });
 
-    // Group by contact type
     const grouped = {
       geschaeftsstelle: members.filter(
         (m) => m.contactType === "GESCHAEFTSSTELLE",
@@ -296,7 +276,6 @@ export const organizationRouter = createTRPCRouter({
     return grouped;
   }),
 
-  // Create team member
   createTeamMember: adminProcedure
     .input(
       z.object({
@@ -309,7 +288,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if user already has a team member record
       const existing = await ctx.db.teamMember.findUnique({
         where: { userId: input.userId },
       });
@@ -321,7 +299,6 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Parse responsibilities string into array (one per line)
       const responsibilities = input.responsibilities
         ? input.responsibilities
             .split("\n")
@@ -329,7 +306,6 @@ export const organizationRouter = createTRPCRouter({
             .filter((r) => r.length > 0)
         : undefined;
 
-      // Parse socials JSON string
       const socials = input.socials ? JSON.parse(input.socials) : undefined;
 
       const member = await ctx.db.teamMember.create({
@@ -357,7 +333,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  // Update team member
   updateTeamMember: adminProcedure
     .input(
       z.object({
@@ -377,7 +352,6 @@ export const organizationRouter = createTRPCRouter({
         ...rest
       } = input;
 
-      // Parse responsibilities string into array (one per line)
       const responsibilities = responsibilitiesStr
         ? responsibilitiesStr
             .split("\n")
@@ -385,7 +359,6 @@ export const organizationRouter = createTRPCRouter({
             .filter((r) => r.length > 0)
         : undefined;
 
-      // Parse socials JSON string
       const socials = socialsStr ? JSON.parse(socialsStr) : undefined;
 
       const member = await ctx.db.teamMember.update({
@@ -411,7 +384,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  // Get single team member
   getTeamMember: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -449,7 +421,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  // Delete team member
   deleteTeamMember: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -460,11 +431,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // ============================================================================
-  // VORSTAND MEMBERS
-  // ============================================================================
-
-  // Public: Get all Vorstand members
   getVorstand: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.vorstandMember.findMany({
       include: {
@@ -499,7 +465,6 @@ export const organizationRouter = createTRPCRouter({
     }));
   }),
 
-  // Get single Vorstand member
   getVorstandMember: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -529,7 +494,6 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  // Create Vorstand member
   createVorstandMember: adminProcedure
     .input(
       z.object({
@@ -545,7 +509,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // If userId provided, check if user already has a vorstand record
       if (input.userId) {
         const existing = await ctx.db.vorstandMember.findUnique({
           where: { userId: input.userId },
@@ -568,7 +531,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Update Vorstand member
   updateVorstandMember: adminProcedure
     .input(
       z.object({
@@ -597,7 +559,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Delete Vorstand member
   deleteVorstandMember: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -608,11 +569,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // ============================================================================
-  // FÖRDERVEREIN MEMBERS
-  // ============================================================================
-
-  // Public: Get all Förderverein members
   getFoerderverein: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.foerdervereinMember.findMany({
       include: {
@@ -634,7 +590,6 @@ export const organizationRouter = createTRPCRouter({
     return members;
   }),
 
-  // Get Förderverein board members (leadership)
   getFoerdervereinBoard: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.foerdervereinMember.findMany({
       where: {
@@ -667,7 +622,6 @@ export const organizationRouter = createTRPCRouter({
     return members;
   }),
 
-  // Get Förderverein members by role
   getFoerdervereinByRole: publicProcedure
     .input(
       z.object({
@@ -702,7 +656,6 @@ export const organizationRouter = createTRPCRouter({
       return members;
     }),
 
-  // Get Förderverein grouped by role
   getFoerdervereinGrouped: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.foerdervereinMember.findMany({
       include: {
@@ -720,7 +673,6 @@ export const organizationRouter = createTRPCRouter({
       orderBy: { sortOrder: "asc" },
     });
 
-    // Group by role category
     const grouped = {
       leadership: members.filter(
         (m) =>
@@ -736,7 +688,6 @@ export const organizationRouter = createTRPCRouter({
     return grouped;
   }),
 
-  // Get single Förderverein member
   getFoerdervereinMember: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -766,7 +717,6 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  // Create Förderverein member
   createFoerdervereinMember: adminProcedure
     .input(
       z.object({
@@ -783,7 +733,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // If userId provided, check if user already has a förderverein record
       if (input.userId) {
         const existing = await ctx.db.foerdervereinMember.findUnique({
           where: { userId: input.userId },
@@ -806,7 +755,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Update Förderverein member
   updateFoerdervereinMember: adminProcedure
     .input(
       z.object({
@@ -836,7 +784,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Delete Förderverein member
   deleteFoerdervereinMember: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -846,10 +793,6 @@ export const organizationRouter = createTRPCRouter({
 
       return { success: true };
     }),
-
-  // ============================================================================
-  // POSAUNENWARTE (Music Directors - LPW & RPW)
-  // ============================================================================
 
   /**
    * Get all Posaunenwarte with their Bezirke
@@ -873,7 +816,7 @@ export const organizationRouter = createTRPCRouter({
       },
       orderBy: [
         {
-          role: "asc", // LPW first, then RPW
+          role: "asc",
         },
         {
           displayName: "asc",
@@ -881,7 +824,6 @@ export const organizationRouter = createTRPCRouter({
       ],
     });
 
-    // Format response
     return posaunenwarte.map((person) => ({
       id: person.id,
       name: person.displayName,
@@ -962,7 +904,6 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Get the Bezirk
       const bezirk = await ctx.db.bezirk.findFirst({
         where: input.bezirkId
           ? { id: input.bezirkId }
@@ -976,7 +917,6 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Get Posaunenwarte responsibilities for this Bezirk
       const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
         {
           where: { bezirkId: bezirk.id },
@@ -1022,7 +962,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Get Bezirk
       const bezirk = await ctx.db.bezirk.findFirst({
         where: { number: input.bezirkNumber },
       });
@@ -1034,7 +973,6 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Get Posaunenwarte for this Bezirk
       const posaunenwarteResponsibilities =
         await ctx.db.posaunenwartResponsibility.findMany({
           where: { bezirkId: bezirk.id },
@@ -1065,7 +1003,6 @@ export const organizationRouter = createTRPCRouter({
         .filter((r) => r.roleType === "RPW")
         .map((r) => r.user)[0];
 
-      // Get Bezirksobmann/obfrau (separate from Posaunenwarte!)
       const obmann = await ctx.db.user.findFirst({
         where: {
           role: "OBLEUTE",
@@ -1093,7 +1030,7 @@ export const organizationRouter = createTRPCRouter({
         },
         lpw,
         rpw,
-        obmann, // This is NOT a Posaunenwart!
+        obmann,
       };
     }),
 
@@ -1117,10 +1054,7 @@ export const organizationRouter = createTRPCRouter({
           },
         },
       },
-      orderBy: [
-        { role: "asc" }, // LPW first
-        { displayName: "asc" },
-      ],
+      orderBy: [{ role: "asc" }, { displayName: "asc" }],
     });
 
     const lpw = posaunenwarte
@@ -1160,7 +1094,6 @@ export const organizationRouter = createTRPCRouter({
         }),
       ]);
 
-    // Count unique Bezirke covered by Posaunenwarte
     const bezirkeWithPosaunenwarte = new Set(
       responsibilities.map((r) => r.bezirkId),
     );
@@ -1188,7 +1121,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify user is LPW or RPW
       const user = await ctx.db.user.findUnique({
         where: { id: input.userId },
       });
@@ -1200,7 +1132,6 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Check if already exists
       const existing = await ctx.db.posaunenwartResponsibility.findUnique({
         where: {
           userId_bezirkId: {
@@ -1298,7 +1229,6 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify user is RPW
       const user = await ctx.db.user.findUnique({
         where: { id: input.userId },
       });
@@ -1310,12 +1240,10 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      // Delete existing responsibilities
       await ctx.db.posaunenwartResponsibility.deleteMany({
         where: { userId: input.userId },
       });
 
-      // Create new responsibilities
       const created = await Promise.all(
         input.bezirkIds.map((bezirkId) =>
           ctx.db.posaunenwartResponsibility.create({
@@ -1340,11 +1268,6 @@ export const organizationRouter = createTRPCRouter({
       };
     }),
 
-  // ============================================================================
-  // HISTORY EVENTS
-  // ============================================================================
-
-  // Public: Get all history events
   getHistory: publicProcedure
     .input(
       z.object({
@@ -1371,7 +1294,6 @@ export const organizationRouter = createTRPCRouter({
       return historyEvents;
     }),
 
-  // Get single history event
   getHistoryEvent: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -1392,7 +1314,6 @@ export const organizationRouter = createTRPCRouter({
       return historyEvent;
     }),
 
-  // Create history event
   createHistoryEvent: lpwProcedure
     .input(
       z.object({
@@ -1414,7 +1335,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Update history event
   updateHistoryEvent: lpwProcedure
     .input(
       z.object({
@@ -1440,7 +1360,6 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  // Delete history event
   deleteHistoryEvent: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -1451,7 +1370,6 @@ export const organizationRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get history timeline (grouped by decade)
   getHistoryTimeline: publicProcedure.query(async ({ ctx }) => {
     const historyEvents = await ctx.db.historyEvent.findMany({
       include: {
@@ -1460,7 +1378,6 @@ export const organizationRouter = createTRPCRouter({
       orderBy: { year: "asc" },
     });
 
-    // Group by decade
     const timeline = historyEvents.reduce(
       (acc, event) => {
         const decade = Math.floor(event.year / 10) * 10;

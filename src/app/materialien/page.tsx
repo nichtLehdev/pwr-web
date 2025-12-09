@@ -24,7 +24,6 @@ export default function MaterialienPage() {
     },
   );
 
-  // Filter downloads
   const filteredDownloads = downloads.data?.downloads?.filter((download) => {
     const matchesCategory =
       selectedCategory === "all" || download.category === selectedCategory;

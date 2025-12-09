@@ -11,7 +11,6 @@ import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 
-// User placeholder icon component
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -58,7 +57,6 @@ export default function EditUserPage() {
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -74,7 +72,6 @@ export default function EditUserPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form state when user data is loaded
   useEffect(() => {
     if (user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -112,7 +109,6 @@ export default function EditUserPage() {
     },
   });
 
-  // Redirects
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;

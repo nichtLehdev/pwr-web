@@ -19,20 +19,18 @@ import DownloadPickerModal from "./download-picker-modal";
 import "@/styles/article-content.css";
 
 interface RichTextEditorProps {
-  content: string; // Markdown content
+  content: string;
   onChange: (markdown: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-// Initialize turndown service for HTML to Markdown conversion
 const turndownService = new TurndownService({
   headingStyle: "atx",
   codeBlockStyle: "fenced",
   bulletListMarker: "-",
 });
 
-// Add table support to turndown
 turndownService.addRule("tableCell", {
   filter: ["th", "td"],
   replacement: function (content) {
@@ -47,17 +45,14 @@ turndownService.addRule("tableRow", {
     const element = node as HTMLElement;
     const cellCount = element.querySelectorAll("th, td").length;
 
-    // Check if this is a header row
     const parent = element.parentNode as HTMLElement | null;
     const table = element.closest("table");
     const isInThead = parent && parent.tagName === "THEAD";
     const hasThCells = element.querySelectorAll("th").length > 0;
 
-    // Check if this is the first row of the table (for tables without thead)
     const allRows = table?.querySelectorAll("tr");
     const isFirstRowOfTable = allRows && allRows[0] === element;
 
-    // Treat as header if: in thead, has th cells, or is first row of table
     const isHeader = isInThead || hasThCells || isFirstRowOfTable;
 
     let result = "|" + cells + "\n";
@@ -89,13 +84,11 @@ turndownService.addRule("tbody", {
   },
 });
 
-// Configure marked for Markdown to HTML conversion
 marked.use({
   gfm: true,
   breaks: true,
 });
 
-// Toolbar button component
 function ToolbarButton({
   onClick,
   isActive = false,
@@ -126,12 +119,10 @@ function ToolbarButton({
   );
 }
 
-// Toolbar separator
 function ToolbarSeparator() {
   return <div className="dark:bg-dark-border mx-1 h-6 w-px bg-gray-300" />;
 }
 
-// Toolbar component
 function Toolbar({
   editor,
   onOpenMediaPicker,
@@ -144,10 +135,9 @@ function Toolbar({
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
   const [showTableMenu, setShowTableMenu] = useState(false);
-  // Force re-render when editor state changes
+
   const [, forceUpdate] = useState(0);
 
-  // Listen for editor updates to trigger re-renders
   useEffect(() => {
     if (!editor) return;
 
@@ -181,14 +171,11 @@ function Toolbar({
     setLinkUrl("");
   }, [editor, linkUrl]);
 
-  // Helper to check if a mark is active (including stored marks for empty selections)
   const isMarkActive = (markName: string) => {
     if (!editor) return false;
 
-    // First check if the mark is active in the current selection
     if (editor.isActive(markName)) return true;
 
-    // Then check stored marks (marks queued to be applied on next input)
     const storedMarks = editor.state.storedMarks;
     if (storedMarks) {
       return storedMarks.some((mark) => mark.type.name === markName);
@@ -590,7 +577,6 @@ export default function RichTextEditor({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showDownloadPicker, setShowDownloadPicker] = useState(false);
 
-  // Convert markdown to HTML for initial content
   const initialHtml = content ? String(marked.parse(content)) : "";
 
   const editor = useEditor({
@@ -639,21 +625,19 @@ export default function RichTextEditor({
       }),
     ],
     content: initialHtml,
-    immediatelyRender: false, // Prevent SSR hydration mismatch
+    immediatelyRender: false,
     editorProps: {
       attributes: {
         class: "article-content p-4 min-h-[300px] focus:outline-none",
       },
     },
     onUpdate: ({ editor }) => {
-      // Convert HTML to Markdown
       const html = editor.getHTML();
       const markdown = turndownService.turndown(html);
       onChange(markdown);
     },
   });
 
-  // Handle image selection from media picker
   const handleImageSelect = useCallback(
     (url: string, alt: string) => {
       if (editor) {
@@ -664,11 +648,9 @@ export default function RichTextEditor({
     [editor],
   );
 
-  // Handle download selection
   const handleDownloadSelect = useCallback(
     (title: string, url: string, fileType: string) => {
       if (editor) {
-        // Insert a styled download link
         editor
           .chain()
           .focus()
@@ -682,7 +664,6 @@ export default function RichTextEditor({
     [editor],
   );
 
-  // Update editor content when external content changes (but only after initialization)
   useEffect(() => {
     if (editor && content && !isInitialized.current) {
       const newHtml = String(marked.parse(content));

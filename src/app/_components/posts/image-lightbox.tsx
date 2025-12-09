@@ -14,7 +14,6 @@ export default function ImageLightbox({
   alt,
   onClose,
 }: ImageLightboxProps) {
-  // Close on ESC key
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -23,7 +22,6 @@ export default function ImageLightbox({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");

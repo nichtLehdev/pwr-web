@@ -72,12 +72,10 @@ export default function EventsClient({
 }: EventsClientProps) {
   const { data: session } = useSession();
 
-  // Get user preferences for default view
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
 
-  // Parse user's default view preference
   const userDefaultView = useMemo((): ViewMode => {
     if (profile?.preferences) {
       try {
@@ -91,9 +89,7 @@ export default function EventsClient({
         ) {
           return prefs.termineDefaultView;
         }
-      } catch {
-        // Ignore parse errors
-      }
+      } catch {}
     }
     return "list";
   }, [profile?.preferences]);
@@ -110,17 +106,14 @@ export default function EventsClient({
 
   const params = useSearchParams();
 
-  // Track if user has manually changed the view
   const [userHasChangedView, setUserHasChangedView] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
 
-  // Update view mode when user preference loads (only if user hasn't manually changed it)
   const prevUserDefaultView = useMemo(() => userDefaultView, [userDefaultView]);
   if (!userHasChangedView && viewMode !== prevUserDefaultView && profile) {
     setViewMode(prevUserDefaultView);
   }
 
-  // Wrapper to track manual view changes
   const handleSetViewMode = (mode: ViewMode) => {
     setUserHasChangedView(true);
     setViewMode(mode);
@@ -143,7 +136,6 @@ export default function EventsClient({
     return date;
   }, []);
 
-  // Combine Events and Courses
   const allItems = useMemo<CalendarItem[]>(
     () => [
       ...initialEvents.map((e): CalendarEventItem => ({ ...e, type: "event" })),
@@ -154,7 +146,6 @@ export default function EventsClient({
     [initialEvents, initialCourses],
   );
 
-  // Filter future items
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
       const itemDate = new Date(
@@ -165,20 +156,15 @@ export default function EventsClient({
     });
   }, [allItems, now]);
 
-  // Apply filters
   const filteredItems = useMemo(() => {
     return futureItems.filter((item) => {
-      // Type Filter
       if (filterType === "events" && item.type !== "event") return false;
       if (filterType === "courses" && item.type !== "course") return false;
 
-      // District Filter
       if (selectedDistrict !== "all") {
-        // Handle "Bezirksübergreifend" (multi-district events)
         if (selectedDistrict === "Bezirksübergreifend") {
           if (item.bezirk !== null) return false;
         } else {
-          // Extract district number from selection like "Bezirk 1 (Saarbrücken)"
           const match = selectedDistrict.match(/Bezirk (\d+)/);
           if (match) {
             const districtNumber = parseInt(match[1] ?? "", 10);
@@ -187,10 +173,8 @@ export default function EventsClient({
         }
       }
 
-      // Category Filter
       if (selectedCategory !== "all") {
         if (item.type === "event") {
-          // Map display names to enum values
           const categoryMap: Record<string, string> = {
             Konzert: "KONZERT",
             Gottesdienst: "GOTTESDIENST",
@@ -200,7 +184,6 @@ export default function EventsClient({
           const enumValue = categoryMap[selectedCategory];
           if (enumValue && item.category !== enumValue) return false;
         } else {
-          // For courses, check both courseType and targetAudience
           const courseTypeMap: Record<string, string> = {
             Lehrgang: "LEHRGANG",
             Freizeit: "FREIZEIT",
@@ -235,7 +218,6 @@ export default function EventsClient({
     });
   }, [futureItems, filterType, selectedDistrict, selectedCategory]);
 
-  // Sort by date
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
       const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
@@ -244,7 +226,6 @@ export default function EventsClient({
     });
   }, [filteredItems]);
 
-  // Group by month
   const groupedByMonth = useMemo(() => {
     return sortedItems.reduce(
       (acc, item) => {
@@ -269,7 +250,6 @@ export default function EventsClient({
     );
   }, [sortedItems]);
 
-  // Filter and group past items
   const pastItems = useMemo(() => {
     return allItems
       .filter((item) => {
@@ -280,7 +260,6 @@ export default function EventsClient({
         return itemDate < now;
       })
       .filter((item) => {
-        // Apply same filters as future items
         if (filterType === "events" && item.type !== "event") return false;
         if (filterType === "courses" && item.type !== "course") return false;
 
@@ -314,11 +293,10 @@ export default function EventsClient({
       .sort((a, b) => {
         const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
         const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
-        return dateB.getTime() - dateA.getTime(); // Most recent first for past events
+        return dateB.getTime() - dateA.getTime();
       });
   }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
 
-  // Group past items by month
   const pastGroupedByMonth = useMemo(() => {
     return pastItems.reduce(
       (acc, item) => {
@@ -343,7 +321,6 @@ export default function EventsClient({
     );
   }, [pastItems]);
 
-  // State for collapsed months (all expanded by default, so we track which are collapsed)
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(
     new Set(),
   );
@@ -362,10 +339,8 @@ export default function EventsClient({
 
   const isMonthExpanded = (monthKey: string) => !collapsedMonths.has(monthKey);
 
-  // State for past events section (collapsed by default)
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false);
 
-  // State for collapsed past months (all collapsed by default, so we track which are expanded)
   const [expandedPastMonths, setExpandedPastMonths] = useState<Set<string>>(
     new Set(),
   );
@@ -385,7 +360,6 @@ export default function EventsClient({
   const isPastMonthExpanded = (monthKey: string) =>
     expandedPastMonths.has(monthKey);
 
-  // District select options
   const districtSelectOptions = [
     "all",
     "Bezirksübergreifend",
@@ -394,7 +368,6 @@ export default function EventsClient({
       .map((b) => `Bezirk ${b.number} (${b.name})`),
   ];
 
-  // Category options (display names)
   const eventCategories = ["Konzert", "Gottesdienst", "Probe", "Andere"];
   const courseCategories = [
     "Lehrgang",

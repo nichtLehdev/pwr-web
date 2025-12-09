@@ -32,10 +32,8 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-// Roles that can edit posts for any district
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -51,21 +49,17 @@ export default function EditPostPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for role and bezirk
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch existing post
   const { data: post, isLoading: postLoading } = api.posts.getById.useQuery(
     { id: postId },
     { enabled: !!postId && !!session?.user },
   );
 
-  // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
 
-  // Form state - initialize directly from post data
   const [title, setTitle] = useState(post?.title ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
@@ -81,26 +75,19 @@ export default function EditPostPage() {
     post?.coverImage?.url ?? null,
   );
 
-  // Media picker state
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
-  // Status state
   const [status, setStatus] = useState<ContentStatus>(post?.status ?? "DRAFT");
 
-  // Submission state
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // tRPC utils for cache invalidation
   const utils = api.useUtils();
 
-  // Update post mutation
   const updatePostMutation = api.posts.update.useMutation({
     onSuccess: async () => {
-      // Invalidate the post query to refetch fresh data on the view page
       await utils.posts.getById.invalidate({ id: postId });
       toast.success("Änderungen gespeichert");
       router.push(`/dashboard/posts/${postId}`);
@@ -111,7 +98,6 @@ export default function EditPostPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -119,7 +105,6 @@ export default function EditPostPage() {
     }
   }, [session, sessionLoading, router, postId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -129,7 +114,6 @@ export default function EditPostPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Check edit permissions once post is loaded
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
       const canEdit =
@@ -149,7 +133,6 @@ export default function EditPostPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -162,8 +145,6 @@ export default function EditPostPage() {
       return;
     }
 
-    // If the post was approved or rejected and content is being changed, set status back to pending
-    // (unless user is explicitly setting a different status)
     let finalStatus = status;
     if (
       (post?.status === ContentStatus.APPROVED &&
@@ -171,7 +152,6 @@ export default function EditPostPage() {
       (post?.status === ContentStatus.REJECTED &&
         status === ContentStatus.REJECTED)
     ) {
-      // Content was approved/rejected and user didn't change status - set back to pending for re-review
       finalStatus = ContentStatus.PENDING;
     }
 
@@ -188,7 +168,6 @@ export default function EditPostPage() {
     });
   };
 
-  // Loading state
   if (sessionLoading || profileLoading || postLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">

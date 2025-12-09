@@ -10,13 +10,11 @@ import { getDistrictColor } from "@/lib/district-color";
 import EventDetailModal from "../event-detail-modal";
 import MoreEventsModal from "./more-events-modal";
 
-// Constants
 const MAX_EVENTS_PER_DAY = 4;
 const MAX_VISIBLE_WHEN_OVERFLOW = 3;
 const MULTI_DAY_ROW_HEIGHT = 24;
 const EVENT_START_TOP_WITHOUT_COURSES = 36;
 
-// Helper functions stay the same
 const getEventCategoryStyle = (category: string) => {
   switch (category) {
     case "KONZERT":
@@ -50,26 +48,23 @@ const hexToRgba = (hex: string, opacity: number) => {
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 
-// Helper to determine if we're in dark mode (for inline styles)
 const getEventBackgroundStyle = (
   districtColor: string,
   bgOpacity: number,
   isDarkMode: boolean,
 ) => {
-  // In dark mode, use higher opacity for better visibility
   const adjustedOpacity = isDarkMode ? Math.min(bgOpacity * 2, 0.4) : bgOpacity;
   return hexToRgba(districtColor, adjustedOpacity);
 };
 
-// ✅ FIXED: Separate internal types for events and courses
 export type CalendarEventInternal = CalendarEventItem & {
   date: Date;
-  endDate?: undefined; // Events don't have endDate
+  endDate?: undefined;
 };
 
 export type CalendarCourseInternal = CalendarCourseItem & {
   date: Date;
-  endDate: Date; // Courses always have endDate
+  endDate: Date;
 };
 
 export type CalendarItemInternal =
@@ -91,7 +86,6 @@ export default function DesktopCalendarView({
   );
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Detect dark mode
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains("dark"));
@@ -99,7 +93,6 @@ export default function DesktopCalendarView({
 
     checkDarkMode();
 
-    // Watch for dark mode changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -124,7 +117,6 @@ export default function DesktopCalendarView({
     }
   }, [showMoreEventsDay]);
 
-  // ✅ FIXED: Properly map items with correct types
   const calendarItems = useMemo<CalendarItemInternal[]>(
     () =>
       items.map((item): CalendarItemInternal => {
@@ -145,7 +137,6 @@ export default function DesktopCalendarView({
     [items],
   );
 
-  // Calendar helper
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -159,7 +150,6 @@ export default function DesktopCalendarView({
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
 
-  // Get events for a day (only normal single-day events)
   const getEventsForDay = (day: number) => {
     const date = new Date(
       currentMonth.getFullYear(),
@@ -179,7 +169,6 @@ export default function DesktopCalendarView({
     });
   };
 
-  // Collect all courses and assign them rows
   const courseRows = useMemo(() => {
     const courses = calendarItems.filter(
       (item): item is CalendarCourseInternal =>
@@ -216,7 +205,6 @@ export default function DesktopCalendarView({
     return rows;
   }, [calendarItems]);
 
-  // Check if course runs on this day and in which row
   const getCoursesForDay = (day: number) => {
     const date = new Date(
       currentMonth.getFullYear(),
@@ -266,12 +254,9 @@ export default function DesktopCalendarView({
     return coursesAtDay;
   };
 
-  // Create mappings for all weeks in the month
-  // useMemo caches calculations for better performance
   const weekRowMappings = useMemo(() => {
     const mappings = new Map<number, Map<number, number>>();
 
-    // Helper: Get courses for a day (inline to avoid dependencies)
     const getCoursesForDayInline = (day: number) => {
       const date = new Date(
         currentMonth.getFullYear(),
@@ -298,19 +283,16 @@ export default function DesktopCalendarView({
       return coursesAtDay;
     };
 
-    // Iterate through all days and create mappings for each week
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(
         currentMonth.getFullYear(),
         currentMonth.getMonth(),
         day,
       );
-      const dayOfWeek = (date.getDay() + 6) % 7; // Monday = 0
+      const dayOfWeek = (date.getDay() + 6) % 7;
       const mondayDay = day - dayOfWeek;
 
-      // If we don't have a mapping for this week yet
       if (mondayDay >= 1 && !mappings.has(mondayDay)) {
-        // Collect all unique row numbers in this week
         const rowsInWeek = new Set<number>();
 
         for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -323,7 +305,6 @@ export default function DesktopCalendarView({
           }
         }
 
-        // Create compact mapping for this week
         const sortedRows = Array.from(rowsInWeek).sort((a, b) => a - b);
         const weekMapping = new Map<number, number>();
         sortedRows.forEach((originalRow, index) => {
@@ -337,7 +318,6 @@ export default function DesktopCalendarView({
     return mappings;
   }, [currentMonth, daysInMonth, courseRows]);
 
-  // Compact rows for a day: Remove empty rows at week start
   const getCompactCoursesForDay = (day: number) => {
     const coursesAtDay = getCoursesForDay(day);
     const date = new Date(
@@ -345,15 +325,12 @@ export default function DesktopCalendarView({
       currentMonth.getMonth(),
       day,
     );
-    const dayOfWeek = (date.getDay() + 6) % 7; // Monday = 0
+    const dayOfWeek = (date.getDay() + 6) % 7;
 
-    // Find Monday of this week
     const mondayDay = day - dayOfWeek;
 
-    // Get mapping for this week
     const rowMapping = weekRowMappings.get(mondayDay);
 
-    // If mapping exists, apply it
     if (rowMapping) {
       return coursesAtDay.map((courseData) => ({
         ...courseData,
@@ -512,7 +489,6 @@ export default function DesktopCalendarView({
             const today = isToday(day);
             const coursesAtDay = getCompactCoursesForDay(day);
 
-            // Collect all events for this day (courses + normal events)
             const allEventsForDay = [
               ...coursesAtDay.map((c) => c.course),
               ...events,
@@ -520,18 +496,15 @@ export default function DesktopCalendarView({
             const totalEventsCount = allEventsForDay.length;
             const hasMoreThanLimit = totalEventsCount > MAX_EVENTS_PER_DAY;
 
-            // Calculate highest row number used on this day
             const maxRowAtDay =
               coursesAtDay.length > 0
                 ? Math.max(...coursesAtDay.map((c) => c.row)) + 1
                 : 0;
 
-            // Limit multi-day rows
             const limitedMaxRowAtDay = hasMoreThanLimit
               ? Math.min(maxRowAtDay, MAX_VISIBLE_WHEN_OVERFLOW)
               : Math.min(maxRowAtDay, MAX_EVENTS_PER_DAY);
 
-            // Calculate available slots for normal events
             const availableSlotsForEvents = hasMoreThanLimit
               ? Math.max(0, MAX_VISIBLE_WHEN_OVERFLOW - limitedMaxRowAtDay)
               : Math.max(0, MAX_EVENTS_PER_DAY - limitedMaxRowAtDay);
