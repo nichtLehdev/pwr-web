@@ -114,9 +114,13 @@ export default function InstagramEventTemplate({
     weekday: "long",
   });
 
-  // Extract description text without HTML
+  // Extract description text without HTML and sanitize
   const descriptionText = event.description
-    ? event.description.replace(/<[^>]*>/g, "").trim()
+    ? event.description
+        .replace(/<[^>]*>/g, "") // Remove HTML tags
+        .replace(/</g, "") // Remove any remaining < characters
+        .replace(/>/g, "") // Remove any remaining > characters
+        .trim()
     : "";
 
   // Determine who is performing
