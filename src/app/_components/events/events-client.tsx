@@ -59,6 +59,30 @@ function ChevronRightIcon({ className }: { className?: string }) {
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
 
+// Category mapping constants
+const EVENT_CATEGORY_MAP: Record<string, string> = {
+  Konzert: "KONZERT",
+  Gottesdienst: "GOTTESDIENST",
+  Probe: "PROBE",
+  Andere: "ANDERE",
+};
+
+const COURSE_TYPE_MAP: Record<string, string> = {
+  Lehrgang: "LEHRGANG",
+  Freizeit: "FREIZEIT",
+  Workshop: "WORKSHOP",
+  Komponistenportrait: "KOMPONISTENPORTRAIT",
+  Andere: "ANDERE",
+};
+
+const TARGET_AUDIENCE_MAP: Record<string, string> = {
+  Alle: "ALLE",
+  Anfänger: "ANFAENGER",
+  Fortgeschrittene: "FORTGESCHRITTENE",
+  Dirigenten: "DIRIGENTEN",
+  Jugend: "JUGEND",
+};
+
 interface EventsClientProps {
   initialEvents: EventWithRelations[];
   initialCourses: CourseWithRelations[];
@@ -166,33 +190,11 @@ export default function EventsClient({
 
       if (selectedCategory !== "all") {
         if (item.type === "event") {
-          const categoryMap: Record<string, string> = {
-            Konzert: "KONZERT",
-            Gottesdienst: "GOTTESDIENST",
-            Probe: "PROBE",
-            Andere: "ANDERE",
-          };
-          const enumValue = categoryMap[selectedCategory];
+          const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
           if (enumValue && item.category !== enumValue) return false;
         } else {
-          const courseTypeMap: Record<string, string> = {
-            Lehrgang: "LEHRGANG",
-            Freizeit: "FREIZEIT",
-            Workshop: "WORKSHOP",
-            Komponistenportrait: "KOMPONISTENPORTRAIT",
-            Andere: "ANDERE",
-          };
-
-          const targetAudienceMap: Record<string, string> = {
-            Alle: "ALLE",
-            Anfänger: "ANFAENGER",
-            Fortgeschrittene: "FORTGESCHRITTENE",
-            Dirigenten: "DIRIGENTEN",
-            Jugend: "JUGEND",
-          };
-
-          const courseTypeEnum = courseTypeMap[selectedCategory];
-          const targetAudienceEnum = targetAudienceMap[selectedCategory];
+          const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
+          const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
 
           // Check if category matches courseType or targetAudience
           if (courseTypeEnum || targetAudienceEnum) {
