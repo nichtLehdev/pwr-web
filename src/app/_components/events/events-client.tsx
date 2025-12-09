@@ -127,8 +127,8 @@ function filterCalendarItems(
         // If the category exists in either mapping
         if (courseTypeEnum || targetAudienceEnum) {
           // The item must match at least one of the applicable criteria
-          const matchesCourseType = item.courseType === courseTypeEnum;
-          const matchesTargetAudience = item.targetAudience === targetAudienceEnum;
+          const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
+          const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
           
           if (!matchesCourseType && !matchesTargetAudience) {
             return false;
