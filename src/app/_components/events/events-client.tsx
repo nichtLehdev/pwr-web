@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type {
@@ -146,18 +146,9 @@ export default function EventsClient({
     [initialEvents, initialCourses],
   );
 
-  const futureItems = useMemo(() => {
-    return allItems.filter((item) => {
-      const itemDate = new Date(
-        item.type === "event" ? item.eventDate : item.endDate,
-      );
-      itemDate.setHours(0, 0, 0, 0);
-      return itemDate >= now;
-    });
-  }, [allItems, now]);
-
-  const filteredItems = useMemo(() => {
-    return futureItems.filter((item) => {
+  // Shared filtering logic for items
+  const applyFilters = useCallback((items: CalendarItem[]) => {
+    return items.filter((item) => {
       if (filterType === "events" && item.type !== "event") return false;
       if (filterType === "courses" && item.type !== "course") return false;
 
@@ -216,7 +207,21 @@ export default function EventsClient({
 
       return true;
     });
-  }, [futureItems, filterType, selectedDistrict, selectedCategory]);
+  }, [filterType, selectedDistrict, selectedCategory]);
+
+  const futureItems = useMemo(() => {
+    return allItems.filter((item) => {
+      const itemDate = new Date(
+        item.type === "event" ? item.eventDate : item.endDate,
+      );
+      itemDate.setHours(0, 0, 0, 0);
+      return itemDate >= now;
+    });
+  }, [allItems, now]);
+
+  const filteredItems = useMemo(() => {
+    return applyFilters(futureItems);
+  }, [futureItems, applyFilters]);
 
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
@@ -251,51 +256,20 @@ export default function EventsClient({
   }, [sortedItems]);
 
   const pastItems = useMemo(() => {
-    return allItems
-      .filter((item) => {
-        const itemDate = new Date(
-          item.type === "event" ? item.eventDate : item.endDate,
-        );
-        itemDate.setHours(0, 0, 0, 0);
-        return itemDate < now;
-      })
-      .filter((item) => {
-        if (filterType === "events" && item.type !== "event") return false;
-        if (filterType === "courses" && item.type !== "course") return false;
-
-        if (selectedDistrict !== "all") {
-          if (selectedDistrict === "Bezirksübergreifend") {
-            if (item.bezirk !== null) return false;
-          } else {
-            const match = selectedDistrict.match(/Bezirk (\d+)/);
-            if (match) {
-              const districtNumber = parseInt(match[1] ?? "", 10);
-              if (item.bezirk?.number !== districtNumber) return false;
-            }
-          }
-        }
-
-        if (selectedCategory !== "all") {
-          if (item.type === "event") {
-            const categoryMap: Record<string, string> = {
-              Konzert: "KONZERT",
-              Gottesdienst: "GOTTESDIENST",
-              Probe: "PROBE",
-              Andere: "ANDERE",
-            };
-            const enumValue = categoryMap[selectedCategory];
-            if (enumValue && item.category !== enumValue) return false;
-          }
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
-        const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
-        return dateB.getTime() - dateA.getTime();
-      });
-  }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
+    const past = allItems.filter((item) => {
+      const itemDate = new Date(
+        item.type === "event" ? item.eventDate : item.endDate,
+      );
+      itemDate.setHours(0, 0, 0, 0);
+      return itemDate < now;
+    });
+    
+    return applyFilters(past).sort((a, b) => {
+      const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
+      const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
+      return dateB.getTime() - dateA.getTime();
+    });
+  }, [allItems, now, applyFilters]);
 
   const pastGroupedByMonth = useMemo(() => {
     return pastItems.reduce(
