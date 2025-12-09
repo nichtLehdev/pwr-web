@@ -171,47 +171,53 @@ export default function EventsClient({
   );
 
   // Shared filtering logic for items
-  const applyFilters = useCallback((items: CalendarItem[]) => {
-    return items.filter((item) => {
-      if (filterType === "events" && item.type !== "event") return false;
-      if (filterType === "courses" && item.type !== "course") return false;
+  const applyFilters = useCallback(
+    (items: CalendarItem[]) => {
+      return items.filter((item) => {
+        if (filterType === "events" && item.type !== "event") return false;
+        if (filterType === "courses" && item.type !== "course") return false;
 
-      if (selectedDistrict !== "all") {
-        if (selectedDistrict === "Bezirksübergreifend") {
-          if (item.bezirk !== null) return false;
-        } else {
-          const match = selectedDistrict.match(/Bezirk (\d+)/);
-          if (match) {
-            const districtNumber = parseInt(match[1] ?? "", 10);
-            if (item.bezirk?.number !== districtNumber) return false;
-          }
-        }
-      }
-
-      if (selectedCategory !== "all") {
-        if (item.type === "event") {
-          const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
-          if (enumValue && item.category !== enumValue) return false;
-        } else {
-          const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-          const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
-
-          // Check if category matches courseType or targetAudience
-          if (courseTypeEnum || targetAudienceEnum) {
-            const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
-            const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
-
-            // Include the course if it matches either courseType or targetAudience
-            if (!matchesCourseType && !matchesTargetAudience) {
-              return false;
+        if (selectedDistrict !== "all") {
+          if (selectedDistrict === "Bezirksübergreifend") {
+            if (item.bezirk !== null) return false;
+          } else {
+            const match = selectedDistrict.match(/Bezirk (\d+)/);
+            if (match) {
+              const districtNumber = parseInt(match[1] ?? "", 10);
+              if (item.bezirk?.number !== districtNumber) return false;
             }
           }
         }
-      }
 
-      return true;
-    });
-  }, [filterType, selectedDistrict, selectedCategory]);
+        if (selectedCategory !== "all") {
+          if (item.type === "event") {
+            const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
+            if (enumValue && item.category !== enumValue) return false;
+          } else {
+            const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
+            const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
+
+            // Check if category matches courseType or targetAudience
+            if (courseTypeEnum || targetAudienceEnum) {
+              const matchesCourseType =
+                courseTypeEnum && item.courseType === courseTypeEnum;
+              const matchesTargetAudience =
+                targetAudienceEnum &&
+                item.targetAudience === targetAudienceEnum;
+
+              // Include the course if it matches either courseType or targetAudience
+              if (!matchesCourseType && !matchesTargetAudience) {
+                return false;
+              }
+            }
+          }
+        }
+
+        return true;
+      });
+    },
+    [filterType, selectedDistrict, selectedCategory],
+  );
 
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
