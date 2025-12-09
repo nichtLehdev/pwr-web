@@ -14,7 +14,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const eventsRouter = createTRPCRouter({
-  // Public: Get all approved events
   getAll: publicProcedure
     .input(
       z.object({
@@ -80,7 +79,6 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  // Get single event by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -128,7 +126,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Only show non-approved events to creators, reviewers, and admins
       if (event.status !== ContentStatus.APPROVED) {
         if (!ctx.session?.user) {
           throw new TRPCError({
@@ -155,7 +152,6 @@ export const eventsRouter = createTRPCRouter({
       return event;
     }),
 
-  // Get events created by current user
   getMine: protectedProcedure
     .input(
       z.object({
@@ -194,7 +190,6 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  // Get events for dashboard based on user role
   getDashboardEvents: protectedProcedure
     .input(
       z.object({
@@ -211,19 +206,15 @@ export const eventsRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Build where clause based on role
       let where: Record<string, unknown> = {};
 
       if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
-        // Admin and LPW can see all events
         if (input.status) {
           where.status = input.status;
         }
       } else if (userRole === UserRole.RPW) {
-        // RPW can see all events except DRAFT status (unless they created it)
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
-            // For DRAFT, only show their own
             where = {
               status: ContentStatus.DRAFT,
               createdById: userId,
@@ -232,7 +223,6 @@ export const eventsRouter = createTRPCRouter({
             where.status = input.status;
           }
         } else {
-          // No status filter: show all non-draft OR own drafts
           where = {
             OR: [
               { status: { not: ContentStatus.DRAFT } },
@@ -241,7 +231,6 @@ export const eventsRouter = createTRPCRouter({
           };
         }
       } else {
-        // OBLEUTE, regular users, vorstand, posaunenrat members - only their own events
         where = {
           createdById: userId,
           ...(input.status && { status: input.status }),
@@ -278,7 +267,6 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  // Get events pending review (for reviewers)
   getPendingReview: reviewerProcedure
     .input(
       z.object({
@@ -296,7 +284,6 @@ export const eventsRouter = createTRPCRouter({
         pendingReview: true,
       };
 
-      // RPW can only review events in their district
       if (ctx.session.user.role === UserRole.RPW && ctx.session.user.bezirkId) {
         where.bezirkId = ctx.session.user.bezirkId;
       }
@@ -325,7 +312,6 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  // Create event
   create: protectedProcedure
     .input(
       z.object({
@@ -382,7 +368,6 @@ export const eventsRouter = createTRPCRouter({
       return event;
     }),
 
-  // Update event
   update: protectedProcedure
     .input(
       z.object({
@@ -422,7 +407,6 @@ export const eventsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, priceOptions, ...updateData } = input;
 
-      // Check permissions
       const event = await ctx.db.event.findUnique({
         where: { id },
         select: { createdById: true },
@@ -448,14 +432,11 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Update price options if provided
       if (priceOptions) {
-        // Delete existing price options
         await ctx.db.eventPriceOption.deleteMany({
           where: { eventId: id },
         });
 
-        // Create new price options
         await ctx.db.eventPriceOption.createMany({
           data: priceOptions.map((option) => ({
             eventId: id,
@@ -477,7 +458,6 @@ export const eventsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete event
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -513,7 +493,6 @@ export const eventsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Approve event (for reviewers)
   approve: reviewerProcedure
     .input(
       z.object({
@@ -534,7 +513,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // RPW can only approve events in their district
       if (
         ctx.session.user.role === UserRole.RPW &&
         event.bezirkId !== ctx.session.user.bezirkId
@@ -551,13 +529,12 @@ export const eventsRouter = createTRPCRouter({
           status: ContentStatus.APPROVED,
           reviewerId: ctx.session.user.id,
           reviewDate: new Date(),
-          reviewNotes: input.reviewNotes ?? null, // Clear old rejection notes if no new notes provided
+          reviewNotes: input.reviewNotes ?? null,
           publishedAt: new Date(),
         },
       });
     }),
 
-  // Reject event (for reviewers)
   reject: reviewerProcedure
     .input(
       z.object({
@@ -577,20 +554,17 @@ export const eventsRouter = createTRPCRouter({
       });
     }),
 
-  // Bulk delete events
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all events to check permissions
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only events user can delete
       const canDeleteIds = events
         .filter(
           (event) =>
@@ -614,20 +588,17 @@ export const eventsRouter = createTRPCRouter({
       return { success: true, deletedCount: canDeleteIds.length };
     }),
 
-  // Bulk cancel events
   bulkCancel: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all events to check permissions
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only events user can update
       const canUpdateIds = events
         .filter(
           (event) =>
@@ -652,7 +623,6 @@ export const eventsRouter = createTRPCRouter({
       return { success: true, cancelledCount: canUpdateIds.length };
     }),
 
-  // Duplicate event
   duplicate: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -670,7 +640,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Create new event as draft
       const newEvent = await ctx.db.event.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -704,7 +673,6 @@ export const eventsRouter = createTRPCRouter({
       return newEvent;
     }),
 
-  // Bulk duplicate events
   bulkDuplicate: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
@@ -722,7 +690,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Create duplicates for each event
       const newEvents = await Promise.all(
         originals.map((original) =>
           ctx.db.event.create({
@@ -760,7 +727,6 @@ export const eventsRouter = createTRPCRouter({
       return { success: true, duplicatedCount: newEvents.length };
     }),
 
-  // Bulk change status
   bulkStatusChange: protectedProcedure
     .input(
       z.object({
@@ -772,13 +738,11 @@ export const eventsRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all events to check permissions
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only events user can update
       const canUpdateIds = events
         .filter(
           (event) =>
@@ -795,7 +759,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Special handling for APPROVED status - set publishedAt
       const updateData: { status: ContentStatus; publishedAt?: Date | null } = {
         status: input.status,
       };

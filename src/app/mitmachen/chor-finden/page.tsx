@@ -21,7 +21,6 @@ function ChorFindenContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const CHOIRS_PER_PAGE = 6;
 
-  // Fetch data
   const ensembles = api.ensembles.getAll.useQuery({
     isActive: true,
     page: 1,
@@ -35,18 +34,15 @@ function ChorFindenContent() {
   );
   const allBezirke = bezirke.data || [];
 
-  // Filter choirs based on selected district and search term
   const filteredChoirs = useMemo(() => {
     let filtered = choirs;
 
-    // Filter by district
     if (selectedBezirk !== null) {
       filtered = filtered.filter(
         (choir) => choir.bezirk?.number === selectedBezirk,
       );
     }
 
-    // Filter by search term (city, zip, or name)
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(
@@ -60,13 +56,11 @@ function ChorFindenContent() {
     return filtered;
   }, [choirs, selectedBezirk, searchTerm]);
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredChoirs.length / CHOIRS_PER_PAGE);
   const startIndex = (currentPage - 1) * CHOIRS_PER_PAGE;
   const endIndex = startIndex + CHOIRS_PER_PAGE;
   const paginatedChoirs = filteredChoirs.slice(startIndex, endIndex);
 
-  // Handle district click on map
   const handleBezirkClick = (bezirkNumber: number) => {
     if (selectedBezirk === bezirkNumber) {
       setSelectedBezirk(null);
@@ -76,7 +70,6 @@ function ChorFindenContent() {
     setCurrentPage(1);
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setSelectedBezirk(null);
     setSearchTerm("");
@@ -85,7 +78,6 @@ function ChorFindenContent() {
 
   const hasActiveFilters = selectedBezirk !== null || searchTerm.trim() !== "";
 
-  // Pagination component
   function Pagination({
     totalPages,
     currentPage,

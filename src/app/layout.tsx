@@ -51,7 +51,7 @@ export default function RootLayout({
                   } else if (theme === 'light') {
                     root.classList.add('light');
                   } else {
-                    // System preference
+                    
                     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
                       ? 'dark' 
                       : 'light';

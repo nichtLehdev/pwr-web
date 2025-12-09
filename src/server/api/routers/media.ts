@@ -13,7 +13,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const mediaRouter = createTRPCRouter({
-  // Public: Get media by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -36,7 +35,6 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      // Check if media is public or user has access
       if (!media.isPublic && !ctx.session?.user) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
@@ -47,7 +45,6 @@ export const mediaRouter = createTRPCRouter({
       return media;
     }),
 
-  // Get all media with filters
   getAll: protectedProcedure
     .input(
       z.object({
@@ -57,7 +54,7 @@ export const mediaRouter = createTRPCRouter({
         folder: z.string().optional(),
         search: z.string().optional(),
         uploadedById: z.string().optional(),
-        includeAll: z.boolean().optional(), // Include pending media for reviewers
+        includeAll: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -68,14 +65,12 @@ export const mediaRouter = createTRPCRouter({
         userRole === UserRole.LPW ||
         userRole === UserRole.ADMIN;
 
-      // Build base where clause
       const where: Prisma.MediaWhereInput = {
         ...(input.mimeType && { mimeType: { contains: input.mimeType } }),
         ...(input.folder && { folder: input.folder }),
         ...(input.uploadedById && { uploadedById: input.uploadedById }),
       };
 
-      // Add search filter
       if (input.search) {
         where.OR = [
           { name: { contains: input.search, mode: "insensitive" } },
@@ -85,12 +80,9 @@ export const mediaRouter = createTRPCRouter({
         ];
       }
 
-      // Add status filter based on user role
       if (input.includeAll) {
         if (isReviewer) {
-          // Reviewers see all statuses - no filter needed
         } else if (userRole === UserRole.OBLEUTE) {
-          // Obleute can see approved + their own pending
           where.AND = [
             {
               OR: [
@@ -103,7 +95,6 @@ export const mediaRouter = createTRPCRouter({
           where.status = ContentStatus.APPROVED;
         }
       } else {
-        // Default: show approved + own uploads
         where.AND = [
           {
             OR: [{ status: ContentStatus.APPROVED }, { uploadedById: userId }],
@@ -136,7 +127,6 @@ export const mediaRouter = createTRPCRouter({
       };
     }),
 
-  // Get media uploaded by current user
   getMine: protectedProcedure
     .input(
       z.object({
@@ -164,7 +154,6 @@ export const mediaRouter = createTRPCRouter({
       };
     }),
 
-  // Create media record (after file upload)
   create: protectedProcedure
     .input(
       z.object({
@@ -188,7 +177,6 @@ export const mediaRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role as UserRole;
 
-      // Reviewers (RPW, LPW, ADMIN) get auto-approved, Obleute need review
       const isReviewer =
         userRole === UserRole.RPW ||
         userRole === UserRole.LPW ||
@@ -205,7 +193,6 @@ export const mediaRouter = createTRPCRouter({
       return media;
     }),
 
-  // Update media metadata
   update: protectedProcedure
     .input(
       z.object({
@@ -233,7 +220,6 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions
       const canEdit =
         media.uploadedById === ctx.session.user.id ||
         ctx.session.user.role === UserRole.ADMIN ||
@@ -252,7 +238,6 @@ export const mediaRouter = createTRPCRouter({
       });
     }),
 
-  // Delete media
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -268,7 +253,6 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions
       const canDelete =
         media.uploadedById === ctx.session.user.id ||
         ctx.session.user.role === UserRole.ADMIN ||
@@ -281,8 +265,6 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      // TODO: Also delete the actual file from storage
-
       await ctx.db.media.delete({
         where: { id: input.id },
       });
@@ -290,7 +272,6 @@ export const mediaRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Review media (approve/reject)
   review: reviewerProcedure
     .input(
       z.object({
@@ -320,7 +301,6 @@ export const mediaRouter = createTRPCRouter({
       });
     }),
 
-  // Get media by folder
   getByFolder: protectedProcedure
     .input(
       z.object({
@@ -349,7 +329,6 @@ export const mediaRouter = createTRPCRouter({
       };
     }),
 
-  // Get all folders
   getFolders: protectedProcedure.query(async ({ ctx }) => {
     const folders = await ctx.db.media.findMany({
       where: {
@@ -365,7 +344,6 @@ export const mediaRouter = createTRPCRouter({
     return folders.map((f) => f.folder).filter((f): f is string => f !== null);
   }),
 
-  // Get media statistics
   getStatistics: protectedProcedure.query(async ({ ctx }) => {
     const [
       totalMedia,

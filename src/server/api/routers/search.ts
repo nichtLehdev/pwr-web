@@ -22,7 +22,6 @@ export interface SearchResult {
   category: string | null;
 }
 
-// Static pages that can be searched
 const staticPages = [
   {
     id: "page-start",
@@ -132,7 +131,7 @@ const staticPages = [
       "registrierung",
     ],
   },
-  // Mitmachen section
+
   {
     id: "page-mitmachen",
     title: "Mitmachen",
@@ -200,7 +199,7 @@ const staticPages = [
     url: "/mitmachen/ehrenamt",
     keywords: ["ehrenamt", "engagieren", "mitarbeit", "freiwillig", "helfen"],
   },
-  // Materialien section
+
   {
     id: "page-materialien",
     title: "Materialien",
@@ -252,7 +251,7 @@ const staticPages = [
     url: "/materialien/literatur",
     keywords: ["literatur", "bücher", "cds", "musik", "empfehlungen", "noten"],
   },
-  // Über uns section
+
   {
     id: "page-ueber-uns",
     title: "Über uns",
@@ -325,7 +324,6 @@ function searchStaticPages(query: string, limit: number): SearchResult[] {
   const results: SearchResult[] = [];
 
   for (const page of staticPages) {
-    // Check if query matches title, description, or keywords
     const titleMatch = page.title.toLowerCase().includes(searchTerm);
     const descriptionMatch = page.description
       .toLowerCase()
@@ -354,7 +352,6 @@ function searchStaticPages(query: string, limit: number): SearchResult[] {
 }
 
 export const searchRouter = createTRPCRouter({
-  // Global site search across posts, events, downloads, and courses
   global: publicProcedure
     .input(
       z.object({
@@ -366,7 +363,6 @@ export const searchRouter = createTRPCRouter({
       const searchTerm = input.query.trim();
       const limitPerType = Math.ceil(input.limit / 4);
 
-      // Search posts
       const postsPromise = ctx.db.post.findMany({
         where: {
           status: ContentStatus.APPROVED,
@@ -388,11 +384,10 @@ export const searchRouter = createTRPCRouter({
         orderBy: { publishedAt: "desc" },
       });
 
-      // Search events (only future or recent events)
       const eventsPromise = ctx.db.event.findMany({
         where: {
           status: ContentStatus.APPROVED,
-          eventDate: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Within last 30 days or future
+          eventDate: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
           OR: [
             { title: { contains: searchTerm, mode: "insensitive" } },
             { description: { contains: searchTerm, mode: "insensitive" } },
@@ -411,7 +406,6 @@ export const searchRouter = createTRPCRouter({
         orderBy: { eventDate: "asc" },
       });
 
-      // Search downloads
       const downloadsPromise = ctx.db.download.findMany({
         where: {
           status: ContentStatus.APPROVED,
@@ -432,7 +426,6 @@ export const searchRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
       });
 
-      // Search courses
       const coursesPromise = ctx.db.course.findMany({
         where: {
           status: ContentStatus.APPROVED,
@@ -452,7 +445,6 @@ export const searchRouter = createTRPCRouter({
         orderBy: { startDate: "asc" },
       });
 
-      // Search ensembles (Posaunenchöre)
       const ensemblesPromise = ctx.db.ensemble.findMany({
         where: {
           isActive: true,
@@ -472,7 +464,6 @@ export const searchRouter = createTRPCRouter({
         orderBy: { name: "asc" },
       });
 
-      // Search Auswahlchöre
       const auswahlchoerePromise = ctx.db.auswahlChor.findMany({
         where: {
           OR: [
@@ -503,10 +494,8 @@ export const searchRouter = createTRPCRouter({
           auswahlchoerePromise,
         ]);
 
-      // Transform results to unified format
       const results: SearchResult[] = [];
 
-      // Add posts
       for (const post of posts) {
         results.push({
           id: post.id,
@@ -520,7 +509,6 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add events
       for (const event of events) {
         results.push({
           id: event.id,
@@ -534,7 +522,6 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add downloads
       for (const download of downloads) {
         results.push({
           id: download.id,
@@ -548,7 +535,6 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add courses
       for (const course of courses) {
         results.push({
           id: course.id,
@@ -562,7 +548,6 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add ensembles (Posaunenchöre)
       for (const ensemble of ensembles) {
         results.push({
           id: ensemble.id,
@@ -580,7 +565,6 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add Auswahlchöre
       for (const chor of auswahlchoere) {
         results.push({
           id: chor.id,
@@ -594,11 +578,9 @@ export const searchRouter = createTRPCRouter({
         });
       }
 
-      // Add static pages
       const pageResults = searchStaticPages(searchTerm, limitPerType);
       results.push(...pageResults);
 
-      // Sort by relevance (title matches first) then by date
       results.sort((a, b) => {
         const aTitle = a.title.toLowerCase();
         const bTitle = b.title.toLowerCase();
@@ -609,13 +591,11 @@ export const searchRouter = createTRPCRouter({
         const aContainsQuery = aTitle.includes(query);
         const bContainsQuery = bTitle.includes(query);
 
-        // Prioritize title matches
         if (aStartsWithQuery && !bStartsWithQuery) return -1;
         if (!aStartsWithQuery && bStartsWithQuery) return 1;
         if (aContainsQuery && !bContainsQuery) return -1;
         if (!aContainsQuery && bContainsQuery) return 1;
 
-        // Then sort by date (most recent first)
         const aDate = a.date?.getTime() ?? 0;
         const bDate = b.date?.getTime() ?? 0;
         return bDate - aDate;

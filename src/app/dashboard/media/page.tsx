@@ -9,7 +9,6 @@ import Image from "next/image";
 import { UserRole, ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -65,20 +64,17 @@ export default function DashboardMediaPage() {
   const hasRedirected = useRef(false);
   const toast = useToast();
 
-  // Filters
   const [search, setSearch] = useState("");
   const [mimeTypeFilter, setMimeTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "">("");
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  // Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState<string | null>(null);
 
-  // Upload state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [newName, setNewName] = useState("");
@@ -92,7 +88,6 @@ export default function DashboardMediaPage() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit state
   const [editName, setEditName] = useState("");
   const [editAlt, setEditAlt] = useState("");
   const [editCaption, setEditCaption] = useState("");
@@ -101,7 +96,6 @@ export default function DashboardMediaPage() {
   const [editIsPublic, setEditIsPublic] = useState(true);
   const [editError, setEditError] = useState("");
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -109,7 +103,6 @@ export default function DashboardMediaPage() {
 
   const utils = api.useUtils();
 
-  // Fetch media
   const { data, isLoading } = api.media.getAll.useQuery(
     {
       page,
@@ -121,12 +114,10 @@ export default function DashboardMediaPage() {
     { enabled: !!profile },
   );
 
-  // Fetch statistics
   const { data: statistics } = api.media.getStatistics.useQuery(undefined, {
     enabled: !!profile,
   });
 
-  // Mutations
   const createMutation = api.media.create.useMutation({
     onSuccess: () => {
       void utils.media.getAll.invalidate();
@@ -263,7 +254,6 @@ export default function DashboardMediaPage() {
         extension: data.extension || file.name.split(".").pop() || "",
       });
 
-      // Auto-fill name from filename
       if (!newName) {
         const baseName = file.name.replace(/\.[^/.]+$/, "");
         setNewName(baseName);
@@ -307,12 +297,10 @@ export default function DashboardMediaPage() {
   const canDelete =
     profile.role === UserRole.ADMIN || profile.role === UserRole.LPW;
 
-  // Filter media by status if filter is set
   const filteredMedia = statusFilter
     ? data?.media.filter((m) => m.status === statusFilter)
     : data?.media;
 
-  // Get preview media item
   const previewItem = showPreviewModal
     ? data?.media.find((m) => m.id === showPreviewModal)
     : null;

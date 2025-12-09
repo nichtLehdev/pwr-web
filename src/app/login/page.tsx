@@ -7,7 +7,6 @@ import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Roles that should be redirected to dashboard after login
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -18,7 +17,7 @@ const DASHBOARD_ROLES: UserRole[] = [
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Support both 'redirect' and 'callbackUrl' parameter names
+
   const redirectTo =
     searchParams.get("redirect") ?? searchParams.get("callbackUrl") ?? "/";
 
@@ -36,7 +35,6 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Check if input is email or username
       const isEmail = emailOrUsername.includes("@");
       let loginEmail = emailOrUsername;
 
@@ -78,10 +76,8 @@ function LoginForm() {
 
       console.log("Sign in successful:", signInResult);
 
-      // Fetch user profile to check role
       const profile = await utils.users.getMyProfile.fetch();
 
-      // Redirect based on role
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
         router.push("/dashboard");
       } else {
@@ -99,7 +95,6 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Store the redirect URL in sessionStorage for after OAuth callback
       sessionStorage.setItem("loginRedirect", redirectTo);
 
       await signIn.social({

@@ -15,7 +15,6 @@ export function SignatureCanvas({
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
 
-  // Initialize canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -23,20 +22,17 @@ export function SignatureCanvas({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set up canvas for high DPI displays
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
 
-    // Set drawing styles
     ctx.strokeStyle = "#000000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
-    // Fill with white background
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, rect.width, rect.height);
   }, []);
@@ -111,7 +107,6 @@ export function SignatureCanvas({
     const canvas = canvasRef.current;
     if (!canvas || !hasSignature) return;
 
-    // Export signature as PNG
     const dataUrl = canvas.toDataURL("image/png");
     onSignatureChange(dataUrl);
   }, [isDrawing, hasSignature, onSignatureChange]);
@@ -128,7 +123,6 @@ export function SignatureCanvas({
     onSignatureChange(null);
   }, [onSignatureChange]);
 
-  // Handle touch events to prevent scrolling while drawing
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;

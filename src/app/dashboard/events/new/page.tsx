@@ -27,7 +27,6 @@ const ensembleTypeLabels: Record<EventEnsembleType, string> = {
   CUSTOM: "Benutzerdefiniert",
 };
 
-// Roles that can create events for any district and use Auswahlchöre
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
 interface PriceOption {
@@ -43,16 +42,13 @@ export default function NewEventPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for role and bezirk
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
   const userBezirkId = profile?.bezirkId ?? null;
 
-  // Form state
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
@@ -62,7 +58,6 @@ export default function NewEventPage() {
   const [bezirkId, setBezirkId] = useState<string>("");
   const [districtName, setDistrictName] = useState("");
 
-  // Location state
   const [locationId, setLocationId] = useState<string>("");
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -75,7 +70,6 @@ export default function NewEventPage() {
     additionalInfo: "",
   });
 
-  // Performing ensemble state
   const [performingEnsembleType, setPerformingEnsembleType] =
     useState<EventEnsembleType | null>(null);
   const [ensembleId, setEnsembleId] = useState<string>("");
@@ -87,42 +81,34 @@ export default function NewEventPage() {
   const [performingEnsembleName, setPerformingEnsembleName] = useState("");
   const [leitung, setLeitung] = useState("");
 
-  // Participation state
   const [openToParticipants, setOpenToParticipants] = useState(false);
   const [participationInfo, setParticipationInfo] = useState("");
 
-  // Pricing state
   const [isFree, setIsFree] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
-  // Submission state
   const [submitAsDraft, setSubmitAsDraft] = useState(false);
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Fetch locations
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
     search: locationSearch || undefined,
   });
 
-  // Fetch ensembles - filter by user's bezirk if restricted role
   const { data: ensemblesData } = api.ensembles.getAll.useQuery({
     bezirkId: !isHigherRole && userBezirkId ? userBezirkId : undefined,
   });
 
-  // Fetch auswahlchöre - only for higher roles
   const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );
 
-  // Set bezirk for restricted users when profile loads
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (!isHigherRole && userBezirkId && !bezirkId) {
@@ -131,7 +117,6 @@ export default function NewEventPage() {
   }, [isHigherRole, userBezirkId, bezirkId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Create event mutation
   const createEventMutation = api.events.create.useMutation({
     onSuccess: (event) => {
       toast.success("Termin erfolgreich erstellt");
@@ -144,7 +129,6 @@ export default function NewEventPage() {
     },
   });
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: (location) => {
       setLocationId(location.id);
@@ -171,7 +155,6 @@ export default function NewEventPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -179,10 +162,8 @@ export default function NewEventPage() {
     }
   }, [session, sessionLoading, router]);
 
-  // Redirect if user doesn't have permission to create events
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      // Only OBLEUTE and higher can create events
       const allowedRoles: UserRole[] = [
         UserRole.ADMIN,
         UserRole.LPW,
@@ -198,7 +179,6 @@ export default function NewEventPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -265,7 +245,6 @@ export default function NewEventPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -278,10 +257,8 @@ export default function NewEventPage() {
       return;
     }
 
-    // Combine date and time
     const dateTime = new Date(`${eventDate}T${eventTime}`);
 
-    // Prepare price options (remove temporary IDs)
     const preparedPriceOptions = !isFree
       ? priceOptions
           .filter((opt) => opt.label && opt.price >= 0)
@@ -340,7 +317,6 @@ export default function NewEventPage() {
     return null;
   }
 
-  // Get available ensemble types based on role
   const availableEnsembleTypes = isHigherRole
     ? Object.entries(ensembleTypeLabels)
     : Object.entries(ensembleTypeLabels).filter(
@@ -679,7 +655,6 @@ export default function NewEventPage() {
             </h2>
             <div className="space-y-4">
               {!isHigherRole && userBezirkId ? (
-                // Restricted users: show their assigned bezirk (locked)
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Dein Bezirk
@@ -714,7 +689,6 @@ export default function NewEventPage() {
                   </p>
                 </div>
               ) : !isHigherRole && !userBezirkId ? (
-                // Restricted users without bezirk assignment
                 <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
@@ -723,7 +697,6 @@ export default function NewEventPage() {
                   </p>
                 </div>
               ) : (
-                // Higher roles: full bezirk selection
                 <>
                   <div>
                     <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

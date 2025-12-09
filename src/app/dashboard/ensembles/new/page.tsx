@@ -31,7 +31,6 @@ export default function NewEnsemblePage() {
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Location state
   const [locationId, setLocationId] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -44,30 +43,25 @@ export default function NewEnsemblePage() {
     additionalInfo: "",
   });
 
-  // Fetch locations with search
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
     search: locationSearch || undefined,
   });
 
-  // User list for dropdown
   const { data: usersData } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
   );
 
-  // Conductor state
   const [conductorId, setConductorId] = useState<string | null>(null);
   const [conductorSearch, setConductorSearch] = useState("");
   const [showConductorDropdown, setShowConductorDropdown] = useState(false);
 
-  // Representative state
   const [representativeId, setRepresentativeId] = useState<string | null>(null);
   const [representativeSearch, setRepresentativeSearch] = useState("");
   const [showRepresentativeDropdown, setShowRepresentativeDropdown] =
     useState(false);
 
-  // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [bezirkId, setBezirkId] = useState("");
@@ -83,7 +77,6 @@ export default function NewEnsemblePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
 
-  // Filter users based on search
   const filteredConductorUsers = usersData?.users.filter((user) => {
     if (!conductorSearch.trim()) return true;
     const searchLower = conductorSearch.toLowerCase();
@@ -117,7 +110,6 @@ export default function NewEnsemblePage() {
     },
   });
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: (location) => {
       setLocationId(location.id);
@@ -156,7 +148,6 @@ export default function NewEnsemblePage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;

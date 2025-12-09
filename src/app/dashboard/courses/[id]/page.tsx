@@ -79,10 +79,8 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-// Roles that can review courses
 const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -98,21 +96,17 @@ export default function CourseDetailPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // View state
   const [activeTab, setActiveTab] = useState<"details" | "participants">(
     "details",
   );
 
-  // Review state
   const [reviewNotes, setReviewNotes] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch course data
   const {
     data: course,
     isLoading: courseLoading,
@@ -122,7 +116,6 @@ export default function CourseDetailPage() {
     { enabled: !!courseId && !!session?.user },
   );
 
-  // Fetch registrations
   const { data: registrationsData, isLoading: registrationsLoading } =
     api.courses.getRegistrations.useQuery(
       { courseId, page: 1, limit: 100 },
@@ -131,7 +124,6 @@ export default function CourseDetailPage() {
       },
     );
 
-  // Mutations
   const approveMutation = api.courses.approve.useMutation({
     onSuccess: () => {
       void refetchCourse();
@@ -164,7 +156,6 @@ export default function CourseDetailPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -172,7 +163,6 @@ export default function CourseDetailPage() {
     }
   }, [session, sessionLoading, router, courseId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -182,7 +172,6 @@ export default function CourseDetailPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Loading state
   if (sessionLoading || profileLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -226,7 +215,6 @@ export default function CourseDetailPage() {
     userRole === UserRole.ADMIN ||
     userRole === UserRole.LPW;
 
-  // Format dates
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
   const formattedStartDate = startDate.toLocaleDateString("de-DE", {
@@ -263,7 +251,6 @@ export default function CourseDetailPage() {
     deleteMutation.mutate({ id: courseId });
   };
 
-  // Calculate participant count
   const confirmedCount = course._count?.participants ?? 0;
 
   return (

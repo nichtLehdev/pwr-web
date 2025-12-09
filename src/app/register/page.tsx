@@ -19,16 +19,13 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Debounced values for API checks
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [debouncedEmail, setDebouncedEmail] = useState("");
 
-  // Email validation regex
   const isValidEmail = (emailToCheck: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
   };
 
-  // Debounce username
   useEffect(() => {
     const timer = setTimeout(() => {
       if (formData.username.length >= 3) {
@@ -38,7 +35,6 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [formData.username]);
 
-  // Debounce email
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isValidEmail(formData.email)) {
@@ -48,7 +44,6 @@ export default function RegisterPage() {
     return () => clearTimeout(timer);
   }, [formData.email]);
 
-  // Check username availability via tRPC
   const checkUsernameQuery = api.users.checkUsername.useQuery(
     { username: debouncedUsername },
     {
@@ -57,7 +52,6 @@ export default function RegisterPage() {
     },
   );
 
-  // Check email availability via tRPC
   const checkEmailQuery = api.users.checkEmail.useQuery(
     { email: debouncedEmail },
     {
@@ -66,7 +60,6 @@ export default function RegisterPage() {
     },
   );
 
-  // Compute username status from query result
   const usernameStatus = useMemo(() => {
     if (formData.username.length < 3) {
       return {
@@ -102,7 +95,6 @@ export default function RegisterPage() {
     checkUsernameQuery.data,
   ]);
 
-  // Compute email status from query result
   const emailStatus = useMemo(() => {
     if (!formData.email || !isValidEmail(formData.email)) {
       return {
@@ -141,7 +133,6 @@ export default function RegisterPage() {
     setFormData((prev) => {
       const updated = { ...prev, [name]: value };
 
-      // Auto-generate username from firstName.lastName if not manually edited
       if ((name === "firstName" || name === "lastName") && !usernameEdited) {
         const firstName = name === "firstName" ? value : prev.firstName;
         const lastName = name === "lastName" ? value : prev.lastName;
@@ -150,7 +141,7 @@ export default function RegisterPage() {
           updated.username =
             `${firstName.toLowerCase()}.${lastName.toLowerCase()}`
               .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+              .replace(/[\u0300-\u036f]/g, "")
               .replace(/[^a-z0-9.]/g, "");
         }
       }
@@ -191,7 +182,6 @@ export default function RegisterPage() {
         name: `${formData.firstName} ${formData.lastName}`.trim(),
       });
 
-      // After successful registration, sign in
       await signIn.email({
         email: formData.email,
         password: formData.password,

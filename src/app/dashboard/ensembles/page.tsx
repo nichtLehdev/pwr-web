@@ -10,7 +10,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Admins and Posaunenrat members can manage Ensembles
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,

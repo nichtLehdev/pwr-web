@@ -14,7 +14,6 @@ import {
   UserRole,
 } from "~/generated/prisma/enums";
 
-// German labels for course types
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
   FREIZEIT: "Freizeit",
@@ -23,7 +22,6 @@ const courseTypeLabels: Record<CourseType, string> = {
   OTHER: "Sonstiges",
 };
 
-// German labels for target audience
 const targetAudienceLabels: Record<TargetAudience, string> = {
   ANFAENGER: "Anfänger",
   FORTGESCHRITTENE: "Fortgeschrittene",
@@ -32,7 +30,6 @@ const targetAudienceLabels: Record<TargetAudience, string> = {
   ALLE: "Alle",
 };
 
-// German labels for custom field types
 const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXT: "Text",
   NUMBER: "Zahl",
@@ -41,7 +38,6 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-// Roles that have access to create courses
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -49,7 +45,6 @@ const ALLOWED_ROLES: UserRole[] = [
   UserRole.OBLEUTE,
 ];
 
-// Roles that can directly approve
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
 interface PriceOption {
@@ -76,27 +71,22 @@ export default function NewCoursePage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
 
-  // Basic info state
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [courseType, setCourseType] = useState<CourseType>("LEHRGANG");
   const [targetAudience, setTargetAudience] = useState<TargetAudience>("ALLE");
 
-  // Date state
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
 
-  // Location state
   const [locationId, setLocationId] = useState<string>("");
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -109,49 +99,38 @@ export default function NewCoursePage() {
     additionalInfo: "",
   });
 
-  // District state
   const [bezirkId, setBezirkId] = useState<string>("");
   const userBezirkId = profile?.bezirkId ?? null;
 
-  // Capacity state
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [allowWaitingList, setAllowWaitingList] = useState(false);
 
-  // Pricing state
   const [isFree, setIsFree] = useState(false);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
-  // Additional info state
   const [prerequisites, setPrerequisites] = useState("");
   const [whatToBring, setWhatToBring] = useState("");
 
-  // Custom fields state
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
 
-  // Submit state
   const [submitAsDraft, setSubmitAsDraft] = useState(false);
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch locations
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
     search: locationSearch || undefined,
   });
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // tRPC utils for cache invalidation
   const utils = api.useUtils();
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: async (location) => {
-      // Refetch locations so the new one appears in search
       await utils.locations.getAll.invalidate();
       setLocationId(location.id);
       setLocationSearch(
@@ -177,7 +156,6 @@ export default function NewCoursePage() {
     },
   });
 
-  // Create course mutation
   const createCourseMutation = api.courses.create.useMutation({
     onSuccess: (course) => {
       toast.success("Kurs erfolgreich erstellt");
@@ -190,7 +168,6 @@ export default function NewCoursePage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -198,7 +175,6 @@ export default function NewCoursePage() {
     }
   }, [session, sessionLoading, router]);
 
-  // Redirect if user doesn't have permission
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!ALLOWED_ROLES.includes(profile.role)) {
@@ -208,7 +184,6 @@ export default function NewCoursePage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Set bezirk for restricted users when profile loads
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (!isHigherRole && userBezirkId && !bezirkId) {
@@ -217,7 +192,6 @@ export default function NewCoursePage() {
   }, [isHigherRole, userBezirkId, bezirkId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -249,7 +223,6 @@ export default function NewCoursePage() {
     createLocationMutation.mutate(newLocation);
   };
 
-  // Price option handlers
   const addPriceOption = () => {
     setPriceOptions([
       ...priceOptions,
@@ -278,7 +251,6 @@ export default function NewCoursePage() {
     setPriceOptions(priceOptions.filter((opt) => opt.id !== id));
   };
 
-  // Custom field handlers
   const addCustomField = () => {
     setCustomFields([
       ...customFields,
@@ -324,7 +296,6 @@ export default function NewCoursePage() {
       newFields[index]!,
     ];
 
-    // Update sort orders
     setCustomFields(newFields.map((cf, i) => ({ ...cf, sortOrder: i })));
   };
 
@@ -333,7 +304,6 @@ export default function NewCoursePage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -370,7 +340,6 @@ export default function NewCoursePage() {
       return;
     }
 
-    // Prepare price options
     const preparedPriceOptions = !isFree
       ? priceOptions
           .filter((opt) => opt.label.trim())
@@ -382,7 +351,6 @@ export default function NewCoursePage() {
           }))
       : undefined;
 
-    // Prepare custom fields
     const preparedCustomFields = customFields
       .filter((cf) => cf.fieldName.trim())
       .map(
@@ -811,7 +779,6 @@ export default function NewCoursePage() {
             </h2>
             <div className="space-y-4">
               {!isHigherRole && userBezirkId ? (
-                // Restricted users: show their assigned bezirk (locked)
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Dein Bezirk
@@ -846,7 +813,6 @@ export default function NewCoursePage() {
                   </p>
                 </div>
               ) : !isHigherRole && !userBezirkId ? (
-                // Restricted users without bezirk assignment
                 <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
@@ -855,7 +821,6 @@ export default function NewCoursePage() {
                   </p>
                 </div>
               ) : (
-                // Higher roles: full bezirk selection
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Bezirk auswählen

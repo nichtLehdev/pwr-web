@@ -8,7 +8,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access posaunenwarte management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -49,7 +48,6 @@ export default function DashboardPosaunenwarteDetailPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // If user is not LPW or RPW, redirect to posaunenwarte list
   useEffect(() => {
     if (user && user.role !== "LPW" && user.role !== "RPW") {
       router.push("/dashboard/posaunenwarte");

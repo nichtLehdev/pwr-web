@@ -7,7 +7,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -19,7 +18,6 @@ export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for extended fields
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -32,7 +30,6 @@ export default function DashboardPage() {
     }
   }, [isPending, session]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -54,7 +51,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Get display name from profile or fall back to session name
   const displayName =
     profile?.displayName ??
     profile?.firstName ??
@@ -344,7 +340,6 @@ function QuickLink({
   );
 }
 
-// Icons
 const CalendarIcon = () => (
   <svg
     className="h-5 w-5"

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import type { RouterInputs, RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
 import type { User } from "~/generated/prisma/client";
-// Use the actual return types from your tRPC router
+
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
   RouterInputs["registrations"]["create"],
@@ -17,7 +17,7 @@ interface CourseRegistrationFormProps {
   onClose: () => void;
   onSuccess: () => void;
   isWaitlist: boolean;
-  currentUser?: User | null; // Optional: Logged in user
+  currentUser?: User | null;
 }
 
 type Step = 1 | 2 | 3 | 4;
@@ -50,7 +50,6 @@ export default function CourseRegistrationForm({
     participants: [],
   });
 
-  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
@@ -60,7 +59,6 @@ export default function CourseRegistrationForm({
     };
   }, []);
 
-  // Close on ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -69,7 +67,6 @@ export default function CourseRegistrationForm({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Add new participant
   const addParticipant = () => {
     if (!course.priceOptions) {
       console.error("Course price options are not defined.");
@@ -92,7 +89,6 @@ export default function CourseRegistrationForm({
     });
   };
 
-  // Add registrant as participant
   const addMyselfAsParticipant = () => {
     setRegistrationData({
       ...registrationData,
@@ -113,7 +109,6 @@ export default function CourseRegistrationForm({
     });
   };
 
-  // Remove participant
   const removeParticipant = (index: number) => {
     setRegistrationData({
       ...registrationData,
@@ -121,7 +116,6 @@ export default function CourseRegistrationForm({
     });
   };
 
-  // Update participant
   const updateParticipant = (
     index: number,
     field: string,
@@ -138,7 +132,6 @@ export default function CourseRegistrationForm({
     setRegistrationData({ ...registrationData, participants: updated });
   };
 
-  // Calculate total price
   const calculateTotalPrice = () => {
     return registrationData.participants.reduce((sum, participant) => {
       const priceOption = course.priceOptions.find(
@@ -148,7 +141,6 @@ export default function CourseRegistrationForm({
     }, 0);
   };
 
-  // Validate current step
   const validateStep = (step: Step): boolean => {
     switch (step) {
       case 1:
@@ -169,7 +161,6 @@ export default function CourseRegistrationForm({
           registrantPhone
         );
 
-        // Validate billing address if separate billing is enabled
         if (registrationData.useSeparateBilling) {
           const { billingStreet, billingZipCode, billingCity } =
             registrationData;
@@ -178,7 +169,6 @@ export default function CourseRegistrationForm({
           );
         }
 
-        // If no separate billing, registrant address is required
         return (
           basicValid &&
           !!(registrantStreet && registrantZipCode && registrantCity)
@@ -199,7 +189,6 @@ export default function CourseRegistrationForm({
 
   const canProceed = validateStep(currentStep);
 
-  // Submit registration
   const handleSubmit = async () => {
     console.log("Registration submitted:", {
       course: course.id,
@@ -722,7 +711,6 @@ export default function CourseRegistrationForm({
               ) : (
                 <div className="space-y-4">
                   {registrationData.participants.map((participant, index) => {
-                    // Check if this participant has the same name as registrant
                     const isRegistrant =
                       participant.firstName ===
                         registrationData.registrantFirstName &&

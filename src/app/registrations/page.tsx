@@ -60,7 +60,6 @@ export default function MyRegistrationsPage() {
     },
   );
 
-  // Redirect if not logged in
   if (!sessionLoading && !session?.user) {
     router.push("/login");
     return null;
@@ -97,7 +96,6 @@ export default function MyRegistrationsPage() {
     });
   };
 
-  // Get edit deadline info message
   const getEditDeadlineInfo = (
     registration: NonNullable<typeof data>["registrations"][0],
   ) => {
@@ -131,7 +129,6 @@ export default function MyRegistrationsPage() {
       };
     }
 
-    // Calculate days until deadline or course start
     const editUntil = deadline || courseStart;
     const daysUntil = Math.ceil(
       (editUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),

@@ -11,7 +11,6 @@ import PageHeader from "../general/page-header";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
 
-// Use the actual return types from your tRPC router
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
 
@@ -20,9 +19,6 @@ interface CourseDetailViewProps {
   spots: CourseSpots;
 }
 
-// Hilfsfunktion zur Formatierung eines Datums für ICS (YYYYMMDDTHHMMSSZ)
-// Wichtig: ICS verwendet UTC-Zeit. Dies ist eine vereinfachte Konvertierung.
-// In einer Produktionsanwendung müsstest du Zeitzonen sorgfältiger behandeln.
 const formatIcsDate = (date: Date): string => {
   const pad = (n: number) => n.toString().padStart(2, "0");
   const year = date.getFullYear();
@@ -31,9 +27,7 @@ const formatIcsDate = (date: Date): string => {
   const hour = pad(date.getHours());
   const minute = pad(date.getMinutes());
   const second = pad(date.getSeconds());
-  // Hinzufügen des 'Z' für UTC wird hier weggelassen,
-  // da die JS Date-Objekte lokal sind. Für präzise ICS-Dateien
-  // sollten die Zeiten zuerst in UTC konvertiert werden.
+
   return `${year}${month}${day}T${hour}${minute}${second}`;
 };
 
@@ -63,7 +57,6 @@ export default function CourseDetailView({
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 
-  // Check if registration is possible
   const canRegister =
     course.registrationOpen &&
     !isPast &&
@@ -88,10 +81,7 @@ export default function CourseDetailView({
         | "district-13"
         | undefined);
 
-  // NEUE FUNKTION: ICS-Datei herunterladen
   const handleDownloadIcs = () => {
-    // Generiere eine eindeutige ID (simuliert)
-
     const array = new Uint32Array(2);
     window.crypto.getRandomValues(array);
     const randomString = Array.from(array)
@@ -100,7 +90,6 @@ export default function CourseDetailView({
     // eslint-disable-next-line react-hooks/purity
     const uid = `${Date.now()}-${randomString}`;
 
-    // Formatiere die Daten
     const icsStartDate = formatIcsDate(startDate);
     const icsEndDate = formatIcsDate(endDate);
 
@@ -108,15 +97,14 @@ export default function CourseDetailView({
       course.location?.name ||
       `${course.location?.street}, ${course.location?.city}`;
 
-    // Erstelle den ICS-Inhalt
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
       "PRODID:-//MyCompany//NONSGML Course Calendar//EN",
       "BEGIN:VEVENT",
       `UID:${uid}`,
-      `DTSTAMP:${formatIcsDate(new Date())}`, // Aktueller Zeitstempel
-      // Verwende DTSTART;VALUE=DATE wenn es ein ganztägiges Event ist.
+      `DTSTAMP:${formatIcsDate(new Date())}`,
+
       `DTSTART:${icsStartDate}`,
       `DTEND:${icsEndDate}`,
       `SUMMARY:${course.title}`,
@@ -128,7 +116,6 @@ export default function CourseDetailView({
       "END:VCALENDAR",
     ].join("\n");
 
-    // Erstelle und löse den Download aus
     const blob = new Blob([icsContent], {
       type: "text/calendar;charset=utf-8",
     });
@@ -142,17 +129,15 @@ export default function CourseDetailView({
     URL.revokeObjectURL(url);
   };
 
-  // NEW: Handle form close with refresh
   const handleCloseRegistrationForm = () => {
     setShowRegistrationForm(false);
-    // Refresh the page data
+
     router.refresh();
   };
 
-  // NEW: Handle successful registration
   const handleRegistrationSuccess = () => {
     setShowRegistrationForm(false);
-    // Refresh the page data to update spots
+
     router.refresh();
   };
 

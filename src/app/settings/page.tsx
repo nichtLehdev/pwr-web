@@ -9,7 +9,6 @@ import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
 import { useToast } from "@/app/_components/ui/toast";
 
-// Collapsible Section Component
 function CollapsibleSection({
   title,
   icon,
@@ -67,7 +66,6 @@ function CollapsibleSection({
   );
 }
 
-// User preferences type
 interface UserPreferences {
   termineDefaultView: "list" | "calendar";
 }
@@ -109,13 +107,11 @@ export default function SettingsPage() {
     message: "",
   });
 
-  // Fetch user profile
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
 
-  // Update profile mutation
   const updateProfile = api.users.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Profil erfolgreich aktualisiert");
@@ -128,7 +124,6 @@ export default function SettingsPage() {
     },
   });
 
-  // Populate form with profile data
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -147,7 +142,7 @@ export default function SettingsPage() {
           : "",
         profileImageId: profile.profileImageId || null,
       });
-      // Parse preferences from JSON
+
       if (profile.preferences) {
         try {
           const parsed =
@@ -162,7 +157,6 @@ export default function SettingsPage() {
     }
   }, [profile]);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
       router.push("/login");

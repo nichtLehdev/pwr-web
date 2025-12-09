@@ -3,7 +3,6 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure, adminProcedure } from "../trpc";
 
 export const bezirkeRouter = createTRPCRouter({
-  // Public: Get all districts
   getAll: publicProcedure.query(async ({ ctx }) => {
     const bezirke = await ctx.db.bezirk.findMany({
       include: {
@@ -58,7 +57,6 @@ export const bezirkeRouter = createTRPCRouter({
     }));
   }),
 
-  // Get single district by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -142,7 +140,6 @@ export const bezirkeRouter = createTRPCRouter({
       return bezirk;
     }),
 
-  // Get district by number
   getByNumber: publicProcedure
     .input(z.object({ number: z.number().min(1).max(13) }))
     .query(async ({ ctx, input }) => {
@@ -178,7 +175,6 @@ export const bezirkeRouter = createTRPCRouter({
       return bezirk;
     }),
 
-  // Create district (admin only)
   create: adminProcedure
     .input(
       z.object({
@@ -196,7 +192,6 @@ export const bezirkeRouter = createTRPCRouter({
       return bezirk;
     }),
 
-  // Update district (admin only)
   update: adminProcedure
     .input(
       z.object({
@@ -216,7 +211,6 @@ export const bezirkeRouter = createTRPCRouter({
       });
     }),
 
-  // Delete district (admin only)
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -227,7 +221,6 @@ export const bezirkeRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get district statistics
   getStatistics: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -253,7 +246,6 @@ export const bezirkeRouter = createTRPCRouter({
         });
       }
 
-      // Get upcoming events count
       const upcomingEvents = await ctx.db.event.count({
         where: {
           bezirkId: input.id,
@@ -262,7 +254,6 @@ export const bezirkeRouter = createTRPCRouter({
         },
       });
 
-      // Get active courses count
       const activeCourses = await ctx.db.course.count({
         where: {
           bezirkId: input.id,

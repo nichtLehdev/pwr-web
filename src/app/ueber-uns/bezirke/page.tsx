@@ -8,7 +8,6 @@ import Link from "next/link";
 import { useState } from "react";
 type Bezirk = RouterOutputs["bezirke"]["getAll"][number];
 
-// Helper function for mobile text descriptions
 function getBezirkInfo(id: number) {
   const info: Record<number, string> = {
     1: "Umfasst den unteren Niederrhein mit Städten wie Moers, Duisburg-Nord und Krefeld-West",
@@ -28,7 +27,6 @@ function getBezirkInfo(id: number) {
   return info[id] || "";
 }
 
-// SVG Map Component
 export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
   const [hoveredBezirk, setHoveredBezirk] = useState<number | null>(null);
 

@@ -32,7 +32,6 @@ export default function PageHeader({
 
   useEffect(() => {
     const handleScroll = () => {
-      // Zeige den Header, wenn die Navigation aus dem Viewport ist (ca. 80px)
       setIsScrolled(window.scrollY > 80);
     };
 

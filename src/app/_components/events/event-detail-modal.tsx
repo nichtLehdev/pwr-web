@@ -37,7 +37,6 @@ export default function EventDetailModal({
     year: "numeric",
   });
 
-  // Close on ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -46,7 +45,6 @@ export default function EventDetailModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");
@@ -56,7 +54,6 @@ export default function EventDetailModal({
     };
   }, []);
 
-  // Get category/type label
   const categoryLabel =
     event.type === "course" ? event.courseType : event.category;
 

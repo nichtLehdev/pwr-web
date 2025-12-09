@@ -39,7 +39,6 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
   REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
 };
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -47,10 +46,8 @@ const DASHBOARD_ROLES: UserRole[] = [
   UserRole.OBLEUTE,
 ];
 
-// Export format types
 type ExportFormat = "csv" | "excel" | "json";
 
-// Helper to escape CSV values
 function escapeCSVValue(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     return `"${value.replace(/"/g, '""')}"`;
@@ -58,7 +55,6 @@ function escapeCSVValue(value: string): string {
   return value;
 }
 
-// Helper to get custom field value from participant
 function getCustomFieldValue(
   participant: { customFields?: unknown },
   fieldName: string,
@@ -67,7 +63,6 @@ function getCustomFieldValue(
     return "–";
   }
 
-  // Handle if customFields is a string (JSON)
   let fields: Record<string, unknown>;
   if (typeof participant.customFields === "string") {
     try {
@@ -98,13 +93,11 @@ export default function CourseParticipantsPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
 
-  // View mode state
   const [viewMode, setViewMode] = useState<"participants" | "registrations">(
     "participants",
   );
   const [showCustomFields, setShowCustomFields] = useState(true);
 
-  // Filter state
   const [statusFilter, setStatusFilter] = useState<
     RegistrationStatus | "ALL" | "ACTIVE"
   >("ACTIVE");
@@ -113,12 +106,10 @@ export default function CourseParticipantsPage() {
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Export state
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close export menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -132,25 +123,21 @@ export default function CourseParticipantsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch course data
   const { data: course, isLoading: courseLoading } =
     api.courses.getById.useQuery(
       { id: courseId },
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Fetch registrations
   const { data: registrationsData, isLoading: registrationsLoading } =
     api.courses.getRegistrations.useQuery(
       { courseId, page: 1, limit: 100 },
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -160,7 +147,6 @@ export default function CourseParticipantsPage() {
     }
   }, [session, sessionLoading, router, courseId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -170,7 +156,6 @@ export default function CourseParticipantsPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Loading state
   if (sessionLoading || profileLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -208,7 +193,6 @@ export default function CourseParticipantsPage() {
     userRole === UserRole.ADMIN ||
     userRole === UserRole.LPW;
 
-  // Only LPW, Admins, or Team Members (instructors) can create invoices
   const canCreateInvoices =
     isInstructor || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
 
@@ -233,12 +217,9 @@ export default function CourseParticipantsPage() {
     );
   }
 
-  // Filter registrations
   const filteredRegistrations =
     registrationsData?.registrations.filter((registration) => {
-      // Status filter
       if (statusFilter === "ACTIVE") {
-        // Show only confirmed and waitlist (exclude cancelled)
         if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
           return false;
         }
@@ -248,14 +229,14 @@ export default function CourseParticipantsPage() {
       ) {
         return false;
       }
-      // Payment filter
+
       if (
         paymentFilter !== "ALL" &&
         registration.paymentStatus !== paymentFilter
       ) {
         return false;
       }
-      // Search filter
+
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         const registrantMatch =
@@ -274,7 +255,6 @@ export default function CourseParticipantsPage() {
       return true;
     }) ?? [];
 
-  // Calculate stats
   const confirmedCount =
     registrationsData?.registrations
       .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
@@ -296,14 +276,11 @@ export default function CourseParticipantsPage() {
       .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
-  // Export function
   const handleExport = (format: ExportFormat) => {
     setShowExportMenu(false);
 
-    // Prepare data for export
     const customFieldNames = course.customFields?.map((f) => f.fieldName) ?? [];
 
-    // Build export data with all participants
     const exportData = filteredRegistrations.flatMap((registration) =>
       registration.participants.map((participant) => {
         const customFieldValues: Record<string, string> = {};
@@ -314,7 +291,6 @@ export default function CourseParticipantsPage() {
           );
         });
 
-        // Find the price for this participant's price option
         const priceOption = course.priceOptions?.find(
           (p) => p.label === participant.priceOption,
         );
@@ -345,12 +321,10 @@ export default function CourseParticipantsPage() {
     const filename = `${course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_teilnehmer_${new Date().toISOString().split("T")[0]}`;
 
     if (format === "json") {
-      // JSON export
       const jsonString = JSON.stringify(exportData, null, 2);
       const blob = new Blob([jsonString], { type: "application/json" });
       downloadBlob(blob, `${filename}.json`);
     } else if (format === "csv") {
-      // CSV export
       const headers = Object.keys(exportData[0] ?? {});
       const csvContent = [
         headers.map(escapeCSVValue).join(";"),
@@ -363,14 +337,12 @@ export default function CourseParticipantsPage() {
         ),
       ].join("\n");
 
-      // Add BOM for Excel to recognize UTF-8
       const bom = "\uFEFF";
       const blob = new Blob([bom + csvContent], {
         type: "text/csv;charset=utf-8",
       });
       downloadBlob(blob, `${filename}.csv`);
     } else if (format === "excel") {
-      // Excel-compatible CSV with semicolon separator (works better in German Excel)
       const headers = Object.keys(exportData[0] ?? {});
       const csvContent = [
         headers.map(escapeCSVValue).join(";"),
@@ -383,7 +355,6 @@ export default function CourseParticipantsPage() {
         ),
       ].join("\r\n");
 
-      // Add BOM for Excel
       const bom = "\uFEFF";
       const blob = new Blob([bom + csvContent], {
         type: "application/vnd.ms-excel;charset=utf-8",
@@ -392,7 +363,6 @@ export default function CourseParticipantsPage() {
     }
   };
 
-  // Helper to download blob
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

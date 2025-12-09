@@ -17,10 +17,6 @@ import { UserRole } from "~/generated/prisma/client";
  */
 
 export const usersRouter = createTRPCRouter({
-  // ============================================================================
-  // PUBLIC QUERIES
-  // ============================================================================
-
   /**
    * Get user by ID (public profile view)
    */
@@ -212,10 +208,6 @@ export const usersRouter = createTRPCRouter({
       return users;
     }),
 
-  // ============================================================================
-  // PROTECTED (USER OWN PROFILE)
-  // ============================================================================
-
   /**
    * Get current user's full profile
    */
@@ -265,7 +257,6 @@ export const usersRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if username is already taken
       if (input.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
@@ -308,11 +299,10 @@ export const usersRouter = createTRPCRouter({
         birthDate: z.string().optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
-        preferences: z.string().optional(), // JSON string
+        preferences: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if username is already taken
       if (input.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
@@ -357,7 +347,7 @@ export const usersRouter = createTRPCRouter({
   updateMyPreferences: protectedProcedure
     .input(
       z.object({
-        preferences: z.string(), // JSON string
+        preferences: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -366,10 +356,6 @@ export const usersRouter = createTRPCRouter({
         data: { preferences: input.preferences },
       });
     }),
-
-  // ============================================================================
-  // ADMIN: USER MANAGEMENT
-  // ============================================================================
 
   /**
    * List all users with pagination and filters
@@ -463,7 +449,7 @@ export const usersRouter = createTRPCRouter({
       ctx.db.user.count({
         where: {
           createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           },
         },
       }),
@@ -512,7 +498,6 @@ export const usersRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if email already exists
       const existingEmail = await ctx.db.user.findUnique({
         where: { email: input.email },
       });
@@ -524,7 +509,6 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Check if username already exists
       if (input.username) {
         const existingUsername = await ctx.db.user.findUnique({
           where: { username: input.username },
@@ -581,7 +565,6 @@ export const usersRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      // Check if email is being changed and already exists
       if (updateData.email) {
         const existing = await ctx.db.user.findFirst({
           where: {
@@ -598,7 +581,6 @@ export const usersRouter = createTRPCRouter({
         }
       }
 
-      // Check if username is being changed and already exists
       if (updateData.username) {
         const existing = await ctx.db.user.findFirst({
           where: {
@@ -631,7 +613,6 @@ export const usersRouter = createTRPCRouter({
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Check if user has important relations
       const user = await ctx.db.user.findUnique({
         where: { id: input.id },
         include: {
@@ -650,7 +631,6 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Prevent deletion of users with important roles or content
       if (
         user.teamMember ||
         user.vorstandMember ||
@@ -665,17 +645,12 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
-      // Actually delete (or you could implement soft delete)
       await ctx.db.user.delete({
         where: { id: input.id },
       });
 
       return { success: true };
     }),
-
-  // ============================================================================
-  // LPW: ROLE MANAGEMENT
-  // ============================================================================
 
   /**
    * Update user role and permissions
@@ -692,7 +667,6 @@ export const usersRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { userId, ...updateData } = input;
 
-      // Verify user exists
       const user = await ctx.db.user.findUnique({
         where: { id: userId },
       });
@@ -742,10 +716,6 @@ export const usersRouter = createTRPCRouter({
         updated: results.length,
       };
     }),
-
-  // ============================================================================
-  // UTILITY QUERIES
-  // ============================================================================
 
   /**
    * Check if username is available
