@@ -65,6 +65,30 @@ interface EventsClientProps {
   bezirke: Bezirk[];
 }
 
+// Category mapping constants
+const EVENT_CATEGORY_MAP: Record<string, string> = {
+  Konzert: "KONZERT",
+  Gottesdienst: "GOTTESDIENST",
+  Probe: "PROBE",
+  Andere: "ANDERE",
+};
+
+const COURSE_TYPE_MAP: Record<string, string> = {
+  Lehrgang: "LEHRGANG",
+  Freizeit: "FREIZEIT",
+  Workshop: "WORKSHOP",
+  Komponistenportrait: "KOMPONISTENPORTRAIT",
+  Andere: "ANDERE",
+};
+
+const TARGET_AUDIENCE_MAP: Record<string, string> = {
+  Alle: "ALLE",
+  Anfänger: "ANFAENGER",
+  Fortgeschrittene: "FORTGESCHRITTENE",
+  Dirigenten: "DIRIGENTEN",
+  Jugend: "JUGEND",
+};
+
 // Helper function to filter calendar items based on filter criteria
 function filterCalendarItems(
   items: CalendarItem[],
@@ -93,43 +117,22 @@ function filterCalendarItems(
     // Filter by category
     if (selectedCategory !== "all") {
       if (item.type === "event") {
-        const categoryMap: Record<string, string> = {
-          Konzert: "KONZERT",
-          Gottesdienst: "GOTTESDIENST",
-          Probe: "PROBE",
-          Andere: "ANDERE",
-        };
-        const enumValue = categoryMap[selectedCategory];
+        const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
         if (enumValue && item.category !== enumValue) return false;
       } else {
-        const courseTypeMap: Record<string, string> = {
-          Lehrgang: "LEHRGANG",
-          Freizeit: "FREIZEIT",
-          Workshop: "WORKSHOP",
-          Komponistenportrait: "KOMPONISTENPORTRAIT",
-          Andere: "ANDERE",
-        };
+        // For courses, check if category matches either courseType OR targetAudience
+        const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
+        const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
 
-        const targetAudienceMap: Record<string, string> = {
-          Alle: "ALLE",
-          Anfänger: "ANFAENGER",
-          Fortgeschrittene: "FORTGESCHRITTENE",
-          Dirigenten: "DIRIGENTEN",
-          Jugend: "JUGEND",
-        };
-
-        const courseTypeEnum = courseTypeMap[selectedCategory];
-        const targetAudienceEnum = targetAudienceMap[selectedCategory];
-
-        // Filter by course type if the category matches a course type
-        if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-          return false;
+        // If category is a course type, filter by courseType
+        if (courseTypeEnum) {
+          if (item.courseType !== courseTypeEnum) return false;
         }
-
-        // Filter by target audience if the category matches a target audience
-        if (targetAudienceEnum && item.targetAudience !== targetAudienceEnum) {
-          return false;
+        // If category is a target audience, filter by targetAudience
+        else if (targetAudienceEnum) {
+          if (item.targetAudience !== targetAudienceEnum) return false;
         }
+        // If category doesn't match either mapping, don't filter (pass through)
       }
     }
 
