@@ -65,6 +65,77 @@ interface EventsClientProps {
   bezirke: Bezirk[];
 }
 
+// Helper function to filter calendar items based on filter criteria
+function filterCalendarItems(
+  items: CalendarItem[],
+  filterType: FilterType,
+  selectedDistrict: string,
+  selectedCategory: string,
+): CalendarItem[] {
+  return items.filter((item) => {
+    // Filter by type
+    if (filterType === "events" && item.type !== "event") return false;
+    if (filterType === "courses" && item.type !== "course") return false;
+
+    // Filter by district
+    if (selectedDistrict !== "all") {
+      if (selectedDistrict === "Bezirksübergreifend") {
+        if (item.bezirk !== null) return false;
+      } else {
+        const match = selectedDistrict.match(/Bezirk (\d+)/);
+        if (match) {
+          const districtNumber = parseInt(match[1] ?? "", 10);
+          if (item.bezirk?.number !== districtNumber) return false;
+        }
+      }
+    }
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      if (item.type === "event") {
+        const categoryMap: Record<string, string> = {
+          Konzert: "KONZERT",
+          Gottesdienst: "GOTTESDIENST",
+          Probe: "PROBE",
+          Andere: "ANDERE",
+        };
+        const enumValue = categoryMap[selectedCategory];
+        if (enumValue && item.category !== enumValue) return false;
+      } else {
+        const courseTypeMap: Record<string, string> = {
+          Lehrgang: "LEHRGANG",
+          Freizeit: "FREIZEIT",
+          Workshop: "WORKSHOP",
+          Komponistenportrait: "KOMPONISTENPORTRAIT",
+          Andere: "ANDERE",
+        };
+
+        const targetAudienceMap: Record<string, string> = {
+          Alle: "ALLE",
+          Anfänger: "ANFAENGER",
+          Fortgeschrittene: "FORTGESCHRITTENE",
+          Dirigenten: "DIRIGENTEN",
+          Jugend: "JUGEND",
+        };
+
+        const courseTypeEnum = courseTypeMap[selectedCategory];
+        const targetAudienceEnum = targetAudienceMap[selectedCategory];
+
+        if (courseTypeEnum && item.courseType !== courseTypeEnum) {
+          if (
+            targetAudienceEnum &&
+            item.targetAudience !== targetAudienceEnum
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  });
+}
+
 export default function EventsClient({
   initialEvents,
   initialCourses,
@@ -157,65 +228,12 @@ export default function EventsClient({
   }, [allItems, now]);
 
   const filteredItems = useMemo(() => {
-    return futureItems.filter((item) => {
-      if (filterType === "events" && item.type !== "event") return false;
-      if (filterType === "courses" && item.type !== "course") return false;
-
-      if (selectedDistrict !== "all") {
-        if (selectedDistrict === "Bezirksübergreifend") {
-          if (item.bezirk !== null) return false;
-        } else {
-          const match = selectedDistrict.match(/Bezirk (\d+)/);
-          if (match) {
-            const districtNumber = parseInt(match[1] ?? "", 10);
-            if (item.bezirk?.number !== districtNumber) return false;
-          }
-        }
-      }
-
-      if (selectedCategory !== "all") {
-        if (item.type === "event") {
-          const categoryMap: Record<string, string> = {
-            Konzert: "KONZERT",
-            Gottesdienst: "GOTTESDIENST",
-            Probe: "PROBE",
-            Andere: "ANDERE",
-          };
-          const enumValue = categoryMap[selectedCategory];
-          if (enumValue && item.category !== enumValue) return false;
-        } else {
-          const courseTypeMap: Record<string, string> = {
-            Lehrgang: "LEHRGANG",
-            Freizeit: "FREIZEIT",
-            Workshop: "WORKSHOP",
-            Komponistenportrait: "KOMPONISTENPORTRAIT",
-            Andere: "ANDERE",
-          };
-
-          const targetAudienceMap: Record<string, string> = {
-            Alle: "ALLE",
-            Anfänger: "ANFAENGER",
-            Fortgeschrittene: "FORTGESCHRITTENE",
-            Dirigenten: "DIRIGENTEN",
-            Jugend: "JUGEND",
-          };
-
-          const courseTypeEnum = courseTypeMap[selectedCategory];
-          const targetAudienceEnum = targetAudienceMap[selectedCategory];
-
-          if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-            if (
-              targetAudienceEnum &&
-              item.targetAudience !== targetAudienceEnum
-            ) {
-              return false;
-            }
-          }
-        }
-      }
-
-      return true;
-    });
+    return filterCalendarItems(
+      futureItems,
+      filterType,
+      selectedDistrict,
+      selectedCategory,
+    );
   }, [futureItems, filterType, selectedDistrict, selectedCategory]);
 
   const sortedItems = useMemo(() => {
@@ -251,50 +269,26 @@ export default function EventsClient({
   }, [sortedItems]);
 
   const pastItems = useMemo(() => {
-    return allItems
-      .filter((item) => {
-        const itemDate = new Date(
-          item.type === "event" ? item.eventDate : item.endDate,
-        );
-        itemDate.setHours(0, 0, 0, 0);
-        return itemDate < now;
-      })
-      .filter((item) => {
-        if (filterType === "events" && item.type !== "event") return false;
-        if (filterType === "courses" && item.type !== "course") return false;
+    const past = allItems.filter((item) => {
+      const itemDate = new Date(
+        item.type === "event" ? item.eventDate : item.endDate,
+      );
+      itemDate.setHours(0, 0, 0, 0);
+      return itemDate < now;
+    });
 
-        if (selectedDistrict !== "all") {
-          if (selectedDistrict === "Bezirksübergreifend") {
-            if (item.bezirk !== null) return false;
-          } else {
-            const match = selectedDistrict.match(/Bezirk (\d+)/);
-            if (match) {
-              const districtNumber = parseInt(match[1] ?? "", 10);
-              if (item.bezirk?.number !== districtNumber) return false;
-            }
-          }
-        }
+    const filtered = filterCalendarItems(
+      past,
+      filterType,
+      selectedDistrict,
+      selectedCategory,
+    );
 
-        if (selectedCategory !== "all") {
-          if (item.type === "event") {
-            const categoryMap: Record<string, string> = {
-              Konzert: "KONZERT",
-              Gottesdienst: "GOTTESDIENST",
-              Probe: "PROBE",
-              Andere: "ANDERE",
-            };
-            const enumValue = categoryMap[selectedCategory];
-            if (enumValue && item.category !== enumValue) return false;
-          }
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
-        const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
-        return dateB.getTime() - dateA.getTime();
-      });
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
+      const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
+      return dateB.getTime() - dateA.getTime();
+    });
   }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
 
   const pastGroupedByMonth = useMemo(() => {
