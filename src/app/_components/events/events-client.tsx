@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type {
@@ -58,6 +58,30 @@ function ChevronRightIcon({ className }: { className?: string }) {
 
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
+
+// Category mapping constants
+const EVENT_CATEGORY_MAP: Record<string, string> = {
+  Konzert: "KONZERT",
+  Gottesdienst: "GOTTESDIENST",
+  Probe: "PROBE",
+  Andere: "ANDERE",
+};
+
+const COURSE_TYPE_MAP: Record<string, string> = {
+  Lehrgang: "LEHRGANG",
+  Freizeit: "FREIZEIT",
+  Workshop: "WORKSHOP",
+  Komponistenportrait: "KOMPONISTENPORTRAIT",
+  Andere: "ANDERE",
+};
+
+const TARGET_AUDIENCE_MAP: Record<string, string> = {
+  Alle: "ALLE",
+  Anfänger: "ANFAENGER",
+  Fortgeschrittene: "FORTGESCHRITTENE",
+  Dirigenten: "DIRIGENTEN",
+  Jugend: "JUGEND",
+};
 
 interface EventsClientProps {
   initialEvents: EventWithRelations[];
@@ -222,6 +246,52 @@ export default function EventsClient({
     [initialEvents, initialCourses],
   );
 
+<<<<<<< HEAD
+=======
+  // Shared filtering logic for items
+  const applyFilters = useCallback((items: CalendarItem[]) => {
+    return items.filter((item) => {
+      if (filterType === "events" && item.type !== "event") return false;
+      if (filterType === "courses" && item.type !== "course") return false;
+
+      if (selectedDistrict !== "all") {
+        if (selectedDistrict === "Bezirksübergreifend") {
+          if (item.bezirk !== null) return false;
+        } else {
+          const match = selectedDistrict.match(/Bezirk (\d+)/);
+          if (match) {
+            const districtNumber = parseInt(match[1] ?? "", 10);
+            if (item.bezirk?.number !== districtNumber) return false;
+          }
+        }
+      }
+
+      if (selectedCategory !== "all") {
+        if (item.type === "event") {
+          const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
+          if (enumValue && item.category !== enumValue) return false;
+        } else {
+          const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
+          const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
+
+          // Check if category matches courseType or targetAudience
+          if (courseTypeEnum || targetAudienceEnum) {
+            const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
+            const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
+
+            // Include the course if it matches either courseType or targetAudience
+            if (!matchesCourseType && !matchesTargetAudience) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [filterType, selectedDistrict, selectedCategory]);
+
+>>>>>>> feature/add-past-events
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
       const itemDate = new Date(
@@ -233,6 +303,7 @@ export default function EventsClient({
   }, [allItems, now]);
 
   const filteredItems = useMemo(() => {
+<<<<<<< HEAD
     return filterCalendarItems(
       futureItems,
       filterType,
@@ -240,6 +311,10 @@ export default function EventsClient({
       selectedCategory,
     );
   }, [futureItems, filterType, selectedDistrict, selectedCategory]);
+=======
+    return applyFilters(futureItems);
+  }, [futureItems, applyFilters]);
+>>>>>>> feature/add-past-events
 
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
@@ -282,6 +357,7 @@ export default function EventsClient({
       return itemDate < now;
     });
 
+<<<<<<< HEAD
     const filtered = filterCalendarItems(
       past,
       filterType,
@@ -290,11 +366,18 @@ export default function EventsClient({
     );
 
     return filtered.sort((a, b) => {
+=======
+    return applyFilters(past).sort((a, b) => {
+>>>>>>> feature/add-past-events
       const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
       const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
       return dateB.getTime() - dateA.getTime();
     });
+<<<<<<< HEAD
   }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
+=======
+  }, [allItems, now, applyFilters]);
+>>>>>>> feature/add-past-events
 
   const pastGroupedByMonth = useMemo(() => {
     return pastItems.reduce(
@@ -675,6 +758,8 @@ export default function EventsClient({
                   >
                     <button
                       onClick={() => toggleMonth(monthKey)}
+                      aria-expanded={isMonthExpanded(monthKey)}
+                      aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
                       className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
                     >
                       <h2 className="text-dark dark:text-dark-text text-lg font-bold md:text-2xl">
@@ -740,6 +825,8 @@ export default function EventsClient({
                   <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-300">
                     <button
                       onClick={() => setPastEventsExpanded(!pastEventsExpanded)}
+                      aria-expanded={pastEventsExpanded}
+                      aria-label={`Vergangene Termine - ${pastItems.length} ${pastItems.length === 1 ? "Termin" : "Termine"}`}
                       className="dark:bg-dark-background-secondary dark:hover:bg-dark-surface flex w-full items-center justify-between bg-gray-100 px-4 py-4 text-left transition-colors hover:bg-gray-200"
                     >
                       <h2 className="text-dark dark:text-dark-text text-xl font-bold md:text-2xl">
@@ -766,6 +853,8 @@ export default function EventsClient({
                             >
                               <button
                                 onClick={() => togglePastMonth(monthKey)}
+                                aria-expanded={isPastMonthExpanded(monthKey)}
+                                aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
                                 className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
                               >
                                 <h3 className="text-dark dark:text-dark-text text-base font-semibold md:text-lg">
