@@ -198,7 +198,7 @@ export default function EventsClient({
           if (courseTypeEnum || targetAudienceEnum) {
             const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
             const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
-            
+
             // Include the course if it matches either courseType or targetAudience
             if (!matchesCourseType && !matchesTargetAudience) {
               return false;
@@ -265,7 +265,7 @@ export default function EventsClient({
       itemDate.setHours(0, 0, 0, 0);
       return itemDate < now;
     });
-    
+
     return applyFilters(past).sort((a, b) => {
       const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
       const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
