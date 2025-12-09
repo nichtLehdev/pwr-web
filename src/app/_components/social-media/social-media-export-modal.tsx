@@ -26,6 +26,7 @@ export default function SocialMediaExportModal({
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<"summary" | number>("summary");
+  const [activeSummaryPage, setActiveSummaryPage] = useState(0);
   const [groupByDistrict, setGroupByDistrict] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [imagePositions, setImagePositions] = useState<
@@ -35,7 +36,7 @@ export default function SocialMediaExportModal({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const previewImageRef = useRef<HTMLDivElement>(null);
 
-  const summaryRef = useRef<HTMLDivElement>(null);
+  const summaryRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const eventRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -135,6 +136,12 @@ export default function SocialMediaExportModal({
       ? events.filter((event) => selectedCategories.includes(event.category))
       : events;
 
+  // Calculate how many summary pages we need (5 events per page)
+  const eventsPerPage = 5;
+  const summaryPageCount = filteredEvents
+    ? Math.ceil(filteredEvents.length / eventsPerPage)
+    : 0;
+
   // Group events by district if needed
   const groupedEvents =
     filteredEvents && groupByDistrict
@@ -168,16 +175,19 @@ export default function SocialMediaExportModal({
   };
 
   const handleDownloadSummary = async () => {
-    if (!summaryRef.current) return;
+    const element = summaryRefs.current.get(activeSummaryPage);
+    if (!element) return;
 
     setIsGenerating(true);
     try {
-      const blob = await downloadImage(summaryRef.current);
+      const blob = await downloadImage(element);
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `termine-${monthNames[selectedMonth - 1]}-${selectedYear}.png`;
+      const pageLabel =
+        summaryPageCount > 1 ? `-seite-${activeSummaryPage + 1}` : "";
+      link.download = `termine-${monthNames[selectedMonth - 1]}-${selectedYear}${pageLabel}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -228,13 +238,18 @@ export default function SocialMediaExportModal({
     try {
       const zip = new JSZip();
 
-      // Add summary image
-      if (summaryRef.current) {
-        const summaryBlob = await downloadImage(summaryRef.current);
-        zip.file(
-          `00-zusammenfassung-${monthNames[selectedMonth - 1]}-${selectedYear}.png`,
-          summaryBlob,
-        );
+      // Add all summary images
+      for (let pageIndex = 0; pageIndex < summaryPageCount; pageIndex++) {
+        const element = summaryRefs.current.get(pageIndex);
+        if (element) {
+          const summaryBlob = await downloadImage(element);
+          const pageLabel =
+            summaryPageCount > 1 ? `-seite-${pageIndex + 1}` : "";
+          zip.file(
+            `00-zusammenfassung-${monthNames[selectedMonth - 1]}-${selectedYear}${pageLabel}.png`,
+            summaryBlob,
+          );
+        }
       }
 
       // Add individual event images
@@ -522,24 +537,88 @@ export default function SocialMediaExportModal({
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === "summary" && filteredEvents && (
               <div className="flex flex-col items-center gap-4">
-                <div
-                  ref={summaryRef}
-                  className="shadow-lg"
-                  style={{ width: "540px", height: "540px" }}
-                >
-                  <div
-                    style={{
-                      transform: "scale(0.5)",
-                      transformOrigin: "top left",
-                    }}
-                  >
-                    <InstagramSummaryTemplate
-                      events={filteredEvents}
-                      month={selectedMonth}
-                      year={selectedYear}
-                    />
+                {summaryPageCount > 1 && (
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() =>
+                        setActiveSummaryPage((p) => Math.max(0, p - 1))
+                      }
+                      disabled={activeSummaryPage === 0 || isGenerating}
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                    >
+                      ← Vorherige
+                    </button>
+                    <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                      Seite {activeSummaryPage + 1} von {summaryPageCount}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setActiveSummaryPage((p) =>
+                          Math.min(summaryPageCount - 1, p + 1),
+                        )
+                      }
+                      disabled={
+                        activeSummaryPage === summaryPageCount - 1 ||
+                        isGenerating
+                      }
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                    >
+                      Nächste →
+                    </button>
                   </div>
-                </div>
+                )}
+                {Array.from({ length: summaryPageCount }).map(
+                  (_, pageIndex) => {
+                    const startIndex = pageIndex * eventsPerPage;
+                    const endIndex = Math.min(
+                      startIndex + eventsPerPage,
+                      filteredEvents.length,
+                    );
+                    const pageEvents = filteredEvents.slice(
+                      startIndex,
+                      endIndex,
+                    );
+
+                    return (
+                      <div
+                        key={pageIndex}
+                        ref={(el) => {
+                          if (el) {
+                            summaryRefs.current.set(pageIndex, el);
+                          }
+                        }}
+                        className="shadow-lg"
+                        style={{
+                          width: "540px",
+                          height: "540px",
+                          display:
+                            activeSummaryPage === pageIndex ? "block" : "none",
+                        }}
+                      >
+                        <div
+                          style={{
+                            transform: "scale(0.5)",
+                            transformOrigin: "top left",
+                          }}
+                        >
+                          <InstagramSummaryTemplate
+                            events={pageEvents}
+                            month={selectedMonth}
+                            year={selectedYear}
+                            pageNumber={
+                              summaryPageCount > 1 ? pageIndex + 1 : undefined
+                            }
+                            totalPages={
+                              summaryPageCount > 1
+                                ? summaryPageCount
+                                : undefined
+                            }
+                          />
+                        </div>
+                      </div>
+                    );
+                  },
+                )}
                 <button
                   onClick={handleDownloadSummary}
                   disabled={isGenerating}
@@ -554,7 +633,9 @@ export default function SocialMediaExportModal({
                       d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                     />
                   </svg>
-                  Zusammenfassung herunterladen
+                  {summaryPageCount > 1
+                    ? `Seite ${activeSummaryPage + 1} herunterladen`
+                    : "Zusammenfassung herunterladen"}
                 </button>
               </div>
             )}
