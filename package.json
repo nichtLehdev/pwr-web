@@ -43,6 +43,7 @@
     "@trpc/react-query": "^11.7.2",
     "@trpc/server": "^11.7.2",
     "better-auth": "^1.4.5",
+    "html-to-image": "^1.11.13",
     "jspdf": "^3.0.4",
     "jszip": "^3.10.1",
     "marked": "^17.0.1",
@@ -79,7 +80,7 @@
   "ct3aMetadata": {
     "initVersion": "7.40.0"
   },
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.25.0",
   "pnpm": {
     "onlyBuiltDependencies": [
       "core-js",
