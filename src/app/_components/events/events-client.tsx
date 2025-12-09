@@ -89,82 +89,6 @@ interface EventsClientProps {
   bezirke: Bezirk[];
 }
 
-// Category mapping constants
-const EVENT_CATEGORY_MAP: Record<string, string> = {
-  Konzert: "KONZERT",
-  Gottesdienst: "GOTTESDIENST",
-  Probe: "PROBE",
-  Andere: "ANDERE",
-};
-
-const COURSE_TYPE_MAP: Record<string, string> = {
-  Lehrgang: "LEHRGANG",
-  Freizeit: "FREIZEIT",
-  Workshop: "WORKSHOP",
-  Komponistenportrait: "KOMPONISTENPORTRAIT",
-  Andere: "ANDERE",
-};
-
-const TARGET_AUDIENCE_MAP: Record<string, string> = {
-  Alle: "ALLE",
-  Anfänger: "ANFAENGER",
-  Fortgeschrittene: "FORTGESCHRITTENE",
-  Dirigenten: "DIRIGENTEN",
-  Jugend: "JUGEND",
-};
-
-// Helper function to filter calendar items based on filter criteria
-function filterCalendarItems(
-  items: CalendarItem[],
-  filterType: FilterType,
-  selectedDistrict: string,
-  selectedCategory: string,
-): CalendarItem[] {
-  return items.filter((item) => {
-    // Filter by type
-    if (filterType === "events" && item.type !== "event") return false;
-    if (filterType === "courses" && item.type !== "course") return false;
-
-    // Filter by district
-    if (selectedDistrict !== "all") {
-      if (selectedDistrict === "Bezirksübergreifend") {
-        if (item.bezirk !== null) return false;
-      } else {
-        const match = selectedDistrict.match(/Bezirk (\d+)/);
-        if (match) {
-          const districtNumber = parseInt(match[1] ?? "", 10);
-          if (item.bezirk?.number !== districtNumber) return false;
-        }
-      }
-    }
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      if (item.type === "event") {
-        const enumValue = EVENT_CATEGORY_MAP[selectedCategory];
-        if (enumValue && item.category !== enumValue) return false;
-      } else {
-        // For courses, check if category matches either courseType OR targetAudience
-        const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-        const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
-
-        // If the category exists in either mapping
-        if (courseTypeEnum || targetAudienceEnum) {
-          // The item must match at least one of the applicable criteria
-          const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
-          const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
-          
-          if (!matchesCourseType && !matchesTargetAudience) {
-            return false;
-          }
-        }
-      }
-    }
-
-    return true;
-  });
-}
-
 export default function EventsClient({
   initialEvents,
   initialCourses,
@@ -246,8 +170,6 @@ export default function EventsClient({
     [initialEvents, initialCourses],
   );
 
-<<<<<<< HEAD
-=======
   // Shared filtering logic for items
   const applyFilters = useCallback((items: CalendarItem[]) => {
     return items.filter((item) => {
@@ -291,7 +213,6 @@ export default function EventsClient({
     });
   }, [filterType, selectedDistrict, selectedCategory]);
 
->>>>>>> feature/add-past-events
   const futureItems = useMemo(() => {
     return allItems.filter((item) => {
       const itemDate = new Date(
@@ -303,18 +224,8 @@ export default function EventsClient({
   }, [allItems, now]);
 
   const filteredItems = useMemo(() => {
-<<<<<<< HEAD
-    return filterCalendarItems(
-      futureItems,
-      filterType,
-      selectedDistrict,
-      selectedCategory,
-    );
-  }, [futureItems, filterType, selectedDistrict, selectedCategory]);
-=======
     return applyFilters(futureItems);
   }, [futureItems, applyFilters]);
->>>>>>> feature/add-past-events
 
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
@@ -357,27 +268,12 @@ export default function EventsClient({
       return itemDate < now;
     });
 
-<<<<<<< HEAD
-    const filtered = filterCalendarItems(
-      past,
-      filterType,
-      selectedDistrict,
-      selectedCategory,
-    );
-
-    return filtered.sort((a, b) => {
-=======
     return applyFilters(past).sort((a, b) => {
->>>>>>> feature/add-past-events
       const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
       const dateB = new Date(b.type === "event" ? b.eventDate : b.startDate);
       return dateB.getTime() - dateA.getTime();
     });
-<<<<<<< HEAD
-  }, [allItems, now, filterType, selectedDistrict, selectedCategory]);
-=======
   }, [allItems, now, applyFilters]);
->>>>>>> feature/add-past-events
 
   const pastGroupedByMonth = useMemo(() => {
     return pastItems.reduce(
