@@ -23,24 +23,19 @@ export default function Navigation() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // Use Better Auth's useSession hook directly
   const { data: session } = useSession();
 
-  // Fetch user profile if logged in
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
 
-  // Track dark mode changes
   useEffect(() => {
     const checkDarkMode = () => {
       setIsDarkMode(document.documentElement.classList.contains("dark"));
     };
 
-    // Initial check
     checkDarkMode();
 
-    // Watch for changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -50,7 +45,6 @@ export default function Navigation() {
     return () => observer.disconnect();
   }, []);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -61,7 +55,6 @@ export default function Navigation() {
     }
   }, [mobileMenuOpen]);
 
-  // Handle Cmd/Ctrl + K keyboard shortcut for search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -74,15 +67,11 @@ export default function Navigation() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Check if a link or its children are active
   const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
-    // Exact match for home
     if (href === "/" && pathname === "/") return true;
 
-    // For other pages, check if pathname starts with href (and href is not "/")
     if (href !== "/" && pathname.startsWith(href)) return true;
 
-    // Check if any dropdown item is active
     if (dropdown) {
       return dropdown.some((item) => pathname.startsWith(item.href));
     }
@@ -143,7 +132,7 @@ export default function Navigation() {
   const handleMouseLeave = () => {
     const timeout = setTimeout(() => {
       setOpenDropdown(null);
-    }, 300); // 300ms delay before closing
+    }, 300);
     setDropdownTimeout(timeout);
   };
 

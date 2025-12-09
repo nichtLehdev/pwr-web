@@ -19,7 +19,6 @@ export default function MoreEventsModal({
   onClose,
   onSelectEvent,
 }: MoreEventsModalProps) {
-  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     document.body.classList.add("modal-open");

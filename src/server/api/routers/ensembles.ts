@@ -10,7 +10,6 @@ import {
 import { UserRole } from "~/generated/prisma/client";
 
 export const ensemblesRouter = createTRPCRouter({
-  // Public: Get all active ensembles
   getAll: publicProcedure
     .input(
       z.object({
@@ -75,7 +74,6 @@ export const ensemblesRouter = createTRPCRouter({
       };
     }),
 
-  // Get single ensemble by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -126,7 +124,6 @@ export const ensemblesRouter = createTRPCRouter({
       return ensemble;
     }),
 
-  // Create ensemble (protected)
   create: posaunenratProcedure
     .input(
       z.object({
@@ -160,7 +157,6 @@ export const ensemblesRouter = createTRPCRouter({
       return ensemble;
     }),
 
-  // Update ensemble
   update: protectedProcedure
     .input(
       z.object({
@@ -195,7 +191,6 @@ export const ensemblesRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions: conductor, representative, or admin/LPW/RPW
       const canEdit =
         ensemble.conductorId === ctx.session.user.id ||
         ensemble.representativeId === ctx.session.user.id ||
@@ -223,7 +218,6 @@ export const ensemblesRouter = createTRPCRouter({
       });
     }),
 
-  // Delete ensemble
   delete: adminProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -234,7 +228,6 @@ export const ensemblesRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get ensembles by bezirk
   getByBezirk: publicProcedure
     .input(z.object({ bezirkId: z.string() }))
     .query(async ({ ctx, input }) => {

@@ -3,7 +3,6 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/server/better-auth";
 
-// Valid file types by folder
 const validTypesByFolder: Record<string, string[]> = {
   profiles: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
   downloads: [
@@ -22,19 +21,16 @@ const validTypesByFolder: Record<string, string[]> = {
   media: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
 };
 
-// Max file size by folder (in bytes)
 const maxSizeByFolder: Record<string, number> = {
-  profiles: 5 * 1024 * 1024, // 5MB
-  downloads: 50 * 1024 * 1024, // 50MB
-  media: 10 * 1024 * 1024, // 10MB
+  profiles: 5 * 1024 * 1024,
+  downloads: 50 * 1024 * 1024,
+  media: 10 * 1024 * 1024,
 };
 
 function getExtension(filename: string, mimeType: string): string {
-  // Try to get extension from filename
   const fromFilename = filename.split(".").pop()?.toLowerCase();
   if (fromFilename) return fromFilename;
 
-  // Fallback to mime type
   const mimeToExt: Record<string, string> = {
     "image/jpeg": "jpg",
     "image/jpg": "jpg",
@@ -60,7 +56,6 @@ function getExtension(filename: string, mimeType: string): string {
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -77,13 +72,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Get valid types and max size for the folder
     const validTypes =
       validTypesByFolder[folder] ?? validTypesByFolder.profiles;
     const maxSize =
       maxSizeByFolder[folder] ?? maxSizeByFolder.profiles ?? 5 * 1024 * 1024;
 
-    // Validate file type
     if (!validTypes?.includes(file.type)) {
       const allowed = validTypes ? validTypes.join(", ") : "(none)";
       return NextResponse.json(
@@ -94,7 +87,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file size
     if (file.size > maxSize) {
       return NextResponse.json(
         {
@@ -107,32 +99,25 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Generate unique filename
     const timestamp = Date.now();
     const userId = session.user.id;
     const extension = getExtension(file.name, file.type);
 
-    // Create a sanitized base name from original filename
     const baseName = file.name
-      .replace(/\.[^/.]+$/, "") // Remove extension
-      .replace(/[^a-zA-Z0-9-_]/g, "-") // Replace special chars
-      .substring(0, 50); // Limit length
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9-_]/g, "-")
+      .substring(0, 50);
 
     const filename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
-    // Ensure upload directory exists
     const uploadDir = join(process.cwd(), "public", "uploads", folder);
     await mkdir(uploadDir, { recursive: true });
 
-    // Save file
     const filePath = join(uploadDir, filename);
     await writeFile(filePath, buffer);
 
-    // Use /api/uploads/ path so files are served dynamically via API route
-    // (Next.js caches public folder at startup and won't see new files)
     const url = `/api/uploads/${folder}/${filename}`;
 
-    // Return file information - unified format for all folders
     return NextResponse.json({
       success: true,
       url,
@@ -140,7 +125,7 @@ export async function POST(request: Request) {
       size: buffer.length,
       mimeType: file.type,
       extension,
-      // Also include nested format for backwards compatibility
+
       file: {
         filename,
         url,

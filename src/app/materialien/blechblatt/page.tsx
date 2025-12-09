@@ -15,7 +15,6 @@ export default function BlechblattPage() {
   );
   const [pdfKey, setPdfKey] = useState(0);
 
-  // Compute selected edition - use first edition as default if none selected
   const selectedEdition = useMemo(() => {
     if (!editions || editions.length === 0) return null;
     if (selectedEditionId) {
@@ -25,14 +24,14 @@ export default function BlechblattPage() {
   }, [editions, selectedEditionId]);
 
   const pdfUrl = selectedEdition?.fileUrl ?? null;
-  // Add cache-busting timestamp for mobile browsers
+
   const pdfUrlWithCacheBust = pdfUrl
     ? `${pdfUrl}${pdfUrl.includes("?") ? "&" : "?"}t=${pdfKey}`
     : null;
 
   const handleEditionChange = (editionId: string) => {
     setSelectedEditionId(editionId);
-    // Force PDF viewer to remount by incrementing key
+
     setPdfKey((prev) => prev + 1);
   };
 

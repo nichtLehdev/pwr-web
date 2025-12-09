@@ -6,7 +6,6 @@ import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Roles that should be redirected to dashboard after login
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -23,21 +22,17 @@ export default function LoginCallbackPage() {
     });
 
   useEffect(() => {
-    // Wait until we have session and profile data
     if (sessionLoading || profileLoading) return;
 
-    // If no session, redirect to login
     if (!session?.user) {
       router.push("/login");
       return;
     }
 
-    // Get the stored redirect URL (from OAuth flow)
     const storedRedirect = sessionStorage.getItem("loginRedirect");
     sessionStorage.removeItem("loginRedirect");
     const redirectTo = storedRedirect ?? "/";
 
-    // Redirect based on role
     if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
       router.push("/dashboard");
     } else {

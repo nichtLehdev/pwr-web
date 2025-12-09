@@ -6,15 +6,12 @@ export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check current dark mode state
     const checkDarkMode = () => {
       setIsDark(document.documentElement.classList.contains("dark"));
     };
 
-    // Initial check
     checkDarkMode();
 
-    // Watch for changes (syncs multiple ThemeToggle instances)
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -43,7 +40,6 @@ export default function ThemeToggle() {
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
       {isDark ? (
-        // Sun icon for light mode
         <svg
           className="h-5 w-5"
           fill="none"
@@ -58,7 +54,6 @@ export default function ThemeToggle() {
           />
         </svg>
       ) : (
-        // Moon icon for dark mode
         <svg
           className="h-5 w-5"
           fill="none"

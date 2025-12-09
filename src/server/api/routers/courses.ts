@@ -17,7 +17,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const coursesRouter = createTRPCRouter({
-  // Public: Get all approved courses
   getAll: publicProcedure
     .input(
       z.object({
@@ -88,7 +87,6 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.count({ where }),
       ]);
 
-      // Transform courses to include participant count
       const courses = coursesRaw.map((course) => {
         const participantCount = course.registrations.reduce(
           (sum, reg) => sum + reg._count.participants,
@@ -111,7 +109,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Get single course by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -167,7 +164,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Only show non-approved courses to authorized users
       if (courseRaw.status !== ContentStatus.APPROVED) {
         if (!ctx.session?.user) {
           throw new TRPCError({
@@ -191,7 +187,6 @@ export const coursesRouter = createTRPCRouter({
         }
       }
 
-      // Calculate participant count from confirmed registrations
       const participantCount = courseRaw.registrations.reduce(
         (sum, reg) => sum + reg._count.participants,
         0,
@@ -208,7 +203,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Get courses created by current user
   getMine: protectedProcedure
     .input(
       z.object({
@@ -248,7 +242,6 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.count({ where }),
       ]);
 
-      // Transform courses to include participant count
       const courses = coursesRaw.map((course) => {
         const participantCount = course.registrations.reduce(
           (sum, reg) => sum + reg._count.participants,
@@ -271,7 +264,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Get courses for dashboard based on user role
   getDashboardCourses: protectedProcedure
     .input(
       z.object({
@@ -288,19 +280,15 @@ export const coursesRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Build where clause based on role
       let where: Record<string, unknown> = {};
 
       if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
-        // Admin and LPW can see all courses
         if (input.status) {
           where.status = input.status;
         }
       } else if (userRole === UserRole.RPW) {
-        // RPW can see all courses except DRAFT status (unless they created it)
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
-            // For DRAFT, only show their own
             where = {
               status: ContentStatus.DRAFT,
               createdById: userId,
@@ -309,7 +297,6 @@ export const coursesRouter = createTRPCRouter({
             where.status = input.status;
           }
         } else {
-          // No status filter: show all non-draft OR own drafts
           where = {
             OR: [
               { status: { not: ContentStatus.DRAFT } },
@@ -318,7 +305,6 @@ export const coursesRouter = createTRPCRouter({
           };
         }
       } else {
-        // OBLEUTE, regular users - only their own courses
         where = {
           createdById: userId,
           ...(input.status && { status: input.status }),
@@ -357,7 +343,6 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.count({ where }),
       ]);
 
-      // Transform courses to include participant count instead of registration count
       const courses = coursesRaw.map((course) => {
         const participantCount = course.registrations.reduce(
           (sum, reg) => sum + reg._count.participants,
@@ -380,7 +365,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Get courses pending review
   getPendingReview: lpwProcedure
     .input(
       z.object({
@@ -426,7 +410,6 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.count({ where }),
       ]);
 
-      // Transform courses to include participant count
       const courses = coursesRaw.map((course) => {
         const participantCount = course.registrations.reduce(
           (sum, reg) => sum + reg._count.participants,
@@ -449,7 +432,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Create course
   create: protectedProcedure
     .input(
       z.object({
@@ -530,7 +512,6 @@ export const coursesRouter = createTRPCRouter({
       return course;
     }),
 
-  // Update course
   update: protectedProcedure
     .input(
       z.object({
@@ -607,7 +588,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Update instructors if provided
       if (instructorIds) {
         await ctx.db.course.update({
           where: { id },
@@ -619,7 +599,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Update price options if provided
       if (priceOptions) {
         await ctx.db.coursePriceOption.deleteMany({
           where: { courseId: id },
@@ -636,7 +615,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Update custom fields if provided
       if (customFields) {
         await ctx.db.courseCustomField.deleteMany({
           where: { courseId: id },
@@ -667,7 +645,6 @@ export const coursesRouter = createTRPCRouter({
       });
     }),
 
-  // Delete course
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -702,7 +679,6 @@ export const coursesRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Approve course
   approve: reviewerProcedure
     .input(
       z.object({
@@ -723,7 +699,6 @@ export const coursesRouter = createTRPCRouter({
       });
     }),
 
-  // Reject course
   reject: reviewerProcedure
     .input(
       z.object({
@@ -777,13 +752,11 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Count total confirmed participants (not registrations, but actual participants)
       const confirmedParticipants = course.registrations.reduce(
         (sum, registration) => sum + registration.participants.length,
         0,
       );
 
-      // Calculate capacity based on price options if they have individual limits
       const priceOptionsWithLimits = course.priceOptions.filter(
         (po) => po.maxParticipants !== null,
       );
@@ -792,15 +765,12 @@ export const coursesRouter = createTRPCRouter({
       const capacityByPriceOption: Record<string, number> = {};
 
       if (priceOptionsWithLimits.length > 0) {
-        // If some price options have limits, use those
         totalCapacity = priceOptionsWithLimits.reduce(
           (sum, po) => sum + (po.maxParticipants || 0),
           0,
         );
 
-        // Calculate remaining slots per price option
         for (const priceOption of priceOptionsWithLimits) {
-          // Count participants for this specific price option
           const usedSlots = course.registrations.reduce((sum, registration) => {
             const participantsForThisOption = registration.participants.filter(
               (p) => p.priceOption === priceOption.label,
@@ -812,7 +782,6 @@ export const coursesRouter = createTRPCRouter({
             (priceOption.maxParticipants || 0) - usedSlots;
         }
 
-        // If there are price options without limits, they share the remaining course capacity
         const priceOptionsWithoutLimits = course.priceOptions.filter(
           (po) => po.maxParticipants === null,
         );
@@ -842,10 +811,8 @@ export const coursesRouter = createTRPCRouter({
           }
         }
 
-        // Total capacity is the lower of: sum of price option limits OR course max
         totalCapacity = Math.min(totalCapacity, course.maxParticipants ?? 0);
       } else {
-        // No price option limits, use course maxParticipants
         totalCapacity = course.maxParticipants ?? 0;
       }
 
@@ -869,7 +836,6 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Get registrations for a course (instructors and admins)
   getRegistrations: protectedProcedure
     .input(
       z.object({
@@ -879,7 +845,6 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Check if user is instructor, creator, or admin
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
@@ -931,20 +896,17 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  // Bulk delete courses
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all courses to check permissions
       const courses = await ctx.db.course.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only courses user can delete
       const canDeleteIds = courses
         .filter(
           (course) =>
@@ -968,7 +930,6 @@ export const coursesRouter = createTRPCRouter({
       return { success: true, deletedCount: canDeleteIds.length };
     }),
 
-  // Duplicate course
   duplicate: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -987,7 +948,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Create new course as draft
       const newCourse = await ctx.db.course.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -1028,7 +988,6 @@ export const coursesRouter = createTRPCRouter({
       return newCourse;
     }),
 
-  // Bulk duplicate courses
   bulkDuplicate: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
@@ -1047,7 +1006,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Create duplicates for each course
       const newCourses = await Promise.all(
         originals.map((original) =>
           ctx.db.course.create({
@@ -1092,7 +1050,6 @@ export const coursesRouter = createTRPCRouter({
       return { success: true, duplicatedCount: newCourses.length };
     }),
 
-  // Bulk change status
   bulkStatusChange: protectedProcedure
     .input(
       z.object({
@@ -1104,13 +1061,11 @@ export const coursesRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all courses to check permissions
       const courses = await ctx.db.course.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only courses user can update
       const canUpdateIds = courses
         .filter(
           (course) =>
@@ -1127,7 +1082,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Special handling for APPROVED status - set publishedAt
       const updateData: { status: ContentStatus; publishedAt?: Date | null } = {
         status: input.status,
       };

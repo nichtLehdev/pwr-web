@@ -37,10 +37,8 @@ export default function EditRegistrationPage() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
-  // Registrant data state
   const [registrantPhone, setRegistrantPhone] = useState("");
 
-  // Billing data state
   const [useSeparateBilling, setUseSeparateBilling] = useState(false);
   const [billingData, setBillingData] = useState({
     billingCompany: "",
@@ -52,29 +50,26 @@ export default function EditRegistrationPage() {
     billingEmail: "",
   });
 
-  // Fetch registration details
   const { data: registration, isLoading: registrationLoading } =
     api.registrations.getById.useQuery(
       { id: registrationId },
       { enabled: !!registrationId },
     );
 
-  // Fetch course availability
   const { data: availability, isLoading: availabilityLoading } =
     api.courses.getAvailableSlots.useQuery(
       { id: registration?.course?.id ?? "" },
       { enabled: !!registration?.course?.id },
     );
 
-  // Update mutation
   const updateMutation = api.registrations.updateMyRegistration.useMutation({
     onSuccess: () => {
       toast.success("Die Änderungen wurden erfolgreich gespeichert.");
       setError("");
-      // Invalidate queries to refresh data
+
       void utils.registrations.getMyRegistrations.invalidate();
       void utils.registrations.getById.invalidate({ id: registrationId });
-      // Redirect after short delay
+
       setTimeout(() => {
         router.push("/registrations");
       }, 1500);
@@ -86,7 +81,6 @@ export default function EditRegistrationPage() {
     },
   });
 
-  // Cancel mutation
   const cancelMutation = api.registrations.cancel.useMutation({
     onSuccess: () => {
       setCancelModalOpen(false);
@@ -105,14 +99,12 @@ export default function EditRegistrationPage() {
     cancelMutation.mutate({ id: registrationId });
   };
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
       router.push("/login");
     }
   }, [session, sessionLoading, router]);
 
-  // Initialize participants from registration
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (registration?.participants) {
@@ -128,7 +120,6 @@ export default function EditRegistrationPage() {
   }, [registration]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Initialize registrant and billing data from registration
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (registration) {
@@ -147,7 +138,6 @@ export default function EditRegistrationPage() {
   }, [registration]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // Check if registration can be edited
   const canEditRegistration = () => {
     if (!registration) return false;
     const now = new Date();
@@ -164,7 +154,6 @@ export default function EditRegistrationPage() {
     return true;
   };
 
-  // Check if user owns this registration
   const isOwner = registration?.registrantEmail === session?.user?.email;
 
   const formatDate = (date: Date) => {
@@ -179,17 +168,14 @@ export default function EditRegistrationPage() {
     return new Date(date).toISOString().split("T")[0];
   };
 
-  // Get active (non-deleted) participants
   const activeParticipants = participants.filter((p) => !p.isDeleted);
 
-  // Check if we can add more participants
   const canAddParticipant = () => {
     if (!availability) return false;
     const currentActive = activeParticipants.length;
     const originalCount = registration?.participants.length ?? 0;
     const netNew = currentActive - originalCount;
 
-    // Check if there's room
     if (availability.availableSlots <= netNew && netNew > 0) {
       return false;
     }
@@ -197,13 +183,11 @@ export default function EditRegistrationPage() {
     return true;
   };
 
-  // Check if a specific price option is available
   const isPriceOptionAvailable = (priceOptionLabel: string) => {
     if (!availability?.capacityByPriceOption) return true;
     const available = availability.capacityByPriceOption[priceOptionLabel];
     if (available === undefined) return true;
 
-    // Count how many we're using of this option
     const currentUsage = activeParticipants.filter(
       (p) => p.priceOption === priceOptionLabel && p.isNew,
     ).length;
@@ -215,7 +199,6 @@ export default function EditRegistrationPage() {
   const addParticipant = () => {
     if (!registration?.course?.priceOptions) return;
 
-    // Find an available price option
     const availablePriceOption = registration.course.priceOptions.find((po) =>
       isPriceOptionAvailable(po.label),
     );
@@ -266,7 +249,6 @@ export default function EditRegistrationPage() {
     );
   };
 
-  // Calculate total price
   const calculateTotalPrice = () => {
     if (!registration?.course?.priceOptions) return 0;
     return activeParticipants.reduce((sum, p) => {
@@ -283,7 +265,6 @@ export default function EditRegistrationPage() {
     setSuccess("");
     setIsSubmitting(true);
 
-    // Validate all participants
     for (const p of activeParticipants) {
       if (!p.firstName || !p.lastName || !p.city || !p.priceOption) {
         setError("Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus.");
@@ -292,7 +273,6 @@ export default function EditRegistrationPage() {
       }
     }
 
-    // Validate billing fields if separate billing is enabled
     if (useSeparateBilling) {
       if (
         !billingData.billingFirstName ||
@@ -308,7 +288,6 @@ export default function EditRegistrationPage() {
       }
     }
 
-    // Prepare participants data for the mutation
     const participantsData = activeParticipants.map((p) => ({
       id: p.isNew ? undefined : p.id,
       firstName: p.firstName,
@@ -321,7 +300,6 @@ export default function EditRegistrationPage() {
       customFields: p.customFields as any,
     }));
 
-    // Call the mutation
     updateMutation.mutate({
       id: registrationId,
       totalPrice: calculateTotalPrice(),

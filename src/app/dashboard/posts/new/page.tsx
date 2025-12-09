@@ -24,7 +24,6 @@ const categoryLabels: Record<PostCategory, string> = {
   ANDERE: "Andere",
 };
 
-// Roles that can create posts for any district and directly approve
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
 export default function NewPostPage() {
@@ -33,22 +32,18 @@ export default function NewPostPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for role and bezirk
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
   const userBezirkId = profile?.bezirkId ?? null;
 
-  // Form state
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<PostCategory>("MAGAZIN");
   const [bezirkId, setBezirkId] = useState<string>(() => {
-    // Initialize with userBezirkId for non-higher roles when available
     return !isHigherRole && userBezirkId ? userBezirkId : "";
   });
   const [pinned, setPinned] = useState(false);
@@ -56,16 +51,13 @@ export default function NewPostPage() {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
 
-  // Submission state
   const [submitAsDraft, setSubmitAsDraft] = useState(false);
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Create post mutation
   const createPostMutation = api.posts.create.useMutation({
     onSuccess: (post) => {
       toast.success("Beitrag erfolgreich erstellt");
@@ -77,7 +69,6 @@ export default function NewPostPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -85,10 +76,8 @@ export default function NewPostPage() {
     }
   }, [session, sessionLoading, router]);
 
-  // Redirect if user doesn't have permission to create posts
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      // Only OBLEUTE and higher can create posts
       const allowedRoles: UserRole[] = [
         UserRole.ADMIN,
         UserRole.LPW,
@@ -109,7 +98,6 @@ export default function NewPostPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -345,7 +333,6 @@ export default function NewPostPage() {
             </h2>
             <div className="space-y-4">
               {!isHigherRole && userBezirkId ? (
-                // Restricted users: show their assigned bezirk (locked)
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Dein Bezirk
@@ -380,7 +367,6 @@ export default function NewPostPage() {
                   </p>
                 </div>
               ) : !isHigherRole && !userBezirkId ? (
-                // Restricted users without bezirk assignment
                 <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                   <p className="text-sm text-yellow-800 dark:text-yellow-300">
                     <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
@@ -388,7 +374,6 @@ export default function NewPostPage() {
                   </p>
                 </div>
               ) : (
-                // Higher roles: full bezirk selection
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Bezirk auswählen

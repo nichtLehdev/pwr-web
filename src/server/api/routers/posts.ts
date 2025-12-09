@@ -13,10 +13,9 @@ import {
   UserRole,
 } from "~/generated/prisma/client";
 
-// Configure marked for safe HTML output with GFM (tables, etc.)
 marked.use({
-  gfm: true, // GitHub Flavored Markdown (enables tables)
-  breaks: true, // Convert \n to <br>
+  gfm: true,
+  breaks: true,
 });
 
 /**
@@ -49,7 +48,6 @@ async function addContentHtmlToMany<T extends { content: string }>(
 }
 
 export const postsRouter = createTRPCRouter({
-  // Public: Get all approved posts
   getAll: publicProcedure
     .input(
       z.object({
@@ -101,7 +99,6 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // Convert markdown content to HTML for each post
       const posts = await addContentHtmlToMany(rawPosts);
 
       return {
@@ -111,7 +108,6 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  // Get single post by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -144,7 +140,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Only show non-approved posts to authorized users
       if (rawPost.status !== ContentStatus.APPROVED) {
         if (!ctx.session?.user) {
           throw new TRPCError({
@@ -169,8 +164,6 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Extract attached downloads from content
-      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
       const downloadUrlPattern =
         /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
@@ -182,7 +175,7 @@ export const postsRouter = createTRPCRouter({
           ? await ctx.db.download.findMany({
               where: {
                 fileUrl: { in: downloadUrls },
-                status: ContentStatus.APPROVED, // Only show approved downloads publicly
+                status: ContentStatus.APPROVED,
               },
               select: {
                 id: true,
@@ -196,7 +189,6 @@ export const postsRouter = createTRPCRouter({
             })
           : [];
 
-      // Convert markdown content to HTML and add attachments
       const postWithHtml = await addContentHtml(rawPost);
       return {
         ...postWithHtml,
@@ -204,7 +196,6 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  // Get attached downloads and media for a post (for review purposes)
   getAttachedContent: reviewerProcedure
     .input(z.object({ postId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -220,24 +211,15 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Extract download URLs from content
-      // Content is stored as Markdown, downloads are inserted as: [📥 Title (TYPE)](/api/uploads/downloads/file.pdf)
-      // We need to match both the markdown link format and any plain URLs
-      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
-
-      // Match any URL containing /downloads/ - covers markdown [text](url) and plain URLs
       const allUrlsPattern = /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
         ...new Set(post.content.match(allUrlsPattern) ?? []),
       ];
 
-      // Extract media URLs from content (images in markdown: ![alt](url))
-      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
       const allMediaPattern =
         /\/(?:api\/)?uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(allMediaPattern) ?? [])];
 
-      // Find downloads by URL
       const downloads =
         downloadUrls.length > 0
           ? await ctx.db.download.findMany({
@@ -253,7 +235,6 @@ export const postsRouter = createTRPCRouter({
             })
           : [];
 
-      // Find media by URL
       const media =
         mediaUrls.length > 0
           ? await ctx.db.media.findMany({
@@ -271,7 +252,6 @@ export const postsRouter = createTRPCRouter({
       return { downloads, media };
     }),
 
-  // Get posts created by current user
   getMine: protectedProcedure
     .input(
       z.object({
@@ -301,7 +281,6 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // Convert markdown content to HTML for each post
       const posts = await addContentHtmlToMany(rawPosts);
 
       return {
@@ -311,7 +290,6 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  // Get posts pending review
   getPendingReview: reviewerProcedure
     .input(
       z.object({
@@ -348,7 +326,6 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      // Convert markdown content to HTML for each post
       const posts = await addContentHtmlToMany(rawPosts);
 
       return {
@@ -358,7 +335,6 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  // Create post
   create: protectedProcedure
     .input(
       z.object({
@@ -373,7 +349,6 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Only admins and LPW can pin posts
       if (
         input.pinned &&
         ctx.session.user.role !== UserRole.ADMIN &&
@@ -385,7 +360,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Only admins, LPW and RPW can directly set status to APPROVED
       if (
         input.status === ContentStatus.APPROVED &&
         ctx.session.user.role !== UserRole.ADMIN &&
@@ -414,7 +388,6 @@ export const postsRouter = createTRPCRouter({
       return post;
     }),
 
-  // Update post
   update: protectedProcedure
     .input(
       z.object({
@@ -457,7 +430,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Only admins and LPW can pin/unpin posts
       if (
         updateData.pinned !== undefined &&
         ctx.session.user.role !== UserRole.ADMIN &&
@@ -469,7 +441,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Only admins and LPW can directly change status to APPROVED
       if (
         updateData.status === ContentStatus.APPROVED &&
         ctx.session.user.role !== UserRole.ADMIN &&
@@ -482,7 +453,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Check if coverImage is approved before approving post
       if (updateData.status === ContentStatus.APPROVED) {
         const coverImageId = updateData.coverImageId ?? post.coverImageId;
         if (coverImageId) {
@@ -500,7 +470,6 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Handle publishedAt based on status change
       const finalData: Record<string, unknown> = { ...updateData };
       if (
         updateData.status === ContentStatus.APPROVED &&
@@ -521,7 +490,6 @@ export const postsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete post
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -557,7 +525,6 @@ export const postsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Approve post
   approve: reviewerProcedure
     .input(
       z.object({
@@ -578,7 +545,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Check if coverImage is approved before approving post
       if (post.coverImageId) {
         const coverImage = await ctx.db.media.findUnique({
           where: { id: post.coverImageId },
@@ -593,8 +559,6 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Check if all attached downloads are approved
-      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
       const downloadUrlPattern =
         /\/(?:api\/)?uploads\/downloads\/[^\s"'<>)\]]+/g;
       const downloadUrls = [
@@ -619,8 +583,6 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Check if all attached media are approved
-      // Match both /uploads/ (legacy) and /api/uploads/ (new) paths
       const mediaUrlPattern =
         /\/(?:api\/)?uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/g;
       const mediaUrls = [...new Set(post.content.match(mediaUrlPattern) ?? [])];
@@ -655,7 +617,6 @@ export const postsRouter = createTRPCRouter({
       });
     }),
 
-  // Reject post
   reject: reviewerProcedure
     .input(
       z.object({
@@ -675,7 +636,6 @@ export const postsRouter = createTRPCRouter({
       });
     }),
 
-  // Get posts for dashboard based on user role
   getDashboardPosts: protectedProcedure
     .input(
       z.object({
@@ -693,11 +653,9 @@ export const postsRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Build where clause based on role
       let where: Record<string, unknown> = {};
 
       if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
-        // Admin and LPW can see all posts
         if (input.status) {
           where.status = input.status;
         }
@@ -705,10 +663,8 @@ export const postsRouter = createTRPCRouter({
           where.category = input.category;
         }
       } else if (userRole === UserRole.RPW) {
-        // RPW can see all posts except DRAFT status (unless they created it)
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
-            // For DRAFT, only show their own
             where = {
               status: ContentStatus.DRAFT,
               createdById: userId,
@@ -717,7 +673,6 @@ export const postsRouter = createTRPCRouter({
             where.status = input.status;
           }
         } else {
-          // No status filter: show all non-draft OR own drafts
           where = {
             OR: [
               { status: { not: ContentStatus.DRAFT } },
@@ -729,7 +684,6 @@ export const postsRouter = createTRPCRouter({
           where.category = input.category;
         }
       } else {
-        // OBLEUTE, regular users - only their own posts
         where = {
           createdById: userId,
           ...(input.status && { status: input.status }),
@@ -765,20 +719,17 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  // Bulk delete posts
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all posts to check permissions
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true },
       });
 
-      // Filter to only posts user can delete
       const canDeleteIds = posts
         .filter(
           (post) =>
@@ -802,7 +753,6 @@ export const postsRouter = createTRPCRouter({
       return { success: true, deletedCount: canDeleteIds.length };
     }),
 
-  // Duplicate post
   duplicate: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -817,7 +767,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Create new post as draft
       const newPost = await ctx.db.post.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -835,7 +784,6 @@ export const postsRouter = createTRPCRouter({
       return newPost;
     }),
 
-  // Bulk duplicate posts
   bulkDuplicate: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
@@ -850,7 +798,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // Create duplicates for each post
       const newPosts = await Promise.all(
         originals.map((original) =>
           ctx.db.post.create({
@@ -872,7 +819,6 @@ export const postsRouter = createTRPCRouter({
       return { success: true, duplicatedCount: newPosts.length };
     }),
 
-  // Bulk change status
   bulkStatusChange: protectedProcedure
     .input(
       z.object({
@@ -884,13 +830,11 @@ export const postsRouter = createTRPCRouter({
       const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
 
-      // Get all posts to check permissions
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
         select: { id: true, createdById: true, coverImageId: true },
       });
 
-      // Filter to only posts user can update
       const canUpdateIds = posts
         .filter(
           (post) =>
@@ -907,7 +851,6 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      // If approving, check that all cover images are approved
       if (input.status === ContentStatus.APPROVED) {
         const coverImageIds = posts
           .filter((p) => canUpdateIds.includes(p.id) && p.coverImageId)
@@ -930,7 +873,6 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      // Special handling for APPROVED status - set publishedAt
       const updateData: {
         status: typeof input.status;
         publishedAt?: Date | null;

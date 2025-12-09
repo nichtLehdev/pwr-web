@@ -111,17 +111,13 @@ export default function DashboardCoursesList({
     },
   });
 
-  // Filter status options based on role
   const availableFilters = statusFilters.filter((filter) => {
-    // Admin and LPW can see all statuses
     if (userRole === "ADMIN" || userRole === "LPW") return true;
 
-    // RPW can see all except DRAFT
     if (userRole === "RPW") {
       return filter.value !== "DRAFT";
     }
 
-    // Others can see all (their own courses)
     return true;
   });
 

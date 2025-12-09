@@ -6,12 +6,9 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 if (process.env.NODE_ENV !== "production") {
-  // Dynamic import to avoid issues in production builds
   try {
     await import("dotenv/config");
-  } catch {
-    // Ignore if dotenv is not available
-  }
+  } catch {}
 }
 
 if (!process.env.DATABASE_URL) {
@@ -22,7 +19,6 @@ console.log(
   `[Prisma] Connecting to database at: ${process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@")}`,
 );
 
-// Create the adapter
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });

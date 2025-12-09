@@ -13,7 +13,6 @@ import {
   FileType,
 } from "~/generated/prisma/enums";
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -77,7 +76,6 @@ export default function DashboardDownloadsPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // Filters
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<DownloadCategory | "">(
     "",
@@ -86,12 +84,10 @@ export default function DashboardDownloadsPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  // Modals
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState<string | null>(null);
 
-  // Upload state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [newTitle, setNewTitle] = useState("");
@@ -104,7 +100,6 @@ export default function DashboardDownloadsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit state
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] =
@@ -113,7 +108,6 @@ export default function DashboardDownloadsPage() {
   const [editIsPublic, setEditIsPublic] = useState(true);
   const [editError, setEditError] = useState("");
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -121,7 +115,6 @@ export default function DashboardDownloadsPage() {
 
   const utils = api.useUtils();
 
-  // Fetch downloads
   const { data, isLoading } = api.materials.getDownloads.useQuery(
     {
       page,
@@ -133,7 +126,6 @@ export default function DashboardDownloadsPage() {
     { enabled: !!profile },
   );
 
-  // Mutations
   const createMutation = api.materials.createDownload.useMutation({
     onSuccess: () => {
       void utils.materials.getDownloads.invalidate();
@@ -228,7 +220,6 @@ export default function DashboardDownloadsPage() {
   const handleUpdate = () => {
     if (!showEditModal || !editTitle) return;
 
-    // Convert comma-separated string to array
     const tagsArray = editTags
       ? editTags
           .split(",")
@@ -284,7 +275,6 @@ export default function DashboardDownloadsPage() {
       setUploadedFileUrl(data.url);
       setUploadedFileSize(data.size);
 
-      // Auto-detect file type
       const ext = data.extension.toLowerCase();
       if (ext === "pdf") setNewFileType("PDF");
       else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
@@ -292,7 +282,6 @@ export default function DashboardDownloadsPage() {
       else if (ext === "zip") setNewFileType("ZIP");
       else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
 
-      // Auto-fill title from filename
       if (!newTitle) {
         const baseName = file.name.replace(/\.[^/.]+$/, "");
         setNewTitle(baseName);
@@ -332,7 +321,6 @@ export default function DashboardDownloadsPage() {
   const handleCreate = () => {
     if (!uploadedFileUrl || !newTitle) return;
 
-    // Convert comma-separated string to array
     const tagsArray = newTags
       ? newTags
           .split(",")
@@ -368,7 +356,6 @@ export default function DashboardDownloadsPage() {
   const canDelete =
     profile.role === UserRole.ADMIN || profile.role === UserRole.LPW;
 
-  // Filter downloads by status if filter is set
   const filteredDownloads = statusFilter
     ? data?.downloads.filter((d) => d.status === statusFilter)
     : data?.downloads;

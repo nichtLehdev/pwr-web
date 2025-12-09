@@ -46,7 +46,6 @@ export default function EditTeamPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
-  // Form state
   const [role, setRole] = useState("");
   const [contactType, setContactType] = useState<ContactType | "">("");
   const [sortOrder, setSortOrder] = useState(0);
@@ -56,25 +55,23 @@ export default function EditTeamPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form when member data loads
   useEffect(() => {
     if (member) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRole(member.role || "");
       setContactType(member.contactType || "");
       setSortOrder(member.sortOrder || 0);
-      // Convert responsibilities array to newline-separated text
+
       if (member.responsibilities && member.responsibilities.length > 0) {
         setResponsibilitiesText(member.responsibilities.join("\n"));
       }
-      // Load socials array
+
       if (member.socials && member.socials.length > 0) {
         setSocials(member.socials);
       }
     }
   }, [member]);
 
-  // Social link handlers
   const addSocialLink = () => {
     setSocials([...socials, { type: "website", url: "", label: "" }]);
   };
@@ -133,14 +130,12 @@ export default function EditTeamPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Parse responsibilities from text (one per line)
     const responsibilities = responsibilitiesText
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .join("\n");
 
-    // Filter out empty socials and serialize
     const validSocials = socials.filter((s) => s.url.trim());
     const socialsJson =
       validSocials.length > 0 ? JSON.stringify(validSocials) : undefined;

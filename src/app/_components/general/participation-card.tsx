@@ -25,7 +25,6 @@ export default function ParticipationCard({
   href,
   color = "primary",
 }: ParticipationCardProps) {
-  // Icon SVGs
   const icons = {
     map: (
       <path
@@ -109,7 +108,6 @@ export default function ParticipationCard({
     ),
   };
 
-  // Bestimme CSS-Farbe basierend auf color prop
   const getColorClass = (colorName: string) => {
     const colorMap: { [key: string]: string } = {
       primary: "bg-primary hover:bg-primary-dark",

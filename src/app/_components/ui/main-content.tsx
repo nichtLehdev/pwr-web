@@ -9,8 +9,6 @@ interface MainContentProps {
 export function MainContent({ children }: MainContentProps) {
   const { bannerHeight } = useBanner();
 
-  // Base padding: 64px (pt-16) on mobile, 80px (pt-20) on desktop
-  // Plus dynamic banner height
   return (
     <main
       className="transition-[padding-top] duration-200"

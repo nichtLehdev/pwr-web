@@ -19,14 +19,12 @@ export default function ViewRegistrationPage() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
-  // Fetch registration details
   const { data: registration, isLoading: registrationLoading } =
     api.registrations.getById.useQuery(
       { id: registrationId },
       { enabled: !!registrationId },
     );
 
-  // Cancel mutation
   const cancelMutation = api.registrations.cancel.useMutation({
     onSuccess: () => {
       setCancelModalOpen(false);
@@ -41,17 +39,14 @@ export default function ViewRegistrationPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
       router.push("/login");
     }
   }, [session, sessionLoading, router]);
 
-  // Check if user owns this registration
   const isOwner = registration?.registrantEmail === session?.user?.email;
 
-  // Check if registration can be edited
   const canEdit = () => {
     if (!registration) return false;
     const now = new Date();
@@ -78,7 +73,6 @@ export default function ViewRegistrationPage() {
       ? new Date(registration.course.registrationDeadline)
       : null;
 
-    // Can only cancel before the registration deadline
     if (deadline && deadline <= now) return false;
 
     return true;

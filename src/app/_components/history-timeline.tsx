@@ -15,7 +15,6 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 
-  // Kategorien-Icons und -Farben
   const categoryConfig = {
     FOUNDING: {
       icon: (
@@ -79,7 +78,6 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
     },
   };
 
-  // Scroll to selected event
   useEffect(() => {
     if (scrollContainerRef.current && timelineRef.current) {
       const container = scrollContainerRef.current;
@@ -92,7 +90,6 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
         const buttonWidth = selectedButton.offsetWidth;
         const containerWidth = container.offsetWidth;
 
-        // Zentriere den ausgewählten Button
         const scrollPosition =
           buttonLeft - containerWidth / 2 + buttonWidth / 2;
         container.scrollTo({

@@ -17,7 +17,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    // Load theme from localStorage on mount
     const stored = localStorage.getItem("theme") as Theme | null;
     if (stored) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -28,7 +27,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const root = window.document.documentElement;
 
-    // Remove existing theme classes
     root.classList.remove("light", "dark");
 
     let effectiveTheme: "light" | "dark";
@@ -49,7 +47,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   useEffect(() => {
-    // Listen for system theme changes
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const handleChange = () => {

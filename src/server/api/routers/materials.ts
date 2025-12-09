@@ -16,11 +16,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const materialsRouter = createTRPCRouter({
-  // ============================================================================
-  // DOWNLOADS
-  // ============================================================================
-
-  // Public: Get all public downloads (only approved ones for public)
   getDownloads: publicProcedure
     .input(
       z.object({
@@ -29,7 +24,7 @@ export const materialsRouter = createTRPCRouter({
         category: z.nativeEnum(DownloadCategory).optional(),
         fileType: z.nativeEnum(FileType).optional(),
         search: z.string().optional(),
-        includeAll: z.boolean().optional(), // For dashboard - include pending
+        includeAll: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -40,14 +35,12 @@ export const materialsRouter = createTRPCRouter({
         userRole === UserRole.ADMIN;
       const userId = ctx.session?.user?.id;
 
-      // Build base where clause
       const where: Prisma.DownloadWhereInput = {
         isPublic: true,
         ...(input.category && { category: input.category }),
         ...(input.fileType && { fileType: input.fileType }),
       };
 
-      // Add search filter
       if (input.search) {
         where.OR = [
           { title: { contains: input.search, mode: "insensitive" } },
@@ -55,12 +48,9 @@ export const materialsRouter = createTRPCRouter({
         ];
       }
 
-      // Add status filter based on user role
       if (input.includeAll && ctx.session?.user) {
         if (isReviewer) {
-          // Reviewers see all statuses - no filter needed
         } else if (userRole === UserRole.OBLEUTE && userId) {
-          // Obleute can see approved + their own pending
           where.AND = [
             {
               OR: [
@@ -73,7 +63,6 @@ export const materialsRouter = createTRPCRouter({
           where.status = ContentStatus.APPROVED;
         }
       } else {
-        // Public users only see approved
         where.status = ContentStatus.APPROVED;
       }
 
@@ -107,7 +96,6 @@ export const materialsRouter = createTRPCRouter({
       };
     }),
 
-  // Get single download by ID
   getDownloadById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -132,7 +120,6 @@ export const materialsRouter = createTRPCRouter({
       return download;
     }),
 
-  // Get downloads by category
   getDownloadsByCategory: publicProcedure
     .input(z.object({ category: z.nativeEnum(DownloadCategory) }))
     .query(async ({ ctx, input }) => {
@@ -151,7 +138,6 @@ export const materialsRouter = createTRPCRouter({
       }));
     }),
 
-  // Get Blechblatt editions (special endpoint for Blechblatt PDFs)
   getBlechblattEditions: publicProcedure.query(async ({ ctx }) => {
     const downloads = await ctx.db.download.findMany({
       where: {
@@ -168,7 +154,6 @@ export const materialsRouter = createTRPCRouter({
     }));
   }),
 
-  // Create download (Obleute and above can create, but Obleute uploads need review)
   createDownload: contentCreatorProcedure
     .input(
       z.object({
@@ -185,7 +170,6 @@ export const materialsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userRole = ctx.session.user.role as UserRole;
 
-      // Reviewers (RPW, LPW, ADMIN) get auto-approved, Obleute need review
       const isReviewer =
         userRole === UserRole.RPW ||
         userRole === UserRole.LPW ||
@@ -200,7 +184,6 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  // Update download
   updateDownload: reviewerProcedure
     .input(
       z.object({
@@ -224,7 +207,6 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete download
   deleteDownload: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -235,7 +217,6 @@ export const materialsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Review download (approve/reject)
   reviewDownload: reviewerProcedure
     .input(
       z.object({
@@ -265,11 +246,6 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  // ============================================================================
-  // BLÄSERHEFTE
-  // ============================================================================
-
-  // Public: Get all Bläserhefte
   getBlaserhefte: publicProcedure.query(async ({ ctx }) => {
     const blaserhefte = await ctx.db.blaeserheft.findMany({
       include: {
@@ -286,7 +262,6 @@ export const materialsRouter = createTRPCRouter({
     }));
   }),
 
-  // Get single Bläserheft by ID
   getBlaserheftById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -307,7 +282,6 @@ export const materialsRouter = createTRPCRouter({
       return blaserheft;
     }),
 
-  // Get Bläserhefte by year
   getBlaserhefteByYear: publicProcedure
     .input(z.object({ year: z.number() }))
     .query(async ({ ctx, input }) => {
@@ -322,7 +296,6 @@ export const materialsRouter = createTRPCRouter({
       return blaserhefte;
     }),
 
-  // Create Bläserheft
   createBlaserheft: lpwProcedure
     .input(
       z.object({
@@ -354,7 +327,6 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  // Update Bläserheft
   updateBlaserheft: lpwProcedure
     .input(
       z.object({
@@ -390,7 +362,6 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete Bläserheft
   deleteBlaserheft: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
