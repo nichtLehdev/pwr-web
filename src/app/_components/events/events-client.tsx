@@ -124,15 +124,16 @@ function filterCalendarItems(
         const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
         const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
 
-        // If category is a course type, filter by courseType
-        if (courseTypeEnum) {
-          if (item.courseType !== courseTypeEnum) return false;
+        // If the category exists in either mapping
+        if (courseTypeEnum || targetAudienceEnum) {
+          // The item must match at least one of the applicable criteria
+          const matchesCourseType = courseTypeEnum && item.courseType === courseTypeEnum;
+          const matchesTargetAudience = targetAudienceEnum && item.targetAudience === targetAudienceEnum;
+          
+          if (!matchesCourseType && !matchesTargetAudience) {
+            return false;
+          }
         }
-        // If category is a target audience, filter by targetAudience
-        else if (targetAudienceEnum) {
-          if (item.targetAudience !== targetAudienceEnum) return false;
-        }
-        // If category doesn't match either mapping, don't filter (pass through)
       }
     }
 
