@@ -130,11 +130,6 @@ function filterCalendarItems(
         if (targetAudienceEnum && item.targetAudience !== targetAudienceEnum) {
           return false;
         }
-
-        // If the category doesn't match either, don't filter
-        if (!courseTypeEnum && !targetAudienceEnum) {
-          return false;
-        }
       }
     }
 
