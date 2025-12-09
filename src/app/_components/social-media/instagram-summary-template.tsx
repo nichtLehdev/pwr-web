@@ -18,6 +18,8 @@ interface InstagramSummaryTemplateProps {
   events: Event[];
   month: number;
   year: number;
+  pageNumber?: number;
+  totalPages?: number;
 }
 
 const monthNames = [
@@ -39,6 +41,8 @@ export default function InstagramSummaryTemplate({
   events,
   month,
   year,
+  pageNumber,
+  totalPages,
 }: InstagramSummaryTemplateProps) {
   const monthName = monthNames[month - 1];
 
@@ -62,14 +66,19 @@ export default function InstagramSummaryTemplate({
           <div className="text-4xl font-bold">{year}</div>
           <div className="mt-4 rounded-full bg-white/20 px-8 py-3 text-3xl font-bold backdrop-blur-sm">
             {events.length} {events.length === 1 ? "Termin" : "Termine"}
+            {pageNumber && totalPages && (
+              <div className="mt-1 text-xl opacity-90">
+                Seite {pageNumber} von {totalPages}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Events List */}
-      <div className="flex-1 overflow-hidden bg-linear-to-b from-gray-50 to-white px-10 py-8">
+      <div className="flex-1 overflow-hidden bg-linear-to-b from-gray-50 to-white px-10 py-4">
         <div className="space-y-3">
-          {events.slice(0, 7).map((event) => {
+          {events.map((event) => {
             const districtColor = event.bezirk
               ? getDistrictColor(event.bezirk.number)
               : "#faa619";
@@ -127,12 +136,6 @@ export default function InstagramSummaryTemplate({
               </div>
             );
           })}
-          {events.length > 7 && (
-            <div className="text-dark-light rounded-2xl bg-white p-6 text-center text-2xl font-bold shadow-md">
-              + {events.length - 7} weitere{" "}
-              {events.length - 7 === 1 ? "Termin" : "Termine"}
-            </div>
-          )}
         </div>
       </div>
 
