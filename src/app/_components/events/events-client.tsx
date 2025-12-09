@@ -676,6 +676,8 @@ export default function EventsClient({
                   >
                     <button
                       onClick={() => toggleMonth(monthKey)}
+                      aria-expanded={isMonthExpanded(monthKey)}
+                      aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
                       className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
                     >
                       <h2 className="text-dark dark:text-dark-text text-lg font-bold md:text-2xl">
@@ -741,6 +743,8 @@ export default function EventsClient({
                   <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-300">
                     <button
                       onClick={() => setPastEventsExpanded(!pastEventsExpanded)}
+                      aria-expanded={pastEventsExpanded}
+                      aria-label={`Vergangene Termine - ${pastItems.length} ${pastItems.length === 1 ? "Termin" : "Termine"}`}
                       className="dark:bg-dark-background-secondary dark:hover:bg-dark-surface flex w-full items-center justify-between bg-gray-100 px-4 py-4 text-left transition-colors hover:bg-gray-200"
                     >
                       <h2 className="text-dark dark:text-dark-text text-xl font-bold md:text-2xl">
@@ -767,6 +771,8 @@ export default function EventsClient({
                             >
                               <button
                                 onClick={() => togglePastMonth(monthKey)}
+                                aria-expanded={isPastMonthExpanded(monthKey)}
+                                aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
                                 className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
                               >
                                 <h3 className="text-dark dark:text-dark-text text-base font-semibold md:text-lg">
