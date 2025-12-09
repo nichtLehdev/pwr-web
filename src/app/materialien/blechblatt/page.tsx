@@ -13,8 +13,8 @@ export default function BlechblattPage() {
   const [selectedEditionId, setSelectedEditionId] = useState<string | null>(
     null,
   );
+  const [pdfKey, setPdfKey] = useState(0);
 
-  // Compute selected edition - use first edition as default if none selected
   const selectedEdition = useMemo(() => {
     if (!editions || editions.length === 0) return null;
     if (selectedEditionId) {
@@ -25,8 +25,14 @@ export default function BlechblattPage() {
 
   const pdfUrl = selectedEdition?.fileUrl ?? null;
 
+  const pdfUrlWithCacheBust = pdfUrl
+    ? `${pdfUrl}${pdfUrl.includes("?") ? "&" : "?"}t=${pdfKey}`
+    : null;
+
   const handleEditionChange = (editionId: string) => {
     setSelectedEditionId(editionId);
+
+    setPdfKey((prev) => prev + 1);
   };
 
   return (
@@ -149,55 +155,12 @@ export default function BlechblattPage() {
                     </div>
                   </div>
                   <div className="relative w-full" style={{ height: "80vh" }}>
-                    <object
-                      key={selectedEdition?.id}
-                      data={pdfUrl}
+                    <embed
+                      key={`pdf-${pdfKey}-${selectedEdition?.id}`}
+                      src={`${pdfUrlWithCacheBust}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
                       type="application/pdf"
                       className="h-full w-full"
-                    >
-                      {/* Fallback for browsers that don't support object/embed */}
-                      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                        <svg
-                          className="text-primary mb-4 h-16 w-16"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                          />
-                        </svg>
-                        <p className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
-                          PDF-Vorschau nicht verfügbar
-                        </p>
-                        <p className="mb-6 text-gray-600 dark:text-gray-400">
-                          Ihr Browser unterstützt die PDF-Vorschau nicht direkt.
-                        </p>
-                        <Link
-                          href={pdfUrl}
-                          download
-                          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                        >
-                          <svg
-                            className="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            />
-                          </svg>
-                          PDF herunterladen
-                        </Link>
-                      </div>
-                    </object>
+                    />
                   </div>
                 </div>
               )}

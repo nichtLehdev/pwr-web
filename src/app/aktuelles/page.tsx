@@ -1,4 +1,3 @@
-// app/aktuelles/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -14,7 +13,6 @@ import PostCard from "../_components/posts/post-card";
 
 type FilterCategory = PostCategory | "all";
 
-// Extend Post with relations
 type PostWithRelations = Post & {
   bezirk: Bezirk | null;
   coverImage: { url: string } | null;
@@ -36,7 +34,6 @@ export default function AktuellesPage() {
     useState<FilterCategory>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  // Fetch data
   const { data: postsData, isLoading: postsLoading } =
     api.posts.getAll.useQuery(
       { page: 1, limit: 100 },
@@ -51,7 +48,6 @@ export default function AktuellesPage() {
 
   const isLoading = postsLoading || bezirkeLoading;
 
-  // Separate pinned and regular posts
   const { pinnedPosts, regularPosts } = useMemo(() => {
     if (!postsData?.posts) return { pinnedPosts: [], regularPosts: [] };
     const pinned = postsData.posts.filter((post) => post.pinned);
@@ -59,17 +55,13 @@ export default function AktuellesPage() {
     return { pinnedPosts: pinned, regularPosts: regular };
   }, [postsData]);
 
-  // Apply filters
   const applyFilters = useMemo(() => {
     return (posts: PostWithRelations[]) => {
       return posts.filter((post) => {
-        // District Filter
         if (selectedDistrict !== "all") {
-          // Handle "Bezirksübergreifend" (multi-district posts)
           if (selectedDistrict === "Bezirksübergreifend") {
             if (post.bezirk !== null) return false;
           } else {
-            // Extract district number from selection like "Bezirk 1 (Saarbrücken)"
             const match = selectedDistrict.match(/Bezirk (\d+)/);
             if (match?.[1]) {
               const districtNumber = parseInt(match[1], 10);
@@ -78,7 +70,6 @@ export default function AktuellesPage() {
           }
         }
 
-        // Category Filter
         if (selectedCategory !== "all" && post.category !== selectedCategory) {
           return false;
         }
@@ -98,7 +89,6 @@ export default function AktuellesPage() {
     [applyFilters, regularPosts],
   );
 
-  // Sort by date (newest first)
   const sortedRegular = useMemo(() => {
     return [...filteredRegular].sort((a, b) => {
       const dateA = new Date(a.publishedAt || a.createdAt);
@@ -107,7 +97,6 @@ export default function AktuellesPage() {
     });
   }, [filteredRegular]);
 
-  // District select options
   const districtSelectOptions = useMemo(() => {
     if (!bezirkeData) return ["all", "Bezirksübergreifend"];
     return [
@@ -119,7 +108,6 @@ export default function AktuellesPage() {
     ];
   }, [bezirkeData]);
 
-  // Category options (enum values)
   const categories: FilterCategory[] = [
     "all",
     "MAGAZIN",
@@ -129,7 +117,6 @@ export default function AktuellesPage() {
     "ANDERE",
   ];
 
-  // Category display labels
   const categoryLabels: Record<FilterCategory, string> = {
     all: "Alle",
     MAGAZIN: "Magazin",
@@ -143,7 +130,6 @@ export default function AktuellesPage() {
   const hasActiveFilters =
     selectedDistrict !== "all" || selectedCategory !== "all";
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="bg-background dark:bg-dark-background min-h-screen">

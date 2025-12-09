@@ -8,7 +8,6 @@ import {
 } from "../trpc";
 
 export const locationsRouter = createTRPCRouter({
-  // Public: Get all locations
   getAll: publicProcedure
     .input(
       z.object({
@@ -62,7 +61,6 @@ export const locationsRouter = createTRPCRouter({
       };
     }),
 
-  // Get single location by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -107,7 +105,6 @@ export const locationsRouter = createTRPCRouter({
       return location;
     }),
 
-  // Create location
   create: posaunenratProcedure
     .input(
       z.object({
@@ -126,7 +123,6 @@ export const locationsRouter = createTRPCRouter({
       });
     }),
 
-  // Update location
   update: lpwProcedure
     .input(
       z.object({
@@ -149,11 +145,9 @@ export const locationsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete location
   delete: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Check if location is in use
       const location = await ctx.db.location.findUnique({
         where: { id: input.id },
         include: {
@@ -192,7 +186,6 @@ export const locationsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get locations by city
   getByCity: publicProcedure
     .input(z.object({ city: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -208,7 +201,6 @@ export const locationsRouter = createTRPCRouter({
 });
 
 export const newsletterRouter = createTRPCRouter({
-  // Public: Subscribe to newsletter
   subscribe: publicProcedure
     .input(
       z.object({
@@ -217,7 +209,6 @@ export const newsletterRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Check if already subscribed
       const existing = await ctx.db.newsletterSubscriber.findUnique({
         where: { email: input.email },
       });
@@ -230,7 +221,6 @@ export const newsletterRouter = createTRPCRouter({
           });
         }
 
-        // Reactivate subscription
         return await ctx.db.newsletterSubscriber.update({
           where: { email: input.email },
           data: {
@@ -247,7 +237,6 @@ export const newsletterRouter = createTRPCRouter({
       });
     }),
 
-  // Public: Unsubscribe from newsletter
   unsubscribe: publicProcedure
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
@@ -271,7 +260,6 @@ export const newsletterRouter = createTRPCRouter({
       });
     }),
 
-  // Admin: Get all subscribers
   getSubscribers: lpwProcedure
     .input(
       z.object({
@@ -309,7 +297,6 @@ export const newsletterRouter = createTRPCRouter({
       };
     }),
 
-  // Admin: Get subscriber statistics
   getStatistics: lpwProcedure.query(async ({ ctx }) => {
     const [total, active, inactive] = await Promise.all([
       ctx.db.newsletterSubscriber.count(),
@@ -324,7 +311,6 @@ export const newsletterRouter = createTRPCRouter({
     };
   }),
 
-  // Admin: Delete subscriber
   deleteSubscriber: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {

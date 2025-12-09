@@ -24,7 +24,6 @@ export function BulkInvoiceModal({
   registrations,
 }: BulkInvoiceModalProps) {
   const [paymentDueDate, setPaymentDueDate] = useState<string>(() => {
-    // Default to 21 days from now
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 21);
     return defaultDate.toISOString().split("T")[0] ?? "";
@@ -46,13 +45,11 @@ export function BulkInvoiceModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       alert("Bitte laden Sie ein Bild hoch (PNG, JPG, etc.)");
       return;
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert("Die Datei ist zu groß. Maximale Größe: 2MB");
       return;
@@ -96,10 +93,8 @@ export function BulkInvoiceModal({
       );
       setIsComplete(true);
 
-      // Clear signature after successful generation (as requested - deleted after use)
       removeSignature();
 
-      // Auto-close after 2 seconds on success
       setTimeout(() => {
         onClose();
         setIsComplete(false);
@@ -116,8 +111,8 @@ export function BulkInvoiceModal({
   };
 
   const handleClose = () => {
-    if (isGenerating) return; // Prevent closing during generation
-    // Clear signature on close
+    if (isGenerating) return;
+
     removeSignature();
     setIsComplete(false);
     setProgress({ current: 0, total: 0 });

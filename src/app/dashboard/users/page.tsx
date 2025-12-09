@@ -8,14 +8,12 @@ import Link from "next/link";
 import DashboardUsersList from "@/app/_components/dashboard/dashboard-users-list";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access user management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardUsersPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for extended fields
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -28,7 +26,6 @@ export default function DashboardUsersPage() {
     }
   }, [isPending, session]);
 
-  // Redirect if user doesn't have admin access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!ALLOWED_ROLES.includes(profile.role)) {

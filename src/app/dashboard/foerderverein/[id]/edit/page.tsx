@@ -43,13 +43,11 @@ export default function EditFoerdervereinPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
-  // Get all users for optional linking
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
   );
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,7 +65,6 @@ export default function EditFoerdervereinPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form when member data loads
   useEffect(() => {
     if (member) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -90,7 +87,6 @@ export default function EditFoerdervereinPage() {
     }
   }, [member]);
 
-  // Filter users based on search
   const filteredUsers = users?.users.filter((user) => {
     if (!userSearch.trim()) return true;
     const searchLower = userSearch.toLowerCase();
@@ -100,7 +96,6 @@ export default function EditFoerdervereinPage() {
     );
   });
 
-  // Handle user selection
   const handleUserSelect = (user: {
     id: string;
     displayName: string | null;
@@ -111,7 +106,6 @@ export default function EditFoerdervereinPage() {
     setShowUserDropdown(false);
   };
 
-  // Handle clearing user selection
   const handleClearUser = () => {
     setUserId(null);
     setUserSearch("");

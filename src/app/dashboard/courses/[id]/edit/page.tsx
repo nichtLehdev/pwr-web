@@ -39,7 +39,6 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-// German labels for custom field types
 const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXT: "Text",
   NUMBER: "Zahl",
@@ -48,10 +47,8 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-// Roles that can edit courses for any district
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -85,7 +82,6 @@ export default function EditCoursePage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  // Form state
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
@@ -117,7 +113,6 @@ export default function EditCoursePage() {
   const [whatToBring, setWhatToBring] = useState("");
   const [status, setStatus] = useState<ContentStatus>(ContentStatus.DRAFT);
 
-  // UI state
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -126,27 +121,21 @@ export default function EditCoursePage() {
     CustomField[]
   >([]);
 
-  // Refs for click outside handling
   const locationDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Fetch user profile
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch course data
   const { data: course, isLoading: courseLoading } =
     api.courses.getById.useQuery(
       { id: courseId },
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Fetch locations
   const { data: locations } = api.locations.getAll.useQuery({ limit: 100 });
 
-  // Filter locations based on search
   const filteredLocations = locations?.locations.filter((loc) => {
     const searchLower = locationSearch.toLowerCase();
     return (
@@ -159,7 +148,6 @@ export default function EditCoursePage() {
   const isHigherRole = profile && HIGHER_ROLES.includes(profile.role);
   const userBezirkId = profile?.bezirkId ?? null;
 
-  // Initialize form from course data
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (course && !isInitialized) {
@@ -167,7 +155,6 @@ export default function EditCoursePage() {
       setMotto(course.motto || "");
       setDescription(course.description);
 
-      // Format dates for input
       const start = new Date(course.startDate);
       setStartDate(start.toISOString().split("T")[0] || "");
       const end = new Date(course.endDate);
@@ -178,7 +165,6 @@ export default function EditCoursePage() {
       setBezirkId(course.bezirkId || "");
       setStatus(course.status);
 
-      // Location
       if (course.location) {
         setLocationId(course.location.id);
         setLocationSearch(
@@ -186,7 +172,6 @@ export default function EditCoursePage() {
         );
       }
 
-      // Registration
       setRegistrationOpen(course.registrationOpen);
       if (course.registrationDeadline) {
         const deadline = new Date(course.registrationDeadline);
@@ -195,7 +180,6 @@ export default function EditCoursePage() {
       setMaxParticipants(course.maxParticipants?.toString() || "");
       setAllowWaitingList(course.allowWaitingList);
 
-      // Pricing
       setIsFree(course.isFree);
       setPriceInfo(course.priceInfo || "");
       if (course.priceOptions && course.priceOptions.length > 0) {
@@ -209,7 +193,6 @@ export default function EditCoursePage() {
         setPriceOptions(options);
       }
 
-      // Custom fields
       if (course.customFields && course.customFields.length > 0) {
         const fields: CustomField[] = course.customFields.map((cf) => ({
           id: cf.id,
@@ -229,7 +212,6 @@ export default function EditCoursePage() {
         setOriginalCustomFields(fields);
       }
 
-      // Additional info
       setPrerequisites(course.prerequisites || "");
       setWhatToBring(course.whatToBring || "");
 
@@ -238,10 +220,8 @@ export default function EditCoursePage() {
   }, [course, isInitialized]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // tRPC utils for cache invalidation
   const utils = api.useUtils();
 
-  // Update course mutation
   const updateCourseMutation = api.courses.update.useMutation({
     onSuccess: async () => {
       await utils.courses.getById.invalidate({ id: courseId });
@@ -255,10 +235,8 @@ export default function EditCoursePage() {
     },
   });
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: async (location) => {
-      // Refetch locations so the new one appears in search
       await utils.locations.getAll.invalidate();
       setLocationId(location.id);
       setLocationSearch(
@@ -292,7 +270,6 @@ export default function EditCoursePage() {
     createLocationMutation.mutate(newLocation);
   };
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -300,7 +277,6 @@ export default function EditCoursePage() {
     }
   }, [session, sessionLoading, router, courseId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -310,7 +286,6 @@ export default function EditCoursePage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Check edit permissions once course is loaded
   useEffect(() => {
     if (course && profile && !hasRedirected.current) {
       const isCreator = course.createdById === session?.user?.id;
@@ -329,7 +304,6 @@ export default function EditCoursePage() {
     }
   }, [course, profile, session, router, courseId]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -344,7 +318,6 @@ export default function EditCoursePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Check if course has registrations
   const hasRegistrations = (course?._count?.participants ?? 0) > 0;
   const registrationCount = course?._count?.participants ?? 0;
 
@@ -377,7 +350,6 @@ export default function EditCoursePage() {
     setPriceOptions(newOptions);
   };
 
-  // Custom field handlers
   const addCustomField = () => {
     const newFields = [
       ...customFields,
@@ -429,7 +401,6 @@ export default function EditCoursePage() {
       newFields[index]!,
     ];
 
-    // Update sort orders
     setCustomFields(newFields.map((cf, i) => ({ ...cf, sortOrder: i })));
     setCustomFieldsChanged(true);
   };
@@ -439,7 +410,6 @@ export default function EditCoursePage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -464,7 +434,6 @@ export default function EditCoursePage() {
       return;
     }
 
-    // Prepare price options
     const preparedPriceOptions = !isFree
       ? priceOptions
           .filter((opt) => opt.label && opt.price >= 0)
@@ -477,7 +446,6 @@ export default function EditCoursePage() {
           }))
       : [];
 
-    // Prepare custom fields
     const preparedCustomFields = customFields
       .filter((cf) => cf.fieldName.trim())
       .map(
@@ -527,7 +495,6 @@ export default function EditCoursePage() {
     });
   };
 
-  // Loading state
   if (sessionLoading || profileLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -772,7 +739,6 @@ export default function EditCoursePage() {
                   Bezirk
                 </label>
                 {!isHigherRole && userBezirkId ? (
-                  // Restricted users: show their assigned bezirk (locked)
                   <div className="flex items-center gap-2">
                     <input
                       type="text"
@@ -799,7 +765,6 @@ export default function EditCoursePage() {
                     </svg>
                   </div>
                 ) : (
-                  // Higher roles: full bezirk selection
                   <select
                     id="bezirk"
                     value={bezirkId}

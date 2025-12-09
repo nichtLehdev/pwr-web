@@ -18,7 +18,7 @@ type AuswahlChor =
 interface ConcertCardProps {
   concert: Event;
   ensemble: AuswahlChor;
-  i: number; // The key index
+  i: number;
 }
 
 const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {

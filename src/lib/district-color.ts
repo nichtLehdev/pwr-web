@@ -25,16 +25,14 @@ export function getDistrictColor(districtNumber?: number): string {
   );
 }
 
-// Hellere Version für Hintergründe
 export function getDistrictColorLight(districtNumber?: number): string {
   const color = getDistrictColor(districtNumber);
-  return color + "20"; // 20 = 12.5% opacity in hex
+  return color + "20";
 }
 
-// Für Text auf farbigem Hintergrund (weiß oder schwarz je nach Helligkeit)
 export function getDistrictTextColor(districtNumber?: number): string {
   const color = getDistrictColor(districtNumber);
-  // Einfache Heuristik: hex zu RGB und Luminanz berechnen
+
   const hex = color.replace("#", "");
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);

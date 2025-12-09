@@ -23,12 +23,10 @@ export default async function PosaunenratPage() {
     ];
   });
 
-  // Filtere die Sachverständigen
   const sachverstaendige = posaunenratMembers.filter(
     (m) => m.role === "SACHVERSTAENDIGE" || m.role === "SACHVERSTAENDIGER",
   );
 
-  // Landeskirchenmusikdirektor
   const lkmd = posaunenratMembers.find(
     (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
   );

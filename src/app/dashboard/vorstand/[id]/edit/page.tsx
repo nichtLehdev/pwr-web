@@ -13,7 +13,6 @@ import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
-// User placeholder icon component
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -49,13 +48,11 @@ export default function EditVorstandPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
-  // Get all users for linking
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 1000 },
     { enabled: !!session?.user },
   );
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -70,7 +67,6 @@ export default function EditVorstandPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
-  // Filter users based on search
   const filteredUsers = users?.users.filter((user) => {
     if (!userSearch.trim()) return true;
     const searchLower = userSearch.toLowerCase();
@@ -80,7 +76,6 @@ export default function EditVorstandPage() {
     );
   });
 
-  // Handle user selection
   const handleUserSelect = (user: {
     id: string;
     displayName: string | null;
@@ -91,7 +86,6 @@ export default function EditVorstandPage() {
     setShowUserDropdown(false);
   };
 
-  // Handle clearing user selection
   const handleClearUser = () => {
     setUserId(null);
     setUserSearch("");
@@ -100,7 +94,6 @@ export default function EditVorstandPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form when member data loads
   useEffect(() => {
     if (member) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -112,7 +105,7 @@ export default function EditVorstandPage() {
       setColor(member.color || "");
       setSortOrder(member.sortOrder || 0);
       setUserId(member.userId || null);
-      // Set userSearch to show the linked user's name
+
       if (member.user) {
         setUserSearch(member.user.displayName || member.user.email || "");
       }

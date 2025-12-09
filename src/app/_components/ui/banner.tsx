@@ -35,7 +35,6 @@ const variantStyles: Record<BannerVariant, string> = {
   maintenance: "bg-slate-700 text-white",
 };
 
-// Hook to check localStorage only on mount
 function useBannerVisibility(id: string) {
   const [visibility, setVisibility] = useState<
     "loading" | "visible" | "hidden"
@@ -58,7 +57,6 @@ function useBannerVisibility(id: string) {
   return { visibility, dismiss };
 }
 
-// Custom hook to observe and report banner height
 function useBannerHeight(
   bannerRef: React.RefObject<HTMLDivElement | null>,
   isVisible: boolean,
@@ -74,10 +72,8 @@ function useBannerHeight(
     const element = bannerRef.current;
     if (!element) return;
 
-    // Set initial height
     setBannerHeight(element.offsetHeight);
 
-    // Observe size changes
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         setBannerHeight(entry.contentRect.height);
@@ -109,7 +105,6 @@ export function AnnouncementBanner({
   const touchStartX = useRef(0);
   const touchCurrentX = useRef(0);
 
-  // Report banner height to context
   useBannerHeight(bannerRef, visibility === "visible");
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -138,7 +133,6 @@ export function AnnouncementBanner({
     }
   };
 
-  // Don't render while loading or if dismissed
   if (visibility !== "visible") {
     return null;
   }
@@ -217,7 +211,6 @@ export function AnnouncementBanner({
   );
 }
 
-// Convenience component for the beta banner
 export function BetaBanner() {
   return (
     <AnnouncementBanner

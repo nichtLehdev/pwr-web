@@ -8,7 +8,6 @@ import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -20,7 +19,6 @@ export default function DashboardEventsPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
 
-  // Fetch user profile for extended fields
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -33,7 +31,6 @@ export default function DashboardEventsPage() {
     }
   }, [isPending, session]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -55,7 +52,6 @@ export default function DashboardEventsPage() {
     return null;
   }
 
-  // Get role from profile
   const userRole = profile.role;
 
   return (

@@ -33,7 +33,6 @@ export default function CompactEventCard({
     month: "short",
   });
 
-  // Prüfe ob mehrtägig
   const isMultiDay =
     endDate && new Date(endDate).toDateString() !== dateObj.toDateString();
   const endDateObj = endDate ? new Date(endDate) : null;

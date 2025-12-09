@@ -9,7 +9,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access vorstand management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function VorstandDetailPage() {

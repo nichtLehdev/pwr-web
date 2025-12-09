@@ -39,7 +39,6 @@ export default function EditEnsemblePage() {
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Location state
   const [locationId, setLocationId] = useState<string | null>("");
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -52,30 +51,25 @@ export default function EditEnsemblePage() {
     additionalInfo: "",
   });
 
-  // Fetch locations with search
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
     search: locationSearch || undefined,
   });
 
-  // User list for dropdown
   const { data: usersData } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
   );
 
-  // Conductor state
   const [conductorId, setConductorId] = useState<string | null>(null);
   const [conductorSearch, setConductorSearch] = useState("");
   const [showConductorDropdown, setShowConductorDropdown] = useState(false);
 
-  // Representative state
   const [representativeId, setRepresentativeId] = useState<string | null>(null);
   const [representativeSearch, setRepresentativeSearch] = useState("");
   const [showRepresentativeDropdown, setShowRepresentativeDropdown] =
     useState(false);
 
-  // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [bezirkId, setBezirkId] = useState<string | null>("");
@@ -92,7 +86,6 @@ export default function EditEnsemblePage() {
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Filter users based on search
   const filteredConductorUsers = usersData?.users.filter((user) => {
     if (!conductorSearch.trim()) return true;
     const searchLower = conductorSearch.toLowerCase();
@@ -111,7 +104,6 @@ export default function EditEnsemblePage() {
     );
   });
 
-  // Initialize form when ensemble data loads
   useEffect(() => {
     if (ensemble && !initialized) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -130,19 +122,16 @@ export default function EditEnsemblePage() {
       setRepresentativeId(ensemble.representativeId);
       setIsActive(ensemble.isActive);
 
-      // Set location search text
       if (ensemble.location) {
         setLocationSearch(
           `${ensemble.location.name ? ensemble.location.name + ", " : ""}${ensemble.location.city}`,
         );
       }
 
-      // Set conductor search text
       if (ensemble.conductor) {
         setConductorSearch(ensemble.conductor.displayName || "");
       }
 
-      // Set representative search text
       if (ensemble.representative) {
         setRepresentativeSearch(ensemble.representative.displayName || "");
       }
@@ -167,7 +156,6 @@ export default function EditEnsemblePage() {
     },
   });
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: (location) => {
       setLocationId(location.id);
@@ -206,7 +194,6 @@ export default function EditEnsemblePage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;

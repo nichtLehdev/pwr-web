@@ -13,7 +13,6 @@ import {
 } from "~/generated/prisma/client";
 
 export const registrationsRouter = createTRPCRouter({
-  // Public: Create registration
   create: publicProcedure
     .input(
       z.object({
@@ -45,7 +44,7 @@ export const registrationsRouter = createTRPCRouter({
             city: z.string().min(1),
             instrument: z.string().optional(),
             priceOption: z.string().optional(),
-            customFields: z.json().optional(), // JSON
+            customFields: z.json().optional(),
           }),
         ),
       }),
@@ -53,7 +52,6 @@ export const registrationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { participants, ...registrationData } = input;
 
-      // Check if course exists and registration is open
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
@@ -84,7 +82,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if registration deadline has passed
       if (
         course.registrationDeadline &&
         new Date() > course.registrationDeadline
@@ -95,7 +92,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if totalPrice is correct using the Price Options of the course
       const expectedTotal = participants.reduce((sum, participant) => {
         const priceOption = course.priceOptions.find(
           (p) => p.label === participant.priceOption,
@@ -110,7 +106,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if course is full
       const currentParticipants = course._count.registrations;
       const newParticipants = participants.length;
       const totalAfterRegistration = currentParticipants + newParticipants;
@@ -135,7 +130,6 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus = RegistrationStatus.WAITLIST;
       }
 
-      // Create registration
       const registration = await ctx.db.courseRegistration.create({
         data: {
           ...registrationData,
@@ -159,12 +153,9 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // TODO: Send confirmation email
-
       return registration;
     }),
 
-  // Get registration by ID
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -211,7 +202,6 @@ export const registrationsRouter = createTRPCRouter({
       return registration;
     }),
 
-  // Get user's own registrations (protected)
   getMyRegistrations: protectedProcedure
     .input(
       z.object({
@@ -274,7 +264,6 @@ export const registrationsRouter = createTRPCRouter({
       };
     }),
 
-  // Update user's own registration (protected)
   updateMyRegistration: protectedProcedure
     .input(
       z.object({
@@ -292,7 +281,7 @@ export const registrationsRouter = createTRPCRouter({
         notes: z.string().optional(),
         participants: z.array(
           z.object({
-            id: z.string().optional(), // existing participant
+            id: z.string().optional(),
             firstName: z.string().min(1),
             lastName: z.string().min(1),
             birthDate: z.date(),
@@ -307,7 +296,6 @@ export const registrationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, participants, ...registrationData } = input;
 
-      // Get the current registration
       const registration = await ctx.db.courseRegistration.findUnique({
         where: { id },
         include: {
@@ -336,7 +324,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Verify user owns this registration
       if (registration.registrantEmail !== ctx.session.user.email) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -344,7 +331,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if registration can be edited (deadline)
       if (
         registration.course.registrationDeadline &&
         new Date() > registration.course.registrationDeadline
@@ -355,7 +341,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if registration is cancelled
       if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -365,7 +350,6 @@ export const registrationsRouter = createTRPCRouter({
 
       const course = registration.course;
 
-      // Validate total price
       const expectedTotal = participants.reduce((sum, participant) => {
         const priceOption = course.priceOptions.find(
           (p) => p.label === participant.priceOption,
@@ -380,7 +364,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Calculate current participants (excluding this registration)
       const currentParticipantsExcludingThis = await ctx.db.participant.count({
         where: {
           registration: {
@@ -391,7 +374,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Check course capacity
       const newTotalParticipants =
         currentParticipantsExcludingThis + participants.length;
       const maxParticipants = course.maxParticipants ?? Infinity;
@@ -405,7 +387,6 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Check price option capacities
       const priceOptionCounts: Record<string, number> = {};
       for (const participant of participants) {
         if (participant.priceOption) {
@@ -419,7 +400,6 @@ export const registrationsRouter = createTRPCRouter({
           (p) => p.label === optionLabel,
         );
         if (priceOption?.maxParticipants) {
-          // Count current registrations for this price option (excluding this registration)
           const currentCount = await ctx.db.participant.count({
             where: {
               priceOption: optionLabel,
@@ -440,12 +420,10 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Get IDs of existing participants to keep or update
       const existingParticipantIds = participants
         .filter((p) => p.id)
         .map((p) => p.id!);
 
-      // Delete participants that are no longer in the list
       await ctx.db.participant.deleteMany({
         where: {
           registrationId: id,
@@ -453,12 +431,10 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Update existing participants and create new ones
       for (const participant of participants) {
         const { id: participantId, ...participantData } = participant;
 
         if (participantId) {
-          // Update existing
           await ctx.db.participant.update({
             where: { id: participantId },
             data: {
@@ -467,7 +443,6 @@ export const registrationsRouter = createTRPCRouter({
             },
           });
         } else {
-          // Create new
           await ctx.db.participant.create({
             data: {
               ...participantData,
@@ -478,7 +453,6 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Update the registration
       const updatedRegistration = await ctx.db.courseRegistration.update({
         where: { id },
         data: {
@@ -500,7 +474,6 @@ export const registrationsRouter = createTRPCRouter({
       return updatedRegistration;
     }),
 
-  // Update registration status (admin/instructor)
   updateStatus: protectedProcedure
     .input(
       z.object({
@@ -528,7 +501,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions
       const isInstructor = registration.course.instructors.some(
         (i) => i.id === ctx.session.user.id,
       );
@@ -556,7 +528,6 @@ export const registrationsRouter = createTRPCRouter({
       });
     }),
 
-  // Update payment status
   updatePaymentStatus: protectedProcedure
     .input(
       z.object({
@@ -584,7 +555,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions
       const isInstructor = registration.course.instructors.some(
         (i) => i.id === ctx.session.user.id,
       );
@@ -612,7 +582,6 @@ export const registrationsRouter = createTRPCRouter({
       });
     }),
 
-  // Cancel registration (user or admin)
   cancel: publicProcedure
     .input(
       z.object({
@@ -622,7 +591,6 @@ export const registrationsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (ctx.session) {
-        // Authenticated user can cancel own registration directly
         const registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
         });
@@ -661,7 +629,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Verify email matches
       if (registration.registrantEmail !== input.email) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -677,7 +644,6 @@ export const registrationsRouter = createTRPCRouter({
       });
     }),
 
-  // Delete registration (admin only)
   delete: lpwProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -688,7 +654,6 @@ export const registrationsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  // Get registration statistics for a course
   getStatistics: protectedProcedure
     .input(z.object({ courseId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -707,7 +672,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check permissions
       const isInstructor = course.instructors.some(
         (i) => i.id === ctx.session.user.id,
       );

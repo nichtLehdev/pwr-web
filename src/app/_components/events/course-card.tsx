@@ -27,7 +27,6 @@ export default function CourseCard({
   const end = new Date(endDate);
   const isSameDay = start.toDateString() === end.toDateString();
 
-  // Berechne Dauer in Tagen
   const durationMs = end.getTime() - start.getTime();
   const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
 
