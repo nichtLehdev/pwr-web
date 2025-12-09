@@ -1,7 +1,6 @@
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
 
-// Type definitions for invoice data
 export interface InvoiceParticipant {
   firstName: string;
   lastName: string;
@@ -36,7 +35,7 @@ export interface InvoiceRegistration {
   createdAt: Date;
   notes: string | null;
   participants: InvoiceParticipant[];
-  // Billing address (optional)
+
   useSeparateBilling?: boolean;
   billingCompany?: string | null;
   billingFirstName?: string | null;
@@ -48,19 +47,16 @@ export interface InvoiceRegistration {
 }
 
 export interface InvoiceOptions {
-  // Organization info
   organizationName?: string;
   organizationAddress?: string;
   organizationContact?: string;
 
-  // Payment info
   paymentDueDate?: Date;
   paymentDeadlineDays?: number;
   bankName?: string;
   iban?: string;
   bic?: string;
 
-  // Signature (base64 image and name)
   signatureBase64?: string;
   signatureName?: string;
 }
@@ -106,7 +102,6 @@ export async function createInvoicePdf(
   const margin = 20;
   let y = 20;
 
-  // Helper to check and add new page if needed
   const checkPageBreak = (requiredSpace: number = 20) => {
     if (y > 270 - requiredSpace) {
       doc.addPage();
@@ -117,13 +112,11 @@ export async function createInvoicePdf(
   const invoiceNumber = `RE-${registration.id.slice(0, 8).toUpperCase()}`;
   const invoiceDate = new Date().toLocaleDateString("de-DE");
 
-  // === HEADER WITH LOGO ===
   if (logoBase64) {
     try {
       doc.addImage(logoBase64, "PNG", margin, y - 5, 60, 25);
       y += 25;
     } catch {
-      // Fallback to text
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(88, 89, 91);
@@ -138,7 +131,6 @@ export async function createInvoicePdf(
     y += 10;
   }
 
-  // Invoice title and number (right side, at top)
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
@@ -149,7 +141,6 @@ export async function createInvoicePdf(
   doc.text(`Nr: ${invoiceNumber}`, pageWidth - margin, 27, { align: "right" });
   doc.text(`Datum: ${invoiceDate}`, pageWidth - margin, 33, { align: "right" });
 
-  // Organization info
   y += 5;
   doc.setFontSize(9);
   doc.setTextColor(100);
@@ -160,7 +151,6 @@ export async function createInvoicePdf(
   doc.text(opts.organizationContact ?? "", margin, y);
   doc.setTextColor(0);
 
-  // === COURSE INFO ===
   y += 12;
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -191,7 +181,6 @@ export async function createInvoicePdf(
     y += 5;
   }
 
-  // === RECIPIENT INFO (Billing address if set, otherwise registrant) ===
   y += 8;
   doc.setFont("helvetica", "bold");
   doc.text("Rechnungsempfänger:", margin, y);
@@ -202,7 +191,6 @@ export async function createInvoicePdf(
     registration.useSeparateBilling &&
     (registration.billingFirstName || registration.billingLastName)
   ) {
-    // Use billing address
     if (registration.billingCompany) {
       doc.text(registration.billingCompany, margin, y);
       y += 5;
@@ -229,7 +217,6 @@ export async function createInvoicePdf(
       doc.text(registration.billingEmail, margin, y);
     }
   } else {
-    // Use registrant info
     doc.text(
       `${registration.registrantFirstName} ${registration.registrantLastName}`,
       margin,
@@ -243,11 +230,9 @@ export async function createInvoicePdf(
     }
   }
 
-  // === PARTICIPANT TABLE ===
   y += 12;
   checkPageBreak(30);
 
-  // Table header
   doc.setFillColor(240, 240, 240);
   doc.rect(margin, y - 4, pageWidth - 2 * margin, 8, "F");
   doc.setFont("helvetica", "bold");
@@ -255,7 +240,6 @@ export async function createInvoicePdf(
   doc.text("Kategorie", margin + 80, y);
   doc.text("Preis", pageWidth - margin - 20, y);
 
-  // Table rows
   y += 10;
   doc.setFont("helvetica", "normal");
 
@@ -273,7 +257,6 @@ export async function createInvoicePdf(
     y += 7;
   });
 
-  // === TOTAL ===
   y += 3;
   doc.setDrawColor(0);
   doc.line(margin, y, pageWidth - margin, y);
@@ -287,12 +270,10 @@ export async function createInvoicePdf(
     y,
   );
 
-  // === PAYMENT INFO ===
   y += 18;
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
 
-  // Payment deadline - use provided date or calculate from days
   let deadlineStr: string;
   if (opts.paymentDueDate) {
     deadlineStr = opts.paymentDueDate.toLocaleDateString("de-DE", {
@@ -312,7 +293,6 @@ export async function createInvoicePdf(
     });
   }
 
-  // Nice text
   const paymentText = `Wir bitten Sie, den Rechnungsbetrag bis zum ${deadlineStr} auf das unten angegebene Konto zu überweisen. Bitte geben Sie als Verwendungszweck die Rechnungsnummer an.`;
   const splitPayment = doc.splitTextToSize(paymentText, pageWidth - 2 * margin);
   doc.text(splitPayment, margin, y);
@@ -324,7 +304,6 @@ export async function createInvoicePdf(
     y,
   );
 
-  // === BANK DETAILS ===
   y += 12;
   checkPageBreak(30);
 
@@ -343,7 +322,6 @@ export async function createInvoicePdf(
   doc.setFont("helvetica", "bold");
   doc.text(`Verwendungszweck: ${invoiceNumber}`, margin + 3, y);
 
-  // === CLOSING TEXT ===
   y += 18;
   checkPageBreak(40);
   doc.setFont("helvetica", "normal");
@@ -354,17 +332,13 @@ export async function createInvoicePdf(
   doc.text("Herzliche Grüße", margin, y);
   y += 12;
 
-  // Add signature if provided
   if (opts.signatureBase64) {
     try {
       doc.addImage(opts.signatureBase64, "PNG", margin, y, 40, 20);
       y += 22;
-    } catch {
-      // Skip signature if it fails
-    }
+    } catch {}
   }
 
-  // Add signature name if provided
   if (opts.signatureName) {
     doc.setFont("helvetica", "normal");
     doc.text(opts.signatureName, margin, y);
@@ -374,7 +348,6 @@ export async function createInvoicePdf(
     doc.text("Ihr Team vom Posaunenwerk Rheinland", margin, y);
   }
 
-  // === REGISTRATION INFO ===
   y += 15;
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
@@ -394,7 +367,6 @@ export async function createInvoicePdf(
     y,
   );
 
-  // Notes
   if (registration.notes) {
     y += 6;
     doc.setTextColor(80);
@@ -404,19 +376,16 @@ export async function createInvoicePdf(
     doc.text(splitNotes, margin, y);
   }
 
-  // === FOOTER ===
   doc.setFontSize(8);
   doc.setTextColor(128);
   doc.setFont("helvetica", "normal");
 
-  // Footer line
   doc.setDrawColor(200);
   doc.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
 
   doc.text(opts.organizationName ?? "", margin, pageHeight - 15);
   doc.text(`IBAN: ${opts.iban} | BIC: ${opts.bic}`, margin, pageHeight - 10);
 
-  // Return PDF as blob
   const filename = `Rechnung_${invoiceNumber}_${registration.registrantLastName}.pdf`;
   const blob = doc.output("blob");
 
@@ -431,13 +400,10 @@ export async function generateInvoice(
   registration: InvoiceRegistration,
   options: InvoiceOptions = {},
 ): Promise<void> {
-  // Load logo
   let logoBase64: string | undefined;
   try {
     logoBase64 = await loadImageAsBase64("/images/logo.png");
-  } catch {
-    // Continue without logo
-  }
+  } catch {}
 
   const { blob, filename } = await createInvoicePdf(
     course,
@@ -446,7 +412,6 @@ export async function generateInvoice(
     logoBase64,
   );
 
-  // Download the file
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -469,15 +434,11 @@ export async function generateBulkInvoices(
 ): Promise<void> {
   const zip = new JSZip();
 
-  // Load logo once for all invoices
   let logoBase64: string | undefined;
   try {
     logoBase64 = await loadImageAsBase64("/images/logo.png");
-  } catch {
-    // Continue without logo
-  }
+  } catch {}
 
-  // Track invoice data for Excel summary
   interface InvoiceSummaryRow {
     invoiceNumber: string;
     registrantName: string;
@@ -491,7 +452,6 @@ export async function generateBulkInvoices(
   }
   const summaryData: InvoiceSummaryRow[] = [];
 
-  // Generate all invoices
   for (let i = 0; i < registrations.length; i++) {
     const registration = registrations[i];
     if (!registration) continue;
@@ -507,7 +467,6 @@ export async function generateBulkInvoices(
 
     zip.file(filename, blob);
 
-    // Build summary row
     const useBilling =
       registration.useSeparateBilling &&
       (registration.billingFirstName || registration.billingLastName);
@@ -544,7 +503,6 @@ export async function generateBulkInvoices(
     });
   }
 
-  // Create Excel summary file (CSV with semicolon for German Excel)
   const excelHeaders = [
     "Rechnungsnummer",
     "Anmelder",
@@ -583,7 +541,6 @@ export async function generateBulkInvoices(
     ),
   ].join("\r\n");
 
-  // Add BOM for Excel UTF-8 recognition
   const bom = "\uFEFF";
   const excelBlob = new Blob([bom + excelContent], {
     type: "application/vnd.ms-excel;charset=utf-8",
@@ -592,7 +549,6 @@ export async function generateBulkInvoices(
   const dateStr = new Date().toISOString().split("T")[0];
   zip.file(`Rechnungsübersicht_${dateStr}.xls`, excelBlob);
 
-  // Generate ZIP and download
   const zipBlob = await zip.generateAsync({ type: "blob" });
   const courseSlug = course.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_");
   const zipFilename = `Rechnungen_${courseSlug}_${dateStr}.zip`;

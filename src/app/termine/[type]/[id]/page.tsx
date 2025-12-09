@@ -27,6 +27,5 @@ export default async function TerminDetailPage({ params }: PageProps) {
     return <CourseDetailView course={course} spots={spots} />;
   }
 
-  // Invalid type
   notFound();
 }

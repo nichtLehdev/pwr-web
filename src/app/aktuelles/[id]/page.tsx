@@ -9,11 +9,9 @@ interface PageProps {
 export default async function NewsDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  // Fetch data on the server
   try {
     const post = await api.posts.getById({ id });
 
-    // Fetch related posts
     const relatedPostsData = await api.posts.getAll({
       page: 1,
       limit: 4,
@@ -21,7 +19,6 @@ export default async function NewsDetailPage({ params }: PageProps) {
       bezirkId: post.bezirk?.id,
     });
 
-    // Filter out current post
     const relatedPosts = relatedPostsData.posts
       .filter((p) => p.id !== post.id)
       .slice(0, 3);

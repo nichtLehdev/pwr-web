@@ -33,7 +33,6 @@ export default function EditBlaeserheftPage() {
       { enabled: !!heftId && !!session?.user },
     );
 
-  // Form state
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());
@@ -59,7 +58,6 @@ export default function EditBlaeserheftPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form when heft data loads
   useEffect(() => {
     if (heft) {
       // eslint-disable-next-line react-hooks/set-state-in-effect

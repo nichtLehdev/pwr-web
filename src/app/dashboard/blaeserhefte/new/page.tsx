@@ -25,7 +25,6 @@ export default function NewBlaeserheftPage() {
       enabled: !!session?.user,
     });
 
-  // Form state
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());

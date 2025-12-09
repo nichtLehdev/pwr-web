@@ -142,7 +142,6 @@ const typeColors: Record<SearchResultType, string> = {
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
-// Search result item component
 function SearchResultItem({
   result,
   onClick,
@@ -222,7 +221,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Debounce the search query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
@@ -230,7 +228,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -239,17 +236,14 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     }
   }, [isOpen]);
 
-  // Handle closing - reset query via onClose callback
   const handleClose = useCallback(() => {
     setQuery("");
     setDebouncedQuery("");
     onClose();
   }, [onClose]);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Close with Escape
       if (e.key === "Escape" && isOpen) {
         handleClose();
       }
@@ -259,7 +253,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleClose]);
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -271,7 +264,6 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     };
   }, [isOpen]);
 
-  // Search query
   const { data, isLoading } = api.search.global.useQuery(
     { query: debouncedQuery, limit: 20 },
     { enabled: debouncedQuery.length >= 2 },

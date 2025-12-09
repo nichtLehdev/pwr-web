@@ -30,7 +30,6 @@ export default function EditBezirkPage() {
       { enabled: !!bezirkId && !!session?.user },
     );
 
-  // Form state
   const [number, setNumber] = useState(bezirk?.number ?? 1);
   const [name, setName] = useState(bezirk?.name ?? "");
   const [shortName, setShortName] = useState(bezirk?.shortName ?? "");
@@ -38,7 +37,6 @@ export default function EditBezirkPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize form when bezirk data loads
   useEffect(() => {
     if (bezirk && !initialized) {
       // eslint-disable-next-line react-hooks/set-state-in-effect

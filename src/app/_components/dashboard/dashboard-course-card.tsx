@@ -92,7 +92,6 @@ export default function DashboardCourseCard({
     : false;
   const isEffectivelyOpen = registrationOpen && !isDeadlinePassed;
 
-  // Format date range
   const formatDateRange = () => {
     const start = new Date(startDate);
     const end = new Date(endDate);

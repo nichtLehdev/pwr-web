@@ -10,7 +10,6 @@ import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
 
-// Only admins can access team management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const CONTACT_TYPE_LABELS: Record<string, string> = {

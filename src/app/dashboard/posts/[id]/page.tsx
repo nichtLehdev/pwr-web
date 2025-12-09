@@ -40,10 +40,8 @@ const statusColors: Record<ContentStatus, string> = {
   ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
 };
 
-// Roles that can review posts
 const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -59,16 +57,13 @@ export default function PostDetailPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const hasRedirected = useRef(false);
 
-  // Review state
   const [reviewNotes, setReviewNotes] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Fetch user profile for role
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch post data
   const {
     data: post,
     isLoading: postLoading,
@@ -78,7 +73,6 @@ export default function PostDetailPage() {
     { enabled: !!postId && !!session?.user },
   );
 
-  // Fetch attached content for reviewers
   const { data: attachedContent, refetch: refetchAttachedContent } =
     api.posts.getAttachedContent.useQuery(
       { postId },
@@ -87,7 +81,6 @@ export default function PostDetailPage() {
       },
     );
 
-  // Mutations
   const approveMutation = api.posts.approve.useMutation({
     onSuccess: () => {
       toast.success("Beitrag genehmigt");
@@ -111,7 +104,6 @@ export default function PostDetailPage() {
     },
   });
 
-  // Mutations for approving attached content
   const approveDownloadMutation = api.materials.reviewDownload.useMutation({
     onSuccess: () => {
       toast.success("Download freigegeben");
@@ -128,7 +120,6 @@ export default function PostDetailPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -136,7 +127,6 @@ export default function PostDetailPage() {
     }
   }, [session, sessionLoading, router, postId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -146,7 +136,6 @@ export default function PostDetailPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Loading state
   if (sessionLoading || profileLoading || postLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -182,7 +171,6 @@ export default function PostDetailPage() {
     isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
   const canReview = isReviewer && post.status === ContentStatus.PENDING;
 
-  // Check if all attached content is approved
   const hasPendingDownloads =
     attachedContent?.downloads.some(
       (d) => d.status !== ContentStatus.APPROVED,

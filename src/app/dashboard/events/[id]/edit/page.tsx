@@ -35,10 +35,8 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-// Roles that can edit events for any district and use Auswahlchöre
 const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
 
-// Roles that have access to the dashboard
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
   UserRole.LPW,
@@ -62,21 +60,17 @@ export default function EditEventPage() {
   const hasRedirected = useRef(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch user profile for role and bezirk
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  // Fetch existing event
   const { data: event, isLoading: eventLoading } = api.events.getById.useQuery(
     { id: eventId },
     { enabled: !!eventId && !!session?.user },
   );
 
-  // Determine user permissions
   const userRole = profile?.role ?? UserRole.USER;
   const isHigherRole = HIGHER_ROLES.includes(userRole);
 
-  // Form state
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
@@ -87,7 +81,6 @@ export default function EditEventPage() {
   const [districtName, setDistrictName] = useState("");
   const [cancelled, setCancelled] = useState(false);
 
-  // Location state
   const [locationId, setLocationId] = useState<string>("");
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -100,7 +93,6 @@ export default function EditEventPage() {
     additionalInfo: "",
   });
 
-  // Performing ensemble state
   const [performingEnsembleType, setPerformingEnsembleType] =
     useState<EventEnsembleType | null>(null);
   const [ensembleId, setEnsembleId] = useState<string>("");
@@ -112,41 +104,32 @@ export default function EditEventPage() {
   const [performingEnsembleName, setPerformingEnsembleName] = useState("");
   const [leitung, setLeitung] = useState("");
 
-  // Participation state
   const [openToParticipants, setOpenToParticipants] = useState(false);
   const [participationInfo, setParticipationInfo] = useState("");
 
-  // Pricing state
   const [isFree, setIsFree] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
-  // Status state
   const [status, setStatus] = useState<ContentStatus>("DRAFT");
 
-  // Submission state
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch bezirke
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  // Fetch locations
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
     search: locationSearch || undefined,
   });
 
-  // Fetch ensembles
   const { data: ensemblesData } = api.ensembles.getAll.useQuery({});
 
-  // Fetch auswahlchöre - only for higher roles
   const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );
 
-  // Initialize form with event data
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (event && !isInitialized) {
@@ -159,7 +142,6 @@ export default function EditEventPage() {
       setDistrictName(event.districtName || "");
       setStatus(event.status);
 
-      // Parse date and time
       const date = new Date(event.eventDate);
       setEventDate(date.toISOString().split("T")[0] || "");
       setEventTime(
@@ -170,7 +152,6 @@ export default function EditEventPage() {
         }),
       );
 
-      // Location
       if (event.location) {
         setLocationId(event.location.id);
         setLocationSearch(
@@ -178,7 +159,6 @@ export default function EditEventPage() {
         );
       }
 
-      // Ensemble
       setPerformingEnsembleType(event.performingEnsembleType);
       if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
         setEnsembleId(event.ensemble.id);
@@ -193,11 +173,9 @@ export default function EditEventPage() {
       }
       setLeitung(event.leitung || "");
 
-      // Participation
       setOpenToParticipants(event.openToParticipants);
       setParticipationInfo(event.participationInfo || "");
 
-      // Pricing
       setIsFree(event.isFree);
       setPriceInfo(event.priceInfo || "");
       if (event.priceOptions && event.priceOptions.length > 0) {
@@ -216,13 +194,10 @@ export default function EditEventPage() {
   }, [event, isInitialized]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  // tRPC utils for cache invalidation
   const utils = api.useUtils();
 
-  // Update event mutation
   const updateEventMutation = api.events.update.useMutation({
     onSuccess: async () => {
-      // Invalidate the event query to refetch fresh data on the view page
       await utils.events.getById.invalidate({ id: eventId });
       toast.success("Termin erfolgreich aktualisiert");
       router.push(`/dashboard/events/${eventId}`);
@@ -234,7 +209,6 @@ export default function EditEventPage() {
     },
   });
 
-  // Create location mutation
   const createLocationMutation = api.locations.create.useMutation({
     onSuccess: (location) => {
       setLocationId(location.id);
@@ -261,7 +235,6 @@ export default function EditEventPage() {
     },
   });
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -269,7 +242,6 @@ export default function EditEventPage() {
     }
   }, [session, sessionLoading, router, eventId]);
 
-  // Redirect if user doesn't have dashboard access
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
       if (!DASHBOARD_ROLES.includes(profile.role)) {
@@ -279,7 +251,6 @@ export default function EditEventPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Check edit permissions once event is loaded
   useEffect(() => {
     if (event && profile && !hasRedirected.current) {
       const canEdit =
@@ -294,7 +265,6 @@ export default function EditEventPage() {
     }
   }, [event, profile, session, router, eventId]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -361,7 +331,6 @@ export default function EditEventPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation
     if (!title.trim()) {
       setError("Bitte gib einen Titel ein.");
       setIsSubmitting(false);
@@ -374,10 +343,8 @@ export default function EditEventPage() {
       return;
     }
 
-    // Combine date and time
     const dateTime = new Date(`${eventDate}T${eventTime}`);
 
-    // Prepare price options
     const preparedPriceOptions = !isFree
       ? priceOptions
           .filter((opt) => opt.label && opt.price >= 0)
@@ -389,8 +356,6 @@ export default function EditEventPage() {
           }))
       : [];
 
-    // If the event was approved or rejected and content is being changed, set status back to pending
-    // (unless user is explicitly setting a different status)
     let finalStatus = status;
     if (
       (event?.status === ContentStatus.APPROVED &&
@@ -398,7 +363,6 @@ export default function EditEventPage() {
       (event?.status === ContentStatus.REJECTED &&
         status === ContentStatus.REJECTED)
     ) {
-      // Content was approved/rejected and user didn't change status - set back to pending for re-review
       finalStatus = ContentStatus.PENDING;
     }
 
@@ -432,7 +396,6 @@ export default function EditEventPage() {
     });
   };
 
-  // Loading state
   if (sessionLoading || profileLoading || eventLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -459,7 +422,6 @@ export default function EditEventPage() {
     );
   }
 
-  // Get available ensemble types based on role
   const availableEnsembleTypes = isHigherRole
     ? Object.entries(ensembleTypeLabels)
     : Object.entries(ensembleTypeLabels).filter(

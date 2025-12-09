@@ -38,13 +38,11 @@ export default function NewTeamPage() {
       enabled: !!session?.user,
     });
 
-  // Get all users for linking
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 1000 },
     { enabled: !!session?.user },
   );
 
-  // Form state
   const [userId, setUserId] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -54,7 +52,6 @@ export default function NewTeamPage() {
   const [responsibilitiesText, setResponsibilitiesText] = useState("");
   const [socials, setSocials] = useState<SocialLink[]>([]);
 
-  // Social link handlers
   const addSocialLink = () => {
     setSocials([...socials, { type: "website", url: "", label: "" }]);
   };
@@ -76,7 +73,6 @@ export default function NewTeamPage() {
     setSocials(socials.filter((_, i) => i !== index));
   };
 
-  // Filter users based on search
   const filteredUsers = users?.users.filter((user) => {
     if (!userSearch.trim()) return true;
     const searchLower = userSearch.toLowerCase();
@@ -86,7 +82,6 @@ export default function NewTeamPage() {
     );
   });
 
-  // Handle user selection
   const handleUserSelect = (user: {
     id: string;
     displayName: string | null;
@@ -97,7 +92,6 @@ export default function NewTeamPage() {
     setShowUserDropdown(false);
   };
 
-  // Handle clearing user selection
   const handleClearUser = () => {
     setUserId(null);
     setUserSearch("");
@@ -148,14 +142,12 @@ export default function NewTeamPage() {
       return;
     }
 
-    // Parse responsibilities from text (one per line)
     const responsibilities = responsibilitiesText
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0)
       .join("\n");
 
-    // Filter out empty socials and serialize
     const validSocials = socials.filter((s) => s.url.trim());
     const socialsJson =
       validSocials.length > 0 ? JSON.stringify(validSocials) : undefined;

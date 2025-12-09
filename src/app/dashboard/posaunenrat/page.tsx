@@ -10,7 +10,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access posaunenrat management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {

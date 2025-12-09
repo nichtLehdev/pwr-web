@@ -10,7 +10,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access team management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const CONTACT_TYPE_LABELS: Record<string, string> = {

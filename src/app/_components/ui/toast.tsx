@@ -92,7 +92,6 @@ export function useToast() {
   return context;
 }
 
-// Toast Item Component
 function ToastItem({
   toast,
   onClose,
@@ -104,7 +103,6 @@ function ToastItem({
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Trigger enter animation
     const timer = setTimeout(() => setIsVisible(true), 10);
     return () => clearTimeout(timer);
   }, []);
@@ -230,7 +228,6 @@ function ToastItem({
   );
 }
 
-// Toaster Component - renders all toasts
 export function Toaster() {
   const { toasts, removeToast } = useToast();
 

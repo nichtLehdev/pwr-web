@@ -25,21 +25,18 @@ export default function ProfileImageUpload({
   const [error, setError] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Use tRPC mutation for creating media
   const createMedia = api.media.create.useMutation();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       setError("Nur JPEG, PNG und WebP Dateien sind erlaubt");
       return;
     }
 
-    // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError("Die Datei ist zu groß. Maximale Größe: 5MB");
       return;
@@ -49,14 +46,12 @@ export default function ProfileImageUpload({
     setUploading(true);
 
     try {
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
 
-      // Upload file
       const formData = new FormData();
       formData.append("file", file);
 
@@ -72,7 +67,6 @@ export default function ProfileImageUpload({
 
       const data = await response.json();
 
-      // Create media record in database using tRPC
       const extension = data.file.mimeType.split("/")[1] || "jpg";
 
       const media = await createMedia.mutateAsync({
@@ -88,7 +82,6 @@ export default function ProfileImageUpload({
         isPublic: false,
       });
 
-      // Update preview with actual uploaded image
       setPreview(data.file.url);
       onImageUploaded(media.id);
     } catch (err) {

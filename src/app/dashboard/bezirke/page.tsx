@@ -9,7 +9,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can manage Bezirke
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardBezirkePage() {

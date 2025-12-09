@@ -8,7 +8,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins and LPW can access blaeserhefte management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function DashboardBlaeserheftDetailPage() {

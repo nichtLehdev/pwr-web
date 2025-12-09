@@ -6,12 +6,10 @@ import PageHeader from "@/app/_components/general/page-header";
 export default async function PosaunenwartePage() {
   const posaunenwarte = await api.organization.getPosaunenwarte();
 
-  // posaunenwarte color mapping. LPW is always primary color, RPW have one (first) of the district colors they are assigned to
   const pwWithColors = posaunenwarte.map((pw) => {
     if (pw.role === "LPW") {
       return { ...pw, color: "bg-primary" };
     } else {
-      // Get first district color or default to district-1
       const firstDistrict = pw.bezirke?.[0]?.number ?? 1;
       return { ...pw, color: `bg-district-${firstDistrict}` };
     }

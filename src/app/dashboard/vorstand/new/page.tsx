@@ -13,7 +13,6 @@ import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
-// User placeholder icon component
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}
@@ -41,13 +40,11 @@ export default function NewVorstandPage() {
       enabled: !!session?.user,
     });
 
-  // Get all users for linking
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
   );
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -62,7 +59,6 @@ export default function NewVorstandPage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
-  // Filter users based on search
   const filteredUsers = users?.users.filter((user) => {
     if (!userSearch.trim()) return true;
     const searchLower = userSearch.toLowerCase();
@@ -72,7 +68,6 @@ export default function NewVorstandPage() {
     );
   });
 
-  // Handle user selection
   const handleUserSelect = (user: {
     id: string;
     displayName: string | null;
@@ -83,7 +78,6 @@ export default function NewVorstandPage() {
     setShowUserDropdown(false);
   };
 
-  // Handle clearing user selection
   const handleClearUser = () => {
     setUserId(null);
     setUserSearch("");

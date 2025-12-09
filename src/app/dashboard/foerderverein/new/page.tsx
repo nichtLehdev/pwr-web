@@ -34,13 +34,11 @@ export default function NewFoerdervereinPage() {
       enabled: !!session?.user,
     });
 
-  // Get all users for optional linking
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
   );
 
-  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -58,7 +56,6 @@ export default function NewFoerdervereinPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Filter users based on search
   const filteredUsers = users?.users.filter((user) => {
     if (!userSearch.trim()) return true;
     const searchLower = userSearch.toLowerCase();
@@ -68,7 +65,6 @@ export default function NewFoerdervereinPage() {
     );
   });
 
-  // Handle user selection
   const handleUserSelect = (user: {
     id: string;
     displayName: string | null;
@@ -79,7 +75,6 @@ export default function NewFoerdervereinPage() {
     setShowUserDropdown(false);
   };
 
-  // Handle clearing user selection
   const handleClearUser = () => {
     setUserId(null);
     setUserSearch("");
@@ -123,7 +118,6 @@ export default function NewFoerdervereinPage() {
     setError("");
     setIsSubmitting(true);
 
-    // Validation: Either userId or name is required
     if (!userId && !name.trim()) {
       setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
       setIsSubmitting(false);

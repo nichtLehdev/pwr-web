@@ -7,7 +7,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
 
-// Only admins can access user management
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const roleLabels: Record<UserRole, string> = {
