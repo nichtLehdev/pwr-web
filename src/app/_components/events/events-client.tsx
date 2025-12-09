@@ -194,13 +194,14 @@ export default function EventsClient({
           const courseTypeEnum = courseTypeMap[selectedCategory];
           const targetAudienceEnum = targetAudienceMap[selectedCategory];
 
+          // Check if the selected category is a course type
           if (courseTypeEnum && item.courseType !== courseTypeEnum) {
-            if (
-              targetAudienceEnum &&
-              item.targetAudience !== targetAudienceEnum
-            ) {
-              return false;
-            }
+            return false;
+          }
+
+          // Check if the selected category is a target audience
+          if (targetAudienceEnum && item.targetAudience !== targetAudienceEnum) {
+            return false;
           }
         }
       }
