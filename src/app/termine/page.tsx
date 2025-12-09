@@ -9,12 +9,11 @@ export default async function TerminePage() {
     api.events.getAll({
       page: 1,
       limit: 100,
-      startDate: now,
+      startDate: new Date(now.getFullYear() - 1, 0, 1),
     }),
     api.courses.getAll({
       page: 1,
       limit: 100,
-      upcoming: true,
     }),
     api.bezirke.getAll(),
   ]);
