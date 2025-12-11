@@ -1,19 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import SectionHeader from "./_components/section-header";
 import EventCard from "./_components/events/event-card";
 import PostCard from "./_components/posts/post-card";
-import { api } from "@/trpc/server";
+import { api } from "@/trpc/react";
 
-export default async function Home() {
-  const upcomingEvents = await api.events.getAll({
+export default function Home() {
+  const upcomingEvents = api.events.getAll.useQuery({
     page: 1,
     limit: 4,
     startDate: new Date(),
-  });
-  const latestPosts = await api.posts.getAll({
+  }).data || { events: [] };
+  const latestPosts = api.posts.getAll.useQuery({
     page: 1,
     limit: 3,
-  });
+  }).data || { posts: [] };
 
   return (
     <div>

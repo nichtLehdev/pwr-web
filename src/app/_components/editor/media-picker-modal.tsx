@@ -24,17 +24,14 @@ export default function MediaPickerModal({
     name: string;
   } | null>(null);
 
-  // Upload state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // New image metadata
   const [newImageAlt, setNewImageAlt] = useState("");
   const [newImageTitle, setNewImageTitle] = useState("");
 
-  // Fetch media library (includeAll shows approved + user's own pending)
   const {
     data: mediaData,
     isLoading,
@@ -50,7 +47,6 @@ export default function MediaPickerModal({
     { enabled: isOpen },
   );
 
-  // Create media mutation
   const createMediaMutation = api.media.create.useMutation({
     onSuccess: async (newMedia) => {
       await refetch();
@@ -75,13 +71,11 @@ export default function MediaPickerModal({
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setUploadError("Bitte wähle eine Bilddatei aus.");
         return;
       }
 
-      // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         setUploadError("Die Datei ist zu groß. Maximal 10MB erlaubt.");
         return;
@@ -92,11 +86,9 @@ export default function MediaPickerModal({
       setUploadProgress(0);
 
       try {
-        // Create form data
         const formData = new FormData();
         formData.append("file", file);
 
-        // Upload to API
         const response = await fetch("/api/upload", {
           method: "POST",
           body: formData,
@@ -121,7 +113,6 @@ export default function MediaPickerModal({
 
         setUploadProgress(75);
 
-        // Create media record
         createMediaMutation.mutate({
           name: file.name,
           filename: data.filename,

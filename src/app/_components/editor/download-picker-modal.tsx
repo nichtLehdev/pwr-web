@@ -52,7 +52,6 @@ export default function DownloadPickerModal({
     description: string | null;
   } | null>(null);
 
-  // Create form state
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newCategory, setNewCategory] = useState<DownloadCategory>("SONSTIGES");
@@ -64,7 +63,6 @@ export default function DownloadPickerModal({
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
   const [uploadedFileSize, setUploadedFileSize] = useState(0);
 
-  // Fetch downloads (includeAll shows approved + user's own pending)
   const {
     data: downloadsData,
     isLoading,
@@ -80,7 +78,6 @@ export default function DownloadPickerModal({
     { enabled: isOpen },
   );
 
-  // Create download mutation
   const createDownloadMutation = api.materials.createDownload.useMutation({
     onSuccess: async (newDownload) => {
       await refetch();
@@ -112,7 +109,6 @@ export default function DownloadPickerModal({
 
   const processFile = useCallback(
     async (file: File) => {
-      // Validate file size (max 50MB)
       if (file.size > 50 * 1024 * 1024) {
         setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
         return;
@@ -146,16 +142,14 @@ export default function DownloadPickerModal({
         setUploadedFileUrl(data.url);
         setUploadedFileSize(data.size);
 
-        // Auto-detect file type
         const ext = data.extension.toLowerCase();
         if (ext === "pdf") setNewFileType("PDF");
         else if (["doc", "docx"].includes(ext)) setNewFileType("DOCX");
         else if (["xls", "xlsx"].includes(ext)) setNewFileType("XLSX");
         else if (ext === "zip") setNewFileType("ZIP");
         else if (["mp3", "wav", "ogg"].includes(ext)) setNewFileType("MP3");
-        else setNewFileType("PDF"); // Default fallback
+        else setNewFileType("PDF");
 
-        // Auto-fill title from filename
         if (!newTitle) {
           setNewTitle(file.name.replace(/\.[^/.]+$/, ""));
         }
