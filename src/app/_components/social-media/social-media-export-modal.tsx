@@ -161,11 +161,16 @@ export default function SocialMediaExportModal({
       : null;
 
   const downloadImage = async (element: HTMLElement): Promise<Blob> => {
+    await document.fonts.ready;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     const dataUrl = await toPng(element, {
       quality: 1,
       pixelRatio: 2,
       width: 1080,
       height: 1080,
+      cacheBust: true,
+      skipFonts: true,
     });
 
     const response = await fetch(dataUrl);
