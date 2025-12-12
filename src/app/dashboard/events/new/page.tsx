@@ -386,6 +386,7 @@ export default function NewEventPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="z.B. Adventskonzert 2025"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  maxLength={200}
                   required
                 />
               </div>
@@ -400,6 +401,7 @@ export default function NewEventPage() {
                   onChange={(e) => setMotto(e.target.value)}
                   placeholder="z.B. Musik zur Weihnachtszeit"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  maxLength={500}
                 />
               </div>
 
@@ -413,6 +415,7 @@ export default function NewEventPage() {
                   rows={4}
                   placeholder="Beschreibe die Veranstaltung..."
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  maxLength={5000}
                 />
               </div>
 
@@ -1056,6 +1059,7 @@ export default function NewEventPage() {
                                 }
                                 placeholder="Bezeichnung (z.B. Erwachsene)"
                                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                maxLength={100}
                               />
                               <div className="flex items-center gap-1">
                                 <input

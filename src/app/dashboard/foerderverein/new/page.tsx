@@ -320,6 +320,7 @@ export default function NewFoerdervereinPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Max Mustermann"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
@@ -355,6 +356,7 @@ export default function NewFoerdervereinPage() {
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
                     placeholder="z.B. 1. Vorsitzender"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
@@ -388,6 +390,9 @@ export default function NewFoerdervereinPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="z.B. +49 123 456789"
+                  maxLength={50}
+                  pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                  title="Bitte geben Sie eine gültige Telefonnummer ein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -401,6 +406,8 @@ export default function NewFoerdervereinPage() {
                     type="date"
                     value={memberSince}
                     onChange={(e) => setMemberSince(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                    title="Datum kann nicht in der Zukunft liegen"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
@@ -429,6 +436,7 @@ export default function NewFoerdervereinPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Zusätzliche Informationen zum Mitglied..."
+                  maxLength={1000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>

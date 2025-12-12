@@ -127,15 +127,19 @@ export const ensemblesRouter = createTRPCRouter({
   create: posaunenratProcedure
     .input(
       z.object({
-        name: z.string().min(1),
-        description: z.string().optional(),
+        name: z.string().min(1).max(200),
+        description: z.string().max(5000).optional(),
         bezirkId: z.string().optional(),
         imageId: z.string().optional(),
         locationId: z.string().optional(),
-        rehearsalDay: z.string().optional(),
-        rehearsalTime: z.string().optional(),
+        rehearsalDay: z.string().max(50).optional(),
+        rehearsalTime: z.string().max(50).optional(),
         contactEmail: z.string().email().optional(),
-        contactPhone: z.string().optional(),
+        contactPhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
         contactWebsite: z.string().url().optional(),
         conductorId: z.string().optional(),
         representativeId: z.string().optional(),
@@ -161,15 +165,19 @@ export const ensemblesRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().min(1).optional(),
-        description: z.string().optional(),
+        name: z.string().min(1).max(200).optional(),
+        description: z.string().max(5000).optional(),
         bezirkId: z.string().optional().nullable(),
         imageId: z.string().optional().nullable(),
         locationId: z.string().optional().nullable(),
-        rehearsalDay: z.string().optional(),
-        rehearsalTime: z.string().optional(),
+        rehearsalDay: z.string().max(50).optional(),
+        rehearsalTime: z.string().max(50).optional(),
         contactEmail: z.string().email().optional().nullable(),
-        contactPhone: z.string().optional(),
+        contactPhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
         contactWebsite: z.string().url().optional().nullable(),
         conductorId: z.string().optional().nullable(),
         representativeId: z.string().optional().nullable(),

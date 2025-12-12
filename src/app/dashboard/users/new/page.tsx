@@ -361,6 +361,7 @@ export default function NewUserPage() {
                     value={firstName}
                     onChange={(e) => handleFirstNameChange(e.target.value)}
                     placeholder="Max"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -374,6 +375,7 @@ export default function NewUserPage() {
                     value={lastName}
                     onChange={(e) => handleLastNameChange(e.target.value)}
                     placeholder="Mustermann"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -425,6 +427,10 @@ export default function NewUserPage() {
                   value={username}
                   onChange={(e) => handleUsernameChange(e.target.value)}
                   placeholder="vorname.nachname"
+                  minLength={3}
+                  maxLength={30}
+                  pattern="[a-zA-Z0-9_-]+"
+                  title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
                   className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
                     usernameStatus.available === false
                       ? "border-red-500"
@@ -465,6 +471,7 @@ export default function NewUserPage() {
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
                   placeholder="Kurze Beschreibung..."
+                  maxLength={2000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -507,6 +514,7 @@ export default function NewUserPage() {
                   value={displayRole}
                   onChange={(e) => setDisplayRole(e.target.value)}
                   placeholder="z.B. Webmaster, Geschäftsführer"
+                  maxLength={100}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
                 <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
@@ -545,6 +553,7 @@ export default function NewUserPage() {
                     value={obleuteRole}
                     onChange={(e) => setObleuteRole(e.target.value)}
                     placeholder="z.B. Bezirksobmann, Bezirksobfrau"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>

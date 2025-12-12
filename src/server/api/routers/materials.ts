@@ -157,12 +157,12 @@ export const materialsRouter = createTRPCRouter({
   createDownload: contentCreatorProcedure
     .input(
       z.object({
-        title: z.string().min(1),
-        description: z.string().optional(),
+        title: z.string().min(1).max(200),
+        description: z.string().max(2000).optional(),
         category: z.enum(DownloadCategory),
-        fileUrl: z.string().min(1),
+        fileUrl: z.string().min(1).max(500),
         fileType: z.enum(FileType),
-        fileSize: z.int(),
+        fileSize: z.int().min(0).max(100000000),
         tags: z.array(z.string()).optional(),
         isPublic: z.boolean().default(true),
       }),
@@ -188,12 +188,12 @@ export const materialsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().min(1).optional(),
-        description: z.string().optional(),
+        title: z.string().min(1).max(200).optional(),
+        description: z.string().max(2000).optional(),
         category: z.enum(DownloadCategory).optional(),
-        fileUrl: z.string().min(1).optional(),
+        fileUrl: z.string().min(1).max(500).optional(),
         fileType: z.enum(FileType).optional(),
-        fileSize: z.int().optional(),
+        fileSize: z.int().min(0).max(100000000).optional(),
         tags: z.array(z.string()).optional(),
         isPublic: z.boolean().optional(),
       }),
@@ -299,10 +299,10 @@ export const materialsRouter = createTRPCRouter({
   createBlaserheft: lpwProcedure
     .input(
       z.object({
-        title: z.string().min(1),
-        subtitle: z.string().min(1),
-        year: z.number(),
-        description: z.string().min(1),
+        title: z.string().min(1).max(200),
+        subtitle: z.string().min(1).max(200),
+        year: z.number().min(1900).max(2100),
+        description: z.string().min(1).max(5000),
         chapters: z.string().optional(),
         highlights: z.string().optional(),
         imageId: z.string(),
@@ -331,10 +331,10 @@ export const materialsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().min(1).optional(),
-        subtitle: z.string().optional(),
-        year: z.number().optional(),
-        description: z.string().optional(),
+        title: z.string().min(1).max(200).optional(),
+        subtitle: z.string().max(200).optional(),
+        year: z.number().min(1900).max(2100).optional(),
+        description: z.string().max(5000).optional(),
         chapters: z.string().optional(),
         highlights: z.string().optional(),
         imageId: z.string().optional(),

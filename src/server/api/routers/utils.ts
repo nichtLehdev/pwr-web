@@ -108,11 +108,11 @@ export const locationsRouter = createTRPCRouter({
   create: posaunenratProcedure
     .input(
       z.object({
-        name: z.string().optional(),
-        street: z.string().optional(),
-        zipCode: z.string().optional(),
-        city: z.string().min(1),
-        additionalInfo: z.string().optional(),
+        name: z.string().max(200).optional(),
+        street: z.string().max(200).optional(),
+        zipCode: z.string().max(20).optional(),
+        city: z.string().min(1).max(100),
+        additionalInfo: z.string().max(500).optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),
       }),
@@ -127,11 +127,11 @@ export const locationsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional(),
-        street: z.string().optional(),
-        zipCode: z.string().optional(),
-        city: z.string().optional(),
-        additionalInfo: z.string().optional(),
+        name: z.string().max(200).optional(),
+        street: z.string().max(200).optional(),
+        zipCode: z.string().max(20).optional(),
+        city: z.string().max(100).optional(),
+        additionalInfo: z.string().max(500).optional(),
         latitude: z.number().optional().nullable(),
         longitude: z.number().optional().nullable(),
       }),
@@ -205,7 +205,7 @@ export const newsletterRouter = createTRPCRouter({
     .input(
       z.object({
         email: z.string().email(),
-        name: z.string().optional(),
+        name: z.string().max(100).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

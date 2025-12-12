@@ -252,6 +252,7 @@ export default function EditBlaeserheftPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
+                  maxLength={200}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="z.B. Bläserheft 2024"
                 />
@@ -265,6 +266,7 @@ export default function EditBlaeserheftPage() {
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
                   required
+                  maxLength={200}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="z.B. Heft 75"
                 />
@@ -307,6 +309,7 @@ export default function EditBlaeserheftPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+                maxLength={5000}
                 rows={4}
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 placeholder="Beschreibung des Bläserhefts..."

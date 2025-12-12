@@ -297,6 +297,7 @@ export default function EditUserPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Vollständiger Name"
+                  maxLength={100}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -324,6 +325,10 @@ export default function EditUserPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="benutzername"
+                  minLength={3}
+                  maxLength={30}
+                  pattern="[a-zA-Z0-9_-]+"
+                  title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -337,6 +342,7 @@ export default function EditUserPage() {
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
                   placeholder="Kurze Beschreibung..."
+                  maxLength={2000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -379,6 +385,7 @@ export default function EditUserPage() {
                   value={displayRole}
                   onChange={(e) => setDisplayRole(e.target.value)}
                   placeholder="z.B. Webmaster, Geschäftsführer"
+                  maxLength={100}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
                 <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
@@ -417,6 +424,7 @@ export default function EditUserPage() {
                     value={obleuteRole}
                     onChange={(e) => setObleuteRole(e.target.value)}
                     placeholder="z.B. Bezirksobmann, Bezirksobfrau"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
