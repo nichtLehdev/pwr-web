@@ -160,26 +160,32 @@ export default function Navigation() {
           <Link href="/" className="shrink-0">
             <div className="relative h-10 lg:h-14">
               {/* Desktop: Komplettes Logo mit Text */}
-              <object
-                data={
+              <Image
+                src={
                   isDarkMode
                     ? "/images/logo-horizontal-dark.svg"
                     : "/images/logo-horizontal.svg"
                 }
-                type="image/svg+xml"
+                alt="Posaunenwerk Rheinland"
+                width={200}
+                height={56}
                 className="pointer-events-none hidden h-full w-auto lg:block"
-                aria-label="Posaunenwerk Rheinland"
+                priority
+                unoptimized
               />
               {/* Mobile: Nur Icon */}
-              <object
-                data={
+              <Image
+                src={
                   isDarkMode
                     ? "/images/logo-icon-dark.svg"
                     : "/images/logo-icon.svg"
                 }
-                type="image/svg+xml"
+                alt="Posaunenwerk Rheinland"
+                width={40}
+                height={40}
                 className="pointer-events-none h-full w-auto lg:hidden"
-                aria-label="Posaunenwerk Rheinland"
+                priority
+                unoptimized
               />
             </div>
           </Link>
