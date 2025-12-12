@@ -20,6 +20,7 @@ interface InstagramSummaryTemplateProps {
   year: number;
   pageNumber?: number;
   totalPages?: number;
+  totalEvents?: number;
 }
 
 const monthNames = [
@@ -43,6 +44,7 @@ export default function InstagramSummaryTemplate({
   year,
   pageNumber,
   totalPages,
+  totalEvents,
 }: InstagramSummaryTemplateProps) {
   const monthName = monthNames[month - 1];
 
@@ -65,7 +67,14 @@ export default function InstagramSummaryTemplate({
           </h1>
           <div className="text-4xl font-bold">{year}</div>
           <div className="mt-4 rounded-full bg-white/20 px-8 py-3 text-3xl font-bold backdrop-blur-sm">
-            {events.length} {events.length === 1 ? "Termin" : "Termine"}
+            {totalEvents ? totalEvents : events.length}{" "}
+            {totalEvents
+              ? totalEvents === 1
+                ? "Termin"
+                : "Termine"
+              : events.length === 1
+                ? "Termin"
+                : "Termine"}
             {pageNumber && totalPages && (
               <div className="mt-1 text-xl opacity-90">
                 Seite {pageNumber} von {totalPages}
