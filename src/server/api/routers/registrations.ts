@@ -25,8 +25,6 @@ export const registrationsRouter = createTRPCRouter({
           .max(50)
           .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
           .optional(),
-        registrantChoir: z.string().max(200).optional(),
-        registrantDistrict: z.string().max(100).optional(),
         registrantStreet: z.string().max(200).optional(),
         registrantZipCode: z.string().max(20).optional(),
         registrantCity: z.string().max(100).optional(),

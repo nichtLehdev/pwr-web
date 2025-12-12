@@ -255,7 +255,7 @@ export const usersRouter = createTRPCRouter({
           .string()
           .min(3)
           .max(30)
-          .regex(/^[a-zA-Z0-9_-]+$/)
+          .regex(/^[a-zA-Z0-9_.-]+$/)
           .optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
@@ -300,7 +300,7 @@ export const usersRouter = createTRPCRouter({
           .string()
           .min(3)
           .max(30)
-          .regex(/^[a-zA-Z0-9_-]+$/)
+          .regex(/^[a-zA-Z0-9_.-]+$/)
           .optional(),
         phone: z
           .string()

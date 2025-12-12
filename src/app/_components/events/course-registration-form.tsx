@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import type { RouterInputs, RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
 import type { User } from "~/generated/prisma/client";
+import { useToast } from "@/app/_components/ui/toast";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -29,6 +30,7 @@ export default function CourseRegistrationForm({
   isWaitlist,
   currentUser,
 }: CourseRegistrationFormProps) {
+  const toast = useToast();
   const registrationMutation = api.registrations.create.useMutation();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [validationErrors, setValidationErrors] = useState<
@@ -231,74 +233,85 @@ export default function CourseRegistrationForm({
   const canProceed = validateStep(currentStep);
 
   const handleSubmit = async () => {
-    console.log("Registration submitted:", {
+    console.debug("Registration submitted:", {
       course: course.id,
       ...registrationData,
       totalPrice: calculateTotalPrice(),
       isWaitlist,
     });
 
-    registrationMutation.mutate({
-      courseId: course.id,
-      registrantFirstName:
-        registrationData.registrantFirstName || currentUser?.firstName || "",
-      registrantLastName:
-        registrationData.registrantLastName || currentUser?.lastName || "",
-      registrantEmail:
-        registrationData.registrantEmail || currentUser?.email || "",
-      registrantPhone:
-        registrationData.registrantPhone || currentUser?.phone || "",
-      ...(registrationData.registrantStreet && {
-        registrantStreet: registrationData.registrantStreet,
-      }),
-      ...(registrationData.registrantZipCode && {
-        registrantZipCode: registrationData.registrantZipCode,
-      }),
-      ...(registrationData.registrantCity && {
-        registrantCity: registrationData.registrantCity,
-      }),
-      ...(registrationData.useSeparateBilling !== undefined && {
-        useSeparateBilling: registrationData.useSeparateBilling,
-      }),
-      ...(registrationData.billingCompany && {
-        billingCompany: registrationData.billingCompany,
-      }),
-      ...(registrationData.billingFirstName && {
-        billingFirstName: registrationData.billingFirstName,
-      }),
-      ...(registrationData.billingLastName && {
-        billingLastName: registrationData.billingLastName,
-      }),
-      ...(registrationData.billingStreet && {
-        billingStreet: registrationData.billingStreet,
-      }),
-      ...(registrationData.billingZipCode && {
-        billingZipCode: registrationData.billingZipCode,
-      }),
-      ...(registrationData.billingCity && {
-        billingCity: registrationData.billingCity,
-      }),
-      ...(registrationData.billingEmail && {
-        billingEmail: registrationData.billingEmail,
-      }),
-      participants: registrationData.participants.map((p) => ({
-        firstName: p.firstName,
-        lastName: p.lastName,
-        birthDate: p.birthDate,
-        city: p.city,
-        ...(p.instrument && { instrument: p.instrument }),
-        priceOptionId: p.priceOptionId,
-        ...(p.customFields && { customFields: p.customFields }),
-      })),
-    });
-
-    alert(
-      isWaitlist
-        ? "Sie wurden auf die Warteliste gesetzt."
-        : "Ihre Anmeldung war erfolgreich.",
+    registrationMutation.mutate(
+      {
+        courseId: course.id,
+        registrantFirstName:
+          registrationData.registrantFirstName || currentUser?.firstName || "",
+        registrantLastName:
+          registrationData.registrantLastName || currentUser?.lastName || "",
+        registrantEmail:
+          registrationData.registrantEmail || currentUser?.email || "",
+        registrantPhone:
+          registrationData.registrantPhone || currentUser?.phone || "",
+        ...(registrationData.registrantStreet && {
+          registrantStreet: registrationData.registrantStreet,
+        }),
+        ...(registrationData.registrantZipCode && {
+          registrantZipCode: registrationData.registrantZipCode,
+        }),
+        ...(registrationData.registrantCity && {
+          registrantCity: registrationData.registrantCity,
+        }),
+        ...(registrationData.useSeparateBilling !== undefined && {
+          useSeparateBilling: registrationData.useSeparateBilling,
+        }),
+        ...(registrationData.billingCompany && {
+          billingCompany: registrationData.billingCompany,
+        }),
+        ...(registrationData.billingFirstName && {
+          billingFirstName: registrationData.billingFirstName,
+        }),
+        ...(registrationData.billingLastName && {
+          billingLastName: registrationData.billingLastName,
+        }),
+        ...(registrationData.billingStreet && {
+          billingStreet: registrationData.billingStreet,
+        }),
+        ...(registrationData.billingZipCode && {
+          billingZipCode: registrationData.billingZipCode,
+        }),
+        ...(registrationData.billingCity && {
+          billingCity: registrationData.billingCity,
+        }),
+        ...(registrationData.billingEmail && {
+          billingEmail: registrationData.billingEmail,
+        }),
+        participants: registrationData.participants.map((p) => ({
+          firstName: p.firstName,
+          lastName: p.lastName,
+          birthDate: p.birthDate,
+          city: p.city,
+          ...(p.instrument && { instrument: p.instrument }),
+          priceOptionId: p.priceOptionId,
+          ...(p.customFields && { customFields: p.customFields }),
+        })),
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            isWaitlist
+              ? "Sie wurden auf die Warteliste gesetzt."
+              : "Ihre Anmeldung war erfolgreich.",
+          );
+          onSuccess();
+          onClose();
+        },
+        onError: (error) => {
+          toast.error(
+            "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.",
+          );
+          console.error("Registration error:", error);
+        },
+      },
     );
-    onSuccess();
-    onClose();
   };
 
   return (
