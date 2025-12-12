@@ -162,7 +162,31 @@ export default function SocialMediaExportModal({
 
   const downloadImage = async (element: HTMLElement): Promise<Blob> => {
     await document.fonts.ready;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Wait for all images in the element to load
+    const images = element.querySelectorAll("img");
+
+    await Promise.all(
+      Array.from(images).map((img) => {
+        if (img.complete && img.naturalWidth > 0) {
+          return Promise.resolve();
+        }
+        return new Promise((resolve) => {
+          img.onload = () => {
+            resolve(undefined);
+          };
+          img.onerror = () => {
+            resolve(undefined);
+          };
+          if (!img.src) {
+            resolve(undefined);
+          }
+        });
+      }),
+    );
+
+    // Additional wait to ensure rendering is complete
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const dataUrl = await toPng(element, {
       quality: 1,
@@ -173,8 +197,17 @@ export default function SocialMediaExportModal({
       skipFonts: true,
     });
 
-    const response = await fetch(dataUrl);
-    const blob = await response.blob();
+    // Convert data URL to blob without using fetch
+    const base64Response = dataUrl.split(",")[1];
+    if (!base64Response) {
+      throw new Error("Invalid data URL");
+    }
+    const binaryString = atob(base64Response);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "image/png" });
 
     return blob;
   };
@@ -240,11 +273,19 @@ export default function SocialMediaExportModal({
     if (!filteredEvents || filteredEvents.length === 0) return;
 
     setIsGenerating(true);
+    const originalTab = activeTab;
+
     try {
       const zip = new JSZip();
 
-      // Add all summary images
+      // Add all summary images - switch to summary tab first
+      setActiveTab("summary");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       for (let pageIndex = 0; pageIndex < summaryPageCount; pageIndex++) {
+        setActiveSummaryPage(pageIndex);
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
         const element = summaryRefs.current.get(pageIndex);
         if (element) {
           const summaryBlob = await downloadImage(element);
@@ -257,13 +298,21 @@ export default function SocialMediaExportModal({
         }
       }
 
-      // Add individual event images
+      // Add individual event images - switch to each event tab one by one
       for (let i = 0; i < filteredEvents.length; i++) {
         const event = filteredEvents[i];
         if (!event) continue;
 
+        // Switch to this event's tab
+        setActiveTab(i);
+        // Wait for the tab to render
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         const element = eventRefs.current.get(event.id);
-        if (!element) continue;
+        if (!element) {
+          console.warn(`Element not found for event ${event.id}`);
+          continue;
+        }
 
         const safeTitle = event.title
           .replace(/[^a-z0-9äöüß]/gi, "-")
@@ -291,6 +340,8 @@ export default function SocialMediaExportModal({
       console.error("Error generating ZIP:", error);
       toast.error("Fehler beim Erstellen des ZIP-Archivs");
     } finally {
+      // Restore original tab
+      setActiveTab(originalTab);
       setIsGenerating(false);
     }
   };
@@ -618,6 +669,7 @@ export default function SocialMediaExportModal({
                                 ? summaryPageCount
                                 : undefined
                             }
+                            totalEvents={filteredEvents.length}
                           />
                         </div>
                       </div>
@@ -645,11 +697,10 @@ export default function SocialMediaExportModal({
               </div>
             )}
 
-            {typeof activeTab === "number" &&
-              filteredEvents &&
-              filteredEvents[activeTab] && (
-                <div className="flex flex-col items-center gap-4">
-                  {(filteredEvents[activeTab]!.coverImage?.url ||
+            {typeof activeTab === "number" && filteredEvents && (
+              <div className="flex flex-col items-center gap-4">
+                {filteredEvents[activeTab] &&
+                  (filteredEvents[activeTab]!.coverImage?.url ||
                     filteredEvents[activeTab]!.ensemble?.image?.url ||
                     filteredEvents[activeTab]!.auswahlChor?.image?.url) && (
                     <div className="dark:text-dark-text-secondary flex items-center gap-2 text-sm text-gray-600">
@@ -665,41 +716,72 @@ export default function SocialMediaExportModal({
                       Bild ziehen, um Position anzupassen
                     </div>
                   )}
-                  <div
-                    ref={(el) => {
-                      if (el && filteredEvents[activeTab]) {
-                        eventRefs.current.set(
-                          filteredEvents[activeTab]!.id,
-                          el,
-                        );
-                      }
-                    }}
-                    className="shadow-lg"
-                    style={{ width: "540px", height: "540px" }}
-                  >
+                <div
+                  className="relative"
+                  style={{ width: "540px", height: "540px" }}
+                >
+                  {filteredEvents.map((event, index) => (
                     <div
-                      ref={previewImageRef}
-                      className={isDragging ? "cursor-grabbing" : "cursor-grab"}
-                      onMouseDown={handleMouseDown}
-                      onMouseMove={handleMouseMove}
-                      onMouseUp={handleMouseUp}
-                      onMouseLeave={handleMouseUp}
+                      key={event.id}
+                      className="shadow-lg"
                       style={{
-                        transform: "scale(0.5)",
-                        transformOrigin: "top left",
+                        width: "540px",
+                        height: "540px",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        opacity: activeTab === index ? 1 : 0,
+                        zIndex: activeTab === index ? 10 : 1,
+                        pointerEvents: activeTab === index ? "auto" : "none",
                       }}
                     >
-                      <InstagramEventTemplate
-                        event={filteredEvents[activeTab]!}
-                        imagePosition={
-                          imagePositions[filteredEvents[activeTab]!.id] || {
-                            x: 50,
-                            y: 50,
+                      <div
+                        ref={(el) => {
+                          if (el) {
+                            eventRefs.current.set(event.id, el);
                           }
+                          if (activeTab === index && el) {
+                            previewImageRef.current = el;
+                          }
+                        }}
+                        className={
+                          activeTab === index && isDragging
+                            ? "cursor-grabbing"
+                            : activeTab === index
+                              ? "cursor-grab"
+                              : ""
                         }
-                      />
+                        onMouseDown={
+                          activeTab === index ? handleMouseDown : undefined
+                        }
+                        onMouseMove={
+                          activeTab === index ? handleMouseMove : undefined
+                        }
+                        onMouseUp={
+                          activeTab === index ? handleMouseUp : undefined
+                        }
+                        onMouseLeave={
+                          activeTab === index ? handleMouseUp : undefined
+                        }
+                        style={{
+                          transform: "scale(0.5)",
+                          transformOrigin: "top left",
+                        }}
+                      >
+                        <InstagramEventTemplate
+                          event={event}
+                          imagePosition={
+                            imagePositions[event.id] || {
+                              x: 50,
+                              y: 50,
+                            }
+                          }
+                        />
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </div>
+                {filteredEvents[activeTab] && (
                   <button
                     onClick={() =>
                       handleDownloadEvent(
@@ -721,8 +803,9 @@ export default function SocialMediaExportModal({
                     </svg>
                     Event herunterladen
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

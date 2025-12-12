@@ -41,7 +41,8 @@ export default function DashboardEventsList({
   const [sortBy, setSortBy] = useState<
     "eventDate" | "title" | "createdAt" | "status"
   >("eventDate");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [showOnlyUpcoming, setShowOnlyUpcoming] = useState(true);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
@@ -60,6 +61,7 @@ export default function DashboardEventsList({
     status: statusFilter === "all" ? undefined : statusFilter,
     sortBy,
     sortOrder,
+    upcomingOnly: showOnlyUpcoming,
   });
 
   const bulkDeleteMutation = api.events.bulkDelete.useMutation({
@@ -441,7 +443,35 @@ export default function DashboardEventsList({
           </div>
 
           {/* Desktop Filters - Always visible */}
-          <div className="hidden sm:flex sm:items-center sm:gap-4">
+          <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:gap-4">
+            {/* Upcoming Filter Toggle */}
+            <button
+              onClick={() => {
+                setShowOnlyUpcoming(!showOnlyUpcoming);
+                setPage(1);
+              }}
+              className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                showOnlyUpcoming
+                  ? "bg-primary text-white"
+                  : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
+              </svg>
+              Nur zukünftige
+            </button>
+
             {/* Status Filter */}
             <div className="flex flex-wrap gap-2">
               {availableFilters.map((filter) => (
@@ -525,6 +555,24 @@ export default function DashboardEventsList({
           {/* Mobile Filters Panel */}
           {filtersOpen && (
             <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 sm:hidden">
+              {/* Upcoming Filter Toggle */}
+              <div className="mb-4">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={showOnlyUpcoming}
+                    onChange={(e) => {
+                      setShowOnlyUpcoming(e.target.checked);
+                      setPage(1);
+                    }}
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                    Nur zukünftige Termine anzeigen
+                  </span>
+                </label>
+              </div>
+
               {/* Status Filter */}
               <div className="mb-4">
                 <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">

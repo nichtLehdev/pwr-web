@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { getDistrictColor } from "@/lib/district-color";
 import type { JSX } from "react";
 import { type RouterOutputs } from "@/trpc/react";
@@ -144,11 +143,12 @@ export default function InstagramEventTemplate({
       {/* Image Section - larger and more prominent */}
       {imageUrl && imageAlt ? (
         <div className="relative h-[540px] w-full">
-          <Image
+          <img
             src={imageUrl || ""}
             alt={imageAlt}
-            fill
-            className="object-cover"
+            crossOrigin="anonymous"
+            loading="eager"
+            className="absolute inset-0 h-full w-full object-cover"
             style={{
               objectPosition: `${imagePosition.x}% ${imagePosition.y}%`,
             }}
@@ -342,11 +342,12 @@ export default function InstagramEventTemplate({
         >
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12">
-              <Image
+              <img
                 src="/images/logo-icon.svg"
                 alt="Logo"
-                fill
-                className="object-contain drop-shadow-lg"
+                crossOrigin="anonymous"
+                loading="eager"
+                className="h-full w-full object-contain drop-shadow-lg"
               />
             </div>
             <div>
