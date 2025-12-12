@@ -200,6 +200,7 @@ export const eventsRouter = createTRPCRouter({
           .enum(["eventDate", "title", "createdAt", "status"])
           .default("eventDate"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
+        upcomingOnly: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -235,6 +236,11 @@ export const eventsRouter = createTRPCRouter({
           createdById: userId,
           ...(input.status && { status: input.status }),
         };
+      }
+
+      // Add upcoming filter
+      if (input.upcomingOnly) {
+        where.eventDate = { gte: new Date() };
       }
 
       const [events, total] = await Promise.all([
