@@ -1,21 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import SectionHeader from "./_components/section-header";
 import EventCard from "./_components/events/event-card";
 import PostCard from "./_components/posts/post-card";
 import { api } from "@/trpc/react";
+import LoadingSpinner from "./_components/general/loading-spinner";
 
 export default function Home() {
-  const upcomingEvents = api.events.getAll.useQuery({
-    page: 1,
-    limit: 4,
-    startDate: new Date(),
-  }).data || { events: [] };
-  const latestPosts = api.posts.getAll.useQuery({
-    page: 1,
-    limit: 3,
-  }).data || { posts: [] };
+  const startDate = useMemo(() => new Date(), []);
+
+  const { data: upcomingEvents, isLoading: isLoadingEvents } =
+    api.events.getAll.useQuery({
+      page: 1,
+      limit: 4,
+      startDate,
+    });
+  const { data: latestPosts, isLoading: isLoadingPosts } =
+    api.posts.getAll.useQuery({
+      page: 1,
+      limit: 3,
+    });
 
   return (
     <div>
@@ -55,7 +61,11 @@ export default function Home() {
             linkHref="/termine"
           />
 
-          {upcomingEvents.events.length > 0 ? (
+          {isLoadingEvents ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner text="Lade Termine..." />
+            </div>
+          ) : upcomingEvents?.events && upcomingEvents.events.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
               {upcomingEvents.events.map((event) => (
                 <EventCard
@@ -87,7 +97,11 @@ export default function Home() {
             linkHref="/aktuelles"
           />
 
-          {latestPosts.posts.length > 0 ? (
+          {isLoadingPosts ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner text="Lade Neuigkeiten..." />
+            </div>
+          ) : latestPosts?.posts && latestPosts.posts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
               {latestPosts.posts.map((post) => (
                 <PostCard
