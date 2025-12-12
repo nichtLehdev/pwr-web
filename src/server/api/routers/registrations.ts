@@ -157,9 +157,18 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      const currentParticipants = course._count.registrations;
+      // Count actual participants from confirmed registrations, not just registrations
+      const currentParticipantsCount = await ctx.db.participant.count({
+        where: {
+          registration: {
+            courseId: input.courseId,
+            registrationStatus: RegistrationStatus.CONFIRMED,
+          },
+        },
+      });
+
       const newParticipants = participants.length;
-      const totalAfterRegistration = currentParticipants + newParticipants;
+      const totalAfterRegistration = currentParticipantsCount + newParticipants;
 
       const maxParticipants = Math.min(
         course.maxParticipants || Infinity,
@@ -169,10 +178,20 @@ export const registrationsRouter = createTRPCRouter({
         ),
       );
 
+      const availableSpots = maxParticipants - currentParticipantsCount;
+
       let registrationStatus: RegistrationStatus = RegistrationStatus.CONFIRMED;
 
+      // If the entire registration doesn't fit, put it on waitlist or reject
       if (totalAfterRegistration > maxParticipants) {
         if (!course.allowWaitingList) {
+          // Check if there are some spots available but not enough for all participants
+          if (availableSpots > 0 && availableSpots < newParticipants) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer oder kontaktieren Sie uns.`,
+            });
+          }
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Course is full and waiting list is not available",
@@ -253,6 +272,28 @@ export const registrationsRouter = createTRPCRouter({
           message: "Registration not found",
         });
       }
+
+      return registration;
+    }),
+
+  getMyActiveRegistrationForCourse: protectedProcedure
+    .input(z.object({ courseId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findFirst({
+        where: {
+          courseId: input.courseId,
+          registrantEmail: ctx.session.user.email,
+          registrationStatus: {
+            in: [RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLIST],
+          },
+        },
+        include: {
+          participants: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
 
       return registration;
     }),
@@ -451,6 +492,15 @@ export const registrationsRouter = createTRPCRouter({
 
       if (newTotalParticipants > maxParticipants) {
         if (!course.allowWaitingList) {
+          const availableSpots =
+            maxParticipants - currentParticipantsExcludingThis;
+          // Check if there are some spots available but not enough for all participants
+          if (availableSpots > 0 && availableSpots < participants.length) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${participants.length} ${participants.length === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer.`,
+            });
+          }
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Cannot add more participants - course is full",
