@@ -16,7 +16,7 @@ interface Participant {
   birthDate: Date;
   city: string;
   instrument: string | null;
-  priceOption: string | null;
+  priceOptionId: string | null;
   customFields: unknown;
   isNew?: boolean;
   isDeleted?: boolean;
@@ -107,14 +107,22 @@ export default function EditRegistrationPage() {
 
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
-    if (registration?.participants) {
+    if (registration?.participants && registration?.course?.priceOptions) {
       setParticipants(
-        registration.participants.map((p) => ({
-          ...p,
-          birthDate: new Date(p.birthDate),
-          isNew: false,
-          isDeleted: false,
-        })),
+        registration.participants.map((p) => {
+          // Convert priceOption label to priceOptionId
+          const priceOption = registration.course.priceOptions.find(
+            (po) => po.label === p.priceOption,
+          );
+          const { priceOption: _, ...participantWithoutLabel } = p;
+          return {
+            ...participantWithoutLabel,
+            birthDate: new Date(p.birthDate),
+            priceOptionId: priceOption?.id ?? null,
+            isNew: false,
+            isDeleted: false,
+          };
+        }),
       );
     }
   }, [registration]);
@@ -183,13 +191,23 @@ export default function EditRegistrationPage() {
     return true;
   };
 
-  const isPriceOptionAvailable = (priceOptionLabel: string) => {
-    if (!availability?.capacityByPriceOption) return true;
-    const available = availability.capacityByPriceOption[priceOptionLabel];
+  const isPriceOptionAvailable = (priceOptionId: string) => {
+    if (
+      !availability?.capacityByPriceOption ||
+      !registration?.course?.priceOptions
+    )
+      return true;
+
+    const priceOption = registration.course.priceOptions.find(
+      (po) => po.id === priceOptionId,
+    );
+    if (!priceOption) return false;
+
+    const available = availability.capacityByPriceOption[priceOption.label];
     if (available === undefined) return true;
 
     const currentUsage = activeParticipants.filter(
-      (p) => p.priceOption === priceOptionLabel && p.isNew,
+      (p) => p.priceOptionId === priceOptionId && p.isNew,
     ).length;
 
     return available > currentUsage;
@@ -200,7 +218,7 @@ export default function EditRegistrationPage() {
     if (!registration?.course?.priceOptions) return;
 
     const availablePriceOption = registration.course.priceOptions.find((po) =>
-      isPriceOptionAvailable(po.label),
+      isPriceOptionAvailable(po.id),
     );
 
     participantIdCounter.current += 1;
@@ -213,7 +231,7 @@ export default function EditRegistrationPage() {
         birthDate: new Date(),
         city: "",
         instrument: null,
-        priceOption: availablePriceOption?.label ?? null,
+        priceOptionId: availablePriceOption?.id ?? null,
         customFields: {},
         isNew: true,
         isDeleted: false,
@@ -253,7 +271,7 @@ export default function EditRegistrationPage() {
     if (!registration?.course?.priceOptions) return 0;
     return activeParticipants.reduce((sum, p) => {
       const priceOption = registration.course.priceOptions.find(
-        (po) => po.label === p.priceOption,
+        (po) => po.id === p.priceOptionId,
       );
       return sum + (priceOption?.price ?? 0);
     }, 0);
@@ -266,7 +284,7 @@ export default function EditRegistrationPage() {
     setIsSubmitting(true);
 
     for (const p of activeParticipants) {
-      if (!p.firstName || !p.lastName || !p.city || !p.priceOption) {
+      if (!p.firstName || !p.lastName || !p.city || !p.priceOptionId) {
         setError("Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus.");
         setIsSubmitting(false);
         return;
@@ -295,14 +313,13 @@ export default function EditRegistrationPage() {
       birthDate: p.birthDate,
       city: p.city,
       instrument: p.instrument ?? undefined,
-      priceOption: p.priceOption ?? undefined,
+      priceOptionId: p.priceOptionId || "", // Ensure priceOptionId is never undefined
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customFields: p.customFields as any,
     }));
 
     updateMutation.mutate({
       id: registrationId,
-      totalPrice: calculateTotalPrice(),
       participants: participantsData,
       registrantPhone: registrantPhone || undefined,
       useSeparateBilling,
@@ -859,11 +876,11 @@ export default function EditRegistrationPage() {
                         Preisoption *
                       </label>
                       <select
-                        value={participant.priceOption ?? ""}
+                        value={participant.priceOptionId ?? ""}
                         onChange={(e) =>
                           updateParticipant(
                             participant.id,
-                            "priceOption",
+                            "priceOptionId",
                             e.target.value,
                           )
                         }
@@ -874,13 +891,13 @@ export default function EditRegistrationPage() {
                         {registration.course.priceOptions.map((option) => {
                           const isAvailable =
                             !participant.isNew ||
-                            isPriceOptionAvailable(option.label);
+                            isPriceOptionAvailable(option.id);
                           const isCurrent =
-                            participant.priceOption === option.label;
+                            participant.priceOptionId === option.id;
                           return (
                             <option
                               key={option.id}
-                              value={option.label}
+                              value={option.id}
                               disabled={!isAvailable && !isCurrent}
                             >
                               {option.label} - {option.price.toFixed(2)} €

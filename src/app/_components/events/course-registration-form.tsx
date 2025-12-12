@@ -68,8 +68,13 @@ export default function CourseRegistrationForm({
   }, [onClose]);
 
   const addParticipant = () => {
-    if (!course.priceOptions) {
+    if (!course.priceOptions || course.priceOptions.length === 0) {
       console.error("Course price options are not defined.");
+      return;
+    }
+    const firstPriceOption = course.priceOptions[0];
+    if (!firstPriceOption) {
+      console.error("No price options available");
       return;
     }
     setRegistrationData({
@@ -82,7 +87,7 @@ export default function CourseRegistrationForm({
           birthDate: new Date(),
           city: "",
           instrument: "",
-          priceOption: course.priceOptions?.[0]?.label || undefined,
+          priceOptionId: firstPriceOption.id,
           customFields: {},
         },
       ],
@@ -90,6 +95,15 @@ export default function CourseRegistrationForm({
   };
 
   const addMyselfAsParticipant = () => {
+    if (!course.priceOptions || course.priceOptions.length === 0) {
+      console.error("Course price options are not defined.");
+      return;
+    }
+    const firstPriceOption = course.priceOptions[0];
+    if (!firstPriceOption) {
+      console.error("No price options available");
+      return;
+    }
     setRegistrationData({
       ...registrationData,
       participants: [
@@ -102,7 +116,7 @@ export default function CourseRegistrationForm({
             : ("" as any),
           city: currentUser?.city || "",
           instrument: "",
-          priceOption: course.priceOptions[0]?.label || "",
+          priceOptionId: firstPriceOption.id,
           customFields: {},
         },
       ],
@@ -135,7 +149,7 @@ export default function CourseRegistrationForm({
   const calculateTotalPrice = () => {
     return registrationData.participants.reduce((sum, participant) => {
       const priceOption = course.priceOptions.find(
-        (p) => p.label === participant.priceOption,
+        (p) => p.id === participant.priceOptionId,
       );
       return sum + (priceOption?.price || 0);
     }, 0);
@@ -178,7 +192,11 @@ export default function CourseRegistrationForm({
       case 3:
         return registrationData.participants.every(
           (p) =>
-            p.firstName && p.lastName && p.birthDate && p.city && p.priceOption,
+            p.firstName &&
+            p.lastName &&
+            p.birthDate &&
+            p.city &&
+            p.priceOptionId,
         );
       case 4:
         return true;
@@ -199,15 +217,6 @@ export default function CourseRegistrationForm({
 
     registrationMutation.mutate({
       courseId: course.id,
-      participants: registrationData.participants.map((p) => ({
-        firstName: p.firstName,
-        lastName: p.lastName,
-        birthDate: p.birthDate,
-        city: p.city,
-        instrument: p.instrument,
-        priceOption: p.priceOption,
-        customFields: p.customFields,
-      })),
       registrantFirstName:
         registrationData.registrantFirstName || currentUser?.firstName || "",
       registrantLastName:
@@ -216,7 +225,48 @@ export default function CourseRegistrationForm({
         registrationData.registrantEmail || currentUser?.email || "",
       registrantPhone:
         registrationData.registrantPhone || currentUser?.phone || "",
-      totalPrice: calculateTotalPrice(),
+      ...(registrationData.registrantStreet && {
+        registrantStreet: registrationData.registrantStreet,
+      }),
+      ...(registrationData.registrantZipCode && {
+        registrantZipCode: registrationData.registrantZipCode,
+      }),
+      ...(registrationData.registrantCity && {
+        registrantCity: registrationData.registrantCity,
+      }),
+      ...(registrationData.useSeparateBilling !== undefined && {
+        useSeparateBilling: registrationData.useSeparateBilling,
+      }),
+      ...(registrationData.billingCompany && {
+        billingCompany: registrationData.billingCompany,
+      }),
+      ...(registrationData.billingFirstName && {
+        billingFirstName: registrationData.billingFirstName,
+      }),
+      ...(registrationData.billingLastName && {
+        billingLastName: registrationData.billingLastName,
+      }),
+      ...(registrationData.billingStreet && {
+        billingStreet: registrationData.billingStreet,
+      }),
+      ...(registrationData.billingZipCode && {
+        billingZipCode: registrationData.billingZipCode,
+      }),
+      ...(registrationData.billingCity && {
+        billingCity: registrationData.billingCity,
+      }),
+      ...(registrationData.billingEmail && {
+        billingEmail: registrationData.billingEmail,
+      }),
+      participants: registrationData.participants.map((p) => ({
+        firstName: p.firstName,
+        lastName: p.lastName,
+        birthDate: p.birthDate,
+        city: p.city,
+        ...(p.instrument && { instrument: p.instrument }),
+        priceOptionId: p.priceOptionId,
+        ...(p.customFields && { customFields: p.customFields }),
+      })),
     });
 
     alert(
@@ -328,6 +378,8 @@ export default function CourseRegistrationForm({
                         registrantFirstName: e.target.value,
                       })
                     }
+                    maxLength={100}
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Max"
                   />
@@ -346,6 +398,8 @@ export default function CourseRegistrationForm({
                         registrantLastName: e.target.value,
                       })
                     }
+                    maxLength={100}
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Mustermann"
                   />
@@ -364,6 +418,7 @@ export default function CourseRegistrationForm({
                         registrantEmail: e.target.value,
                       })
                     }
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="max@example.com"
                   />
@@ -382,6 +437,10 @@ export default function CourseRegistrationForm({
                         registrantPhone: e.target.value,
                       })
                     }
+                    maxLength={50}
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                    title="Bitte geben Sie eine gültige Telefonnummer ein"
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="0211 123456"
                   />
@@ -399,6 +458,7 @@ export default function CourseRegistrationForm({
                         registrantStreet: e.target.value,
                       })
                     }
+                    maxLength={200}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Musterstraße 1"
                     required={!registrationData.useSeparateBilling}
@@ -417,6 +477,7 @@ export default function CourseRegistrationForm({
                         registrantZipCode: e.target.value,
                       })
                     }
+                    maxLength={20}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="12345"
                     required={!registrationData.useSeparateBilling}
@@ -435,6 +496,7 @@ export default function CourseRegistrationForm({
                         registrantCity: e.target.value,
                       })
                     }
+                    maxLength={100}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Düsseldorf"
                     required={!registrationData.useSeparateBilling}
@@ -486,6 +548,7 @@ export default function CourseRegistrationForm({
                             billingCompany: e.target.value,
                           })
                         }
+                        maxLength={200}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Evangelische Kirchengemeinde Düsseldorf"
                       />
@@ -504,6 +567,7 @@ export default function CourseRegistrationForm({
                             billingFirstName: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Max"
                       />
@@ -522,6 +586,7 @@ export default function CourseRegistrationForm({
                             billingLastName: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Mustermann"
                       />
@@ -540,6 +605,7 @@ export default function CourseRegistrationForm({
                             billingStreet: e.target.value,
                           })
                         }
+                        maxLength={200}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Musterstraße 123"
                       />
@@ -558,6 +624,7 @@ export default function CourseRegistrationForm({
                             billingZipCode: e.target.value,
                           })
                         }
+                        maxLength={20}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="40210"
                       />
@@ -576,6 +643,7 @@ export default function CourseRegistrationForm({
                             billingCity: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Düsseldorf"
                       />
@@ -818,6 +886,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "firstName", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       />
                     </div>
@@ -832,6 +902,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "lastName", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       />
                     </div>
@@ -872,6 +944,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "city", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Düsseldorf"
                       />
@@ -887,6 +961,7 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "instrument", e.target.value)
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Trompete"
                       />
@@ -897,18 +972,18 @@ export default function CourseRegistrationForm({
                         Preisoption *
                       </label>
                       <select
-                        value={participant.priceOption}
+                        value={participant.priceOptionId}
                         onChange={(e) =>
                           updateParticipant(
                             index,
-                            "priceOption",
+                            "priceOptionId",
                             e.target.value,
                           )
                         }
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       >
                         {course.priceOptions.map((option) => (
-                          <option key={option.label} value={option.label}>
+                          <option key={option.id} value={option.id}>
                             {option.label} - {option.price.toFixed(2)} €
                           </option>
                         ))}
@@ -1127,7 +1202,7 @@ export default function CourseRegistrationForm({
                 <div className="space-y-3">
                   {registrationData.participants.map((participant, index) => {
                     const priceOption = course.priceOptions.find(
-                      (p) => p.label === participant.priceOption,
+                      (p) => p.id === participant.priceOptionId,
                     );
                     return (
                       <div
@@ -1146,7 +1221,7 @@ export default function CourseRegistrationForm({
                               ` • ${participant.instrument}`}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {participant.priceOption}
+                            {priceOption?.label}
                           </p>
                         </div>
                         <p className="text-primary font-bold">
