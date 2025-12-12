@@ -179,17 +179,6 @@ function LoginForm() {
               {isLoading ? "Wird angemeldet..." : "Anmelden"}
             </button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="dark:border-dark-border w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="dark:bg-dark-surface bg-white px-3 text-gray-500 dark:text-gray-400">
-                Oder
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
