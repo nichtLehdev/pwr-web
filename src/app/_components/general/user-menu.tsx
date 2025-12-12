@@ -9,9 +9,14 @@ export function UserMenu({ session }: { session: Session }) {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push("/login");
-    router.refresh();
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          router.refresh();
+        },
+      },
+    });
   };
 
   if (!session?.user) {
