@@ -36,6 +36,9 @@ export default function EditRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [birthdateErrors, setBirthdateErrors] = useState<
+    Record<string, string>
+  >({});
 
   const [registrantPhone, setRegistrantPhone] = useState("");
 
@@ -820,18 +823,40 @@ export default function EditRegistrationPage() {
                       <input
                         type="date"
                         value={formatDateForInput(participant.birthDate)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const newDate = new Date(e.target.value);
                           updateParticipant(
                             participant.id,
                             "birthDate",
-                            new Date(e.target.value),
-                          )
-                        }
+                            newDate,
+                          );
+                          // Validate immediately
+                          const newErrors = { ...birthdateErrors };
+                          if (!e.target.value) {
+                            newErrors[participant.id] =
+                              "Geburtsdatum ist erforderlich";
+                          } else if (newDate >= new Date()) {
+                            newErrors[participant.id] =
+                              "Geburtsdatum muss in der Vergangenheit liegen";
+                          } else {
+                            delete newErrors[participant.id];
+                          }
+                          setBirthdateErrors(newErrors);
+                        }}
                         max={new Date().toISOString().split("T")[0]}
                         required
                         title="Geburtsdatum muss in der Vergangenheit liegen"
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                        className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border px-3 py-2 focus:ring-1 focus:outline-none ${
+                          birthdateErrors[participant.id]
+                            ? "border-red-500 dark:border-red-500"
+                            : "border-gray-300"
+                        }`}
                       />
+                      {birthdateErrors[participant.id] && (
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {birthdateErrors[participant.id]}
+                        </p>
+                      )}
                     </div>
 
                     <div>

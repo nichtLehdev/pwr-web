@@ -31,6 +31,9 @@ export default function CourseRegistrationForm({
 }: CourseRegistrationFormProps) {
   const registrationMutation = api.registrations.create.useMutation();
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<number, string>
+  >({});
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
     registrantFirstName: currentUser?.firstName || "",
@@ -66,6 +69,24 @@ export default function CourseRegistrationForm({
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
+
+  // Validate birthdates when step 3 is reached
+  useEffect(() => {
+    if (currentStep === 3) {
+      const errors: Record<number, string> = {};
+      registrationData.participants.forEach((p, index) => {
+        if (!p.birthDate) {
+          errors[index] = "Geburtsdatum ist erforderlich";
+        } else if (new Date(p.birthDate) >= new Date()) {
+          errors[index] = "Geburtsdatum muss in der Vergangenheit liegen";
+        }
+      });
+      setValidationErrors(errors);
+    } else {
+      // Clear errors when leaving step 3
+      setValidationErrors({});
+    }
+  }, [currentStep, registrationData.participants]);
 
   const addParticipant = () => {
     if (!course.priceOptions || course.priceOptions.length === 0) {
@@ -190,6 +211,8 @@ export default function CourseRegistrationForm({
       case 2:
         return registrationData.participants.length > 0;
       case 3:
+        // Only check if required fields are filled, not if they're valid
+        // Validity is checked in real-time and shown as errors
         return registrationData.participants.every(
           (p) =>
             p.firstName &&
@@ -921,20 +944,37 @@ export default function CourseRegistrationForm({
                                 .split("T")[0]
                             : ""
                         }
-                        onChange={(e) =>
-                          updateParticipant(
-                            index,
-                            "birthDate",
-                            e.target.value
-                              ? new Date(e.target.value)
-                              : ("" as any),
-                          )
-                        }
+                        onChange={(e) => {
+                          const newDate = e.target.value
+                            ? new Date(e.target.value)
+                            : ("" as any);
+                          updateParticipant(index, "birthDate", newDate);
+                          // Validate immediately
+                          const newErrors = { ...validationErrors };
+                          if (!e.target.value) {
+                            newErrors[index] = "Geburtsdatum ist erforderlich";
+                          } else if (new Date(e.target.value) >= new Date()) {
+                            newErrors[index] =
+                              "Geburtsdatum muss in der Vergangenheit liegen";
+                          } else {
+                            delete newErrors[index];
+                          }
+                          setValidationErrors(newErrors);
+                        }}
                         max={new Date().toISOString().split("T")[0]}
                         required
                         title="Geburtsdatum muss in der Vergangenheit liegen"
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                        className={`focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 ${
+                          validationErrors[index]
+                            ? "border-red-500 dark:border-red-500"
+                            : "border-gray-300"
+                        }`}
                       />
+                      {validationErrors[index] && (
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {validationErrors[index]}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -1299,8 +1339,19 @@ export default function CourseRegistrationForm({
 
           {currentStep < 4 ? (
             <button
-              onClick={() => setCurrentStep((currentStep + 1) as Step)}
-              disabled={!canProceed}
+              onClick={() => {
+                if (
+                  currentStep === 3 &&
+                  Object.keys(validationErrors).length > 0
+                ) {
+                  return; // Don't proceed if there are validation errors
+                }
+                setCurrentStep((currentStep + 1) as Step);
+              }}
+              disabled={
+                !canProceed ||
+                (currentStep === 3 && Object.keys(validationErrors).length > 0)
+              }
               className="bg-primary hover:bg-primary-dark order-3 rounded-lg px-6 py-2 font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               Weiter

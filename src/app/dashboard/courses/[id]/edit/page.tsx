@@ -727,6 +727,8 @@ export default function EditCoursePage() {
                     id="endDate"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || undefined}
+                    title="Enddatum muss nach oder gleich dem Startdatum sein"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />
