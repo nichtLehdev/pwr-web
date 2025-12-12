@@ -394,6 +394,7 @@ export default function EditEnsemblePage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  maxLength={200}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="z.B. Posaunenchor Musterstadt"
                 />
@@ -408,6 +409,7 @@ export default function EditEnsemblePage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
+                  maxLength={5000}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="Beschreibe das Ensemble..."
                 />
@@ -964,6 +966,7 @@ export default function EditEnsemblePage() {
                   type="email"
                   value={contactEmail ?? ""}
                   onChange={(e) => setContactEmail(e.target.value || null)}
+                  maxLength={255}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="kontakt@example.de"
                 />
@@ -978,6 +981,9 @@ export default function EditEnsemblePage() {
                   type="tel"
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
+                  maxLength={50}
+                  pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                  title="Bitte geben Sie eine gültige Telefonnummer ein"
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="+49 123 456789"
                 />
@@ -992,6 +998,7 @@ export default function EditEnsemblePage() {
                   type="url"
                   value={contactWebsite ?? ""}
                   onChange={(e) => setContactWebsite(e.target.value || null)}
+                  maxLength={500}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="https://www.example.de"
                 />

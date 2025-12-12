@@ -265,6 +265,7 @@ export default function EditPostPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="z.B. Neues Bläserheft erschienen"
+                  maxLength={200}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
@@ -279,6 +280,7 @@ export default function EditPostPage() {
                   onChange={(e) => setExcerpt(e.target.value)}
                   rows={2}
                   placeholder="Eine kurze Zusammenfassung des Beitrags (wird in Übersichten angezeigt)"
+                  maxLength={500}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>

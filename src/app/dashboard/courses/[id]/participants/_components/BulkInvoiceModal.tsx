@@ -7,6 +7,7 @@ import {
   type InvoiceRegistration,
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
+import { useToast } from "@/app/_components/ui/toast";
 
 type SignatureMode = "none" | "upload" | "draw";
 
@@ -23,6 +24,7 @@ export function BulkInvoiceModal({
   course,
   registrations,
 }: BulkInvoiceModalProps) {
+  const toast = useToast();
   const [paymentDueDate, setPaymentDueDate] = useState<string>(() => {
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 21);
@@ -46,12 +48,12 @@ export function BulkInvoiceModal({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Bitte laden Sie ein Bild hoch (PNG, JPG, etc.)");
+      toast.error("Bitte laden Sie ein Bild hoch (PNG, JPG, etc.)");
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Die Datei ist zu groß. Maximale Größe: 2MB");
+      toast.error("Die Datei ist zu groß. Maximale Größe: 2MB");
       return;
     }
 
@@ -102,7 +104,7 @@ export function BulkInvoiceModal({
       }, 2000);
     } catch (error) {
       console.error("Error generating invoices:", error);
-      alert(
+      toast.error(
         "Fehler beim Generieren der Rechnungen. Bitte versuchen Sie es erneut.",
       );
     } finally {

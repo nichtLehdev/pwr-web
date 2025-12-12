@@ -434,48 +434,62 @@ export const coursesRouter = createTRPCRouter({
 
   create: protectedProcedure
     .input(
-      z.object({
-        title: z.string().min(1),
-        motto: z.string().optional(),
-        description: z.string().min(1),
-        startDate: z.date(),
-        endDate: z.date(),
-        locationId: z.string().optional(),
-        courseType: z.enum(CourseType),
-        targetAudience: z.enum(TargetAudience).optional(),
-        bezirkId: z.string().optional(),
-        registrationOpen: z.boolean().default(false),
-        registrationDeadline: z.date().optional(),
-        maxParticipants: z.number().min(1),
-        allowWaitingList: z.boolean().default(false),
-        isFree: z.boolean().default(false),
-        priceInfo: z.string().optional(),
-        prerequisites: z.string().optional(),
-        whatToBring: z.string().optional(),
-        instructorIds: z.array(z.string()).optional(),
-        priceOptions: z
-          .array(
-            z.object({
-              price: z.number(),
-              label: z.string(),
-              description: z.string().optional(),
-              maxParticipants: z.number().optional(),
-            }),
-          )
-          .optional(),
-        customFields: z
-          .array(
-            z.object({
-              fieldName: z.string(),
-              fieldType: z.enum(CustomFieldType),
-              options: z.string().optional(),
-              isRequired: z.boolean().default(false),
-              helpText: z.string().optional(),
-              sortOrder: z.number().default(0),
-            }),
-          )
-          .optional(),
-      }),
+      z
+        .object({
+          title: z.string().min(1).max(200),
+          motto: z.string().max(500).optional(),
+          description: z.string().min(1).max(10000),
+          startDate: z.date(),
+          endDate: z.date(),
+          locationId: z.string().optional(),
+          courseType: z.enum(CourseType),
+          targetAudience: z.enum(TargetAudience).optional(),
+          bezirkId: z.string().optional(),
+          registrationOpen: z.boolean().default(false),
+          registrationDeadline: z.date().optional(),
+          maxParticipants: z.number().min(1).max(500),
+          allowWaitingList: z.boolean().default(false),
+          isFree: z.boolean().default(false),
+          priceInfo: z.string().max(1000).optional(),
+          prerequisites: z.string().max(1000).optional(),
+          whatToBring: z.string().max(1000).optional(),
+          instructorIds: z.array(z.string()).optional(),
+          priceOptions: z
+            .array(
+              z.object({
+                price: z.number().min(0),
+                label: z.string().min(1).max(100),
+                description: z.string().max(500).optional(),
+                maxParticipants: z.number().min(1).max(500).optional(),
+              }),
+            )
+            .optional(),
+          customFields: z
+            .array(
+              z.object({
+                fieldName: z.string(),
+                fieldType: z.enum(CustomFieldType),
+                options: z.string().optional(),
+                isRequired: z.boolean().default(false),
+                helpText: z.string().optional(),
+                sortOrder: z.number().default(0),
+              }),
+            )
+            .optional(),
+        })
+        .refine((data) => data.endDate >= data.startDate, {
+          message: "Enddatum muss nach oder gleich dem Startdatum sein",
+          path: ["endDate"],
+        })
+        .refine(
+          (data) =>
+            !data.registrationDeadline ||
+            data.registrationDeadline <= data.startDate,
+          {
+            message: "Anmeldeschluss muss vor oder am Startdatum sein",
+            path: ["registrationDeadline"],
+          },
+        ),
     )
     .mutation(async ({ ctx, input }) => {
       const { priceOptions, customFields, instructorIds, ...courseData } =
@@ -514,51 +528,70 @@ export const coursesRouter = createTRPCRouter({
 
   update: protectedProcedure
     .input(
-      z.object({
-        id: z.string(),
-        title: z.string().min(1).optional(),
-        motto: z.string().optional(),
-        description: z.string().optional(),
-        startDate: z.date().optional(),
-        endDate: z.date().optional(),
-        locationId: z.string().optional().nullable(),
-        courseType: z.enum(CourseType).optional(),
-        targetAudience: z.enum(TargetAudience).optional().nullable(),
-        bezirkId: z.string().optional().nullable(),
-        registrationOpen: z.boolean().optional(),
-        registrationDeadline: z.date().optional().nullable(),
-        maxParticipants: z.number().min(1).optional(),
-        allowWaitingList: z.boolean().optional(),
-        isFree: z.boolean().optional(),
-        priceInfo: z.string().optional(),
-        prerequisites: z.string().optional(),
-        whatToBring: z.string().optional(),
-        instructorIds: z.array(z.string()).optional(),
-        priceOptions: z
-          .array(
-            z.object({
-              id: z.string().optional(),
-              price: z.number(),
-              label: z.string(),
-              description: z.string().optional(),
-              maxParticipants: z.number().optional(),
-            }),
-          )
-          .optional(),
-        customFields: z
-          .array(
-            z.object({
-              id: z.string().optional(),
-              fieldName: z.string(),
-              fieldType: z.enum(CustomFieldType),
-              options: z.string().optional(),
-              isRequired: z.boolean().default(false),
-              helpText: z.string().optional(),
-              sortOrder: z.number().default(0),
-            }),
-          )
-          .optional(),
-      }),
+      z
+        .object({
+          id: z.string(),
+          title: z.string().min(1).max(200).optional(),
+          motto: z.string().max(500).optional(),
+          description: z.string().max(10000).optional(),
+          startDate: z.date().optional(),
+          endDate: z.date().optional(),
+          locationId: z.string().optional().nullable(),
+          courseType: z.enum(CourseType).optional(),
+          targetAudience: z.enum(TargetAudience).optional().nullable(),
+          bezirkId: z.string().optional().nullable(),
+          registrationOpen: z.boolean().optional(),
+          registrationDeadline: z.date().optional().nullable(),
+          maxParticipants: z.number().min(1).max(500).optional(),
+          allowWaitingList: z.boolean().optional(),
+          isFree: z.boolean().optional(),
+          priceInfo: z.string().max(1000).optional(),
+          prerequisites: z.string().max(1000).optional(),
+          whatToBring: z.string().max(1000).optional(),
+          instructorIds: z.array(z.string()).optional(),
+          priceOptions: z
+            .array(
+              z.object({
+                id: z.string().optional(),
+                price: z.number().min(0),
+                label: z.string().min(1).max(100),
+                description: z.string().max(500).optional(),
+                maxParticipants: z.number().min(1).max(500).optional(),
+              }),
+            )
+            .optional(),
+          customFields: z
+            .array(
+              z.object({
+                id: z.string().optional(),
+                fieldName: z.string(),
+                fieldType: z.enum(CustomFieldType),
+                options: z.string().optional(),
+                isRequired: z.boolean().default(false),
+                helpText: z.string().optional(),
+                sortOrder: z.number().default(0),
+              }),
+            )
+            .optional(),
+        })
+        .refine(
+          (data) =>
+            !data.startDate || !data.endDate || data.endDate >= data.startDate,
+          {
+            message: "Enddatum muss nach oder gleich dem Startdatum sein",
+            path: ["endDate"],
+          },
+        )
+        .refine(
+          (data) =>
+            !data.registrationDeadline ||
+            !data.startDate ||
+            data.registrationDeadline <= data.startDate,
+          {
+            message: "Anmeldeschluss muss vor oder am Startdatum sein",
+            path: ["registrationDeadline"],
+          },
+        ),
     )
     .mutation(async ({ ctx, input }) => {
       const { id, priceOptions, customFields, instructorIds, ...updateData } =

@@ -473,6 +473,7 @@ export default function NewCoursePage() {
                   placeholder="z.B. Bläserfreizeit 2025"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
+                  maxLength={200}
                 />
               </div>
 
@@ -500,6 +501,7 @@ export default function NewCoursePage() {
                   placeholder="Beschreibe den Kurs..."
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
+                  maxLength={10000}
                 />
               </div>
 
@@ -573,7 +575,8 @@ export default function NewCoursePage() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
+                  min={startDate || undefined}
+                  title="Enddatum muss nach oder gleich dem Startdatum sein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
@@ -586,7 +589,8 @@ export default function NewCoursePage() {
                   type="date"
                   value={registrationDeadline}
                   onChange={(e) => setRegistrationDeadline(e.target.value)}
-                  max={startDate}
+                  max={startDate || undefined}
+                  title="Anmeldeschluss muss vor oder am Startdatum sein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -859,6 +863,7 @@ export default function NewCoursePage() {
                     setMaxParticipants(parseInt(e.target.value) || 0)
                   }
                   min="1"
+                  max="500"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
@@ -999,6 +1004,7 @@ export default function NewCoursePage() {
                                   )
                                 }
                                 min="1"
+                                max="500"
                                 placeholder="Max. Plätze (optional)"
                                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />

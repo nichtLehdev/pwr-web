@@ -5,6 +5,7 @@ import { getDistrictColor } from "@/lib/district-color";
 import PageHeader from "../general/page-header";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
+import { useToast } from "@/app/_components/ui/toast";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -13,6 +14,7 @@ interface EventDetailViewProps {
 }
 
 export default function EventDetailView({ event }: EventDetailViewProps) {
+  const toast = useToast();
   const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
 
@@ -67,7 +69,7 @@ END:VCALENDAR`;
       if (typeof navigator !== "undefined" && navigator.clipboard) {
         try {
           await navigator.clipboard.writeText(window.location.href);
-          alert("Link wurde in die Zwischenablage kopiert!");
+          toast.success("Link wurde in die Zwischenablage kopiert!");
         } catch (err) {
           console.error("Failed to copy:", err);
         }

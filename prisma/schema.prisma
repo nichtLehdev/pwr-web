@@ -418,6 +418,9 @@ model CourseRegistration {
   registrantLastName  String
   registrantEmail     String
   registrantPhone     String?
+  registrantStreet    String?
+  registrantZipCode   String?
+  registrantCity      String?
   registrantId        String?
   useSeparateBilling  Boolean @default(false)
   billingCompany      String?

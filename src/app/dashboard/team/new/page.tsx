@@ -340,6 +340,7 @@ export default function NewTeamPage() {
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   placeholder="z.B. Webentwickler, Sachbearbeiter..."
+                  maxLength={100}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -390,6 +391,7 @@ export default function NewTeamPage() {
               onChange={(e) => setResponsibilitiesText(e.target.value)}
               rows={5}
               placeholder="Webseite pflegen&#10;Newsletter erstellen&#10;Anmeldungen bearbeiten"
+              maxLength={1000}
               className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 focus:ring-1 focus:outline-none"
             />
           </section>

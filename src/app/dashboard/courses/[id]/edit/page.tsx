@@ -598,6 +598,7 @@ export default function EditCoursePage() {
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                   placeholder="z.B. Bläserlehrgang 2025"
                   required
+                  maxLength={200}
                 />
               </div>
 
@@ -633,6 +634,7 @@ export default function EditCoursePage() {
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                   placeholder="Beschreibe den Kurs..."
                   required
+                  maxLength={10000}
                 />
               </div>
 
@@ -725,6 +727,8 @@ export default function EditCoursePage() {
                     id="endDate"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || undefined}
+                    title="Enddatum muss nach oder gleich dem Startdatum sein"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -993,6 +997,7 @@ export default function EditCoursePage() {
                     value={maxParticipants}
                     onChange={(e) => setMaxParticipants(e.target.value)}
                     min="1"
+                    max="500"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -1225,6 +1230,7 @@ export default function EditCoursePage() {
                                     )
                                   }
                                   min="1"
+                                  max="500"
                                   placeholder="Unbegrenzt"
                                   disabled={hasRegistrations}
                                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"

@@ -315,9 +315,9 @@ export const eventsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        title: z.string().min(1),
-        motto: z.string().optional(),
-        description: z.string().optional(),
+        title: z.string().min(1).max(200),
+        motto: z.string().max(500).optional(),
+        description: z.string().max(5000).optional(),
         coverImageId: z.string().optional(),
         eventDate: z.date(),
         locationId: z.string().optional(),
@@ -327,18 +327,18 @@ export const eventsRouter = createTRPCRouter({
         performingEnsembleType: z.enum(EventEnsembleType).optional(),
         ensembleId: z.string().optional(),
         auswahlChorId: z.string().optional(),
-        performingEnsembleName: z.string().optional(),
-        leitung: z.string().optional(),
+        performingEnsembleName: z.string().max(200).optional(),
+        leitung: z.string().max(200).optional(),
         openToParticipants: z.boolean().default(false),
-        participationInfo: z.string().optional(),
+        participationInfo: z.string().max(1000).optional(),
         isFree: z.boolean().default(true),
-        priceInfo: z.string().optional(),
+        priceInfo: z.string().max(500).optional(),
         priceOptions: z
           .array(
             z.object({
-              price: z.number(),
-              label: z.string(),
-              description: z.string().optional(),
+              price: z.number().min(0),
+              label: z.string().min(1).max(100),
+              description: z.string().max(500).optional(),
             }),
           )
           .optional(),
@@ -372,9 +372,9 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().min(1).optional(),
-        motto: z.string().optional(),
-        description: z.string().optional(),
+        title: z.string().min(1).max(200).optional(),
+        motto: z.string().max(500).optional(),
+        description: z.string().max(5000).optional(),
         coverImageId: z.string().optional().nullable(),
         eventDate: z.date().optional(),
         locationId: z.string().optional().nullable(),
@@ -384,19 +384,19 @@ export const eventsRouter = createTRPCRouter({
         performingEnsembleType: z.enum(EventEnsembleType).optional(),
         ensembleId: z.string().optional().nullable(),
         auswahlChorId: z.string().optional().nullable(),
-        performingEnsembleName: z.string().optional(),
-        leitung: z.string().optional(),
+        performingEnsembleName: z.string().max(200).optional(),
+        leitung: z.string().max(200).optional(),
         openToParticipants: z.boolean().optional(),
-        participationInfo: z.string().optional(),
+        participationInfo: z.string().max(1000).optional(),
         isFree: z.boolean().optional(),
-        priceInfo: z.string().optional(),
+        priceInfo: z.string().max(500).optional(),
         priceOptions: z
           .array(
             z.object({
               id: z.string().optional(),
-              price: z.number(),
-              label: z.string(),
-              description: z.string().optional(),
+              price: z.number().min(0),
+              label: z.string().min(1).max(100),
+              description: z.string().max(500).optional(),
             }),
           )
           .optional(),

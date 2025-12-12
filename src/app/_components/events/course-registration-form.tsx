@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import type { RouterInputs, RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
 import type { User } from "~/generated/prisma/client";
+import { useToast } from "@/app/_components/ui/toast";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -29,8 +30,12 @@ export default function CourseRegistrationForm({
   isWaitlist,
   currentUser,
 }: CourseRegistrationFormProps) {
+  const toast = useToast();
   const registrationMutation = api.registrations.create.useMutation();
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<number, string>
+  >({});
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
     registrantFirstName: currentUser?.firstName || "",
@@ -67,9 +72,33 @@ export default function CourseRegistrationForm({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
+  // Validate birthdates when step 3 is reached
+  useEffect(() => {
+    if (currentStep === 3) {
+      const errors: Record<number, string> = {};
+      registrationData.participants.forEach((p, index) => {
+        if (!p.birthDate) {
+          errors[index] = "Geburtsdatum ist erforderlich";
+        } else if (new Date(p.birthDate) >= new Date()) {
+          errors[index] = "Geburtsdatum muss in der Vergangenheit liegen";
+        }
+      });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setValidationErrors(errors);
+    } else {
+      // Clear errors when leaving step 3
+      setValidationErrors({});
+    }
+  }, [currentStep, registrationData.participants]);
+
   const addParticipant = () => {
-    if (!course.priceOptions) {
+    if (!course.priceOptions || course.priceOptions.length === 0) {
       console.error("Course price options are not defined.");
+      return;
+    }
+    const firstPriceOption = course.priceOptions[0];
+    if (!firstPriceOption) {
+      console.error("No price options available");
       return;
     }
     setRegistrationData({
@@ -82,7 +111,7 @@ export default function CourseRegistrationForm({
           birthDate: new Date(),
           city: "",
           instrument: "",
-          priceOption: course.priceOptions?.[0]?.label || undefined,
+          priceOptionId: firstPriceOption.id,
           customFields: {},
         },
       ],
@@ -90,6 +119,15 @@ export default function CourseRegistrationForm({
   };
 
   const addMyselfAsParticipant = () => {
+    if (!course.priceOptions || course.priceOptions.length === 0) {
+      console.error("Course price options are not defined.");
+      return;
+    }
+    const firstPriceOption = course.priceOptions[0];
+    if (!firstPriceOption) {
+      console.error("No price options available");
+      return;
+    }
     setRegistrationData({
       ...registrationData,
       participants: [
@@ -102,7 +140,7 @@ export default function CourseRegistrationForm({
             : ("" as any),
           city: currentUser?.city || "",
           instrument: "",
-          priceOption: course.priceOptions[0]?.label || "",
+          priceOptionId: firstPriceOption.id,
           customFields: {},
         },
       ],
@@ -135,7 +173,7 @@ export default function CourseRegistrationForm({
   const calculateTotalPrice = () => {
     return registrationData.participants.reduce((sum, participant) => {
       const priceOption = course.priceOptions.find(
-        (p) => p.label === participant.priceOption,
+        (p) => p.id === participant.priceOptionId,
       );
       return sum + (priceOption?.price || 0);
     }, 0);
@@ -176,9 +214,15 @@ export default function CourseRegistrationForm({
       case 2:
         return registrationData.participants.length > 0;
       case 3:
+        // Only check if required fields are filled, not if they're valid
+        // Validity is checked in real-time and shown as errors
         return registrationData.participants.every(
           (p) =>
-            p.firstName && p.lastName && p.birthDate && p.city && p.priceOption,
+            p.firstName &&
+            p.lastName &&
+            p.birthDate &&
+            p.city &&
+            p.priceOptionId,
         );
       case 4:
         return true;
@@ -190,42 +234,85 @@ export default function CourseRegistrationForm({
   const canProceed = validateStep(currentStep);
 
   const handleSubmit = async () => {
-    console.log("Registration submitted:", {
+    console.debug("Registration submitted:", {
       course: course.id,
       ...registrationData,
       totalPrice: calculateTotalPrice(),
       isWaitlist,
     });
 
-    registrationMutation.mutate({
-      courseId: course.id,
-      participants: registrationData.participants.map((p) => ({
-        firstName: p.firstName,
-        lastName: p.lastName,
-        birthDate: p.birthDate,
-        city: p.city,
-        instrument: p.instrument,
-        priceOption: p.priceOption,
-        customFields: p.customFields,
-      })),
-      registrantFirstName:
-        registrationData.registrantFirstName || currentUser?.firstName || "",
-      registrantLastName:
-        registrationData.registrantLastName || currentUser?.lastName || "",
-      registrantEmail:
-        registrationData.registrantEmail || currentUser?.email || "",
-      registrantPhone:
-        registrationData.registrantPhone || currentUser?.phone || "",
-      totalPrice: calculateTotalPrice(),
-    });
-
-    alert(
-      isWaitlist
-        ? "Sie wurden auf die Warteliste gesetzt."
-        : "Ihre Anmeldung war erfolgreich.",
+    registrationMutation.mutate(
+      {
+        courseId: course.id,
+        registrantFirstName:
+          registrationData.registrantFirstName || currentUser?.firstName || "",
+        registrantLastName:
+          registrationData.registrantLastName || currentUser?.lastName || "",
+        registrantEmail:
+          registrationData.registrantEmail || currentUser?.email || "",
+        registrantPhone:
+          registrationData.registrantPhone || currentUser?.phone || "",
+        ...(registrationData.registrantStreet && {
+          registrantStreet: registrationData.registrantStreet,
+        }),
+        ...(registrationData.registrantZipCode && {
+          registrantZipCode: registrationData.registrantZipCode,
+        }),
+        ...(registrationData.registrantCity && {
+          registrantCity: registrationData.registrantCity,
+        }),
+        ...(registrationData.useSeparateBilling !== undefined && {
+          useSeparateBilling: registrationData.useSeparateBilling,
+        }),
+        ...(registrationData.billingCompany && {
+          billingCompany: registrationData.billingCompany,
+        }),
+        ...(registrationData.billingFirstName && {
+          billingFirstName: registrationData.billingFirstName,
+        }),
+        ...(registrationData.billingLastName && {
+          billingLastName: registrationData.billingLastName,
+        }),
+        ...(registrationData.billingStreet && {
+          billingStreet: registrationData.billingStreet,
+        }),
+        ...(registrationData.billingZipCode && {
+          billingZipCode: registrationData.billingZipCode,
+        }),
+        ...(registrationData.billingCity && {
+          billingCity: registrationData.billingCity,
+        }),
+        ...(registrationData.billingEmail && {
+          billingEmail: registrationData.billingEmail,
+        }),
+        participants: registrationData.participants.map((p) => ({
+          firstName: p.firstName,
+          lastName: p.lastName,
+          birthDate: p.birthDate,
+          city: p.city,
+          ...(p.instrument && { instrument: p.instrument }),
+          priceOptionId: p.priceOptionId,
+          ...(p.customFields && { customFields: p.customFields }),
+        })),
+      },
+      {
+        onSuccess: () => {
+          toast.success(
+            isWaitlist
+              ? "Sie wurden auf die Warteliste gesetzt."
+              : "Ihre Anmeldung war erfolgreich.",
+          );
+          onSuccess();
+          onClose();
+        },
+        onError: (error) => {
+          toast.error(
+            "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.",
+          );
+          console.error("Registration error:", error);
+        },
+      },
     );
-    onSuccess();
-    onClose();
   };
 
   return (
@@ -328,6 +415,8 @@ export default function CourseRegistrationForm({
                         registrantFirstName: e.target.value,
                       })
                     }
+                    maxLength={100}
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Max"
                   />
@@ -346,6 +435,8 @@ export default function CourseRegistrationForm({
                         registrantLastName: e.target.value,
                       })
                     }
+                    maxLength={100}
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Mustermann"
                   />
@@ -364,6 +455,7 @@ export default function CourseRegistrationForm({
                         registrantEmail: e.target.value,
                       })
                     }
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="max@example.com"
                   />
@@ -382,6 +474,10 @@ export default function CourseRegistrationForm({
                         registrantPhone: e.target.value,
                       })
                     }
+                    maxLength={50}
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                    title="Bitte geben Sie eine gültige Telefonnummer ein"
+                    required
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="0211 123456"
                   />
@@ -399,6 +495,7 @@ export default function CourseRegistrationForm({
                         registrantStreet: e.target.value,
                       })
                     }
+                    maxLength={200}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Musterstraße 1"
                     required={!registrationData.useSeparateBilling}
@@ -417,6 +514,7 @@ export default function CourseRegistrationForm({
                         registrantZipCode: e.target.value,
                       })
                     }
+                    maxLength={20}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="12345"
                     required={!registrationData.useSeparateBilling}
@@ -435,6 +533,7 @@ export default function CourseRegistrationForm({
                         registrantCity: e.target.value,
                       })
                     }
+                    maxLength={100}
                     className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                     placeholder="Düsseldorf"
                     required={!registrationData.useSeparateBilling}
@@ -486,6 +585,7 @@ export default function CourseRegistrationForm({
                             billingCompany: e.target.value,
                           })
                         }
+                        maxLength={200}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Evangelische Kirchengemeinde Düsseldorf"
                       />
@@ -504,6 +604,7 @@ export default function CourseRegistrationForm({
                             billingFirstName: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Max"
                       />
@@ -522,6 +623,7 @@ export default function CourseRegistrationForm({
                             billingLastName: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Mustermann"
                       />
@@ -540,6 +642,7 @@ export default function CourseRegistrationForm({
                             billingStreet: e.target.value,
                           })
                         }
+                        maxLength={200}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Musterstraße 123"
                       />
@@ -558,6 +661,7 @@ export default function CourseRegistrationForm({
                             billingZipCode: e.target.value,
                           })
                         }
+                        maxLength={20}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="40210"
                       />
@@ -576,6 +680,7 @@ export default function CourseRegistrationForm({
                             billingCity: e.target.value,
                           })
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Düsseldorf"
                       />
@@ -818,6 +923,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "firstName", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       />
                     </div>
@@ -832,6 +939,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "lastName", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       />
                     </div>
@@ -849,17 +958,37 @@ export default function CourseRegistrationForm({
                                 .split("T")[0]
                             : ""
                         }
-                        onChange={(e) =>
-                          updateParticipant(
-                            index,
-                            "birthDate",
-                            e.target.value
-                              ? new Date(e.target.value)
-                              : ("" as any),
-                          )
-                        }
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                        onChange={(e) => {
+                          const newDate = e.target.value
+                            ? new Date(e.target.value)
+                            : ("" as any);
+                          updateParticipant(index, "birthDate", newDate);
+                          // Validate immediately
+                          const newErrors = { ...validationErrors };
+                          if (!e.target.value) {
+                            newErrors[index] = "Geburtsdatum ist erforderlich";
+                          } else if (new Date(e.target.value) >= new Date()) {
+                            newErrors[index] =
+                              "Geburtsdatum muss in der Vergangenheit liegen";
+                          } else {
+                            delete newErrors[index];
+                          }
+                          setValidationErrors(newErrors);
+                        }}
+                        max={new Date().toISOString().split("T")[0]}
+                        required
+                        title="Geburtsdatum muss in der Vergangenheit liegen"
+                        className={`focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 ${
+                          validationErrors[index]
+                            ? "border-red-500 dark:border-red-500"
+                            : "border-gray-300"
+                        }`}
                       />
+                      {validationErrors[index] && (
+                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                          {validationErrors[index]}
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -872,6 +1001,8 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "city", e.target.value)
                         }
+                        maxLength={100}
+                        required
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Düsseldorf"
                       />
@@ -887,6 +1018,7 @@ export default function CourseRegistrationForm({
                         onChange={(e) =>
                           updateParticipant(index, "instrument", e.target.value)
                         }
+                        maxLength={100}
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                         placeholder="Trompete"
                       />
@@ -897,18 +1029,18 @@ export default function CourseRegistrationForm({
                         Preisoption *
                       </label>
                       <select
-                        value={participant.priceOption}
+                        value={participant.priceOptionId}
                         onChange={(e) =>
                           updateParticipant(
                             index,
-                            "priceOption",
+                            "priceOptionId",
                             e.target.value,
                           )
                         }
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       >
                         {course.priceOptions.map((option) => (
-                          <option key={option.label} value={option.label}>
+                          <option key={option.id} value={option.id}>
                             {option.label} - {option.price.toFixed(2)} €
                           </option>
                         ))}
@@ -1127,7 +1259,7 @@ export default function CourseRegistrationForm({
                 <div className="space-y-3">
                   {registrationData.participants.map((participant, index) => {
                     const priceOption = course.priceOptions.find(
-                      (p) => p.label === participant.priceOption,
+                      (p) => p.id === participant.priceOptionId,
                     );
                     return (
                       <div
@@ -1146,7 +1278,7 @@ export default function CourseRegistrationForm({
                               ` • ${participant.instrument}`}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {participant.priceOption}
+                            {priceOption?.label}
                           </p>
                         </div>
                         <p className="text-primary font-bold">
@@ -1221,8 +1353,19 @@ export default function CourseRegistrationForm({
 
           {currentStep < 4 ? (
             <button
-              onClick={() => setCurrentStep((currentStep + 1) as Step)}
-              disabled={!canProceed}
+              onClick={() => {
+                if (
+                  currentStep === 3 &&
+                  Object.keys(validationErrors).length > 0
+                ) {
+                  return; // Don't proceed if there are validation errors
+                }
+                setCurrentStep((currentStep + 1) as Step);
+              }}
+              disabled={
+                !canProceed ||
+                (currentStep === 3 && Object.keys(validationErrors).length > 0)
+              }
               className="bg-primary hover:bg-primary-dark order-3 rounded-lg px-6 py-2 font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               Weiter

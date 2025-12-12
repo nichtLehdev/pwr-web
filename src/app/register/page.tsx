@@ -242,6 +242,7 @@ export default function RegisterPage() {
                   name="firstName"
                   type="text"
                   required
+                  maxLength={100}
                   value={formData.firstName}
                   onChange={handleChange}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
@@ -260,6 +261,7 @@ export default function RegisterPage() {
                   name="lastName"
                   type="text"
                   required
+                  maxLength={100}
                   value={formData.lastName}
                   onChange={handleChange}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
@@ -283,6 +285,8 @@ export default function RegisterPage() {
                 value={formData.username}
                 minLength={3}
                 maxLength={30}
+                pattern="[a-zA-Z0-9_-]+"
+                title="Nur Buchstaben, Zahlen, Unterstrich und Bindestrich erlaubt"
                 onChange={handleChange}
                 className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
                   usernameStatus.available === true

@@ -17,34 +17,37 @@ export const registrationsRouter = createTRPCRouter({
     .input(
       z.object({
         courseId: z.string(),
-        registrantFirstName: z.string().min(1),
-        registrantLastName: z.string().min(1),
+        registrantFirstName: z.string().min(1).max(100),
+        registrantLastName: z.string().min(1).max(100),
         registrantEmail: z.email(),
-        registrantPhone: z.string().optional(),
-        registrantChoir: z.string().optional(),
-        registrantDistrict: z.string().optional(),
-        registrantStreet: z.string().optional(),
-        registrantZipCode: z.string().optional(),
-        registrantCity: z.string().optional(),
+        registrantPhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
+        registrantStreet: z.string().max(200).optional(),
+        registrantZipCode: z.string().max(20).optional(),
+        registrantCity: z.string().max(100).optional(),
         useSeparateBilling: z.boolean().optional(),
-        billingCompany: z.string().optional(),
-        billingFirstName: z.string().optional(),
-        billingLastName: z.string().optional(),
-        billingStreet: z.string().optional(),
-        billingZipCode: z.string().optional(),
-        billingCity: z.string().optional(),
+        billingCompany: z.string().max(200).optional(),
+        billingFirstName: z.string().max(100).optional(),
+        billingLastName: z.string().max(100).optional(),
+        billingStreet: z.string().max(200).optional(),
+        billingZipCode: z.string().max(20).optional(),
+        billingCity: z.string().max(100).optional(),
         billingEmail: z.email().optional(),
-        totalPrice: z.number().min(0),
-        notes: z.string().optional(),
+        notes: z.string().max(2000).optional(),
         participants: z.array(
           z.object({
-            firstName: z.string().min(1),
-            lastName: z.string().min(1),
-            birthDate: z.date(),
-            city: z.string().min(1),
-            instrument: z.string().optional(),
-            priceOption: z.string().optional(),
-            customFields: z.json().optional(),
+            firstName: z.string().min(1).max(100),
+            lastName: z.string().min(1).max(100),
+            birthDate: z.date().refine((date) => date < new Date(), {
+              message: "Geburtsdatum muss in der Vergangenheit liegen",
+            }),
+            city: z.string().min(1).max(100),
+            instrument: z.string().max(100).optional(),
+            priceOptionId: z.string().min(1),
+            customFields: z.record(z.string(), z.any()).optional(),
           }),
         ),
       }),
@@ -52,6 +55,7 @@ export const registrationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { participants, ...registrationData } = input;
 
+      // Fetch course with all necessary data including custom fields
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
@@ -65,6 +69,7 @@ export const registrationsRouter = createTRPCRouter({
             },
           },
           priceOptions: true,
+          customFields: true,
         },
       });
 
@@ -92,18 +97,64 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const expectedTotal = participants.reduce((sum, participant) => {
-        const priceOption = course.priceOptions.find(
-          (p) => p.label === participant.priceOption,
-        );
-        return sum + (priceOption?.price || 0);
-      }, 0);
+      // Validate participants and calculate total price server-side
+      let totalPrice = 0;
+      const participantsWithPriceOptions = [];
 
-      if (expectedTotal !== input.totalPrice) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Total price does not match the sum of price options",
+      for (const participant of participants) {
+        // Validate price option exists by ID
+        const priceOption = course.priceOptions.find(
+          (p) => p.id === participant.priceOptionId,
+        );
+
+        if (!priceOption) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid price option ID: ${participant.priceOptionId}`,
+          });
+        }
+
+        totalPrice += priceOption.price;
+
+        // Store participant with price option label for database
+        participantsWithPriceOptions.push({
+          ...participant,
+          priceOption: priceOption.label,
         });
+
+        // Validate custom fields
+        if (participant.customFields && course.customFields) {
+          for (const customField of course.customFields) {
+            const value = participant.customFields[customField.fieldName];
+
+            // Check required fields
+            if (customField.isRequired && !value) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Required field missing: ${customField.fieldName}`,
+              });
+            }
+
+            // Validate select options
+            if (
+              value &&
+              customField.fieldType === "SELECT" &&
+              customField.options
+            ) {
+              const validOptions =
+                typeof customField.options === "string"
+                  ? customField.options.split(",").map((o) => o.trim())
+                  : [];
+
+              if (!validOptions.includes(String(value))) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `Invalid value for ${customField.fieldName}`,
+                });
+              }
+            }
+          }
+        }
       }
 
       const currentParticipants = course._count.registrations;
@@ -133,12 +184,16 @@ export const registrationsRouter = createTRPCRouter({
       const registration = await ctx.db.courseRegistration.create({
         data: {
           ...registrationData,
+          totalPrice, // Use server-calculated price
           registrationStatus,
           participants: {
-            create: participants.map((participant) => ({
-              ...participant,
-              customFields: participant.customFields || {},
-            })),
+            create: participantsWithPriceOptions.map((participant) => {
+              const { priceOptionId, ...participantData } = participant;
+              return {
+                ...participantData,
+                customFields: participantData.customFields || {},
+              };
+            }),
           },
         },
         include: {
@@ -268,27 +323,32 @@ export const registrationsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        registrantPhone: z.string().optional(),
+        registrantPhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
         useSeparateBilling: z.boolean().optional(),
-        billingCompany: z.string().optional(),
-        billingFirstName: z.string().optional(),
-        billingLastName: z.string().optional(),
-        billingStreet: z.string().optional(),
-        billingZipCode: z.string().optional(),
-        billingCity: z.string().optional(),
+        billingCompany: z.string().max(200).optional(),
+        billingFirstName: z.string().max(100).optional(),
+        billingLastName: z.string().max(100).optional(),
+        billingStreet: z.string().max(200).optional(),
+        billingZipCode: z.string().max(20).optional(),
+        billingCity: z.string().max(100).optional(),
         billingEmail: z.string().email().optional(),
-        totalPrice: z.number().min(0),
-        notes: z.string().optional(),
+        notes: z.string().max(2000).optional(),
         participants: z.array(
           z.object({
             id: z.string().optional(),
-            firstName: z.string().min(1),
-            lastName: z.string().min(1),
-            birthDate: z.date(),
-            city: z.string().min(1),
-            instrument: z.string().optional(),
-            priceOption: z.string().optional(),
-            customFields: z.json().optional(),
+            firstName: z.string().min(1).max(100),
+            lastName: z.string().min(1).max(100),
+            birthDate: z.date().refine((date) => date < new Date(), {
+              message: "Geburtsdatum muss in der Vergangenheit liegen",
+            }),
+            city: z.string().min(1).max(100),
+            instrument: z.string().max(100).optional(),
+            priceOptionId: z.string().min(1),
+            customFields: z.record(z.string(), z.any()).optional(),
           }),
         ),
       }),
@@ -350,17 +410,28 @@ export const registrationsRouter = createTRPCRouter({
 
       const course = registration.course;
 
-      const expectedTotal = participants.reduce((sum, participant) => {
-        const priceOption = course.priceOptions.find(
-          (p) => p.label === participant.priceOption,
-        );
-        return sum + (priceOption?.price ?? 0);
-      }, 0);
+      // Calculate total price server-side and validate
+      let totalPrice = 0;
+      const participantsWithPriceOptions = [];
 
-      if (expectedTotal !== input.totalPrice) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Total price does not match the sum of price options",
+      for (const participant of participants) {
+        const priceOption = course.priceOptions.find(
+          (p) => p.id === participant.priceOptionId,
+        );
+
+        if (!priceOption) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid price option ID: ${participant.priceOptionId}`,
+          });
+        }
+
+        totalPrice += priceOption.price;
+
+        // Store participant with price option label for database
+        participantsWithPriceOptions.push({
+          ...participant,
+          priceOption: priceOption.label,
         });
       }
 
@@ -388,7 +459,7 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       const priceOptionCounts: Record<string, number> = {};
-      for (const participant of participants) {
+      for (const participant of participantsWithPriceOptions) {
         if (participant.priceOption) {
           priceOptionCounts[participant.priceOption] =
             (priceOptionCounts[participant.priceOption] ?? 0) + 1;
@@ -431,8 +502,12 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      for (const participant of participants) {
-        const { id: participantId, ...participantData } = participant;
+      for (const participant of participantsWithPriceOptions) {
+        const {
+          id: participantId,
+          priceOptionId,
+          ...participantData
+        } = participant;
 
         if (participantId) {
           await ctx.db.participant.update({
@@ -457,6 +532,7 @@ export const registrationsRouter = createTRPCRouter({
         where: { id },
         data: {
           ...registrationData,
+          totalPrice, // Use server-calculated price
         },
         include: {
           participants: true,
