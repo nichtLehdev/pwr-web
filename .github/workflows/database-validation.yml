@@ -13,6 +13,20 @@ on:
       - "prisma.config.ts"
 
 jobs:
+  read-pnpm-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read pnpm version from package.json
+        id: pnpm
+        run: echo "version=$(jq -r '.packageManager' package.json | sed 's/pnpm@//')" >> $GITHUB_OUTPUT
+
+      - name: Use version
+        run: echo "PNPM version is ${{ steps.pnpm.outputs.version }}"
+
   prisma-validate:
     name: Validate Prisma Schema
     runs-on: ubuntu-latest
@@ -31,7 +45,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.24.0
+          version: ${{ steps.pnpm.outputs.version }}
 
       - name: Get pnpm store directory
         shell: bash
