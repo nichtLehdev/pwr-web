@@ -83,6 +83,7 @@ export default function CourseRegistrationForm({
           errors[index] = "Geburtsdatum muss in der Vergangenheit liegen";
         }
       });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValidationErrors(errors);
     } else {
       // Clear errors when leaving step 3
