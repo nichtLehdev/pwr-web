@@ -36,11 +36,17 @@ export default function CourseDetailView({
   spots,
 }: CourseDetailViewProps) {
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [showRegistrationOptions, setShowRegistrationOptions] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
   const { data: userProfile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
+  const { data: existingRegistration } =
+    api.registrations.getMyActiveRegistrationForCourse.useQuery(
+      { courseId: course.id },
+      { enabled: !!session?.user },
+    );
 
   const districtColor = getDistrictColor(course.bezirk?.number);
   const startDate = new Date(course.startDate);
@@ -139,6 +145,24 @@ export default function CourseDetailView({
     setShowRegistrationForm(false);
 
     router.refresh();
+  };
+
+  const handleRegisterClick = () => {
+    if (existingRegistration) {
+      setShowRegistrationOptions(true);
+    } else {
+      setShowRegistrationForm(true);
+    }
+  };
+
+  const handleEditExisting = () => {
+    setShowRegistrationOptions(false);
+    router.push(`/registrations/${existingRegistration?.id}/edit`);
+  };
+
+  const handleCreateNew = () => {
+    setShowRegistrationOptions(false);
+    setShowRegistrationForm(true);
   };
 
   return (
@@ -561,7 +585,7 @@ export default function CourseDetailView({
                   )}
 
                   <button
-                    onClick={() => setShowRegistrationForm(true)}
+                    onClick={handleRegisterClick}
                     className="bg-primary hover:bg-primary-dark mb-3 w-full rounded-lg px-6 py-3 font-bold text-white transition-colors"
                   >
                     {spots.isFull && course.allowWaitingList
@@ -684,6 +708,48 @@ export default function CourseDetailView({
           </div>
         </div>
       </section>
+
+      {/* Registration Options Modal */}
+      {showRegistrationOptions && existingRegistration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+              Bestehende Anmeldung gefunden
+            </h2>
+            <p className="mb-6 text-gray-700 dark:text-gray-300">
+              Sie haben bereits eine aktive Anmeldung für diesen Kurs mit{" "}
+              <strong>
+                {existingRegistration.participants.length}{" "}
+                {existingRegistration.participants.length === 1
+                  ? "Teilnehmer"
+                  : "Teilnehmern"}
+              </strong>
+              . Möchten Sie Ihre bestehende Anmeldung bearbeiten oder eine
+              zusätzliche Anmeldung erstellen?
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={handleEditExisting}
+                className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+              >
+                Bestehende Anmeldung bearbeiten
+              </button>
+              <button
+                onClick={handleCreateNew}
+                className="dark:border-dark-border dark:hover:bg-dark-surface w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
+              >
+                Zusätzliche Anmeldung erstellen
+              </button>
+              <button
+                onClick={() => setShowRegistrationOptions(false)}
+                className="w-full rounded-lg px-6 py-3 font-semibold text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Registration Form Modal */}
       {showRegistrationForm && (
