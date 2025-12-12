@@ -280,9 +280,9 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string(),
-        role: z.string().optional(),
-        responsibilities: z.string().optional(),
-        socials: z.string().optional(),
+        role: z.string().max(100).optional(),
+        responsibilities: z.string().max(1000).optional(),
+        socials: z.string().max(500).optional(),
         contactType: z.enum(ContactType).optional(),
         sortOrder: z.number().default(0),
       }),
@@ -337,9 +337,9 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        role: z.string().optional(),
-        responsibilities: z.string().optional(),
-        socials: z.string().optional(),
+        role: z.string().max(100).optional(),
+        responsibilities: z.string().max(1000).optional(),
+        socials: z.string().max(500).optional(),
         contactType: z.enum(ContactType).optional().nullable(),
         sortOrder: z.number().optional(),
       }),
@@ -497,11 +497,15 @@ export const organizationRouter = createTRPCRouter({
   createVorstandMember: adminProcedure
     .input(
       z.object({
-        name: z.string().optional(),
+        name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().optional(),
-        position: z.string().min(1),
-        description: z.string().optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
+        position: z.string().min(1).max(100),
+        description: z.string().max(1000).optional(),
         color: z.string().optional(),
         sortOrder: z.number().default(0),
         userId: z.string().optional(),
@@ -535,11 +539,15 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional(),
+        name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().optional(),
-        position: z.string().optional(),
-        description: z.string().optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
+        position: z.string().max(100).optional(),
+        description: z.string().max(1000).optional(),
         color: z.string().optional(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
@@ -722,7 +730,11 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         name: z.string().optional(),
         email: z.email().optional(),
-        phone: z.string().optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
         position: z.string().optional(),
         role: z.enum(FoerdervereinRole).default("MITGLIED"),
         memberSince: z.date().optional(),
@@ -761,7 +773,12 @@ export const organizationRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().optional().nullable(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\\s./0-9]*$/)
+          .optional()
+          .nullable(),
         position: z.string().optional().nullable(),
         role: z.enum(FoerdervereinRole).optional(),
         memberSince: z.date().optional().nullable(),

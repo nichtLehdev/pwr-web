@@ -250,8 +250,13 @@ export const usersRouter = createTRPCRouter({
   updateMyProfile: protectedProcedure
     .input(
       z.object({
-        name: z.string().min(1).optional(),
-        username: z.string().min(3).max(30).optional(),
+        name: z.string().min(1).max(100).optional(),
+        username: z
+          .string()
+          .min(3)
+          .max(30)
+          .regex(/^[a-zA-Z0-9_-]+$/)
+          .optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
       }),
@@ -288,14 +293,23 @@ export const usersRouter = createTRPCRouter({
   updateProfile: protectedProcedure
     .input(
       z.object({
-        firstName: z.string().optional(),
-        lastName: z.string().optional(),
-        displayName: z.string().optional(),
-        username: z.string().min(3).max(30).optional(),
-        phone: z.string().optional(),
-        street: z.string().optional(),
-        zipCode: z.string().optional(),
-        city: z.string().optional(),
+        firstName: z.string().max(100).optional(),
+        lastName: z.string().max(100).optional(),
+        displayName: z.string().max(100).optional(),
+        username: z
+          .string()
+          .min(3)
+          .max(30)
+          .regex(/^[a-zA-Z0-9_-]+$/)
+          .optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
+        street: z.string().max(200).optional(),
+        zipCode: z.string().max(20).optional(),
+        city: z.string().max(100).optional(),
         birthDate: z.string().optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
@@ -480,19 +494,20 @@ export const usersRouter = createTRPCRouter({
   create: adminProcedure
     .input(
       z.object({
-        firstName: z.string().min(1, "Vorname ist erforderlich"),
-        lastName: z.string().min(1, "Nachname ist erforderlich"),
-        displayName: z.string().optional(),
+        firstName: z.string().min(1, "Vorname ist erforderlich").max(100),
+        lastName: z.string().min(1, "Nachname ist erforderlich").max(100),
+        displayName: z.string().max(100).optional(),
         email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
         username: z
           .string()
           .min(3, "Benutzername muss mindestens 3 Zeichen haben")
           .max(30, "Benutzername darf maximal 30 Zeichen haben")
+          .regex(/^[a-zA-Z0-9_-]+$/)
           .optional(),
         role: z.nativeEnum(UserRole).default("USER"),
-        displayRole: z.string().optional(),
-        obleuteRole: z.string().optional(),
-        bio: z.string().optional(),
+        displayRole: z.string().max(100).optional(),
+        obleuteRole: z.string().max(100).optional(),
+        bio: z.string().max(2000).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional(),
       }),
@@ -551,13 +566,18 @@ export const usersRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        displayName: z.string().min(1).optional(),
+        displayName: z.string().min(1).max(100).optional(),
         email: z.string().email().optional(),
-        username: z.string().min(3).max(30).optional(),
+        username: z
+          .string()
+          .min(3)
+          .max(30)
+          .regex(/^[a-zA-Z0-9_-]+$/)
+          .optional(),
         role: z.nativeEnum(UserRole).optional(),
-        bio: z.string().optional(),
-        displayRole: z.string().optional(),
-        obleuteRole: z.string().optional(),
+        bio: z.string().max(2000).optional(),
+        displayRole: z.string().max(100).optional(),
+        obleuteRole: z.string().max(100).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
       }),

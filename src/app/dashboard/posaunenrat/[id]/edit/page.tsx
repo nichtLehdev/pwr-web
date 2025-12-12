@@ -298,6 +298,7 @@ export default function EditPosaunenratPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Max Mustermann"
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>

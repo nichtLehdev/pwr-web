@@ -208,8 +208,8 @@ export default function EditBezirkPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                maxLength={100}
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Bezirk 01 - Unterer Niederrhein"
               />
             </div>
 
@@ -223,16 +223,16 @@ export default function EditBezirkPage() {
                 value={shortName}
                 onChange={(e) => setShortName(e.target.value)}
                 required
+                maxLength={50}
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Unterer Niederrhein"
               />
             </div>
 
             {/* Preview */}
-            <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-gray-800">
-              <p className="dark:text-dark-muted mb-2 text-sm font-medium text-gray-600">
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Vorschau
-              </p>
+              </label>
               <div className="flex items-center gap-3">
                 <span
                   className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white"

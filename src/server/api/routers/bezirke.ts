@@ -179,8 +179,8 @@ export const bezirkeRouter = createTRPCRouter({
     .input(
       z.object({
         number: z.number().min(1).max(13),
-        name: z.string().min(1),
-        shortName: z.string().min(1),
+        name: z.string().min(1).max(100),
+        shortName: z.string().min(1).max(50),
         color: z.string(),
       }),
     )
@@ -197,8 +197,8 @@ export const bezirkeRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         number: z.number().min(1).max(13).optional(),
-        name: z.string().min(1).optional(),
-        shortName: z.string().min(1).optional(),
+        name: z.string().min(1).max(100).optional(),
+        shortName: z.string().min(1).max(50).optional(),
         color: z.string().optional(),
       }),
     )

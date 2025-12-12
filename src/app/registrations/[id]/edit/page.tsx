@@ -522,6 +522,9 @@ export default function EditRegistrationPage() {
                   type="tel"
                   value={registrantPhone}
                   onChange={(e) => setRegistrantPhone(e.target.value)}
+                  maxLength={50}
+                  pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                  title="Bitte geben Sie eine gültige Telefonnummer ein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                   placeholder="Optional"
                 />
@@ -563,6 +566,7 @@ export default function EditRegistrationPage() {
                         billingCompany: e.target.value,
                       })
                     }
+                    maxLength={200}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     placeholder="Optional"
                   />
@@ -580,6 +584,7 @@ export default function EditRegistrationPage() {
                         billingFirstName: e.target.value,
                       })
                     }
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -597,6 +602,7 @@ export default function EditRegistrationPage() {
                         billingLastName: e.target.value,
                       })
                     }
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -614,6 +620,7 @@ export default function EditRegistrationPage() {
                         billingStreet: e.target.value,
                       })
                     }
+                    maxLength={200}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -631,6 +638,7 @@ export default function EditRegistrationPage() {
                         billingZipCode: e.target.value,
                       })
                     }
+                    maxLength={20}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -648,6 +656,7 @@ export default function EditRegistrationPage() {
                         billingCity: e.target.value,
                       })
                     }
+                    maxLength={100}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                     required
                   />
@@ -761,6 +770,7 @@ export default function EditRegistrationPage() {
                             e.target.value,
                           )
                         }
+                        maxLength={100}
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                         required
                       />
@@ -780,6 +790,7 @@ export default function EditRegistrationPage() {
                             e.target.value,
                           )
                         }
+                        maxLength={100}
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                         required
                       />
@@ -818,6 +829,7 @@ export default function EditRegistrationPage() {
                             e.target.value,
                           )
                         }
+                        maxLength={100}
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                         required
                       />
@@ -837,6 +849,7 @@ export default function EditRegistrationPage() {
                             e.target.value || null,
                           )
                         }
+                        maxLength={100}
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                       />
                     </div>

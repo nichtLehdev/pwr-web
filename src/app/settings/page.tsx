@@ -363,6 +363,7 @@ export default function SettingsPage() {
                     name="firstName"
                     type="text"
                     value={formData.firstName}
+                    maxLength={100}
                     onChange={handleChange}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
@@ -380,6 +381,7 @@ export default function SettingsPage() {
                     name="lastName"
                     type="text"
                     value={formData.lastName}
+                    maxLength={100}
                     onChange={handleChange}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
@@ -415,6 +417,7 @@ export default function SettingsPage() {
                   name="displayName"
                   type="text"
                   value={formData.displayName}
+                  maxLength={100}
                   onChange={handleChange}
                   placeholder="Wird anderen Nutzern angezeigt"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
@@ -458,6 +461,10 @@ export default function SettingsPage() {
                     name="username"
                     type="text"
                     value={formData.username}
+                    minLength={3}
+                    maxLength={30}
+                    pattern="[a-zA-Z0-9_-]+"
+                    title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
                     onChange={handleChange}
                     onBlur={checkUsernameAvailability}
                     className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
@@ -587,7 +594,7 @@ export default function SettingsPage() {
                       type="text"
                       value={formData.zipCode}
                       onChange={handleChange}
-                      maxLength={5}
+                      maxLength={20}
                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                     />
                   </div>
@@ -604,6 +611,7 @@ export default function SettingsPage() {
                       name="city"
                       type="text"
                       value={formData.city}
+                      maxLength={100}
                       onChange={handleChange}
                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                     />

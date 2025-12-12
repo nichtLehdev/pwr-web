@@ -338,9 +338,9 @@ export const postsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        title: z.string().min(1),
-        excerpt: z.string().optional(),
-        content: z.string().min(1),
+        title: z.string().min(1).max(200),
+        excerpt: z.string().max(500).optional(),
+        content: z.string().min(1).max(50000),
         coverImageId: z.string().optional(),
         category: z.enum(PostCategory),
         bezirkId: z.string().optional(),
@@ -392,9 +392,9 @@ export const postsRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        title: z.string().min(1).optional(),
-        excerpt: z.string().optional(),
-        content: z.string().optional(),
+        title: z.string().min(1).max(200).optional(),
+        excerpt: z.string().max(500).optional(),
+        content: z.string().max(50000).optional(),
         coverImageId: z.string().optional().nullable(),
         category: z.enum(PostCategory).optional(),
         bezirkId: z.string().optional().nullable(),
