@@ -36,11 +36,11 @@ const config = {
             key: "Content-Security-Policy",
             value: `
               default-src 'self';
-              script-src 'self' 'unsafe-inline' 'unsafe-eval';
+              script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com;
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' https:;
-              connect-src 'self' https:;
+              connect-src 'self';
               frame-ancestors 'none';
               base-uri 'self';
               form-action 'self';
