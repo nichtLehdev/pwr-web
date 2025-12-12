@@ -310,7 +310,12 @@ export const usersRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
-        birthDate: z.string().optional(),
+        birthDate: z
+          .string()
+          .refine((date) => !date || new Date(date) < new Date(), {
+            message: "Geburtsdatum muss in der Vergangenheit liegen",
+          })
+          .optional(),
         bio: z.string().max(2000).optional(),
         profileImageId: z.string().optional().nullable(),
         preferences: z.string().optional(),

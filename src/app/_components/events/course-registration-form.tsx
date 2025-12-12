@@ -930,6 +930,9 @@ export default function CourseRegistrationForm({
                               : ("" as any),
                           )
                         }
+                        max={new Date().toISOString().split("T")[0]}
+                        required
+                        title="Geburtsdatum muss in der Vergangenheit liegen"
                         className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
                       />
                     </div>

@@ -827,8 +827,10 @@ export default function EditRegistrationPage() {
                             new Date(e.target.value),
                           )
                         }
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                        max={new Date().toISOString().split("T")[0]}
                         required
+                        title="Geburtsdatum muss in der Vergangenheit liegen"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
                       />
                     </div>
 

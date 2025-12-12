@@ -737,7 +737,12 @@ export const organizationRouter = createTRPCRouter({
           .optional(),
         position: z.string().optional(),
         role: z.enum(FoerdervereinRole).default("MITGLIED"),
-        memberSince: z.date().optional(),
+        memberSince: z
+          .date()
+          .refine((date) => date <= new Date(), {
+            message: "Datum kann nicht in der Zukunft liegen",
+          })
+          .optional(),
         description: z.string().optional(),
         sortOrder: z.number().default(0),
         userId: z.string().optional(),
@@ -781,7 +786,13 @@ export const organizationRouter = createTRPCRouter({
           .nullable(),
         position: z.string().optional().nullable(),
         role: z.enum(FoerdervereinRole).optional(),
-        memberSince: z.date().optional().nullable(),
+        memberSince: z
+          .date()
+          .refine((date) => !date || date <= new Date(), {
+            message: "Datum kann nicht in der Zukunft liegen",
+          })
+          .optional()
+          .nullable(),
         description: z.string().optional().nullable(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),

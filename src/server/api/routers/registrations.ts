@@ -43,7 +43,9 @@ export const registrationsRouter = createTRPCRouter({
           z.object({
             firstName: z.string().min(1).max(100),
             lastName: z.string().min(1).max(100),
-            birthDate: z.date(),
+            birthDate: z.date().refine((date) => date < new Date(), {
+              message: "Geburtsdatum muss in der Vergangenheit liegen",
+            }),
             city: z.string().min(1).max(100),
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
@@ -342,7 +344,9 @@ export const registrationsRouter = createTRPCRouter({
             id: z.string().optional(),
             firstName: z.string().min(1).max(100),
             lastName: z.string().min(1).max(100),
-            birthDate: z.date(),
+            birthDate: z.date().refine((date) => date < new Date(), {
+              message: "Geburtsdatum muss in der Vergangenheit liegen",
+            }),
             city: z.string().min(1).max(100),
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),

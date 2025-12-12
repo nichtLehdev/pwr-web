@@ -400,6 +400,8 @@ export default function SettingsPage() {
                     type="date"
                     value={formData.birthDate}
                     onChange={handleChange}
+                    max={new Date().toISOString().split("T")[0]}
+                    title="Geburtsdatum muss in der Vergangenheit liegen"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
                 </div>

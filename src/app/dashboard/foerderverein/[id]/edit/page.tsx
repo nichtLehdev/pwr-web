@@ -507,6 +507,8 @@ export default function EditFoerdervereinPage() {
                     type="date"
                     value={memberSince}
                     onChange={(e) => setMemberSince(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                    title="Datum kann nicht in der Zukunft liegen"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
