@@ -1,0 +1,58 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(req: NextRequest) {
+  const { feedback, email, type, subject, url, device } = await req.json();
+  if (!feedback || typeof feedback !== "string" || !subject) {
+    return NextResponse.json(
+      { error: "Feedback and subject required" },
+      { status: 400 },
+    );
+  }
+
+  // Prepare GitHub issue data
+  const title = `[${type === "bug" ? "🐞 Bug" : type === "feature" ? "✨ Feature" : "💬 Feedback"}] ${subject}`;
+  let body = `**Typ:** ${type || "other"}\n`;
+  body += `**Betreff:** ${subject}\n`;
+  body += `**Feedback:**\n${feedback}\n`;
+  if (url) body += `\n**URL:** ${url}`;
+  if (device) body += `\n**Gerät/Betriebssystem & Browser:** ${device}`;
+  body += `\n\n**E-Mail:** ${email || "Nicht angegeben"}`;
+
+  // Get GitHub token and repo info from environment variables
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  const GITHUB_REPO = process.env.GITHUB_REPO; // e.g. 'lehdev/posaunenwerk'
+
+  if (!GITHUB_TOKEN || !GITHUB_REPO) {
+    return NextResponse.json(
+      { error: "Server not configured" },
+      { status: 500 },
+    );
+  }
+
+  // Create issue via GitHub API
+  const res = await fetch(
+    `https://api.github.com/repos/${GITHUB_REPO}/issues`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title,
+        body,
+        labels: [type || "feedback"],
+      }),
+    },
+  );
+
+  if (!res.ok) {
+    return NextResponse.json(
+      { error: "Failed to create issue" },
+      { status: 500 },
+    );
+  }
+
+  return NextResponse.json({ ok: true });
+}

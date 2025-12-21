@@ -117,6 +117,8 @@ services:
     environment:
       # Database - override any build-time URL with runtime URL
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
+      GITHUB_REPO: ${GITHUB_REPO:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
 
       # Application
       NODE_ENV: production
