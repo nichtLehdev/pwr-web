@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useBanner } from "../ui/banner-context";
 
 interface PageHeaderProps {
   title: string;
@@ -29,15 +30,29 @@ export default function PageHeader({
   color = "primary",
 }: PageHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [topPosition, setTopPosition] = useState(64);
+  const { bannerHeight } = useBanner();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 80);
     };
 
+    const updateTopPosition = () => {
+      // 64px (top-16) on mobile, 80px (top-20) on desktop
+      const baseTop = window.innerWidth >= 768 ? 80 : 64;
+      setTopPosition(baseTop + bannerHeight);
+    };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("resize", updateTopPosition);
+    updateTopPosition(); // Initial calculation
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", updateTopPosition);
+    };
+  }, [bannerHeight]);
 
   const colorClasses = {
     primary: "bg-primary",
@@ -61,9 +76,12 @@ export default function PageHeader({
 
   return (
     <div
-      className={`fixed top-16 right-0 left-0 z-40 transition-all duration-300 md:top-20 ${
+      className={`fixed right-0 left-0 z-40 transition-all duration-300 ${
         isScrolled ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
       }`}
+      style={{
+        top: `${topPosition}px`,
+      }}
     >
       <div
         className={`${colorClasses[color]} h-12 text-white shadow-md md:h-16`}
