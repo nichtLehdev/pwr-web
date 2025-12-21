@@ -185,7 +185,7 @@ export default function PostDetailView({
               </span>
               {post.bezirk && (
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  Bezirk {post.bezirk.number} ({post.bezirk.name})
+                  Bezirk {post.bezirk.number} ({post.bezirk.shortName})
                 </span>
               )}
               {post.pinned && (

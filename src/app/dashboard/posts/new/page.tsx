@@ -388,7 +388,7 @@ export default function NewPostPage() {
                     <option value="">Übergreifend / Kein Bezirk</option>
                     {bezirke?.map((bezirk) => (
                       <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.name}
+                        Bezirk {bezirk.number} – {bezirk.shortName}
                       </option>
                     ))}
                   </select>

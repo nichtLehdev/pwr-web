@@ -467,17 +467,17 @@ export default function BezirkePage() {
                     {/* Content */}
                     <div className="p-6">
                       {bezirk.users && (
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                           {bezirk.users.map((obmann, idx) => (
                             <div
                               key={idx}
-                              className={`flex ${
+                              className={`flex items-start gap-5 ${
                                 idx > 0
-                                  ? "dark:border-dark-border border-t border-gray-200 pt-6"
+                                  ? "dark:border-dark-border border-t border-gray-200 pt-8"
                                   : ""
                               }`}
                             >
-                              <div className="my-auto mr-6 h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-32 md:w-32">
+                              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-28 md:w-28">
                                 <Image
                                   src={
                                     obmann.profileImage?.url ||
@@ -492,23 +492,20 @@ export default function BezirkePage() {
                                   className="h-full w-full object-cover object-center"
                                 />
                               </div>
-                              <div>
-                                <div className="mb-3">
-                                  <span
-                                    className={`inline-block rounded-full px-3 py-1 text-xs font-semibold bg-district-${bezirk.number}/20`}
-                                  >
-                                    {obmann.obleuteRole}
-                                  </span>
-                                </div>
-                                <h4 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                              <div className="space-around h-full min-w-0 flex-1">
+                                <span
+                                  className={`mb-0 inline-block rounded-full pt-1 text-xs font-semibold bg-district-${bezirk.number}/20`}
+                                >
+                                  {obmann.obleuteRole}
+                                </span>
+                                <h4 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                                   {obmann.displayName}
                                 </h4>
-
-                                <div className="space-y-3">
+                                <div className="space-y-1">
                                   {obmann.address && (
-                                    <div className="flex items-start gap-3">
+                                    <div className="flex items-start gap-2.5">
                                       <svg
-                                        className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
+                                        className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -526,7 +523,7 @@ export default function BezirkePage() {
                                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                                         />
                                       </svg>
-                                      <p className="text-sm text-gray-600">
+                                      <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
                                         {obmann.address}
                                       </p>
                                     </div>
@@ -538,10 +535,10 @@ export default function BezirkePage() {
                                         /[\s-]/g,
                                         "",
                                       )}`}
-                                      className="hover:text-primary flex items-center gap-3 text-sm text-gray-600"
+                                      className="hover:text-primary flex items-center gap-2.5 text-sm text-gray-600 transition-colors dark:text-gray-400"
                                     >
                                       <svg
-                                        className="h-5 w-5 shrink-0 text-gray-400"
+                                        className="h-4 w-4 shrink-0 text-gray-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -560,10 +557,10 @@ export default function BezirkePage() {
                                   {obmann.email && (
                                     <Link
                                       href={`mailto:${obmann.email}`}
-                                      className="text-primary hover:text-primary-dark flex items-center gap-3 text-sm font-semibold"
+                                      className="text-primary hover:text-primary-dark flex items-center gap-2.5 text-sm font-semibold transition-colors"
                                     >
                                       <svg
-                                        className="h-5 w-5 shrink-0"
+                                        className="h-4 w-4 shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"

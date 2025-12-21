@@ -44,6 +44,9 @@ export default function NewUserPage() {
   const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
+  const [street, setStreet] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [city, setCity] = useState("");
 
   const isValidEmail = (emailToCheck: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
@@ -233,10 +236,30 @@ export default function NewUserPage() {
       return;
     }
 
-    if (username && usernameStatus.available === false) {
-      setError("Dieser Benutzername ist bereits vergeben.");
-      setIsSubmitting(false);
-      return;
+    // Validate username if provided
+    if (username.trim()) {
+      if (username.trim().length < 3) {
+        setError("Benutzername muss mindestens 3 Zeichen haben.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (username.trim().length > 30) {
+        setError("Benutzername darf maximal 30 Zeichen haben.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username.trim())) {
+        setError(
+          "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      if (usernameStatus.available === false) {
+        setError("Bitte wähle einen verfügbaren Benutzernamen.");
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     createUserMutation.mutate({
@@ -253,6 +276,9 @@ export default function NewUserPage() {
           ? obleuteRole.trim() || undefined
           : undefined,
       bio: bio.trim() || undefined,
+      street: street.trim() || undefined,
+      zipCode: zipCode.trim() || undefined,
+      city: city.trim() || undefined,
     });
   };
 
@@ -429,8 +455,8 @@ export default function NewUserPage() {
                   placeholder="vorname.nachname"
                   minLength={3}
                   maxLength={30}
-                  pattern="[a-zA-Z0-9_-]+"
-                  title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
+                  pattern="[a-zA-Z0-9_.-]+"
+                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
                   className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
                     usernameStatus.available === false
                       ? "border-red-500"
@@ -474,6 +500,58 @@ export default function NewUserPage() {
                   maxLength={2000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Address */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Adresse
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Straße und Hausnummer
+                </label>
+                <input
+                  type="text"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="Musterstraße 1"
+                  maxLength={200}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    PLZ
+                  </label>
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="12345"
+                    maxLength={20}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Stadt
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Musterstadt"
+                    maxLength={100}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
           </section>
@@ -536,7 +614,7 @@ export default function NewUserPage() {
                     <option value="">Kein Bezirk</option>
                     {bezirke?.map((bezirk) => (
                       <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.name}
+                        Bezirk {bezirk.number} – {bezirk.shortName}
                       </option>
                     ))}
                   </select>
