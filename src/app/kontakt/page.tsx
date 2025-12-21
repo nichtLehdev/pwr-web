@@ -409,6 +409,25 @@ export default async function KontaktPage() {
                           />
                         </svg>
                         Feedback und Verbesserungsvorschlägen
+                        <Link
+                          href="/feedback"
+                          className="bg-district-3/10 text-district-3 hover:bg-district-3/20 ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold transition-colors"
+                        >
+                          Feedback geben
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 8l4 4m0 0l-4 4m4-4H3"
+                            />
+                          </svg>
+                        </Link>
                       </li>
                     </ul>
                   </div>
