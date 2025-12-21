@@ -151,10 +151,10 @@ const icons = {
   ),
   heiligabend: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <circle cx="12" cy="12" r="5" fill="#FFD700" />
+      <circle cx="12" cy="12" r="5" fill="currentColor" />
       <path
         d="M12 2v4M12 18v4M2 12h4M18 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"
-        stroke="#FFD700"
+        stroke="currentColor"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
