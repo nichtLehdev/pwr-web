@@ -6,6 +6,7 @@ import {
   publicProcedure,
   reviewerProcedure,
   contentCreatorProcedure,
+  adminProcedure,
 } from "../trpc";
 import {
   DownloadCategory,
@@ -370,5 +371,142 @@ export const materialsRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  exportDownloads: adminProcedure.query(async ({ ctx }) => {
+    const downloads = await ctx.db.download.findMany({
+      include: {
+        uploadedBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      downloads: downloads.map((download) => ({
+        ...download,
+        tags: (download.tags as string[]) || [],
+        uploadedByEmail: download.uploadedBy?.email,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: downloads.length,
+    };
+  }),
+
+  importDownloads: adminProcedure
+    .input(
+      z.object({
+        downloads: z.array(
+          z.object({
+            title: z.string(),
+            description: z.string().optional().nullable(),
+            category: z.enum(DownloadCategory),
+            fileUrl: z.string(),
+            fileType: z.enum(FileType),
+            fileSize: z.number().optional().nullable(),
+            tags: z.array(z.string()).optional(),
+            isPublic: z.boolean().optional(),
+            status: z.enum(ContentStatus).optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.downloads.map(async (downloadData) => {
+          const { originalId, ...data } = downloadData;
+          return await ctx.db.download.create({
+            data: {
+              ...data,
+              status: data.status ?? ContentStatus.DRAFT,
+              isPublic: data.isPublic ?? true,
+              uploadedById: ctx.session.user.id,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        downloads: results,
+      };
+    }),
+
+  exportBlaeserhefte: adminProcedure.query(async ({ ctx }) => {
+    const blaeserhefte = await ctx.db.blaeserheft.findMany({
+      include: {
+        image: true,
+      },
+      orderBy: [{ year: "desc" }, { sortOrder: "asc" }],
+    });
+
+    return {
+      blaeserhefte: blaeserhefte.map((heft) => ({
+        ...heft,
+        imageUrl: heft.image?.url,
+        highlights: heft.highlights ? (heft.highlights as string[]) : [],
+        chapters: heft.chapters ? (heft.chapters as string[]) : [],
+      })),
+      exportedAt: new Date().toISOString(),
+      count: blaeserhefte.length,
+    };
+  }),
+
+  importBlaeserhefte: adminProcedure
+    .input(
+      z.object({
+        blaeserhefte: z.array(
+          z.object({
+            title: z.string(),
+            subtitle: z.string(),
+            year: z.number(),
+            description: z.string(),
+            chapters: z.any().optional(),
+            highlights: z.any().optional(),
+            imageId: z.string(),
+            audioSample: z.string().optional().nullable(),
+            priceBlaeserheft: z.number().optional().nullable(),
+            priceBeiheft: z.number().optional().nullable(),
+            priceTrompeten: z.number().optional().nullable(),
+            priceCd: z.number().optional().nullable(),
+            availableBlaeserheft: z.boolean().optional(),
+            availableBeiheft: z.boolean().optional(),
+            availableTrompeten: z.boolean().optional(),
+            availableCd: z.boolean().optional(),
+            sortOrder: z.number().optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.blaeserhefte.map(async (heftData) => {
+          const { originalId, ...data } = heftData;
+          return await ctx.db.blaeserheft.create({
+            data: {
+              ...data,
+              availableBlaeserheft: data.availableBlaeserheft ?? true,
+              availableBeiheft: data.availableBeiheft ?? true,
+              availableTrompeten: data.availableTrompeten ?? false,
+              availableCd: data.availableCd ?? true,
+              sortOrder: data.sortOrder ?? 0,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        blaeserhefte: results,
+      };
     }),
 });

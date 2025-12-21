@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
+import ExportImportSection from "@/app/_components/dashboard/export-import-section";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -224,6 +225,11 @@ export default function DashboardPage() {
               )}
             </div>
           </section>
+        )}
+
+        {/* Export & Import - Admin only */}
+        {profile.role === UserRole.ADMIN && (
+          <ExportImportSection userRole={profile.role} />
         )}
 
         {/* Quick Links */}

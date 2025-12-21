@@ -5,6 +5,7 @@ import {
   protectedProcedure,
   publicProcedure,
   reviewerProcedure,
+  adminProcedure,
 } from "../trpc";
 import {
   UserRole,
@@ -385,4 +386,76 @@ export const mediaRouter = createTRPCRouter({
       userUploads,
     };
   }),
+
+  exportMedia: adminProcedure.query(async ({ ctx }) => {
+    const media = await ctx.db.media.findMany({
+      include: {
+        uploadedBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      media: media.map((item) => ({
+        ...item,
+        uploadedByEmail: item.uploadedBy?.email,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: media.length,
+    };
+  }),
+
+  importMedia: adminProcedure
+    .input(
+      z.object({
+        media: z.array(
+          z.object({
+            name: z.string(),
+            filename: z.string(),
+            url: z.string(),
+            path: z.string(),
+            mimeType: z.string(),
+            size: z.number(),
+            extension: z.string(),
+            width: z.number().optional().nullable(),
+            height: z.number().optional().nullable(),
+            alt: z.string().optional().nullable(),
+            caption: z.string().optional().nullable(),
+            title: z.string().optional().nullable(),
+            folder: z.string().optional().nullable(),
+            tags: z.any().optional(),
+            isPublic: z.boolean().optional(),
+            status: z.enum(ContentStatus).optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.media.map(async (mediaData) => {
+          const { originalId, ...data } = mediaData;
+          return await ctx.db.media.create({
+            data: {
+              ...data,
+              status: data.status ?? ContentStatus.APPROVED,
+              isPublic: data.isPublic ?? true,
+              uploadedById: ctx.session.user.id,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        media: results,
+      };
+    }),
 });

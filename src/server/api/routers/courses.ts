@@ -6,6 +6,7 @@ import {
   publicProcedure,
   lpwProcedure,
   reviewerProcedure,
+  adminProcedure,
 } from "../trpc";
 import {
   CourseType,
@@ -1131,5 +1132,88 @@ export const coursesRouter = createTRPCRouter({
       });
 
       return { success: true, updatedCount: canUpdateIds.length };
+    }),
+
+  exportCourses: adminProcedure.query(async ({ ctx }) => {
+    const courses = await ctx.db.course.findMany({
+      include: {
+        coverImage: true,
+        location: true,
+        bezirk: true,
+        createdBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+        reviewer: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      courses: courses.map((course) => ({
+        ...course,
+        coverImageUrl: course.coverImage?.url,
+        locationName: course.location?.name,
+        bezirkName: course.bezirk?.name,
+        createdByEmail: course.createdBy?.email,
+        reviewerEmail: course.reviewer?.email,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: courses.length,
+    };
+  }),
+
+  importCourses: adminProcedure
+    .input(
+      z.object({
+        courses: z.array(
+          z.object({
+            title: z.string(),
+            description: z.string().optional().nullable(),
+            courseType: z.enum(CourseType),
+            targetAudience: z.enum(TargetAudience),
+            startDate: z.date(),
+            endDate: z.date().optional().nullable(),
+            registrationDeadline: z.date().optional().nullable(),
+            maxParticipants: z.number().optional().nullable(),
+            price: z.number().optional().nullable(),
+            bezirkId: z.string().optional().nullable(),
+            locationId: z.string().optional().nullable(),
+            coverImageId: z.string().optional().nullable(),
+            status: z.enum(ContentStatus).optional(),
+            customFields: z.any().optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.courses.map(async (courseData) => {
+          const { originalId, ...data } = courseData;
+          return await ctx.db.course.create({
+            data: {
+              ...data,
+              status: data.status ?? ContentStatus.DRAFT,
+              createdById: ctx.session.user.id,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        courses: results,
+      };
     }),
 });
