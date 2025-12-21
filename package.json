@@ -66,7 +66,7 @@
     "baseline-browser-mapping": "^2.9.4",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-next": "^16.0.10",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
@@ -75,7 +75,7 @@
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1"
+    "typescript-eslint": "^8.49.0"
   },
   "ct3aMetadata": {
     "initVersion": "7.40.0"
