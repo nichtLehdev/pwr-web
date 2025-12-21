@@ -85,7 +85,9 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
         {/* Validity */}
         <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-gray-800">
           <h3 className="text-dark dark:text-dark-text mb-2 text-sm font-semibold">
-            {holiday.isLegalHoliday === false ? "Kirchlicher Feiertag" : "Gesetzlicher Feiertag"}
+            {holiday.isLegalHoliday === false
+              ? "Kirchlicher Feiertag"
+              : "Gesetzlicher Feiertag"}
           </h3>
           {holiday.isNationwide ? (
             <div className="flex items-center gap-2">
@@ -103,7 +105,9 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
                 />
               </svg>
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                {holiday.isLegalHoliday === false ? "Bundesweit" : "Bundesweiter Feiertag"}
+                {holiday.isLegalHoliday === false
+                  ? "Bundesweit"
+                  : "Bundesweiter Feiertag"}
               </span>
             </div>
           ) : (
