@@ -204,7 +204,7 @@ export default function CourseDetailView({
                 )}
                 {course.bezirk && (
                   <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {`Bezirk ${course.bezirk.number} (${course.bezirk.name})`}
+                    {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
                   </span>
                 )}
                 {!isSameDay && (

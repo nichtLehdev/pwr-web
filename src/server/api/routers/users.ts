@@ -507,7 +507,7 @@ export const usersRouter = createTRPCRouter({
           .string()
           .min(3, "Benutzername muss mindestens 3 Zeichen haben")
           .max(30, "Benutzername darf maximal 30 Zeichen haben")
-          .regex(/^[a-zA-Z0-9_-]+$/)
+          .regex(/^[a-zA-Z0-9_.-]+$/, "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten")
           .optional(),
         role: z.nativeEnum(UserRole).default("USER"),
         displayRole: z.string().max(100).optional(),
@@ -515,6 +515,9 @@ export const usersRouter = createTRPCRouter({
         bio: z.string().max(2000).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional(),
+        street: z.string().max(200).optional(),
+        zipCode: z.string().max(20).optional(),
+        city: z.string().max(100).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -556,6 +559,9 @@ export const usersRouter = createTRPCRouter({
           bio: input.bio,
           bezirkId: input.bezirkId,
           profileImageId: input.profileImageId,
+          street: input.street,
+          zipCode: input.zipCode,
+          city: input.city,
         },
         include: {
           profileImage: true,
@@ -575,9 +581,9 @@ export const usersRouter = createTRPCRouter({
         email: z.string().email().optional(),
         username: z
           .string()
-          .min(3)
-          .max(30)
-          .regex(/^[a-zA-Z0-9_-]+$/)
+          .min(3, "Benutzername muss mindestens 3 Zeichen haben")
+          .max(30, "Benutzername darf maximal 30 Zeichen haben")
+          .regex(/^[a-zA-Z0-9_.-]+$/, "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten")
           .optional(),
         role: z.nativeEnum(UserRole).optional(),
         bio: z.string().max(2000).optional(),
@@ -585,6 +591,9 @@ export const usersRouter = createTRPCRouter({
         obleuteRole: z.string().max(100).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
+        street: z.string().max(200).optional(),
+        zipCode: z.string().max(20).optional(),
+        city: z.string().max(100).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

@@ -198,10 +198,10 @@ export default function BezirkDetailPage() {
               {bezirk.users.map((user) => (
                 <div
                   key={user.id}
-                  className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                  className="dark:border-dark-border flex items-start gap-4 rounded-lg border border-gray-100 p-4"
                 >
                   {user.profileImage?.url ? (
-                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
                       <Image
                         src={user.profileImage.url}
                         alt={user.displayName || "Profilbild"}
@@ -210,9 +210,9 @@ export default function BezirkDetailPage() {
                       />
                     </div>
                   ) : (
-                    <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                    <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
                       <svg
-                        className="h-6 w-6"
+                        className="h-7 w-7"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -226,7 +226,7 @@ export default function BezirkDetailPage() {
                       </svg>
                     </div>
                   )}
-                  <div>
+                  <div className="min-w-0 flex-1 space-y-1">
                     <p className="dark:text-dark-text font-medium text-gray-900">
                       {user.displayName}
                     </p>
@@ -238,6 +238,13 @@ export default function BezirkDetailPage() {
                     <p className="dark:text-dark-muted text-sm text-gray-500">
                       {user.email}
                     </p>
+                    {(user.street || user.zipCode || user.city) && (
+                      <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
+                        {[user.street, user.zipCode, user.city]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

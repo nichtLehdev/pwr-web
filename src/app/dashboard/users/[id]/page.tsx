@@ -240,6 +240,47 @@ export default function UserDetailPage() {
             </dl>
           </section>
 
+          {/* Address */}
+          {(user.street || user.zipCode || user.city) && (
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Adresse
+              </h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                {user.street && (
+                  <div className="sm:col-span-2">
+                    <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                      Straße und Hausnummer
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {user.street}
+                    </dd>
+                  </div>
+                )}
+                {user.zipCode && (
+                  <div>
+                    <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                      PLZ
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {user.zipCode}
+                    </dd>
+                  </div>
+                )}
+                {user.city && (
+                  <div>
+                    <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                      Stadt
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {user.city}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          )}
+
           {/* Role & Permissions */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
@@ -272,7 +313,7 @@ export default function UserDetailPage() {
                     Obleute für Bezirk
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    Bezirk {user.bezirk.number} – {user.bezirk.name}
+                    Bezirk {user.bezirk.number} – {user.bezirk.shortName}
                     {user.obleuteRole && (
                       <span className="text-gray-500">
                         {" "}

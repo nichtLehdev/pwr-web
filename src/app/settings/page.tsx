@@ -487,8 +487,8 @@ export default function SettingsPage() {
                     value={formData.username}
                     minLength={3}
                     maxLength={30}
-                    pattern="[a-zA-Z0-9_-]+"
-                    title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
+                    pattern="[a-zA-Z0-9_.-]+"
+                    title="Buchstaben, Zahlen, Bindestrich, Unterstrich und Punkt erlaubt"
                     onChange={handleChange}
                     onBlur={checkUsernameAvailability}
                     className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${

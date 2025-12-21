@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -60,11 +60,15 @@ export default function EditUserPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [debouncedUsername, setDebouncedUsername] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.USER);
   const [displayRole, setDisplayRole] = useState("");
   const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
+  const [street, setStreet] = useState("");
+  const [zipCode, setZipCode] = useState("");
+  const [city, setCity] = useState("");
   const [profileImageId, setProfileImageId] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
@@ -87,10 +91,83 @@ export default function EditUserPage() {
       setBezirkId(user.bezirkId ?? null);
       setObleuteRole(user.obleuteRole ?? "");
       setBio(user.bio ?? "");
+      setStreet(user.street ?? "");
+      setZipCode(user.zipCode ?? "");
+      setCity(user.city ?? "");
       setProfileImageId(user.profileImageId ?? null);
       setProfileImageUrl(user.profileImage?.url ?? null);
     }
   }, [user]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (username.length >= 3) {
+        setDebouncedUsername(username);
+      } else {
+        setDebouncedUsername("");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  const checkUsernameQuery = api.users.checkUsername.useQuery(
+    { username: debouncedUsername },
+    {
+      enabled: debouncedUsername.length >= 3,
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  const usernameStatus = useMemo(() => {
+    // If username is empty or less than 3 characters, don't show status
+    if (username.length === 0) {
+      return {
+        checking: false,
+        available: null as boolean | null,
+        message: "",
+      };
+    }
+    if (username.length < 3) {
+      return {
+        checking: false,
+        available: null as boolean | null,
+        message: "Mindestens 3 Zeichen",
+      };
+    }
+    // If username hasn't changed or is the same as the original, consider it available
+    if (username === user?.username) {
+      return {
+        checking: false,
+        available: true as boolean | null,
+        message: "",
+      };
+    }
+    // If still debouncing or loading, show checking
+    if (username !== debouncedUsername || checkUsernameQuery.isLoading) {
+      return {
+        checking: true,
+        available: null as boolean | null,
+        message: "Wird geprüft...",
+      };
+    }
+    // If we have data, show the result
+    if (checkUsernameQuery.data) {
+      return {
+        checking: false,
+        available: checkUsernameQuery.data.available,
+        message: checkUsernameQuery.data.available
+          ? "✓ Benutzername verfügbar"
+          : "✗ Benutzername bereits vergeben",
+      };
+    }
+    return { checking: false, available: null as boolean | null, message: "" };
+  }, [
+    username,
+    debouncedUsername,
+    checkUsernameQuery.isLoading,
+    checkUsernameQuery.data,
+    user?.username,
+  ]);
 
   const utils = api.useUtils();
 
@@ -136,6 +213,36 @@ export default function EditUserPage() {
       return;
     }
 
+    // Validate username if provided
+    if (username.trim()) {
+      if (username.trim().length < 3) {
+        setError("Benutzername muss mindestens 3 Zeichen haben.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (username.trim().length > 30) {
+        setError("Benutzername darf maximal 30 Zeichen haben.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username.trim())) {
+        setError(
+          "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      // Check availability if username changed
+      if (
+        username.trim() !== user?.username &&
+        usernameStatus.available === false
+      ) {
+        setError("Bitte wähle einen verfügbaren Benutzernamen.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     updateUserMutation.mutate({
       id: userId,
       displayName: name.trim() || undefined,
@@ -151,6 +258,9 @@ export default function EditUserPage() {
           : undefined,
       bio: bio.trim() || undefined,
       profileImageId,
+      street: street.trim() || undefined,
+      zipCode: zipCode.trim() || undefined,
+      city: city.trim() || undefined,
     });
   };
 
@@ -327,10 +437,36 @@ export default function EditUserPage() {
                   placeholder="benutzername"
                   minLength={3}
                   maxLength={30}
-                  pattern="[a-zA-Z0-9_-]+"
-                  title="Buchstaben, Zahlen, Bindestrich und Unterstrich erlaubt"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  pattern="[a-zA-Z0-9_.-]+"
+                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                  className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
+                    usernameStatus.available === true
+                      ? "border-green-500"
+                      : usernameStatus.available === false
+                        ? "border-red-500"
+                        : "border-gray-300"
+                  }`}
                 />
+                {usernameStatus.message ? (
+                  <p
+                    className={`mt-1 flex items-center gap-1 text-xs ${
+                      usernameStatus.checking
+                        ? "text-gray-500 dark:text-gray-400"
+                        : usernameStatus.available
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                    }`}
+                  >
+                    {usernameStatus.checking && (
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    )}
+                    {usernameStatus.message}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Kann für die Anmeldung verwendet werden
+                  </p>
+                )}
               </div>
 
               <div>
@@ -345,6 +481,58 @@ export default function EditUserPage() {
                   maxLength={2000}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
+              </div>
+            </div>
+          </section>
+
+          {/* Address */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Adresse
+            </h2>
+            <div className="space-y-4">
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Straße und Hausnummer
+                </label>
+                <input
+                  type="text"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="Musterstraße 1"
+                  maxLength={200}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    PLZ
+                  </label>
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    placeholder="12345"
+                    maxLength={20}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Stadt
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Musterstadt"
+                    maxLength={100}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
           </section>
@@ -407,7 +595,7 @@ export default function EditUserPage() {
                     <option value="">Kein Bezirk</option>
                     {bezirke?.map((bezirk) => (
                       <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.name}
+                        Bezirk {bezirk.number} – {bezirk.shortName}
                       </option>
                     ))}
                   </select>

@@ -73,6 +73,9 @@ export const bezirkeRouter = createTRPCRouter({
               profileImage: true,
               obleuteRole: true,
               bio: true,
+              street: true,
+              zipCode: true,
+              city: true,
             },
           },
           ensembles: {
