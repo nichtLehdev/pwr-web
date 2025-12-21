@@ -7,8 +7,10 @@ import type {
   CalendarCourseItem,
 } from "@/lib/types/calendar";
 import { getDistrictColor } from "@/lib/district-color";
+import { getHolidaysForMonth, type Holiday } from "@/lib/holidays";
 import EventDetailModal from "../event-detail-modal";
 import MoreEventsModal from "./more-events-modal";
+import HolidayModal from "./holiday-modal";
 
 const MAX_EVENTS_PER_DAY = 4;
 const MAX_VISIBLE_WHEN_OVERFLOW = 3;
@@ -84,6 +86,7 @@ export default function DesktopCalendarView({
   const [showMoreEventsDay, setShowMoreEventsDay] = useState<number | null>(
     null,
   );
+  const [selectedHoliday, setSelectedHoliday] = useState<Holiday | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -149,6 +152,12 @@ export default function DesktopCalendarView({
   };
 
   const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentMonth);
+
+  const holidaysThisMonth = useMemo(
+    () =>
+      getHolidaysForMonth(currentMonth.getFullYear(), currentMonth.getMonth()),
+    [currentMonth],
+  );
 
   const getEventsForDay = (day: number) => {
     const date = new Date(
@@ -488,6 +497,9 @@ export default function DesktopCalendarView({
             const events = getEventsForDay(day);
             const today = isToday(day);
             const coursesAtDay = getCompactCoursesForDay(day);
+            const holiday = holidaysThisMonth.find(
+              (h) => h.date.getDate() === day,
+            );
 
             const allEventsForDay = [
               ...coursesAtDay.map((c) => c.course),
@@ -533,6 +545,19 @@ export default function DesktopCalendarView({
                   >
                     {day}
                   </span>
+                  {holiday && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedHoliday(holiday);
+                      }}
+                      className="text-amber-600 transition-transform hover:scale-125 dark:text-amber-400"
+                      title={holiday.name}
+                      aria-label={`Details zu ${holiday.name}`}
+                    >
+                      {holiday.icon}
+                    </button>
+                  )}
                 </div>
 
                 {/* Multi-day course bars */}
@@ -786,6 +811,14 @@ export default function DesktopCalendarView({
             <div className="bg-primary h-3 w-8 rounded"></div>
             <span>Mehrtägige Veranstaltung</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-amber-600 dark:text-amber-400">
+              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l-2 4h1l-2 4h1l-3 6h4v6h4v-6h4l-3-6h1l-2-4h1l-2-4z" />
+              </svg>
+            </span>
+            <span>Feiertag</span>
+          </div>
         </div>
       </div>
 
@@ -808,6 +841,14 @@ export default function DesktopCalendarView({
           ]}
           onClose={() => setShowMoreEventsDay(null)}
           onSelectEvent={(event) => setSelectedEvent(event)}
+        />
+      )}
+
+      {/* Holiday Modal */}
+      {selectedHoliday && (
+        <HolidayModal
+          holiday={selectedHoliday}
+          onClose={() => setSelectedHoliday(null)}
         />
       )}
     </>
