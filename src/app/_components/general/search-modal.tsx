@@ -264,6 +264,15 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("modal-open");
+    return () => {
+      document.body.style.overflow = "unset";
+      document.body.classList.remove("modal-open");
+    };
+  }, []);
+
   const { data, isLoading } = api.search.global.useQuery(
     { query: debouncedQuery, limit: 20 },
     { enabled: debouncedQuery.length >= 2 },
