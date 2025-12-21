@@ -5,7 +5,6 @@
 
 import React from "react";
 
-// Holiday icon components
 const icons = {
   sparkles: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
@@ -234,8 +233,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Fest der Erscheinung des Herrn",
   });
 
-  // Easter-based holidays
-  // Good Friday (Karfreitag)
   const goodFriday = new Date(easter);
   goodFriday.setDate(easter.getDate() - 2);
   holidays.push({
@@ -246,7 +243,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Gedenktag der Kreuzigung Jesu",
   });
 
-  // Easter Monday (Ostermontag)
   const easterMonday = new Date(easter);
   easterMonday.setDate(easter.getDate() + 1);
   holidays.push({
@@ -257,7 +253,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Tag nach dem Ostersonntag",
   });
 
-  // Ascension Day (Christi Himmelfahrt) - 39 days after Easter
   const ascensionDay = new Date(easter);
   ascensionDay.setDate(easter.getDate() + 39);
   holidays.push({
@@ -268,7 +263,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Rückkehr Jesu zu Gott",
   });
 
-  // Whit Sunday (Pfingstsonntag) - 49 days after Easter
   const whitSunday = new Date(easter);
   whitSunday.setDate(easter.getDate() + 49);
   holidays.push({
@@ -280,7 +274,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Pfingsten (Fest des Heiligen Geistes)",
   });
 
-  // Whit Monday (Pfingstmontag) - 50 days after Easter
   const whitMonday = new Date(easter);
   whitMonday.setDate(easter.getDate() + 50);
   holidays.push({
@@ -291,7 +284,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Tag nach Pfingsten (Fest des Heiligen Geistes)",
   });
 
-  // Corpus Christi (Fronleichnam) - 60 days after Easter
   const corpusChristi = new Date(easter);
   corpusChristi.setDate(easter.getDate() + 60);
   holidays.push({
@@ -310,7 +302,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Hochfest des Leibes und Blutes Christi",
   });
 
-  // Fixed holidays (continued)
   holidays.push({
     name: "Tag der Arbeit",
     date: new Date(year, 4, 1),
@@ -370,7 +361,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
     description: "Gedenktag aller Heiligen",
   });
 
-  // Christmas holidays
   holidays.push({
     name: "1. Weihnachtsfeiertag",
     date: new Date(year, 11, 25),
@@ -404,7 +394,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
   const firstAdvent = new Date(secondAdvent);
   firstAdvent.setDate(secondAdvent.getDate() - 7);
 
-  // Totensonntag (last Sunday before 1st Advent)
   const totensonntag = new Date(firstAdvent);
   totensonntag.setDate(firstAdvent.getDate() - 7);
 
