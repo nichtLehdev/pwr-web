@@ -219,6 +219,8 @@ export function BetaBanner() {
       message="Diese Website befindet sich noch in der Entwicklung. Feedback ist willkommen!"
       mobileMessage="Website in Entwicklung"
       variant="info"
+      dismissible={false}
+      link={{ href: "/feedback", label: "Feedback geben" }}
     />
   );
 }
