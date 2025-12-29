@@ -16,13 +16,60 @@ const getBaseUrl = () => {
 
 const baseUrl = getBaseUrl();
 
+// Normalize origin URL (remove trailing slashes, ensure proper format)
+const normalizeOrigin = (origin: string): string => {
+  return origin.trim().replace(/\/+$/, "");
+};
+
+// Add both http and https versions of a URL to handle protocol variations
+const addProtocolVariants = (url: string): string[] => {
+  const normalized = normalizeOrigin(url);
+  const variants: string[] = [normalized];
+  
+  // If it's http, also add https variant
+  if (normalized.startsWith("http://")) {
+    variants.push(normalized.replace("http://", "https://"));
+  }
+  // If it's https, also add http variant (for local dev)
+  else if (normalized.startsWith("https://")) {
+    variants.push(normalized.replace("https://", "http://"));
+  }
+  
+  return variants;
+};
+
 // Build trusted origins list - include base URL and common localhost variants
-const trustedOrigins = [
-  baseUrl,
+// Also include any additional origins from environment variable (comma-separated)
+const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
+  ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").flatMap(addProtocolVariants)
+  : [];
+
+// Always include the base URL and NEXT_PUBLIC_APP_URL if different
+// Add both http and https variants to handle protocol variations
+const baseUrlVariants = addProtocolVariants(baseUrl);
+const nextPublicAppUrlVariants = process.env.NEXT_PUBLIC_APP_URL && 
+  process.env.NEXT_PUBLIC_APP_URL !== baseUrl
+  ? addProtocolVariants(process.env.NEXT_PUBLIC_APP_URL)
+  : [];
+
+const allOrigins = [
+  ...baseUrlVariants,
+  ...nextPublicAppUrlVariants,
+  ...additionalOrigins,
   "http://localhost:3000",
+  "https://localhost:3000",
   "http://192.168.4.136:3000",
   "http://192.168.6.244:3000",
-].filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+]
+  .filter(Boolean) // Remove null/empty strings
+  .filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+
+const trustedOrigins = allOrigins;
+
+// Log trusted origins in development for debugging (remove sensitive info in production)
+if (process.env.NODE_ENV === "development") {
+  console.log("[Better Auth] Trusted origins:", trustedOrigins);
+}
 
 export const auth = betterAuth({
   baseURL: baseUrl,
