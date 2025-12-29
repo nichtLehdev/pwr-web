@@ -100,7 +100,7 @@ export default function Navigation() {
       href: "/materialien",
       label: "Materialien",
       dropdown: [
-        { href: "/materialien/uebungen", label: "Übungen & Tipps" },
+        //{ href: "/materialien/uebungen", label: "Übungen & Tipps" },
         { href: "/materialien/blechblatt", label: "Rheinisches Blechblatt" },
         { href: "/materialien/literatur", label: "Literatur & CDs" },
       ],
