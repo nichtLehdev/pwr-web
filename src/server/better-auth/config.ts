@@ -5,24 +5,40 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { env } from "@/env";
 import { db } from "@/server/db";
 
+// Get base URL from environment or default to localhost
+const getBaseUrl = () => {
+  return (
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000"
+  );
+};
+
+const baseUrl = getBaseUrl();
+
+// Build trusted origins list - include base URL and common localhost variants
+const trustedOrigins = [
+  baseUrl,
+  "http://localhost:3000",
+  "http://192.168.4.136:3000",
+  "http://192.168.6.244:3000",
+].filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
+
 export const auth = betterAuth({
+  baseURL: baseUrl,
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
   emailAndPassword: {
     enabled: true,
   },
-  trustedOrigins: [
-    "http://localhost:3000",
-    "http://192.168.4.136:3000",
-    "http://192.168.6.244:3000",
-  ],
+  trustedOrigins,
   plugins: [username()],
   socialProviders: {
     github: {
       clientId: env.BETTER_AUTH_GITHUB_CLIENT_ID,
       clientSecret: env.BETTER_AUTH_GITHUB_CLIENT_SECRET,
-      redirectURI: "http://localhost:3000/api/auth/callback/github",
+      redirectURI: `${baseUrl}/api/auth/callback/github`,
     },
   },
   user: {
