@@ -10,6 +10,8 @@ import { api } from "@/trpc/react";
 import ThemeToggle from "./theme-toggle";
 import SearchModal from "./search-modal";
 import { useBanner } from "../ui/banner-context";
+import { useRouter } from "next/navigation";
+import { useToast } from "../ui/toast";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -22,7 +24,8 @@ export default function Navigation() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-
+  const router = useRouter();
+  const toast = useToast();
   const { data: session } = useSession();
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
@@ -137,7 +140,17 @@ export default function Navigation() {
   };
 
   const handleLogout = async () => {
-    await signOut();
+    await signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          router.refresh();
+        },
+        onError: (error) => {
+          toast.error(error.error.message);
+        },
+      },
+    });
     setUserMenuOpen(false);
   };
 
