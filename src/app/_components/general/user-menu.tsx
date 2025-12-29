@@ -4,9 +4,11 @@ import { signOut } from "@/lib/auth";
 import type { Session } from "@/server/better-auth/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "../ui/toast";
 
 export function UserMenu({ session }: { session: Session }) {
   const router = useRouter();
+  const toast = useToast();
 
   const handleSignOut = async () => {
     await signOut({
@@ -14,6 +16,9 @@ export function UserMenu({ session }: { session: Session }) {
         onSuccess: () => {
           router.push("/login");
           router.refresh();
+        },
+        onError: (error) => {
+          toast.error(error.error.message);
         },
       },
     });
