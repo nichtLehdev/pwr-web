@@ -30,6 +30,7 @@ export function VerificationEmail({
         <Container style={container}>
           <Section style={header}>
             <Text style={logoText}>Posaunenwerk Rheinland</Text>
+            <Text style={tagline}>Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland</Text>
           </Section>
 
           <Section style={content}>
@@ -52,7 +53,7 @@ export function VerificationEmail({
             </Section>
 
             <Text style={paragraph}>
-              Oder kopiere diesen Link in deinen Browser:
+              Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
             </Text>
             <Text style={link}>{verificationUrl}</Text>
 
@@ -82,7 +83,7 @@ export function VerificationEmail({
 
 // Styles matching your website's design
 const main = {
-  backgroundColor: "#f6f9fc",
+  backgroundColor: "#f5f5f5", // Background secondary color
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
@@ -90,22 +91,35 @@ const main = {
 const container = {
   backgroundColor: "#ffffff",
   margin: "0 auto",
-  padding: "20px 0 48px",
+  padding: "0",
   marginBottom: "64px",
   maxWidth: "600px",
+  borderRadius: "8px",
+  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
 };
 
 const header = {
-  backgroundColor: "#1e40af", // Primary blue color
-  padding: "24px",
+  backgroundColor: "#faa619", // Primary brand color (orange)
+  padding: "32px 24px",
   textAlign: "center" as const,
+  borderRadius: "8px 8px 0 0",
 };
 
 const logoText = {
   color: "#ffffff",
-  fontSize: "24px",
+  fontSize: "28px",
   fontWeight: "bold",
+  margin: "0 0 8px 0",
+  letterSpacing: "0.5px",
+};
+
+const tagline = {
+  color: "#ffffff",
+  fontSize: "12px",
+  fontWeight: "normal",
   margin: "0",
+  opacity: 0.95,
+  letterSpacing: "0.3px",
 };
 
 const content = {
@@ -115,14 +129,14 @@ const content = {
 const heading = {
   fontSize: "24px",
   fontWeight: "bold",
-  color: "#1f2937",
+  color: "#58595b", // Brand dark color
   marginBottom: "24px",
 };
 
 const paragraph = {
   fontSize: "16px",
   lineHeight: "26px",
-  color: "#374151",
+  color: "#58595b", // Brand dark color
   marginBottom: "16px",
 };
 
@@ -132,7 +146,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#1e40af",
+  backgroundColor: "#faa619", // Primary brand color
   borderRadius: "8px",
   color: "#ffffff",
   fontSize: "16px",
@@ -140,12 +154,13 @@ const button = {
   textDecoration: "none",
   textAlign: "center" as const,
   display: "inline-block",
-  padding: "12px 24px",
+  padding: "14px 32px",
+  boxShadow: "0 2px 4px rgba(250, 166, 25, 0.3)",
 };
 
 const link = {
   fontSize: "14px",
-  color: "#3b82f6",
+  color: "#faa619", // Primary brand color for links
   wordBreak: "break-all" as const,
   marginBottom: "16px",
 };
@@ -164,8 +179,9 @@ const footer = {
 
 const footerSection = {
   padding: "24px",
-  backgroundColor: "#f9fafb",
+  backgroundColor: "#f5f5f5", // Background secondary color
   textAlign: "center" as const,
+  borderRadius: "0 0 8px 8px",
 };
 
 const footerText = {

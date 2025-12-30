@@ -11,6 +11,11 @@ import {
   RegistrationStatus,
   UserRole,
 } from "~/generated/prisma/client";
+import {
+  sendCourseRegistrationConfirmedEmail,
+  sendCourseRegistrationWaitlistEmail,
+  isEmailConfigured,
+} from "@/server/email";
 
 export const registrationsRouter = createTRPCRouter({
   create: publicProcedure
@@ -226,6 +231,40 @@ export const registrationsRouter = createTRPCRouter({
           },
         },
       });
+
+      // Send confirmation email
+      if (isEmailConfigured()) {
+        try {
+          if (registrationStatus === RegistrationStatus.CONFIRMED) {
+            await sendCourseRegistrationConfirmedEmail(
+              registration.registrantEmail,
+              registration.registrantFirstName,
+              registration.registrantLastName,
+              registration.course.title,
+              registration.course.startDate,
+              registration.course.endDate,
+              registration.totalPrice,
+              registration.participants.length,
+              registration.id,
+            );
+          } else if (registrationStatus === RegistrationStatus.WAITLIST) {
+            await sendCourseRegistrationWaitlistEmail(
+              registration.registrantEmail,
+              registration.registrantFirstName,
+              registration.registrantLastName,
+              registration.course.title,
+              registration.course.startDate,
+              registration.course.endDate,
+              registration.totalPrice,
+              registration.participants.length,
+              registration.id,
+            );
+          }
+        } catch (error) {
+          // Log error but don't fail the registration
+          console.error("Failed to send registration email:", error);
+        }
+      }
 
       return registration;
     }),
@@ -612,9 +651,16 @@ export const registrationsRouter = createTRPCRouter({
       const registration = await ctx.db.courseRegistration.findUnique({
         where: { id: input.id },
         include: {
+          participants: true,
           course: {
             include: {
               instructors: { select: { id: true } },
+            },
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+              createdById: true,
             },
           },
         },
@@ -642,7 +688,11 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.db.courseRegistration.update({
+      const previousStatus = registration.registrationStatus;
+      const wasWaitlist = previousStatus === RegistrationStatus.WAITLIST;
+      const isNowConfirmed = input.registrationStatus === RegistrationStatus.CONFIRMED;
+
+      const updatedRegistration = await ctx.db.courseRegistration.update({
         where: { id: input.id },
         data: {
           registrationStatus: input.registrationStatus,
@@ -650,8 +700,37 @@ export const registrationsRouter = createTRPCRouter({
         },
         include: {
           participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
         },
       });
+
+      // Send confirmation email if status changed from WAITLIST to CONFIRMED
+      if (isEmailConfigured() && wasWaitlist && isNowConfirmed) {
+        try {
+          await sendCourseRegistrationConfirmedEmail(
+            updatedRegistration.registrantEmail,
+            updatedRegistration.registrantFirstName,
+            updatedRegistration.registrantLastName,
+            updatedRegistration.course.title,
+            updatedRegistration.course.startDate,
+            updatedRegistration.course.endDate,
+            updatedRegistration.totalPrice,
+            updatedRegistration.participants.length,
+            updatedRegistration.id,
+          );
+        } catch (error) {
+          // Log error but don't fail the status update
+          console.error("Failed to send confirmation email:", error);
+        }
+      }
+
+      return updatedRegistration;
     }),
 
   updatePaymentStatus: protectedProcedure
