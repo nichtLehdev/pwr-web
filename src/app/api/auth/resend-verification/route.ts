@@ -44,21 +44,24 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
 
-    // Delete any existing verification tokens for this email
-    await db.verification.deleteMany({
-      where: {
-        identifier: user.email,
-      },
-    });
+    // Delete existing tokens and create new one atomically
+    await db.$transaction(async (tx) => {
+      // Delete any existing verification tokens for this email
+      await tx.verification.deleteMany({
+        where: {
+          identifier: user.email,
+        },
+      });
 
-    // Create new verification record
-    await db.verification.create({
-      data: {
-        id: randomBytes(16).toString("hex"),
-        identifier: user.email,
-        value: token,
-        expiresAt,
-      },
+      // Create new verification record
+      await tx.verification.create({
+        data: {
+          id: randomBytes(16).toString("hex"),
+          identifier: user.email,
+          value: token,
+          expiresAt,
+        },
+      });
     });
 
     // Create verification URL using request headers for accurate base URL
