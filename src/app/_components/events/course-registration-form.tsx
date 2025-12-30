@@ -389,7 +389,7 @@ export default function CourseRegistrationForm({
         </div>
 
         {/* Beta Disclaimer */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mx-6 mt-4">
+        <div className="mx-6 mt-4 border-l-4 border-yellow-400 bg-yellow-50 p-4 dark:bg-yellow-900/20">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
@@ -406,9 +406,9 @@ export default function CourseRegistrationForm({
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                <strong>Hinweis:</strong> Dies ist eine Beta-Version der Website.
-                Anmeldungen und Buchungen sind noch nicht gültig und werden nicht
-                bearbeitet.
+                <strong>Hinweis:</strong> Dies ist eine Beta-Version der
+                Website. Anmeldungen und Buchungen sind noch nicht gültig und
+                werden nicht bearbeitet.
               </p>
             </div>
           </div>

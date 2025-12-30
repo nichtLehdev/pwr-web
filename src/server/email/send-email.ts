@@ -11,7 +11,9 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions) {
   if (!transporter || !isEmailConfigured()) {
-    throw new Error("SMTP is not configured. Please set SMTP environment variables.");
+    throw new Error(
+      "SMTP is not configured. Please set SMTP environment variables.",
+    );
   }
 
   const mailOptions: SendMailOptions = {
@@ -29,4 +31,3 @@ export async function sendEmail(options: EmailOptions) {
     throw error;
   }
 }
-

@@ -199,7 +199,10 @@ export default function RegisterPage() {
         });
 
         if (!response.ok) {
-          console.error("Failed to send verification email:", await response.text());
+          console.error(
+            "Failed to send verification email:",
+            await response.text(),
+          );
         } else {
           console.log("Verification email sent successfully");
         }

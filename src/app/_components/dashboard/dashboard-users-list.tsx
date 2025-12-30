@@ -420,7 +420,7 @@ export default function DashboardUsersList() {
                         {session?.user.id !== user.id && (
                           <button
                             onClick={() => setShowDeleteModal(user.id)}
-                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                            className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                           >
                             Löschen
                           </button>

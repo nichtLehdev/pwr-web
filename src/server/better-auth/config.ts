@@ -26,7 +26,7 @@ const normalizeOrigin = (origin: string): string => {
 const addProtocolVariants = (url: string): string[] => {
   const normalized = normalizeOrigin(url);
   const variants: string[] = [normalized];
-  
+
   // If it's http, also add https variant
   if (normalized.startsWith("http://")) {
     variants.push(normalized.replace("http://", "https://"));
@@ -35,23 +35,25 @@ const addProtocolVariants = (url: string): string[] => {
   else if (normalized.startsWith("https://")) {
     variants.push(normalized.replace("https://", "http://"));
   }
-  
+
   return variants;
 };
 
 // Build trusted origins list - include base URL and common localhost variants
 // Also include any additional origins from environment variable (comma-separated)
 const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
-  ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").flatMap(addProtocolVariants)
+  ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").flatMap(
+      addProtocolVariants,
+    )
   : [];
 
 // Always include the base URL and NEXT_PUBLIC_APP_URL if different
 // Add both http and https variants to handle protocol variations
 const baseUrlVariants = addProtocolVariants(baseUrl);
-const nextPublicAppUrlVariants = process.env.NEXT_PUBLIC_APP_URL && 
-  process.env.NEXT_PUBLIC_APP_URL !== baseUrl
-  ? addProtocolVariants(process.env.NEXT_PUBLIC_APP_URL)
-  : [];
+const nextPublicAppUrlVariants =
+  process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL !== baseUrl
+    ? addProtocolVariants(process.env.NEXT_PUBLIC_APP_URL)
+    : [];
 
 const allOrigins = [
   ...baseUrlVariants,
@@ -67,7 +69,6 @@ const allOrigins = [
 
 const trustedOrigins = allOrigins;
 
-
 export const auth = betterAuth({
   baseURL: baseUrl,
   database: prismaAdapter(db, {
@@ -78,7 +79,13 @@ export const auth = betterAuth({
     requireEmailVerification: true, // Require email verification
   },
   email: {
-    sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+    sendVerificationEmail: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string | null };
+      url: string;
+    }) => {
       if (!isEmailConfigured()) {
         throw new Error("Email service is not configured");
       }
@@ -89,7 +96,7 @@ export const auth = betterAuth({
       try {
         const urlObj = new URL(url, baseUrl);
         const token = urlObj.searchParams.get("token");
-        
+
         // Create our custom verification page URL
         verificationUrl = token
           ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
@@ -97,7 +104,7 @@ export const auth = betterAuth({
       } catch (error) {
         // If URL parsing fails, use original URL
       }
-      
+
       await sendVerificationEmail(
         user.email,
         verificationUrl,

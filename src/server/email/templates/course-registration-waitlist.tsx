@@ -31,7 +31,9 @@ export function CourseRegistrationWaitlist({
   registrationId,
 }: CourseRegistrationWaitlistProps) {
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "http://localhost:3000";
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -104,8 +106,8 @@ export function CourseRegistrationWaitlist({
             <Hr style={hr} />
 
             <Text style={paragraph}>
-              Sollte ein Platz frei werden, werden wir dich umgehend per
-              E-Mail benachrichtigen. Du erhältst dann eine Bestätigung deiner
+              Sollte ein Platz frei werden, werden wir dich umgehend per E-Mail
+              benachrichtigen. Du erhältst dann eine Bestätigung deiner
               Anmeldung.
             </Text>
 
@@ -250,4 +252,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

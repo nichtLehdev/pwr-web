@@ -31,7 +31,10 @@ function VerifyEmailContent() {
 
     try {
       // Use our custom verification endpoint
-      const verificationUrl = new URL("/api/auth/verify-email-custom", window.location.origin);
+      const verificationUrl = new URL(
+        "/api/auth/verify-email-custom",
+        window.location.origin,
+      );
       verificationUrl.searchParams.set("token", verificationToken);
       if (email) {
         verificationUrl.searchParams.set("email", email);
@@ -44,7 +47,10 @@ function VerifyEmailContent() {
       if (response.ok) {
         const data = await response.json();
         if (data.error) {
-          setError(data.error || "Der Verifizierungslink ist ungültig oder abgelaufen.");
+          setError(
+            data.error ||
+              "Der Verifizierungslink ist ungültig oder abgelaufen.",
+          );
           setVerificationStatus("error");
         } else {
           setVerificationStatus("success");
@@ -52,8 +58,7 @@ function VerifyEmailContent() {
       } else {
         const data = await response.json().catch(() => ({}));
         setError(
-          data.error ||
-            "Der Verifizierungslink ist ungültig oder abgelaufen.",
+          data.error || "Der Verifizierungslink ist ungültig oder abgelaufen.",
         );
         setVerificationStatus("error");
       }
@@ -127,8 +132,8 @@ function VerifyEmailContent() {
                 E-Mail bestätigt!
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst
-                dich jetzt anmelden.
+                Deine E-Mail-Adresse wurde erfolgreich bestätigt. Du kannst dich
+                jetzt anmelden.
               </p>
             </div>
 
@@ -241,9 +246,7 @@ export default function VerifyEmailPage() {
                 <h1 className="text-dark dark:text-dark-text mb-2 text-3xl font-bold">
                   E-Mail bestätigen
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Lade...
-                </p>
+                <p className="text-gray-600 dark:text-gray-400">Lade...</p>
               </div>
             </div>
           </div>
@@ -254,4 +257,3 @@ export default function VerifyEmailPage() {
     </Suspense>
   );
 }
-

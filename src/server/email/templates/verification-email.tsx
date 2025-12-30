@@ -21,7 +21,9 @@ export function VerificationEmail({
   userName,
 }: VerificationEmailProps) {
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "http://localhost:3000";
 
   return (
     <Html lang="de">
@@ -30,7 +32,10 @@ export function VerificationEmail({
         <Container style={container}>
           <Section style={header}>
             <Text style={logoText}>Posaunenwerk Rheinland</Text>
-            <Text style={tagline}>Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland</Text>
+            <Text style={tagline}>
+              Evangelisches Posaunenwerk in der Evangelischen Kirche im
+              Rheinland
+            </Text>
           </Section>
 
           <Section style={content}>
@@ -53,7 +58,8 @@ export function VerificationEmail({
             </Section>
 
             <Text style={paragraph}>
-              Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:
+              Falls der Button nicht funktioniert, kopiere diesen Link in deinen
+              Browser:
             </Text>
             <Text style={link}>{verificationUrl}</Text>
 
@@ -64,9 +70,7 @@ export function VerificationEmail({
               ignorieren.
             </Text>
 
-            <Text style={footer}>
-              Dieser Link ist 24 Stunden gültig.
-            </Text>
+            <Text style={footer}>Dieser Link ist 24 Stunden gültig.</Text>
           </Section>
 
           <Section style={footerSection}>
@@ -189,4 +193,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

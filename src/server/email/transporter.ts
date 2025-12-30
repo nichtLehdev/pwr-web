@@ -3,11 +3,7 @@ import { env } from "@/env";
 
 // Check if SMTP is configured
 const isSmtpConfigured = () => {
-  return !!(
-    env.SMTP_HOST &&
-    env.SMTP_USER &&
-    env.SMTP_PASSWORD
-  );
+  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
 };
 
 // Create reusable transporter for Mailcow SMTP
@@ -19,7 +15,7 @@ export const transporter = isSmtpConfigured()
       // This ensures consistency between test script and main transporter
       const rawSecure = process.env.SMTP_SECURE;
       const secure = rawSecure === "true" || (port === 465 && !rawSecure);
-      
+
       return nodemailer.createTransport({
         host: env.SMTP_HOST!,
         port: port,
@@ -39,7 +35,9 @@ export const transporter = isSmtpConfigured()
 // Verify connection configuration
 export async function verifyEmailConnection() {
   if (!transporter) {
-    console.warn("⚠️  SMTP not configured. Email functionality will be disabled.");
+    console.warn(
+      "⚠️  SMTP not configured. Email functionality will be disabled.",
+    );
     return false;
   }
 
@@ -54,4 +52,3 @@ export async function verifyEmailConnection() {
 export function isEmailConfigured() {
   return isSmtpConfigured();
 }
-

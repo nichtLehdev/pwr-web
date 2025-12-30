@@ -32,7 +32,10 @@ export async function POST(request: NextRequest) {
     if (!user) {
       // Don't reveal if user exists for security (prevent user enumeration)
       return NextResponse.json(
-        { message: "Falls ein Konto mit dieser E-Mail existiert, wurde eine Verifizierungs-E-Mail gesendet." },
+        {
+          message:
+            "Falls ein Konto mit dieser E-Mail existiert, wurde eine Verifizierungs-E-Mail gesendet.",
+        },
         { status: 200 },
       );
     }
@@ -86,10 +89,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: "Fehler beim Senden der E-Mail. Bitte versuche es später erneut.",
+        message:
+          "Fehler beim Senden der E-Mail. Bitte versuche es später erneut.",
       },
       { status: 500 },
     );
   }
 }
-

@@ -21,7 +21,9 @@ async function testEmail() {
 
   if (!smtpHost || !smtpUser || !smtpPassword) {
     console.error("❌ SMTP is not configured!");
-    console.log("\nPlease set the following environment variables in your .env file:");
+    console.log(
+      "\nPlease set the following environment variables in your .env file:",
+    );
     console.log("  SMTP_HOST=mail.your-domain.com");
     console.log("  SMTP_PORT=587");
     console.log("  SMTP_SECURE=false");
@@ -63,7 +65,7 @@ async function testEmail() {
 
   // Test sending a simple email
   console.log("\n2. Sending test email...");
-  
+
   const testEmail = process.env.TEST_EMAIL;
   if (!testEmail) {
     console.error("❌ TEST_EMAIL environment variable is required!");
@@ -71,9 +73,9 @@ async function testEmail() {
     console.log("  TEST_EMAIL=your-email@example.com pnpm test:email");
     process.exit(1);
   }
-  
+
   const fromEmail = process.env.SMTP_FROM || smtpUser;
-  
+
   console.log(`   From: ${fromEmail}`);
   console.log(`   To: ${testEmail}`);
 
@@ -100,7 +102,9 @@ async function testEmail() {
 
     console.log(`✅ Test email sent successfully to ${testEmail}`);
     console.log(`   Message ID: ${info.messageId}`);
-    console.log("\n📧 Please check your inbox (and spam folder) for the test email.");
+    console.log(
+      "\n📧 Please check your inbox (and spam folder) for the test email.",
+    );
   } catch (error) {
     console.error("\n❌ Failed to send test email:", error);
     if (error instanceof Error) {
@@ -119,4 +123,3 @@ testEmail().catch((error) => {
 });
 
 export { testEmail };
-

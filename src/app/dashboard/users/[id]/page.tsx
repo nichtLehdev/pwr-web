@@ -190,7 +190,7 @@ export default function UserDetailPage() {
             {session?.user.id !== userId && (
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="bg-red-600 hover:bg-red-700 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
               >
                 <svg
                   className="h-4 w-4"
@@ -455,8 +455,8 @@ export default function UserDetailPage() {
                 Benutzer löschen?
               </h3>
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Möchtest du diesen Benutzer wirklich unwiderruflich löschen? Diese
-                Aktion kann nicht rückgängig gemacht werden.
+                Möchtest du diesen Benutzer wirklich unwiderruflich löschen?
+                Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
               <div className="mt-4 flex justify-end gap-3">
                 <button

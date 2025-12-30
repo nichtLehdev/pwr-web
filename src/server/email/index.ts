@@ -87,5 +87,8 @@ export async function sendCourseRegistrationWaitlistEmail(
 
 // Export other email functions here as needed
 export { sendEmail } from "./send-email";
-export { transporter, verifyEmailConnection, isEmailConfigured } from "./transporter";
-
+export {
+  transporter,
+  verifyEmailConnection,
+  isEmailConfigured,
+} from "./transporter";

@@ -31,7 +31,9 @@ export function CourseRegistrationConfirmed({
   registrationId,
 }: CourseRegistrationConfirmedProps) {
   const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "http://localhost:3000";
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -243,4 +245,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

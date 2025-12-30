@@ -7,10 +7,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
     const user = await db.user.findUnique({
@@ -34,10 +31,6 @@ export async function GET(request: NextRequest) {
       emailVerified: user.emailVerified ?? false,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "An error occurred" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
   }
 }
-

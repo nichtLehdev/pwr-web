@@ -690,7 +690,8 @@ export const registrationsRouter = createTRPCRouter({
 
       const previousStatus = registration.registrationStatus;
       const wasWaitlist = previousStatus === RegistrationStatus.WAITLIST;
-      const isNowConfirmed = input.registrationStatus === RegistrationStatus.CONFIRMED;
+      const isNowConfirmed =
+        input.registrationStatus === RegistrationStatus.CONFIRMED;
 
       const updatedRegistration = await ctx.db.courseRegistration.update({
         where: { id: input.id },
