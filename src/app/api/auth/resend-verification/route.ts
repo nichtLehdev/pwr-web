@@ -3,7 +3,6 @@ import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { randomBytes } from "crypto";
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
