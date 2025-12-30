@@ -5,14 +5,11 @@ import { env } from "@/env";
 const isSmtpConfigured = () => {
   const configured = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
   if (!configured) {
-    console.warn(
-      "[Email] SMTP not configured. Missing:",
-      {
-        SMTP_HOST: !!env.SMTP_HOST,
-        SMTP_USER: !!env.SMTP_USER,
-        SMTP_PASSWORD: !!env.SMTP_PASSWORD,
-      },
-    );
+    console.warn("[Email] SMTP not configured. Missing:", {
+      SMTP_HOST: !!env.SMTP_HOST,
+      SMTP_USER: !!env.SMTP_USER,
+      SMTP_PASSWORD: !!env.SMTP_PASSWORD,
+    });
   }
   return configured;
 };

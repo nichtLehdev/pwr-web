@@ -53,4 +53,3 @@ export function getBaseUrl(request?: {
   // This should rarely be reached in production
   return "http://localhost:3000";
 }
-
