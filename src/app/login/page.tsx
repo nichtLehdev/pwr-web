@@ -59,26 +59,7 @@ function LoginForm() {
         }
       }
 
-      // Check if email is verified before attempting login
-      try {
-        const checkUserResponse = await fetch(
-          `/api/users/check-email-verified?email=${encodeURIComponent(loginEmail)}`,
-        );
-        if (checkUserResponse.ok) {
-          const checkData = await checkUserResponse.json();
-          if (checkData.exists && !checkData.emailVerified) {
-            setLoginEmail(loginEmail); // Store for resend link
-            setError(
-              "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte überprüfe dein E-Mail-Postfach und klicke auf den Verifizierungslink.",
-            );
-            setIsLoading(false);
-            return;
-          }
-        }
-      } catch {
-        // If check fails, continue with login attempt
-      }
-
+      // Attempt login - the signIn process will handle email verification errors
       const signInResult = await signIn.email({
         email: loginEmail,
         password,

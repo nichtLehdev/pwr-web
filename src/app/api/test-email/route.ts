@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyEmailConnection } from "@/server/email/transporter";
 import { sendVerificationEmail } from "@/server/email";
+import { getBaseUrl } from "@/server/utils/get-base-url";
 
 export async function POST(request: NextRequest) {
   // Only allow in development
@@ -32,10 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send test email
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.BETTER_AUTH_URL ||
-      "http://localhost:3000";
+    const baseUrl = getBaseUrl(request);
     const testVerificationUrl = `${baseUrl}/verify-email?token=test-token-123&email=${encodeURIComponent(email)}`;
 
     await sendVerificationEmail(email, testVerificationUrl, "Test User");
