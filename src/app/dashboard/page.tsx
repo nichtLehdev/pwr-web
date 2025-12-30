@@ -213,13 +213,13 @@ export default function DashboardPage() {
                 icon={<BookOpenIcon />}
                 href="/dashboard/blaeserhefte"
               />
-              {profile.role === UserRole.ADMIN && (
+              {(profile.role === UserRole.ADMIN ||
+                profile.role === UserRole.LPW) && (
                 <DashboardCard
                   title="Newsletter"
                   description="Abonnenten verwalten"
                   icon={<MailIcon />}
                   href="/dashboard/newsletter"
-                  comingSoon
                 />
               )}
             </div>
