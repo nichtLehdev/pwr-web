@@ -1,33 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
+import { auth } from "@/server/better-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const email = searchParams.get("email");
+    // Require authentication to prevent email enumeration
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Only allow users to check their own email verification status
     const user = await db.user.findUnique({
-      where: { email },
+      where: { id: session.user.id },
       select: {
-        id: true,
-        email: true,
         emailVerified: true,
       },
     });
 
     if (!user) {
-      return NextResponse.json({
-        exists: false,
-        emailVerified: false,
-      });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 },
+      );
     }
 
+    // Return only email verification status (no exists field to prevent enumeration)
     return NextResponse.json({
-      exists: true,
       emailVerified: user.emailVerified ?? false,
     });
   } catch (error) {
