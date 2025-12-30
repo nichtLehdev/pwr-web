@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
+import { getBaseUrl } from "@/server/utils/get-base-url";
 import { randomBytes } from "crypto";
-
-const getBaseUrl = () => {
-  return (
-    process.env.BETTER_AUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000"
-  );
-};
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -52,25 +44,28 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
 
-    // Delete any existing verification tokens for this email
-    await db.verification.deleteMany({
-      where: {
-        identifier: user.email,
-      },
+    // Delete existing tokens and create new one atomically
+    await db.$transaction(async (tx) => {
+      // Delete any existing verification tokens for this email
+      await tx.verification.deleteMany({
+        where: {
+          identifier: user.email,
+        },
+      });
+
+      // Create new verification record
+      await tx.verification.create({
+        data: {
+          id: randomBytes(16).toString("hex"),
+          identifier: user.email,
+          value: token,
+          expiresAt,
+        },
+      });
     });
 
-    // Create new verification record
-    await db.verification.create({
-      data: {
-        id: randomBytes(16).toString("hex"),
-        identifier: user.email,
-        value: token,
-        expiresAt,
-      },
-    });
-
-    // Create verification URL
-    const baseUrl = getBaseUrl();
+    // Create verification URL using request headers for accurate base URL
+    const baseUrl = getBaseUrl(request);
     const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
     // Send verification email directly
