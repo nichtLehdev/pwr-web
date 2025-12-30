@@ -4,6 +4,7 @@ import { useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
+import { useSession } from "@/lib/auth";
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrator",
@@ -91,14 +92,17 @@ function SortIcon({
 }
 
 export default function DashboardUsersList() {
+  const { data: session } = useSession();
   const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const limit = 20;
 
+  const utils = api.useUtils();
   const { data, isLoading, error } = api.users.list.useQuery({
     page,
     limit,
@@ -109,6 +113,17 @@ export default function DashboardUsersList() {
   });
 
   const { data: stats } = api.users.getStatistics.useQuery();
+
+  const deleteMutation = api.users.delete.useMutation({
+    onSuccess: () => {
+      setShowDeleteModal(null);
+      void utils.users.list.invalidate();
+      void utils.users.getStatistics.invalidate();
+    },
+    onError: (error) => {
+      alert(`Fehler beim Löschen: ${error.message}`);
+    },
+  });
 
   const handleSort = (field: SortField) => {
     if (sortBy === field) {
@@ -395,12 +410,22 @@ export default function DashboardUsersList() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <Link
-                        href={`/dashboard/users/${user.id}/edit`}
-                        className="text-primary hover:text-primary/80 text-sm font-medium"
-                      >
-                        Bearbeiten
-                      </Link>
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          href={`/dashboard/users/${user.id}/edit`}
+                          className="text-primary hover:text-primary/80 text-sm font-medium"
+                        >
+                          Bearbeiten
+                        </Link>
+                        {session?.user.id !== user.id && (
+                          <button
+                            onClick={() => setShowDeleteModal(user.id)}
+                            className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                          >
+                            Löschen
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -432,6 +457,36 @@ export default function DashboardUsersList() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="dark:text-dark-text text-lg font-bold">
+              Benutzer löschen?
+            </h3>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Möchtest du diesen Benutzer wirklich unwiderruflich löschen? Diese
+              Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(null)}
+                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
+                disabled={deleteMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

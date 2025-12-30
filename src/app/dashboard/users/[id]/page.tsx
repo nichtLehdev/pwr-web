@@ -1,8 +1,8 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
-import { redirect, useParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { redirect, useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
@@ -27,11 +27,14 @@ const roleBadgeColors: Record<UserRole, string> = {
 };
 
 export default function UserDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const utils = api.useUtils();
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
@@ -41,6 +44,18 @@ export default function UserDetailPage() {
     { id: userId },
     { enabled: !!userId && !!session?.user },
   );
+
+  const deleteMutation = api.users.delete.useMutation({
+    onSuccess: () => {
+      void utils.users.list.invalidate();
+      void utils.users.getStatistics.invalidate();
+      router.push("/dashboard/users");
+    },
+    onError: (error) => {
+      alert(`Fehler beim Löschen: ${error.message}`);
+      setShowDeleteModal(false);
+    },
+  });
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -152,25 +167,48 @@ export default function UserDetailPage() {
               </span>
             </div>
           </div>
-          <Link
-            href={`/dashboard/users/${userId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/dashboard/users/${userId}/edit`}
+              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-            Bearbeiten
-          </Link>
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              Bearbeiten
+            </Link>
+            {session?.user.id !== userId && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-red-600 hover:bg-red-700 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+                Löschen
+              </button>
+            )}
+          </div>
         </div>
 
         {/* User Info Sections */}
@@ -408,6 +446,36 @@ export default function UserDetailPage() {
             </dl>
           </section>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+              <h3 className="dark:text-dark-text text-lg font-bold">
+                Benutzer löschen?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Möchtest du diesen Benutzer wirklich unwiderruflich löschen? Diese
+                Aktion kann nicht rückgängig gemacht werden.
+              </p>
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate({ id: userId })}
+                  disabled={deleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
