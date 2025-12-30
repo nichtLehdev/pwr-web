@@ -3,6 +3,7 @@ import { sendEmail } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
+import { NewsletterEmail } from "./templates/newsletter";
 
 export async function sendVerificationEmail(
   email: string,
