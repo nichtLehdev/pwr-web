@@ -2,15 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
+import { getBaseUrl } from "@/server/utils/get-base-url";
 import { randomBytes } from "crypto";
-
-const getBaseUrl = () => {
-  return (
-    process.env.BETTER_AUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    "http://localhost:3000"
-  );
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,8 +63,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create verification URL
-    const baseUrl = getBaseUrl();
+    // Create verification URL using request headers for accurate base URL
+    const baseUrl = getBaseUrl(request);
     const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
     // Send verification email directly

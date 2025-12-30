@@ -3,7 +3,18 @@ import { env } from "@/env";
 
 // Check if SMTP is configured
 const isSmtpConfigured = () => {
-  return !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
+  const configured = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
+  if (!configured) {
+    console.warn(
+      "[Email] SMTP not configured. Missing:",
+      {
+        SMTP_HOST: !!env.SMTP_HOST,
+        SMTP_USER: !!env.SMTP_USER,
+        SMTP_PASSWORD: !!env.SMTP_PASSWORD,
+      },
+    );
+  }
+  return configured;
 };
 
 // Create reusable transporter for Mailcow SMTP
@@ -16,7 +27,7 @@ export const transporter = isSmtpConfigured()
       const rawSecure = process.env.SMTP_SECURE;
       const secure = rawSecure === "true" || (port === 465 && !rawSecure);
 
-      return nodemailer.createTransport({
+      const config = {
         host: env.SMTP_HOST!,
         port: port,
         secure: secure, // true for 465 (SSL/TLS), false for 587/25 (STARTTLS)
@@ -28,7 +39,17 @@ export const transporter = isSmtpConfigured()
         tls: {
           rejectUnauthorized: false, // Set to true in production with proper certificates
         },
+      };
+
+      console.log("[Email] SMTP transporter configured:", {
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+        user: config.auth.user,
+        passwordSet: !!config.auth.pass,
       });
+
+      return nodemailer.createTransport(config);
     })()
   : null;
 
