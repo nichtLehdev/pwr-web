@@ -44,7 +44,7 @@ export function NewsletterEmail({
             </Text>
           </Section>
 
-          <Section style={content}>
+          <Section style={contentStyle}>
             <Text style={greeting}>
               {subscriberName ? `Hallo ${subscriberName},` : "Hallo,"}
             </Text>
@@ -127,7 +127,7 @@ const tagline = {
   letterSpacing: "0.3px",
 };
 
-const content = {
+const contentStyle = {
   padding: "32px 24px",
 };
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function UnsubscribePage() {
+function UnsubscribeContent() {
   const searchParams = useSearchParams();
 
   // Initialize email from URL params without using useEffect
@@ -122,5 +122,28 @@ export default function UnsubscribePage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function UnsubscribePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+          <div className="container mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700">
+              <h1 className="dark:text-dark-text mb-4 text-3xl font-bold text-gray-900">
+                Newsletter abmelden
+              </h1>
+              <div className="flex items-center justify-center py-12">
+                <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+              </div>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <UnsubscribeContent />
+    </Suspense>
   );
 }
