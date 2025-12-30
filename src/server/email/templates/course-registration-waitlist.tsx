@@ -75,7 +75,7 @@ export function CourseRegistrationWaitlist({
             </Text>
 
             <Section style={courseInfo}>
-              <Text style={courseTitle}>{courseTitle}</Text>
+              <Text style={courseTitleStyle}>{courseTitle}</Text>
               <Text style={courseDetail}>
                 <strong>Start:</strong> {formatDate(startDate)}
               </Text>
@@ -197,7 +197,7 @@ const courseInfo = {
   border: "1px solid #e5e7eb",
 };
 
-const courseTitle = {
+const courseTitleStyle = {
   fontSize: "20px",
   fontWeight: "bold",
   color: "#58595b",
