@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
 import { randomBytes } from "crypto";
@@ -29,10 +30,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      // Don't reveal if user exists for security
       return NextResponse.json(
-        { message: "Falls ein Konto mit dieser E-Mail existiert, wurde eine Verifizierungs-E-Mail gesendet." },
-        { status: 200 },
+        { message: "Benutzer nicht gefunden" },
+        { status: 404 },
       );
     }
 
@@ -44,9 +44,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[resend-verification] Generating new verification token for:", email);
+    console.log("[send-verification] Generating verification token for:", email);
 
-    // Generate a new verification token
+    // Generate a verification token
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Token expires in 24 hours
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl();
     const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
-    console.log("[resend-verification] Sending verification email...");
+    console.log("[send-verification] Sending verification email...");
 
     // Send verification email directly
     await sendVerificationEmail(
@@ -81,16 +81,19 @@ export async function POST(request: NextRequest) {
       user.displayName || undefined,
     );
 
-    console.log("[resend-verification] ✅ Verification email sent successfully");
+    console.log("[send-verification] ✅ Verification email sent successfully");
 
     return NextResponse.json(
-      { message: "Verifizierungs-E-Mail wurde gesendet." },
+      { success: true, message: "Verifizierungs-E-Mail wurde gesendet." },
       { status: 200 },
     );
   } catch (error) {
-    console.error("[resend-verification] Error:", error);
+    console.error("[send-verification] ❌ Error:", error);
     return NextResponse.json(
-      { message: "Fehler beim Senden der E-Mail. Bitte versuche es später erneut." },
+      {
+        success: false,
+        message: "Fehler beim Senden der E-Mail. Bitte versuche es später erneut.",
+      },
       { status: 500 },
     );
   }

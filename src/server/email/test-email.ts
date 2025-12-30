@@ -64,8 +64,18 @@ async function testEmail() {
   // Test sending a simple email
   console.log("\n2. Sending test email...");
   
-  const testEmail = process.env.TEST_EMAIL || "test@example.com";
+  const testEmail = process.env.TEST_EMAIL;
+  if (!testEmail) {
+    console.error("❌ TEST_EMAIL environment variable is required!");
+    console.log("\nPlease specify a real email address to test with:");
+    console.log("  TEST_EMAIL=your-email@example.com pnpm test:email");
+    process.exit(1);
+  }
+  
   const fromEmail = process.env.SMTP_FROM || smtpUser;
+  
+  console.log(`   From: ${fromEmail}`);
+  console.log(`   To: ${testEmail}`);
 
   try {
     const info = await transporter.sendMail({

@@ -29,34 +29,29 @@ export default function VerifyEmailPage() {
     setError("");
 
     try {
-      // Call Better Auth's verification endpoint
-      // Better Auth handles verification via /api/auth/verify-email
-      const response = await fetch(
-        `/api/auth/verify-email?token=${encodeURIComponent(verificationToken)}`,
-        {
-          method: "GET",
-        },
-      );
+      // Use our custom verification endpoint
+      const verificationUrl = new URL("/api/auth/verify-email-custom", window.location.origin);
+      verificationUrl.searchParams.set("token", verificationToken);
+      if (email) {
+        verificationUrl.searchParams.set("email", email);
+      }
+
+      const response = await fetch(verificationUrl.toString(), {
+        method: "GET",
+      });
 
       if (response.ok) {
-        // Check response content to determine success
-        const contentType = response.headers.get("content-type");
-        if (contentType?.includes("application/json")) {
-          const data = await response.json();
-          if (data.error) {
-            setError(data.message || "Der Verifizierungslink ist ungültig oder abgelaufen.");
-            setVerificationStatus("error");
-          } else {
-            setVerificationStatus("success");
-          }
+        const data = await response.json();
+        if (data.error) {
+          setError(data.error || "Der Verifizierungslink ist ungültig oder abgelaufen.");
+          setVerificationStatus("error");
         } else {
-          // If it's HTML (redirect response), consider it success
           setVerificationStatus("success");
         }
       } else {
         const data = await response.json().catch(() => ({}));
         setError(
-          data.message ||
+          data.error ||
             "Der Verifizierungslink ist ungültig oder abgelaufen.",
         );
         setVerificationStatus("error");

@@ -22,7 +22,13 @@ export const env = createEnv({
     // SMTP Configuration for Mailcow
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.coerce.number().default(587).optional(),
-    SMTP_SECURE: z.coerce.boolean().default(false).optional(),
+    SMTP_SECURE: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (val === undefined) return undefined;
+        return val === "true" || val === "1";
+      }),
     SMTP_USER: z.string().email().optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_FROM: z.string().email().optional(),

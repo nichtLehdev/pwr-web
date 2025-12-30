@@ -176,7 +176,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await signUp.email({
+      const signUpResult = await signUp.email({
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -185,6 +185,28 @@ export default function RegisterPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
+
+      console.log("Registration successful, sending verification email...");
+
+      // Manually trigger verification email after signup
+      try {
+        const response = await fetch("/api/auth/send-verification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email: formData.email }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to send verification email:", await response.text());
+        } else {
+          console.log("Verification email sent successfully");
+        }
+      } catch (emailError) {
+        console.error("Error triggering verification email:", emailError);
+        // Don't fail registration if email fails, user can resend
+      }
 
       // Redirect to verification page instead of auto-signing in
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);

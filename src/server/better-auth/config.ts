@@ -83,6 +83,13 @@ export const auth = betterAuth({
   },
   email: {
     sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+      console.log("=".repeat(60));
+      console.log("[Better Auth] 📧 VERIFICATION EMAIL CALLBACK TRIGGERED");
+      console.log("[Better Auth] User:", user.email);
+      console.log("[Better Auth] Name:", user.name);
+      console.log("[Better Auth] Original URL:", url);
+      console.log("=".repeat(60));
+      
       if (!isEmailConfigured()) {
         console.error("⚠️  Cannot send verification email: SMTP not configured");
         throw new Error("Email service is not configured");
@@ -90,19 +97,35 @@ export const auth = betterAuth({
 
       // Extract token from Better Auth's verification URL
       // Better Auth URL format: /api/auth/verify-email?token=...
-      const urlObj = new URL(url, baseUrl);
-      const token = urlObj.searchParams.get("token");
+      let verificationUrl = url;
+      try {
+        const urlObj = new URL(url, baseUrl);
+        const token = urlObj.searchParams.get("token");
+        
+        // Create our custom verification page URL
+        verificationUrl = token
+          ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
+          : url; // Fallback to original URL if token not found
+      } catch (error) {
+        console.warn("[Better Auth] Could not parse URL, using original:", error);
+      }
       
-      // Create our custom verification page URL
-      const verificationUrl = token
-        ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
-        : url; // Fallback to original URL if token not found
+      console.log("[Better Auth] Final Verification URL:", verificationUrl);
       
-      await sendVerificationEmail(
-        user.email,
-        verificationUrl,
-        user.name || undefined,
-      );
+      try {
+        await sendVerificationEmail(
+          user.email,
+          verificationUrl,
+          user.name || undefined,
+        );
+        console.log("[Better Auth] ✅ Verification email sent successfully");
+        console.log("=".repeat(60));
+      } catch (error) {
+        console.error("[Better Auth] ❌ Failed to send verification email:", error);
+        console.error("[Better Auth] Error details:", error instanceof Error ? error.stack : error);
+        console.log("=".repeat(60));
+        throw error;
+      }
     },
   },
   trustedOrigins,
