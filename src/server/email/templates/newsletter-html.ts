@@ -70,4 +70,3 @@ export function generateNewsletterHtml({
 </body>
 </html>`;
 }
-

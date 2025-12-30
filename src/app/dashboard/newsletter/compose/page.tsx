@@ -53,7 +53,9 @@ export default function DashboardNewsletterComposePage() {
     onSuccess: (data, variables) => {
       if (variables.testEmail) {
         // Test email - don't clear fields
-        toast.success(`Test-Newsletter erfolgreich an ${variables.testEmail} gesendet!`);
+        toast.success(
+          `Test-Newsletter erfolgreich an ${variables.testEmail} gesendet!`,
+        );
       } else {
         // Sent to all subscribers - clear all fields
         toast.success(
@@ -199,7 +201,7 @@ export default function DashboardNewsletterComposePage() {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Newsletter Betreff"
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
                 />
               </div>
 
@@ -222,14 +224,14 @@ export default function DashboardNewsletterComposePage() {
                 <button
                   onClick={handleSendTest}
                   disabled={sendNewsletter.isPending || !testEmail}
-                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Test senden
                 </button>
                 <button
                   onClick={handleSend}
                   disabled={sendNewsletter.isPending}
-                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-primary hover:bg-primary/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sendNewsletter.isPending
                     ? "Wird gesendet..."
@@ -257,7 +259,7 @@ export default function DashboardNewsletterComposePage() {
                     type="checkbox"
                     checked={includeNews}
                     onChange={(e) => setIncludeNews(e.target.checked)}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                    className="text-primary focus:ring-primary rounded border-gray-300"
                   />
                   Neue Beiträge einbeziehen
                 </label>
@@ -266,7 +268,7 @@ export default function DashboardNewsletterComposePage() {
                     type="checkbox"
                     checked={includeEvents}
                     onChange={(e) => setIncludeEvents(e.target.checked)}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                    className="text-primary focus:ring-primary rounded border-gray-300"
                   />
                   Kommende Termine einbeziehen
                 </label>
@@ -283,7 +285,7 @@ export default function DashboardNewsletterComposePage() {
                     max="90"
                     value={daysBack}
                     onChange={(e) => setDaysBack(Number(e.target.value))}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -296,7 +298,7 @@ export default function DashboardNewsletterComposePage() {
                     max="90"
                     value={daysAhead}
                     onChange={(e) => setDaysAhead(Number(e.target.value))}
-                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:outline-none"
                   />
                 </div>
               </div>
@@ -304,7 +306,7 @@ export default function DashboardNewsletterComposePage() {
               <button
                 onClick={handleGenerate}
                 disabled={isGenerating || generateNewsletter.isFetching}
-                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary hover:bg-primary/90 w-full rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isGenerating || generateNewsletter.isFetching
                   ? "Wird generiert..."
@@ -326,7 +328,7 @@ export default function DashboardNewsletterComposePage() {
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
                 placeholder="test@example.com"
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none"
               />
             </div>
 
@@ -390,7 +392,7 @@ export default function DashboardNewsletterComposePage() {
               <button
                 onClick={confirmSend}
                 disabled={sendNewsletter.isPending}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {sendNewsletter.isPending ? "Wird gesendet..." : "Senden"}
               </button>
@@ -401,4 +403,3 @@ export default function DashboardNewsletterComposePage() {
     </main>
   );
 }
-

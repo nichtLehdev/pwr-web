@@ -178,7 +178,7 @@ export default function DashboardNewsletterSubscribersPage() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
             />
           </div>
           <div className="flex gap-2">
@@ -226,33 +226,33 @@ export default function DashboardNewsletterSubscribersPage() {
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="dark:bg-dark-surface bg-gray-50">
                   <tr>
-                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       E-Mail
                     </th>
-                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Name
                     </th>
-                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Status
                     </th>
-                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Abonniert am
                     </th>
-                    <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                       Aktionen
                     </th>
                   </tr>
                 </thead>
-                <tbody className="dark:bg-dark-surface bg-white divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="dark:bg-dark-surface divide-y divide-gray-200 bg-white dark:divide-gray-700">
                   {subscribersData.subscribers.map((subscriber) => (
                     <tr key={subscriber.id}>
-                      <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                      <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {subscriber.email}
                       </td>
-                      <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                      <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {subscriber.name || "-"}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                      <td className="px-6 py-4 text-sm whitespace-nowrap">
                         {subscriber.isActive ? (
                           <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
                             Aktiv
@@ -263,12 +263,12 @@ export default function DashboardNewsletterSubscribersPage() {
                           </span>
                         )}
                       </td>
-                      <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+                      <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                         {new Date(subscriber.subscribedAt).toLocaleDateString(
                           "de-DE",
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                      <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
                         <button
                           onClick={() => {
                             if (
@@ -296,7 +296,7 @@ export default function DashboardNewsletterSubscribersPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Zurück
                 </button>
@@ -308,7 +308,7 @@ export default function DashboardNewsletterSubscribersPage() {
                     setPage((p) => Math.min(subscribersData.pages, p + 1))
                   }
                   disabled={page === subscribersData.pages}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Weiter
                 </button>
@@ -326,4 +326,3 @@ export default function DashboardNewsletterSubscribersPage() {
     </main>
   );
 }
-

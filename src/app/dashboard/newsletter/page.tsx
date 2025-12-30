@@ -116,9 +116,9 @@ export default function DashboardNewsletterPage() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <Link
             href="/dashboard/newsletter/compose"
-            className="dark:bg-dark-surface group rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:border-primary hover:shadow-lg dark:border-gray-700"
+            className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
           >
-            <div className="text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+            <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
               <svg
                 className="h-6 w-6"
                 fill="none"
@@ -143,9 +143,9 @@ export default function DashboardNewsletterPage() {
 
           <Link
             href="/dashboard/newsletter/subscribers"
-            className="dark:bg-dark-surface group rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:border-primary hover:shadow-lg dark:border-gray-700"
+            className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
           >
-            <div className="text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 group-hover:bg-primary group-hover:text-white transition-colors">
+            <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
               <svg
                 className="h-6 w-6"
                 fill="none"
@@ -172,4 +172,3 @@ export default function DashboardNewsletterPage() {
     </main>
   );
 }
-

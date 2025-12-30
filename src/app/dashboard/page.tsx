@@ -213,7 +213,8 @@ export default function DashboardPage() {
                 icon={<BookOpenIcon />}
                 href="/dashboard/blaeserhefte"
               />
-              {(profile.role === UserRole.ADMIN || profile.role === UserRole.LPW) && (
+              {(profile.role === UserRole.ADMIN ||
+                profile.role === UserRole.LPW) && (
                 <DashboardCard
                   title="Newsletter"
                   description="Abonnenten verwalten"

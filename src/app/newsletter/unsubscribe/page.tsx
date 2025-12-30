@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function UnsubscribePage() {
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle",
-  );
-  const [message, setMessage] = useState("");
 
-  useEffect(() => {
+  // Initialize email from URL params without using useEffect
+  const initialEmail = useMemo(() => {
     const emailParam = searchParams.get("email");
-    if (emailParam) {
-      setEmail(decodeURIComponent(emailParam));
-    }
+    return emailParam ? decodeURIComponent(emailParam) : "";
   }, [searchParams]);
+
+  const [email, setEmail] = useState(initialEmail);
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ export default function UnsubscribePage() {
         setStatus("error");
         setMessage(data.message || "Ein Fehler ist aufgetreten.");
       }
-    } catch (error) {
+    } catch {
       setStatus("error");
       setMessage("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
     }
@@ -91,7 +91,7 @@ export default function UnsubscribePage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
                   placeholder="deine@email.de"
                 />
               </div>
@@ -105,7 +105,7 @@ export default function UnsubscribePage() {
               <button
                 type="submit"
                 disabled={status === "loading"}
-                className="w-full rounded-lg bg-red-600 px-6 py-3 font-medium text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-lg bg-red-600 px-6 py-3 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {status === "loading" ? "Wird abgemeldet..." : "Abmelden"}
               </button>
@@ -124,4 +124,3 @@ export default function UnsubscribePage() {
     </main>
   );
 }
-
