@@ -6,6 +6,16 @@ import {
   posaunenratProcedure,
   publicProcedure,
 } from "../trpc";
+import { sendEmail } from "@/server/email/send-email";
+import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
+import { getBaseUrl } from "@/server/utils/get-base-url";
+import { ContentStatus } from "~/generated/prisma/client";
+import { marked } from "marked";
+
+marked.use({
+  gfm: true,
+  breaks: true,
+});
 
 export const locationsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -319,5 +329,226 @@ export const newsletterRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  sendNewsletter: lpwProcedure
+    .input(
+      z.object({
+        subject: z.string().min(1).max(200),
+        content: z.string().min(1), // Markdown content
+        testEmail: z.string().email().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const baseUrl = getBaseUrl(
+        ctx.headers ? { headers: ctx.headers } : undefined,
+      );
+      const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe`;
+
+      // Convert markdown to HTML
+      const htmlContent = String(await marked.parse(input.content));
+
+      // Ensure content is not empty
+      if (!htmlContent || htmlContent.trim().length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Newsletter content cannot be empty",
+        });
+      }
+
+      // If test email is provided, send only to that email
+      if (input.testEmail) {
+        // Generate HTML email manually
+        const emailHtml = generateNewsletterHtml({
+          content: htmlContent,
+          unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(input.testEmail)}`,
+        });
+
+        await sendEmail({
+          to: input.testEmail,
+          subject: `[TEST] ${input.subject}`,
+          html: emailHtml,
+        });
+
+        return {
+          success: true,
+          message: "Test newsletter sent",
+          sentTo: 1,
+        };
+      }
+
+      // Get all active subscribers
+      const subscribers = await ctx.db.newsletterSubscriber.findMany({
+        where: { isActive: true },
+      });
+
+      if (subscribers.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No active subscribers found",
+        });
+      }
+
+      // Send to all subscribers
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const subscriber of subscribers) {
+        try {
+          // Generate HTML email manually
+          const emailHtml = generateNewsletterHtml({
+            content: htmlContent,
+            unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}`,
+            subscriberName: subscriber.name || undefined,
+          });
+
+          await sendEmail({
+            to: subscriber.email,
+            subject: input.subject,
+            html: emailHtml,
+          });
+
+          successCount++;
+        } catch (error) {
+          console.error(
+            `Failed to send newsletter to ${subscriber.email}:`,
+            error,
+          );
+          errorCount++;
+        }
+      }
+
+      return {
+        success: true,
+        message: `Newsletter sent to ${successCount} subscribers`,
+        sentTo: successCount,
+        errors: errorCount,
+      };
+    }),
+
+  generateNewsletter: lpwProcedure
+    .input(
+      z.object({
+        includeNews: z.boolean().default(true),
+        includeEvents: z.boolean().default(true),
+        daysBack: z.number().min(1).max(90).default(30),
+        daysAhead: z.number().min(1).max(90).default(30),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const now = new Date();
+      const startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - input.daysBack);
+      const endDate = new Date(now);
+      endDate.setDate(endDate.getDate() + input.daysAhead);
+
+      const sections: string[] = [];
+
+      // Get recent news posts
+      if (input.includeNews) {
+        const recentPosts = await ctx.db.post.findMany({
+          where: {
+            status: ContentStatus.APPROVED,
+            publishedAt: {
+              gte: startDate,
+              lte: now,
+            },
+          },
+          include: {
+            coverImage: true,
+            bezirk: true,
+            createdBy: {
+              select: {
+                displayName: true,
+              },
+            },
+          },
+          orderBy: { publishedAt: "desc" },
+          take: 10,
+        });
+
+        if (recentPosts.length > 0) {
+          sections.push("## Neue Beiträge\n");
+          for (const post of recentPosts) {
+            const postUrl = `${getBaseUrl(
+              ctx.headers ? { headers: ctx.headers } : undefined,
+            )}/aktuelles/${post.id}`;
+            const imageMarkdown = post.coverImage
+              ? `![${post.coverImage.alt || post.title}](${post.coverImage.url})\n\n`
+              : "";
+            sections.push(
+              `${imageMarkdown}### [${post.title}](${postUrl})\n\n${
+                post.excerpt ? `${post.excerpt}\n\n` : ""
+              }[Weiterlesen →](${postUrl})\n\n`,
+            );
+          }
+        }
+      }
+
+      // Get upcoming events
+      if (input.includeEvents) {
+        const upcomingEvents = await ctx.db.event.findMany({
+          where: {
+            status: ContentStatus.APPROVED,
+            cancelled: false,
+            eventDate: {
+              gte: now,
+              lte: endDate,
+            },
+          },
+          include: {
+            coverImage: true,
+            location: true,
+            bezirk: true,
+          },
+          orderBy: { eventDate: "asc" },
+          take: 10,
+        });
+
+        if (upcomingEvents.length > 0) {
+          sections.push("## Kommende Termine\n");
+          for (const event of upcomingEvents) {
+            const eventUrl = `${getBaseUrl(
+              ctx.headers ? { headers: ctx.headers } : undefined,
+            )}/termine/event/${event.id}`;
+            const eventDate = new Date(event.eventDate);
+            const formattedDate = eventDate.toLocaleDateString("de-DE", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const locationText = event.location
+              ? `${event.location.name || ""} ${event.location.city || ""}`.trim()
+              : event.districtName || "";
+
+            sections.push(
+              `### [${event.title}](${eventUrl})\n\n**Datum:** ${formattedDate}\n\n${
+                locationText ? `**Ort:** ${locationText}\n\n` : ""
+              }${
+                event.description
+                  ? `${event.description.substring(0, 200)}${
+                      event.description.length > 200 ? "..." : ""
+                    }\n\n`
+                  : ""
+              }[Mehr erfahren →](${eventUrl})\n\n`,
+            );
+          }
+        }
+      }
+
+      if (sections.length === 0) {
+        return {
+          content: "Keine neuen Inhalte im ausgewählten Zeitraum.",
+          hasContent: false,
+        };
+      }
+
+      return {
+        content: sections.join(""),
+        hasContent: true,
+      };
     }),
 });
