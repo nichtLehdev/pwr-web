@@ -186,13 +186,8 @@ export default function RegisterPage() {
         lastName: formData.lastName,
       });
 
-      await signIn.email({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      router.push("/");
-      router.refresh();
+      // Redirect to verification page instead of auto-signing in
+      router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       setError(
         "Registrierung fehlgeschlagen. E-Mail könnte bereits verwendet werden.",

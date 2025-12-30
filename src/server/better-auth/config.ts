@@ -4,6 +4,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { env } from "@/env";
 import { db } from "@/server/db";
+import { sendVerificationEmail, isEmailConfigured } from "@/server/email";
 
 // Get base URL from environment or default to localhost
 const getBaseUrl = () => {
@@ -78,6 +79,31 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: true, // Require email verification
+  },
+  email: {
+    sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
+      if (!isEmailConfigured()) {
+        console.error("⚠️  Cannot send verification email: SMTP not configured");
+        throw new Error("Email service is not configured");
+      }
+
+      // Extract token from Better Auth's verification URL
+      // Better Auth URL format: /api/auth/verify-email?token=...
+      const urlObj = new URL(url, baseUrl);
+      const token = urlObj.searchParams.get("token");
+      
+      // Create our custom verification page URL
+      const verificationUrl = token
+        ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
+        : url; // Fallback to original URL if token not found
+      
+      await sendVerificationEmail(
+        user.email,
+        verificationUrl,
+        user.name || undefined,
+      );
+    },
   },
   trustedOrigins,
   plugins: [username()],
