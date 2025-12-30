@@ -14,8 +14,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("[verify-email-custom] Verifying token for:", email);
-
     // Find verification record
     const verification = await db.verification.findFirst({
       where: {
@@ -28,7 +26,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!verification) {
-      console.log("[verify-email-custom] ❌ Invalid or expired token");
       return NextResponse.json(
         { error: "Der Verifizierungslink ist ungültig oder abgelaufen." },
         { status: 400 },
@@ -41,7 +38,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      console.log("[verify-email-custom] ❌ User not found");
       return NextResponse.json(
         { error: "Benutzer nicht gefunden" },
         { status: 404 },
@@ -61,14 +57,11 @@ export async function GET(request: NextRequest) {
       where: { id: verification.id },
     });
 
-    console.log("[verify-email-custom] ✅ Email verified successfully for:", email);
-
     return NextResponse.json({
       success: true,
       message: "E-Mail-Adresse erfolgreich verifiziert.",
     });
   } catch (error) {
-    console.error("[verify-email-custom] Error:", error);
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 },

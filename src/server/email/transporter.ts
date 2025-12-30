@@ -20,13 +20,7 @@ export const transporter = isSmtpConfigured()
       const rawSecure = process.env.SMTP_SECURE;
       const secure = rawSecure === "true" || (port === 465 && !rawSecure);
       
-      console.log(`[Email] Configuring SMTP:`);
-      console.log(`  Host: ${env.SMTP_HOST}`);
-      console.log(`  Port: ${port}`);
-      console.log(`  Secure: ${secure} (${secure ? 'SSL/TLS' : 'STARTTLS'})`);
-      console.log(`  User: ${env.SMTP_USER}`);
-      
-      const config = {
+      return nodemailer.createTransport({
         host: env.SMTP_HOST!,
         port: port,
         secure: secure, // true for 465 (SSL/TLS), false for 587/25 (STARTTLS)
@@ -38,11 +32,7 @@ export const transporter = isSmtpConfigured()
         tls: {
           rejectUnauthorized: false, // Set to true in production with proper certificates
         },
-      };
-      
-      console.log(`[Email] Full config:`, JSON.stringify({ ...config, auth: { user: config.auth.user, pass: '***' } }, null, 2));
-      
-      return nodemailer.createTransport(config);
+      });
     })()
   : null;
 
@@ -54,23 +44,9 @@ export async function verifyEmailConnection() {
   }
 
   try {
-    const port = env.SMTP_PORT ?? 587;
-    const secure = env.SMTP_SECURE ?? (port === 465);
-    console.log(`[Email] Verifying connection to ${env.SMTP_HOST}:${port} (secure: ${secure})`);
-    
     await transporter.verify();
-    console.log("✅ Email server is ready to send messages");
     return true;
   } catch (error) {
-    console.error("❌ Email server connection failed:", error);
-    if (error instanceof Error) {
-      console.error(`   Error: ${error.message}`);
-      if (error.message.includes("wrong version number")) {
-        console.error("   💡 This usually means a port/secure mismatch:");
-        console.error("      - Port 587 should use SMTP_SECURE=false (STARTTLS)");
-        console.error("      - Port 465 should use SMTP_SECURE=true (SSL/TLS)");
-      }
-    }
     return false;
   }
 }

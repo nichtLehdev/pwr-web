@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const email = searchParams.get("email");
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<
@@ -59,7 +60,6 @@ export default function VerifyEmailPage() {
     } catch (err) {
       setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
       setVerificationStatus("error");
-      console.error(err);
     } finally {
       setIsVerifying(false);
     }
@@ -85,7 +85,7 @@ export default function VerifyEmailPage() {
 
       if (response.ok) {
         setError("");
-        alert(
+        toast.success(
           "Eine neue Verifizierungs-E-Mail wurde an deine E-Mail-Adresse gesendet.",
         );
       } else {
@@ -97,7 +97,6 @@ export default function VerifyEmailPage() {
       }
     } catch (err) {
       setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
-      console.error(err);
     } finally {
       setIsVerifying(false);
     }

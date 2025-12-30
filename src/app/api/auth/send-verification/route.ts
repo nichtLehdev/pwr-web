@@ -44,8 +44,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[send-verification] Generating verification token for:", email);
-
     // Generate a verification token
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
@@ -72,8 +70,6 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl();
     const verificationUrl = `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
-    console.log("[send-verification] Sending verification email...");
-
     // Send verification email directly
     await sendVerificationEmail(
       user.email,
@@ -81,14 +77,11 @@ export async function POST(request: NextRequest) {
       user.displayName || undefined,
     );
 
-    console.log("[send-verification] ✅ Verification email sent successfully");
-
     return NextResponse.json(
       { success: true, message: "Verifizierungs-E-Mail wurde gesendet." },
       { status: 200 },
     );
   } catch (error) {
-    console.error("[send-verification] ❌ Error:", error);
     return NextResponse.json(
       {
         success: false,

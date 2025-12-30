@@ -67,10 +67,6 @@ const allOrigins = [
 
 const trustedOrigins = allOrigins;
 
-// Log trusted origins in development for debugging (remove sensitive info in production)
-if (process.env.NODE_ENV === "development") {
-  console.log("[Better Auth] Trusted origins:", trustedOrigins);
-}
 
 export const auth = betterAuth({
   baseURL: baseUrl,
@@ -83,15 +79,7 @@ export const auth = betterAuth({
   },
   email: {
     sendVerificationEmail: async ({ user, url }: { user: { email: string; name?: string | null }; url: string }) => {
-      console.log("=".repeat(60));
-      console.log("[Better Auth] 📧 VERIFICATION EMAIL CALLBACK TRIGGERED");
-      console.log("[Better Auth] User:", user.email);
-      console.log("[Better Auth] Name:", user.name);
-      console.log("[Better Auth] Original URL:", url);
-      console.log("=".repeat(60));
-      
       if (!isEmailConfigured()) {
-        console.error("⚠️  Cannot send verification email: SMTP not configured");
         throw new Error("Email service is not configured");
       }
 
@@ -107,25 +95,14 @@ export const auth = betterAuth({
           ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
           : url; // Fallback to original URL if token not found
       } catch (error) {
-        console.warn("[Better Auth] Could not parse URL, using original:", error);
+        // If URL parsing fails, use original URL
       }
       
-      console.log("[Better Auth] Final Verification URL:", verificationUrl);
-      
-      try {
-        await sendVerificationEmail(
-          user.email,
-          verificationUrl,
-          user.name || undefined,
-        );
-        console.log("[Better Auth] ✅ Verification email sent successfully");
-        console.log("=".repeat(60));
-      } catch (error) {
-        console.error("[Better Auth] ❌ Failed to send verification email:", error);
-        console.error("[Better Auth] Error details:", error instanceof Error ? error.stack : error);
-        console.log("=".repeat(60));
-        throw error;
-      }
+      await sendVerificationEmail(
+        user.email,
+        verificationUrl,
+        user.name || undefined,
+      );
     },
   },
   trustedOrigins,
