@@ -14,8 +14,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Validate email format - limit length first to prevent ReDoS
+    if (email.length > 254) {
+      return NextResponse.json(
+        { message: "Invalid email format" },
+        { status: 400 },
+      );
+    }
+
+    // Use a simpler, safer regex pattern that avoids catastrophic backtracking
+    // This pattern is more efficient and less vulnerable to ReDoS
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { message: "Invalid email format" },
