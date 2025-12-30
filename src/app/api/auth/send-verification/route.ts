@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
+      // Don't reveal if user exists for security (prevent user enumeration)
       return NextResponse.json(
-        { message: "Benutzer nicht gefunden" },
-        { status: 404 },
+        { message: "Falls ein Konto mit dieser E-Mail existiert, wurde eine Verifizierungs-E-Mail gesendet." },
+        { status: 200 },
       );
     }
 
