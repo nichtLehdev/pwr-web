@@ -68,8 +68,9 @@ function LoginForm() {
 
       if (signInResult.error) {
         // Better Auth might return a specific error for unverified email
-        const errorMessage =
-          (signInResult.error.message || signInResult.error.toString()).toLowerCase();
+        const errorMessage = (
+          signInResult.error.message || signInResult.error.toString()
+        ).toLowerCase();
         // Only check for specific verification-related terms, not just "email"
         if (
           errorMessage.includes("verif") ||
