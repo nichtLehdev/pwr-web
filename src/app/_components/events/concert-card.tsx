@@ -13,7 +13,7 @@ type Event = Omit<
   | "ensemble"
 >;
 type AuswahlChor =
-  RouterOutputs["auswahlchoereRouter"]["getAll"]["auswahlchoere"][0];
+  RouterOutputs["auswahlchoere"]["getAll"]["auswahlchoere"][0];
 
 interface ConcertCardProps {
   concert: Event;
