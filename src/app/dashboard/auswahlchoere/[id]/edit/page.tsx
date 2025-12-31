@@ -67,6 +67,7 @@ export default function EditAuswahlchorPage() {
 
   useEffect(() => {
     if (auswahlchor && !initialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(auswahlchor.name);
       setSlug(auswahlchor.slug);
       setSubtitle(auswahlchor.subtitle);
