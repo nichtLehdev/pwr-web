@@ -10,12 +10,21 @@ export const auswahlchoereRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           image: true,
-          conductor: true,
+          conductor: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              bio: true,
+            },
+          },
           events: {
             orderBy: { eventDate: "asc" },
             include: {
               location: true,
               priceOptions: true,
+              coverImage: true,
             },
           },
         },
