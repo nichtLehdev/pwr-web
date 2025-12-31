@@ -157,7 +157,7 @@ export default function AuswahlchorDetailPage() {
                     : "Bewerbung inaktiv"}
                 </span>
               </div>
-              <p className="dark:text-primary mt-1 text-lg font-semibold text-primary">
+              <p className="dark:text-primary text-primary mt-1 text-lg font-semibold">
                 {auswahlchor.subtitle}
               </p>
               <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
@@ -236,9 +236,7 @@ export default function AuswahlchorDetailPage() {
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
                     <Image
                       src={auswahlchor.conductor.profileImage.url}
-                      alt={
-                        auswahlchor.conductor.displayName || "Chorleitung"
-                      }
+                      alt={auswahlchor.conductor.displayName || "Chorleitung"}
                       fill
                       className="object-cover"
                     />
@@ -419,4 +417,3 @@ export default function AuswahlchorDetailPage() {
     </main>
   );
 }
-

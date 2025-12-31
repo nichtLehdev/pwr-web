@@ -192,7 +192,9 @@ export const auswahlchoereRouter = createTRPCRouter({
           ...(input.description && { description: input.description }),
           ...(input.color && { color: input.color }),
           ...(input.colorHex && { colorHex: input.colorHex }),
-          ...(input.imageId !== undefined && { imageId: input.imageId || null }),
+          ...(input.imageId !== undefined && {
+            imageId: input.imageId || null,
+          }),
           ...(input.conductorId !== undefined && {
             conductorId: input.conductorId || null,
           }),

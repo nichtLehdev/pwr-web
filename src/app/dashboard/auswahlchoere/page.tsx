@@ -107,9 +107,7 @@ export default function DashboardAuswahlchoerePage() {
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Auswahlchöre
-            </li>
+            <li className="dark:text-dark-text text-gray-900">Auswahlchöre</li>
           </ol>
         </nav>
 
@@ -299,8 +297,7 @@ export default function DashboardAuswahlchoerePage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {chor.conductor ? (
                           <span className="dark:text-dark-text text-sm text-gray-900">
-                            {chor.conductor.displayName ||
-                              chor.conductor.email}
+                            {chor.conductor.displayName || chor.conductor.email}
                           </span>
                         ) : (
                           <span className="dark:text-dark-muted text-sm text-gray-400 italic">
@@ -491,4 +488,3 @@ export default function DashboardAuswahlchoerePage() {
     </main>
   );
 }
-

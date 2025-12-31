@@ -229,14 +229,17 @@ export default function NewAuswahlchorPage() {
                 <input
                   type="text"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                  onChange={(e) =>
+                    setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                  }
                   required
                   maxLength={15}
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="z.B. conspirito"
                 />
                 <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben und Bindestriche)
+                  URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
+                  und Bindestriche)
                 </p>
               </div>
 
@@ -478,7 +481,7 @@ export default function NewAuswahlchorPage() {
                             key={user.id}
                             type="button"
                             onClick={() => handleConductorSelect(user)}
-                            className="dark:hover:bg-gray-700 block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
                           >
                             <span className="dark:text-dark-text font-medium text-gray-900">
                               {user.displayName || user.email}
@@ -503,7 +506,7 @@ export default function NewAuswahlchorPage() {
                       <button
                         type="button"
                         onClick={handleClearConductor}
-                        className="dark:border-dark-border dark:text-red-400 dark:hover:bg-gray-700 block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100"
+                        className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                       >
                         Verknüpfung entfernen
                       </button>
@@ -575,4 +578,3 @@ export default function NewAuswahlchorPage() {
     </main>
   );
 }
-
