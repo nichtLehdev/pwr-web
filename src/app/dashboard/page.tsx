@@ -99,7 +99,6 @@ export default function DashboardPage() {
               description="Historische Ereignisse"
               icon={<ClockIcon />}
               href="/dashboard/history"
-              comingSoon
             />
           </div>
         </section>
