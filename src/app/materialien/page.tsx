@@ -72,7 +72,7 @@ export default function MaterialienPage() {
               Unsere Material-Bereiche
             </h2>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
               <ParticipationCard
                 title="Rheinisches Blechblatt"
                 description="Unser Magazin mit Artikeln, Terminen und Neuigkeiten aus der Posaunenchorarbeit"
@@ -86,13 +86,6 @@ export default function MaterialienPage() {
                 icon="music"
                 href="/materialien/literatur"
                 color="district-2"
-              />
-              <ParticipationCard
-                title="Übungen & Tipps"
-                description="Praktische Übungen und Anleitungen für Bläser und Chorleiter"
-                icon="education"
-                href="/materialien/uebungen"
-                color="district-6"
               />
             </div>
           </div>
