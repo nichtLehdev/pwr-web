@@ -104,7 +104,7 @@ export default function NewEventPage() {
     bezirkId: !isHigherRole && userBezirkId ? userBezirkId : undefined,
   });
 
-  const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
+  const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );

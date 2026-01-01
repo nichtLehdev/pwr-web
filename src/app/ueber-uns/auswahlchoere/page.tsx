@@ -5,7 +5,7 @@ import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
 
 export default async function AuswahlchoerePage() {
-  const ensembles = (await api.auswahlchoereRouter.getAll({})).auswahlchoere;
+  const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;
 
   return (
     <div>
