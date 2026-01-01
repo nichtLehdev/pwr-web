@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -48,14 +48,16 @@ export default function EditHistoryEventPage() {
   useEffect(() => {
     if (historyEvent && !initializedRef.current) {
       initializedRef.current = true;
-      setYear(historyEvent.year.toString());
-      setTitle(historyEvent.title);
-      setDescription(historyEvent.description);
-      setCategory(historyEvent.category || "");
-      setImageId(historyEvent.imageId);
-      setImageUrl(historyEvent.image?.url ?? "");
-      setImageAlt(historyEvent.imageAlt || "");
-      setSortOrder(historyEvent.sortOrder.toString());
+      startTransition(() => {
+        setYear(historyEvent.year.toString());
+        setTitle(historyEvent.title);
+        setDescription(historyEvent.description);
+        setCategory(historyEvent.category || "");
+        setImageId(historyEvent.imageId);
+        setImageUrl(historyEvent.image?.url ?? "");
+        setImageAlt(historyEvent.imageAlt || "");
+        setSortOrder(historyEvent.sortOrder.toString());
+      });
     }
   }, [historyEvent]);
 
