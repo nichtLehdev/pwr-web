@@ -128,7 +128,6 @@ export default function DashboardPage() {
                 description="Auswahlchöre verwalten"
                 icon={<MusicNoteIcon />}
                 href="/dashboard/auswahlchoere"
-                comingSoon
               />
               <DashboardCard
                 title="Veranstaltungsorte"

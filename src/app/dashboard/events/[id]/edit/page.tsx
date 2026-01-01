@@ -125,7 +125,7 @@ export default function EditEventPage() {
 
   const { data: ensemblesData } = api.ensembles.getAll.useQuery({});
 
-  const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
+  const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );
