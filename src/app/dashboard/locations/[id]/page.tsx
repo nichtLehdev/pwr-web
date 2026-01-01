@@ -288,11 +288,14 @@ export default function LocationDetailPage() {
                             },
                           )}{" "}
                           -{" "}
-                          {new Date(course.endDate).toLocaleDateString("de-DE", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })}
+                          {new Date(course.endDate).toLocaleDateString(
+                            "de-DE",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )}
                         </p>
                       </div>
                     </div>
@@ -418,4 +421,3 @@ export default function LocationDetailPage() {
     </main>
   );
 }
-

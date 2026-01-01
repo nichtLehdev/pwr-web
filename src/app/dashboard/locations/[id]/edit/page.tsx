@@ -73,9 +73,7 @@ export default function EditLocationPage() {
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(
-        `/login?callbackUrl=/dashboard/locations/${locationId}/edit`,
-      );
+      router.push(`/login?callbackUrl=/dashboard/locations/${locationId}/edit`);
     }
   }, [session, sessionLoading, router, locationId]);
 
@@ -100,12 +98,8 @@ export default function EditLocationPage() {
       zipCode: zipCode.trim() || undefined,
       city: city.trim() || undefined,
       additionalInfo: additionalInfo.trim() || undefined,
-      latitude: latitude.trim()
-        ? parseFloat(latitude.trim())
-        : undefined,
-      longitude: longitude.trim()
-        ? parseFloat(longitude.trim())
-        : undefined,
+      latitude: latitude.trim() ? parseFloat(latitude.trim()) : undefined,
+      longitude: longitude.trim() ? parseFloat(longitude.trim()) : undefined,
     });
   };
 
@@ -351,4 +345,3 @@ export default function EditLocationPage() {
     </main>
   );
 }
-

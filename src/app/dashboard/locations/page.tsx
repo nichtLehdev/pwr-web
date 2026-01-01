@@ -272,20 +272,21 @@ export default function DashboardLocationsPage() {
                               {location.street}
                             </span>
                           )}
-                          {(location.street && (location.zipCode || location.city)) && (
-                            <br />
-                          )}
+                          {location.street &&
+                            (location.zipCode || location.city) && <br />}
                           {(location.zipCode || location.city) && (
                             <span className="dark:text-dark-text text-gray-900">
                               {location.zipCode && `${location.zipCode} `}
                               {location.city}
                             </span>
                           )}
-                          {!location.street && !location.zipCode && !location.city && (
-                            <span className="dark:text-dark-muted text-gray-400 italic">
-                              Keine Adresse
-                            </span>
-                          )}
+                          {!location.street &&
+                            !location.zipCode &&
+                            !location.city && (
+                              <span className="dark:text-dark-muted text-gray-400 italic">
+                                Keine Adresse
+                              </span>
+                            )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -376,7 +377,7 @@ export default function DashboardLocationsPage() {
                               location._count.courses > 0 ||
                               location._count.ensembles > 0
                             }
-                            className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                            className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                             title="Löschen"
                           >
                             {deletingId === location.id ? (
@@ -499,4 +500,3 @@ export default function DashboardLocationsPage() {
     </main>
   );
 }
-
