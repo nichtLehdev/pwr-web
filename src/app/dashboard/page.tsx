@@ -134,7 +134,6 @@ export default function DashboardPage() {
                 description="Locations verwalten"
                 icon={<LocationMarkerIcon />}
                 href="/dashboard/locations"
-                comingSoon
               />
             </div>
           </section>
