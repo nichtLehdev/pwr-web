@@ -43,6 +43,7 @@ export default function EditLocationPage() {
 
   useEffect(() => {
     if (location && !initialized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(location.name || "");
       setStreet(location.street || "");
       setZipCode(location.zipCode || "");
