@@ -43,10 +43,11 @@ export default function EditHistoryEventPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (historyEvent && !initialized) {
+    if (historyEvent && !initializedRef.current) {
+      initializedRef.current = true;
       setYear(historyEvent.year.toString());
       setTitle(historyEvent.title);
       setDescription(historyEvent.description);
@@ -55,9 +56,8 @@ export default function EditHistoryEventPage() {
       setImageUrl(historyEvent.image?.url ?? "");
       setImageAlt(historyEvent.imageAlt || "");
       setSortOrder(historyEvent.sortOrder.toString());
-      setInitialized(true);
     }
-  }, [historyEvent, initialized]);
+  }, [historyEvent]);
 
   const utils = api.useUtils();
 
@@ -104,7 +104,12 @@ export default function EditHistoryEventPage() {
       title: title.trim(),
       description: description.trim(),
       category: category
-        ? (category as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
+        ? (category as
+            | "FOUNDING"
+            | "MILESTONE"
+            | "EXPANSION"
+            | "MODERNIZATION"
+            | "PARTNERSHIP")
         : null,
       imageId: imageId || null,
       imageAlt: imageAlt.trim() || undefined,
@@ -425,4 +430,3 @@ export default function EditHistoryEventPage() {
     </main>
   );
 }
-

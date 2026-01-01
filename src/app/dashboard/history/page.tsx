@@ -33,7 +33,12 @@ export default function DashboardHistoryTimelinePage() {
     refetch,
   } = api.organization.getHistory.useQuery({
     category: categoryFilter
-      ? (categoryFilter as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
+      ? (categoryFilter as
+          | "FOUNDING"
+          | "MILESTONE"
+          | "EXPANSION"
+          | "MODERNIZATION"
+          | "PARTNERSHIP")
       : undefined,
   });
 
@@ -89,15 +94,16 @@ export default function DashboardHistoryTimelinePage() {
     return null;
   }
 
-  const filteredEvents = historyEvents?.filter((event) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      event.title.toLowerCase().includes(searchLower) ||
-      event.description.toLowerCase().includes(searchLower) ||
-      event.year.toString().includes(searchLower)
-    );
-  }) ?? [];
+  const filteredEvents =
+    historyEvents?.filter((event) => {
+      if (!search) return true;
+      const searchLower = search.toLowerCase();
+      return (
+        event.title.toLowerCase().includes(searchLower) ||
+        event.description.toLowerCase().includes(searchLower) ||
+        event.year.toString().includes(searchLower)
+      );
+    }) ?? [];
 
   const categoryLabels: Record<string, string> = {
     FOUNDING: "Gründung",
@@ -122,9 +128,7 @@ export default function DashboardHistoryTimelinePage() {
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Historie
-            </li>
+            <li className="dark:text-dark-text text-gray-900">Historie</li>
           </ol>
         </nav>
 
@@ -192,7 +196,7 @@ export default function DashboardHistoryTimelinePage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 px-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Alle Kategorien</option>
                 <option value="FOUNDING">Gründung</option>
@@ -297,7 +301,7 @@ export default function DashboardHistoryTimelinePage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {event.category ? (
-                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                             {categoryLabels[event.category] || event.category}
                           </span>
                         ) : (
@@ -412,4 +416,3 @@ export default function DashboardHistoryTimelinePage() {
     </main>
   );
 }
-
