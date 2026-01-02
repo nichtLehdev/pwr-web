@@ -8,6 +8,17 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ChevronDown,
+  Image,
+  User,
+  Key,
+  MapPin,
+  Menu,
+  Settings,
+  Calendar,
+  AlertTriangle,
+} from "lucide-react";
 
 function CollapsibleSection({
   title,
@@ -35,21 +46,11 @@ function CollapsibleSection({
             {title}
           </h2>
         </div>
-        <svg
+        <ChevronDown
           className={`text-dark dark:text-dark-text h-5 w-5 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        />
       </button>
       <div
         className={`transition-all duration-200 ease-in-out ${
@@ -279,21 +280,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Profilbild"
               defaultOpen={true}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              }
+              icon={<Image className="h-5 w-5" />}
             >
               <ProfileImageUpload
                 currentImage={profile?.profileImage}
@@ -307,19 +294,7 @@ export default function SettingsPage() {
               {profile?.role && profile.role !== UserRole.USER && (
                 <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
                   <div className="flex items-start gap-2">
-                    <svg
-                      className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     <p className="text-xs text-amber-700 dark:text-amber-300">
                       <strong>Hinweis:</strong> Dein Profilbild wird auch auf
                       öffentlichen Seiten angezeigt (z.B. Team, Bezirke,
@@ -335,21 +310,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Persönliche Daten"
               defaultOpen={false}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              }
+              icon={<User className="h-5 w-5" />}
             >
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
@@ -456,21 +417,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Konto"
               defaultOpen={false}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                  />
-                </svg>
-              }
+              icon={<Key className="h-5 w-5" />}
             >
               <div className="space-y-4">
                 <div>
@@ -564,27 +511,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Adresse"
               defaultOpen={false}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              }
+              icon={<MapPin className="h-5 w-5" />}
             >
               <div className="space-y-4">
                 <div>
@@ -648,21 +575,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Über mich"
               defaultOpen={false}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h7"
-                  />
-                </svg>
-              }
+              icon={<Menu className="h-5 w-5" />}
             >
               <div>
                 <label
@@ -691,27 +604,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Einstellungen"
               defaultOpen={false}
-              icon={
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              }
+              icon={<Settings className="h-5 w-5" />}
             >
               <div className="space-y-4">
                 <div>
@@ -737,19 +630,7 @@ export default function SettingsPage() {
                           : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
                       }`}
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                        />
-                      </svg>
+                      <Menu className="h-5 w-5" />
                       Liste
                     </button>
                     <button
@@ -766,19 +647,7 @@ export default function SettingsPage() {
                           : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
                       }`}
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <Calendar className="h-5 w-5" />
                       Kalender
                     </button>
                   </div>

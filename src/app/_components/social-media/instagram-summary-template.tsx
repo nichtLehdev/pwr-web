@@ -1,4 +1,5 @@
 import { getDistrictColor } from "@/lib/district-color";
+import { MapPinIcon } from "lucide-react";
 
 interface Event {
   id: string;
@@ -118,17 +119,9 @@ export default function InstagramSummaryTemplate({
                   <div className="flex items-center gap-3">
                     {event.location?.city && (
                       <p className="text-dark-light flex items-center gap-2 text-lg font-medium">
-                        <svg
+                        <MapPinIcon
                           className="h-5 w-5 shrink-0"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+                        />
                         {event.location.city}
                       </p>
                     )}

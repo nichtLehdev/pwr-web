@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, startTransition } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,6 @@ import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { ImageIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -44,23 +43,21 @@ export default function EditHistoryEventPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const initializedRef = useRef(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    if (historyEvent && !initializedRef.current) {
-      initializedRef.current = true;
-      startTransition(() => {
-        setYear(historyEvent.year.toString());
-        setTitle(historyEvent.title);
-        setDescription(historyEvent.description);
-        setCategory(historyEvent.category || "");
-        setImageId(historyEvent.imageId);
-        setImageUrl(historyEvent.image?.url ?? "");
-        setImageAlt(historyEvent.imageAlt || "");
-        setSortOrder(historyEvent.sortOrder.toString());
-      });
+    if (historyEvent && !initialized) {
+      setYear(historyEvent.year.toString());
+      setTitle(historyEvent.title);
+      setDescription(historyEvent.description);
+      setCategory(historyEvent.category || "");
+      setImageId(historyEvent.imageId);
+      setImageUrl(historyEvent.image?.url ?? "");
+      setImageAlt(historyEvent.imageAlt || "");
+      setSortOrder(historyEvent.sortOrder.toString());
+      setInitialized(true);
     }
-  }, [historyEvent]);
+  }, [historyEvent, initialized]);
 
   const utils = api.useUtils();
 
@@ -107,12 +104,7 @@ export default function EditHistoryEventPage() {
       title: title.trim(),
       description: description.trim(),
       category: category
-        ? (category as
-            | "FOUNDING"
-            | "MILESTONE"
-            | "EXPANSION"
-            | "MODERNIZATION"
-            | "PARTNERSHIP")
+        ? (category as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
         : null,
       imageId: imageId || null,
       imageAlt: imageAlt.trim() || undefined,
@@ -187,7 +179,7 @@ export default function EditHistoryEventPage() {
                 href="/dashboard/history-timeline"
                 className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
-                Historie
+                Historie-Timeline
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
@@ -365,7 +357,19 @@ export default function EditHistoryEventPage() {
                     className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
                   >
                     <div className="text-center">
-                      <ImageIcon className="mx-auto h-8 w-8" />
+                      <svg
+                        className="mx-auto h-8 w-8"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
                       <span className="mt-1 block text-sm">Bild auswählen</span>
                     </div>
                   </button>
@@ -421,3 +425,4 @@ export default function EditHistoryEventPage() {
     </main>
   );
 }
+

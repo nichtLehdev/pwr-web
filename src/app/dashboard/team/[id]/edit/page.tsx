@@ -12,6 +12,7 @@ import {
   SocialIcon,
   SOCIAL_TYPE_OPTIONS,
 } from "@/app/_components/ui/social-icon";
+import { Plus } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -350,19 +351,7 @@ export default function EditTeamPage() {
                 onClick={addSocialLink}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
+                <Plus className="h-4 w-4" />
                 Link hinzufügen
               </button>
             </div>

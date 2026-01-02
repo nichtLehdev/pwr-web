@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface SectionHeaderProps {
@@ -21,19 +22,7 @@ export default function SectionHeader({
         className="text-primary hover:text-primary-dark flex items-center gap-2 font-semibold"
       >
         {linkText}
-        <svg
-          className="h-5 w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+        <ArrowRight className="h-5 w-5" />
       </Link>
     </div>
   );

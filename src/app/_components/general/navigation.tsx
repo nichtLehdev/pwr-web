@@ -12,6 +12,7 @@ import SearchModal from "./search-modal";
 import { useBanner } from "../ui/banner-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/toast";
+import { ChevronDown, Search, Menu, X, LogOut } from "lucide-react";
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -225,19 +226,7 @@ export default function Navigation() {
                       }`}
                     >
                       {link.label}
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      <ChevronDown className="h-4 w-4" />
                     </Link>
                     {openDropdown === link.label && (
                       <div
@@ -286,19 +275,7 @@ export default function Navigation() {
                 className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary flex items-center gap-2 transition-colors"
                 aria-label="Suchen"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                <Search className="h-5 w-5" />
                 <kbd className="dark:border-dark-border hidden rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-400 xl:inline">
                   ⌘K
                 </kbd>
@@ -325,21 +302,11 @@ export default function Navigation() {
                       )}
                     </div>
 
-                    <svg
+                    <ChevronDown
                       className={`text-dark dark:text-dark-text h-4 w-4 transition-transform ${
                         userMenuOpen ? "rotate-180" : ""
                       }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    />
                   </button>
 
                   {userMenuOpen && (
@@ -394,28 +361,11 @@ export default function Navigation() {
               className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-2 hover:bg-gray-100"
               aria-label="Menü öffnen"
             >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                {mobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -448,21 +398,11 @@ export default function Navigation() {
                           className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-3 transition-colors hover:bg-gray-100"
                           aria-label={`${link.label} Untermenü öffnen`}
                         >
-                          <svg
+                          <ChevronDown
                             className={`h-5 w-5 transition-transform ${
                               openDropdown === link.label ? "rotate-180" : ""
                             }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
+                          />
                         </button>
                       </div>
                       {openDropdown === link.label && (
@@ -509,19 +449,7 @@ export default function Navigation() {
                   }}
                   className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center rounded-md px-4 py-3 hover:bg-gray-100"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
+                  <Search className="mr-2 h-5 w-5" />
                   Suchen
                 </button>
 

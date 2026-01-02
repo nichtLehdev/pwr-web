@@ -9,7 +9,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
-import { Plus, Search, Clock, Eye, Edit, Trash2 } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -34,12 +33,7 @@ export default function DashboardHistoryTimelinePage() {
     refetch,
   } = api.organization.getHistory.useQuery({
     category: categoryFilter
-      ? (categoryFilter as
-          | "FOUNDING"
-          | "MILESTONE"
-          | "EXPANSION"
-          | "MODERNIZATION"
-          | "PARTNERSHIP")
+      ? (categoryFilter as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
       : undefined,
   });
 
@@ -95,16 +89,15 @@ export default function DashboardHistoryTimelinePage() {
     return null;
   }
 
-  const filteredEvents =
-    historyEvents?.filter((event) => {
-      if (!search) return true;
-      const searchLower = search.toLowerCase();
-      return (
-        event.title.toLowerCase().includes(searchLower) ||
-        event.description.toLowerCase().includes(searchLower) ||
-        event.year.toString().includes(searchLower)
-      );
-    }) ?? [];
+  const filteredEvents = historyEvents?.filter((event) => {
+    if (!search) return true;
+    const searchLower = search.toLowerCase();
+    return (
+      event.title.toLowerCase().includes(searchLower) ||
+      event.description.toLowerCase().includes(searchLower) ||
+      event.year.toString().includes(searchLower)
+    );
+  }) ?? [];
 
   const categoryLabels: Record<string, string> = {
     FOUNDING: "Gründung",
@@ -129,7 +122,9 @@ export default function DashboardHistoryTimelinePage() {
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Historie</li>
+            <li className="dark:text-dark-text text-gray-900">
+              Historie-Timeline
+            </li>
           </ol>
         </nav>
 
@@ -137,7 +132,7 @@ export default function DashboardHistoryTimelinePage() {
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              Historie
+              Historie-Timeline
             </h1>
             <p className="dark:text-dark-muted mt-2 text-gray-600">
               Verwalte alle historischen Ereignisse
@@ -147,7 +142,19 @@ export default function DashboardHistoryTimelinePage() {
             href="/dashboard/history-timeline/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <Plus className="h-5 w-5" />
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
             Neues Ereignis
           </Link>
         </div>
@@ -158,7 +165,19 @@ export default function DashboardHistoryTimelinePage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <svg
+                  className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
                 <input
                   type="text"
                   value={search}
@@ -173,7 +192,7 @@ export default function DashboardHistoryTimelinePage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 px-3 focus:border-transparent focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Alle Kategorien</option>
                 <option value="FOUNDING">Gründung</option>
@@ -190,7 +209,14 @@ export default function DashboardHistoryTimelinePage() {
         {filteredEvents.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <Clock className="h-12 w-12" />
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Keine Ereignisse gefunden
@@ -205,7 +231,19 @@ export default function DashboardHistoryTimelinePage() {
                 href="/dashboard/history-timeline/new"
                 className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
               >
-                <Plus className="h-5 w-5" />
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
                 Ereignis erstellen
               </Link>
             )}
@@ -259,7 +297,7 @@ export default function DashboardHistoryTimelinePage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {event.category ? (
-                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                             {categoryLabels[event.category] || event.category}
                           </span>
                         ) : (
@@ -291,14 +329,44 @@ export default function DashboardHistoryTimelinePage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <Eye className="h-4 w-4" />
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                            </svg>
                           </Link>
                           <Link
                             href={`/dashboard/history-timeline/${event.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bearbeiten"
                           >
-                            <Edit className="h-4 w-4" />
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
                           </Link>
                           <button
                             onClick={() => handleDelete(event.id, event.title)}
@@ -309,7 +377,19 @@ export default function DashboardHistoryTimelinePage() {
                             {deletingId === event.id ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                             ) : (
-                              <Trash2 className="h-4 w-4" />
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
                             )}
                           </button>
                         </div>
@@ -332,3 +412,4 @@ export default function DashboardHistoryTimelinePage() {
     </main>
   );
 }
+

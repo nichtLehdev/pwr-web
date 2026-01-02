@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
+import { CalendarIcon, CheckCircleIcon, CircleXIcon, MapPinIcon, X } from "lucide-react";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -81,19 +82,7 @@ export default function EventDetailModal({
               <div className="flex flex-wrap items-center gap-2">
                 {event.type === "event" && event.cancelled && (
                   <span className="inline-flex items-center gap-1 rounded bg-white/20 px-2 py-0.5 text-xs font-bold uppercase">
-                    <svg
-                      className="h-3 w-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="h-3 w-3" />
                     Abgesagt
                   </span>
                 )}
@@ -115,19 +104,7 @@ export default function EventDetailModal({
               className="ml-4 rounded-lg p-2 transition-colors hover:bg-white/20"
               aria-label="Modal schließen"
             >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -138,19 +115,9 @@ export default function EventDetailModal({
           {event.type === "event" && event.cancelled && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
               <div className="flex items-start gap-3">
-                <svg
+                <CircleXIcon
                   className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                />
                 <div>
                   <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
                     Veranstaltung abgesagt
@@ -165,19 +132,9 @@ export default function EventDetailModal({
 
           {/* Date & Time */}
           <div className="flex items-start gap-3">
-            <svg
+            <CalendarIcon
               className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            />
             <div>
               <p className="text-dark dark:text-dark-text font-semibold">
                 {startDate}
@@ -197,25 +154,9 @@ export default function EventDetailModal({
           {/* Location */}
           {event.location && (
             <div className="flex items-start gap-3">
-              <svg
+                <MapPinIcon
                 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
+              />
               <div>
                 <p className="text-dark dark:text-dark-text font-semibold">
                   {event.location.name || event.location.city}
@@ -236,19 +177,9 @@ export default function EventDetailModal({
           {/* District */}
           {event.bezirk && (
             <div className="flex items-start gap-3">
-              <svg
+              <CheckCircleIcon
                 className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              />
               <div>
                 <p className="text-dark dark:text-dark-text font-semibold">
                   {event.bezirk.name}
@@ -261,19 +192,9 @@ export default function EventDetailModal({
           {event.type === "event" && event.openToParticipants && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
               <div className="flex items-start gap-3">
-                <svg
+                <CheckCircleIcon
                   className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
+                />
                 <div>
                   <h3 className="mb-1 font-semibold text-green-900 dark:text-green-100">
                     Mitmachangebot

@@ -8,6 +8,7 @@ import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";
 import { DownloadCategory } from "~/generated/prisma/enums";
 import LoadingSpinner from "../_components/general/loading-spinner";
+import { Search, X } from "lucide-react";
 
 export default function MaterialienPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | "all">(
@@ -123,19 +124,7 @@ export default function MaterialienPage() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="focus:ring-district-4 dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 outline-none placeholder:text-gray-400 focus:border-transparent focus:ring-2 dark:placeholder:text-gray-500"
                     />
-                    <svg
-                      className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
+                    <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
                   </div>
                 </div>
 
@@ -177,19 +166,7 @@ export default function MaterialienPage() {
                         onClick={() => setSelectedCategory("all")}
                         className="hover:text-district-4"
                       >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <X className="h-4 w-4" />
                       </button>
                     </span>
                   )}

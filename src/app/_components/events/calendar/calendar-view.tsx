@@ -5,6 +5,7 @@ import { useState } from "react";
 import CompactEventCard from "../event-card-compact";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
+import { ChevronLeft, ChevronRight, XCircleIcon, XIcon } from "lucide-react";
 
 interface CalendarViewProps {
   items: CalendarItem[];
@@ -179,19 +180,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 className="dark:hover:bg-dark-background rounded-lg p-2 transition-colors hover:bg-gray-100"
                 aria-label="Vorheriger Monat"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={goToToday}
@@ -204,19 +193,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 className="rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
                 aria-label="Nächster Monat"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -285,19 +262,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       } shadow-sm`}
                       title="Abgesagt"
                     >
-                      <svg
+                      <XCircleIcon
                         className="h-2 w-2 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      />
                     </div>
                   )}
 
@@ -362,19 +329,9 @@ export default function CalendarView({ items }: CalendarViewProps) {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
-                  <svg
+                  <XIcon
                     className="h-2 w-2 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  />
                 </div>
                 <span>Abgesagt</span>
               </div>
