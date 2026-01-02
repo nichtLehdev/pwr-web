@@ -75,8 +75,11 @@ export default function ThemeToggle() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get current theme label
-  const currentTheme = themeOptions.find((opt) => opt.value === theme) || themeOptions[0];
-  const currentIcon = themeOptions.find((opt) => opt.value === resolvedTheme)?.icon || themeOptions[0]!.icon;
+  const currentTheme =
+    themeOptions.find((opt) => opt.value === theme) || themeOptions[0];
+  const currentIcon =
+    themeOptions.find((opt) => opt.value === resolvedTheme)?.icon ||
+    themeOptions[0]!.icon;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -116,7 +119,7 @@ export default function ThemeToggle() {
       </button>
 
       {isOpen && (
-        <div className="dark:border-dark-border dark:bg-dark-surface absolute right-0 top-full z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
+        <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
           {themeOptions.map((option) => (
             <button
               key={option.value}

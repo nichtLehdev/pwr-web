@@ -815,7 +815,8 @@ export default function SettingsPage() {
                         setCurrentTheme(newTheme);
                       }}
                       className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                        preferences.theme === "light" || (!preferences.theme && currentTheme === "light")
+                        preferences.theme === "light" ||
+                        (!preferences.theme && currentTheme === "light")
                           ? "bg-primary text-white"
                           : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
                       }`}
@@ -846,7 +847,8 @@ export default function SettingsPage() {
                         setCurrentTheme(newTheme);
                       }}
                       className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                        preferences.theme === "dark" || (!preferences.theme && currentTheme === "dark")
+                        preferences.theme === "dark" ||
+                        (!preferences.theme && currentTheme === "dark")
                           ? "bg-primary text-white"
                           : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
                       }`}
@@ -877,7 +879,8 @@ export default function SettingsPage() {
                         setCurrentTheme(newTheme);
                       }}
                       className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
-                        preferences.theme === "system" || (!preferences.theme && currentTheme === "system")
+                        preferences.theme === "system" ||
+                        (!preferences.theme && currentTheme === "system")
                           ? "bg-primary text-white"
                           : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
                       }`}

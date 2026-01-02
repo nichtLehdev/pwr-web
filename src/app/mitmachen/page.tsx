@@ -148,9 +148,7 @@ export default function MitmachenPage() {
 
                     <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                       <div className="flex h-full items-center rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="text-xl font-bold">
-                          Nur 36 € / Jahr
-                        </p>
+                        <p className="text-xl font-bold">Nur 36 € / Jahr</p>
                       </div>
                       <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
                         <p className="mb-1 text-lg font-bold">
