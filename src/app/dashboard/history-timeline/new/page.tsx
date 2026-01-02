@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, startTransition } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
@@ -10,14 +10,11 @@ import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { ImageIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
-export default function EditHistoryEventPage() {
+export default function NewHistoryEventPage() {
   const router = useRouter();
-  const params = useParams();
-  const eventId = params.id as string;
   const { data: session, isPending: sessionLoading } = useSession();
   const toast = useToast();
   const hasRedirected = useRef(false);
@@ -26,12 +23,6 @@ export default function EditHistoryEventPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
-
-  const { data: historyEvent, isLoading: eventLoading } =
-    api.organization.getHistoryEvent.useQuery(
-      { id: eventId },
-      { enabled: !!eventId && !!session?.user },
-    );
 
   const [year, setYear] = useState("");
   const [title, setTitle] = useState("");
@@ -44,48 +35,28 @@ export default function EditHistoryEventPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const initializedRef = useRef(false);
-
-  useEffect(() => {
-    if (historyEvent && !initializedRef.current) {
-      initializedRef.current = true;
-      startTransition(() => {
-        setYear(historyEvent.year.toString());
-        setTitle(historyEvent.title);
-        setDescription(historyEvent.description);
-        setCategory(historyEvent.category || "");
-        setImageId(historyEvent.imageId);
-        setImageUrl(historyEvent.image?.url ?? "");
-        setImageAlt(historyEvent.imageAlt || "");
-        setSortOrder(historyEvent.sortOrder.toString());
-      });
-    }
-  }, [historyEvent]);
 
   const utils = api.useUtils();
 
-  const updateMutation = api.organization.updateHistoryEvent.useMutation({
-    onSuccess: async () => {
+  const createMutation = api.organization.createHistoryEvent.useMutation({
+    onSuccess: async (data) => {
       await utils.organization.getHistory.invalidate();
-      await utils.organization.getHistoryEvent.invalidate({ id: eventId });
-      toast.success("Ereignis erfolgreich aktualisiert");
-      router.push(`/dashboard/history-timeline/${eventId}`);
+      toast.success("Ereignis erfolgreich erstellt");
+      router.push(`/dashboard/history-timeline/${data.id}`);
     },
     onError: (err) => {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
-      toast.error("Fehler beim Aktualisieren: " + err.message);
+      toast.error("Fehler beim Erstellen: " + err.message);
     },
   });
 
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(
-        `/login?callbackUrl=/dashboard/history-timeline/${eventId}/edit`,
-      );
+      router.push("/login?callbackUrl=/dashboard/history-timeline/new");
     }
-  }, [session, sessionLoading, router, eventId]);
+  }, [session, sessionLoading, router]);
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
@@ -101,20 +72,14 @@ export default function EditHistoryEventPage() {
     setError("");
     setIsSubmitting(true);
 
-    updateMutation.mutate({
-      id: eventId,
+    createMutation.mutate({
       year: parseInt(year, 10),
       title: title.trim(),
       description: description.trim(),
       category: category
-        ? (category as
-            | "FOUNDING"
-            | "MILESTONE"
-            | "EXPANSION"
-            | "MODERNIZATION"
-            | "PARTNERSHIP")
-        : null,
-      imageId: imageId || null,
+        ? (category as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
+        : undefined,
+      imageId: imageId || undefined,
       imageAlt: imageAlt.trim() || undefined,
       sortOrder: parseInt(sortOrder, 10) || 0,
     });
@@ -129,7 +94,7 @@ export default function EditHistoryEventPage() {
     setShowMediaPicker(false);
   };
 
-  if (sessionLoading || profileLoading || eventLoading) {
+  if (sessionLoading || profileLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -139,24 +104,6 @@ export default function EditHistoryEventPage() {
 
   if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
     return null;
-  }
-
-  if (!historyEvent) {
-    return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="dark:text-dark-text text-xl font-semibold text-gray-900">
-            Ereignis nicht gefunden
-          </h1>
-          <Link
-            href="/dashboard/history-timeline"
-            className="text-primary mt-4 inline-block hover:underline"
-          >
-            Zurück zur Übersicht
-          </Link>
-        </div>
-      </div>
-    );
   }
 
   const categoryLabels: Record<string, string> = {
@@ -187,30 +134,21 @@ export default function EditHistoryEventPage() {
                 href="/dashboard/history-timeline"
                 className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
-                Historie
+                Historie-Timeline
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/history-timeline/${eventId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {historyEvent.title}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
+            <li className="dark:text-dark-text text-gray-900">Neu</li>
           </ol>
         </nav>
 
         {/* Header */}
         <div className="mb-8">
           <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Ereignis bearbeiten
+            Neues Ereignis
           </h1>
           <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Bearbeite die Informationen des Ereignisses
+            Erstelle ein neues historisches Ereignis
           </p>
         </div>
 
@@ -365,7 +303,19 @@ export default function EditHistoryEventPage() {
                     className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
                   >
                     <div className="text-center">
-                      <ImageIcon className="mx-auto h-8 w-8" />
+                      <svg
+                        className="mx-auto h-8 w-8"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
                       <span className="mt-1 block text-sm">Bild auswählen</span>
                     </div>
                   </button>
@@ -394,15 +344,15 @@ export default function EditHistoryEventPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="submit"
-                disabled={isSubmitting || updateMutation.isPending}
+                disabled={isSubmitting || createMutation.isPending}
                 className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
               >
-                {isSubmitting || updateMutation.isPending
-                  ? "Wird gespeichert..."
-                  : "Änderungen speichern"}
+                {isSubmitting || createMutation.isPending
+                  ? "Wird erstellt..."
+                  : "Ereignis erstellen"}
               </button>
               <Link
-                href={`/dashboard/history-timeline/${eventId}`}
+                href="/dashboard/history-timeline"
                 className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Abbrechen
@@ -421,3 +371,4 @@ export default function EditHistoryEventPage() {
     </main>
   );
 }
+

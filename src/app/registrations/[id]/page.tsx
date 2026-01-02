@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
+import { Edit, X } from "lucide-react";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -221,19 +222,7 @@ export default function ViewRegistrationPage() {
                   onClick={() => setCancelModalOpen(true)}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100 hover:text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="h-4 w-4" />
                   Stornieren
                 </button>
               )}

@@ -8,6 +8,7 @@ import {
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { useToast } from "@/app/_components/ui/toast";
+import { X, Upload, Pencil, FileText, CheckCircle, Loader2 } from "lucide-react";
 
 type SignatureMode = "none" | "upload" | "draw";
 
@@ -130,19 +131,7 @@ export function BulkInvoiceModal({
           disabled={isGenerating}
           className="absolute top-4 right-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
         >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="h-5 w-5" />
         </button>
 
         {/* Header */}
@@ -197,19 +186,7 @@ export function BulkInvoiceModal({
                   disabled={isGenerating}
                   className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-gray-300 px-4 py-4 transition-colors hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg
-                    className="h-6 w-6 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
+                  <Upload className="h-6 w-6 text-gray-400" />
                   <span className="text-sm text-gray-600">Hochladen</span>
                 </button>
                 <button
@@ -218,19 +195,7 @@ export function BulkInvoiceModal({
                   disabled={isGenerating}
                   className="flex flex-1 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-gray-300 px-4 py-4 transition-colors hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg
-                    className="h-6 w-6 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
+                  <Pencil className="h-6 w-6 text-gray-400" />
                   <span className="text-sm text-gray-600">Zeichnen</span>
                 </button>
               </div>
@@ -255,19 +220,7 @@ export function BulkInvoiceModal({
                       disabled={isGenerating}
                       className="rounded p-1 text-red-500 hover:bg-red-50 disabled:opacity-50"
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 ) : (
@@ -278,19 +231,7 @@ export function BulkInvoiceModal({
                       }
                       className={`flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-gray-300 px-4 py-6 transition-colors hover:border-blue-400 hover:bg-blue-50 ${isGenerating ? "cursor-not-allowed opacity-50" : ""}`}
                     >
-                      <svg
-                        className="mb-2 h-8 w-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                      </svg>
+                      <Upload className="mb-2 h-8 w-8 text-gray-400" />
                       <span className="text-sm text-gray-600">
                         Klicken zum Hochladen
                       </span>
@@ -397,19 +338,7 @@ export function BulkInvoiceModal({
         {/* Success Message */}
         {isComplete && (
           <div className="mt-6 flex items-center gap-2 rounded-md bg-green-50 p-3 text-green-700">
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle className="h-5 w-5" />
             <span className="text-sm font-medium">
               Rechnungen erfolgreich exportiert!
             </span>
@@ -432,42 +361,12 @@ export function BulkInvoiceModal({
           >
             {isGenerating ? (
               <>
-                <svg
-                  className="h-4 w-4 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Generiere...
               </>
             ) : (
               <>
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <FileText className="h-4 w-4" />
                 Generieren
               </>
             )}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import type { Holiday } from "@/lib/holidays";
+import { X, CheckCircle } from "lucide-react";
 
 interface HolidayModalProps {
   holiday: Holiday;
@@ -35,19 +36,7 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
           className="text-dark dark:text-dark-text absolute top-4 right-4 rounded-full p-1 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
           aria-label="Schließen"
         >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="h-6 w-6" />
         </button>
 
         {/* Holiday Icon */}
@@ -91,19 +80,7 @@ export default function HolidayModal({ holiday, onClose }: HolidayModalProps) {
           </h3>
           {holiday.isNationwide ? (
             <div className="flex items-center gap-2">
-              <svg
-                className="h-5 w-5 text-green-600 dark:text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 {holiday.isLegalHoliday === false
                   ? "Bundesweit"

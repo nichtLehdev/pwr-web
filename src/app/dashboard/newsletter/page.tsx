@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
+import { Mail, Users } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -119,19 +120,7 @@ export default function DashboardNewsletterPage() {
             className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
           >
             <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
+              <Mail className="h-6 w-6" />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Newsletter erstellen
@@ -146,19 +135,7 @@ export default function DashboardNewsletterPage() {
             className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
           >
             <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <Users className="h-6 w-6" />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Abonnenten verwalten

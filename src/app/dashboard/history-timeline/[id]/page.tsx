@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
-import { Clock, Edit } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -32,7 +31,9 @@ export default function HistoryEventDetailPage() {
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(`/login?callbackUrl=/dashboard/history-timeline/${eventId}`);
+      router.push(
+        `/login?callbackUrl=/dashboard/history-timeline/${eventId}`,
+      );
     }
   }, [session, sessionLoading, router, eventId]);
 
@@ -103,7 +104,7 @@ export default function HistoryEventDetailPage() {
                 href="/dashboard/history-timeline"
                 className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
               >
-                Historie
+                Historie-Timeline
               </Link>
             </li>
             <li className="dark:text-dark-muted text-gray-400">/</li>
@@ -126,8 +127,20 @@ export default function HistoryEventDetailPage() {
                 />
               </div>
             ) : (
-              <div className="bg-primary flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white">
-                <Clock className="h-10 w-10" />
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+                <svg
+                  className="h-10 w-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
               </div>
             )}
             <div>
@@ -136,7 +149,7 @@ export default function HistoryEventDetailPage() {
                   {historyEvent.title}
                 </h1>
                 {historyEvent.category && (
-                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                     {categoryLabels[historyEvent.category] ||
                       historyEvent.category}
                   </span>
@@ -151,7 +164,19 @@ export default function HistoryEventDetailPage() {
             href={`/dashboard/history-timeline/${eventId}/edit`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <Edit className="h-4 w-4" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
             Bearbeiten
           </Link>
         </div>
@@ -239,14 +264,11 @@ export default function HistoryEventDetailPage() {
                   Erstellt am
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.createdAt).toLocaleDateString(
-                    "de-DE",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}
+                  {new Date(historyEvent.createdAt).toLocaleDateString("de-DE", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </dd>
               </div>
               <div>
@@ -254,14 +276,11 @@ export default function HistoryEventDetailPage() {
                   Zuletzt aktualisiert
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.updatedAt).toLocaleDateString(
-                    "de-DE",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}
+                  {new Date(historyEvent.updatedAt).toLocaleDateString("de-DE", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </dd>
               </div>
             </dl>
@@ -294,3 +313,4 @@ export default function HistoryEventDetailPage() {
     </main>
   );
 }
+

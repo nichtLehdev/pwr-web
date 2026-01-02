@@ -5,6 +5,15 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Filter,
+  Users,
+  Search,
+  X,
+} from "lucide-react";
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrator",
@@ -44,50 +53,12 @@ function SortIcon({
   sortOrder: "asc" | "desc";
 }) {
   if (sortBy !== field) {
-    return (
-      <svg
-        className="ml-1 h-4 w-4 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-        />
-      </svg>
-    );
+    return <ArrowUpDown className="ml-1 h-4 w-4 text-gray-400" />;
   }
   return sortOrder === "asc" ? (
-    <svg
-      className="text-primary ml-1 h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 15l7-7 7 7"
-      />
-    </svg>
+    <ArrowUp className="text-primary ml-1 h-4 w-4" />
   ) : (
-    <svg
-      className="text-primary ml-1 h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 9l-7 7-7-7"
-      />
-    </svg>
+    <ArrowDown className="text-primary ml-1 h-4 w-4" />
   );
 }
 
@@ -193,19 +164,7 @@ export default function DashboardUsersList() {
             placeholder="Suche nach Name, E-Mail..."
             className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-gray-900 focus:ring-1 focus:outline-none"
           />
-          <svg
-            className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
+          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
         </div>
 
         {/* Filter Toggle (Mobile) */}
@@ -213,19 +172,7 @@ export default function DashboardUsersList() {
           onClick={() => setFiltersOpen(!filtersOpen)}
           className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:hidden"
         >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-            />
-          </svg>
+          <Filter className="h-5 w-5" />
           Filter
         </button>
 
@@ -275,19 +222,7 @@ export default function DashboardUsersList() {
         </div>
       ) : data?.users.length === 0 ? (
         <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <svg
-            className="mx-auto h-12 w-12 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
+          <Users className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
             Keine Benutzer gefunden
           </h3>

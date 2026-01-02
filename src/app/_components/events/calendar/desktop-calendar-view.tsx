@@ -11,6 +11,7 @@ import { getHolidaysForMonth, type Holiday } from "@/lib/holidays";
 import EventDetailModal from "../event-detail-modal";
 import MoreEventsModal from "./more-events-modal";
 import HolidayModal from "./holiday-modal";
+import { ChevronLeft, ChevronRight, X, Users, StarIcon } from "lucide-react";
 
 const MAX_EVENTS_PER_DAY = 4;
 const MAX_VISIBLE_WHEN_OVERFLOW = 3;
@@ -407,19 +408,7 @@ export default function DesktopCalendarView({
               className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Vorheriger Monat"
             >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={goToToday}
@@ -433,19 +422,7 @@ export default function DesktopCalendarView({
               className="text-dark dark:text-dark-text rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Nächster Monat"
             >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ChevronRight className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -694,35 +671,13 @@ export default function DesktopCalendarView({
                                 title={`${isCancelled ? "[ABGESAGT] " : ""}${time} ${event.title}`}
                               >
                                 {isCancelled && (
-                                  <svg
-                                    className="h-3 w-3 shrink-0 text-red-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M6 18L18 6M6 6l12 12"
-                                    />
-                                  </svg>
+                                  <X className="h-3 w-3 shrink-0 text-red-500" />
                                 )}
                                 {!isCancelled && hasOpenToParticipants && (
-                                  <svg
+                                  <Users
                                     className="h-3 w-3 shrink-0"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
                                     style={{ color: districtColor }}
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                    />
-                                  </svg>
+                                  />
                                 )}
                                 <span className="truncate">
                                   {time} {event.title}
@@ -758,36 +713,12 @@ export default function DesktopCalendarView({
         </h3>
         <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 md:grid-cols-2 dark:text-gray-300">
           <div className="flex items-center gap-2">
-            <svg
-              className="h-3 w-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
+            <Users className="h-3 w-3" />
             <span>= Mitspielen möglich</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex h-3 w-8 items-center justify-center rounded border-2 border-red-500 bg-red-100 dark:bg-red-900/30">
-              <svg
-                className="h-2.5 w-2.5 text-red-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-2.5 w-2.5 text-red-500" />
             </div>
             <span>Abgesagt</span>
           </div>
@@ -813,9 +744,7 @@ export default function DesktopCalendarView({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-amber-600 dark:text-amber-400">
-              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l-2 4h1l-2 4h1l-3 6h4v6h4v-6h4l-3-6h1l-2-4h1l-2-4z" />
-              </svg>
+              <StarIcon className="h-3 w-3" />
             </span>
             <span>Feiertag</span>
           </div>

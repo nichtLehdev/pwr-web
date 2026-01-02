@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getDistrictColor } from "@/lib/district-color";
+import { ArrowRightIcon, PinIcon } from "lucide-react";
 
 interface PostCardProps {
   id: string;
@@ -47,14 +48,10 @@ export default function PostCard({
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               {pinned && (
-                <svg
+                <PinIcon
                   className="text-primary h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
                   aria-label="Angepinnt"
-                >
-                  <path d="M16 12V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v8l-2 2v2h5v5l1 1 1-1v-5h5v-2l-2-2zm-6 0V4h4v8.13l1.07 1.07.6.6H8.34l.6-.6L10 12.13z" />
-                </svg>
+                />
               )}
               <span className="text-primary text-xs font-semibold">
                 {category}
@@ -89,19 +86,9 @@ export default function PostCard({
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Weiterlesen
-            <svg
+            <ArrowRightIcon
               className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
+            />
           </div>
         </div>
       </article>
