@@ -8,7 +8,15 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
-import { BookIcon, CalendarIcon, MapPinIcon, MusicIcon, EyeIcon, PencilIcon, TrashIcon } from "lucide-react";
+import {
+  BookIcon,
+  CalendarIcon,
+  MapPinIcon,
+  MusicIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+} from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -218,12 +226,16 @@ export default function DashboardBezirkePage() {
                               </span>
                               <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                                 <CalendarIcon className="h-3 w-3" />
-                                {(bezirk._count as { events: number }).events}{" "}
+                                {
+                                  (bezirk._count as { events: number }).events
+                                }{" "}
                                 Termine
                               </span>
                               <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
                                 <BookIcon className="h-3 w-3" />
-                                {(bezirk._count as { courses: number }).courses}{" "}
+                                {
+                                  (bezirk._count as { courses: number }).courses
+                                }{" "}
                                 Kurse
                               </span>
                             </>
@@ -262,8 +274,7 @@ export default function DashboardBezirkePage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bearbeiten"
                           >
-                            <PencilIcon
-                              className="h-4 w-4" />
+                            <PencilIcon className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(bezirk.id)}

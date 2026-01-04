@@ -1,5 +1,18 @@
 import PageHeader from "@/app/_components/general/page-header";
-import { BookOpenIcon, BrainIcon, CalendarIcon, ChurchIcon, DownloadIcon,   MailIcon, Music2Icon, Music3Icon, MusicIcon, PartyPopperIcon, StarIcon, UsersIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  BrainIcon,
+  CalendarIcon,
+  ChurchIcon,
+  DownloadIcon,
+  MailIcon,
+  Music2Icon,
+  Music3Icon,
+  MusicIcon,
+  PartyPopperIcon,
+  StarIcon,
+  UsersIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function JungblaserPage() {
@@ -9,44 +22,28 @@ export default function JungblaserPage() {
       title: "Bläserkurse für Kinder & Jugendliche",
       description:
         "Spielerisch ein Blechblasinstrument erlernen – von den ersten Tönen bis zum gemeinsamen Musizieren.",
-      icon: (
-        <MusicIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
     },
     {
       id: "freizeiten",
       title: "Jungbläserfreizeiten",
       description:
         "Gemeinsam Musik machen, neue Freunde finden und unvergessliche Erlebnisse teilen.",
-      icon: (
-        <PartyPopperIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <PartyPopperIcon className="h-6 w-6" />,
     },
     {
       id: "ensembles",
       title: "Jungbläserensembles",
       description:
         "In kleinen Gruppen gemeinsam musizieren und von erfahrenen Dozenten lernen.",
-      icon: (
-        <UsersIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <UsersIcon className="h-6 w-6" />,
     },
     {
       id: "workshops",
       title: "Workshops & Projekte",
       description:
         "Spannende Themen wie Improvisation, Rhythmik oder Musik und Bewegung für junge Bläser.",
-      icon: (
-        <Music2Icon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <Music2Icon className="h-6 w-6" />,
     },
   ];
 
@@ -55,41 +52,25 @@ export default function JungblaserPage() {
       title: "Musikalische Grundlagen",
       description:
         "Kinder und Jugendliche lernen Notenlesen, Rhythmus und erwerben ein fundiertes musikalisches Verständnis.",
-      icon: (
-        <Music3Icon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <Music3Icon className="h-6 w-6" />,
     },
     {
       title: "Gemeinschaft erleben",
       description:
         "Im Chor entstehen Freundschaften, Teamgeist und ein starkes Zusammengehörigkeitsgefühl.",
-      icon: (
-        <UsersIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <UsersIcon className="h-6 w-6" />,
     },
     {
       title: "Persönliche Entwicklung",
       description:
         "Musik fördert Konzentration, Disziplin, Selbstbewusstsein und Kreativität.",
-      icon: (
-        <BrainIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <BrainIcon className="h-6 w-6" />,
     },
     {
       title: "Glauben leben",
       description:
         "Junge Menschen erleben, wie Musik und Glaube zusammengehören und Gottesdienste mitgestalten können.",
-      icon: (
-        <ChurchIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <ChurchIcon className="h-6 w-6" />,
     },
   ];
 
@@ -200,9 +181,7 @@ export default function JungblaserPage() {
                 href="/termine?type=courses&category=Anfänger"
                 className="bg-district-9 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <CalendarIcon
-                  className="mr-2 h-5 w-5"
-                  />
+                <CalendarIcon className="mr-2 h-5 w-5" />
                 Aktuelle Termine für Jungbläser
               </Link>
             </div>
@@ -253,9 +232,7 @@ export default function JungblaserPage() {
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-district-9 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <BookOpenIcon
-                      className="h-6 w-6 text-white"
-                    />
+                    <BookOpenIcon className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
@@ -272,9 +249,7 @@ export default function JungblaserPage() {
                       rel="noopener noreferrer"
                       className="text-district-9 inline-flex items-center font-semibold hover:opacity-80"
                     >
-                      <DownloadIcon
-                          className="mr-2 h-5 w-5"
-                      />
+                      <DownloadIcon className="mr-2 h-5 w-5" />
                       Arbeitshilfe herunterladen
                     </a>
                   </div>
@@ -285,9 +260,7 @@ export default function JungblaserPage() {
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                    <StarIcon
-                      className="h-6 w-6 text-white"
-                    />
+                    <StarIcon className="h-6 w-6 text-white" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
@@ -322,9 +295,7 @@ export default function JungblaserPage() {
                   href="/kontakt"
                   className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                 >
-                  <MailIcon
-                    className="mr-2 h-5 w-5"
-                  />
+                  <MailIcon className="mr-2 h-5 w-5" />
                   Kontakt Jungbläser-Referent
                 </Link>
               </div>

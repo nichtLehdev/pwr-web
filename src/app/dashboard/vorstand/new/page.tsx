@@ -331,9 +331,7 @@ export default function NewVorstandPage() {
                     onClick={handleClearUser}
                     className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   >
-                    <XIcon
-                      className="h-4 w-4" 
-                    />
+                    <XIcon className="h-4 w-4" />
                   </button>
                 )}
               </div>

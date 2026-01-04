@@ -219,9 +219,7 @@ export default function AuswahlchorDetailPage() {
                   </div>
                 ) : (
                   <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                    <UserIcon
-                      className="h-6 w-6"
-                    />
+                    <UserIcon className="h-6 w-6" />
                   </div>
                 )}
                 <div>
@@ -363,9 +361,7 @@ export default function AuswahlchorDetailPage() {
             href="/dashboard/auswahlchoere"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

@@ -339,9 +339,7 @@ export default function TeamDetailPage() {
             href="/dashboard/team"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
           >
-            <ArrowLeftIcon 
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

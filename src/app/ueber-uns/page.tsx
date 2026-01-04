@@ -1,7 +1,13 @@
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";
-import { ArrowRightIcon, BuildingIcon, ClockIcon, MailIcon, PhoneIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BuildingIcon,
+  ClockIcon,
+  MailIcon,
+  PhoneIcon,
+} from "lucide-react";
 
 export default function UeberUnsPage() {
   const sections = [
@@ -212,9 +218,7 @@ export default function UeberUnsPage() {
                   className="text-primary hover:text-primary-dark dark:hover:text-primary-light inline-flex items-center font-semibold"
                 >
                   Mehr zur Geschichte und Struktur
-                  <ArrowRightIcon
-                    className="ml-2 h-5 w-5"
-                  />
+                  <ArrowRightIcon className="ml-2 h-5 w-5" />
                 </Link>
               </div>
             </div>
@@ -268,9 +272,7 @@ export default function UeberUnsPage() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <ArrowRightIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <ArrowRightIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -287,9 +289,7 @@ export default function UeberUnsPage() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-district-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <ArrowRightIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <ArrowRightIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -336,7 +336,7 @@ export default function UeberUnsPage() {
                       40476 Düsseldorf
                     </p>
                   </div>
-                </div>  
+                </div>
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
@@ -357,9 +357,7 @@ export default function UeberUnsPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <MailIcon
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                    />
+                    <MailIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -376,9 +374,7 @@ export default function UeberUnsPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <ClockIcon
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                    />
+                    <ClockIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -409,11 +405,9 @@ export default function UeberUnsPage() {
                 <Link
                   href="/kontakt"
                   className="bg-primary hover:bg-primary-dark inline-flex w-full items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                >                  
+                >
                   Kontaktformular
-                  <ArrowRightIcon
-                    className="mr-2 h-5 w-5"
-                  />
+                  <ArrowRightIcon className="mr-2 h-5 w-5" />
                 </Link>
 
                 <div className="flex gap-4">
@@ -477,9 +471,7 @@ export default function UeberUnsPage() {
                   className="text-primary hover:text-primary-dark dark:hover:text-primary-light mt-2 inline-flex items-center text-sm font-semibold"
                 >
                   Newsletter abonnieren
-                  <ArrowRightIcon
-                    className="ml-1 h-4 w-4"
-                  />
+                  <ArrowRightIcon className="ml-1 h-4 w-4" />
                 </Link>
               </div>
             </div>

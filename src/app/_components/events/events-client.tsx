@@ -18,7 +18,13 @@ import EventCard from "./event-card";
 import CourseCard from "./course-card";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
-import { CalendarIcon, ChevronDown, ChevronRight, XCircleIcon, XIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronDown,
+  ChevronRight,
+  XCircleIcon,
+  XIcon,
+} from "lucide-react";
 import { ListIcon } from "lucide-react";
 
 // Inline chevron icons
@@ -381,9 +387,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Listenansicht"
               >
-                <ListIcon
-                className="h-5 w-5"
-                />
+                <ListIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={() => handleSetViewMode("calendar")}
@@ -394,9 +398,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Kalenderansicht"
               >
-                <CalendarIcon
-                  className="h-5 w-5"
-                />
+                <CalendarIcon className="h-5 w-5" />
               </button>
             </div>
 
@@ -429,9 +431,7 @@ export default function EventsClient({
                     }}
                     aria-label="Filter zurücksetzen"
                   >
-                    <XIcon
-                      className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600"
-                    />
+                    <XIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
                   </button>
                 )}
               <button
@@ -443,9 +443,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Filter öffnen"
               >
-                <XCircleIcon
-                  className="h-5 w-5"
-                />
+                <XCircleIcon className="h-5 w-5" />
                 {/* Active Filter Badge */}
                 {(filterType !== "all" ||
                   selectedDistrict !== "all" ||

@@ -6,7 +6,19 @@ import { useRouter } from "next/navigation";
 import DashboardCourseCard from "./dashboard-course-card";
 import type { ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CopyIcon, FilterIcon, PencilIcon, SquareDashed, TrashIcon, X } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  CopyIcon,
+  FilterIcon,
+  PencilIcon,
+  SquareDashed,
+  TrashIcon,
+  X,
+} from "lucide-react";
 
 interface DashboardCoursesListProps {
   userRole: string;

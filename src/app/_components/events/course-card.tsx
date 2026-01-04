@@ -98,9 +98,7 @@ export default function CourseCard({
 
         <div className="mb-4 flex-col space-y-2 text-sm text-gray-600 dark:text-gray-300">
           <div className="flex items-center gap-2">
-            <CalendarIcon
-              className="h-4 w-4 shrink-0"
-            />
+            <CalendarIcon className="h-4 w-4 shrink-0" />
             {isSameDay ? (
               <span>
                 {start.toLocaleDateString("de-DE", {
@@ -126,17 +124,13 @@ export default function CourseCard({
           </div>
 
           <div className="flex items-center gap-2">
-            <MapPinIcon
-              className="h-4 w-4 shrink-0"
-            />
+            <MapPinIcon className="h-4 w-4 shrink-0" />
             {location}
           </div>
 
           {registrationOpen && !spotsAvailable.isFull && (
             <div className="text-primary flex items-center gap-2 font-semibold">
-              <CheckIcon
-                className="h-4 w-4 shrink-0"
-              />
+              <CheckIcon className="h-4 w-4 shrink-0" />
               Noch {spotsAvailable.availableSlots}{" "}
               {spotsAvailable.availableSlots === 1 ? "Platz" : "Plätze"} frei
             </div>
@@ -147,9 +141,7 @@ export default function CourseCard({
           {registrationOpen && !spotsAvailable.isFull
             ? "Jetzt anmelden"
             : "Details ansehen"}
-          <CheckIcon
-            className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
-          />
+          <CheckIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </div>
       </article>
     </Link>

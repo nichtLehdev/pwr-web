@@ -8,17 +8,9 @@ type SocialIconProps = {
 export function SocialIcon({ type, className = "h-5 w-5" }: SocialIconProps) {
   switch (type.toLowerCase()) {
     case "website":
-      return (
-        <GlobeIcon
-          className={className}
-        />
-      );
+      return <GlobeIcon className={className} />;
     case "email":
-      return (
-        <MailIcon
-          className={className}
-        />
-      );
+      return <MailIcon className={className} />;
     case "twitter":
     case "x":
       return (
@@ -57,17 +49,9 @@ export function SocialIcon({ type, className = "h-5 w-5" }: SocialIconProps) {
         </svg>
       );
     case "phone":
-      return (
-        <PhoneIcon
-          className={className}
-        />
-      );
+      return <PhoneIcon className={className} />;
     default:
-      return (
-        <PhoneIcon
-          className={className}
-        />
-      );
+      return <PhoneIcon className={className} />;
   }
 }
 

@@ -462,9 +462,7 @@ export default function DashboardDownloadsPage() {
           </div>
         ) : !filteredDownloads?.length ? (
           <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <SearchIcon
-              className="mx-auto h-12 w-12 text-gray-400"
-              />
+            <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
             <p className="dark:text-dark-muted mt-4 text-gray-500">
               Keine Downloads gefunden
             </p>
@@ -541,9 +539,7 @@ export default function DashboardDownloadsPage() {
                           className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                           title="Herunterladen"
                         >
-                          <DownloadIcon
-                            className="h-5 w-5"
-                          />
+                          <DownloadIcon className="h-5 w-5" />
                         </a>
 
                         {/* Edit button for reviewers */}
@@ -553,9 +549,7 @@ export default function DashboardDownloadsPage() {
                             className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                             title="Bearbeiten"
                           >
-                            <EditIcon
-                              className="h-5 w-5"
-                            />
+                            <EditIcon className="h-5 w-5" />
                           </button>
                         )}
 
@@ -573,9 +567,7 @@ export default function DashboardDownloadsPage() {
                               className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                               title="Freigeben"
                             >
-                              <CheckIcon
-                                className="h-5 w-5"
-                              />
+                              <CheckIcon className="h-5 w-5" />
                             </button>
                           )}
 
@@ -586,9 +578,7 @@ export default function DashboardDownloadsPage() {
                             className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                             title="Löschen"
                           >
-                            <TrashIcon
-                              className="h-5 w-5"
-                            />
+                            <TrashIcon className="h-5 w-5" />
                           </button>
                         )}
                       </div>
@@ -669,9 +659,7 @@ export default function DashboardDownloadsPage() {
                     </div>
                   ) : uploadedFileUrl ? (
                     <div className="flex flex-col items-center gap-2">
-                      <CheckIcon
-                        className="h-10 w-10 text-green-500"
-                      />
+                      <CheckIcon className="h-10 w-10 text-green-500" />
                       <p className="text-sm font-medium text-green-600 dark:text-green-400">
                         Datei hochgeladen
                       </p>

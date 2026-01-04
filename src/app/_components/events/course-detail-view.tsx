@@ -10,7 +10,15 @@ import type { RouterOutputs } from "@/trpc/react";
 import PageHeader from "../general/page-header";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
-import { Clock, Calendar, CalendarArrowDownIcon, MapPinIcon, CheckCircleIcon, UsersIcon, CircleXIcon } from "lucide-react";
+import {
+  Clock,
+  Calendar,
+  CalendarArrowDownIcon,
+  MapPinIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  CircleXIcon,
+} from "lucide-react";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -345,9 +353,7 @@ export default function CourseDetailView({
                       onClick={handleDownloadIcs}
                       className="border-primary text-primary hover:bg-primary/10 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors"
                     >
-                      <CalendarArrowDownIcon
-                        className="h-5 w-5"
-                      />
+                      <CalendarArrowDownIcon className="h-5 w-5" />
                       Zum Kalender hinzufügen (ICS)
                     </button>
                   </div>
@@ -358,9 +364,7 @@ export default function CourseDetailView({
               {course.location && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <MapPinIcon
-                      className="text-primary h-6 w-6"
-                    />
+                    <MapPinIcon className="text-primary h-6 w-6" />
                     Veranstaltungsort
                   </h2>
                   <div className="space-y-2">
@@ -404,9 +408,7 @@ export default function CourseDetailView({
               {course.prerequisites && (
                 <div className="rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-6 dark:bg-blue-900/30">
                   <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900 dark:text-blue-200">
-                    <CheckCircleIcon
-                      className="h-5 w-5"
-                    />  
+                    <CheckCircleIcon className="h-5 w-5" />
                     Voraussetzungen
                   </h3>
                   <p className="text-blue-800 dark:text-blue-300">
@@ -419,9 +421,7 @@ export default function CourseDetailView({
               {course.whatToBring && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h3 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 text-lg font-bold">
-                    <CheckCircleIcon
-                      className="text-primary h-5 w-5"
-                    />
+                    <CheckCircleIcon className="text-primary h-5 w-5" />
                     Mitzubringen
                   </h3>
                   <p className="text-gray-700 dark:text-gray-300">
@@ -434,9 +434,7 @@ export default function CourseDetailView({
               {course.instructors && course.instructors.length > 0 && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <UsersIcon
-                      className="text-primary h-6 w-6"
-                    />
+                    <UsersIcon className="text-primary h-6 w-6" />
                     Dozenten
                   </h2>
                   <div className="space-y-3">
@@ -525,9 +523,7 @@ export default function CourseDetailView({
                   </h3>
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex items-start gap-3">
-                      <CircleXIcon
-                        className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400"
-                      />
+                      <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
                       <div>
                         <p className="font-semibold text-gray-700 dark:text-gray-300">
                           {isDeadlinePassed
@@ -556,9 +552,7 @@ export default function CourseDetailView({
                 </h3>
                 {course.isFree ? (
                   <p className="flex items-center gap-2 font-semibold text-green-700">
-                    <CheckCircleIcon
-                      className="h-5 w-5"
-                    />
+                    <CheckCircleIcon className="h-5 w-5" />
                     Dieser Kurs ist kostenfrei
                   </p>
                 ) : (

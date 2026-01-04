@@ -119,9 +119,7 @@ export default function InstagramSummaryTemplate({
                   <div className="flex items-center gap-3">
                     {event.location?.city && (
                       <p className="text-dark-light flex items-center gap-2 text-lg font-medium">
-                        <MapPinIcon
-                          className="h-5 w-5 shrink-0"
-                        />
+                        <MapPinIcon className="h-5 w-5 shrink-0" />
                         {event.location.city}
                       </p>
                     )}

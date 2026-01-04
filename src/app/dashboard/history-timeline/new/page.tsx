@@ -77,7 +77,12 @@ export default function NewHistoryEventPage() {
       title: title.trim(),
       description: description.trim(),
       category: category
-        ? (category as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
+        ? (category as
+            | "FOUNDING"
+            | "MILESTONE"
+            | "EXPANSION"
+            | "MODERNIZATION"
+            | "PARTNERSHIP")
         : undefined,
       imageId: imageId || undefined,
       imageAlt: imageAlt.trim() || undefined,
@@ -371,4 +376,3 @@ export default function NewHistoryEventPage() {
     </main>
   );
 }
-

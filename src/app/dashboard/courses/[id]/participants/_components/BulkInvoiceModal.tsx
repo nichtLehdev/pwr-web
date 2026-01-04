@@ -8,7 +8,14 @@ import {
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { useToast } from "@/app/_components/ui/toast";
-import { X, Upload, Pencil, FileText, CheckCircle, Loader2 } from "lucide-react";
+import {
+  X,
+  Upload,
+  Pencil,
+  FileText,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 type SignatureMode = "none" | "upload" | "draw";
 

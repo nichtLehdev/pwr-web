@@ -7,7 +7,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 type Bezirk = RouterOutputs["bezirke"]["getAll"][number];
-import { ArrowRightIcon, BuildingIcon, MailIcon, MousePointerIcon, PhoneIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BuildingIcon,
+  MailIcon,
+  MousePointerIcon,
+  PhoneIcon,
+} from "lucide-react";
 
 function getBezirkInfo(id: number) {
   const info: Record<number, string> = {
@@ -404,9 +410,7 @@ export default function BezirkePage() {
                     Fragen zu den besonderen Angeboten haben.
                   </p>
                   <div className="bg-primary/10 dark:bg-primary/20 flex items-start gap-3 rounded-lg p-4">
-                    <ArrowRightIcon 
-                      className="text-primary mt-1 h-6 w-6 shrink-0"
-                    />
+                    <ArrowRightIcon className="text-primary mt-1 h-6 w-6 shrink-0" />
                     <div>
                       <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                         Posaunenchor in der Nähe suchen
@@ -483,9 +487,7 @@ export default function BezirkePage() {
                                 <div className="space-y-1">
                                   {obmann.address && (
                                     <div className="flex items-start gap-2.5">
-                                      <BuildingIcon 
-                                        className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
-                                      />
+                                      <BuildingIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                                       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
                                         {obmann.address}
                                       </p>
@@ -500,9 +502,7 @@ export default function BezirkePage() {
                                       )}`}
                                       className="hover:text-primary flex items-center gap-2.5 text-sm text-gray-600 transition-colors dark:text-gray-400"
                                     >
-                                      <PhoneIcon
-                                        className="h-4 w-4 shrink-0 text-gray-400"
-                                      />
+                                      <PhoneIcon className="h-4 w-4 shrink-0 text-gray-400" />
                                       {obmann.phone}
                                     </a>
                                   )}
@@ -512,9 +512,7 @@ export default function BezirkePage() {
                                       href={`mailto:${obmann.email}`}
                                       className="text-primary hover:text-primary-dark flex items-center gap-2.5 text-sm font-semibold transition-colors"
                                     >
-                                      <MailIcon
-                                        className="h-4 w-4 shrink-0 text-gray-400"
-                                      />
+                                      <MailIcon className="h-4 w-4 shrink-0 text-gray-400" />
                                       E-Mail senden
                                     </Link>
                                   )}

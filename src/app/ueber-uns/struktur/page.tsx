@@ -2,7 +2,15 @@ import Link from "next/link";
 import PageHeader from "@/app/_components/general/page-header";
 import HistoryTimeline from "@/app/_components/history-timeline";
 import { api } from "@/trpc/server";
-import { ArrowRightIcon, BadgeCheckIcon, BookOpenIcon, Building, EyeIcon, Music2Icon, MusicIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BadgeCheckIcon,
+  BookOpenIcon,
+  Building,
+  EyeIcon,
+  Music2Icon,
+  MusicIcon,
+} from "lucide-react";
 
 export default async function StrukturGeschichtePage() {
   const historyTimeline = await api.organization.getHistory({});
@@ -257,9 +265,7 @@ export default async function StrukturGeschichtePage() {
             <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <MusicIcon
-                    className="h-5 w-5"
-                  />
+                  <MusicIcon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Auswahlchöre</h3>
                 <p className="text-sm opacity-90">
@@ -269,9 +275,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <BookOpenIcon
-                    className="h-5 w-5"
-                  />
+                  <BookOpenIcon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Ausbildung</h3>
                 <p className="text-sm opacity-90">
@@ -281,9 +285,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <Music2Icon
-                    className="h-5 w-5"
-                  />
+                  <Music2Icon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Projekte</h3>
                 <p className="text-sm opacity-90">
@@ -298,9 +300,7 @@ export default async function StrukturGeschichtePage() {
                 className="text-foerderverein mr-4 inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
               >
                 Mehr erfahren
-                <ArrowRightIcon
-                  className="ml-2 h-5 w-5"
-                />
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
               <a
                 href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
@@ -342,9 +342,7 @@ export default async function StrukturGeschichtePage() {
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                  <EyeIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <EyeIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold">Unsere Vision</h3>
                 <p className="leading-relaxed opacity-90">
@@ -357,9 +355,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                  <BadgeCheckIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <BadgeCheckIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold">Unsere Mission</h3>
                 <p className="leading-relaxed opacity-90">
@@ -390,9 +386,7 @@ export default async function StrukturGeschichtePage() {
               className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white transition-colors"
             >
               Chor finden
-              <ArrowRightIcon
-                className="ml-2 h-6 w-6"
-              />
+              <ArrowRightIcon className="ml-2 h-6 w-6" />
             </Link>
           </div>
         </div>

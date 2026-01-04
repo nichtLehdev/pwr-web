@@ -724,9 +724,7 @@ export default function EditRegistrationPage() {
                 disabled={!canAddParticipant()}
                 className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <PlusIcon
-                  className="mr-2 h-5 w-5"
-                />
+                <PlusIcon className="mr-2 h-5 w-5" />
                 Teilnehmer hinzufügen
               </button>
             </div>
@@ -749,9 +747,7 @@ export default function EditRegistrationPage() {
                         onClick={() => removeParticipant(participant.id)}
                         className="text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                       >
-                        <TrashIcon
-                          className="mr-2 h-5 w-5"
-                        />
+                        <TrashIcon className="mr-2 h-5 w-5" />
                       </button>
                     )}
                   </div>
@@ -953,9 +949,7 @@ export default function EditRegistrationPage() {
               onClick={() => setCancelModalOpen(true)}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
             >
-              <CircleXIcon
-                className="h-5 w-5"
-              />
+              <CircleXIcon className="h-5 w-5" />
               Anmeldung stornieren
             </button>
             <div className="flex flex-col gap-4 sm:flex-row">

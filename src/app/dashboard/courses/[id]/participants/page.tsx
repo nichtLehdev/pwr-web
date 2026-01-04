@@ -445,27 +445,21 @@ export default function CourseParticipantsPage() {
                     onClick={() => handleExport("csv")}
                     className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <DownloadIcon
-                      className="h-4 w-4 text-green-600"
-                    />
+                    <DownloadIcon className="h-4 w-4 text-green-600" />
                     CSV (.csv)
                   </button>
                   <button
                     onClick={() => handleExport("excel")}
                     className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <DownloadIcon
-                      className="h-4 w-4 text-green-700"
-                    />
+                    <DownloadIcon className="h-4 w-4 text-green-700" />
                     Excel (.xls)
                   </button>
                   <button
                     onClick={() => handleExport("json")}
                     className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   >
-                    <DownloadIcon
-                      className="h-4 w-4 text-yellow-600"
-                    />
+                    <DownloadIcon className="h-4 w-4 text-yellow-600" />
                     JSON (.json)
                   </button>
                   {canCreateInvoices && (
@@ -494,8 +488,7 @@ export default function CourseParticipantsPage() {
               href={`/dashboard/courses/${courseId}`}
               className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon
-                className="h-4 w-4" />
+              <ArrowLeftIcon className="h-4 w-4" />
               Zurück zum Kurs
             </Link>
           </div>
@@ -562,9 +555,7 @@ export default function CourseParticipantsPage() {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <UserIcon
-                    className="h-4 w-4" 
-                    />
+                    <UserIcon className="h-4 w-4" />
                     Teilnehmer
                   </span>
                 </button>
@@ -577,9 +568,7 @@ export default function CourseParticipantsPage() {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <FileIcon
-                      className="h-4 w-4"
-                      />
+                    <FileIcon className="h-4 w-4" />
                     Anmeldungen
                   </span>
                 </button>
@@ -604,9 +593,7 @@ export default function CourseParticipantsPage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <SearchIcon
-                  className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
-                  />
+                <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -668,9 +655,7 @@ export default function CourseParticipantsPage() {
             </div>
           ) : filteredRegistrations.length === 0 ? (
             <div className="py-12 text-center">
-              <SearchIcon
-                className="mx-auto h-12 w-12 text-gray-400"
-              />
+              <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
                 Keine Anmeldungen gefunden
               </h3>

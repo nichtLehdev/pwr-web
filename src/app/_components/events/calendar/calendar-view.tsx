@@ -262,9 +262,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                       } shadow-sm`}
                       title="Abgesagt"
                     >
-                      <XCircleIcon
-                        className="h-2 w-2 text-white"
-                      />
+                      <XCircleIcon className="h-2 w-2 text-white" />
                     </div>
                   )}
 
@@ -329,9 +327,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex h-3 w-3 items-center justify-center rounded-full bg-red-500">
-                  <XIcon
-                    className="h-2 w-2 text-white"
-                  />
+                  <XIcon className="h-2 w-2 text-white" />
                 </div>
                 <span>Abgesagt</span>
               </div>

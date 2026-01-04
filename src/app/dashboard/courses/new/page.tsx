@@ -13,7 +13,13 @@ import {
   CustomFieldType,
   UserRole,
 } from "~/generated/prisma/enums";
-import { ArrowDownIcon, ArrowUpIcon, Lock, Trash2, TrashIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Lock,
+  Trash2,
+  TrashIcon,
+} from "lucide-react";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -1105,9 +1111,7 @@ export default function NewCoursePage() {
                           disabled={index === 0}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                          <ArrowUpIcon
-                            className="h-4 w-4"
-                            />
+                          <ArrowUpIcon className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
@@ -1115,18 +1119,14 @@ export default function NewCoursePage() {
                           disabled={index === customFields.length - 1}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                        <ArrowDownIcon
-                            className="h-4 w-4"
-                            />
+                          <ArrowDownIcon className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => removeCustomField(field.id)}
                           className="p-1 text-gray-400 hover:text-red-500"
                         >
-                          <TrashIcon
-                            className="h-4 w-4"
-                            />
+                          <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

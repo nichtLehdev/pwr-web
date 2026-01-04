@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import PageHeader from "@/app/_components/general/page-header";
 import { api } from "@/trpc/server";
-import { ArrowRightIcon,  CheckIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
 export default async function LiteraturPage() {
   const blaesherhefte = await api.materials.getBlaserhefte();
@@ -59,27 +59,19 @@ export default async function LiteraturPage() {
               </p>
               <ul className="mb-6 space-y-2 text-gray-600 dark:text-gray-400">
                 <li className="flex items-start gap-2">
-                  <CheckIcon
-                    className="text-district-2 mt-0.5 h-5 w-5 shrink-0"
-                  />
+                  <CheckIcon className="text-district-2 mt-0.5 h-5 w-5 shrink-0" />
                   Bearbeitungen von Werken großer Komponisten
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckIcon
-                    className="text-district-2 mt-0.5 h-5 w-5 shrink-0"
-                    />
+                  <CheckIcon className="text-district-2 mt-0.5 h-5 w-5 shrink-0" />
                   Neue Vorspiele und Begleitsätze zu Gesangbuchliedern
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckIcon
-                    className="text-district-2 mt-0.5 h-5 w-5 shrink-0"
-                  />
+                  <CheckIcon className="text-district-2 mt-0.5 h-5 w-5 shrink-0" />
                   Exklusive Auftragskompositionen renommierter Komponisten
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckIcon
-                    className="text-district-2 mt-0.5 h-5 w-5 shrink-0"
-                  />
+                  <CheckIcon className="text-district-2 mt-0.5 h-5 w-5 shrink-0" />
                   Populäre Melodien aus Film, Musical und Popmusik
                 </li>
               </ul>
@@ -111,7 +103,7 @@ export default async function LiteraturPage() {
                   } flex flex-col md:flex`}
                 >
                   {/* Bild */}
-                  <div className="relative h-64 bg-gray-200 dark:bg-dark-background-secondary md:h-auto md:w-1/3">
+                  <div className="dark:bg-dark-background-secondary relative h-64 bg-gray-200 md:h-auto md:w-1/3">
                     <Image
                       src={heft.image.url}
                       alt={heft.image.alt || heft.title || "Bläserheft Cover"}
@@ -272,11 +264,9 @@ export default async function LiteraturPage() {
                 <Link
                   href="/kontakt"
                   className="text-district-2 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold transition-colors hover:bg-gray-100"
-                >                  
+                >
                   Geschäftsstelle kontaktieren
-                  <ArrowRightIcon
-                    className="ml-2 h-5 w-5"
-                  />
+                  <ArrowRightIcon className="ml-2 h-5 w-5" />
                 </Link>
                 <Link
                   href="/materialien"

@@ -153,9 +153,7 @@ export default function MitmachenPage() {
 
                     <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                       <div className="flex h-full items-center rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="text-xl font-bold">
-                          Nur 36 € / Jahr
-                        </p>
+                        <p className="text-xl font-bold">Nur 36 € / Jahr</p>
                       </div>
                       <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
                         <p className="mb-1 text-lg font-bold">
@@ -185,7 +183,7 @@ export default function MitmachenPage() {
                         href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                         className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-transparent px-8 py-4 font-semibold text-white transition-colors hover:bg-white/10"
                       >
-                      <Mail className="mr-2 h-5 w-5" />
+                        <Mail className="mr-2 h-5 w-5" />
                         Mitglied werden
                       </a>
                     </div>

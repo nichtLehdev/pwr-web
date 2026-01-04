@@ -41,9 +41,7 @@ export default function PeopleCard({
               href={`mailto:${email}`}
               className="hover:text-primary dark:hover:text-primary-light flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
             >
-              <MailIcon
-                className="mr-2 h-4 w-4 shrink-0"
-              />
+              <MailIcon className="mr-2 h-4 w-4 shrink-0" />
               E-Mail senden
             </Link>
           )}

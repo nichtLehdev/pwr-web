@@ -174,9 +174,7 @@ export function AnnouncementBanner({
             className="ml-4 shrink-0 rounded-full p-1 transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none"
             aria-label="Banner schließen"
           >
-            <XIcon
-              className="h-4 w-4"
-            />
+            <XIcon className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -184,9 +182,7 @@ export function AnnouncementBanner({
       {/* Swipe indicator for mobile */}
       {dismissible && (
         <div className="absolute top-1/2 right-2 -translate-y-1/2 text-white/50 sm:hidden">
-          <ArrowRightIcon
-            className="h-4 w-4"
-          />
+          <ArrowRightIcon className="h-4 w-4" />
         </div>
       )}
     </div>

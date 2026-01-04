@@ -6,7 +6,21 @@ import { useRouter } from "next/navigation";
 import DashboardEventCard from "./dashboard-event-card";
 import type { ContentStatus } from "~/generated/prisma/client";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpDownIcon, ArrowUpIcon, BanIcon, CheckIcon, CopyIcon, FilterIcon, PencilIcon, SquareDashed, TrashIcon, X } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpDownIcon,
+  ArrowUpIcon,
+  BanIcon,
+  CheckIcon,
+  CopyIcon,
+  FilterIcon,
+  PencilIcon,
+  SquareDashed,
+  TrashIcon,
+  X,
+} from "lucide-react";
 
 interface DashboardEventsListProps {
   userRole: string;

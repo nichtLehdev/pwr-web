@@ -134,8 +134,7 @@ export default function BezirkDetailPage() {
             href={`/dashboard/bezirke/${bezirkId}/edit`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <PencilIcon
-              className="h-4 w-4" />
+            <PencilIcon className="h-4 w-4" />
             Bearbeiten
           </Link>
         </div>
@@ -201,8 +200,7 @@ export default function BezirkDetailPage() {
                     </div>
                   ) : (
                     <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                      <UserIcon
-                        className="h-7 w-7" />
+                      <UserIcon className="h-7 w-7" />
                     </div>
                   )}
                   <div className="min-w-0 flex-1 space-y-1">
@@ -258,8 +256,7 @@ export default function BezirkDetailPage() {
                     </div>
                   ) : (
                     <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
-                      <MusicIcon
-                        className="h-5 w-5" />
+                      <MusicIcon className="h-5 w-5" />
                     </div>
                   )}
                   <div>
@@ -365,8 +362,7 @@ export default function BezirkDetailPage() {
             href="/dashboard/bezirke"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

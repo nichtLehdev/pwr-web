@@ -7,7 +7,13 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
-import { ArrowLeftIcon, BookIcon, CheckIcon, PencilIcon, XIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  BookIcon,
+  CheckIcon,
+  PencilIcon,
+  XIcon,
+} from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -129,9 +135,7 @@ export default function DashboardBlaeserheftDetailPage() {
               </div>
             ) : (
               <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500 shadow-md">
-                <BookIcon
-                  className="h-10 w-10"
-                />
+                <BookIcon className="h-10 w-10" />
               </div>
             )}
             <div>
@@ -150,9 +154,7 @@ export default function DashboardBlaeserheftDetailPage() {
             href={`/dashboard/blaeserhefte/${id}/edit`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <PencilIcon
-              className="h-4 w-4"
-              />
+            <PencilIcon className="h-4 w-4" />
             Bearbeiten
           </Link>
         </div>
@@ -219,16 +221,12 @@ export default function DashboardBlaeserheftDetailPage() {
                 <dd>
                   {heft.availableBlaeserheft ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon
-                        className="h-3 w-3"
-                      />
+                      <CheckIcon className="h-3 w-3" />
                       Verfügbar
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon
-                        className="h-3 w-3"
-                      />
+                      <XIcon className="h-3 w-3" />
                       Vergriffen
                     </span>
                   )}
@@ -239,17 +237,12 @@ export default function DashboardBlaeserheftDetailPage() {
                 <dd>
                   {heft.availableBeiheft ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon
-                        className="h-3 w-3"
-                      />
+                      <CheckIcon className="h-3 w-3" />
                       Verfügbar
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon
-                        className="h-3 w-3"
-                        fill="currentColor"
-                      />
+                      <XIcon className="h-3 w-3" fill="currentColor" />
                       Vergriffen
                     </span>
                   )}
@@ -262,16 +255,12 @@ export default function DashboardBlaeserheftDetailPage() {
                 <dd>
                   {heft.availableTrompeten ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon
-                        className="h-3 w-3"
-                      />
+                      <CheckIcon className="h-3 w-3" />
                       Verfügbar
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon
-                        className="h-3 w-3"
-                      />
+                      <XIcon className="h-3 w-3" />
                       Vergriffen
                     </span>
                   )}
@@ -282,16 +271,12 @@ export default function DashboardBlaeserheftDetailPage() {
                 <dd>
                   {heft.availableCd ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon
-                        className="h-3 w-3"
-                      />
+                      <CheckIcon className="h-3 w-3" />
                       Verfügbar
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon
-                        className="h-3 w-3"
-                      />
+                      <XIcon className="h-3 w-3" />
                       Vergriffen
                     </span>
                   )}
@@ -359,8 +344,7 @@ export default function DashboardBlaeserheftDetailPage() {
             href="/dashboard/blaeserhefte"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

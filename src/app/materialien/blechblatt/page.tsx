@@ -139,9 +139,7 @@ export default function BlechblattPage() {
                         download
                         className="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       >
-                        <DownloadIcon
-                          className="h-4 w-4"
-                        />  
+                        <DownloadIcon className="h-4 w-4" />
                         Herunterladen
                       </Link>
                     </div>
@@ -178,9 +176,7 @@ export default function BlechblattPage() {
                           PDF
                         </div>
                         {selectedEdition?.id === edition.id && (
-                          <CheckIcon
-                            className="h-5 w-5 text-primary"
-                          />
+                          <CheckIcon className="text-primary h-5 w-5" />
                         )}
                       </div>
                       <h3 className="text-dark dark:text-dark-text line-clamp-2 font-semibold">
@@ -209,9 +205,7 @@ export default function BlechblattPage() {
             /* Empty State */
             <div className="py-16 text-center">
               <div className="bg-primary/10 mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full">
-                <FileIcon
-                  className="h-10 w-10 text-primary"
-                />
+                <FileIcon className="text-primary h-10 w-10" />
               </div>
               <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
                 Keine Ausgaben verfügbar
@@ -224,9 +218,7 @@ export default function BlechblattPage() {
                 href="/materialien"
                 className="text-primary hover:text-primary/80 inline-flex items-center gap-2 font-semibold transition-colors"
               >
-                <ArrowLeftIcon
-                  className="h-5 w-5"
-                />
+                <ArrowLeftIcon className="h-5 w-5" />
                 Zurück zu Materialien
               </Link>
             </div>
@@ -242,9 +234,7 @@ export default function BlechblattPage() {
               {/* About Blechblatt */}
               <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
-                  <FileIcon
-                    className="text-primary h-6 w-6"
-                  />
+                  <FileIcon className="text-primary h-6 w-6" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Über das Blechblatt
@@ -260,9 +250,7 @@ export default function BlechblattPage() {
               {/* Subscription Info */}
               <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
-                  <FileIcon
-                    className="text-primary h-6 w-6"
-                  />
+                  <FileIcon className="text-primary h-6 w-6" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Beiträge einreichen
@@ -277,9 +265,7 @@ export default function BlechblattPage() {
                   className="text-primary hover:text-primary/80 inline-flex items-center gap-2 font-semibold transition-colors"
                 >
                   Kontakt aufnehmen
-                  <ArrowRightIcon
-                    className="h-4 w-4"
-                  />
+                  <ArrowRightIcon className="h-4 w-4" />
                 </Link>
               </div>
             </div>
@@ -303,9 +289,7 @@ export default function BlechblattPage() {
               className="text-primary inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
             >
               Alle Materialien ansehen
-              <ArrowRightIcon
-                className="h-5 w-5"
-              />
+              <ArrowRightIcon className="h-5 w-5" />
             </Link>
           </div>
         </div>

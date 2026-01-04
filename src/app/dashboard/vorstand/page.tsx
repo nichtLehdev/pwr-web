@@ -247,9 +247,7 @@ export default function DashboardVorstandPage() {
                               className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                               title="Bearbeiten"
                             >
-                              <EditIcon
-                                className="h-4 w-4"
-                              />
+                              <EditIcon className="h-4 w-4" />
                             </Link>
                             <button
                               onClick={() => handleDelete(member.id)}
@@ -260,9 +258,7 @@ export default function DashboardVorstandPage() {
                               {deletingId === member.id ? (
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                               ) : (
-                                <TrashIcon
-                                  className="h-4 w-4"
-                                />
+                                <TrashIcon className="h-4 w-4" />
                               )}
                             </button>
                           </div>

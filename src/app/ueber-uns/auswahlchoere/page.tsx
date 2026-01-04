@@ -3,7 +3,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
-import { Music, Calendar, MapPin, Users, ChevronRight, User } from "lucide-react";
+import {
+  Music,
+  Calendar,
+  MapPin,
+  Users,
+  ChevronRight,
+  User,
+} from "lucide-react";
 
 export default async function AuswahlchoerePage() {
   const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;

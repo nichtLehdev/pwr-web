@@ -1,5 +1,15 @@
 import PageHeader from "@/app/_components/general/page-header";
-import { BookOpenIcon, ComputerIcon, GlobeIcon, HeartIcon, MailIcon, Music2Icon, MusicIcon, PartyPopperIcon, UsersIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  ComputerIcon,
+  GlobeIcon,
+  HeartIcon,
+  MailIcon,
+  Music2Icon,
+  MusicIcon,
+  PartyPopperIcon,
+  UsersIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function EhrenamtPage() {
@@ -9,11 +19,7 @@ export default function EhrenamtPage() {
       title: "Chorleitung",
       description:
         "Leite einen Posaunenchor und bringe deine musikalischen Fähigkeiten ein. Wir unterstützen dich mit Aus- und Weiterbildungsangeboten.",
-      icon: (
-        <MusicIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
       color: "bg-district-2",
     },
     {
@@ -21,11 +27,7 @@ export default function EhrenamtPage() {
       title: "Jungbläser-Ausbildung",
       description:
         "Gib dein Wissen an die nächste Generation weiter und begleite junge Menschen auf ihrem musikalischen Weg.",
-      icon: (
-        <Music2Icon 
-          className="h-6 w-6"
-        />
-      ),
+      icon: <Music2Icon className="h-6 w-6" />,
       color: "bg-district-9",
     },
     {
@@ -33,11 +35,7 @@ export default function EhrenamtPage() {
       title: "Vorstandsarbeit",
       description:
         "Gestalte die Zukunft des Posaunenwerks mit. Ob auf Bezirks-, Regional- oder Landesebene – dein Engagement zählt!",
-      icon: (
-        <UsersIcon 
-          className="h-6 w-6"
-        />
-      ),
+      icon: <UsersIcon className="h-6 w-6" />,
       color: "bg-primary",
     },
     {
@@ -45,11 +43,7 @@ export default function EhrenamtPage() {
       title: "Organisation & Veranstaltungen",
       description:
         "Hilf bei der Planung und Durchführung von Konzerten, Freizeiten, Lehrgängen und anderen Events.",
-      icon: (
-        <PartyPopperIcon 
-          className="h-6 w-6"
-        />
-      ),
+      icon: <PartyPopperIcon className="h-6 w-6" />,
       color: "bg-district-4",
     },
     {
@@ -57,11 +51,7 @@ export default function EhrenamtPage() {
       title: "Kommunikation & Öffentlichkeitsarbeit",
       description:
         "Gestalte Flyer, pflege Social Media, schreibe Berichte oder fotografiere bei Veranstaltungen.",
-      icon: (
-        <GlobeIcon 
-          className="h-6 w-6"
-        />
-      ),
+      icon: <GlobeIcon className="h-6 w-6" />,
       color: "bg-district-7",
     },
     {
@@ -69,11 +59,7 @@ export default function EhrenamtPage() {
       title: "Technik & IT",
       description:
         "Bringe deine technischen Fähigkeiten ein – ob bei Tontechnik, Website-Pflege oder digitalen Projekten.",
-      icon: (
-        <ComputerIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <ComputerIcon className="h-6 w-6" />,
       color: "bg-district-6",
     },
   ];
@@ -198,9 +184,7 @@ export default function EhrenamtPage() {
                 >
                   <div className="flex items-start gap-3">
                     <div className="bg-district-5 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                      <HeartIcon
-                        className="h-5 w-5 text-white"
-                      />
+                      <HeartIcon className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -230,9 +214,7 @@ export default function EhrenamtPage() {
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <BookOpenIcon
-                      className="h-5 w-5 text-white"
-                    />
+                    <BookOpenIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -247,9 +229,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <BookOpenIcon 
-                      className="h-5 w-5 text-white"
-                    />
+                    <BookOpenIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -264,9 +244,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <UsersIcon 
-                      className="h-5 w-5 text-white"
-                    />
+                    <UsersIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -281,9 +259,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <UsersIcon 
-                      className="h-5 w-5 text-white"
-                    />
+                    <UsersIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -307,9 +283,7 @@ export default function EhrenamtPage() {
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="mb-6 flex items-start gap-4">
-                <MusicIcon 
-                  className="h-12 w-12 text-primary"
-                />
+                <MusicIcon className="text-primary h-12 w-12" />
                 <div>
                   <p className="mb-4 text-lg leading-relaxed text-gray-700 italic dark:text-gray-300">
                     &quot;Die Arbeit als Chorleiter erfüllt mich sehr. Es ist
@@ -346,9 +320,7 @@ export default function EhrenamtPage() {
                 href="/kontakt"
                 className="bg-district-5 inline-flex items-center justify-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <MailIcon 
-                  className="mr-2 h-5 w-5"
-                />
+                <MailIcon className="mr-2 h-5 w-5" />
                 Jetzt Kontakt aufnehmen
               </Link>
               <Link

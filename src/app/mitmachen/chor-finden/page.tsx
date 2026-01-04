@@ -7,7 +7,15 @@ import { api } from "@/trpc/react";
 import PageHeader from "@/app/_components/general/page-header";
 import { getDistrictColor } from "@/lib/district-color";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
-import { ArrowLeftIcon, ArrowRightIcon, ClockIcon,  GlobeIcon,  MapPinIcon, PhoneIcon, SearchIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ClockIcon,
+  GlobeIcon,
+  MapPinIcon,
+  PhoneIcon,
+  SearchIcon,
+} from "lucide-react";
 import { MailIcon } from "lucide-react";
 
 function ChorFindenContent() {
@@ -135,9 +143,7 @@ function ChorFindenContent() {
           className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Vorherige Seite"
         >
-          <ArrowLeftIcon
-            className="h-5 w-5"
-          />
+          <ArrowLeftIcon className="h-5 w-5" />
         </button>
 
         {getPageNumbers().map((page, index) =>
@@ -169,9 +175,7 @@ function ChorFindenContent() {
           className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Nächste Seite"
         >
-          <ArrowRightIcon
-            className="h-5 w-5"
-          />
+          <ArrowRightIcon className="h-5 w-5" />
         </button>
       </div>
     );
@@ -218,9 +222,7 @@ function ChorFindenContent() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="flex items-start gap-6">
                 <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <MapPinIcon
-                    className="h-7 w-7 text-white"
-                  />
+                  <MapPinIcon className="h-7 w-7 text-white" />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
@@ -236,10 +238,8 @@ function ChorFindenContent() {
                     href="/kontakt"
                     className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                   >
-                    <MailIcon
-                      className="mr-2 h-5 w-5"
-                    />
-                      Kontakt aufnehmen
+                    <MailIcon className="mr-2 h-5 w-5" />
+                    Kontakt aufnehmen
                   </Link>
                 </div>
               </div>
@@ -605,9 +605,7 @@ function ChorFindenContent() {
                               </h3>
                               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center gap-1">
-                                  <MapPinIcon
-                                  className="h-4 w-4 text-gray-400 dark:text-gray-500"
-                                  />
+                                  <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                                   {choir.location?.city},{" "}
                                   {choir.location?.zipCode}
                                 </div>
@@ -665,17 +663,13 @@ function ChorFindenContent() {
                             )}
                             {choir.contactPhone && (
                               <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <PhoneIcon
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
-                                />
+                                <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
                                 <span>Telefon: {choir.contactPhone}</span>
                               </div>
                             )}
                             {choir.contactWebsite && (
                               <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <GlobeIcon
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
-                                />
+                                <GlobeIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
                                 <Link
                                   href={choir.contactWebsite}
                                   target="_blank"
@@ -694,9 +688,7 @@ function ChorFindenContent() {
                             }`}
                             className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
                           >
-                            <MailIcon
-                              className="mr-2 h-4 w-4"
-                            />
+                            <MailIcon className="mr-2 h-4 w-4" />
                             Kontakt aufnehmen
                           </Link>
                         </div>
@@ -714,9 +706,7 @@ function ChorFindenContent() {
                 ) : (
                   !ensembles.isLoading && (
                     <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
-                      <SearchIcon
-                        className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600"
-                      />
+                      <SearchIcon className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
                       <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         Keine Chöre gefunden
                       </h3>
@@ -728,7 +718,7 @@ function ChorFindenContent() {
                       {hasActiveFilters && (
                         <button
                           onClick={clearFilters}
-                          className="border-primary text-primary hover:bg-primary mb-4 mr-2 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
+                          className="border-primary text-primary hover:bg-primary mr-2 mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
                         >
                           Filter zurücksetzen
                         </button>

@@ -9,7 +9,13 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
-import { ArrowLeftIcon, EditIcon, MusicIcon, PlusIcon, SearchIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  EditIcon,
+  MusicIcon,
+  PlusIcon,
+  SearchIcon,
+} from "lucide-react";
 import { ArrowRightIcon, EyeIcon, TrashIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [
@@ -139,9 +145,7 @@ export default function DashboardEnsemblesPage() {
             href="/dashboard/ensembles/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <PlusIcon
-              className="h-5 w-5"
-            />
+            <PlusIcon className="h-5 w-5" />
             Neues Ensemble
           </Link>
         </div>
@@ -152,9 +156,7 @@ export default function DashboardEnsemblesPage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <SearchIcon
-                  className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
-                />
+                <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   value={search}
@@ -224,9 +226,7 @@ export default function DashboardEnsemblesPage() {
                 href="/dashboard/ensembles/new"
                 className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
               >
-                <PlusIcon
-                  className="h-5 w-5"
-                />
+                <PlusIcon className="h-5 w-5" />
                 Ensemble erstellen
               </Link>
             )}
@@ -276,9 +276,7 @@ export default function DashboardEnsemblesPage() {
                             </div>
                           ) : (
                             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
-                              <MusicIcon
-                                className="h-5 w-5"
-                              />
+                              <MusicIcon className="h-5 w-5" />
                             </div>
                           )}
                           <div>
@@ -356,18 +354,14 @@ export default function DashboardEnsemblesPage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <EyeIcon
-                              className="h-4 w-4"
-                            />
+                            <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/dashboard/ensembles/${ensemble.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bearbeiten"
                           >
-                            <EditIcon
-                              className="h-4 w-4"
-                            />
+                            <EditIcon className="h-4 w-4" />
                           </Link>
                           {isAdmin && (
                             <button
@@ -381,9 +375,7 @@ export default function DashboardEnsemblesPage() {
                               {deletingId === ensemble.id ? (
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                               ) : (
-                                <TrashIcon
-                                  className="h-4 w-4"
-                                />
+                                <TrashIcon className="h-4 w-4" />
                               )}
                             </button>
                           )}
@@ -413,9 +405,7 @@ export default function DashboardEnsemblesPage() {
                     disabled={page === 1}
                     className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
                   >
-                    <ArrowLeftIcon
-                      className="h-4 w-4"
-                    />
+                    <ArrowLeftIcon className="h-4 w-4" />
                     Zurück
                   </button>
                   <div className="flex items-center gap-1">
@@ -456,9 +446,7 @@ export default function DashboardEnsemblesPage() {
                     className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
                   >
                     Weiter
-                    <ArrowRightIcon
-                      className="h-4 w-4"
-                    />
+                    <ArrowRightIcon className="h-4 w-4" />
                   </button>
                 </div>
               )}

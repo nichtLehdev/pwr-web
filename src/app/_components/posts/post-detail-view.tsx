@@ -9,7 +9,12 @@ import { getDistrictColor } from "@/lib/district-color";
 import ImageLightbox from "./image-lightbox";
 import PostCard from "./post-card";
 import type { FileType } from "~/generated/prisma/enums";
-import { ArrowLeftIcon, ArrowUpRightIcon, DownloadIcon, PinIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ArrowUpRightIcon,
+  DownloadIcon,
+  PinIcon,
+} from "lucide-react";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
 type PostListItem = RouterOutputs["posts"]["getAll"]["posts"][number];
@@ -133,9 +138,7 @@ export default function PostDetailView({
                 )}
                 {post.pinned && (
                   <span className="flex items-center gap-1 text-sm">
-                    <PinIcon
-                      className="h-4 w-4"
-                    />
+                    <PinIcon className="h-4 w-4" />
                     Angepinnt
                   </span>
                 )}
@@ -187,9 +190,7 @@ export default function PostDetailView({
               )}
               {post.pinned && (
                 <span className="flex items-center gap-1 text-sm">
-                  <PinIcon
-                    className="h-4 w-4"
-                  />
+                  <PinIcon className="h-4 w-4" />
                   Angepinnt
                 </span>
               )}
@@ -322,9 +323,7 @@ export default function PostDetailView({
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl">
               <h2 className="text-dark dark:text-dark-text mb-6 flex items-center gap-2 text-xl font-bold md:text-2xl">
-                <DownloadIcon
-                  className="h-6 w-6"
-                />
+                <DownloadIcon className="h-6 w-6" />
                 Downloads
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -354,9 +353,7 @@ export default function PostDetailView({
                           ` • ${formatFileSize(download.fileSize)}`}
                       </p>
                     </div>
-                    <ArrowUpRightIcon
-                      className="h-5 w-5"
-                    />
+                    <ArrowUpRightIcon className="h-5 w-5" />
                   </a>
                 ))}
               </div>

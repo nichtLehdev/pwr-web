@@ -2,7 +2,16 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
 import PageHeader from "@/app/_components/general/page-header";
-import { ArrowRightIcon, BookOpenIcon, CircleUserRoundIcon, ClockIcon, HeartIcon, MailIcon, SquareArrowOutUpRightIcon, UsersIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BookOpenIcon,
+  CircleUserRoundIcon,
+  ClockIcon,
+  HeartIcon,
+  MailIcon,
+  SquareArrowOutUpRightIcon,
+  UsersIcon,
+} from "lucide-react";
 import { CheckIcon, PhoneIcon } from "lucide-react";
 
 export default async function VorstandPage() {
@@ -91,9 +100,7 @@ export default async function VorstandPage() {
                           href={`mailto:${member.user.email}`}
                           className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
-                          <MailIcon
-                            className="mr-2 h-4 w-4 shrink-0"
-                          />
+                          <MailIcon className="mr-2 h-4 w-4 shrink-0" />
                           E-Mail senden
                         </Link>
                         {(member.user.phone || member.phone) && (
@@ -104,9 +111,7 @@ export default async function VorstandPage() {
                             ).replace(/[^0-9+]/g, "")}`}
                             className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
-                            <PhoneIcon
-                              className="mr-2 h-4 w-4 shrink-0"
-                            />
+                            <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
                             {member.user.phone || member.phone}
                           </Link>
                         )}
@@ -148,9 +153,7 @@ export default async function VorstandPage() {
                           href={`mailto:${member.email}`}
                           className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
-                          <MailIcon
-                            className="mr-2 h-4 w-4 shrink-0"
-                          />
+                          <MailIcon className="mr-2 h-4 w-4 shrink-0" />
                           E-Mail senden
                         </Link>
                         {member.phone && (
@@ -158,9 +161,7 @@ export default async function VorstandPage() {
                             href={`tel:${member.phone.replace(/[^0-9+]/g, "")}`}
                             className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
-                            <PhoneIcon
-                              className="mr-2 h-4 w-4 shrink-0"
-                            />
+                            <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
                             {member.phone}
                           </Link>
                         )}
@@ -174,9 +175,7 @@ export default async function VorstandPage() {
 
           <div className="bg-primary/10 dark:bg-primary/20 mx-auto mt-12 max-w-3xl rounded-lg p-6">
             <div className="flex items-start gap-4">
-              <CircleUserRoundIcon
-                className="text-primary mt-1 h-6 w-6 shrink-0"
-              />
+              <CircleUserRoundIcon className="text-primary mt-1 h-6 w-6 shrink-0" />
               <div>
                 <h3 className="text-dark dark:text-dark-text mb-2 font-bold">
                   Kontakt zum Vorstand
@@ -215,9 +214,7 @@ export default async function VorstandPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <BookOpenIcon
-                  className="h-6 w-6 text-white"
-                />
+                <BookOpenIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Geschäftsführung
@@ -230,9 +227,7 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <CheckIcon
-                  className="h-6 w-6 text-white"
-                />
+                <CheckIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Beschlussumsetzung
@@ -245,9 +240,7 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <ClockIcon
-                  className="h-6 w-6 text-white"
-                />
+                <ClockIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Eilentscheidungen
@@ -273,9 +266,7 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <SquareArrowOutUpRightIcon
-                  className="h-6 w-6 text-white"
-                />
+                <SquareArrowOutUpRightIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Berichterstattung
@@ -288,9 +279,7 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <HeartIcon
-                  className="h-6 w-6 text-white"
-                />
+                <HeartIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Ehrenamtliche Arbeit
@@ -386,9 +375,7 @@ export default async function VorstandPage() {
                     className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                   >
                     Zum Posaunenrat
-                    <ArrowRightIcon
-                      className="ml-2 h-5 w-5"
-                    />
+                    <ArrowRightIcon className="ml-2 h-5 w-5" />
                   </Link>
                   <Link
                     href="/ueber-uns/struktur"

@@ -13,7 +13,16 @@ import {
 } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
-import { Star, Edit, Trash2, PinIcon, AlertTriangleIcon, CheckIcon, TrashIcon, DownloadIcon } from "lucide-react";
+import {
+  Star,
+  Edit,
+  Trash2,
+  PinIcon,
+  AlertTriangleIcon,
+  CheckIcon,
+  TrashIcon,
+  DownloadIcon,
+} from "lucide-react";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 
 const categoryLabels: Record<PostCategory, string> = {
@@ -251,9 +260,7 @@ export default function PostDetailPage() {
               </span>
               {post.pinned && (
                 <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                  <PinIcon
-                    className="h-3 w-3"
-                  />
+                  <PinIcon className="h-3 w-3" />
                   Gepinnt
                 </span>
               )}
@@ -296,9 +303,7 @@ export default function PostDetailPage() {
               {/* Warning if there's unapproved content */}
               {hasUnapprovedContent && (
                 <div className="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-700 dark:bg-red-900/20">
-                  <AlertTriangleIcon
-                    className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-                  />
+                  <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                   <div>
                     <p className="text-sm font-medium text-red-800 dark:text-red-300">
                       Nicht alle Inhalte sind freigegeben
@@ -334,9 +339,7 @@ export default function PostDetailPage() {
                   }
                   className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <CheckIcon
-                    className="h-4 w-4"
-                  />
+                  <CheckIcon className="h-4 w-4" />
                   {approveMutation.isPending
                     ? "Wird genehmigt..."
                     : "Genehmigen"}
@@ -345,9 +348,7 @@ export default function PostDetailPage() {
                   onClick={() => setShowRejectModal(true)}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                 >
-                  <TrashIcon
-                    className="h-4 w-4"
-                  />
+                  <TrashIcon className="h-4 w-4" />
                   Ablehnen
                 </button>
               </div>
@@ -413,9 +414,7 @@ export default function PostDetailPage() {
                           className="inline-flex items-center gap-1 rounded bg-gray-600 px-2 py-1 text-xs font-medium text-white hover:bg-gray-700"
                           title="Herunterladen"
                         >
-                          <DownloadIcon
-                            className="h-3 w-3"
-                          />
+                          <DownloadIcon className="h-3 w-3" />
                           Öffnen
                         </a>
                         <span
@@ -434,9 +433,7 @@ export default function PostDetailPage() {
                             disabled={approveDownloadMutation.isPending}
                             className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                           >
-                            <CheckIcon
-                              className="h-3 w-3"
-                            />
+                            <CheckIcon className="h-3 w-3" />
                             Freigeben
                           </button>
                         )}
@@ -477,9 +474,7 @@ export default function PostDetailPage() {
                                 className="rounded object-cover transition-opacity group-hover:opacity-75"
                               />
                               <span className="absolute inset-0 flex items-center justify-center rounded bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                <EyeIcon
-                                  className="h-6 w-6 text-white"
-                                />
+                                <EyeIcon className="h-6 w-6 text-white" />
                               </span>
                             </a>
                           ) : (
@@ -518,9 +513,7 @@ export default function PostDetailPage() {
                               disabled={approveMediaMutation.isPending}
                               className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                             >
-                              <CheckIcon
-                                className="h-3 w-3"
-                              />    
+                              <CheckIcon className="h-3 w-3" />
                               Freigeben
                             </button>
                           )}
@@ -608,9 +601,7 @@ export default function PostDetailPage() {
                         disabled={approveMediaMutation.isPending}
                         className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                       >
-                        <CheckIcon
-                          className="h-3 w-3"
-                        />
+                        <CheckIcon className="h-3 w-3" />
                         Freigeben
                       </button>
                     )}
@@ -754,9 +745,7 @@ export default function PostDetailPage() {
             href="/dashboard/posts"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium text-gray-600"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>
