@@ -248,9 +248,7 @@ export default function DownloadPickerModal({
             onClick={onClose}
             className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
           >
-            <X
-              className="h-5 w-5"
-            />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -314,9 +312,7 @@ export default function DownloadPickerModal({
                 </div>
               ) : downloadsData?.downloads.length === 0 ? (
                 <div className="py-12 text-center">
-                  <X
-                    className="mx-auto h-12 w-12 text-gray-400"
-                  />
+                  <X className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-4 text-gray-500 dark:text-gray-400">
                     Keine Downloads gefunden
                   </p>
@@ -367,9 +363,7 @@ export default function DownloadPickerModal({
                       </div>
                       {selectedDownload?.id === download.id && (
                         <div className="bg-primary rounded-full p-1">
-                          <CheckIcon
-                            className="h-4 w-4 text-white"
-                          />
+                          <CheckIcon className="h-4 w-4 text-white" />
                         </div>
                       )}
                     </button>
@@ -405,9 +399,7 @@ export default function DownloadPickerModal({
                       }}
                       className="text-red-600 hover:text-red-700"
                     >
-                      <X
-                        className="h-5 w-5"
-                      />
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
@@ -435,18 +427,14 @@ export default function DownloadPickerModal({
                       </div>
                     ) : isDragging ? (
                       <>
-                        <ArrowUpIcon
-                          className="text-primary mx-auto h-10 w-10"
-                        />
+                        <ArrowUpIcon className="text-primary mx-auto h-10 w-10" />
                         <p className="text-primary mt-2 font-medium">
                           Datei hier ablegen
                         </p>
                       </>
                     ) : (
                       <>
-                        <ArrowUpIcon
-                          className="mx-auto h-10 w-10 text-gray-400"
-                        />
+                        <ArrowUpIcon className="mx-auto h-10 w-10 text-gray-400" />
                         <p className="dark:text-dark-text mt-2 font-medium text-gray-700">
                           Datei hierher ziehen oder klicken
                         </p>

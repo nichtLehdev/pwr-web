@@ -40,11 +40,7 @@ export default function ThemeToggle() {
       className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-2 transition-colors hover:bg-gray-100"
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
-      {isDark ? (
-        <Sun className="h-5 w-5" />
-      ) : (
-        <Moon className="h-5 w-5" />
-      )}
+      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </button>
   );
 }

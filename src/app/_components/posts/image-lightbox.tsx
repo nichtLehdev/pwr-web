@@ -43,9 +43,7 @@ export default function ImageLightbox({
         className="absolute top-4 right-4 z-10 rounded-lg p-2 text-white transition-colors hover:bg-white/10"
         aria-label="Schließen"
       >
-        <XIcon
-          className="h-8 w-8"
-        />
+        <XIcon className="h-8 w-8" />
       </button>
 
       {/* Image */}

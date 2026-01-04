@@ -269,8 +269,7 @@ export default function EditBezirkPage() {
                 </>
               ) : (
                 <>
-                  <SaveIcon
-                    className="h-4 w-4" />
+                  <SaveIcon className="h-4 w-4" />
                   Speichern
                 </>
               )}

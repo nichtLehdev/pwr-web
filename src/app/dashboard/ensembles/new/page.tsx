@@ -398,9 +398,7 @@ export default function NewEnsemblePage() {
                     className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
                   >
                     <div className="text-center">
-                      <PlusIcon 
-                        className="h-8 w-8"
-                      />
+                      <PlusIcon className="h-8 w-8" />
                       <span className="mt-1 block text-sm">Bild auswählen</span>
                     </div>
                   </button>
@@ -455,9 +453,7 @@ export default function NewEnsemblePage() {
                       onClick={handleClearConductor}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <XIcon
-                        className="h-4 w-4"
-                      />
+                      <XIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -541,9 +537,7 @@ export default function NewEnsemblePage() {
                       onClick={handleClearRepresentative}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <XIcon
-                        className="h-4 w-4"
-                      />
+                      <XIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -882,9 +876,7 @@ export default function NewEnsemblePage() {
                 </>
               ) : (
                 <>
-                  <CheckIcon
-                    className="h-4 w-4"
-                  />
+                  <CheckIcon className="h-4 w-4" />
                   Ensemble erstellen
                 </>
               )}

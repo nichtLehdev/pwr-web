@@ -86,9 +86,7 @@ export default function PostCard({
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Weiterlesen
-            <ArrowRightIcon
-              className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
-            />
+            <ArrowRightIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
         </div>
       </article>

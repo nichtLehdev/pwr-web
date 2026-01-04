@@ -220,9 +220,7 @@ export default function DashboardPosaunenwarteEditPage() {
             </div>
           ) : (
             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-              <UserIcon
-                className="h-8 w-8"
-              />
+              <UserIcon className="h-8 w-8" />
             </div>
           )}
           <div>
@@ -248,9 +246,7 @@ export default function DashboardPosaunenwarteEditPage() {
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex gap-3">
-              <AlertTriangleIcon
-                className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-              />
+              <AlertTriangleIcon className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           </div>
@@ -260,9 +256,7 @@ export default function DashboardPosaunenwarteEditPage() {
         {user.role === "LPW" && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="flex gap-3">
-              <InfoIcon
-                className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-              />
+              <InfoIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
               <div className="text-sm text-blue-800 dark:text-blue-300">
                 <p className="font-medium">Hinweis für Landesposaunenwart</p>
                 <p className="mt-1">
@@ -325,9 +319,7 @@ export default function DashboardPosaunenwarteEditPage() {
                     className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                     title="Bezirk entfernen"
                   >
-                    <TrashIcon
-                      className="h-4 w-4"
-                    />
+                    <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
               ))}
@@ -377,9 +369,7 @@ export default function DashboardPosaunenwarteEditPage() {
                       </p>
                     )}
                   </div>
-                  <PlusIcon
-                    className="h-5 w-5 text-green-500"
-                  />
+                  <PlusIcon className="h-5 w-5 text-green-500" />
                 </button>
               ))}
             </div>
@@ -392,18 +382,14 @@ export default function DashboardPosaunenwarteEditPage() {
             href={`/dashboard/posaunenwarte/${id}`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Fertig
           </Link>
           <Link
             href="/dashboard/posaunenwarte"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zur Übersicht
           </Link>
         </div>

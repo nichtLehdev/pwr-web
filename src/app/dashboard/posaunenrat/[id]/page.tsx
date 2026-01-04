@@ -173,9 +173,7 @@ export default function PosaunenratDetailPage() {
               href={`/dashboard/posaunenrat/${memberId}/edit`}
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
             >
-              <EditIcon
-                className="h-4 w-4"
-              />
+              <EditIcon className="h-4 w-4" />
               Bearbeiten
             </Link>
             <button
@@ -186,9 +184,7 @@ export default function PosaunenratDetailPage() {
               {isDeleting ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
               ) : (
-                <TrashIcon
-                  className="h-4 w-4"
-                />
+                <TrashIcon className="h-4 w-4" />
               )}
               Löschen
             </button>
@@ -312,9 +308,7 @@ export default function PosaunenratDetailPage() {
             href="/dashboard/posaunenrat"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

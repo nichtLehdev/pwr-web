@@ -2,7 +2,16 @@ import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import type { ContentStatus } from "~/generated/prisma/client";
-import { CalendarIcon, CheckCircleIcon, ExternalLinkIcon, EyeIcon, MapPinIcon, PencilIcon, TagIcon, UserIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  MapPinIcon,
+  PencilIcon,
+  TagIcon,
+  UserIcon,
+} from "lucide-react";
 
 interface DashboardEventCardProps {
   id: string;

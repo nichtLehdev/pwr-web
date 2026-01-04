@@ -164,9 +164,7 @@ export default function MediaPickerModal({
             onClick={onClose}
             className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
           >
-            <X
-              className="h-5 w-5"
-            />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -216,9 +214,7 @@ export default function MediaPickerModal({
                 </div>
               ) : mediaData?.media.length === 0 ? (
                 <div className="py-12 text-center">
-                  <X
-                    className="mx-auto h-12 w-12 text-gray-400"
-                  />
+                  <X className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-4 text-gray-500 dark:text-gray-400">
                     Keine Bilder gefunden
                   </p>
@@ -252,9 +248,7 @@ export default function MediaPickerModal({
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                       {selectedMedia?.id === media.id && (
                         <div className="bg-primary absolute top-2 right-2 rounded-full p-1">
-                          <CheckIcon
-                            className="h-4 w-4 text-white"
-                          />
+                          <CheckIcon className="h-4 w-4 text-white" />
                         </div>
                       )}
                     </button>
@@ -282,9 +276,7 @@ export default function MediaPickerModal({
                   </div>
                 ) : (
                   <>
-                    <ArrowUpIcon
-                      className="mx-auto h-12 w-12 text-gray-400"
-                    />
+                    <ArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <p className="dark:text-dark-text mt-4 font-medium text-gray-700">
                       Klicke zum Hochladen
                     </p>

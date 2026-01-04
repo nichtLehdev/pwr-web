@@ -2,7 +2,15 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
 import PageHeader from "@/app/_components/general/page-header";
-import { BookIcon, MailIcon, Music2Icon, MusicIcon, PartyPopperIcon, PhoneIcon, SchoolIcon } from "lucide-react";
+import {
+  BookIcon,
+  MailIcon,
+  Music2Icon,
+  MusicIcon,
+  PartyPopperIcon,
+  PhoneIcon,
+  SchoolIcon,
+} from "lucide-react";
 
 export default async function PosaunenwartePage() {
   const posaunenwarte = await api.organization.getPosaunenwarte();
@@ -110,9 +118,7 @@ export default async function PosaunenwartePage() {
                           href={`mailto:${pw.email}`}
                           className="text-primary hover:text-primary-dark flex items-center font-semibold"
                         >
-                          <MailIcon
-                            className="mr-2 h-5 w-5"
-                          />
+                          <MailIcon className="mr-2 h-5 w-5" />
                           E-Mail senden
                         </a>
                       )}
@@ -121,9 +127,7 @@ export default async function PosaunenwartePage() {
                           href={`tel:${pw.phone.replace(/\s/g, "")}`}
                           className="hover:text-primary flex items-center text-gray-600 dark:text-gray-400"
                         >
-                          <PhoneIcon
-                            className="mr-2 h-5 w-5"
-                          />
+                          <PhoneIcon className="mr-2 h-5 w-5" />
                           {pw.phone}
                         </a>
                       )}
@@ -205,9 +209,7 @@ export default async function PosaunenwartePage() {
                           href={`mailto:${pw.email}`}
                           className="text-primary hover:text-primary-dark flex items-center text-sm font-semibold"
                         >
-                          <MailIcon
-                            className="mr-2 h-4 w-4"
-                          />
+                          <MailIcon className="mr-2 h-4 w-4" />
                           E-Mail senden
                         </a>
                       )}
@@ -216,9 +218,7 @@ export default async function PosaunenwartePage() {
                           href={`tel:${pw.phone.replace(/\s/g, "")}`}
                           className="hover:text-primary flex items-center text-sm text-gray-600 dark:text-gray-400"
                         >
-                          <PhoneIcon
-                            className="mr-2 h-4 w-4"
-                          />
+                          <PhoneIcon className="mr-2 h-4 w-4" />
                           {pw.phone}
                         </a>
                       )}
@@ -240,9 +240,7 @@ export default async function PosaunenwartePage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <BookIcon
-                  className="h-6 w-6 text-white"
-                />
+                <BookIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Weiterbildung
@@ -255,9 +253,7 @@ export default async function PosaunenwartePage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <Music2Icon
-                  className="h-6 w-6 text-white"
-                />
+                <Music2Icon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Chorbesuche
@@ -270,9 +266,7 @@ export default async function PosaunenwartePage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <PartyPopperIcon
-                  className="h-6 w-6 text-white"
-                />
+                <PartyPopperIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Lehrgänge & Freizeiten
@@ -285,9 +279,7 @@ export default async function PosaunenwartePage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-3 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <BookIcon
-                  className="h-6 w-6 text-white"
-                />
+                <BookIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Beratung
@@ -300,9 +292,7 @@ export default async function PosaunenwartePage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <MusicIcon
-                  className="h-6 w-6 text-white"
-                  />
+                <MusicIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Musikalische Leitung
@@ -315,9 +305,7 @@ export default async function PosaunenwartePage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-6 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <SchoolIcon 
-                  className="h-6 w-6 text-white"
-                />
+                <SchoolIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Nachwuchsförderung

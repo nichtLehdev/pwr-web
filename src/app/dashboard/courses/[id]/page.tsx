@@ -771,8 +771,7 @@ export default function CourseDetailPage() {
                 href={`/dashboard/courses/${courseId}/participants`}
                 className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
               >
-                <ArrowRightIcon
-                  className="h-4 w-4" />
+                <ArrowRightIcon className="h-4 w-4" />
                 Zur Teilnehmerverwaltung
               </Link>
             </div>

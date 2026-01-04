@@ -127,9 +127,7 @@ export default function DashboardFoerdervereinPage() {
             href="/dashboard/foerderverein/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
           >
-            <PlusIcon
-              className="h-5 w-5"
-            />
+            <PlusIcon className="h-5 w-5" />
             Neues Mitglied
           </Link>
         </div>
@@ -203,9 +201,7 @@ export default function DashboardFoerdervereinPage() {
                               </div>
                             ) : (
                               <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                                <UserIcon
-                                  className="h-5 w-5"
-                                />
+                                <UserIcon className="h-5 w-5" />
                               </div>
                             )}
                             <div>
@@ -248,16 +244,12 @@ export default function DashboardFoerdervereinPage() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           {member.user ? (
                             <span className="inline-flex items-center gap-1 text-sm text-green-600">
-                              <CheckIcon
-                                className="h-4 w-4"
-                              />
+                              <CheckIcon className="h-4 w-4" />
                               Verknüpft
                             </span>
                           ) : (
                             <span className="dark:text-dark-muted inline-flex items-center gap-1 text-sm text-gray-500">
-                              <UserIcon
-                                className="h-4 w-4"
-                              />
+                              <UserIcon className="h-4 w-4" />
                               Manuell
                             </span>
                           )}
@@ -269,9 +261,7 @@ export default function DashboardFoerdervereinPage() {
                               className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                               title="Bearbeiten"
                             >
-                              <EditIcon
-                                className="h-4 w-4"
-                              />
+                              <EditIcon className="h-4 w-4" />
                             </Link>
                             <button
                               onClick={() => handleDelete(member.id)}
@@ -282,9 +272,7 @@ export default function DashboardFoerdervereinPage() {
                               {deletingId === member.id ? (
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                               ) : (
-                                <TrashIcon
-                                  className="h-4 w-4"
-                                />
+                                <TrashIcon className="h-4 w-4" />
                               )}
                             </button>
                           </div>

@@ -341,9 +341,7 @@ export default function DashboardMediaPage() {
             onClick={() => setShowUploadModal(true)}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
           >
-            <PlusIcon
-              className="h-5 w-5"
-            />
+            <PlusIcon className="h-5 w-5" />
             Neues Medium
           </button>
         </div>
@@ -447,9 +445,7 @@ export default function DashboardMediaPage() {
           </div>
         ) : !filteredMedia?.length ? (
           <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <ImageIcon
-              className="mx-auto h-12 w-12 text-gray-400"
-            />
+            <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
             <p className="dark:text-dark-muted mt-4 text-gray-500">
               Keine Medien gefunden
             </p>
@@ -515,9 +511,7 @@ export default function DashboardMediaPage() {
                       className="rounded bg-gray-600 p-1.5 text-white shadow hover:bg-gray-700"
                       title="Bearbeiten"
                     >
-                      <EditIcon
-                        className="h-4 w-4"
-                      />
+                      <EditIcon className="h-4 w-4" />
                     </button>
                   )}
 
@@ -534,9 +528,7 @@ export default function DashboardMediaPage() {
                       className="rounded bg-green-600 p-1.5 text-white shadow hover:bg-green-700"
                       title="Freigeben"
                     >
-                      <CheckIcon
-                        className="h-4 w-4"
-                      />
+                      <CheckIcon className="h-4 w-4" />
                     </button>
                   )}
 
@@ -547,9 +539,7 @@ export default function DashboardMediaPage() {
                       className="rounded bg-red-600 p-1.5 text-white shadow hover:bg-red-700"
                       title="Löschen"
                     >
-                      <TrashIcon
-                        className="h-4 w-4"
-                      />
+                      <TrashIcon className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -740,9 +730,7 @@ export default function DashboardMediaPage() {
               onClick={() => setShowPreviewModal(null)}
               className="absolute -top-2 -right-2 rounded-full bg-white p-2 shadow-lg hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
             >
-              <XIcon
-                className="h-5 w-5"
-              />
+              <XIcon className="h-5 w-5" />
             </button>
           </div>
         </div>

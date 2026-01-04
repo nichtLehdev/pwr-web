@@ -6,7 +6,19 @@ import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CopyIcon, FilterIcon, PencilIcon, SquareDashed, TrashIcon, X } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CheckIcon,
+  CopyIcon,
+  FilterIcon,
+  PencilIcon,
+  SquareDashed,
+  TrashIcon,
+  X,
+} from "lucide-react";
 
 interface DashboardPostsListProps {
   userRole: string;
@@ -225,9 +237,7 @@ export default function DashboardPostsList({
             onClick={() => setSelectionMode(true)}
             className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <SquareDashed
-              className="h-4 w-4"
-            />
+            <SquareDashed className="h-4 w-4" />
             Auswählen
           </button>
         ) : (
@@ -235,9 +245,7 @@ export default function DashboardPostsList({
             onClick={exitSelectionMode}
             className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <X
-              className="h-4 w-4"
-            />
+            <X className="h-4 w-4" />
             Abbrechen
           </button>
         )}
@@ -273,9 +281,7 @@ export default function DashboardPostsList({
                 disabled={duplicateMutation.isPending}
                 className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
-                <CopyIcon
-                  className="h-4 w-4"
-                />
+                <CopyIcon className="h-4 w-4" />
                 {duplicateMutation.isPending ? "..." : "Duplizieren"}
               </button>
             )}
@@ -286,9 +292,7 @@ export default function DashboardPostsList({
                 disabled={bulkDuplicateMutation.isPending}
                 className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
-                <CopyIcon 
-                  className="h-4 w-4"
-                />
+                <CopyIcon className="h-4 w-4" />
                 {bulkDuplicateMutation.isPending
                   ? "..."
                   : `${selectedIds.size} duplizieren`}
@@ -300,9 +304,7 @@ export default function DashboardPostsList({
               disabled={selectedIds.size === 0}
               className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
             >
-              <PencilIcon
-                className="h-4 w-4"
-              />
+              <PencilIcon className="h-4 w-4" />
               Status ändern
             </button>
 
@@ -311,9 +313,7 @@ export default function DashboardPostsList({
               disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
               className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
             >
-              <TrashIcon
-                className="h-4 w-4"
-              />
+              <TrashIcon className="h-4 w-4" />
               Löschen
             </button>
           </div>
@@ -330,9 +330,7 @@ export default function DashboardPostsList({
               className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <span className="flex items-center gap-2">
-                <FilterIcon
-                  className="h-4 w-4"
-                />
+                <FilterIcon className="h-4 w-4" />
                 Filter & Sortierung
               </span>
               {(statusFilter !== "all" ||
@@ -416,13 +414,9 @@ export default function DashboardPostsList({
                   title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
                 >
                   {sortOrder === "asc" ? (
-                    <ArrowUpIcon
-                      className="h-4 w-4"
-                    />
+                    <ArrowUpIcon className="h-4 w-4" />
                   ) : (
-                    <ArrowDownIcon
-                      className="h-4 w-4"
-                    />
+                    <ArrowDownIcon className="h-4 w-4" />
                   )}
                 </button>
               </div>
@@ -510,16 +504,12 @@ export default function DashboardPostsList({
                   >
                     {sortOrder === "asc" ? (
                       <>
-                        <ArrowUpIcon
-                          className="h-4 w-4"
-                        />
+                        <ArrowUpIcon className="h-4 w-4" />
                         Aufsteigend
                       </>
                     ) : (
                       <>
-                        <ArrowDownIcon
-                          className="h-4 w-4"
-                        />
+                        <ArrowDownIcon className="h-4 w-4" />
                         Absteigend
                       </>
                     )}
@@ -566,9 +556,7 @@ export default function DashboardPostsList({
                       }`}
                     >
                       {selectedIds.has(post.id) && (
-                        <CheckIcon
-                          className="h-4 w-4"
-                        />
+                        <CheckIcon className="h-4 w-4" />
                       )}
                     </div>
                   </div>
@@ -598,9 +586,7 @@ export default function DashboardPostsList({
       {/* Empty State */}
       {!isLoading && data?.posts && data.posts.length === 0 && (
         <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white py-12 text-center">
-          <X
-            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
-          />
+          <X className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
             Keine Beiträge gefunden
           </h3>
@@ -620,9 +606,7 @@ export default function DashboardPostsList({
             disabled={page === 1}
             className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
           </button>
 
           <span className="text-dark dark:text-dark-text text-sm">
@@ -634,9 +618,7 @@ export default function DashboardPostsList({
             disabled={page === data.pages}
             className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
           >
-            <ArrowRightIcon
-              className="h-4 w-4"
-            />
+            <ArrowRightIcon className="h-4 w-4" />
           </button>
         </div>
       )}

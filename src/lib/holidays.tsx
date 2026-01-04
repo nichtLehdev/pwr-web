@@ -3,40 +3,30 @@
  * Calculates German public holidays based on Easter date
  */
 
-import { CloudIcon, CrossIcon, CrownIcon, EggIcon, FlameIcon, GiftIcon, SparkleIcon } from "lucide-react";
+import {
+  CloudIcon,
+  CrossIcon,
+  CrownIcon,
+  EggIcon,
+  FlameIcon,
+  GiftIcon,
+  SparkleIcon,
+} from "lucide-react";
 import React from "react";
 import { WrenchIcon } from "lucide-react";
 import { FlagIcon } from "lucide-react";
 import { ChurchIcon } from "lucide-react";
 
 const icons = {
-  sparkles: (
-    <SparkleIcon className="h-4 w-4" />
-  ),
-  crown: (
-    <CrownIcon className="h-4 w-4" /> 
-  ),
-  cross: (
-   <CrossIcon className="h-4 w-4" />
-  ),
-  egg: (
-    <EggIcon className="h-4 w-4" />
-  ),
-  cloud: (
-    <CloudIcon className="h-4 w-4" /> 
-  ),
-  flame: (
-    <FlameIcon className="h-4 w-4" />
-  ),
-  wrench: (
-    <WrenchIcon className="h-4 w-4" />
-  ),
-  flag: (
-    <FlagIcon className="h-4 w-4" />
-  ),
-  church: (
-    <ChurchIcon className="h-4 w-4" />
-  ),
+  sparkles: <SparkleIcon className="h-4 w-4" />,
+  crown: <CrownIcon className="h-4 w-4" />,
+  cross: <CrossIcon className="h-4 w-4" />,
+  egg: <EggIcon className="h-4 w-4" />,
+  cloud: <CloudIcon className="h-4 w-4" />,
+  flame: <FlameIcon className="h-4 w-4" />,
+  wrench: <WrenchIcon className="h-4 w-4" />,
+  flag: <FlagIcon className="h-4 w-4" />,
+  church: <ChurchIcon className="h-4 w-4" />,
   candle: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2c-.5 1-1 2-1 3 0 1.1.9 2 2 2s2-.9 2-2c0-1-0.5-2-1-3h-2zm-1 6v14h2V8h-2z" />
@@ -47,9 +37,7 @@ const icons = {
       <path d="M12 2l-2 4h1l-2 4h1l-3 6h4v6h4v-6h4l-3-6h1l-2-4h1l-2-4z" />
     </svg>
   ),
-  gift: (
-    <GiftIcon className="h-4 w-4" />
-  ),
+  gift: <GiftIcon className="h-4 w-4" />,
   oneCandle: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <ellipse cx="12" cy="4" rx="2" ry="3" fill="#FFA500" />

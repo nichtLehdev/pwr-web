@@ -1,7 +1,19 @@
 import { getDistrictColor } from "@/lib/district-color";
 import type { JSX } from "react";
 import { type RouterOutputs } from "@/trpc/react";
-import { BookOpenIcon, UsersIcon, MusicIcon, PartyPopperIcon, WrenchIcon, MedalIcon, GlobeIcon, ChurchIcon, UserIcon, MapPinIcon, ArrowUpRightIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  UsersIcon,
+  MusicIcon,
+  PartyPopperIcon,
+  WrenchIcon,
+  MedalIcon,
+  GlobeIcon,
+  ChurchIcon,
+  UserIcon,
+  MapPinIcon,
+  ArrowUpRightIcon,
+} from "lucide-react";
 
 type InstagramEventTemplateProps = {
   event: RouterOutputs["events"]["getEventsByMonth"][0];
@@ -27,30 +39,14 @@ const CategoryIcon = ({
   className?: string;
 }) => {
   const icons: Record<string, JSX.Element> = {
-    COURSE: (
-      <BookOpenIcon className={className} />
-    ),
-    CONCERT: (
-      <MusicIcon className={className} />
-    ),
-    MEETING: (
-      <UsersIcon className={className} />
-    ),
-    WORSHIP: (
-      <ChurchIcon className={className} />
-    ),
-    WORKSHOP: ( 
-      <WrenchIcon className={className} />
-    ),
-    FESTIVAL: (
-      <PartyPopperIcon className={className} />
-    ),
-    COMPETITION: (
-      <MedalIcon className={className} />
-    ),
-    OTHER: (
-      <GlobeIcon className={className} />
-    ),
+    COURSE: <BookOpenIcon className={className} />,
+    CONCERT: <MusicIcon className={className} />,
+    MEETING: <UsersIcon className={className} />,
+    WORSHIP: <ChurchIcon className={className} />,
+    WORKSHOP: <WrenchIcon className={className} />,
+    FESTIVAL: <PartyPopperIcon className={className} />,
+    COMPETITION: <MedalIcon className={className} />,
+    OTHER: <GlobeIcon className={className} />,
   };
 
   return icons[category] || icons.OTHER;
@@ -238,17 +234,13 @@ export default function InstagramEventTemplate({
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
                 style={{ backgroundColor: districtColor }}
               >
-                <MusicIcon
-                  className="h-8 w-8"
-                />
+                <MusicIcon className="h-8 w-8" />
               </div>
               <div className="text-xl font-semibold">
                 <div className="text-dark font-bold">{performer}</div>
                 {conductor && (
                   <div className="text-dark-light flex items-center gap-2 text-lg">
-                    <UserIcon
-                      className="h-5 w-5"
-                    />
+                    <UserIcon className="h-5 w-5" />
                     Leitung: {conductor}
                   </div>
                 )}
@@ -263,9 +255,7 @@ export default function InstagramEventTemplate({
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
                 style={{ backgroundColor: districtColor }}
               >
-                <MapPinIcon
-                  className="h-8 w-8"
-                />
+                <MapPinIcon className="h-8 w-8" />
               </div>
               <div className="text-xl font-semibold">
                 {event.location.name && (

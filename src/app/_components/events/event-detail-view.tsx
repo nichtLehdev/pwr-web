@@ -6,7 +6,18 @@ import PageHeader from "../general/page-header";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
-import { AlertTriangle, CalendarArrowDownIcon, CalendarIcon, CheckCircleIcon, CircleXIcon, MapPinIcon, NavigationIcon, ShareIcon, Users, UsersIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarArrowDownIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  CircleXIcon,
+  MapPinIcon,
+  NavigationIcon,
+  ShareIcon,
+  Users,
+  UsersIcon,
+} from "lucide-react";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -170,9 +181,7 @@ END:VCALENDAR`;
                 onClick={shareEvent}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
               >
-                <ShareIcon
-                  className="h-5 w-5"
-                />
+                <ShareIcon className="h-5 w-5" />
                 <span className="hidden sm:inline">Teilen</span>
               </button>
             </div>
@@ -191,9 +200,7 @@ END:VCALENDAR`;
                 <div className="rounded-lg border-2 border-red-500 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/50">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-                      <CircleXIcon
-                        className="h-6 w-6 text-red-600 dark:text-red-400"
-                      />
+                      <CircleXIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-red-800 dark:text-red-300">
@@ -212,9 +219,7 @@ END:VCALENDAR`;
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-xl font-bold">
-                    <CalendarIcon
-                      className="text-primary h-6 w-6"
-                    />
+                    <CalendarIcon className="text-primary h-6 w-6" />
                     Datum & Uhrzeit
                   </h2>
                 </div>
@@ -240,9 +245,7 @@ END:VCALENDAR`;
                     onClick={handleDownloadIcs}
                     className="border-primary text-primary hover:bg-primary/10 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors"
                   >
-                    <CalendarArrowDownIcon
-                      className="h-5 w-5"
-                    />
+                    <CalendarArrowDownIcon className="h-5 w-5" />
                     Zum Kalender hinzufügen (ICS)
                   </button>
                 </div>
@@ -251,9 +254,7 @@ END:VCALENDAR`;
               {/* Location */}
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <MapPinIcon
-                    className="text-primary h-6 w-6"
-                  />
+                  <MapPinIcon className="text-primary h-6 w-6" />
                   Veranstaltungsort
                 </h2>
                 {event.location && (
@@ -290,9 +291,7 @@ END:VCALENDAR`;
                       rel="noopener noreferrer"
                       className="bg-primary hover:bg-primary-dark mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
                     >
-                      <NavigationIcon
-                        className="h-5 w-5"
-                      />
+                      <NavigationIcon className="h-5 w-5" />
                       Navigation starten
                     </a>
                   </div>
@@ -316,9 +315,7 @@ END:VCALENDAR`;
               {event.performingEnsembleType && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <UsersIcon
-                      className="text-primary h-6 w-6"
-                    />
+                    <UsersIcon className="text-primary h-6 w-6" />
                     Mitwirkende
                   </h2>
                   {event.performingEnsembleType === "AUSWAHLCHOR" &&
@@ -405,9 +402,7 @@ END:VCALENDAR`;
               {event.openToParticipants && (
                 <div className="sticky top-20 rounded-lg bg-linear-to-br from-green-500 to-green-700 p-6 text-white shadow-xl">
                   <div className="mb-4 flex items-start gap-3">
-                    <CheckCircleIcon
-                      className="h-8 w-8 shrink-0"
-                    />
+                    <CheckCircleIcon className="h-8 w-8 shrink-0" />
                     <div>
                       <h3 className="mb-2 text-xl font-bold">
                         Mitspielen möglich!
@@ -468,9 +463,7 @@ END:VCALENDAR`;
               {event.isFree && (
                 <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/30">
                   <p className="flex items-center gap-2 text-lg font-bold text-green-800 dark:text-green-400">
-                    <CheckCircleIcon
-                      className="h-6 w-6 shrink-0"
-                    />
+                    <CheckCircleIcon className="h-6 w-6 shrink-0" />
                     Eintritt frei
                   </p>
                 </div>

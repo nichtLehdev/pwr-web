@@ -4,7 +4,13 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
-import { CalendarIcon, CheckCircleIcon, CircleXIcon, MapPinIcon, X } from "lucide-react";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  CircleXIcon,
+  MapPinIcon,
+  X,
+} from "lucide-react";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -115,9 +121,7 @@ export default function EventDetailModal({
           {event.type === "event" && event.cancelled && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
               <div className="flex items-start gap-3">
-                <CircleXIcon
-                  className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-                />
+                <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                 <div>
                   <h3 className="mb-1 font-semibold text-red-900 dark:text-red-100">
                     Veranstaltung abgesagt
@@ -132,9 +136,7 @@ export default function EventDetailModal({
 
           {/* Date & Time */}
           <div className="flex items-start gap-3">
-            <CalendarIcon
-              className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-            />
+            <CalendarIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
             <div>
               <p className="text-dark dark:text-dark-text font-semibold">
                 {startDate}
@@ -154,9 +156,7 @@ export default function EventDetailModal({
           {/* Location */}
           {event.location && (
             <div className="flex items-start gap-3">
-                <MapPinIcon
-                className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-              />
+              <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
               <div>
                 <p className="text-dark dark:text-dark-text font-semibold">
                   {event.location.name || event.location.city}
@@ -177,9 +177,7 @@ export default function EventDetailModal({
           {/* District */}
           {event.bezirk && (
             <div className="flex items-start gap-3">
-              <CheckCircleIcon
-                className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-              />
+              <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
               <div>
                 <p className="text-dark dark:text-dark-text font-semibold">
                   {event.bezirk.name}
@@ -192,9 +190,7 @@ export default function EventDetailModal({
           {event.type === "event" && event.openToParticipants && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/30">
               <div className="flex items-start gap-3">
-                <CheckCircleIcon
-                  className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400"
-                />
+                <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-green-600 dark:text-green-400" />
                 <div>
                   <h3 className="mb-1 font-semibold text-green-900 dark:text-green-100">
                     Mitmachangebot

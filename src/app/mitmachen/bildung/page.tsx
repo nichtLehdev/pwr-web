@@ -1,5 +1,10 @@
 import PageHeader from "@/app/_components/general/page-header";
-import { BookOpenIcon, CalendarIcon, DownloadIcon,  MusicIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  CalendarIcon,
+  DownloadIcon,
+  MusicIcon,
+} from "lucide-react";
 import { Globe2Icon, GiftIcon, MapPinIcon, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { StarIcon } from "lucide-react";
@@ -11,22 +16,14 @@ export default function BildungPage() {
       title: "Bläserkurse",
       description:
         "Von Anfänger bis Fortgeschrittene, von Jung bis Alt – Lehrgänge für alle Leistungsstufen",
-      icon: (
-        <MusicIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
       color: "bg-district-2",
     },
     {
       id: "chorleitung",
       title: "Chorleitung",
       description: "Ausbildung für Chorleiter und angehende Dirigenten",
-      icon: (
-        <MusicIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
       color: "bg-district-5",
     },
     {
@@ -34,9 +31,7 @@ export default function BildungPage() {
       title: "Workshops",
       description:
         "Spezialthemen wie Improvisation, Arrangement, Registerarbeit",
-      icon: (
-        <MusicIcon className="h-6 w-6" />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
       color: "bg-district-6",
     },
     {
@@ -44,11 +39,7 @@ export default function BildungPage() {
       title: "Komponistenportraits",
       description:
         "Musikalische Reisen durch Leben und Werk großer Komponisten",
-      icon: (
-        <BookOpenIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <BookOpenIcon className="h-6 w-6" />,
       color: "bg-district-3",
     },
     {
@@ -56,11 +47,7 @@ export default function BildungPage() {
       title: "Studienfahrten",
       description:
         "Musikalische Bildungsreisen zu besonderen Orten und Festivals",
-      icon: (
-        <MapPinIcon
-          className="h-6 w-6"
-        />
-      ),
+      icon: <MapPinIcon className="h-6 w-6" />,
       color: "bg-primary",
     },
     {
@@ -68,11 +55,7 @@ export default function BildungPage() {
       title: "Bläserfreizeiten",
       description:
         "Gemeinsames Musizieren, Lernen und Erleben für alle Altersgruppen",
-      icon: (
-        <Globe2Icon
-        className="text-primary dark:text-dark-text h-6 w-6"
-        />
-      ),
+      icon: <Globe2Icon className="text-primary dark:text-dark-text h-6 w-6" />,
       color: "bg-district-9",
     },
   ];
@@ -175,9 +158,7 @@ export default function BildungPage() {
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-8 text-center shadow-xl md:p-10 dark:border dark:shadow-none">
               <div className="bg-district-2 mb-6 inline-block rounded-full p-3">
-                <CalendarIcon
-                  className="h-12 w-12 text-white"
-                />
+                <CalendarIcon className="h-12 w-12 text-white" />
               </div>
               <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl">
                 Aktuelle Lehrgänge & Anmeldung
@@ -191,9 +172,7 @@ export default function BildungPage() {
                 href="/termine?type=courses"
                 className="bg-district-2 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <CalendarIcon
-                  className="mr-2 h-5 w-5"
-                />
+                <CalendarIcon className="mr-2 h-5 w-5" />
                 Zu den Lehrgängen
               </Link>
             </div>
@@ -212,9 +191,7 @@ export default function BildungPage() {
             <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg bg-white p-8 shadow-lg dark:border dark:shadow-none">
               <div className="mb-6 flex items-start gap-4">
                 <div className="bg-primary flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <StarIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <StarIcon className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
@@ -236,9 +213,7 @@ export default function BildungPage() {
                     rel="noopener noreferrer"
                     className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
                   >
-                    <DownloadIcon
-                      className="mr-2 h-5 w-5"
-                    />
+                    <DownloadIcon className="mr-2 h-5 w-5" />
                     Infos zu Leistungsstempeln herunterladen
                   </a>
                 </div>
@@ -291,9 +266,7 @@ export default function BildungPage() {
                 rel="noopener noreferrer"
                 className="bg-district-9 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
               >
-                <DownloadIcon
-                  className="mr-2 h-5 w-5"
-                />
+                <DownloadIcon className="mr-2 h-5 w-5" />
                 Arbeitshilfe Jungbläser herunterladen
               </a>
             </div>
@@ -308,9 +281,7 @@ export default function BildungPage() {
             <div className="bg-foerderverein/10 dark:bg-foerderverein/20 border-foerderverein rounded-lg border-l-4 p-8">
               <div className="flex items-start gap-4">
                 <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <GiftIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <GiftIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
@@ -360,9 +331,7 @@ export default function BildungPage() {
                     rel="noopener noreferrer"
                     className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
                   >
-                    <DownloadIcon
-                      className="mr-2 h-5 w-5"
-                    />
+                    <DownloadIcon className="mr-2 h-5 w-5" />
                     Zusatzerklärung herunterladen
                   </a>
                 </div>
@@ -379,9 +348,7 @@ export default function BildungPage() {
                     href="/kontakt"
                     className="bg-district-2 inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
                   >
-                    <MailIcon
-                      className="mr-2 h-5 w-5"
-                    />
+                    <MailIcon className="mr-2 h-5 w-5" />
                     Kontakt aufnehmen
                   </Link>
                 </div>

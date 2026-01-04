@@ -137,9 +137,7 @@ export default function DashboardPosaunenwarteDetailPage() {
               </div>
             ) : (
               <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                <UserIcon 
-                  className="h-10 w-10"
-                />
+                <UserIcon className="h-10 w-10" />
               </div>
             )}
             <div>
@@ -162,9 +160,7 @@ export default function DashboardPosaunenwarteDetailPage() {
               href={`/dashboard/posaunenwarte/${id}/edit`}
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
             >
-              <EditIcon
-                className="h-4 w-4"
-              />
+              <EditIcon className="h-4 w-4" />
               Bezirke bearbeiten
             </Link>
           </div>
@@ -252,9 +248,7 @@ export default function DashboardPosaunenwarteDetailPage() {
               user.posaunenwarteResponsibilities.length === 0) && (
               <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-100 bg-gray-50 p-4">
                 <div className="flex gap-3">
-                  <MapPinIcon
-                    className="text-primary h-5 w-5 shrink-0"
-                  />
+                  <MapPinIcon className="text-primary h-5 w-5 shrink-0" />
                   <div className="dark:text-dark-text text-sm text-gray-700">
                     <p className="font-medium">Landesposaunenwart</p>
                     <p className="dark:text-dark-muted mt-1 text-gray-600">
@@ -311,9 +305,7 @@ export default function DashboardPosaunenwarteDetailPage() {
               user.posaunenwarteResponsibilities.length === 0) && (
               <div className="py-8 text-center">
                 <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-                  <MapPinIcon
-                    className="h-12 w-12"
-                  />
+                  <MapPinIcon className="h-12 w-12" />
                 </div>
                 <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
                   Keine Bezirke zugewiesen
@@ -338,18 +330,14 @@ export default function DashboardPosaunenwarteDetailPage() {
             href="/dashboard/posaunenwarte"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
           <Link
             href={`/dashboard/users/${id}`}
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <UserIcon
-              className="h-4 w-4"
-            />
+            <UserIcon className="h-4 w-4" />
             Benutzerprofil öffnen
           </Link>
         </div>

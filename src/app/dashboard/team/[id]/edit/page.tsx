@@ -435,9 +435,7 @@ export default function EditTeamPage() {
                         className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
                         title="Entfernen"
                       >
-                        <TrashIcon
-                          className="h-5 w-5"
-                        />
+                        <TrashIcon className="h-5 w-5" />
                       </button>
                     </div>
                   </div>

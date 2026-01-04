@@ -7,7 +7,18 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowLeftIcon, ArrowRightIcon, BuildingIcon, CalendarIcon, CircleXIcon, Edit, EditIcon, PencilIcon, UsersIcon, X } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BuildingIcon,
+  CalendarIcon,
+  CircleXIcon,
+  Edit,
+  EditIcon,
+  PencilIcon,
+  UsersIcon,
+  X,
+} from "lucide-react";
 import { UserIcon } from "lucide-react";
 
 export default function ViewRegistrationPage() {
@@ -202,9 +213,7 @@ export default function ViewRegistrationPage() {
                   href={`/registrations/${registration.id}/edit`}
                   className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
                 >
-                  <EditIcon
-                    className="h-4 w-4"
-                  />
+                  <EditIcon className="h-4 w-4" />
                   Bearbeiten
                 </Link>
               )}
@@ -224,9 +233,7 @@ export default function ViewRegistrationPage() {
         {/* Course Info Card */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <CalendarIcon
-              className="text-primary h-5 w-5"
-            />
+            <CalendarIcon className="text-primary h-5 w-5" />
             Kursdetails
           </h2>
           <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -275,9 +282,7 @@ export default function ViewRegistrationPage() {
               className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
             >
               Zur Kursseite
-              <ArrowRightIcon
-                className="h-4 w-4"
-              />
+              <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -285,9 +290,7 @@ export default function ViewRegistrationPage() {
         {/* Registrant Info */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <UserIcon
-              className="text-primary h-5 w-5"
-            />
+            <UserIcon className="text-primary h-5 w-5" />
             Anmelder
           </h2>
           <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -325,9 +328,7 @@ export default function ViewRegistrationPage() {
         {registration.useSeparateBilling && (
           <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <BuildingIcon
-                className="text-primary h-5 w-5"
-              />
+              <BuildingIcon className="text-primary h-5 w-5" />
               Rechnungsadresse
             </h2>
             <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -387,9 +388,7 @@ export default function ViewRegistrationPage() {
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-200 p-6 dark:border-gray-700">
             <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <UsersIcon
-                className="text-primary h-5 w-5"
-              />
+              <UsersIcon className="text-primary h-5 w-5" />
               Teilnehmer ({registration.participants.length})
             </h2>
           </div>
@@ -471,9 +470,7 @@ export default function ViewRegistrationPage() {
         {registration.notes && (
           <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <PencilIcon
-                className="text-primary h-5 w-5"
-              />
+              <PencilIcon className="text-primary h-5 w-5" />
               Anmerkungen
             </h2>
             <p className="whitespace-pre-wrap text-gray-600 dark:text-gray-400">
@@ -488,9 +485,7 @@ export default function ViewRegistrationPage() {
             href="/registrations"
             className="text-primary hover:text-primary-dark inline-flex items-center gap-2 text-sm font-medium transition-colors"
           >
-            <ArrowLeftIcon
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

@@ -9,7 +9,13 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
-import { EyeIcon, FileIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  EyeIcon,
+  FileIcon,
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -112,8 +118,7 @@ export default function DashboardBlaeserheftePage() {
             href="/dashboard/blaeserhefte/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <PlusIcon
-              className="h-5 w-5" />
+            <PlusIcon className="h-5 w-5" />
             Neues Bläserheft
           </Link>
         </div>
@@ -134,8 +139,7 @@ export default function DashboardBlaeserheftePage() {
               href="/dashboard/blaeserhefte/new"
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
             >
-              <PlusIcon
-                className="h-5 w-5" />
+              <PlusIcon className="h-5 w-5" />
               Bläserheft erstellen
             </Link>
           </div>
@@ -244,17 +248,14 @@ export default function DashboardBlaeserheftePage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <EyeIcon
-                              className="h-4 w-4"
-                            />
+                            <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/dashboard/blaeserhefte/${heft.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bearbeiten"
                           >
-                            <PencilIcon
-                              className="h-4 w-4" />
+                            <PencilIcon className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(heft.id)}
@@ -265,9 +266,7 @@ export default function DashboardBlaeserheftePage() {
                             {deletingId === heft.id ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                             ) : (
-                              <TrashIcon
-                                className="h-4 w-4"
-                              />
+                              <TrashIcon className="h-4 w-4" />
                             )}
                           </button>
                         </div>

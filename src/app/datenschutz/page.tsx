@@ -804,9 +804,7 @@ export default function DatenschutzPage() {
                   className="text-primary inline-flex items-center gap-1 hover:underline"
                 >
                   Zur Kontaktseite
-                  <ArrowRightIcon
-                    className="h-4 w-4"
-                  />
+                  <ArrowRightIcon className="h-4 w-4" />
                 </Link>
               </div>
             </div>

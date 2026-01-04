@@ -193,9 +193,7 @@ export default function AktuellesPage() {
                   }}
                   aria-label="Filter zurücksetzen"
                 >
-                  <XCircleIcon
-                    className="h-5 w-5"
-                  />
+                  <XCircleIcon className="h-5 w-5" />
                 </button>
               )}
               <button
@@ -207,9 +205,7 @@ export default function AktuellesPage() {
                 }`}
                 aria-label="Filter öffnen"
               >
-                  <FilterIcon
-                  className="h-5 w-5"
-                />
+                <FilterIcon className="h-5 w-5" />
                 {/* Active Filter Badge */}
                 {hasActiveFilters && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
@@ -286,9 +282,7 @@ export default function AktuellesPage() {
           {filteredPinned.length > 0 && (
             <div className="mb-12">
               <h2 className="text-dark dark:text-dark-text border-primary mb-4 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
-                <PinIcon
-                  className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6"
-                />
+                <PinIcon className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6" />
                 Angepinnte Beiträge
               </h2>
               <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -338,9 +332,7 @@ export default function AktuellesPage() {
           {/* No Results */}
           {totalFiltered === 0 && (
             <div className="py-12 text-center">
-              <CircleXIcon
-                className="mx-auto mb-4 h-16 w-16 text-gray-300"
-              />
+              <CircleXIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <p className="mb-4 text-base text-gray-600 md:text-lg dark:text-gray-400">
                 Keine Beiträge gefunden.
               </p>

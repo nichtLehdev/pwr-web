@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { AlertTriangle, Users, Calendar, MapPin, ChevronRight } from "lucide-react";
+import {
+  AlertTriangle,
+  Users,
+  Calendar,
+  MapPin,
+  ChevronRight,
+} from "lucide-react";
 
 interface EventCardProps {
   id: string;

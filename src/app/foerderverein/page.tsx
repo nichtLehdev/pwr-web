@@ -3,8 +3,13 @@ import PageHeader from "../_components/general/page-header";
 import { api } from "@/trpc/server";
 import PeopleCard from "../_components/general/people-card";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import { DownloadIcon, HandCoinsIcon, MusicIcon, CalendarIcon } from "lucide-react";
-import { MailIcon, GiftIcon  } from "lucide-react";
+import {
+  DownloadIcon,
+  HandCoinsIcon,
+  MusicIcon,
+  CalendarIcon,
+} from "lucide-react";
+import { MailIcon, GiftIcon } from "lucide-react";
 import { UsersIcon } from "lucide-react";
 
 const sonderaktionen = [
@@ -87,9 +92,7 @@ export default async function FoerdervereinPage() {
                   className="border-foerderverein dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-l-4 bg-white p-6 shadow-lg"
                 >
                   <div className="mb-4 flex items-start gap-3">
-                    <MusicIcon
-                      className="text-foerderverein h-8 w-8 shrink-0"
-                    />
+                    <MusicIcon className="text-foerderverein h-8 w-8 shrink-0" />
                     <div>
                       <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         {aktion.title}
@@ -122,9 +125,7 @@ export default async function FoerdervereinPage() {
                 href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                 className="bg-foerderverein inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <MailIcon
-                  className="mr-2 h-6 w-6"
-                />
+                <MailIcon className="mr-2 h-6 w-6" />
                 Jetzt Mitglied werden
               </a>
             </div>
@@ -149,9 +150,7 @@ export default async function FoerdervereinPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon 
-                    className="h-6 w-6 text-white"
-                  />
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Auswahlchorarbeit
@@ -165,9 +164,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Geschwisterermäßigung
@@ -180,9 +177,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Lehrgangskosten
@@ -195,9 +190,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Projektförderung
@@ -232,34 +225,26 @@ export default async function FoerdervereinPage() {
 
               <div className="mb-8 space-y-4">
                 <div className="flex items-start gap-3">
-                  <HandCoinsIcon
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                  />
+                  <HandCoinsIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>Günstiger Jahresbeitrag: nur 36 €</strong>
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <MusicIcon
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                  />
+                  <MusicIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     Einladung zur jährlichen Mitgliederversammlung mit Berichten
                     und Zukunftsplanungen
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <CalendarIcon
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                  />
+                  <CalendarIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     Flexible Kündigung möglich bis 3 Monate vor Jahresende
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <GiftIcon
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                  />
+                  <GiftIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>2025:</strong> Geschenk-CD für Neumitglieder!
                   </p>
@@ -271,9 +256,7 @@ export default async function FoerdervereinPage() {
                   href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                   className="bg-foerderverein inline-flex items-center justify-center rounded-lg px-8 py-3 font-semibold text-white transition-opacity hover:opacity-90"
                 >
-                  <MailIcon
-                    className="mr-2 h-5 w-5"
-                  />
+                  <MailIcon className="mr-2 h-5 w-5" />
                   Mitglied werden
                 </a>
                 <a
@@ -282,9 +265,7 @@ export default async function FoerdervereinPage() {
                   rel="noopener noreferrer"
                   className="border-foerderverein text-foerderverein hover:bg-foerderverein inline-flex items-center justify-center rounded-lg border-2 bg-white px-8 py-3 font-semibold transition-colors hover:text-white"
                 >
-                  <DownloadIcon
-                    className="mr-2 h-5 w-5"
-                  />
+                  <DownloadIcon className="mr-2 h-5 w-5" />
                   Flyer herunterladen
                 </a>
               </div>
@@ -363,9 +344,7 @@ export default async function FoerdervereinPage() {
                   href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=CD-Bestellung 'Unter Sternen und Satelliten'"
                   className="bg-foerderverein inline-flex w-full items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
                 >
-                  <MailIcon
-                    className="mr-2 h-5 w-5"
-                  />
+                  <MailIcon className="mr-2 h-5 w-5" />
                   Jetzt bestellen
                 </a>
               </div>

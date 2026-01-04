@@ -210,9 +210,7 @@ export default async function PosaunenratPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <BuildingIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <BuildingIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Strategische Führung
@@ -225,9 +223,7 @@ export default async function PosaunenratPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Personalentscheidungen
@@ -240,9 +236,7 @@ export default async function PosaunenratPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <BanknoteIcon
-                    className="h-6 w-6 text-white" 
-                  />
+                  <BanknoteIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Finanzverwaltung
@@ -255,9 +249,7 @@ export default async function PosaunenratPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <CheckIcon
-                    className="h-6 w-6 text-white"
-                  />
+                  <CheckIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                   Beschlusskontrolle
@@ -289,9 +281,7 @@ export default async function PosaunenratPage() {
                 className="text-primary inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold transition-colors hover:bg-gray-100"
               >
                 Zum Vorstand
-                <ArrowRightIcon
-                  className="ml-2 h-5 w-5"
-                />
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/kontakt"

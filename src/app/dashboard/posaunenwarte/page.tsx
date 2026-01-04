@@ -93,9 +93,7 @@ export default function DashboardPosaunenwartenPage() {
               href="/dashboard/users?role=LPW,RPW"
               className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <ArrowLeftIcon
-                className="h-4 w-4"
-              />
+              <ArrowLeftIcon className="h-4 w-4" />
               Benutzer verwalten
             </Link>
           </div>
@@ -104,9 +102,7 @@ export default function DashboardPosaunenwartenPage() {
         {/* Info Box */}
         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="flex gap-3">
-            <ArrowLeftIcon
-              className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-            />
+            <ArrowLeftIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
             <div className="text-sm text-blue-800 dark:text-blue-300">
               <p className="font-medium">Hinweis zur Verwaltung</p>
               <p className="mt-1">
@@ -123,9 +119,7 @@ export default function DashboardPosaunenwartenPage() {
         {!posaunenwarte || posaunenwarte.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <UsersIcon
-                className="h-12 w-12"
-              />
+              <UsersIcon className="h-12 w-12" />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Keine Posaunenwarte gefunden
@@ -179,9 +173,7 @@ export default function DashboardPosaunenwartenPage() {
                             </div>
                           ) : (
                             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                              <UserIcon
-                                className="h-5 w-5"
-                              />
+                              <UserIcon className="h-5 w-5" />
                             </div>
                           )}
                           <div>
@@ -240,27 +232,21 @@ export default function DashboardPosaunenwartenPage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <EyeIcon
-                              className="h-4 w-4"
-                            />
+                            <EyeIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/dashboard/posaunenwarte/${person.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bezirke bearbeiten"
                           >
-                            <EditIcon
-                              className="h-4 w-4"
-                            />
+                            <EditIcon className="h-4 w-4" />
                           </Link>
                           <Link
                             href={`/dashboard/users/${person.id}`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Benutzerprofil"
                           >
-                            <UserIcon
-                              className="h-4 w-4"
-                            />
+                            <UserIcon className="h-4 w-4" />
                           </Link>
                         </div>
                       </td>

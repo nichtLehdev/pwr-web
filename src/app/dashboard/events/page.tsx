@@ -91,9 +91,7 @@ export default function DashboardEventsPage() {
               onClick={() => setShowSocialMediaModal(true)}
               className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex items-center gap-2 rounded-md border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
-              <InstagramIcon
-                className="h-4 w-4"
-              />
+              <InstagramIcon className="h-4 w-4" />
               Instagram Posts
             </button>
             <Link

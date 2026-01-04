@@ -316,9 +316,7 @@ export default function EventDetailPage() {
                   disabled={approveMutation.isPending}
                   className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
-                  <CheckIcon
-                    className="h-4 w-4"
-                  />
+                  <CheckIcon className="h-4 w-4" />
                   {approveMutation.isPending
                     ? "Wird genehmigt..."
                     : "Genehmigen"}
@@ -327,9 +325,7 @@ export default function EventDetailPage() {
                   onClick={() => setShowRejectModal(true)}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                 >
-                  <XIcon
-                    className="h-4 w-4"
-                  />
+                  <XIcon className="h-4 w-4" />
                   Ablehnen
                 </button>
               </div>
@@ -641,9 +637,7 @@ export default function EventDetailPage() {
             href="/dashboard/events"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium text-gray-600"
           >
-            <ArrowLeftIcon  
-              className="h-4 w-4"
-            />
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

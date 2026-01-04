@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
-import { CalendarIcon, CheckCircleIcon, ExternalLinkIcon, EyeIcon, MapPinIcon, PencilIcon, PinIcon, UserIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  MapPinIcon,
+  PencilIcon,
+  PinIcon,
+  UserIcon,
+} from "lucide-react";
 
 interface DashboardPostCardProps {
   id: string;

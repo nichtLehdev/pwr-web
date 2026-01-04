@@ -14,7 +14,14 @@ import {
   UserRole,
   CustomFieldType,
 } from "~/generated/prisma/enums";
-import { Lock, AlertTriangle, TrashIcon, ArrowUpIcon, ArrowDownIcon, AlertTriangleIcon } from "lucide-react";
+import {
+  Lock,
+  AlertTriangle,
+  TrashIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  AlertTriangleIcon,
+} from "lucide-react";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -1129,9 +1136,7 @@ export default function EditCoursePage() {
                                   className="p-1 text-gray-400 hover:text-red-500"
                                   title="Kategorie entfernen"
                                 >
-                                  <TrashIcon
-                                    className="h-4 w-4"
-                                  />
+                                  <TrashIcon className="h-4 w-4" />
                                 </button>
                               )}
                             </div>
@@ -1299,8 +1304,7 @@ export default function EditCoursePage() {
                             disabled={index === 0}
                             className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                           >
-                            <ArrowUpIcon
-                              className="h-4 w-4" />
+                            <ArrowUpIcon className="h-4 w-4" />
                           </button>
                           <button
                             type="button"
@@ -1308,18 +1312,14 @@ export default function EditCoursePage() {
                             disabled={index === customFields.length - 1}
                             className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                           >
-                            <ArrowDownIcon
-                              className="h-4 w-4"
-                            />
+                            <ArrowDownIcon className="h-4 w-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => removeCustomField(field.id)}
                             className="p-1 text-gray-400 hover:text-red-500"
                           >
-                            <TrashIcon
-                              className="h-4 w-4"
-                            />
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       )}
@@ -1498,9 +1498,7 @@ export default function EditCoursePage() {
               !isHigherRole && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
                   <div className="flex items-start gap-3">
-                    <AlertTriangleIcon
-                      className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500"
-                    />
+                    <AlertTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
                     <div>
                       <p className="font-medium text-amber-800 dark:text-amber-200">
                         {course?.status === ContentStatus.APPROVED

@@ -104,7 +104,12 @@ export default function EditHistoryEventPage() {
       title: title.trim(),
       description: description.trim(),
       category: category
-        ? (category as "FOUNDING" | "MILESTONE" | "EXPANSION" | "MODERNIZATION" | "PARTNERSHIP")
+        ? (category as
+            | "FOUNDING"
+            | "MILESTONE"
+            | "EXPANSION"
+            | "MODERNIZATION"
+            | "PARTNERSHIP")
         : null,
       imageId: imageId || null,
       imageAlt: imageAlt.trim() || undefined,
@@ -425,4 +430,3 @@ export default function EditHistoryEventPage() {
     </main>
   );
 }
-

@@ -31,9 +31,7 @@ export default function HistoryEventDetailPage() {
   useEffect(() => {
     if (!sessionLoading && !session?.user && !hasRedirected.current) {
       hasRedirected.current = true;
-      router.push(
-        `/login?callbackUrl=/dashboard/history-timeline/${eventId}`,
-      );
+      router.push(`/login?callbackUrl=/dashboard/history-timeline/${eventId}`);
     }
   }, [session, sessionLoading, router, eventId]);
 
@@ -127,7 +125,7 @@ export default function HistoryEventDetailPage() {
                 />
               </div>
             ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+              <div className="bg-primary flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white">
                 <svg
                   className="h-10 w-10"
                   fill="none"
@@ -149,7 +147,7 @@ export default function HistoryEventDetailPage() {
                   {historyEvent.title}
                 </h1>
                 {historyEvent.category && (
-                  <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                  <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                     {categoryLabels[historyEvent.category] ||
                       historyEvent.category}
                   </span>
@@ -264,11 +262,14 @@ export default function HistoryEventDetailPage() {
                   Erstellt am
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {new Date(historyEvent.createdAt).toLocaleDateString(
+                    "de-DE",
+                    {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )}
                 </dd>
               </div>
               <div>
@@ -276,11 +277,14 @@ export default function HistoryEventDetailPage() {
                   Zuletzt aktualisiert
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.updatedAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {new Date(historyEvent.updatedAt).toLocaleDateString(
+                    "de-DE",
+                    {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    },
+                  )}
                 </dd>
               </div>
             </dl>
@@ -313,4 +317,3 @@ export default function HistoryEventDetailPage() {
     </main>
   );
 }
-

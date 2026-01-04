@@ -8,7 +8,13 @@ import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";
 import { DownloadCategory } from "~/generated/prisma/enums";
 import LoadingSpinner from "../_components/general/loading-spinner";
-import { ArrowRightIcon, DownloadIcon, FileIcon, Search, X } from "lucide-react";
+import {
+  ArrowRightIcon,
+  DownloadIcon,
+  FileIcon,
+  Search,
+  X,
+} from "lucide-react";
 
 export default function MaterialienPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | "all">(
@@ -237,9 +243,7 @@ export default function MaterialienPage() {
                             {/* Meta */}
                             <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                               <span className="inline-flex items-center gap-1">
-                                <FileIcon
-                                  className="h-4 w-4"
-                                  />
+                                <FileIcon className="h-4 w-4" />
                                 {download.fileType.toUpperCase()}
                               </span>
                               {download.fileSize && (
@@ -287,9 +291,7 @@ export default function MaterialienPage() {
                               download
                               className="bg-district-4 hover:bg-district-4/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
                             >
-                              <DownloadIcon
-                                className="h-4 w-4"
-                              />
+                              <DownloadIcon className="h-4 w-4" />
                               Download
                             </Link>
                           </div>
@@ -299,9 +301,7 @@ export default function MaterialienPage() {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <FileIcon
-                      className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500"
-                    />
+                    <FileIcon className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500" />
                     <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Keine Downloads gefunden
                     </h3>
@@ -341,9 +341,7 @@ export default function MaterialienPage() {
               className="text-district-4 inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
             >
               Kontakt aufnehmen
-                <ArrowRightIcon
-                  className="h-5 w-5"
-              />
+              <ArrowRightIcon className="h-5 w-5" />
             </Link>
           </div>
         </div>
