@@ -8,7 +8,7 @@ import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";
 import { DownloadCategory } from "~/generated/prisma/enums";
 import LoadingSpinner from "../_components/general/loading-spinner";
-import { Search, X } from "lucide-react";
+import { ArrowRightIcon, DownloadIcon, FileIcon, Search, X } from "lucide-react";
 
 export default function MaterialienPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | "all">(
@@ -177,19 +177,7 @@ export default function MaterialienPage() {
                         onClick={() => setSearchQuery("")}
                         className="hover:text-gray-900"
                       >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <X className="h-4 w-4" />
                       </button>
                     </span>
                   )}
@@ -249,19 +237,9 @@ export default function MaterialienPage() {
                             {/* Meta */}
                             <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                               <span className="inline-flex items-center gap-1">
-                                <svg
+                                <FileIcon
                                   className="h-4 w-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                                   />
-                                </svg>
                                 {download.fileType.toUpperCase()}
                               </span>
                               {download.fileSize && (
@@ -309,19 +287,9 @@ export default function MaterialienPage() {
                               download
                               className="bg-district-4 hover:bg-district-4/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
                             >
-                              <svg
+                              <DownloadIcon
                                 className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                />
-                              </svg>
+                              />
                               Download
                             </Link>
                           </div>
@@ -331,19 +299,9 @@ export default function MaterialienPage() {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <svg
+                    <FileIcon
                       className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
+                    />
                     <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                       Keine Downloads gefunden
                     </h3>
@@ -383,19 +341,9 @@ export default function MaterialienPage() {
               className="text-district-4 inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
             >
               Kontakt aufnehmen
-              <svg
-                className="ml-2 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+                <ArrowRightIcon
+                  className="h-5 w-5"
+              />
             </Link>
           </div>
         </div>

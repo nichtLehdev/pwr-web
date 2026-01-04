@@ -8,7 +8,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
-import { Edit, Trash2 } from "lucide-react";
+import { ArrowLeftIcon, Edit, Trash2 } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -301,19 +301,9 @@ export default function VorstandDetailPage() {
             href="/dashboard/vorstand"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
           >
-            <svg
+            <ArrowLeftIcon
               className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            />
             Zurück zur Übersicht
           </Link>
         </div>

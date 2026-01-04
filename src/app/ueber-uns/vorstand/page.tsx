@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
 import PageHeader from "@/app/_components/general/page-header";
+import { ArrowRightIcon, BookOpenIcon, CircleUserRoundIcon, ClockIcon, HeartIcon, MailIcon, SquareArrowOutUpRightIcon, UsersIcon } from "lucide-react";
+import { CheckIcon, PhoneIcon } from "lucide-react";
 
 export default async function VorstandPage() {
   const vorstandMembers = await api.organization.getVorstand();
@@ -89,19 +91,9 @@ export default async function VorstandPage() {
                           href={`mailto:${member.user.email}`}
                           className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
-                          <svg
+                          <MailIcon
                             className="mr-2 h-4 w-4 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            />
-                          </svg>
+                          />
                           E-Mail senden
                         </Link>
                         {(member.user.phone || member.phone) && (
@@ -112,19 +104,9 @@ export default async function VorstandPage() {
                             ).replace(/[^0-9+]/g, "")}`}
                             className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
-                            <svg
+                            <PhoneIcon
                               className="mr-2 h-4 w-4 shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                              />
-                            </svg>
+                            />
                             {member.user.phone || member.phone}
                           </Link>
                         )}
@@ -166,19 +148,9 @@ export default async function VorstandPage() {
                           href={`mailto:${member.email}`}
                           className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                         >
-                          <svg
+                          <MailIcon
                             className="mr-2 h-4 w-4 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            />
-                          </svg>
+                          />
                           E-Mail senden
                         </Link>
                         {member.phone && (
@@ -186,19 +158,9 @@ export default async function VorstandPage() {
                             href={`tel:${member.phone.replace(/[^0-9+]/g, "")}`}
                             className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
                           >
-                            <svg
+                            <PhoneIcon
                               className="mr-2 h-4 w-4 shrink-0"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                              />
-                            </svg>
+                            />
                             {member.phone}
                           </Link>
                         )}
@@ -212,19 +174,9 @@ export default async function VorstandPage() {
 
           <div className="bg-primary/10 dark:bg-primary/20 mx-auto mt-12 max-w-3xl rounded-lg p-6">
             <div className="flex items-start gap-4">
-              <svg
+              <CircleUserRoundIcon
                 className="text-primary mt-1 h-6 w-6 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              />
               <div>
                 <h3 className="text-dark dark:text-dark-text mb-2 font-bold">
                   Kontakt zum Vorstand
@@ -263,19 +215,9 @@ export default async function VorstandPage() {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
+                <BookOpenIcon
                   className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Geschäftsführung
@@ -288,19 +230,9 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
+                <CheckIcon
                   className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                  />
-                </svg>
+                />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Beschlussumsetzung
@@ -313,19 +245,9 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
+                <ClockIcon
                   className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Eilentscheidungen
@@ -338,19 +260,7 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-3 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
-                  className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
+                <UsersIcon className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Vertretung nach außen
@@ -363,19 +273,9 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
+                <SquareArrowOutUpRightIcon
                   className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Berichterstattung
@@ -388,19 +288,9 @@ export default async function VorstandPage() {
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <svg
+                <HeartIcon
                   className="h-6 w-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
+                />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
                 Ehrenamtliche Arbeit
@@ -496,19 +386,9 @@ export default async function VorstandPage() {
                     className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                   >
                     Zum Posaunenrat
-                    <svg
+                    <ArrowRightIcon
                       className="ml-2 h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    />
                   </Link>
                   <Link
                     href="/ueber-uns/struktur"

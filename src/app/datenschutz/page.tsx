@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
+import { ArrowRightIcon } from "lucide-react";
 
 export const metadata = {
   title: "Datenschutzerklärung | Posaunenwerk Rheinland",
@@ -803,19 +804,9 @@ export default function DatenschutzPage() {
                   className="text-primary inline-flex items-center gap-1 hover:underline"
                 >
                   Zur Kontaktseite
-                  <svg
+                  <ArrowRightIcon
                     className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  />
                 </Link>
               </div>
             </div>

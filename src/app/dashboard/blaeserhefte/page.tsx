@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
+import { EyeIcon, FileIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -111,19 +112,8 @@ export default function DashboardBlaeserheftePage() {
             href="/dashboard/blaeserhefte/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <PlusIcon
+              className="h-5 w-5" />
             Neues Bläserheft
           </Link>
         </div>
@@ -132,14 +122,7 @@ export default function DashboardBlaeserheftePage() {
         {!hefte || hefte.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
+              <FileIcon className="h-12 w-12" />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Keine Bläserhefte vorhanden
@@ -151,19 +134,8 @@ export default function DashboardBlaeserheftePage() {
               href="/dashboard/blaeserhefte/new"
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
             >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <PlusIcon
+                className="h-5 w-5" />
               Bläserheft erstellen
             </Link>
           </div>
@@ -209,19 +181,7 @@ export default function DashboardBlaeserheftePage() {
                             </div>
                           ) : (
                             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-10 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
-                              <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                                />
-                              </svg>
+                              <FileIcon className="h-5 w-5" />
                             </div>
                           )}
                           <div>
@@ -284,44 +244,17 @@ export default function DashboardBlaeserheftePage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <svg
+                            <EyeIcon
                               className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
+                            />
                           </Link>
                           <Link
                             href={`/dashboard/blaeserhefte/${heft.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bearbeiten"
                           >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            <PencilIcon
+                              className="h-4 w-4" />
                           </Link>
                           <button
                             onClick={() => handleDelete(heft.id)}
@@ -332,19 +265,9 @@ export default function DashboardBlaeserheftePage() {
                             {deletingId === heft.id ? (
                               <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
                             ) : (
-                              <svg
+                              <TrashIcon
                                 className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
+                              />
                             )}
                           </button>
                         </div>

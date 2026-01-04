@@ -12,7 +12,7 @@ import {
   EventEnsembleType,
   UserRole,
 } from "~/generated/prisma/enums";
-import { Edit, Trash2 } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -316,19 +316,9 @@ export default function EventDetailPage() {
                   disabled={approveMutation.isPending}
                   className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
-                  <svg
+                  <CheckIcon
                     className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  />
                   {approveMutation.isPending
                     ? "Wird genehmigt..."
                     : "Genehmigen"}
@@ -337,19 +327,9 @@ export default function EventDetailPage() {
                   onClick={() => setShowRejectModal(true)}
                   className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
                 >
-                  <svg
+                  <XIcon
                     className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  />
                   Ablehnen
                 </button>
               </div>
@@ -661,19 +641,9 @@ export default function EventDetailPage() {
             href="/dashboard/events"
             className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium text-gray-600"
           >
-            <svg
+            <ArrowLeftIcon  
               className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            />
             Zurück zur Übersicht
           </Link>
         </div>

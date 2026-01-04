@@ -7,6 +7,8 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole } from "~/generated/prisma/enums";
+import { ArrowLeftIcon, EditIcon, EyeIcon } from "lucide-react";
+import { UserIcon, UsersIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -91,19 +93,9 @@ export default function DashboardPosaunenwartenPage() {
               href="/dashboard/users?role=LPW,RPW"
               className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <svg
+              <ArrowLeftIcon
                 className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                />
-              </svg>
+              />
               Benutzer verwalten
             </Link>
           </div>
@@ -112,19 +104,9 @@ export default function DashboardPosaunenwartenPage() {
         {/* Info Box */}
         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="flex gap-3">
-            <svg
+            <ArrowLeftIcon
               className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            />
             <div className="text-sm text-blue-800 dark:text-blue-300">
               <p className="font-medium">Hinweis zur Verwaltung</p>
               <p className="mt-1">
@@ -141,14 +123,9 @@ export default function DashboardPosaunenwartenPage() {
         {!posaunenwarte || posaunenwarte.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                />
-              </svg>
+              <UsersIcon
+                className="h-12 w-12"
+              />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
               Keine Posaunenwarte gefunden
@@ -202,19 +179,9 @@ export default function DashboardPosaunenwartenPage() {
                             </div>
                           ) : (
                             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                              <svg
+                              <UserIcon
                                 className="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                />
-                              </svg>
+                              />
                             </div>
                           )}
                           <div>
@@ -273,63 +240,27 @@ export default function DashboardPosaunenwartenPage() {
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Details anzeigen"
                           >
-                            <svg
+                            <EyeIcon
                               className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
+                            />
                           </Link>
                           <Link
                             href={`/dashboard/posaunenwarte/${person.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Bezirke bearbeiten"
                           >
-                            <svg
+                            <EditIcon
                               className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            />
                           </Link>
                           <Link
                             href={`/dashboard/users/${person.id}`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
                             title="Benutzerprofil"
                           >
-                            <svg
+                            <UserIcon
                               className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                              />
-                            </svg>
+                            />
                           </Link>
                         </div>
                       </td>
