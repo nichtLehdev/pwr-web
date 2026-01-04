@@ -19,6 +19,8 @@ import {
   EyeOff,
   X,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
