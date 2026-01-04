@@ -13,6 +13,13 @@ import {
   CustomFieldType,
   UserRole,
 } from "~/generated/prisma/enums";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Lock,
+  Trash2,
+  TrashIcon,
+} from "lucide-react";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -798,19 +805,7 @@ export default function NewCoursePage() {
                       disabled
                       className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
                     />
-                    <svg
-                      className="h-5 w-5 shrink-0 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
+                    <Lock className="h-5 w-5 shrink-0 text-gray-400" />
                   </div>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Du kannst nur Lehrgänge für deinen eigenen Bezirk erstellen.
@@ -1028,19 +1023,7 @@ export default function NewCoursePage() {
                             onClick={() => removePriceOption(option.id)}
                             className="p-1 text-gray-400 hover:text-red-500"
                           >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       ))}
@@ -1128,19 +1111,7 @@ export default function NewCoursePage() {
                           disabled={index === 0}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 15l7-7 7 7"
-                            />
-                          </svg>
+                          <ArrowUpIcon className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
@@ -1148,38 +1119,14 @@ export default function NewCoursePage() {
                           disabled={index === customFields.length - 1}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
+                          <ArrowDownIcon className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
                           onClick={() => removeCustomField(field.id)}
                           className="p-1 text-gray-400 hover:text-red-500"
                         >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
+                          <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

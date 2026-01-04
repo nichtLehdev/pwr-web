@@ -9,6 +9,12 @@ import { getDistrictColor } from "@/lib/district-color";
 import ImageLightbox from "./image-lightbox";
 import PostCard from "./post-card";
 import type { FileType } from "~/generated/prisma/enums";
+import {
+  ArrowLeftIcon,
+  ArrowUpRightIcon,
+  DownloadIcon,
+  PinIcon,
+} from "lucide-react";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
 type PostListItem = RouterOutputs["posts"]["getAll"]["posts"][number];
@@ -132,13 +138,7 @@ export default function PostDetailView({
                 )}
                 {post.pinned && (
                   <span className="flex items-center gap-1 text-sm">
-                    <svg
-                      className="h-4 w-4"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M16 12V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v8l-2 2v2h5v5l1 1 1-1v-5h5v-2l-2-2zm-6 0V4h4v8.13l1.07 1.07.6.6H8.34l.6-.6L10 12.13z" />
-                    </svg>
+                    <PinIcon className="h-4 w-4" />
                     Angepinnt
                   </span>
                 )}
@@ -190,13 +190,7 @@ export default function PostDetailView({
               )}
               {post.pinned && (
                 <span className="flex items-center gap-1 text-sm">
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M16 12V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v8l-2 2v2h5v5l1 1 1-1v-5h5v-2l-2-2zm-6 0V4h4v8.13l1.07 1.07.6.6H8.34l.6-.6L10 12.13z" />
-                  </svg>
+                  <PinIcon className="h-4 w-4" />
                   Angepinnt
                 </span>
               )}
@@ -262,19 +256,11 @@ export default function PostDetailView({
                 href="/aktuelles"
                 className="text-primary hover:text-primary-dark inline-flex items-center font-semibold transition-colors"
               >
-                <svg
+                <ArrowLeftIcon
                   className="mr-2 h-5 w-5"
                   fill="none"
                   stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                />
                 Zurück zur Übersicht
               </Link>
 
@@ -337,19 +323,7 @@ export default function PostDetailView({
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-4xl">
               <h2 className="text-dark dark:text-dark-text mb-6 flex items-center gap-2 text-xl font-bold md:text-2xl">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <DownloadIcon className="h-6 w-6" />
                 Downloads
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -379,19 +353,7 @@ export default function PostDetailView({
                           ` • ${formatFileSize(download.fileSize)}`}
                       </p>
                     </div>
-                    <svg
-                      className="group-hover:text-primary h-5 w-5 shrink-0 text-gray-400 transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
+                    <ArrowUpRightIcon className="h-5 w-5" />
                   </a>
                 ))}
               </div>

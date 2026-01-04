@@ -12,6 +12,8 @@ import {
   DownloadCategory,
   FileType,
 } from "~/generated/prisma/enums";
+import { CheckIcon, EditIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { DownloadIcon, TrashIcon } from "lucide-react";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -393,19 +395,7 @@ export default function DashboardDownloadsPage() {
             onClick={() => setShowUploadModal(true)}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
+            <PlusIcon className="h-4 w-4" />
             Neuer Download
           </button>
         </div>
@@ -472,19 +462,7 @@ export default function DashboardDownloadsPage() {
           </div>
         ) : !filteredDownloads?.length ? (
           <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-              />
-            </svg>
+            <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
             <p className="dark:text-dark-muted mt-4 text-gray-500">
               Keine Downloads gefunden
             </p>
@@ -561,19 +539,7 @@ export default function DashboardDownloadsPage() {
                           className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                           title="Herunterladen"
                         >
-                          <svg
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                            />
-                          </svg>
+                          <DownloadIcon className="h-5 w-5" />
                         </a>
 
                         {/* Edit button for reviewers */}
@@ -583,19 +549,7 @@ export default function DashboardDownloadsPage() {
                             className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                             title="Bearbeiten"
                           >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
+                            <EditIcon className="h-5 w-5" />
                           </button>
                         )}
 
@@ -613,19 +567,7 @@ export default function DashboardDownloadsPage() {
                               className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                               title="Freigeben"
                             >
-                              <svg
-                                className="h-5 w-5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
+                              <CheckIcon className="h-5 w-5" />
                             </button>
                           )}
 
@@ -636,19 +578,7 @@ export default function DashboardDownloadsPage() {
                             className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                             title="Löschen"
                           >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
+                            <TrashIcon className="h-5 w-5" />
                           </button>
                         )}
                       </div>
@@ -729,19 +659,7 @@ export default function DashboardDownloadsPage() {
                     </div>
                   ) : uploadedFileUrl ? (
                     <div className="flex flex-col items-center gap-2">
-                      <svg
-                        className="h-10 w-10 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <CheckIcon className="h-10 w-10 text-green-500" />
                       <p className="text-sm font-medium text-green-600 dark:text-green-400">
                         Datei hochgeladen
                       </p>
@@ -751,19 +669,9 @@ export default function DashboardDownloadsPage() {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2">
-                      <svg
+                      <PlusIcon
                         className={`h-10 w-10 ${isDragging ? "text-primary" : "text-gray-400"}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                        />
-                      </svg>
+                      />
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {isDragging
                           ? "Datei hier ablegen"

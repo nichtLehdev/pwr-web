@@ -5,6 +5,8 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import PageHeader from "../../_components/general/page-header";
 import LoadingSpinner from "../../_components/general/loading-spinner";
+import { ArrowLeftIcon, CheckIcon, DownloadIcon, FileIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 export default function BlechblattPage() {
   const { data: editions, isLoading } =
@@ -137,19 +139,7 @@ export default function BlechblattPage() {
                         download
                         className="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       >
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                          />
-                        </svg>
+                        <DownloadIcon className="h-4 w-4" />
                         Herunterladen
                       </Link>
                     </div>
@@ -186,17 +176,7 @@ export default function BlechblattPage() {
                           PDF
                         </div>
                         {selectedEdition?.id === edition.id && (
-                          <svg
-                            className="text-primary h-5 w-5"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <CheckIcon className="text-primary h-5 w-5" />
                         )}
                       </div>
                       <h3 className="text-dark dark:text-dark-text line-clamp-2 font-semibold">
@@ -225,19 +205,7 @@ export default function BlechblattPage() {
             /* Empty State */
             <div className="py-16 text-center">
               <div className="bg-primary/10 mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full">
-                <svg
-                  className="text-primary h-10 w-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+                <FileIcon className="text-primary h-10 w-10" />
               </div>
               <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
                 Keine Ausgaben verfügbar
@@ -250,19 +218,7 @@ export default function BlechblattPage() {
                 href="/materialien"
                 className="text-primary hover:text-primary/80 inline-flex items-center gap-2 font-semibold transition-colors"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ArrowLeftIcon className="h-5 w-5" />
                 Zurück zu Materialien
               </Link>
             </div>
@@ -278,19 +234,7 @@ export default function BlechblattPage() {
               {/* About Blechblatt */}
               <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
-                  <svg
-                    className="text-primary h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                    />
-                  </svg>
+                  <FileIcon className="text-primary h-6 w-6" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Über das Blechblatt
@@ -306,19 +250,7 @@ export default function BlechblattPage() {
               {/* Subscription Info */}
               <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="bg-primary/10 mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
-                  <svg
-                    className="text-primary h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <FileIcon className="text-primary h-6 w-6" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Beiträge einreichen
@@ -333,19 +265,7 @@ export default function BlechblattPage() {
                   className="text-primary hover:text-primary/80 inline-flex items-center gap-2 font-semibold transition-colors"
                 >
                   Kontakt aufnehmen
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ArrowRightIcon className="h-4 w-4" />
                 </Link>
               </div>
             </div>
@@ -369,19 +289,7 @@ export default function BlechblattPage() {
               className="text-primary inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
             >
               Alle Materialien ansehen
-              <svg
-                className="ml-2 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ArrowRightIcon className="h-5 w-5" />
             </Link>
           </div>
         </div>

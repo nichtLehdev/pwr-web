@@ -3,86 +3,30 @@
  * Calculates German public holidays based on Easter date
  */
 
+import {
+  CloudIcon,
+  CrossIcon,
+  CrownIcon,
+  EggIcon,
+  FlameIcon,
+  GiftIcon,
+  SparkleIcon,
+} from "lucide-react";
 import React from "react";
+import { WrenchIcon } from "lucide-react";
+import { FlagIcon } from "lucide-react";
+import { ChurchIcon } from "lucide-react";
 
 const icons = {
-  sparkles: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path
-        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </svg>
-  ),
-  crown: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2L15 8.5L22 9L17 14L18.5 21L12 17.5L5.5 21L7 14L2 9L9 8.5L12 2Z" />
-    </svg>
-  ),
-  cross: (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path d="M12 2v20M5 9h14" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  ),
-  egg: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2C8 2 4 6.5 4 12c0 4.5 3.5 10 8 10s8-5.5 8-10c0-5.5-4-10-8-10z" />
-    </svg>
-  ),
-  cloud: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M6.5 17.5c-1.4 0-2.6-.5-3.5-1.4C2 15.1 1.5 13.9 1.5 12.5c0-1.2.3-2.3.9-3.2.6-.9 1.5-1.6 2.6-2 .2-1.7 1-3.2 2.2-4.3C8.4 1.8 10 1 11.8 1c1.4 0 2.7.4 3.8 1.2 1.1.8 2 1.9 2.5 3.2 1.6.2 3 1 4 2.2 1 1.2 1.5 2.7 1.5 4.3 0 1.8-.6 3.3-1.9 4.6-1.2 1.3-2.8 1.9-4.6 1.9h-11z" />
-    </svg>
-  ),
-  flame: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2c-.8 2-2 3.5-3.5 5.5C7 9.5 6 11.5 6 14c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2.5-1-4.5-2.5-6.5C14 5.5 12.8 4 12 2z" />
-    </svg>
-  ),
-  wrench: (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-  flag: (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-  church: (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2l-1 1v2H9v2l3 2v2l-8 4v9h16v-9l-8-4v-2l3-2V5h-2V3l-1-1zm0 2.5V5h2v1.5L12 8 9.5 6.5V5h2V4.5zm0 4.5l6 3v8H6v-8l6-3z" />
-    </svg>
-  ),
+  sparkles: <SparkleIcon className="h-4 w-4" />,
+  crown: <CrownIcon className="h-4 w-4" />,
+  cross: <CrossIcon className="h-4 w-4" />,
+  egg: <EggIcon className="h-4 w-4" />,
+  cloud: <CloudIcon className="h-4 w-4" />,
+  flame: <FlameIcon className="h-4 w-4" />,
+  wrench: <WrenchIcon className="h-4 w-4" />,
+  flag: <FlagIcon className="h-4 w-4" />,
+  church: <ChurchIcon className="h-4 w-4" />,
   candle: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2c-.5 1-1 2-1 3 0 1.1.9 2 2 2s2-.9 2-2c0-1-0.5-2-1-3h-2zm-1 6v14h2V8h-2z" />
@@ -93,21 +37,7 @@ const icons = {
       <path d="M12 2l-2 4h1l-2 4h1l-3 6h4v6h4v-6h4l-3-6h1l-2-4h1l-2-4z" />
     </svg>
   ),
-  gift: (
-    <svg
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-    >
-      <path
-        d="M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
+  gift: <GiftIcon className="h-4 w-4" />,
   oneCandle: (
     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
       <ellipse cx="12" cy="4" rx="2" ry="3" fill="#FFA500" />

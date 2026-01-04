@@ -6,6 +6,18 @@ import PageHeader from "../general/page-header";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  AlertTriangle,
+  CalendarArrowDownIcon,
+  CalendarIcon,
+  CheckCircleIcon,
+  CircleXIcon,
+  MapPinIcon,
+  NavigationIcon,
+  ShareIcon,
+  Users,
+  UsersIcon,
+} from "lucide-react";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -126,19 +138,7 @@ END:VCALENDAR`;
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 {event.cancelled && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg">
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
+                    <AlertTriangle className="h-4 w-4" />
                     ABGESAGT
                   </span>
                 )}
@@ -152,19 +152,7 @@ END:VCALENDAR`;
                 )}
                 {event.openToParticipants && (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <Users className="h-4 w-4" />
                     Mitspielen möglich!
                   </span>
                 )}
@@ -193,19 +181,7 @@ END:VCALENDAR`;
                 onClick={shareEvent}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                  />
-                </svg>
+                <ShareIcon className="h-5 w-5" />
                 <span className="hidden sm:inline">Teilen</span>
               </button>
             </div>
@@ -224,19 +200,7 @@ END:VCALENDAR`;
                 <div className="rounded-lg border-2 border-red-500 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/50">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-                      <svg
-                        className="h-6 w-6 text-red-600 dark:text-red-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                      </svg>
+                      <CircleXIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold text-red-800 dark:text-red-300">
@@ -255,19 +219,7 @@ END:VCALENDAR`;
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-xl font-bold">
-                    <svg
-                      className="text-primary h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <CalendarIcon className="text-primary h-6 w-6" />
                     Datum & Uhrzeit
                   </h2>
                 </div>
@@ -293,25 +245,7 @@ END:VCALENDAR`;
                     onClick={handleDownloadIcs}
                     className="border-primary text-primary hover:bg-primary/10 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors"
                   >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 14l2-2-2-2M12 14v4"
-                      />
-                    </svg>
+                    <CalendarArrowDownIcon className="h-5 w-5" />
                     Zum Kalender hinzufügen (ICS)
                   </button>
                 </div>
@@ -320,25 +254,7 @@ END:VCALENDAR`;
               {/* Location */}
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                  <svg
-                    className="text-primary h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                  <MapPinIcon className="text-primary h-6 w-6" />
                   Veranstaltungsort
                 </h2>
                 {event.location && (
@@ -375,19 +291,7 @@ END:VCALENDAR`;
                       rel="noopener noreferrer"
                       className="bg-primary hover:bg-primary-dark mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                        />
-                      </svg>
+                      <NavigationIcon className="h-5 w-5" />
                       Navigation starten
                     </a>
                   </div>
@@ -411,19 +315,7 @@ END:VCALENDAR`;
               {event.performingEnsembleType && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <svg
-                      className="text-primary h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <UsersIcon className="text-primary h-6 w-6" />
                     Mitwirkende
                   </h2>
                   {event.performingEnsembleType === "AUSWAHLCHOR" &&
@@ -510,19 +402,7 @@ END:VCALENDAR`;
               {event.openToParticipants && (
                 <div className="sticky top-20 rounded-lg bg-linear-to-br from-green-500 to-green-700 p-6 text-white shadow-xl">
                   <div className="mb-4 flex items-start gap-3">
-                    <svg
-                      className="h-8 w-8 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <CheckCircleIcon className="h-8 w-8 shrink-0" />
                     <div>
                       <h3 className="mb-2 text-xl font-bold">
                         Mitspielen möglich!
@@ -583,19 +463,7 @@ END:VCALENDAR`;
               {event.isFree && (
                 <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6 dark:border-green-800 dark:bg-green-900/30">
                   <p className="flex items-center gap-2 text-lg font-bold text-green-800 dark:text-green-400">
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    <CheckCircleIcon className="h-6 w-6 shrink-0" />
                     Eintritt frei
                   </p>
                 </div>

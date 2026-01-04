@@ -11,6 +11,8 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
+import { ImageIcon, SaveIcon, XIcon } from "lucide-react";
+import { MusicIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -265,19 +267,8 @@ export default function NewBlaeserheftPage() {
                   </div>
                 ) : (
                   <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-20 shrink-0 items-center justify-center rounded-lg border bg-gray-100 text-gray-400">
-                    <svg
-                      className="h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <ImageIcon
+                      className="h-8 w-8" />
                   </div>
                 )}
                 <button
@@ -326,19 +317,8 @@ export default function NewBlaeserheftPage() {
               <div className="flex items-center gap-4">
                 {audioSample ? (
                   <div className="dark:bg-dark-background-secondary flex flex-1 items-center gap-3 rounded-lg bg-gray-100 px-3 py-2">
-                    <svg
-                      className="text-primary h-5 w-5 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                      />
-                    </svg>
+                    <MusicIcon
+                      className="h-5 w-5 shrink-0" />
                     <span className="dark:text-dark-text min-w-0 flex-1 truncate text-sm text-gray-700">
                       {audioSample.split("/").pop() || audioSample}
                     </span>
@@ -347,19 +327,9 @@ export default function NewBlaeserheftPage() {
                       onClick={() => setAudioSample("")}
                       className="dark:text-dark-muted shrink-0 text-gray-400 hover:text-red-500"
                     >
-                      <svg
+                      <XIcon
                         className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      />
                     </button>
                   </div>
                 ) : (
@@ -526,19 +496,9 @@ export default function NewBlaeserheftPage() {
                 </>
               ) : (
                 <>
-                  <svg
+                  <SaveIcon
                     className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
+                  />
                   Erstellen
                 </>
               )}

@@ -1,6 +1,13 @@
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
 import ParticipationCard from "../_components/general/participation-card";
+import {
+  ArrowRightIcon,
+  BuildingIcon,
+  ClockIcon,
+  MailIcon,
+  PhoneIcon,
+} from "lucide-react";
 
 export default function UeberUnsPage() {
   const sections = [
@@ -211,19 +218,7 @@ export default function UeberUnsPage() {
                   className="text-primary hover:text-primary-dark dark:hover:text-primary-light inline-flex items-center font-semibold"
                 >
                   Mehr zur Geschichte und Struktur
-                  <svg
-                    className="ml-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ArrowRightIcon className="ml-2 h-5 w-5" />
                 </Link>
               </div>
             </div>
@@ -277,19 +272,7 @@ export default function UeberUnsPage() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-foerderverein flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <ArrowRightIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -306,19 +289,7 @@ export default function UeberUnsPage() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
               <div className="flex items-start gap-4">
                 <div className="bg-district-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
+                  <ArrowRightIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -352,25 +323,7 @@ export default function UeberUnsPage() {
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <svg
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                    <BuildingIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -387,19 +340,7 @@ export default function UeberUnsPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <svg
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
+                    <PhoneIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -416,19 +357,7 @@ export default function UeberUnsPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <svg
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <MailIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -445,19 +374,7 @@ export default function UeberUnsPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary/10 dark:bg-primary/20 shrink-0 rounded-lg p-3">
-                    <svg
-                      className="text-primary dark:text-primary-light h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <ClockIcon className="text-primary dark:text-primary-light h-6 w-6" />
                   </div>
                   <div>
                     <p className="text-dark dark:text-dark-text mb-1 font-semibold">
@@ -489,20 +406,8 @@ export default function UeberUnsPage() {
                   href="/kontakt"
                   className="bg-primary hover:bg-primary-dark inline-flex w-full items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
                   Kontaktformular
+                  <ArrowRightIcon className="mr-2 h-5 w-5" />
                 </Link>
 
                 <div className="flex gap-4">
@@ -566,19 +471,7 @@ export default function UeberUnsPage() {
                   className="text-primary hover:text-primary-dark dark:hover:text-primary-light mt-2 inline-flex items-center text-sm font-semibold"
                 >
                   Newsletter abonnieren
-                  <svg
-                    className="ml-1 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ArrowRightIcon className="ml-1 h-4 w-4" />
                 </Link>
               </div>
             </div>
