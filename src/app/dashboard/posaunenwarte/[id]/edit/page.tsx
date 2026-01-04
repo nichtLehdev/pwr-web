@@ -8,6 +8,9 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { UserRole, PosaunenwartRoleType } from "~/generated/prisma/enums";
+import { ArrowLeftIcon, UserIcon } from "lucide-react";
+import { AlertTriangleIcon, TrashIcon } from "lucide-react";
+import { InfoIcon, PlusIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -217,19 +220,9 @@ export default function DashboardPosaunenwarteEditPage() {
             </div>
           ) : (
             <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-              <svg
+              <UserIcon
                 className="h-8 w-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
+              />
             </div>
           )}
           <div>
@@ -255,19 +248,9 @@ export default function DashboardPosaunenwarteEditPage() {
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex gap-3">
-              <svg
+              <AlertTriangleIcon
                 className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              />
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           </div>
@@ -277,19 +260,9 @@ export default function DashboardPosaunenwarteEditPage() {
         {user.role === "LPW" && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="flex gap-3">
-              <svg
+              <InfoIcon
                 className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              />
               <div className="text-sm text-blue-800 dark:text-blue-300">
                 <p className="font-medium">Hinweis für Landesposaunenwart</p>
                 <p className="mt-1">
@@ -352,19 +325,9 @@ export default function DashboardPosaunenwarteEditPage() {
                     className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                     title="Bezirk entfernen"
                   >
-                    <svg
+                    <TrashIcon
                       className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    />
                   </button>
                 </div>
               ))}
@@ -414,19 +377,9 @@ export default function DashboardPosaunenwarteEditPage() {
                       </p>
                     )}
                   </div>
-                  <svg
+                  <PlusIcon
                     className="h-5 w-5 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
+                  />
                 </button>
               ))}
             </div>
@@ -439,25 +392,18 @@ export default function DashboardPosaunenwarteEditPage() {
             href={`/dashboard/posaunenwarte/${id}`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <svg
+            <ArrowLeftIcon
               className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            />
             Fertig
           </Link>
           <Link
             href="/dashboard/posaunenwarte"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
+            <ArrowLeftIcon
+              className="h-4 w-4"
+            />
             Zur Übersicht
           </Link>
         </div>

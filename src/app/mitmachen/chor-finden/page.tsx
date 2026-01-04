@@ -7,6 +7,8 @@ import { api } from "@/trpc/react";
 import PageHeader from "@/app/_components/general/page-header";
 import { getDistrictColor } from "@/lib/district-color";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
+import { ArrowLeftIcon, ArrowRightIcon, ClockIcon,  GlobeIcon,  MapPinIcon, PhoneIcon, SearchIcon } from "lucide-react";
+import { MailIcon } from "lucide-react";
 
 function ChorFindenContent() {
   const searchParams = useSearchParams();
@@ -133,19 +135,9 @@ function ChorFindenContent() {
           className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Vorherige Seite"
         >
-          <svg
+          <ArrowLeftIcon
             className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          />
         </button>
 
         {getPageNumbers().map((page, index) =>
@@ -177,19 +169,9 @@ function ChorFindenContent() {
           className="dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-3 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
           aria-label="Nächste Seite"
         >
-          <svg
+          <ArrowRightIcon
             className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          />
         </button>
       </div>
     );
@@ -236,19 +218,9 @@ function ChorFindenContent() {
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="flex items-start gap-6">
                 <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <svg
+                  <MapPinIcon
                     className="h-7 w-7 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
+                  />
                 </div>
                 <div className="flex-1">
                   <h2 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
@@ -264,20 +236,10 @@ function ChorFindenContent() {
                     href="/kontakt"
                     className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                   >
-                    <svg
+                    <MailIcon
                       className="mr-2 h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Kontakt aufnehmen
+                    />
+                      Kontakt aufnehmen
                   </Link>
                 </div>
               </div>
@@ -643,25 +605,9 @@ function ChorFindenContent() {
                               </h3>
                               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center gap-1">
-                                  <svg
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                  </svg>
+                                  <MapPinIcon
+                                  className="h-4 w-4 text-gray-400 dark:text-gray-500"
+                                  />
                                   {choir.location?.city},{" "}
                                   {choir.location?.zipCode}
                                 </div>
@@ -688,9 +634,9 @@ function ChorFindenContent() {
 
                           <div className="mb-4 space-y-2">
                             {choir.rehearsalDay && choir.rehearsalTime && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700">
-                                <svg
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
+                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <ClockIcon
+                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -701,7 +647,7 @@ function ChorFindenContent() {
                                     strokeWidth={2}
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                   />
-                                </svg>
+                                </ClockIcon>
                                 <span>
                                   Proben: {choir.rehearsalDay} um{" "}
                                   {choir.rehearsalTime} Uhr
@@ -709,20 +655,8 @@ function ChorFindenContent() {
                               </div>
                             )}
                             {choir.location && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700">
-                                <svg
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                  />
-                                </svg>
+                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
                                 <span>
                                   {choir.location.street},{" "}
                                   {choir.location.zipCode} {choir.location.city}
@@ -730,38 +664,18 @@ function ChorFindenContent() {
                               </div>
                             )}
                             {choir.contactPhone && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700">
-                                <svg
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                  />
-                                </svg>
+                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <PhoneIcon
+                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
+                                />
                                 <span>Telefon: {choir.contactPhone}</span>
                               </div>
                             )}
                             {choir.contactWebsite && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700">
-                                <svg
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 64 64"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M32,0C14.327,0,0,14.327,0,32s14.327,32,32,32s32-14.327,32-32S49.673,0,32,0z M49.972,31c-0.138-5.582-1.414-10.878-3.613-15.667c2.652-1.022,5.169-2.317,7.515-3.854c4.824,5.14,7.854,11.976,8.102,19.521H49.972z M33.333,61.966c-0.11,0.005-0.222,0.005-0.333,0.009V50.035c3.324,0.087,6.547,0.581,9.605,1.47C40.184,55.541,37.029,59.084,33.333,61.966z M44.549,52.141c2.283,0.801,4.462,1.817,6.523,3.018c-3.991,3.29-8.849,5.563-14.178,6.438C39.902,58.861,42.484,55.672,44.549,52.141z M21.394,51.505c3.059-0.89,6.282-1.383,9.606-1.47v11.939c-0.111-0.004-0.223-0.004-0.333-0.009C26.97,59.084,23.816,55.541,21.394,51.505z M27.105,61.596c-5.329-0.874-10.187-3.147-14.178-6.438c2.062-1.2,4.24-2.217,6.523-3.017C21.515,55.672,24.098,58.861,27.105,61.596z M2.025,31c0.248-7.545,3.277-14.381,8.102-19.521c2.346,1.536,4.862,2.831,7.515,3.854C15.442,20.122,14.166,25.418,14.028,31H2.025z M43.57,14.196c-3.345,1.069-6.894,1.67-10.57,1.766V2.025c0.111,0.004,0.223,0.004,0.333,0.009C37.541,5.314,41.047,9.453,43.57,14.196z M36.895,2.404c5.944,0.976,11.298,3.696,15.521,7.622c-2.176,1.391-4.496,2.57-6.944,3.499C43.278,9.326,40.369,5.562,36.895,2.404z M31,2.025v13.937c-3.677-0.096-7.226-0.696-10.57-1.766c2.523-4.743,6.029-8.882,10.237-12.162C30.777,2.029,30.889,2.029,31,2.025z M18.529,13.525c-2.448-0.929-4.769-2.108-6.944-3.499c4.223-3.926,9.576-6.646,15.521-7.622C23.631,5.562,20.722,9.326,18.529,13.525z M19.532,16.009c3.622,1.189,7.472,1.873,11.468,1.972V31H16.031C16.17,25.654,17.403,20.584,19.532,16.009z M31,33v15.036c-3.684,0.092-7.245,0.665-10.615,1.689C17.732,44.712,16.188,39.029,16.031,33H31z M33,48.036V33h14.969c-0.156,6.029-1.701,11.712-4.354,16.726C40.245,48.701,36.684,48.128,33,48.036z M33,31V17.98c3.996-0.099,7.846-0.782,11.468-1.972c2.129,4.575,3.362,9.646,3.501,14.991H33z M2.025,33h12.003c0.154,6.253,1.74,12.146,4.447,17.369c-2.496,0.899-4.871,2.044-7.109,3.396C5.827,48.513,2.294,41.172,2.025,33z M52.634,53.766c-2.238-1.353-4.613-2.497-7.109-3.396c2.707-5.224,4.293-11.116,4.447-17.369h12.003C61.706,41.172,58.173,48.513,52.634,53.766z"
-                                  />
-                                </svg>
+                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                <GlobeIcon
+                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
+                                />
                                 <Link
                                   href={choir.contactWebsite}
                                   target="_blank"
@@ -780,19 +694,9 @@ function ChorFindenContent() {
                             }`}
                             className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
                           >
-                            <svg
+                            <MailIcon
                               className="mr-2 h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                              />
-                            </svg>
+                            />
                             Kontakt aufnehmen
                           </Link>
                         </div>
@@ -810,19 +714,9 @@ function ChorFindenContent() {
                 ) : (
                   !ensembles.isLoading && (
                     <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
-                      <svg
+                      <SearchIcon
                         className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                      </svg>
+                      />
                       <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         Keine Chöre gefunden
                       </h3>
@@ -834,7 +728,7 @@ function ChorFindenContent() {
                       {hasActiveFilters && (
                         <button
                           onClick={clearFilters}
-                          className="border-primary text-primary hover:bg-primary mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
+                          className="border-primary text-primary hover:bg-primary mb-4 mr-2 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
                         >
                           Filter zurücksetzen
                         </button>

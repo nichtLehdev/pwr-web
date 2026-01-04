@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
-import { Clock, Edit } from "lucide-react";
+import { ArrowLeftIcon, Clock, Edit } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -274,19 +274,9 @@ export default function HistoryEventDetailPage() {
             href="/dashboard/history-timeline"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <svg
+            <ArrowLeftIcon
               className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            />
             Zurück zur Übersicht
           </Link>
         </div>

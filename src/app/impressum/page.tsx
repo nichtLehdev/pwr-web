@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
+import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
 export const metadata = {
   title: "Impressum | Posaunenwerk Rheinland",
@@ -598,70 +599,30 @@ export default function ImpressumPage() {
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
                     <li className="flex items-center gap-2">
-                      <svg
+                      <CheckIcon
                         className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      />
                       <strong>MIT License</strong> - Erlaubt kommerzielle
                       Nutzung, Modifikation und Verteilung
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
+                      <CheckIcon
                         className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      />
                       <strong>Apache License 2.0</strong> - Erlaubt Nutzung,
                       Modifikation und Verteilung mit Patentrechtsgewährung
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
+                      <CheckIcon
                         className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      />
                       <strong>BSD-2-Clause</strong> - Permissive Lizenz mit
                       minimalen Einschränkungen
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
+                      <CheckIcon
                         className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      />
                       <strong>0BSD</strong> - &ldquo;Zero-Clause&rdquo;
                       BSD-Lizenz, Public Domain äquivalent
                     </li>
@@ -697,19 +658,9 @@ export default function ImpressumPage() {
                     className="text-primary inline-flex items-center gap-1 hover:underline"
                   >
                     Zur Datenschutzerklärung
-                    <svg
+                    <ArrowRightIcon
                       className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    />
                   </Link>
                 </div>
 
@@ -726,19 +677,9 @@ export default function ImpressumPage() {
                     className="text-primary inline-flex items-center gap-1 hover:underline"
                   >
                     Zur Kontaktseite
-                    <svg
+                    <ArrowRightIcon
                       className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    />
                   </Link>
                 </div>
 

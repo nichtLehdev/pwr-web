@@ -10,6 +10,7 @@ import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -476,19 +477,7 @@ export default function EditEnsemblePage() {
                     className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
                   >
                     <div className="text-center">
-                      <svg
-                        className="mx-auto h-8 w-8"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <PlusIcon className="h-8 w-8" />
                       <span className="mt-1 block text-sm">Bild auswählen</span>
                     </div>
                   </button>
@@ -543,19 +532,9 @@ export default function EditEnsemblePage() {
                       onClick={handleClearConductor}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <svg
+                      <XIcon
                         className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      />
                     </button>
                   )}
                 </div>
@@ -639,19 +618,9 @@ export default function EditEnsemblePage() {
                       onClick={handleClearRepresentative}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <svg
+                      <XIcon
                         className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      />
                     </button>
                   )}
                 </div>
@@ -772,19 +741,9 @@ export default function EditEnsemblePage() {
                       onClick={handleClearLocation}
                       className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <svg
+                      <XIcon
                         className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      />
                     </button>
                   )}
                 </div>
@@ -1020,19 +979,9 @@ export default function EditEnsemblePage() {
                 </>
               ) : (
                 <>
-                  <svg
+                  <CheckIcon
                     className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  />
                   Speichern
                 </>
               )}

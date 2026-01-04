@@ -13,7 +13,7 @@ import {
   CustomFieldType,
   UserRole,
 } from "~/generated/prisma/enums";
-import { Lock, Trash2 } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, Lock, Trash2, TrashIcon } from "lucide-react";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -1105,19 +1105,9 @@ export default function NewCoursePage() {
                           disabled={index === 0}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                          <svg
+                          <ArrowUpIcon
                             className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 15l7-7 7 7"
                             />
-                          </svg>
                         </button>
                         <button
                           type="button"
@@ -1125,38 +1115,18 @@ export default function NewCoursePage() {
                           disabled={index === customFields.length - 1}
                           className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
                         >
-                          <svg
+                        <ArrowDownIcon
                             className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 9l-7 7-7-7"
                             />
-                          </svg>
                         </button>
                         <button
                           type="button"
                           onClick={() => removeCustomField(field.id)}
                           className="p-1 text-gray-400 hover:text-red-500"
                         >
-                          <svg
+                          <TrashIcon
                             className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
                             />
-                          </svg>
                         </button>
                       </div>
                     </div>

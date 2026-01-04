@@ -7,6 +7,9 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
+import { EditIcon, MusicIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -123,19 +126,9 @@ export default function EnsembleDetailPage() {
               </div>
             ) : (
               <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-                <svg
-                  className="h-10 w-10"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
+                <MusicIcon
+                  className="h-10 w-10"  
+                />
               </div>
             )}
             <div>
@@ -169,19 +162,9 @@ export default function EnsembleDetailPage() {
             href={`/dashboard/ensembles/${ensembleId}/edit`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
-            <svg
+            <EditIcon
               className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
+            />
             Bearbeiten
           </Link>
         </div>
@@ -218,19 +201,9 @@ export default function EnsembleDetailPage() {
                   </div>
                 ) : (
                   <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                    <svg
+                    <UserIcon
                       className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                    />
                   </div>
                 )}
                 <div>
@@ -271,19 +244,9 @@ export default function EnsembleDetailPage() {
                   </div>
                 ) : (
                   <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                    <svg
+                    <UserIcon
                       className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                    />
                   </div>
                 )}
                 <div>
@@ -498,19 +461,9 @@ export default function EnsembleDetailPage() {
             href="/dashboard/ensembles"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <svg
+            <ArrowLeftIcon
               className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            />
             Zurück zur Übersicht
           </Link>
         </div>
