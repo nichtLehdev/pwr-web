@@ -35,6 +35,7 @@ import {
   Undo,
   Redo,
   X,
+  Plus,
 } from "lucide-react";
 
 interface RichTextEditorProps {

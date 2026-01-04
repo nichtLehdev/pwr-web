@@ -8,7 +8,12 @@ import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowLeftIcon, CircleXIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CircleXIcon,
+  PlusIcon,
+  TrashIcon,
+} from "lucide-react";
 
 interface Participant {
   id: string;
