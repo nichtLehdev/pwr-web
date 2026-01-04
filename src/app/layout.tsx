@@ -5,6 +5,7 @@ import Navigation from "./_components/general/navigation";
 import Footer from "./_components/general/footer";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "./_components/general/theme-provider";
+import { ThemeSync } from "./_components/general/theme-sync";
 import { ToastProvider, Toaster } from "./_components/ui/toast";
 import { BetaBanner } from "./_components/ui/banner";
 import { BannerProvider } from "./_components/ui/banner-context";
@@ -51,7 +52,6 @@ export default function RootLayout({
                   } else if (theme === 'light') {
                     root.classList.add('light');
                   } else {
-                    
                     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
                       ? 'dark' 
                       : 'light';
@@ -69,6 +69,7 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <TRPCReactProvider>
+              <ThemeSync />
               <BannerProvider>
                 <BetaBanner />
                 <Navigation />

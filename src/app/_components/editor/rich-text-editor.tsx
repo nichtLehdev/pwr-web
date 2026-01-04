@@ -20,7 +20,7 @@ import "@/styles/article-content.css";
 import {
   Bold,
   Italic,
-  Underline,
+  Underline as UnderlineIcon,
   Strikethrough,
   List,
   ListOrdered,
@@ -31,7 +31,7 @@ import {
   Link as LinkIcon,
   Image as ImageIcon,
   FileText,
-  Table,
+  Table as TableIcon,
   Undo,
   Redo,
   X,
@@ -228,7 +228,7 @@ function Toolbar({
         isActive={isMarkActive("underline")}
         title="Unterstrichen (Strg+U)"
       >
-        <Underline className="h-4 w-4" />
+        <UnderlineIcon className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -393,7 +393,7 @@ function Toolbar({
           isActive={editor.isActive("table")}
           title="Tabelle"
         >
-          <Table className="h-4 w-4" />
+          <TableIcon className="h-4 w-4" />
         </ToolbarButton>
         {showTableMenu && (
           <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-50 mt-1 min-w-48 rounded-lg border border-gray-200 bg-white p-1 shadow-xl">
