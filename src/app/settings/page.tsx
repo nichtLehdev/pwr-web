@@ -8,6 +8,7 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
 import { useToast } from "@/app/_components/ui/toast";
+import { useTheme } from "@/app/_components/general/theme-provider";
 import {
   ChevronDown,
   Image,
@@ -69,10 +70,12 @@ function CollapsibleSection({
 
 interface UserPreferences {
   termineDefaultView: "list" | "calendar";
+  theme?: "light" | "dark" | "system";
 }
 
 const defaultPreferences: UserPreferences = {
   termineDefaultView: "list",
+  theme: "system",
 };
 
 export default function SettingsPage() {
@@ -80,6 +83,7 @@ export default function SettingsPage() {
   const { data: session, isPending: sessionLoading } = useSession();
   const utils = api.useUtils();
   const toast = useToast();
+  const { theme: currentTheme, setTheme: setCurrentTheme } = useTheme();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -151,13 +155,21 @@ export default function SettingsPage() {
             typeof profile.preferences === "string"
               ? JSON.parse(profile.preferences)
               : profile.preferences;
-          setPreferences({ ...defaultPreferences, ...parsed });
+          const newPreferences = { ...defaultPreferences, ...parsed };
+          setPreferences(newPreferences);
+          // Sync theme with ThemeProvider if user has a preference
+          if (newPreferences.theme && newPreferences.theme !== currentTheme) {
+            setCurrentTheme(newPreferences.theme);
+          }
         } catch {
           setPreferences(defaultPreferences);
         }
+      } else {
+        // If no preferences, use current theme from ThemeProvider
+        setPreferences({ ...defaultPreferences, theme: currentTheme });
       }
     }
-  }, [profile]);
+  }, [profile, currentTheme, setCurrentTheme]);
 
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
@@ -649,6 +661,113 @@ export default function SettingsPage() {
                     >
                       <Calendar className="h-5 w-5" />
                       Kalender
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-dark dark:text-dark-text mb-2 block text-sm font-medium">
+                    Design-Theme
+                  </label>
+                  <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                    Wähle dein bevorzugtes Design-Theme für die Website.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTheme: "light" | "dark" | "system" = "light";
+                        setPreferences((prev) => ({
+                          ...prev,
+                          theme: newTheme,
+                        }));
+                        setCurrentTheme(newTheme);
+                      }}
+                      className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                        preferences.theme === "light" ||
+                        (!preferences.theme && currentTheme === "light")
+                          ? "bg-primary text-white"
+                          : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                      Hell
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTheme: "light" | "dark" | "system" = "dark";
+                        setPreferences((prev) => ({
+                          ...prev,
+                          theme: newTheme,
+                        }));
+                        setCurrentTheme(newTheme);
+                      }}
+                      className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                        preferences.theme === "dark" ||
+                        (!preferences.theme && currentTheme === "dark")
+                          ? "bg-primary text-white"
+                          : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                        />
+                      </svg>
+                      Dunkel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newTheme: "light" | "dark" | "system" = "system";
+                        setPreferences((prev) => ({
+                          ...prev,
+                          theme: newTheme,
+                        }));
+                        setCurrentTheme(newTheme);
+                      }}
+                      className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
+                        preferences.theme === "system" ||
+                        (!preferences.theme && currentTheme === "system")
+                          ? "bg-primary text-white"
+                          : "text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50"
+                      }`}
+                    >
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                      System
                     </button>
                   </div>
                 </div>

@@ -267,8 +267,7 @@ export default function NewBlaeserheftPage() {
                   </div>
                 ) : (
                   <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-20 shrink-0 items-center justify-center rounded-lg border bg-gray-100 text-gray-400">
-                    <ImageIcon
-                      className="h-8 w-8" />
+                    <ImageIcon className="h-8 w-8" />
                   </div>
                 )}
                 <button
@@ -317,8 +316,7 @@ export default function NewBlaeserheftPage() {
               <div className="flex items-center gap-4">
                 {audioSample ? (
                   <div className="dark:bg-dark-background-secondary flex flex-1 items-center gap-3 rounded-lg bg-gray-100 px-3 py-2">
-                    <MusicIcon
-                      className="h-5 w-5 shrink-0" />
+                    <MusicIcon className="h-5 w-5 shrink-0" />
                     <span className="dark:text-dark-text min-w-0 flex-1 truncate text-sm text-gray-700">
                       {audioSample.split("/").pop() || audioSample}
                     </span>
@@ -327,9 +325,7 @@ export default function NewBlaeserheftPage() {
                       onClick={() => setAudioSample("")}
                       className="dark:text-dark-muted shrink-0 text-gray-400 hover:text-red-500"
                     >
-                      <XIcon
-                        className="h-4 w-4"
-                      />
+                      <XIcon className="h-4 w-4" />
                     </button>
                   </div>
                 ) : (
@@ -496,9 +492,7 @@ export default function NewBlaeserheftPage() {
                 </>
               ) : (
                 <>
-                  <SaveIcon
-                    className="h-4 w-4"
-                  />
+                  <SaveIcon className="h-4 w-4" />
                   Erstellen
                 </>
               )}
