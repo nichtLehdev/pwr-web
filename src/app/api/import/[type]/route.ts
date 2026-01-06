@@ -4,7 +4,17 @@ import { db } from "@/server/db";
 import { extractImportZip } from "@/server/utils/export-import";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import { ContentStatus } from "~/generated/prisma/client";
+import {
+  ContentStatus,
+  PostCategory,
+  EventCategory,
+  EventEnsembleType,
+  DownloadCategory,
+  FileType,
+  CourseType,
+  TargetAudience,
+} from "~/generated/prisma/client";
+import { Prisma } from "~/generated/prisma/client";
 
 export async function POST(
   request: NextRequest,
@@ -125,10 +135,12 @@ export async function POST(
                 title: postData.title as string,
                 excerpt: (postData.excerpt as string) || null,
                 content: postData.content as string,
-                category: postData.category as string,
+                category: (postData.category as string) as PostCategory,
                 bezirkId: (postData.bezirkId as string) || null,
                 pinned: (postData.pinned as boolean) || false,
-                status: (postData.status as string) || ContentStatus.DRAFT,
+                status:
+                  ((postData.status as string) as ContentStatus) ||
+                  ContentStatus.DRAFT,
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
               },
@@ -160,14 +172,19 @@ export async function POST(
                 description: (eventData.description as string) || null,
                 eventDate: new Date(eventData.eventDate as string),
                 cancelled: (eventData.cancelled as boolean) || false,
-                category: eventData.category as string,
+                category: (eventData.category as string) as EventCategory,
                 bezirkId: (eventData.bezirkId as string) || null,
                 locationId: (eventData.locationId as string) || null,
                 ensembleId: (eventData.ensembleId as string) || null,
                 auswahlChorId: (eventData.auswahlChorId as string) || null,
-                ensembleType: (eventData.ensembleType as string) || null,
+                performingEnsembleType:
+                  (eventData.ensembleType as string)
+                    ? ((eventData.ensembleType as string) as EventEnsembleType)
+                    : null,
                 coverImageId: newCoverImageId,
-                status: (eventData.status as string) || ContentStatus.DRAFT,
+                status:
+                  ((eventData.status as string) as ContentStatus) ||
+                  ContentStatus.DRAFT,
               },
             });
           }),
@@ -232,9 +249,13 @@ export async function POST(
                 caption: (mediaData.caption as string) || null,
                 title: (mediaData.title as string) || null,
                 folder: (mediaData.folder as string) || null,
-                tags: mediaData.tags || null,
+                tags: mediaData.tags
+                  ? (mediaData.tags as Prisma.InputJsonValue)
+                  : Prisma.JsonNull,
                 isPublic: (mediaData.isPublic as boolean) ?? true,
-                status: (mediaData.status as string) || ContentStatus.APPROVED,
+                status:
+                  ((mediaData.status as string) as ContentStatus) ||
+                  ContentStatus.APPROVED,
                 uploadedById: session.user.id,
               },
             });
@@ -257,13 +278,15 @@ export async function POST(
               data: {
                 title: downloadData.title as string,
                 description: (downloadData.description as string) || null,
-                category: downloadData.category as string,
+                category: (downloadData.category as string) as DownloadCategory,
                 fileUrl: downloadData.fileUrl as string,
-                fileType: downloadData.fileType as string,
+                fileType: (downloadData.fileType as string) as FileType,
                 fileSize: (downloadData.fileSize as number) || null,
-                tags: (downloadData.tags as unknown[]) || [],
+                tags: (downloadData.tags as unknown) || [],
                 isPublic: (downloadData.isPublic as boolean) ?? true,
-                status: (downloadData.status as string) || ContentStatus.DRAFT,
+                status:
+                  ((downloadData.status as string) as ContentStatus) ||
+                  ContentStatus.DRAFT,
                 uploadedById: session.user.id,
               },
             });
@@ -295,8 +318,12 @@ export async function POST(
                 subtitle: bhData.subtitle as string,
                 year: bhData.year as number,
                 description: bhData.description as string,
-                chapters: bhData.chapters || null,
-                highlights: bhData.highlights || null,
+                chapters: bhData.chapters
+                  ? (bhData.chapters as Prisma.InputJsonValue)
+                  : Prisma.JsonNull,
+                highlights: bhData.highlights
+                  ? (bhData.highlights as Prisma.InputJsonValue)
+                  : Prisma.JsonNull,
                 imageId: newImageId,
                 audioSample: (bhData.audioSample as string) || null,
                 priceBlaeserheft: (bhData.priceBlaeserheft as number) || null,
@@ -331,8 +358,10 @@ export async function POST(
               data: {
                 title: courseData.title as string,
                 description: (courseData.description as string) || "",
-                courseType: courseData.courseType as string,
-                targetAudience: courseData.targetAudience as string,
+                courseType: (courseData.courseType as string) as CourseType,
+                targetAudience:
+                  ((courseData.targetAudience as string) as TargetAudience) ||
+                  null,
                 startDate: new Date(courseData.startDate as string),
                 endDate: courseData.endDate
                   ? new Date(courseData.endDate as string)
@@ -343,7 +372,9 @@ export async function POST(
                 maxParticipants: (courseData.maxParticipants as number) || null,
                 bezirkId: (courseData.bezirkId as string) || null,
                 locationId: (courseData.locationId as string) || null,
-                status: (courseData.status as string) || ContentStatus.DRAFT,
+                status:
+                  ((courseData.status as string) as ContentStatus) ||
+                  ContentStatus.DRAFT,
                 createdById: session.user.id,
               },
             });

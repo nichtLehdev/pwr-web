@@ -5,6 +5,7 @@ import {
   createExportZip,
   collectMediaFromEntities,
 } from "@/server/utils/export-import";
+import type { Media } from "~/generated/prisma/client";
 
 export async function GET(
   request: NextRequest,
@@ -24,10 +25,10 @@ export async function GET(
 
     let jsonData: Record<string, unknown>;
     let mediaFiles: Array<{
-      coverImage?: { id: string } | null;
-      image?: { id: string } | null;
-      ensemble?: { image?: { id: string } | null } | null;
-      auswahlChor?: { image?: { id: string } | null } | null;
+      coverImage?: Media | null;
+      image?: Media | null;
+      ensemble?: { image?: Media | null } | null;
+      auswahlChor?: { image?: Media | null } | null;
     }> = [];
     let filename: string;
 
@@ -197,7 +198,7 @@ export async function GET(
           "media.json",
         );
 
-        return new NextResponse(zipBuffer, {
+        return new NextResponse(zipBuffer as unknown as BodyInit, {
           headers: {
             "Content-Type": "application/zip",
             "Content-Disposition": `attachment; filename="media-export-${date}.zip"`,
@@ -234,7 +235,7 @@ export async function GET(
           await import("@/server/utils/export-import");
         const zipBuffer = await createExportZip(jsonData, [], "downloads.json");
 
-        return new NextResponse(zipBuffer, {
+        return new NextResponse(zipBuffer as unknown as BodyInit, {
           headers: {
             "Content-Type": "application/zip",
             "Content-Disposition": `attachment; filename="downloads-export-${date}.zip"`,
@@ -302,7 +303,7 @@ export async function GET(
         // Courses don't have media references
         const zipBuffer = await createExportZip(jsonData, [], "courses.json");
 
-        return new NextResponse(zipBuffer, {
+        return new NextResponse(zipBuffer as unknown as BodyInit, {
           headers: {
             "Content-Type": "application/zip",
             "Content-Disposition": `attachment; filename="courses-export-${date}.zip"`,
@@ -325,7 +326,7 @@ export async function GET(
       `${type}.json`,
     );
 
-    return new NextResponse(zipBuffer, {
+    return new NextResponse(zipBuffer as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${filename}"`,
