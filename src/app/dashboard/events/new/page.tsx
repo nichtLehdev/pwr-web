@@ -533,7 +533,9 @@ export default function NewEventPage() {
                             downloadIds.filter((id) => id !== download.id),
                           );
                           setSelectedDownloads(
-                            selectedDownloads.filter((d) => d.id !== download.id),
+                            selectedDownloads.filter(
+                              (d) => d.id !== download.id,
+                            ),
                           );
                         }}
                         className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-red-600 dark:hover:bg-gray-700"

@@ -71,58 +71,58 @@ export default function EventCard({
           <div
             className={`mb-4 flex items-start justify-between ${cancelled ? "" : ""}`}
           >
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {capitalizeFirstLetter(category)}
-            </span>
-            {openToParticipants && (
-              <span className="inline-flex items-center gap-1 rounded-full border-2 border-green-300 bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                <Users className="h-3 w-3" />
-                Mitspielen möglich
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {capitalizeFirstLetter(category)}
               </span>
-            )}
+              {openToParticipants && (
+                <span className="inline-flex items-center gap-1 rounded-full border-2 border-green-300 bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                  <Users className="h-3 w-3" />
+                  Mitspielen möglich
+                </span>
+              )}
+            </div>
+            <span
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
+              style={{ backgroundColor: districtColor }}
+            >
+              {district ? `Bezirk ${district}` : "Bezirksübergreifend"}
+            </span>
           </div>
-          <span
-            className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
-            style={{ backgroundColor: districtColor }}
+
+          <h3
+            className={`group-hover:text-primary dark:group-hover:text-primary mb-2 line-clamp-2 text-xl font-bold transition-colors dark:text-white ${
+              cancelled
+                ? "text-gray-500 line-through dark:text-gray-400"
+                : "text-dark"
+            }`}
           >
-            {district ? `Bezirk ${district}` : "Bezirksübergreifend"}
-          </span>
-        </div>
+            {title}
+          </h3>
 
-        <h3
-          className={`group-hover:text-primary dark:group-hover:text-primary mb-2 line-clamp-2 text-xl font-bold transition-colors dark:text-white ${
-            cancelled
-              ? "text-gray-500 line-through dark:text-gray-400"
-              : "text-dark"
-          }`}
-        >
-          {title}
-        </h3>
-
-        <div
-          className={`mb-4 grow space-y-2 text-sm ${
-            cancelled
-              ? "text-gray-400 dark:text-gray-500"
-              : "text-gray-600 dark:text-gray-300"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            {`${date.toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })}, ${date.toLocaleTimeString("de-DE", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}`}
+          <div
+            className={`mb-4 grow space-y-2 text-sm ${
+              cancelled
+                ? "text-gray-400 dark:text-gray-500"
+                : "text-gray-600 dark:text-gray-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {`${date.toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}, ${date.toLocaleTimeString("de-DE", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`}
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              {location}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            {location}
-          </div>
-        </div>
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Details ansehen
