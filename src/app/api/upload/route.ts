@@ -117,10 +117,12 @@ export async function POST(request: Request) {
     await writeFile(filePath, buffer);
 
     const url = `/api/uploads/${folder}/${filename}`;
+    const path = url; // path is the same as url for uploaded files
 
     return NextResponse.json({
       success: true,
       url,
+      path,
       filename,
       size: buffer.length,
       mimeType: file.type,
