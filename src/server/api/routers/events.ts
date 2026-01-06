@@ -5,6 +5,7 @@ import {
   protectedProcedure,
   publicProcedure,
   reviewerProcedure,
+  adminProcedure,
 } from "../trpc";
 import {
   EventCategory,
@@ -823,5 +824,97 @@ export const eventsRouter = createTRPCRouter({
       });
 
       return events;
+    }),
+
+  exportEvents: adminProcedure.query(async ({ ctx }) => {
+    const events = await ctx.db.event.findMany({
+      include: {
+        coverImage: true,
+        location: true,
+        bezirk: true,
+        ensemble: {
+          include: {
+            conductor: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+            image: true,
+          },
+        },
+        auswahlChor: {
+          include: {
+            conductor: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+            image: true,
+          },
+        },
+      },
+      orderBy: { eventDate: "desc" },
+    });
+
+    return {
+      events: events.map((event) => ({
+        ...event,
+        coverImageUrl: event.coverImage?.url,
+        locationName: event.location?.name,
+        bezirkName: event.bezirk?.name,
+        ensembleName: event.ensemble?.name,
+        auswahlChorName: event.auswahlChor?.name,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: events.length,
+    };
+  }),
+
+  importEvents: adminProcedure
+    .input(
+      z.object({
+        events: z.array(
+          z.object({
+            title: z.string(),
+            motto: z.string().optional().nullable(),
+            description: z.string().optional().nullable(),
+            eventDate: z.date(),
+            cancelled: z.boolean().optional(),
+            category: z.enum(EventCategory),
+            bezirkId: z.string().optional().nullable(),
+            locationId: z.string().optional().nullable(),
+            ensembleId: z.string().optional().nullable(),
+            auswahlChorId: z.string().optional().nullable(),
+            ensembleType: z.enum(EventEnsembleType).optional().nullable(),
+            coverImageId: z.string().optional().nullable(),
+            status: z.enum(ContentStatus).optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.events.map(async (eventData) => {
+          const { originalId, ...data } = eventData;
+          return await ctx.db.event.create({
+            data: {
+              ...data,
+              status: data.status ?? ContentStatus.DRAFT,
+              cancelled: data.cancelled ?? false,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        events: results,
+      };
     }),
 });

@@ -259,4 +259,85 @@ export const ensemblesRouter = createTRPCRouter({
 
       return ensembles;
     }),
+
+  exportEnsembles: adminProcedure.query(async ({ ctx }) => {
+    const ensembles = await ctx.db.ensemble.findMany({
+      include: {
+        image: true,
+        location: true,
+        bezirk: true,
+        conductor: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+        representative: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return {
+      ensembles: ensembles.map((ensemble) => ({
+        ...ensemble,
+        imageUrl: ensemble.image?.url,
+        locationName: ensemble.location?.name,
+        bezirkName: ensemble.bezirk?.name,
+        conductorEmail: ensemble.conductor?.email,
+        representativeEmail: ensemble.representative?.email,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: ensembles.length,
+    };
+  }),
+
+  importEnsembles: adminProcedure
+    .input(
+      z.object({
+        ensembles: z.array(
+          z.object({
+            name: z.string(),
+            description: z.string().optional().nullable(),
+            bezirkId: z.string().optional().nullable(),
+            imageId: z.string().optional().nullable(),
+            locationId: z.string().optional().nullable(),
+            rehearsalDay: z.string().optional().nullable(),
+            rehearsalTime: z.string().optional().nullable(),
+            contactEmail: z.string().email().optional().nullable(),
+            contactPhone: z.string().optional().nullable(),
+            contactWebsite: z.string().url().optional().nullable(),
+            conductorId: z.string().optional().nullable(),
+            representativeId: z.string().optional().nullable(),
+            isActive: z.boolean().optional(),
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.ensembles.map(async (ensembleData) => {
+          const { originalId, ...data } = ensembleData;
+          return await ctx.db.ensemble.create({
+            data: {
+              ...data,
+              isActive: data.isActive ?? true,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        ensembles: results,
+      };
+    }),
 });
