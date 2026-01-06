@@ -8,7 +8,7 @@ export default function Footer() {
       { label: "Über uns", href: "/ueber-uns" },
       { label: "Vorstand", href: "/ueber-uns/vorstand" },
       { label: "Auswahlchöre", href: "/ueber-uns/auswahlchoere" },
-      { label: "Namibia-Partnerschaft", href: "/ueber-uns/namibia" },
+      { label: "Struktur & Geschichte", href: "/ueber-uns/struktur" },
     ],
     participate: [
       { label: "Mitmachen", href: "/mitmachen" },

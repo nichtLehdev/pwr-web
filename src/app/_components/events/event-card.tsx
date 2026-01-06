@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
@@ -45,19 +44,7 @@ export default function EventCard({
           borderLeftColor: districtColor,
         }}
       >
-        {/* Cover Image */}
-        {coverImageUrl && (
-          <div className="relative h-48 w-full">
-            <Image
-              src={coverImageUrl}
-              alt={title}
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
-
-        <div className={`p-6 ${coverImageUrl ? "" : ""}`}>
+        <div className="p-6">
           {/* Cancelled Banner */}
           {cancelled && (
             <div className="mb-4 flex items-center justify-center rounded-lg bg-red-600 py-2">
