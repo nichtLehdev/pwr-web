@@ -274,7 +274,7 @@ export const coursesRouter = createTRPCRouter({
         sortBy: z
           .enum(["startDate", "title", "createdAt", "status"])
           .default("startDate"),
-        sortOrder: z.enum(["asc", "desc"]).default("desc"),
+        sortOrder: z.enum(["asc", "desc"]).default("asc"),
       }),
     )
     .query(async ({ ctx, input }) => {
