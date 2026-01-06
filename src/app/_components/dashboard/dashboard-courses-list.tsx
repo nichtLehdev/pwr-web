@@ -54,7 +54,7 @@ export default function DashboardCoursesList({
   const [sortBy, setSortBy] = useState<
     "startDate" | "title" | "createdAt" | "status"
   >("startDate");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
