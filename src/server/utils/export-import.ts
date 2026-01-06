@@ -1,0 +1,140 @@
+import { readFile, stat } from "fs/promises";
+import { join } from "path";
+import JSZip from "jszip";
+import type { Media } from "~/generated/prisma/client";
+
+/**
+ * Collects all unique media files referenced by entities
+ * Handles nested structures like events with ensemble.image
+ */
+export function collectMediaFromEntities(
+  entities: Array<{
+    coverImage?: Media | null;
+    image?: Media | null;
+    ensemble?: { image?: Media | null } | null;
+    auswahlChor?: { image?: Media | null } | null;
+  }>,
+): Media[] {
+  const mediaMap = new Map<string, Media>();
+
+  for (const entity of entities) {
+    if (entity.coverImage) {
+      mediaMap.set(entity.coverImage.id, entity.coverImage);
+    }
+    if (entity.image) {
+      mediaMap.set(entity.image.id, entity.image);
+    }
+    if (entity.ensemble?.image) {
+      mediaMap.set(entity.ensemble.image.id, entity.ensemble.image);
+    }
+    if (entity.auswahlChor?.image) {
+      mediaMap.set(entity.auswahlChor.image.id, entity.auswahlChor.image);
+    }
+  }
+
+  return Array.from(mediaMap.values());
+}
+
+/**
+ * Reads a media file from disk
+ */
+export async function readMediaFile(media: Media): Promise<Buffer | null> {
+  try {
+    // Media path might be relative (like /api/uploads/media/file.jpg) or absolute
+    let filePath: string;
+
+    if (media.path.startsWith("/api/uploads/")) {
+      // Convert API path to file system path
+      const relativePath = media.path.replace("/api/uploads/", "");
+      filePath = join(process.cwd(), "public", "uploads", relativePath);
+    } else if (media.path.startsWith("/")) {
+      // Already a public path
+      filePath = join(process.cwd(), "public", media.path);
+    } else {
+      // Assume it's already a file system path
+      filePath = media.path;
+    }
+
+    // Check if file exists
+    try {
+      await stat(filePath);
+    } catch {
+      console.warn(`Media file not found: ${filePath} (media ID: ${media.id})`);
+      return null;
+    }
+
+    return await readFile(filePath);
+  } catch (error) {
+    console.error(`Error reading media file ${media.id}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Creates a ZIP file containing JSON data and media files
+ */
+export async function createExportZip(
+  jsonData: Record<string, unknown>,
+  mediaFiles: Media[],
+  jsonFileName: string = "data.json",
+): Promise<Buffer> {
+  const zip = new JSZip();
+
+  // Add JSON data
+  zip.file(jsonFileName, JSON.stringify(jsonData, null, 2));
+
+  // Add media files
+  const mediaMapping: Record<string, string> = {}; // oldId -> filename in zip
+
+  for (const media of mediaFiles) {
+    const fileBuffer = await readMediaFile(media);
+    if (fileBuffer) {
+      // Use original filename or generate one from media data
+      const filename = media.filename || `${media.id}.${media.extension}`;
+      const zipPath = `media/${filename}`;
+
+      zip.file(zipPath, fileBuffer);
+      mediaMapping[media.id] = filename;
+    }
+  }
+
+  // Add media mapping file
+  if (Object.keys(mediaMapping).length > 0) {
+    zip.file("media-mapping.json", JSON.stringify(mediaMapping, null, 2));
+  }
+
+  return await zip.generateAsync({ type: "nodebuffer" });
+}
+
+/**
+ * Extracts a ZIP file and returns its contents
+ */
+export async function extractImportZip(zipBuffer: Buffer): Promise<{
+  jsonData: Record<string, unknown>;
+  mediaFiles: Map<string, Buffer>; // filename -> buffer
+  mediaMapping: Record<string, string>; // oldId -> filename
+}> {
+  const zip = await JSZip.loadAsync(zipBuffer);
+  const mediaFiles = new Map<string, Buffer>();
+  let jsonData: Record<string, unknown> = {};
+  let mediaMapping: Record<string, string> = {};
+
+  // Extract all files
+  for (const [filename, file] of Object.entries(zip.files)) {
+    if (file.dir) continue;
+
+    const content = await file.async("nodebuffer");
+
+    if (filename === "media-mapping.json") {
+      mediaMapping = JSON.parse(content.toString("utf-8"));
+    } else if (filename.endsWith(".json") && !filename.startsWith("media/")) {
+      jsonData = JSON.parse(content.toString("utf-8"));
+    } else if (filename.startsWith("media/")) {
+      const mediaFilename = filename.replace("media/", "");
+      mediaFiles.set(mediaFilename, content);
+    }
+  }
+
+  return { jsonData, mediaFiles, mediaMapping };
+}
+
