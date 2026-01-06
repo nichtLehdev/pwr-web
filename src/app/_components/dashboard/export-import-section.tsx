@@ -282,7 +282,7 @@ export default function ExportImportSection({
                 onChange={(e) =>
                   setSelectedType(e.target.value as ContentType | null)
                 }
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               >
                 <option value="">Bitte wählen...</option>
                 {(
@@ -310,7 +310,7 @@ export default function ExportImportSection({
                 type="file"
                 accept=".json"
                 onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-1 focus:outline-none"
               />
             </div>
             {importError && (
@@ -326,7 +326,7 @@ export default function ExportImportSection({
             <button
               onClick={handleImport}
               disabled={!selectedType || !importFile || isImporting}
-              className="hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors"
+              className="hover:bg-primary-dark bg-primary flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               <ArrowUpIcon />
               {isImporting ? "Importiere..." : "Importieren"}
@@ -337,4 +337,3 @@ export default function ExportImportSection({
     </section>
   );
 }
-

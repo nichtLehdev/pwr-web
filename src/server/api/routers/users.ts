@@ -507,7 +507,10 @@ export const usersRouter = createTRPCRouter({
           .string()
           .min(3, "Benutzername muss mindestens 3 Zeichen haben")
           .max(30, "Benutzername darf maximal 30 Zeichen haben")
-          .regex(/^[a-zA-Z0-9_.-]+$/, "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten")
+          .regex(
+            /^[a-zA-Z0-9_.-]+$/,
+            "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
+          )
           .optional(),
         role: z.nativeEnum(UserRole).default("USER"),
         displayRole: z.string().max(100).optional(),
@@ -583,7 +586,10 @@ export const usersRouter = createTRPCRouter({
           .string()
           .min(3, "Benutzername muss mindestens 3 Zeichen haben")
           .max(30, "Benutzername darf maximal 30 Zeichen haben")
-          .regex(/^[a-zA-Z0-9_.-]+$/, "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten")
+          .regex(
+            /^[a-zA-Z0-9_.-]+$/,
+            "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
+          )
           .optional(),
         role: z.nativeEnum(UserRole).optional(),
         bio: z.string().max(2000).optional(),
