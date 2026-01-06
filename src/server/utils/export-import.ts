@@ -137,4 +137,3 @@ export async function extractImportZip(zipBuffer: Buffer): Promise<{
 
   return { jsonData, mediaFiles, mediaMapping };
 }
-

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
-import { createExportZip, collectMediaFromEntities } from "@/server/utils/export-import";
+import {
+  createExportZip,
+  collectMediaFromEntities,
+} from "@/server/utils/export-import";
 
 export async function GET(
   request: NextRequest,
@@ -20,7 +23,12 @@ export async function GET(
     const date = new Date().toISOString().split("T")[0];
 
     let jsonData: Record<string, unknown>;
-    let mediaFiles: Array<{ coverImage?: { id: string } | null; image?: { id: string } | null; ensemble?: { image?: { id: string } | null } | null; auswahlChor?: { image?: { id: string } | null } | null }> = [];
+    let mediaFiles: Array<{
+      coverImage?: { id: string } | null;
+      image?: { id: string } | null;
+      ensemble?: { image?: { id: string } | null } | null;
+      auswahlChor?: { image?: { id: string } | null } | null;
+    }> = [];
     let filename: string;
 
     switch (type) {
@@ -222,7 +230,8 @@ export async function GET(
         };
 
         // Downloads don't have media references, just return JSON in ZIP
-        const { createExportZip } = await import("@/server/utils/export-import");
+        const { createExportZip } =
+          await import("@/server/utils/export-import");
         const zipBuffer = await createExportZip(jsonData, [], "downloads.json");
 
         return new NextResponse(zipBuffer, {
@@ -310,7 +319,11 @@ export async function GET(
 
     // Collect media files and create ZIP
     const mediaList = collectMediaFromEntities(mediaFiles);
-    const zipBuffer = await createExportZip(jsonData, mediaList, `${type}.json`);
+    const zipBuffer = await createExportZip(
+      jsonData,
+      mediaList,
+      `${type}.json`,
+    );
 
     return new NextResponse(zipBuffer, {
       headers: {
@@ -326,4 +339,3 @@ export async function GET(
     );
   }
 }
-

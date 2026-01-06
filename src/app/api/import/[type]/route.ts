@@ -128,8 +128,7 @@ export async function POST(
                 category: postData.category as string,
                 bezirkId: (postData.bezirkId as string) || null,
                 pinned: (postData.pinned as boolean) || false,
-                status:
-                  (postData.status as string) || ContentStatus.DRAFT,
+                status: (postData.status as string) || ContentStatus.DRAFT,
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
               },
@@ -145,7 +144,8 @@ export async function POST(
       }
 
       case "events": {
-        const events = (jsonData.events as Array<Record<string, unknown>>) || [];
+        const events =
+          (jsonData.events as Array<Record<string, unknown>>) || [];
         const results = await Promise.all(
           events.map(async (eventData: Record<string, unknown>) => {
             const coverImageId = eventData.coverImageId as string | undefined;
@@ -167,8 +167,7 @@ export async function POST(
                 auswahlChorId: (eventData.auswahlChorId as string) || null,
                 ensembleType: (eventData.ensembleType as string) || null,
                 coverImageId: newCoverImageId,
-                status:
-                  (eventData.status as string) || ContentStatus.DRAFT,
+                status: (eventData.status as string) || ContentStatus.DRAFT,
               },
             });
           }),
@@ -235,8 +234,7 @@ export async function POST(
                 folder: (mediaData.folder as string) || null,
                 tags: mediaData.tags || null,
                 isPublic: (mediaData.isPublic as boolean) ?? true,
-                status:
-                  (mediaData.status as string) || ContentStatus.APPROVED,
+                status: (mediaData.status as string) || ContentStatus.APPROVED,
                 uploadedById: session.user.id,
               },
             });
@@ -265,8 +263,7 @@ export async function POST(
                 fileSize: (downloadData.fileSize as number) || null,
                 tags: (downloadData.tags as unknown[]) || [],
                 isPublic: (downloadData.isPublic as boolean) ?? true,
-                status:
-                  (downloadData.status as string) || ContentStatus.DRAFT,
+                status: (downloadData.status as string) || ContentStatus.DRAFT,
                 uploadedById: session.user.id,
               },
             });
@@ -308,8 +305,7 @@ export async function POST(
                 priceCd: (bhData.priceCd as number) || null,
                 availableBlaeserheft:
                   (bhData.availableBlaeserheft as boolean) ?? true,
-                availableBeiheft:
-                  (bhData.availableBeiheft as boolean) ?? true,
+                availableBeiheft: (bhData.availableBeiheft as boolean) ?? true,
                 availableTrompeten:
                   (bhData.availableTrompeten as boolean) ?? false,
                 availableCd: (bhData.availableCd as boolean) ?? true,
@@ -327,7 +323,8 @@ export async function POST(
       }
 
       case "courses": {
-        const courses = (jsonData.courses as Array<Record<string, unknown>>) || [];
+        const courses =
+          (jsonData.courses as Array<Record<string, unknown>>) || [];
         const results = await Promise.all(
           courses.map(async (courseData: Record<string, unknown>) => {
             return await db.course.create({
@@ -343,12 +340,10 @@ export async function POST(
                 registrationDeadline: courseData.registrationDeadline
                   ? new Date(courseData.registrationDeadline as string)
                   : null,
-                maxParticipants:
-                  (courseData.maxParticipants as number) || null,
+                maxParticipants: (courseData.maxParticipants as number) || null,
                 bezirkId: (courseData.bezirkId as string) || null,
                 locationId: (courseData.locationId as string) || null,
-                status:
-                  (courseData.status as string) || ContentStatus.DRAFT,
+                status: (courseData.status as string) || ContentStatus.DRAFT,
                 createdById: session.user.id,
               },
             });
@@ -374,11 +369,9 @@ export async function POST(
     console.error("Import error:", error);
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Failed to import data",
+        error: error instanceof Error ? error.message : "Failed to import data",
       },
       { status: 500 },
     );
   }
 }
-
