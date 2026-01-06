@@ -1,280 +1,148 @@
 # Posaunenwerk Rheinland
 
-A modern web platform for the Posaunenwerk Rheinland - the regional brass music association in the Rhineland region of Germany. This application serves as a central hub for managing events, courses, news, and organizational information for brass choirs and musicians.
+Web platform for the Posaunenwerk Rheinland brass music association. Manages events, courses, news, and organizational information.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?style=flat-square&logo=typescript)
 ![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?style=flat-square&logo=prisma)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC?style=flat-square&logo=tailwind-css)
+![tRPC](https://img.shields.io/badge/tRPC-11-2596BE?style=flat-square&logo=trpc)
+![Better Auth](https://img.shields.io/badge/Better%20Auth-1.4-000000?style=flat-square)
+![React Query](https://img.shields.io/badge/React%20Query-5-FF4154?style=flat-square&logo=react-query)
+![pnpm](https://img.shields.io/badge/pnpm-10-F69220?style=flat-square&logo=pnpm)
 
-## ✨ Features
+## Tech Stack
 
-### Public Features
+- **Next.js 16** (App Router) + **TypeScript**
+- **tRPC** (end-to-end typesafe APIs)
+- **Prisma** + **PostgreSQL**
+- **Better Auth** (authentication)
+- **Tailwind CSS**
 
-- 📅 **Event Calendar** - Interactive calendar view for concerts, services, rehearsals, and other events
-- 📚 **Course Management** - Browse and register for music courses and workshops
-- 📰 **News & Updates** - Stay informed with the latest posts and announcements
-- 🎵 **Organization Info** - Learn about districts, ensembles, leadership, and more
-- 📥 **Downloads** - Access sheet music and other resources
+## Quick Start
 
-### Dashboard Features (Authenticated)
+### Docker (Recommended)
 
-- 🎯 **Content Management** - Create, edit, and manage events and courses
-- 👥 **Participant Management** - Track registrations and participants
-- ✅ **Approval Workflow** - Review and approve content submissions
-- 📊 **Bulk Operations** - Select, duplicate, delete, or change status of multiple items
-- 🔐 **Role-Based Access** - Different permissions for Admin, LPW, RPW, Obleute, and Users
+```bash
+# 1. Clone and configure
+git clone https://github.com/nichtLehdev/pwr-web.git
+cd pwr-web
 
-## 🛠️ Tech Stack
+# 2. Set environment variables
+# Required: DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_GITHUB_CLIENT_ID, 
+#           BETTER_AUTH_GITHUB_CLIENT_SECRET, GITHUB_TOKEN, GITHUB_REPO
+# Optional: SMTP_* (for email)
 
-This project is built with the [T3 Stack](https://create.t3.gg/):
+# 3. Start services
+docker compose up -d
 
-- **[Next.js 16](https://nextjs.org)** - React framework with App Router
-- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
-- **[tRPC](https://trpc.io)** - End-to-end typesafe APIs
-- **[Prisma](https://prisma.io)** - Type-safe database ORM
-- **[PostgreSQL](https://www.postgresql.org/)** - Relational database
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
-- **[Better Auth](https://www.better-auth.com/)** - Authentication library
-- **[React Query](https://tanstack.com/query)** - Server state management
+# 4. (Optional) Seed database
+docker compose run --rm --profile seed db-seed
+```
 
-## 📁 Project Structure
+Visit [http://localhost:3000](http://localhost:3000)
+
+### Local Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start database (or use ./start-database.sh)
+docker run -d --name posaunenwerk-db \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=posaunenwerk \
+  -p 5432:5432 postgres:16-alpine
+
+# Setup database
+pnpm db:migrate
+pnpm tsx prisma/seed.ts  # Optional
+
+# Start dev server
+pnpm dev
+```
+
+## Environment Variables
+
+**Required:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `BETTER_AUTH_SECRET` - Auth secret (generate: `openssl rand -base64 32`)
+- `BETTER_AUTH_GITHUB_CLIENT_ID` - GitHub OAuth client ID
+- `BETTER_AUTH_GITHUB_CLIENT_SECRET` - GitHub OAuth secret
+- `GITHUB_TOKEN` - GitHub API token
+- `GITHUB_REPO` - GitHub repository (format: `owner/repo`)
+
+**Optional (Email):**
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`
+
+## Scripts
+
+| Command             | Description                    |
+| ------------------- | ------------------------------ |
+| `pnpm dev`          | Development server             |
+| `pnpm build`        | Production build               |
+| `pnpm start`        | Production server              |
+| `pnpm check`        | Lint + type check              |
+| `pnpm db:migrate`   | Run migrations                 |
+| `pnpm db:studio`    | Open Prisma Studio             |
+| `pnpm test:email`   | Test email configuration       |
+
+## Project Structure
 
 ```
 src/
-├── app/                    # Next.js App Router pages
-│   ├── aktuelles/         # News/posts section
-│   ├── dashboard/         # Admin dashboard
-│   ├── foerderverein/     # Supporter association
-│   ├── kontakt/           # Contact page
-│   ├── materialien/       # Resources/downloads
-│   ├── mitmachen/         # Participation info
-│   ├── termine/           # Events calendar
-│   ├── ueber-uns/         # About us pages
-│   └── _components/       # Shared components
-├── lib/                   # Utility functions and types
-├── server/                # Server-side code
-│   ├── api/              # tRPC routers
-│   └── better-auth/      # Auth configuration
-├── styles/               # Global styles
-└── trpc/                 # tRPC client setup
+├── app/              # Next.js pages (aktuelles, dashboard, termine, etc.)
+├── server/api/       # tRPC routers
+├── server/better-auth/ # Auth configuration
+├── lib/              # Utilities
+└── trpc/             # tRPC client
 prisma/
-├── schema.prisma         # Database schema
-├── seed.ts              # Database seeding
-└── migrations/          # Database migrations
+├── schema.prisma     # Database schema
+└── migrations/       # Migration history
 ```
 
-## 🚀 Getting Started
+## Features
 
-### Prerequisites
+**Public:**
+- Event calendar, course listings, news, organization info, downloads
 
-- Node.js 22+
-- pnpm 10+
-- PostgreSQL 16+ (or Docker)
+**Dashboard (Authenticated):**
+- Content management (events, courses, posts)
+- Registration management
+- Approval workflow (DRAFT → PENDING → APPROVED)
+- Role-based access (ADMIN, LPW, RPW, OBLEUTE, USER)
 
-### Option 1: Docker (Recommended)
+## User Roles
 
-The easiest way to run the project is using Docker Compose:
+- `ADMIN` - Full access
+- `LPW` - Landesposaunenwart (can approve all content)
+- `RPW` - Regionalposaunenwart (can approve for assigned districts)
+- `OBLEUTE` - District representatives (can create, needs approval)
+- `USER` - Regular users
 
-1. **Clone and configure**
+## Database Models
 
-   ```bash
-   git clone https://github.com/nichtLehdev/pwr-web.git
-   cd pwr-web
-   cp .env.example .env
-   ```
+Key entities: `User`, `Event`, `Course`, `Post`, `Bezirk`, `Ensemble`, `AuswahlChor`, `Location`, `Media`, `Download`, `CourseRegistration`
 
-2. **Configure environment variables** in `.env`:
+## Docker Services
 
-   ```bash
-   # Generate a secure password
-   POSTGRES_PASSWORD=your_secure_password
+- `db` - PostgreSQL 16
+- `db-migrate` - Runs migrations on startup
+- `db-seed` - Optional seeding (profile: seed)
+- `app` - Next.js application
 
-   # Generate auth secret (Linux/macOS)
-   openssl rand -base64 32
-   # Or Windows PowerShell:
-   [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])
-   ```
+## Documentation
 
-   Set `BETTER_AUTH_SECRET` to the generated value.
+See [docs/](./docs/) for detailed documentation:
 
-3. **Start the application**
+- [Architecture](./docs/architecture.md) - Tech stack and project structure
+- [API Reference](./docs/api.md) - tRPC routers and endpoints
+- [Development Guide](./docs/development.md) - Setup and development workflow
+- [Deployment](./docs/deployment.md) - Production deployment guide
+- [Email Testing](./EMAIL_TESTING.md) - SMTP configuration
+- [Social Media Export](./docs/social-media-export.md) - Instagram post generation
 
-   ```bash
-   docker compose up -d
-   ```
+## License
 
-   This will:
-   - Start PostgreSQL database
-   - Run database migrations automatically
-   - Start the Next.js application
-
-4. **(Optional) Seed with sample data**
-
-   ```bash
-   docker compose run --rm --profile seed db-seed
-   ```
-
-5. **Open the application**
-
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Option 2: Local Development
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/nichtLehdev/pwr-web.git
-   cd pwr-web
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-3. **Set up environment variables**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Configure the required variables (see `.env.example` for details).
-
-4. **Start the database**
-
-   Using the provided script:
-
-   ```bash
-   ./start-database.sh
-   ```
-
-   Or using Docker directly:
-
-   ```bash
-   docker run -d --name posaunenwerk-db \
-     -e POSTGRES_PASSWORD=password \
-     -e POSTGRES_DB=posaunenwerk \
-     -p 5432:5432 postgres:16-alpine
-   ```
-
-5. **Set up the database**
-
-   ```bash
-   # Run migrations
-   pnpm db:migrate
-
-   # (Optional) Seed the database
-   pnpm tsx prisma/seed.ts
-   ```
-
-6. **Start the development server**
-
-   ```bash
-   pnpm dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## 📜 Available Scripts
-
-| Command             | Description                             |
-| ------------------- | --------------------------------------- |
-| `pnpm dev`          | Start development server with Turbopack |
-| `pnpm build`        | Build for production                    |
-| `pnpm start`        | Start production server                 |
-| `pnpm check`        | Run linting and type checking           |
-| `pnpm lint`         | Run ESLint                              |
-| `pnpm lint:fix`     | Fix ESLint errors                       |
-| `pnpm format:check` | Check code formatting                   |
-| `pnpm format:write` | Format code with Prettier               |
-| `pnpm db:generate`  | Generate Prisma migrations              |
-| `pnpm db:migrate`   | Deploy database migrations              |
-| `pnpm db:push`      | Push schema changes (dev only)          |
-| `pnpm db:studio`    | Open Prisma Studio                      |
-
-## 🗄️ Database
-
-### Key Models
-
-- **User** - User accounts with roles and permissions
-- **Event** - Concerts, services, rehearsals, and other events
-- **Course** - Music courses and workshops with registration
-- **Post** - News articles and announcements
-- **Bezirk** - Regional districts
-- **Ensemble** - Local brass choirs
-- **AuswahlChor** - Select/elite choirs
-
-### User Roles
-
-| Role      | Description                            |
-| --------- | -------------------------------------- |
-| `ADMIN`   | Full system access                     |
-| `LPW`     | Landesposaunenwart (regional director) |
-| `RPW`     | Regionalposaunenwart (area director)   |
-| `OBLEUTE` | District representatives               |
-| `USER`    | Regular authenticated users            |
-
-## 🐳 Docker Reference
-
-### Services
-
-| Service      | Description                                        |
-| ------------ | -------------------------------------------------- |
-| `db`         | PostgreSQL 16 database with health checks          |
-| `db-migrate` | Runs Prisma migrations on startup (init container) |
-| `db-seed`    | Seeds the database with sample data (optional)     |
-| `app`        | Next.js application (production build)             |
-
-### Commands
-
-| Command                                          | Description                             |
-| ------------------------------------------------ | --------------------------------------- |
-| `docker compose up -d`                           | Start all services in background        |
-| `docker compose up -d --build`                   | Rebuild and start services              |
-| `docker compose down`                            | Stop all services                       |
-| `docker compose down -v`                         | Stop and remove volumes (deletes data!) |
-| `docker compose logs -f app`                     | Follow application logs                 |
-| `docker compose logs -f db`                      | Follow database logs                    |
-| `docker compose run --rm --profile seed db-seed` | Seed database with sample data          |
-| `docker compose ps`                              | Show running containers                 |
-| `docker compose exec db psql -U posaunenwerk`    | Connect to database                     |
-
-### Production Deployment
-
-For production environments:
-
-1. **Use strong passwords** - Generate a secure `POSTGRES_PASSWORD`
-2. **Set proper URLs** - Update `NEXT_PUBLIC_APP_URL` to your domain
-3. **Use HTTPS** - Set up a reverse proxy (nginx, traefik, caddy) with SSL
-4. **Backup database** - Set up regular backups of the `posaunenwerk_postgres_data` volume
-
-Example production `.env`:
-
-```env
-POSTGRES_PASSWORD=your_very_secure_password_here
-BETTER_AUTH_SECRET=generated_secret_at_least_32_chars
-NEXT_PUBLIC_APP_URL=https://your-domain.com
-BETTER_AUTH_URL=https://your-domain.com
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is proprietary software for the Posaunenwerk Rheinland.
-
-## 🔗 Links
-
-- [T3 Stack Documentation](https://create.t3.gg/)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
-- [tRPC Documentation](https://trpc.io/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+Proprietary software for Posaunenwerk Rheinland.
