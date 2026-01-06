@@ -23,6 +23,7 @@ interface DashboardCourseCardProps {
   district?: number;
   status: ContentStatus;
   registrationOpen: boolean;
+  registrationOpensAt?: Date | null;
   registrationDeadline?: Date | null;
   maxParticipants?: number | null;
   confirmedCount: number;
@@ -87,6 +88,7 @@ export default function DashboardCourseCard({
   district,
   status,
   registrationOpen,
+  registrationOpensAt,
   registrationDeadline,
   maxParticipants,
   confirmedCount,
@@ -101,7 +103,12 @@ export default function DashboardCourseCard({
   const isDeadlinePassed = registrationDeadline
     ? new Date(registrationDeadline) < new Date()
     : false;
-  const isEffectivelyOpen = registrationOpen && !isDeadlinePassed;
+  const isRegistrationNotOpenYet =
+    registrationOpensAt && new Date(registrationOpensAt) > new Date();
+  const isEffectivelyOpen =
+    registrationOpen &&
+    !isDeadlinePassed &&
+    !isRegistrationNotOpenYet;
 
   const formatDateRange = () => {
     const start = new Date(startDate);
@@ -131,7 +138,15 @@ export default function DashboardCourseCard({
           </span>
 
           {/* Registration Status */}
-          {isEffectivelyOpen ? (
+          {isRegistrationNotOpenYet && registrationOpen ? (
+            <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+              Öffnet{" "}
+              {registrationOpensAt?.toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "short",
+              })}
+            </span>
+          ) : isEffectivelyOpen ? (
             <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
               Offen
             </span>

@@ -96,6 +96,7 @@ export default function NewCoursePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
+  const [registrationOpensAt, setRegistrationOpensAt] = useState("");
 
   const [locationId, setLocationId] = useState<string>("");
   const [locationSearch, setLocationSearch] = useState("");
@@ -394,6 +395,9 @@ export default function NewCoursePage() {
       registrationDeadline: registrationDeadline
         ? new Date(registrationDeadline)
         : undefined,
+      registrationOpensAt: registrationOpensAt
+        ? new Date(registrationOpensAt)
+        : undefined,
       locationId: locationId || undefined,
       bezirkId: bezirkId || undefined,
       courseType,
@@ -652,12 +656,30 @@ export default function NewCoursePage() {
               </div>
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Anmeldung öffnet ab (optional)
+                </label>
+                <input
+                  type="datetime-local"
+                  value={registrationOpensAt}
+                  onChange={(e) => setRegistrationOpensAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  max={registrationDeadline || startDate || undefined}
+                  title="Anmeldungsstart muss vor oder am Anmeldeschluss sein"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem Zeitpunkt
+                </p>
+              </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Anmeldeschluss
                 </label>
                 <input
                   type="date"
                   value={registrationDeadline}
                   onChange={(e) => setRegistrationDeadline(e.target.value)}
+                  min={registrationOpensAt ? new Date(registrationOpensAt).toISOString().split('T')[0] : undefined}
                   max={startDate || undefined}
                   title="Anmeldeschluss muss vor oder am Startdatum sein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"

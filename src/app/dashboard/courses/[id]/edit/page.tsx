@@ -113,6 +113,7 @@ export default function EditCoursePage() {
     additionalInfo: "",
   });
   const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [registrationOpensAt, setRegistrationOpensAt] = useState("");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [allowWaitingList, setAllowWaitingList] = useState(false);
@@ -188,6 +189,16 @@ export default function EditCoursePage() {
       }
 
       setRegistrationOpen(course.registrationOpen);
+      if (course.registrationOpensAt) {
+        const opensAt = new Date(course.registrationOpensAt);
+        // Convert to local time for datetime-local input
+        const year = opensAt.getFullYear();
+        const month = String(opensAt.getMonth() + 1).padStart(2, "0");
+        const day = String(opensAt.getDate()).padStart(2, "0");
+        const hours = String(opensAt.getHours()).padStart(2, "0");
+        const minutes = String(opensAt.getMinutes()).padStart(2, "0");
+        setRegistrationOpensAt(`${year}-${month}-${day}T${hours}:${minutes}`);
+      }
       if (course.registrationDeadline) {
         const deadline = new Date(course.registrationDeadline);
         setRegistrationDeadline(deadline.toISOString().split("T")[0] || "");
@@ -501,6 +512,9 @@ export default function EditCoursePage() {
       targetAudience: targetAudience || null,
       bezirkId: bezirkId || null,
       registrationOpen,
+      registrationOpensAt: registrationOpensAt
+        ? new Date(registrationOpensAt)
+        : null,
       registrationDeadline: registrationDeadline
         ? new Date(registrationDeadline)
         : null,
@@ -1068,6 +1082,26 @@ export default function EditCoursePage() {
 
                 <div>
                   <label
+                    htmlFor="registrationOpensAt"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Anmeldung öffnet ab (optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    id="registrationOpensAt"
+                    value={registrationOpensAt}
+                    onChange={(e) => setRegistrationOpensAt(e.target.value)}
+                    min={new Date().toISOString().slice(0, 16)}
+                    max={registrationDeadline || undefined}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem Zeitpunkt
+                  </p>
+                </div>
+                <div>
+                  <label
                     htmlFor="registrationDeadline"
                     className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
                   >
@@ -1078,6 +1112,7 @@ export default function EditCoursePage() {
                     id="registrationDeadline"
                     value={registrationDeadline}
                     onChange={(e) => setRegistrationDeadline(e.target.value)}
+                    min={registrationOpensAt ? new Date(registrationOpensAt).toISOString().split('T')[0] : undefined}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                   />
                 </div>
