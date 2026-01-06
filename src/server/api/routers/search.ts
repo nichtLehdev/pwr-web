@@ -249,7 +249,8 @@ const staticPages = [
   {
     id: "page-registrations",
     title: "Meine Anmeldungen",
-    description: "Übersicht über alle deine Kursanmeldungen beim Posaunenwerk Rheinland",
+    description:
+      "Übersicht über alle deine Kursanmeldungen beim Posaunenwerk Rheinland",
     url: "/registrations",
     keywords: [
       "anmeldungen",

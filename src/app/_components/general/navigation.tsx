@@ -319,16 +319,15 @@ export default function Navigation() {
 
                   {userMenuOpen && (
                     <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
-                      {profile &&
-                        DASHBOARD_ROLES.includes(profile.role) && (
-                          <Link
-                            href="/dashboard"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
-                          >
-                            Dashboard
-                          </Link>
-                        )}
+                      {profile && DASHBOARD_ROLES.includes(profile.role) && (
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="text-dark dark:text-dark-text hover:bg-primary/10 dark:hover:bg-primary/20 hover:text-primary block px-4 py-2 transition-colors"
+                        >
+                          Dashboard
+                        </Link>
+                      )}
                       <Link
                         href="/registrations"
                         onClick={() => setUserMenuOpen(false)}
@@ -490,16 +489,15 @@ export default function Navigation() {
                           "User"}
                       </span>
                     </div>
-                    {profile &&
-                      DASHBOARD_ROLES.includes(profile.role) && (
-                        <Link
-                          href="/dashboard"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
-                        >
-                          Dashboard
-                        </Link>
-                      )}
+                    {profile && DASHBOARD_ROLES.includes(profile.role) && (
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary block w-full rounded-md px-4 py-3 text-left hover:bg-gray-100"
+                      >
+                        Dashboard
+                      </Link>
+                    )}
                     <Link
                       href="/registrations"
                       onClick={() => setMobileMenuOpen(false)}
