@@ -20,21 +20,12 @@ import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
 import {
   CalendarIcon,
-  ChevronDown,
-  ChevronRight,
-  XCircleIcon,
-  XIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  FunnelIcon,
+  FunnelXIcon,
 } from "lucide-react";
 import { ListIcon } from "lucide-react";
-
-// Inline chevron icons
-function ChevronDownIcon({ className }: { className?: string }) {
-  return <ChevronDown className={className} />;
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return <ChevronRight className={className} />;
-}
 
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
@@ -431,7 +422,7 @@ export default function EventsClient({
                     }}
                     aria-label="Filter zurücksetzen"
                   >
-                    <XIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
+                    <FunnelXIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
                   </button>
                 )}
               <button
@@ -443,7 +434,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Filter öffnen"
               >
-                <XCircleIcon className="h-5 w-5" />
+                <FunnelIcon className="h-5 w-5" />
                 {/* Active Filter Badge */}
                 {(filterType !== "all" ||
                   selectedDistrict !== "all" ||

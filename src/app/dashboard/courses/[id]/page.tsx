@@ -293,11 +293,24 @@ export default function CourseDetailPage() {
               >
                 {statusLabels[course.status]}
               </span>
-              {course.registrationOpen && (
+              {course.registrationOpen &&
+              course.registrationOpensAt &&
+              new Date(course.registrationOpensAt) > new Date() ? (
+                <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                  Öffnet{" "}
+                  {new Date(course.registrationOpensAt).toLocaleDateString(
+                    "de-DE",
+                    {
+                      day: "2-digit",
+                      month: "short",
+                    },
+                  )}
+                </span>
+              ) : course.registrationOpen ? (
                 <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                   Anmeldung offen
                 </span>
-              )}
+              ) : null}
               {course.maxParticipants &&
                 confirmedCount >= course.maxParticipants && (
                   <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
@@ -525,6 +538,33 @@ export default function CourseDetailPage() {
                     )}
                   </dd>
                 </div>
+                {course.registrationOpensAt && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Anmeldung öffnet ab
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {new Date(course.registrationOpensAt).toLocaleDateString(
+                        "de-DE",
+                        {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        },
+                      )}{" "}
+                      um{" "}
+                      {new Date(course.registrationOpensAt).toLocaleTimeString(
+                        "de-DE",
+                        {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}{" "}
+                      Uhr
+                    </dd>
+                  </div>
+                )}
                 {course.registrationDeadline && (
                   <div>
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">

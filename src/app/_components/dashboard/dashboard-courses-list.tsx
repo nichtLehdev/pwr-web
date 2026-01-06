@@ -514,6 +514,11 @@ export default function DashboardCoursesList({
                 district={course.bezirk?.number}
                 status={course.status}
                 registrationOpen={course.registrationOpen}
+                registrationOpensAt={
+                  course.registrationOpensAt
+                    ? new Date(course.registrationOpensAt)
+                    : null
+                }
                 registrationDeadline={
                   course.registrationDeadline
                     ? new Date(course.registrationDeadline)

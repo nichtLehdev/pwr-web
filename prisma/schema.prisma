@@ -361,6 +361,7 @@ model Course {
 
   // Registration
   registrationOpen     Boolean   @default(false)
+  registrationOpensAt  DateTime? // When registrations become available (details visible before this)
   registrationDeadline DateTime?
   maxParticipants      Int? // optional hard cap
   allowWaitingList     Boolean   @default(false)
