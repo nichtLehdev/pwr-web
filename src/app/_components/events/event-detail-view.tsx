@@ -6,6 +6,9 @@ import PageHeader from "../general/page-header";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
+import { UserRole } from "~/generated/prisma/enums";
 import {
   AlertTriangle,
   CalendarArrowDownIcon,
@@ -17,6 +20,7 @@ import {
   ShareIcon,
   Users,
   UsersIcon,
+  EditIcon,
 } from "lucide-react";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
@@ -27,8 +31,21 @@ interface EventDetailViewProps {
 
 export default function EventDetailView({ event }: EventDetailViewProps) {
   const toast = useToast();
+  const { data: session } = useSession();
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
   const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
+
+  // Check if user can edit this event
+  const canEdit =
+    session?.user &&
+    profile &&
+    ((event.createdById === session.user.id ||
+      event.createdBy?.id === session.user.id) ||
+      profile.role === UserRole.ADMIN ||
+      profile.role === UserRole.LPW);
 
   const endDate = new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
   const isPast = eventDate < new Date();
@@ -177,6 +194,15 @@ END:VCALENDAR`;
 
             {/* Action Buttons */}
             <div className="flex gap-2">
+              {canEdit && (
+                <Link
+                  href={`/dashboard/events/${event.id}/edit`}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
+                >
+                  <EditIcon className="h-5 w-5" />
+                  <span className="hidden sm:inline">Bearbeiten</span>
+                </Link>
+              )}
               <button
                 onClick={shareEvent}
                 className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"

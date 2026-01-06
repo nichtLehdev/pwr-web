@@ -10,6 +10,7 @@ import type { RouterOutputs } from "@/trpc/react";
 import PageHeader from "../general/page-header";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
+import { UserRole } from "~/generated/prisma/enums";
 import {
   Clock,
   Calendar,
@@ -18,6 +19,7 @@ import {
   CheckCircleIcon,
   UsersIcon,
   CircleXIcon,
+  EditIcon,
 } from "lucide-react";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
@@ -56,6 +58,15 @@ export default function CourseDetailView({
       { courseId: course.id },
       { enabled: !!session?.user },
     );
+
+  // Check if user can edit this course
+  const canEdit =
+    session?.user &&
+    userProfile &&
+    ((course.createdById === session.user.id ||
+      course.createdBy?.id === session.user.id) ||
+      userProfile.role === UserRole.ADMIN ||
+      userProfile.role === UserRole.LPW);
 
   const districtColor = getDistrictColor(course.bezirk?.number);
   const startDate = new Date(course.startDate);
@@ -247,6 +258,19 @@ export default function CourseDetailView({
                 </p>
               )}
             </div>
+
+            {/* Action Buttons */}
+            {canEdit && (
+              <div className="flex gap-2">
+                <Link
+                  href={`/dashboard/courses/${course.id}/edit`}
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
+                >
+                  <EditIcon className="h-5 w-5" />
+                  <span className="hidden sm:inline">Bearbeiten</span>
+                </Link>
+              </div>
+            )}
 
             {/* Registration Status */}
             {!isPast && (
