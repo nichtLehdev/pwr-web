@@ -92,6 +92,17 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      // Check if registration has opened yet
+      if (
+        course.registrationOpensAt &&
+        new Date() < course.registrationOpensAt
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration is not yet open for this course",
+        });
+      }
+
       if (
         course.registrationDeadline &&
         new Date() > course.registrationDeadline

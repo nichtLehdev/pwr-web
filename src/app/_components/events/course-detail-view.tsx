@@ -74,9 +74,14 @@ export default function CourseDetailView({
   const registrationDeadline = course.registrationDeadline
     ? new Date(course.registrationDeadline)
     : null;
+  const registrationOpensAt = course.registrationOpensAt
+    ? new Date(course.registrationOpensAt)
+    : null;
   const isPast = endDate < new Date();
   const isDeadlinePassed =
     registrationDeadline && registrationDeadline < new Date();
+  const isRegistrationNotOpenYet =
+    registrationOpensAt && registrationOpensAt > new Date();
 
   const isSameDay = startDate.toDateString() === endDate.toDateString();
   const durationDays = Math.ceil(
@@ -87,6 +92,7 @@ export default function CourseDetailView({
     course.registrationOpen &&
     !isPast &&
     !isDeadlinePassed &&
+    !isRegistrationNotOpenYet &&
     (!spots.isFull || course.allowWaitingList);
 
   const district = !course.bezirk
@@ -298,22 +304,42 @@ export default function CourseDetailView({
             )}
           </div>
 
-          {/* Registration Deadline */}
-          {registrationDeadline && !isPast && (
-            <div className="inline-block rounded-lg bg-white/10 p-4">
-              <p className="flex items-center gap-2 text-sm">
-                <Clock className="h-5 w-5" />
-                <span>
-                  Anmeldeschluss:{" "}
-                  {registrationDeadline.toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-              </p>
-            </div>
-          )}
+          {/* Registration Info */}
+          <div className="flex flex-wrap gap-4">
+            {registrationOpensAt && isRegistrationNotOpenYet && (
+              <div className="inline-block rounded-lg bg-white/10 p-4">
+                <p className="flex items-center gap-2 text-sm">
+                  <Clock className="h-5 w-5" />
+                  <span>
+                    Anmeldung ab:{" "}
+                    {registrationOpensAt.toLocaleDateString("de-DE", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    Uhr
+                  </span>
+                </p>
+              </div>
+            )}
+            {registrationDeadline && !isPast && (
+              <div className="inline-block rounded-lg bg-white/10 p-4">
+                <p className="flex items-center gap-2 text-sm">
+                  <Clock className="h-5 w-5" />
+                  <span>
+                    Anmeldeschluss:{" "}
+                    {registrationDeadline.toLocaleDateString("de-DE", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -385,6 +411,32 @@ export default function CourseDetailView({
                         {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
                       </p>
                     </>
+                  )}
+                  {registrationOpensAt && isRegistrationNotOpenYet && (
+                    <div className="mt-4 rounded-lg border-2 border-purple-300 bg-purple-50 p-4 dark:border-purple-700 dark:bg-purple-900/30">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-purple-700 dark:text-purple-300" />
+                        <div>
+                          <p className="font-semibold text-purple-900 dark:text-purple-200">
+                            Anmeldung öffnet am
+                          </p>
+                          <p className="text-lg font-bold text-purple-800 dark:text-purple-100">
+                            {registrationOpensAt.toLocaleDateString("de-DE", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}{" "}
+                            um{" "}
+                            {registrationOpensAt.toLocaleTimeString("de-DE", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            Uhr
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   <div className="pt-4">
                     <button
@@ -564,18 +616,31 @@ export default function CourseDetailView({
                       <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
                       <div>
                         <p className="font-semibold text-gray-700 dark:text-gray-300">
-                          {isDeadlinePassed
-                            ? "Anmeldefrist abgelaufen"
-                            : spots.isFull && !course.allowWaitingList
-                              ? "Kurs ausgebucht"
-                              : "Anmeldung geschlossen"}
+                          {isRegistrationNotOpenYet
+                            ? "Anmeldung noch nicht geöffnet"
+                            : isDeadlinePassed
+                              ? "Anmeldefrist abgelaufen"
+                              : spots.isFull && !course.allowWaitingList
+                                ? "Kurs ausgebucht"
+                                : "Anmeldung geschlossen"}
                         </p>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          {isDeadlinePassed
-                            ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
-                            : spots.isFull && !course.allowWaitingList
-                              ? "Alle Plätze sind belegt und es gibt keine Warteliste."
-                              : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
+                          {isRegistrationNotOpenYet
+                            ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString(
+                                "de-DE",
+                                {
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )} Uhr. Die Kursdetails sind bereits verfügbar.`
+                            : isDeadlinePassed
+                              ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
+                              : spots.isFull && !course.allowWaitingList
+                                ? "Alle Plätze sind belegt und es gibt keine Warteliste."
+                                : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
                         </p>
                       </div>
                     </div>

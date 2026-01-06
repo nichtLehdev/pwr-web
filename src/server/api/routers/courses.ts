@@ -453,6 +453,7 @@ export const coursesRouter = createTRPCRouter({
           targetAudience: z.enum(TargetAudience).optional(),
           bezirkId: z.string().optional(),
           registrationOpen: z.boolean().default(false),
+          registrationOpensAt: z.date().optional(),
           registrationDeadline: z.date().optional(),
           maxParticipants: z.number().min(1).max(500),
           allowWaitingList: z.boolean().default(false),
@@ -495,6 +496,16 @@ export const coursesRouter = createTRPCRouter({
           {
             message: "Anmeldeschluss muss vor oder am Startdatum sein",
             path: ["registrationDeadline"],
+          },
+        )
+        .refine(
+          (data) =>
+            !data.registrationOpensAt ||
+            !data.registrationDeadline ||
+            data.registrationOpensAt <= data.registrationDeadline,
+          {
+            message: "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
+            path: ["registrationOpensAt"],
           },
         ),
     )
@@ -549,6 +560,7 @@ export const coursesRouter = createTRPCRouter({
           targetAudience: z.enum(TargetAudience).optional().nullable(),
           bezirkId: z.string().optional().nullable(),
           registrationOpen: z.boolean().optional(),
+          registrationOpensAt: z.date().optional().nullable(),
           registrationDeadline: z.date().optional().nullable(),
           maxParticipants: z.number().min(1).max(500).optional(),
           allowWaitingList: z.boolean().optional(),
@@ -598,6 +610,16 @@ export const coursesRouter = createTRPCRouter({
           {
             message: "Anmeldeschluss muss vor oder am Startdatum sein",
             path: ["registrationDeadline"],
+          },
+        )
+        .refine(
+          (data) =>
+            !data.registrationOpensAt ||
+            !data.registrationDeadline ||
+            data.registrationOpensAt <= data.registrationDeadline,
+          {
+            message: "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
+            path: ["registrationOpensAt"],
           },
         ),
     )

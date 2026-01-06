@@ -44,9 +44,15 @@ export default function CourseCard({
     id: id,
   }).data;
   const course = api.courses.getById.useQuery({ id: id }).data;
+  const registrationOpensAt = course?.registrationOpensAt
+    ? new Date(course.registrationOpensAt)
+    : null;
+  const isRegistrationNotOpenYet =
+    registrationOpensAt && registrationOpensAt > new Date();
   const registrationOpen =
     course &&
     course.registrationOpen &&
+    !isRegistrationNotOpenYet &&
     course.registrationDeadline &&
     new Date() < new Date(course.registrationDeadline);
 
@@ -84,6 +90,15 @@ export default function CourseCard({
               {!isSameDay && (
                 <span className="text-primary bg-primary/10 rounded-full px-3 py-1 text-xs font-semibold">
                   {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
+                </span>
+              )}
+              {isRegistrationNotOpenYet && (
+                <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                  Anmeldung ab{" "}
+                  {registrationOpensAt?.toLocaleDateString("de-DE", {
+                    day: "2-digit",
+                    month: "short",
+                  })}
                 </span>
               )}
               {registrationOpen && spotsAvailable.availableSlots > 0 && (
