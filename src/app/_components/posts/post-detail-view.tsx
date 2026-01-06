@@ -9,11 +9,15 @@ import { getDistrictColor } from "@/lib/district-color";
 import ImageLightbox from "./image-lightbox";
 import PostCard from "./post-card";
 import type { FileType } from "~/generated/prisma/enums";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
+import { UserRole } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
   ArrowUpRightIcon,
   DownloadIcon,
   PinIcon,
+  EditIcon,
 } from "lucide-react";
 
 type PostWithRelations = RouterOutputs["posts"]["getById"];
@@ -55,6 +59,10 @@ export default function PostDetailView({
     src: string;
     alt: string;
   } | null>(null);
+  const { data: session } = useSession();
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
 
   useEffect(() => {
     const container = document.querySelector(".article-content");
@@ -79,6 +87,15 @@ export default function PostDetailView({
 
   const districtColor = getDistrictColor(post.bezirk?.number);
   const publishDate = new Date(post.publishedAt || post.createdAt);
+
+  // Check if user can edit this post
+  const canEdit =
+    session?.user &&
+    profile &&
+    (post.createdById === session.user.id ||
+      post.createdBy?.id === session.user.id ||
+      profile.role === UserRole.ADMIN ||
+      profile.role === UserRole.LPW);
 
   return (
     <div className="bg-background dark:bg-dark-background min-h-screen">
@@ -264,8 +281,20 @@ export default function PostDetailView({
                 Zurück zur Übersicht
               </Link>
 
-              {/* Share Buttons */}
+              {/* Action Buttons */}
               <div className="flex items-center gap-2">
+                {/* Edit Link */}
+                {canEdit && (
+                  <Link
+                    href={`/dashboard/posts/${post.id}/edit`}
+                    className="text-primary hover:text-primary-dark border-primary hover:bg-primary/10 inline-flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-semibold transition-colors"
+                  >
+                    <EditIcon className="h-4 w-4" />
+                    Bearbeiten
+                  </Link>
+                )}
+
+                {/* Share Buttons */}
                 <span className="mr-2 text-sm text-gray-600 dark:text-gray-400">
                   Teilen:
                 </span>

@@ -4,7 +4,12 @@ import { api } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getDistrictColor } from "@/lib/district-color";
 import CourseCardSkeleton from "./course-card-skeleton";
-import { CalendarIcon, CheckIcon, MapPinIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  CheckIcon,
+  MapPinIcon,
+  ChevronRightIcon,
+} from "lucide-react";
 
 interface CourseCardProps {
   id: string;
@@ -152,7 +157,7 @@ export default function CourseCard({
             {registrationOpen && !spotsAvailable.isFull
               ? "Jetzt anmelden"
               : "Details ansehen"}
-            <CheckIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <ChevronRightIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
         </div>
       </article>
