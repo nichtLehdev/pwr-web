@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getDistrictColor } from "@/lib/district-color";
@@ -68,13 +67,6 @@ export default function CourseCard({
           borderLeftColor: districtColor,
         }}
       >
-        {/* Course Image */}
-        {imageUrl && (
-          <div className="relative h-48 w-full">
-            <Image src={imageUrl} alt={title} fill className="object-cover" />
-          </div>
-        )}
-
         <div className="p-6">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
             <div className="flex gap-2">
