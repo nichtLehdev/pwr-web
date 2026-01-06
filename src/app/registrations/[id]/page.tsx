@@ -7,6 +7,19 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  BuildingIcon,
+  CalendarIcon,
+  CircleXIcon,
+  Edit,
+  EditIcon,
+  PencilIcon,
+  UsersIcon,
+  X,
+} from "lucide-react";
+import { UserIcon } from "lucide-react";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -200,19 +213,7 @@ export default function ViewRegistrationPage() {
                   href={`/registrations/${registration.id}/edit`}
                   className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
+                  <EditIcon className="h-4 w-4" />
                   Bearbeiten
                 </Link>
               )}
@@ -221,19 +222,7 @@ export default function ViewRegistrationPage() {
                   onClick={() => setCancelModalOpen(true)}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:border-red-400 hover:bg-red-100 hover:text-red-700 dark:border-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <CircleXIcon className="h-4 w-4" />
                   Stornieren
                 </button>
               )}
@@ -244,19 +233,7 @@ export default function ViewRegistrationPage() {
         {/* Course Info Card */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <svg
-              className="text-primary h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
+            <CalendarIcon className="text-primary h-5 w-5" />
             Kursdetails
           </h2>
           <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -305,19 +282,7 @@ export default function ViewRegistrationPage() {
               className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
             >
               Zur Kursseite
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
+              <ArrowRightIcon className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -325,19 +290,7 @@ export default function ViewRegistrationPage() {
         {/* Registrant Info */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-            <svg
-              className="text-primary h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+            <UserIcon className="text-primary h-5 w-5" />
             Anmelder
           </h2>
           <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -375,19 +328,7 @@ export default function ViewRegistrationPage() {
         {registration.useSeparateBilling && (
           <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <svg
-                className="text-primary h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <BuildingIcon className="text-primary h-5 w-5" />
               Rechnungsadresse
             </h2>
             <div className="grid gap-4 text-sm md:grid-cols-2">
@@ -447,19 +388,7 @@ export default function ViewRegistrationPage() {
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="border-b border-gray-200 p-6 dark:border-gray-700">
             <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <svg
-                className="text-primary h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <UsersIcon className="text-primary h-5 w-5" />
               Teilnehmer ({registration.participants.length})
             </h2>
           </div>
@@ -541,19 +470,7 @@ export default function ViewRegistrationPage() {
         {registration.notes && (
           <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
-              <svg
-                className="text-primary h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
+              <PencilIcon className="text-primary h-5 w-5" />
               Anmerkungen
             </h2>
             <p className="whitespace-pre-wrap text-gray-600 dark:text-gray-400">
@@ -568,19 +485,7 @@ export default function ViewRegistrationPage() {
             href="/registrations"
             className="text-primary hover:text-primary-dark inline-flex items-center gap-2 text-sm font-medium transition-colors"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
+            <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
         </div>

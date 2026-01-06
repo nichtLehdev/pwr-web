@@ -3,9 +3,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
+import {
+  Music,
+  Calendar,
+  MapPin,
+  Users,
+  ChevronRight,
+  User,
+} from "lucide-react";
 
 export default async function AuswahlchoerePage() {
-  const ensembles = (await api.auswahlchoereRouter.getAll({})).auswahlchoere;
+  const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;
 
   return (
     <div>
@@ -66,19 +74,7 @@ export default async function AuswahlchoerePage() {
                     <div
                       className={`absolute inset-0 ${ensemble.color} flex items-center justify-center`}
                     >
-                      <svg
-                        className="h-32 w-32 text-white opacity-50"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                        />
-                      </svg>
+                      <Music className="h-32 w-32 text-white opacity-50" />
                     </div>
                   )}
 
@@ -108,54 +104,18 @@ export default async function AuswahlchoerePage() {
                 {/* Metadaten */}
                 <div className="mb-6 flex flex-wrap gap-4">
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <Calendar className="h-5 w-5" />
                     <span className="font-semibold">
                       Seit {ensemble.founded}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <Users className="h-5 w-5" />
                     <span className="font-semibold">{ensemble.members}</span>
                   </div>
                   {ensemble.conductor && (
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
+                      <User className="h-5 w-5" />
                       <span className="font-semibold">
                         {ensemble.conductor.displayRole &&
                           `${ensemble.conductor.displayRole} `}
@@ -206,19 +166,7 @@ export default async function AuswahlchoerePage() {
                       className={`inline-flex items-center px-6 py-3 ${ensemble.color} rounded-lg font-semibold text-white transition-opacity hover:opacity-90`}
                     >
                       Jetzt informieren
-                      <svg
-                        className="ml-2 h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      <ChevronRight className="ml-2 h-5 w-5" />
                     </Link>
                   </div>
                 )}

@@ -2,6 +2,15 @@ import Link from "next/link";
 import PageHeader from "@/app/_components/general/page-header";
 import HistoryTimeline from "@/app/_components/history-timeline";
 import { api } from "@/trpc/server";
+import {
+  ArrowRightIcon,
+  BadgeCheckIcon,
+  BookOpenIcon,
+  Building,
+  EyeIcon,
+  Music2Icon,
+  MusicIcon,
+} from "lucide-react";
 
 export default async function StrukturGeschichtePage() {
   const historyTimeline = await api.organization.getHistory({});
@@ -220,19 +229,7 @@ export default async function StrukturGeschichtePage() {
           <div className="mx-auto max-w-5xl">
             <div className="mb-8 text-center">
               <div className="mb-4 inline-block rounded-full bg-white/10 p-3">
-                <svg
-                  className="h-12 w-12"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-                  />
-                </svg>
+                <Building className="h-12 w-12" />
               </div>
               <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
                 Förderverein – Gemeinsam stark
@@ -268,19 +265,7 @@ export default async function StrukturGeschichtePage() {
             <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                    />
-                  </svg>
+                  <MusicIcon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Auswahlchöre</h3>
                 <p className="text-sm opacity-90">
@@ -290,19 +275,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                  <BookOpenIcon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Ausbildung</h3>
                 <p className="text-sm opacity-90">
@@ -312,19 +285,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
+                  <Music2Icon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 font-bold">Projekte</h3>
                 <p className="text-sm opacity-90">
@@ -339,19 +300,7 @@ export default async function StrukturGeschichtePage() {
                 className="text-foerderverein mr-4 inline-flex items-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
               >
                 Mehr erfahren
-                <svg
-                  className="ml-2 h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
               <a
                 href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
@@ -393,25 +342,7 @@ export default async function StrukturGeschichtePage() {
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                  </svg>
+                  <EyeIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold">Unsere Vision</h3>
                 <p className="leading-relaxed opacity-90">
@@ -424,19 +355,7 @@ export default async function StrukturGeschichtePage() {
 
               <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                    />
-                  </svg>
+                  <BadgeCheckIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="mb-3 text-xl font-bold">Unsere Mission</h3>
                 <p className="leading-relaxed opacity-90">
@@ -467,19 +386,7 @@ export default async function StrukturGeschichtePage() {
               className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white transition-colors"
             >
               Chor finden
-              <svg
-                className="ml-2 h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+              <ArrowRightIcon className="ml-2 h-6 w-6" />
             </Link>
           </div>
         </div>

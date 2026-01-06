@@ -13,6 +13,7 @@ import {
   ContentStatus,
   UserRole,
 } from "~/generated/prisma/enums";
+import { Lock, Trash2 } from "lucide-react";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -104,7 +105,7 @@ export default function NewEventPage() {
     bezirkId: !isHigherRole && userBezirkId ? userBezirkId : undefined,
   });
 
-  const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
+  const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );
@@ -673,19 +674,7 @@ export default function NewEventPage() {
                       disabled
                       className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
                     />
-                    <svg
-                      className="h-5 w-5 shrink-0 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                      />
-                    </svg>
+                    <Lock className="h-5 w-5 shrink-0 text-gray-400" />
                   </div>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Du kannst nur Termine für deinen eigenen Bezirk erstellen.
@@ -1098,19 +1087,7 @@ export default function NewEventPage() {
                             onClick={() => removePriceOption(option.id)}
                             className="p-1 text-gray-400 hover:text-red-500"
                           >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       ))}

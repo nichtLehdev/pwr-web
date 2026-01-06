@@ -18,42 +18,22 @@ import EventCard from "./event-card";
 import CourseCard from "./course-card";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
+import {
+  CalendarIcon,
+  ChevronDown,
+  ChevronRight,
+  XCircleIcon,
+  XIcon,
+} from "lucide-react";
+import { ListIcon } from "lucide-react";
 
 // Inline chevron icons
 function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M19 9l-7 7-7-7"
-      />
-    </svg>
-  );
+  return <ChevronDown className={className} />;
 }
 
 function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 5l7 7-7 7"
-      />
-    </svg>
-  );
+  return <ChevronRight className={className} />;
 }
 
 type ViewMode = "list" | "calendar";
@@ -407,19 +387,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Listenansicht"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                  />
-                </svg>
+                <ListIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={() => handleSetViewMode("calendar")}
@@ -430,19 +398,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Kalenderansicht"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <CalendarIcon className="h-5 w-5" />
               </button>
             </div>
 
@@ -475,19 +431,7 @@ export default function EventsClient({
                     }}
                     aria-label="Filter zurücksetzen"
                   >
-                    <svg
-                      className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <XIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
                   </button>
                 )}
               <button
@@ -499,19 +443,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Filter öffnen"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
+                <XCircleIcon className="h-5 w-5" />
                 {/* Active Filter Badge */}
                 {(filterType !== "all" ||
                   selectedDistrict !== "all" ||

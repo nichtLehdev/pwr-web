@@ -13,6 +13,7 @@ import {
   ContentStatus,
   UserRole,
 } from "~/generated/prisma/enums";
+import { Trash2, AlertTriangle } from "lucide-react";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -125,7 +126,7 @@ export default function EditEventPage() {
 
   const { data: ensemblesData } = api.ensembles.getAll.useQuery({});
 
-  const { data: auswahlchoereData } = api.auswahlchoereRouter.getAll.useQuery(
+  const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
     {},
     { enabled: isHigherRole },
   );
@@ -1186,19 +1187,7 @@ export default function EditEventPage() {
                             onClick={() => removePriceOption(option.id)}
                             className="p-1 text-gray-400 hover:text-red-500"
                           >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       ))}
@@ -1221,19 +1210,7 @@ export default function EditEventPage() {
               !isHigherRole && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
                   <div className="flex items-start gap-3">
-                    <svg
-                      className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
                     <div>
                       <p className="font-medium text-amber-800 dark:text-amber-200">
                         {event?.status === ContentStatus.APPROVED

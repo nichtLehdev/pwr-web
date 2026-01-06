@@ -1,6 +1,19 @@
 import { getDistrictColor } from "@/lib/district-color";
 import type { JSX } from "react";
 import { type RouterOutputs } from "@/trpc/react";
+import {
+  BookOpenIcon,
+  UsersIcon,
+  MusicIcon,
+  PartyPopperIcon,
+  WrenchIcon,
+  MedalIcon,
+  GlobeIcon,
+  ChurchIcon,
+  UserIcon,
+  MapPinIcon,
+  ArrowUpRightIcon,
+} from "lucide-react";
 
 type InstagramEventTemplateProps = {
   event: RouterOutputs["events"]["getEventsByMonth"][0];
@@ -26,54 +39,14 @@ const CategoryIcon = ({
   className?: string;
 }) => {
   const icons: Record<string, JSX.Element> = {
-    COURSE: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-      </svg>
-    ),
-    CONCERT: (
-      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-      </svg>
-    ),
-    MEETING: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-      </svg>
-    ),
-    WORSHIP: (
-      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-      </svg>
-    ),
-    WORKSHOP: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-      </svg>
-    ),
-    FESTIVAL: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fillRule="evenodd"
-          d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z"
-          clipRule="evenodd"
-        />
-      </svg>
-    ),
-    COMPETITION: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
-      </svg>
-    ),
-    OTHER: (
-      <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-        <path
-          fillRule="evenodd"
-          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-          clipRule="evenodd"
-        />
-      </svg>
-    ),
+    COURSE: <BookOpenIcon className={className} />,
+    CONCERT: <MusicIcon className={className} />,
+    MEETING: <UsersIcon className={className} />,
+    WORSHIP: <ChurchIcon className={className} />,
+    WORKSHOP: <WrenchIcon className={className} />,
+    FESTIVAL: <PartyPopperIcon className={className} />,
+    COMPETITION: <MedalIcon className={className} />,
+    OTHER: <GlobeIcon className={className} />,
   };
 
   return icons[category] || icons.OTHER;
@@ -261,25 +234,13 @@ export default function InstagramEventTemplate({
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
                 style={{ backgroundColor: districtColor }}
               >
-                <svg
-                  className="h-8 w-8"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
-                </svg>
+                <MusicIcon className="h-8 w-8" />
               </div>
               <div className="text-xl font-semibold">
                 <div className="text-dark font-bold">{performer}</div>
                 {conductor && (
                   <div className="text-dark-light flex items-center gap-2 text-lg">
-                    <svg
-                      className="h-5 w-5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                    </svg>
+                    <UserIcon className="h-5 w-5" />
                     Leitung: {conductor}
                   </div>
                 )}
@@ -294,17 +255,7 @@ export default function InstagramEventTemplate({
                 className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white"
                 style={{ backgroundColor: districtColor }}
               >
-                <svg
-                  className="h-8 w-8"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <MapPinIcon className="h-8 w-8" />
               </div>
               <div className="text-xl font-semibold">
                 {event.location.name && (
@@ -364,13 +315,7 @@ export default function InstagramEventTemplate({
               <div className="text-lg font-semibold">Mehr Infos:</div>
               <div className="text-xl font-bold">posaunenwerk-rheinland.de</div>
             </div>
-            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <ArrowUpRightIcon className="h-6 w-6" />
           </div>
         </div>
       </div>

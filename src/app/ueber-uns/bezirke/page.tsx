@@ -7,6 +7,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 type Bezirk = RouterOutputs["bezirke"]["getAll"][number];
+import {
+  ArrowRightIcon,
+  BuildingIcon,
+  MailIcon,
+  MousePointerIcon,
+  PhoneIcon,
+} from "lucide-react";
 
 function getBezirkInfo(id: number) {
   const info: Record<number, string> = {
@@ -284,19 +291,7 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
             </div>
           ) : (
             <div className="text-center text-gray-400">
-              <svg
-                className="mx-auto mb-3 h-16 w-16 opacity-50"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                />
-              </svg>
+              <MousePointerIcon className="mx-auto mb-3 h-16 w-16 opacity-50" />
               <p className="text-sm">Bewegen Sie die Maus über einen Bezirk</p>
             </div>
           )}
@@ -415,19 +410,7 @@ export default function BezirkePage() {
                     Fragen zu den besonderen Angeboten haben.
                   </p>
                   <div className="bg-primary/10 dark:bg-primary/20 flex items-start gap-3 rounded-lg p-4">
-                    <svg
-                      className="text-primary mt-1 h-6 w-6 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <ArrowRightIcon className="text-primary mt-1 h-6 w-6 shrink-0" />
                     <div>
                       <p className="text-dark dark:text-dark-text mb-1 font-semibold">
                         Posaunenchor in der Nähe suchen
@@ -504,25 +487,7 @@ export default function BezirkePage() {
                                 <div className="space-y-1">
                                   {obmann.address && (
                                     <div className="flex items-start gap-2.5">
-                                      <svg
-                                        className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                      </svg>
+                                      <BuildingIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                                       <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
                                         {obmann.address}
                                       </p>
@@ -537,19 +502,7 @@ export default function BezirkePage() {
                                       )}`}
                                       className="hover:text-primary flex items-center gap-2.5 text-sm text-gray-600 transition-colors dark:text-gray-400"
                                     >
-                                      <svg
-                                        className="h-4 w-4 shrink-0 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                                        />
-                                      </svg>
+                                      <PhoneIcon className="h-4 w-4 shrink-0 text-gray-400" />
                                       {obmann.phone}
                                     </a>
                                   )}
@@ -559,19 +512,7 @@ export default function BezirkePage() {
                                       href={`mailto:${obmann.email}`}
                                       className="text-primary hover:text-primary-dark flex items-center gap-2.5 text-sm font-semibold transition-colors"
                                     >
-                                      <svg
-                                        className="h-4 w-4 shrink-0"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                        />
-                                      </svg>
+                                      <MailIcon className="h-4 w-4 shrink-0 text-gray-400" />
                                       E-Mail senden
                                     </Link>
                                   )}

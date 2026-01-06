@@ -2,6 +2,23 @@ import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
 import SectionHeader from "../_components/section-header";
 import ParticipationCard from "../_components/general/participation-card";
+import {
+  Gift,
+  Mail,
+  ChevronRight,
+  Music,
+  GraduationCap,
+  Users,
+  Heart,
+  MapPin,
+  Calendar,
+  Clock,
+  FileText,
+  Shield,
+  AlertTriangle,
+  Zap,
+  Download,
+} from "lucide-react";
 
 export default function MitmachenPage() {
   const participationOptions: {
@@ -122,19 +139,7 @@ export default function MitmachenPage() {
               <div className="relative z-10">
                 <div className="mb-6 flex items-start gap-6">
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white">
-                    <svg
-                      className="text-foerderverein h-8 w-8"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-                      />
-                    </svg>
+                    <Gift className="text-foerderverein h-8 w-8" />
                   </div>
                   <div className="flex-1">
                     <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
@@ -147,11 +152,8 @@ export default function MitmachenPage() {
                     </p>
 
                     <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="mb-1 text-lg font-bold">
-                          Nur 36 € / Jahr
-                        </p>
-                        <p className="text-sm opacity-90">für Chöre</p>
+                      <div className="flex h-full items-center rounded-lg bg-white/10 p-4 backdrop-blur-sm">
+                        <p className="text-xl font-bold">Nur 36 € / Jahr</p>
                       </div>
                       <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
                         <p className="mb-1 text-lg font-bold">
@@ -175,37 +177,13 @@ export default function MitmachenPage() {
                         className="text-foerderverein inline-flex items-center justify-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
                       >
                         Mehr zum Förderverein
-                        <svg
-                          className="ml-2 h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
+                        <ChevronRight className="ml-2 h-5 w-5" />
                       </Link>
                       <a
                         href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                         className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-transparent px-8 py-4 font-semibold text-white transition-colors hover:bg-white/10"
                       >
-                        <svg
-                          className="mr-2 h-5 w-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                          />
-                        </svg>
+                        <Mail className="mr-2 h-5 w-5" />
                         Mitglied werden
                       </a>
                     </div>
@@ -228,19 +206,7 @@ export default function MitmachenPage() {
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                    />
-                  </svg>
+                  <Music className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Gemeinsam Musik machen
@@ -253,19 +219,7 @@ export default function MitmachenPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                  <GraduationCap className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Glauben leben
@@ -278,19 +232,7 @@ export default function MitmachenPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 10V3L4 14h7v7l9-11h-7z"
-                    />
-                  </svg>
+                  <Zap className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Persönlich wachsen
@@ -303,19 +245,7 @@ export default function MitmachenPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
+                  <Users className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Teil einer Bewegung
@@ -340,19 +270,7 @@ export default function MitmachenPage() {
             <div className="border-primary dark:bg-dark-surface rounded-lg border-t-4 bg-white p-8 shadow-xl md:p-12">
               <div className="mb-6 flex items-start gap-4">
                 <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <svg
-                    className="h-7 w-7 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+                  <FileText className="h-7 w-7 text-white" />
                 </div>
                 <div>
                   <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
@@ -436,19 +354,7 @@ export default function MitmachenPage() {
                       rel="noopener noreferrer"
                       className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                     >
-                      <svg
-                        className="mr-2 h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
+                      <Download className="mr-2 h-5 w-5" />
                       Satzung herunterladen
                     </a>
                     <a
@@ -457,19 +363,7 @@ export default function MitmachenPage() {
                       rel="noopener noreferrer"
                       className="border-primary text-primary hover:bg-primary inline-flex items-center justify-center rounded-lg border-2 bg-white px-6 py-3 font-semibold transition-colors hover:text-white"
                     >
-                      <svg
-                        className="mr-2 h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
+                      <FileText className="mr-2 h-5 w-5" />
                       Aufnahmeantrag herunterladen
                     </a>
                   </div>
@@ -517,19 +411,7 @@ export default function MitmachenPage() {
             <div className="border-district-6 dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-t-4 bg-white p-6 shadow-xl md:p-12">
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
                 <div className="bg-district-6 flex h-12 w-12 shrink-0 items-center justify-center rounded-full md:h-14 md:w-14">
-                  <svg
-                    className="h-6 w-6 text-white md:h-7 md:w-7"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    />
-                  </svg>
+                  <Shield className="h-6 w-6 text-white md:h-7 md:w-7" />
                 </div>
                 <div>
                   <h2 className="text-dark dark:text-dark-text mb-3 text-xl font-bold wrap-break-word md:mb-4 md:text-2xl lg:text-3xl xl:text-4xl">
@@ -582,19 +464,7 @@ export default function MitmachenPage() {
                 {/* Im Schadenfall */}
                 <div className="bg-district-6/10 dark:bg-district-6/20 rounded-lg p-4 md:p-6">
                   <h3 className="text-dark dark:text-dark-text mb-3 flex items-start gap-2 text-lg font-bold md:text-xl">
-                    <svg
-                      className="text-district-6 mt-0.5 h-5 w-5 shrink-0 md:h-6 md:w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
+                    <AlertTriangle className="text-district-6 mt-0.5 h-5 w-5 shrink-0 md:h-6 md:w-6" />
                     <span>Im Schadensfall</span>
                   </h3>
                   <p className="mb-4 text-sm leading-relaxed text-gray-600 md:text-base dark:text-gray-400">
@@ -642,19 +512,7 @@ export default function MitmachenPage() {
                       href="/kontakt"
                       className="bg-district-6 inline-flex w-full items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 md:w-auto md:text-base"
                     >
-                      <svg
-                        className="mr-2 h-5 w-5 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <Mail className="mr-2 h-5 w-5 shrink-0" />
                       Schaden melden
                     </Link>
                   </div>

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { api } from "@/trpc/react";
 import { DownloadCategory, FileType } from "~/generated/prisma/enums";
+import { ArrowUpIcon, CheckIcon, X } from "lucide-react";
 
 const categoryLabels: Record<DownloadCategory, string> = {
   BLECHBLATT: "Rheinisches Blechblatt",
@@ -247,19 +248,7 @@ export default function DownloadPickerModal({
             onClick={onClose}
             className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -323,19 +312,7 @@ export default function DownloadPickerModal({
                 </div>
               ) : downloadsData?.downloads.length === 0 ? (
                 <div className="py-12 text-center">
-                  <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <X className="mx-auto h-12 w-12 text-gray-400" />
                   <p className="mt-4 text-gray-500 dark:text-gray-400">
                     Keine Downloads gefunden
                   </p>
@@ -386,19 +363,7 @@ export default function DownloadPickerModal({
                       </div>
                       {selectedDownload?.id === download.id && (
                         <div className="bg-primary rounded-full p-1">
-                          <svg
-                            className="h-4 w-4 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={3}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+                          <CheckIcon className="h-4 w-4 text-white" />
                         </div>
                       )}
                     </button>
@@ -434,19 +399,7 @@ export default function DownloadPickerModal({
                       }}
                       className="text-red-600 hover:text-red-700"
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X className="h-5 w-5" />
                     </button>
                   </div>
                 ) : (
@@ -474,38 +427,14 @@ export default function DownloadPickerModal({
                       </div>
                     ) : isDragging ? (
                       <>
-                        <svg
-                          className="text-primary mx-auto h-10 w-10"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
-                        </svg>
+                        <ArrowUpIcon className="text-primary mx-auto h-10 w-10" />
                         <p className="text-primary mt-2 font-medium">
                           Datei hier ablegen
                         </p>
                       </>
                     ) : (
                       <>
-                        <svg
-                          className="mx-auto h-10 w-10 text-gray-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
-                        </svg>
+                        <ArrowUpIcon className="mx-auto h-10 w-10 text-gray-400" />
                         <p className="dark:text-dark-text mt-2 font-medium text-gray-700">
                           Datei hierher ziehen oder klicken
                         </p>

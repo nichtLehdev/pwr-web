@@ -10,6 +10,8 @@ import {
 } from "~/generated/prisma/client";
 import PageHeader from "../_components/general/page-header";
 import PostCard from "../_components/posts/post-card";
+import { FilterIcon, PinIcon, XCircleIcon } from "lucide-react";
+import { CircleXIcon } from "lucide-react";
 
 type FilterCategory = PostCategory | "all";
 
@@ -191,19 +193,7 @@ export default function AktuellesPage() {
                   }}
                   aria-label="Filter zurücksetzen"
                 >
-                  <svg
-                    className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <XCircleIcon className="h-5 w-5" />
                 </button>
               )}
               <button
@@ -215,19 +205,7 @@ export default function AktuellesPage() {
                 }`}
                 aria-label="Filter öffnen"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
+                <FilterIcon className="h-5 w-5" />
                 {/* Active Filter Badge */}
                 {hasActiveFilters && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
@@ -304,13 +282,7 @@ export default function AktuellesPage() {
           {filteredPinned.length > 0 && (
             <div className="mb-12">
               <h2 className="text-dark dark:text-dark-text border-primary mb-4 flex items-center gap-2 border-b-2 pb-2 text-lg font-bold md:mb-6 md:text-2xl">
-                <svg
-                  className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M16 12V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v8l-2 2v2h5v5l1 1 1-1v-5h5v-2l-2-2zm-6 0V4h4v8.13l1.07 1.07.6.6H8.34l.6-.6L10 12.13z" />
-                </svg>
+                <PinIcon className="text-primary dark:text-primary-light h-5 w-5 md:h-6 md:w-6" />
                 Angepinnte Beiträge
               </h2>
               <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2 xl:grid-cols-3">
@@ -360,19 +332,7 @@ export default function AktuellesPage() {
           {/* No Results */}
           {totalFiltered === 0 && (
             <div className="py-12 text-center">
-              <svg
-                className="mx-auto mb-4 h-16 w-16 text-gray-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CircleXIcon className="mx-auto mb-4 h-16 w-16 text-gray-300" />
               <p className="mb-4 text-base text-gray-600 md:text-lg dark:text-gray-400">
                 Keine Beiträge gefunden.
               </p>

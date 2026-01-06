@@ -15,6 +15,7 @@ import {
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
+import { ImageIcon, AlertTriangle } from "lucide-react";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -347,19 +348,7 @@ export default function EditPostPage() {
                   className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-8 transition-colors hover:border-gray-400 hover:bg-gray-50"
                 >
                   <div className="text-center">
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
                     <span className="dark:text-dark-muted mt-2 block text-sm font-medium text-gray-600">
                       Titelbild auswählen
                     </span>
@@ -452,19 +441,7 @@ export default function EditPostPage() {
               !isHigherRole && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-900/20">
                   <div className="flex items-start gap-3">
-                    <svg
-                      className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                      />
-                    </svg>
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-500" />
                     <div>
                       <p className="font-medium text-amber-800 dark:text-amber-200">
                         {post?.status === ContentStatus.APPROVED

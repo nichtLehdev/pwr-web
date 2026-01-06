@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
+import {
+  CalendarIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  EyeIcon,
+  MapPinIcon,
+  PencilIcon,
+  PinIcon,
+  UserIcon,
+} from "lucide-react";
 
 interface DashboardPostCardProps {
   id: string;
@@ -118,9 +128,7 @@ export default function DashboardPostCard({
           {/* Pinned Badge */}
           {pinned && (
             <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
+              <PinIcon className="h-3 w-3 text-amber-800 dark:text-amber-300" />
               Gepinnt
             </span>
           )}
@@ -151,25 +159,7 @@ export default function DashboardPostCard({
         {/* District */}
         {district !== undefined && (
           <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+            <MapPinIcon className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />
             <span
               className="rounded px-1.5 py-0.5 text-xs font-medium text-white"
               style={{ backgroundColor: districtColor }}
@@ -182,19 +172,7 @@ export default function DashboardPostCard({
         {/* Published Date */}
         {publishedAt && (
           <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
+            <CalendarIcon className="h-4 w-4 shrink-0" />
             <span>
               Veröffentlicht:{" "}
               {new Date(publishedAt).toLocaleDateString("de-DE", {
@@ -209,19 +187,7 @@ export default function DashboardPostCard({
         {/* Created By */}
         {createdBy && (
           <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
+            <UserIcon className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />
             <span className="truncate">
               {createdBy.displayName || "Unbekannt"}
               {createdAt && (
@@ -242,19 +208,7 @@ export default function DashboardPostCard({
         {/* Reviewer */}
         {reviewer && (
           <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircleIcon className="h-4 w-4 shrink-0" />
             <span className="truncate">
               {reviewer.displayName || "Unbekannt"}
               {reviewDate && (
@@ -279,25 +233,7 @@ export default function DashboardPostCard({
           href={`/dashboard/posts/${id}`}
           className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium transition-colors"
         >
-          <svg
-            className="mr-1 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            />
-          </svg>
+          <EyeIcon className="h-4 w-4 shrink-0" />
           Ansehen
         </Link>
 
@@ -305,19 +241,7 @@ export default function DashboardPostCard({
           href={`/dashboard/posts/${id}/edit`}
           className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         >
-          <svg
-            className="mr-1 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-            />
-          </svg>
+          <PencilIcon className="h-4 w-4 shrink-0" />
           Bearbeiten
         </Link>
 
@@ -326,19 +250,7 @@ export default function DashboardPostCard({
           className="ml-auto inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           target="_blank"
         >
-          <svg
-            className="mr-1 h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-            />
-          </svg>
+          <ExternalLinkIcon className="h-4 w-4 shrink-0" />
           Öffentlich
         </Link>
       </div>

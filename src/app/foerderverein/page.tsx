@@ -3,6 +3,14 @@ import PageHeader from "../_components/general/page-header";
 import { api } from "@/trpc/server";
 import PeopleCard from "../_components/general/people-card";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import {
+  DownloadIcon,
+  HandCoinsIcon,
+  MusicIcon,
+  CalendarIcon,
+} from "lucide-react";
+import { MailIcon, GiftIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 
 const sonderaktionen = [
   {
@@ -84,19 +92,7 @@ export default async function FoerdervereinPage() {
                   className="border-foerderverein dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-l-4 bg-white p-6 shadow-lg"
                 >
                   <div className="mb-4 flex items-start gap-3">
-                    <svg
-                      className="text-foerderverein h-8 w-8 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
-                      />
-                    </svg>
+                    <MusicIcon className="text-foerderverein h-8 w-8 shrink-0" />
                     <div>
                       <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                         {aktion.title}
@@ -129,19 +125,7 @@ export default async function FoerdervereinPage() {
                 href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                 className="bg-foerderverein inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <svg
-                  className="mr-2 h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
+                <MailIcon className="mr-2 h-6 w-6" />
                 Jetzt Mitglied werden
               </a>
             </div>
@@ -166,19 +150,7 @@ export default async function FoerdervereinPage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                    />
-                  </svg>
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Auswahlchorarbeit
@@ -192,19 +164,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Geschwisterermäßigung
@@ -217,19 +177,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Lehrgangskosten
@@ -242,19 +190,7 @@ export default async function FoerdervereinPage() {
 
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="h-6 w-6 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
+                  <UsersIcon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                   Projektförderung
@@ -289,74 +225,26 @@ export default async function FoerdervereinPage() {
 
               <div className="mb-8 space-y-4">
                 <div className="flex items-start gap-3">
-                  <svg
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <HandCoinsIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>Günstiger Jahresbeitrag: nur 36 €</strong>
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <svg
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <MusicIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     Einladung zur jährlichen Mitgliederversammlung mit Berichten
                     und Zukunftsplanungen
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <svg
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <CalendarIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     Flexible Kündigung möglich bis 3 Monate vor Jahresende
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
-                  <svg
-                    className="text-foerderverein mt-0.5 h-6 w-6 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <GiftIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>2025:</strong> Geschenk-CD für Neumitglieder!
                   </p>
@@ -368,19 +256,7 @@ export default async function FoerdervereinPage() {
                   href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
                   className="bg-foerderverein inline-flex items-center justify-center rounded-lg px-8 py-3 font-semibold text-white transition-opacity hover:opacity-90"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <MailIcon className="mr-2 h-5 w-5" />
                   Mitglied werden
                 </a>
                 <a
@@ -389,19 +265,7 @@ export default async function FoerdervereinPage() {
                   rel="noopener noreferrer"
                   className="border-foerderverein text-foerderverein hover:bg-foerderverein inline-flex items-center justify-center rounded-lg border-2 bg-white px-8 py-3 font-semibold transition-colors hover:text-white"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
+                  <DownloadIcon className="mr-2 h-5 w-5" />
                   Flyer herunterladen
                 </a>
               </div>
@@ -480,19 +344,7 @@ export default async function FoerdervereinPage() {
                   href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=CD-Bestellung 'Unter Sternen und Satelliten'"
                   className="bg-foerderverein inline-flex w-full items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
+                  <MailIcon className="mr-2 h-5 w-5" />
                   Jetzt bestellen
                 </a>
               </div>

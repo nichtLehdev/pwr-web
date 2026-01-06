@@ -3,18 +3,53 @@ import { TRPCError } from "@trpc/server";
 import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
 
 export const auswahlchoereRouter = createTRPCRouter({
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const auswahlChor = await ctx.db.auswahlChor.findUnique({
+        where: { id: input.id },
+        include: {
+          image: true,
+          conductor: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              profileImage: true,
+              bio: true,
+            },
+          },
+          events: {
+            orderBy: { eventDate: "asc" },
+            include: {
+              location: true,
+              priceOptions: true,
+              coverImage: true,
+            },
+          },
+        },
+      });
+
+      if (!auswahlChor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Auswahlchor not found",
+        });
+      }
+
+      return auswahlChor;
+    }),
+
   getAll: publicProcedure
     .input(
       z.object({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(50),
-        isActive: z.boolean().optional(),
         search: z.string().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const where = {
-        ...(input.isActive !== undefined && { isActive: input.isActive }),
         ...(input.search && {
           OR: [
             { name: { contains: input.search, mode: "insensitive" as const } },
@@ -69,6 +104,7 @@ export const auswahlchoereRouter = createTRPCRouter({
         colorHex: z.string().optional(),
         imageId: z.string().optional(),
         conductorId: z.string().optional(),
+        showApplication: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -106,6 +142,9 @@ export const auswahlchoereRouter = createTRPCRouter({
           colorHex: input.colorHex || "#000000",
           ...(input.imageId && { imageId: input.imageId }),
           ...(input.conductorId && { conductorId: input.conductorId }),
+          ...(input.showApplication !== undefined && {
+            showApplication: input.showApplication,
+          }),
         },
       });
       return auswahlChor;
@@ -125,6 +164,7 @@ export const auswahlchoereRouter = createTRPCRouter({
         colorHex: z.string().optional(),
         imageId: z.string().optional(),
         conductorId: z.string().optional(),
+        showApplication: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -161,8 +201,15 @@ export const auswahlchoereRouter = createTRPCRouter({
           ...(input.description && { description: input.description }),
           ...(input.color && { color: input.color }),
           ...(input.colorHex && { colorHex: input.colorHex }),
-          ...(input.imageId && { imageId: input.imageId }),
-          ...(input.conductorId && { conductorId: input.conductorId }),
+          ...(input.imageId !== undefined && {
+            imageId: input.imageId || null,
+          }),
+          ...(input.conductorId !== undefined && {
+            conductorId: input.conductorId || null,
+          }),
+          ...(input.showApplication !== undefined && {
+            showApplication: input.showApplication,
+          }),
         },
       });
       return auswahlChor;

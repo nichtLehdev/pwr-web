@@ -7,6 +7,7 @@ import JSZip from "jszip";
 import { useToast } from "@/app/_components/ui/toast";
 import InstagramSummaryTemplate from "./instagram-summary-template";
 import InstagramEventTemplate from "./instagram-event-template";
+import { ArrowUpRightIcon, DownloadIcon, XIcon } from "lucide-react";
 
 interface SocialMediaExportModalProps {
   isOpen: boolean;
@@ -366,15 +367,7 @@ export default function SocialMediaExportModal({
             className="dark:hover:bg-dark-border rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
             disabled={isGenerating}
           >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XIcon className="h-6 w-6" />
           </button>
         </div>
 
@@ -480,15 +473,7 @@ export default function SocialMediaExportModal({
                   </>
                 ) : (
                   <>
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
+                    <DownloadIcon className="h-5 w-5" />
                     Alle als ZIP
                   </>
                 )}
@@ -681,15 +666,7 @@ export default function SocialMediaExportModal({
                   disabled={isGenerating}
                   className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <path
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
+                  <DownloadIcon className="h-5 w-5" />
                   {summaryPageCount > 1
                     ? `Seite ${activeSummaryPage + 1} herunterladen`
                     : "Zusammenfassung herunterladen"}
@@ -704,15 +681,7 @@ export default function SocialMediaExportModal({
                     filteredEvents[activeTab]!.ensemble?.image?.url ||
                     filteredEvents[activeTab]!.auswahlChor?.image?.url) && (
                     <div className="dark:text-dark-text-secondary flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                        />
-                      </svg>
+                      <ArrowUpRightIcon className="h-5 w-5" />
                       Bild ziehen, um Position anzupassen
                     </div>
                   )}
@@ -792,15 +761,7 @@ export default function SocialMediaExportModal({
                     disabled={isGenerating}
                     className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-6 py-3 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <path
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
+                    <DownloadIcon className="h-5 w-5" />
                     Event herunterladen
                   </button>
                 )}

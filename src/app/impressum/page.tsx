@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
+import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
 export const metadata = {
   title: "Impressum | Posaunenwerk Rheinland",
@@ -301,6 +302,41 @@ export default function ImpressumPage() {
                     >
                       https://nextjs.org
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2024 Vercel, Inc.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* React */}
@@ -324,6 +360,41 @@ export default function ImpressumPage() {
                     >
                       https://react.dev
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) Meta Platforms, Inc. and affiliates.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* TypeScript */}
@@ -347,6 +418,29 @@ export default function ImpressumPage() {
                     >
                       https://www.typescriptlang.org
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        Apache License 2.0:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) Microsoft Corporation.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Licensed under the Apache License, Version 2.0 (the
+                        &quot;License&quot;); you may not use this file except
+                        in compliance with the License. You may obtain a copy of
+                        the License at
+                        http://www.apache.org/licenses/LICENSE-2.0
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Unless required by applicable law or agreed to in
+                        writing, software distributed under the License is
+                        distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+                        WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                        implied. See the License for the specific language
+                        governing permissions and limitations under the License.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Tailwind CSS */}
@@ -370,6 +464,41 @@ export default function ImpressumPage() {
                     >
                       https://tailwindcss.com
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) Tailwind Labs, Inc.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Prisma */}
@@ -393,6 +522,29 @@ export default function ImpressumPage() {
                     >
                       https://www.prisma.io
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        Apache License 2.0:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2024 Prisma Data, Inc.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Licensed under the Apache License, Version 2.0 (the
+                        &quot;License&quot;); you may not use this file except
+                        in compliance with the License. You may obtain a copy of
+                        the License at
+                        http://www.apache.org/licenses/LICENSE-2.0
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Unless required by applicable law or agreed to in
+                        writing, software distributed under the License is
+                        distributed on an &quot;AS IS&quot; BASIS, WITHOUT
+                        WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+                        implied. See the License for the specific language
+                        governing permissions and limitations under the License.
+                      </p>
+                    </div>
                   </div>
 
                   {/* tRPC */}
@@ -416,6 +568,41 @@ export default function ImpressumPage() {
                     >
                       https://trpc.io
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2022 KATT & tRPC contributors
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* TanStack Query */}
@@ -439,6 +626,41 @@ export default function ImpressumPage() {
                     >
                       https://tanstack.com/query
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) Tanner Linsley
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Better Auth */}
@@ -462,6 +684,41 @@ export default function ImpressumPage() {
                     >
                       https://www.better-auth.com
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) Better Auth contributors
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Zod */}
@@ -485,6 +742,41 @@ export default function ImpressumPage() {
                     >
                       https://zod.dev
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2020 Colin McDonnell
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* PostgreSQL */}
@@ -508,6 +800,42 @@ export default function ImpressumPage() {
                     >
                       https://node-postgres.com
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2010-2024 Brian Carlson, Luke Chafer, and
+                        Contributors
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* TipTap */}
@@ -531,6 +859,41 @@ export default function ImpressumPage() {
                     >
                       https://tiptap.dev
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2021-2024 Tiptap Inc.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Marked */}
@@ -554,6 +917,42 @@ export default function ImpressumPage() {
                     >
                       https://marked.js.org
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2011-2024 Christopher Jeffrey and
+                        contributors
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Turndown */}
@@ -577,6 +976,142 @@ export default function ImpressumPage() {
                     >
                       https://github.com/mixmark-io/turndown
                     </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        MIT License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2017 Dom Christie
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Permission is hereby granted, free of charge, to any
+                        person obtaining a copy of this software and associated
+                        documentation files (the &quot;Software&quot;), to deal
+                        in the Software without restriction, including without
+                        limitation the rights to use, copy, modify, merge,
+                        publish, distribute, sublicense, and/or sell copies of
+                        the Software, and to permit persons to whom the Software
+                        is furnished to do so, subject to the following
+                        conditions:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        The above copyright notice and this permission notice
+                        shall be included in all copies or substantial portions
+                        of the Software.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT
+                        WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
+                        NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+                        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+                        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+                        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+                        WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+                        ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+                        OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lucide React */}
+                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
+                    <div className="mb-2 flex items-start justify-between">
+                      <h3 className="text-dark dark:text-dark-text text-lg font-semibold">
+                        Lucide React
+                      </h3>
+                      <div className="flex gap-2">
+                        <span className="bg-primary/10 text-primary dark:bg-primary/20 rounded px-2 py-1 text-xs font-semibold">
+                          ISC License
+                        </span>
+                        <span className="bg-primary/10 text-primary dark:bg-primary/20 rounded px-2 py-1 text-xs font-semibold">
+                          MIT License
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                      Icon-Bibliothek für React-Anwendungen
+                    </p>
+                    <a
+                      href="https://lucide.dev"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary text-sm hover:underline"
+                    >
+                      https://lucide.dev
+                    </a>
+                    <div className="mt-3 space-y-3 text-xs">
+                      <div className="dark:bg-dark-background-secondary rounded bg-gray-50 p-3">
+                        <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                          ISC License (Hauptlizenz):
+                        </p>
+                        <p className="leading-relaxed text-gray-600 dark:text-gray-400">
+                          Copyright (c) für Teile von Lucide werden von Cole
+                          Bemis 2013-2023 als Teil von Feather (MIT) gehalten.
+                          Alle anderen Copyrights (c) für Lucide werden von
+                          Lucide Contributors 2025 gehalten.
+                        </p>
+                        <p className="mt-2 leading-relaxed text-gray-600 dark:text-gray-400">
+                          Die Erlaubnis zur Nutzung, Kopie, Modifikation
+                          und/oder Verbreitung dieser Software für jeden Zweck
+                          mit oder ohne Gebühr wird hiermit erteilt,
+                          vorausgesetzt, dass der obige Copyright-Hinweis und
+                          diese Erlaubnis in allen Kopien erscheinen.
+                        </p>
+                        <p className="mt-2 leading-relaxed text-gray-600 dark:text-gray-400">
+                          DIE SOFTWARE WIRD &quot;WIE BESEHEN&quot;
+                          BEREITGESTELLT UND DER AUTOR LEHNT ALLE
+                          GEWÄHRLEISTUNGEN IN BEZUG AUF DIESE SOFTWARE AB,
+                          EINSCHLIESSLICH ALLER IMPLIZITEN GEWÄHRLEISTUNGEN DER
+                          MARKTGÄNGIGKEIT UND EIGNUNG FÜR EINEN BESTIMMTEN
+                          ZWECK. IN KEINEM FALL HAFTET DER AUTOR FÜR BESONDERE,
+                          DIREKTE, INDIREKTE ODER FOLGESCHÄDEN ODER SCHÄDEN
+                          JEGLICHER ART, DIE AUS DEM VERLUST DER NUTZUNG, DATEN
+                          ODER GEWINNE RESULTIEREN, OB IN EINEM VERTRAG,
+                          FAHRLÄSSIGKEIT ODER ANDERER UNERLAUBTER HANDLUNG, DIE
+                          AUS ODER IM ZUSAMMENHANG MIT DER NUTZUNG ODER LEISTUNG
+                          DIESER SOFTWARE ENTSTEHEN.
+                        </p>
+                      </div>
+                      <div className="dark:bg-dark-background-secondary rounded bg-gray-50 p-3">
+                        <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                          MIT License (für Teile aus Feather Icons):
+                        </p>
+                        <p className="leading-relaxed text-gray-600 dark:text-gray-400">
+                          Copyright (c) 2013-2023 Cole Bemis
+                        </p>
+                        <p className="mt-2 leading-relaxed text-gray-600 dark:text-gray-400">
+                          Hiermit wird jeder Person, die eine Kopie dieser
+                          Software und der zugehörigen Dokumentationsdateien
+                          (die &quot;Software&quot;) erhält, kostenlos die
+                          Erlaubnis erteilt, uneingeschränkt mit der Software zu
+                          handeln, einschließlich und ohne Einschränkung der
+                          Rechte zur Nutzung, Kopie, Modifikation,
+                          Zusammenführung, Veröffentlichung, Verbreitung,
+                          Unterlizenzierung und/oder zum Verkauf von Kopien der
+                          Software, und Personen, denen die Software
+                          bereitgestellt wird, dies zu erlauben, unter den
+                          folgenden Bedingungen:
+                        </p>
+                        <p className="mt-2 leading-relaxed text-gray-600 dark:text-gray-400">
+                          Der obige Copyright-Hinweis und dieser
+                          Erlaubnishinweis müssen in allen Kopien oder
+                          wesentlichen Teilen der Software enthalten sein.
+                        </p>
+                        <p className="mt-2 leading-relaxed text-gray-600 dark:text-gray-400">
+                          DIE SOFTWARE WIRD &quot;WIE BESEHEN&quot;
+                          BEREITGESTELLT, OHNE JEGLICHE GEWÄHRLEISTUNG,
+                          AUSDRÜCKLICH ODER IMPLIZIT, EINSCHLIESSLICH, ABER
+                          NICHT BESCHRÄNKT AUF DIE GEWÄHRLEISTUNGEN DER
+                          MARKTGÄNGIGKEIT, EIGNUNG FÜR EINEN BESTIMMTEN ZWECK
+                          UND NICHTVERLETZUNG. IN KEINEM FALL HAFTEN DIE AUTOREN
+                          ODER COPYRIGHT-INHABER FÜR JEGLICHE ANSPRÜCHE, SCHÄDEN
+                          ODER ANDERE HAFTUNGEN, OB IN EINEM VERTRAGSVERHÄLTNIS,
+                          UNERLAUBTER HANDLUNG ODER ANDERWEITIG, DIE AUS, AUS
+                          ODER IM ZUSAMMENHANG MIT DER SOFTWARE ODER DER NUTZUNG
+                          ODER ANDEREN GESCHÄFTEN MIT DER SOFTWARE ENTSTEHEN.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -598,70 +1133,22 @@ export default function ImpressumPage() {
                   </p>
                   <ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
                     <li className="flex items-center gap-2">
-                      <svg
-                        className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <CheckIcon className="text-primary h-4 w-4" />
                       <strong>MIT License</strong> - Erlaubt kommerzielle
                       Nutzung, Modifikation und Verteilung
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
-                        className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <CheckIcon className="text-primary h-4 w-4" />
                       <strong>Apache License 2.0</strong> - Erlaubt Nutzung,
                       Modifikation und Verteilung mit Patentrechtsgewährung
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
-                        className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <CheckIcon className="text-primary h-4 w-4" />
                       <strong>BSD-2-Clause</strong> - Permissive Lizenz mit
                       minimalen Einschränkungen
                     </li>
                     <li className="flex items-center gap-2">
-                      <svg
-                        className="text-primary h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <CheckIcon className="text-primary h-4 w-4" />
                       <strong>0BSD</strong> - &ldquo;Zero-Clause&rdquo;
                       BSD-Lizenz, Public Domain äquivalent
                     </li>
@@ -697,19 +1184,7 @@ export default function ImpressumPage() {
                     className="text-primary inline-flex items-center gap-1 hover:underline"
                   >
                     Zur Datenschutzerklärung
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <ArrowRightIcon className="h-4 w-4" />
                   </Link>
                 </div>
 
@@ -726,19 +1201,7 @@ export default function ImpressumPage() {
                     className="text-primary inline-flex items-center gap-1 hover:underline"
                   >
                     Zur Kontaktseite
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <ArrowRightIcon className="h-4 w-4" />
                   </Link>
                 </div>
 

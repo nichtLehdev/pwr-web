@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "../_components/ui/toast";
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
+import { X } from "lucide-react";
 interface IssueLabel {
   id: number;
   name: string;
@@ -192,19 +193,7 @@ export default function FeedbackPage() {
               className="text-dark dark:text-dark-text absolute top-4 right-4 rounded-full p-1 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
               aria-label="Schließen"
             >
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-6 w-6" />
             </button>
             <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
               Feedback geben

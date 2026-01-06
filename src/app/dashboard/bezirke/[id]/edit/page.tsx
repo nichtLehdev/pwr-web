@@ -8,6 +8,7 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
+import { SaveIcon } from "lucide-react";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -268,19 +269,7 @@ export default function EditBezirkPage() {
                 </>
               ) : (
                 <>
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <SaveIcon className="h-4 w-4" />
                   Speichern
                 </>
               )}

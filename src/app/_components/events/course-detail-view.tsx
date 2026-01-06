@@ -10,6 +10,15 @@ import type { RouterOutputs } from "@/trpc/react";
 import PageHeader from "../general/page-header";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
+import {
+  Clock,
+  Calendar,
+  CalendarArrowDownIcon,
+  MapPinIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  CircleXIcon,
+} from "lucide-react";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -269,19 +278,7 @@ export default function CourseDetailView({
           {registrationDeadline && !isPast && (
             <div className="inline-block rounded-lg bg-white/10 p-4">
               <p className="flex items-center gap-2 text-sm">
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <Clock className="h-5 w-5" />
                 <span>
                   Anmeldeschluss:{" "}
                   {registrationDeadline.toLocaleDateString("de-DE", {
@@ -305,19 +302,7 @@ export default function CourseDetailView({
               {/* Date & Time */}
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                  <svg
-                    className="text-primary h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <Calendar className="text-primary h-6 w-6" />
                   Termin
                 </h2>
                 <div className="space-y-2">
@@ -368,25 +353,7 @@ export default function CourseDetailView({
                       onClick={handleDownloadIcs}
                       className="border-primary text-primary hover:bg-primary/10 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors"
                     >
-                      <svg
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 14l2-2-2-2M12 14v4"
-                        />
-                      </svg>
+                      <CalendarArrowDownIcon className="h-5 w-5" />
                       Zum Kalender hinzufügen (ICS)
                     </button>
                   </div>
@@ -397,25 +364,7 @@ export default function CourseDetailView({
               {course.location && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <svg
-                      className="text-primary h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
+                    <MapPinIcon className="text-primary h-6 w-6" />
                     Veranstaltungsort
                   </h2>
                   <div className="space-y-2">
@@ -459,19 +408,7 @@ export default function CourseDetailView({
               {course.prerequisites && (
                 <div className="rounded-r-lg border-l-4 border-blue-500 bg-blue-50 p-6 dark:bg-blue-900/30">
                   <h3 className="mb-2 flex items-center gap-2 text-lg font-bold text-blue-900 dark:text-blue-200">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <CheckCircleIcon className="h-5 w-5" />
                     Voraussetzungen
                   </h3>
                   <p className="text-blue-800 dark:text-blue-300">
@@ -484,19 +421,7 @@ export default function CourseDetailView({
               {course.whatToBring && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h3 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 text-lg font-bold">
-                    <svg
-                      className="text-primary h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
-                      />
-                    </svg>
+                    <CheckCircleIcon className="text-primary h-5 w-5" />
                     Mitzubringen
                   </h3>
                   <p className="text-gray-700 dark:text-gray-300">
@@ -509,19 +434,7 @@ export default function CourseDetailView({
               {course.instructors && course.instructors.length > 0 && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
-                    <svg
-                      className="text-primary h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <UsersIcon className="text-primary h-6 w-6" />
                     Dozenten
                   </h2>
                   <div className="space-y-3">
@@ -610,19 +523,7 @@ export default function CourseDetailView({
                   </h3>
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
                     <div className="flex items-start gap-3">
-                      <svg
-                        className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                      <CircleXIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
                       <div>
                         <p className="font-semibold text-gray-700 dark:text-gray-300">
                           {isDeadlinePassed
@@ -651,19 +552,7 @@ export default function CourseDetailView({
                 </h3>
                 {course.isFree ? (
                   <p className="flex items-center gap-2 font-semibold text-green-700">
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    <CheckCircleIcon className="h-5 w-5" />
                     Dieser Kurs ist kostenfrei
                   </p>
                 ) : (

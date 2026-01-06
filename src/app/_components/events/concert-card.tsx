@@ -2,6 +2,7 @@ import Link from "next/link";
 import React from "react";
 import type { RouterOutputs } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { Calendar, MapPin } from "lucide-react";
 
 type Event = Omit<
   RouterOutputs["events"]["getById"],
@@ -12,8 +13,7 @@ type Event = Omit<
   | "createdBy"
   | "ensemble"
 >;
-type AuswahlChor =
-  RouterOutputs["auswahlchoereRouter"]["getAll"]["auswahlchoere"][0];
+type AuswahlChor = RouterOutputs["auswahlchoere"]["getAll"]["auswahlchoere"][0];
 
 interface ConcertCardProps {
   concert: Event;
@@ -37,19 +37,7 @@ const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
             <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
               {/* Date Information */}
               <div className="flex items-center gap-2">
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
+                <Calendar className="h-4 w-4" />
                 {new Date(concert.eventDate).toLocaleDateString("de-DE", {
                   year: "numeric",
                   month: "long",
@@ -64,25 +52,7 @@ const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
 
               {/* Location Information */}
               <div className="flex items-center gap-2">
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
+                <MapPin className="h-4 w-4" />
 
                 {concert.location && (
                   <span className="font-semibold">

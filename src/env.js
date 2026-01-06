@@ -19,6 +19,19 @@ export const env = createEnv({
       .default("development"),
     GITHUB_TOKEN: z.string(),
     GITHUB_REPO: z.string(),
+    // SMTP Configuration for Mailcow
+    SMTP_HOST: z.string().min(1).optional(),
+    SMTP_PORT: z.coerce.number().default(587).optional(),
+    SMTP_SECURE: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (val === undefined) return undefined;
+        return val === "true" || val === "1";
+      }),
+    SMTP_USER: z.string().email().optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
+    SMTP_FROM: z.string().email().optional(),
   },
 
   /**
@@ -43,6 +56,12 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_REPO: process.env.GITHUB_REPO,
+    SMTP_HOST: process.env.SMTP_HOST,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_SECURE: process.env.SMTP_SECURE,
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PASSWORD: process.env.SMTP_PASSWORD,
+    SMTP_FROM: process.env.SMTP_FROM,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

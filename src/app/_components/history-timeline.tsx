@@ -3,6 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
+import {
+  GraduationCap,
+  Star,
+  Expand,
+  Zap,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 type HistoryEvent = RouterOutputs["organization"]["getHistory"][number];
 
@@ -17,62 +26,27 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
 
   const categoryConfig = {
     FOUNDING: {
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      ),
+      icon: <GraduationCap className="h-6 w-6" />,
       color: "bg-district-1",
       lightColor: "bg-district-1/10",
     },
     MILESTONE: {
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-        />
-      ),
+      icon: <Star className="h-6 w-6" />,
       color: "bg-primary",
       lightColor: "bg-primary/10",
     },
     EXPANSION: {
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
-        />
-      ),
+      icon: <Expand className="h-6 w-6" />,
       color: "bg-district-2",
       lightColor: "bg-district-2/10",
     },
     MODERNIZATION: {
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M13 10V3L4 14h7v7l9-11h-7z"
-        />
-      ),
+      icon: <Zap className="h-6 w-6" />,
       color: "bg-district-4",
       lightColor: "bg-district-4/10",
     },
     PARTNERSHIP: {
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-        />
-      ),
+      icon: <Heart className="h-6 w-6" />,
       color: "bg-district-5",
       lightColor: "bg-district-5/10",
     },
@@ -156,14 +130,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
                         : "dark:border-dark-border dark:bg-dark-surface border-2 border-gray-300 bg-white text-gray-400 dark:text-gray-500"
                     }`}
                   >
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {evtConfig.icon}
-                    </svg>
+                    {evtConfig.icon}
                   </div>
 
                   {/* Verbindungslinie zum nächsten Event */}
@@ -197,14 +164,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className={`h-20 w-20 text-gray-400`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {config.icon}
-                </svg>
+                <div className="text-gray-400">{config.icon}</div>
               </div>
             )}
           </div>
@@ -215,14 +175,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
               <div
                 className={`h-10 w-10 rounded-full ${config.color} flex items-center justify-center`}
               >
-                <svg
-                  className="h-5 w-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {config.icon}
-                </svg>
+                <div className="text-white">{config.icon}</div>
               </div>
               <span className="text-primary text-3xl font-bold">
                 {event.year}
@@ -244,19 +197,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
                 disabled={selectedEvent === 0}
                 className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ChevronLeft className="h-5 w-5" />
                 Zurück
               </button>
 
@@ -270,19 +211,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
                 className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Weiter
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           </div>

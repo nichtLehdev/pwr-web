@@ -1,4 +1,15 @@
 import PageHeader from "@/app/_components/general/page-header";
+import {
+  BookOpenIcon,
+  ComputerIcon,
+  GlobeIcon,
+  HeartIcon,
+  MailIcon,
+  Music2Icon,
+  MusicIcon,
+  PartyPopperIcon,
+  UsersIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function EhrenamtPage() {
@@ -8,14 +19,7 @@ export default function EhrenamtPage() {
       title: "Chorleitung",
       description:
         "Leite einen Posaunenchor und bringe deine musikalischen Fähigkeiten ein. Wir unterstützen dich mit Aus- und Weiterbildungsangeboten.",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-        />
-      ),
+      icon: <MusicIcon className="h-6 w-6" />,
       color: "bg-district-2",
     },
     {
@@ -23,14 +27,7 @@ export default function EhrenamtPage() {
       title: "Jungbläser-Ausbildung",
       description:
         "Gib dein Wissen an die nächste Generation weiter und begleite junge Menschen auf ihrem musikalischen Weg.",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-        />
-      ),
+      icon: <Music2Icon className="h-6 w-6" />,
       color: "bg-district-9",
     },
     {
@@ -38,14 +35,7 @@ export default function EhrenamtPage() {
       title: "Vorstandsarbeit",
       description:
         "Gestalte die Zukunft des Posaunenwerks mit. Ob auf Bezirks-, Regional- oder Landesebene – dein Engagement zählt!",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-        />
-      ),
+      icon: <UsersIcon className="h-6 w-6" />,
       color: "bg-primary",
     },
     {
@@ -53,14 +43,7 @@ export default function EhrenamtPage() {
       title: "Organisation & Veranstaltungen",
       description:
         "Hilf bei der Planung und Durchführung von Konzerten, Freizeiten, Lehrgängen und anderen Events.",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      ),
+      icon: <PartyPopperIcon className="h-6 w-6" />,
       color: "bg-district-4",
     },
     {
@@ -68,14 +51,7 @@ export default function EhrenamtPage() {
       title: "Kommunikation & Öffentlichkeitsarbeit",
       description:
         "Gestalte Flyer, pflege Social Media, schreibe Berichte oder fotografiere bei Veranstaltungen.",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-        />
-      ),
+      icon: <GlobeIcon className="h-6 w-6" />,
       color: "bg-district-7",
     },
     {
@@ -83,14 +59,7 @@ export default function EhrenamtPage() {
       title: "Technik & IT",
       description:
         "Bringe deine technischen Fähigkeiten ein – ob bei Tontechnik, Website-Pflege oder digitalen Projekten.",
-      icon: (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-        />
-      ),
+      icon: <ComputerIcon className="h-6 w-6" />,
       color: "bg-district-6",
     },
   ];
@@ -184,14 +153,7 @@ export default function EhrenamtPage() {
                   <div
                     className={`h-12 w-12 ${opportunity.color} mb-4 flex items-center justify-center rounded-full`}
                   >
-                    <svg
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      {opportunity.icon}
-                    </svg>
+                    {opportunity.icon}
                   </div>
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
                     {opportunity.title}
@@ -222,19 +184,7 @@ export default function EhrenamtPage() {
                 >
                   <div className="flex items-start gap-3">
                     <div className="bg-district-5 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                      <svg
-                        className="h-5 w-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <HeartIcon className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -264,19 +214,7 @@ export default function EhrenamtPage() {
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <svg
-                      className="h-5 w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
+                    <BookOpenIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -291,19 +229,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <svg
-                      className="h-5 w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                      />
-                    </svg>
+                    <BookOpenIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -318,19 +244,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <svg
-                      className="h-5 w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
+                    <UsersIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -345,19 +259,7 @@ export default function EhrenamtPage() {
 
                 <div className="flex items-start gap-4">
                   <div className="bg-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    <svg
-                      className="h-5 w-5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                      />
-                    </svg>
+                    <UsersIcon className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
@@ -381,13 +283,7 @@ export default function EhrenamtPage() {
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg md:p-10">
               <div className="mb-6 flex items-start gap-4">
-                <svg
-                  className="text-primary h-12 w-12 shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                </svg>
+                <MusicIcon className="text-primary h-12 w-12" />
                 <div>
                   <p className="mb-4 text-lg leading-relaxed text-gray-700 italic dark:text-gray-300">
                     &quot;Die Arbeit als Chorleiter erfüllt mich sehr. Es ist
@@ -424,19 +320,7 @@ export default function EhrenamtPage() {
                 href="/kontakt"
                 className="bg-district-5 inline-flex items-center justify-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
               >
-                <svg
-                  className="mr-2 h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  />
-                </svg>
+                <MailIcon className="mr-2 h-5 w-5" />
                 Jetzt Kontakt aufnehmen
               </Link>
               <Link

@@ -26,7 +26,7 @@ export const appRouter = createTRPCRouter({
   registrations: registrationsRouter,
   posts: postsRouter,
   ensembles: ensemblesRouter,
-  auswahlchoereRouter: auswahlchoereRouter,
+  auswahlchoere: auswahlchoereRouter,
   bezirke: bezirkeRouter,
   media: mediaRouter,
   organization: organizationRouter,

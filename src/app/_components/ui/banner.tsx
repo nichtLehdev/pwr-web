@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useBanner } from "./banner-context";
+import { XIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 export type BannerVariant = "info" | "warning" | "success" | "maintenance";
 
@@ -172,19 +174,7 @@ export function AnnouncementBanner({
             className="ml-4 shrink-0 rounded-full p-1 transition-colors hover:bg-white/20 focus:ring-2 focus:ring-white/50 focus:outline-none"
             aria-label="Banner schließen"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <XIcon className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -192,19 +182,7 @@ export function AnnouncementBanner({
       {/* Swipe indicator for mobile */}
       {dismissible && (
         <div className="absolute top-1/2 right-2 -translate-y-1/2 text-white/50 sm:hidden">
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          <ArrowRightIcon className="h-4 w-4" />
         </div>
       )}
     </div>

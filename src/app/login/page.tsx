@@ -26,6 +26,7 @@ function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loginEmail, setLoginEmail] = useState<string>("");
 
   const utils = api.useUtils();
 
@@ -37,8 +38,6 @@ function LoginForm() {
     try {
       const isEmail = emailOrUsername.includes("@");
       let loginEmail = emailOrUsername;
-
-      console.log("Login attempt:", { emailOrUsername, isEmail });
 
       if (!isEmail) {
         try {
@@ -60,8 +59,7 @@ function LoginForm() {
         }
       }
 
-      console.log("Attempting sign in with email:", loginEmail);
-
+      // Attempt login - the signIn process will handle email verification errors
       const signInResult = await signIn.email({
         email: loginEmail,
         password,
@@ -69,12 +67,27 @@ function LoginForm() {
       });
 
       if (signInResult.error) {
-        setError("Ungültige Anmeldedaten");
+        // Better Auth might return a specific error for unverified email
+        const errorMessage = (
+          signInResult.error.message || signInResult.error.toString()
+        ).toLowerCase();
+        // Only check for specific verification-related terms, not just "email"
+        if (
+          errorMessage.includes("verif") ||
+          errorMessage.includes("not verified") ||
+          errorMessage.includes("email verification") ||
+          errorMessage.includes("verify your email")
+        ) {
+          setLoginEmail(loginEmail); // Store for resend link
+          setError(
+            "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte überprüfe dein E-Mail-Postfach und klicke auf den Verifizierungslink.",
+          );
+        } else {
+          setError("Ungültige Anmeldedaten");
+        }
         setIsLoading(false);
         return;
       }
-
-      console.log("Sign in successful:", signInResult);
 
       const profile = await utils.users.getMyProfile.fetch();
 
@@ -112,6 +125,14 @@ function LoginForm() {
           {error && (
             <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
               <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              {error.includes("verifiziert") && loginEmail && (
+                <Link
+                  href={`/verify-email?email=${encodeURIComponent(loginEmail)}`}
+                  className="mt-2 block text-sm font-medium text-red-700 underline dark:text-red-300"
+                >
+                  Verifizierungs-E-Mail erneut senden
+                </Link>
+              )}
             </div>
           )}
 
