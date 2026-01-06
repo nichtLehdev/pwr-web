@@ -92,8 +92,8 @@ export default function PostDetailView({
   const canEdit =
     session?.user &&
     profile &&
-    ((post.createdById === session.user.id ||
-      post.createdBy?.id === session.user.id) ||
+    (post.createdById === session.user.id ||
+      post.createdBy?.id === session.user.id ||
       profile.role === UserRole.ADMIN ||
       profile.role === UserRole.LPW);
 
@@ -287,7 +287,7 @@ export default function PostDetailView({
                 {canEdit && (
                   <Link
                     href={`/dashboard/posts/${post.id}/edit`}
-                    className="text-primary hover:text-primary-dark inline-flex items-center gap-2 rounded-lg border-2 border-primary px-4 py-2 font-semibold transition-colors hover:bg-primary/10"
+                    className="text-primary hover:text-primary-dark border-primary hover:bg-primary/10 inline-flex items-center gap-2 rounded-lg border-2 px-4 py-2 font-semibold transition-colors"
                   >
                     <EditIcon className="h-4 w-4" />
                     Bearbeiten

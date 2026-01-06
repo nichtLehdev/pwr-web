@@ -63,8 +63,8 @@ export default function CourseDetailView({
   const canEdit =
     session?.user &&
     userProfile &&
-    ((course.createdById === session.user.id ||
-      course.createdBy?.id === session.user.id) ||
+    (course.createdById === session.user.id ||
+      course.createdBy?.id === session.user.id ||
       userProfile.role === UserRole.ADMIN ||
       userProfile.role === UserRole.LPW);
 

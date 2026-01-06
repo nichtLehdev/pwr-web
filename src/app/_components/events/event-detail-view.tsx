@@ -42,8 +42,8 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const canEdit =
     session?.user &&
     profile &&
-    ((event.createdById === session.user.id ||
-      event.createdBy?.id === session.user.id) ||
+    (event.createdById === session.user.id ||
+      event.createdBy?.id === session.user.id ||
       profile.role === UserRole.ADMIN ||
       profile.role === UserRole.LPW);
 
