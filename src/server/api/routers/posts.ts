@@ -6,6 +6,7 @@ import {
   protectedProcedure,
   publicProcedure,
   reviewerProcedure,
+  adminProcedure,
 } from "../trpc";
 import {
   PostCategory,
@@ -892,5 +893,82 @@ export const postsRouter = createTRPCRouter({
       });
 
       return { success: true, updatedCount: canUpdateIds.length };
+    }),
+
+  exportPosts: adminProcedure.query(async ({ ctx }) => {
+    const posts = await ctx.db.post.findMany({
+      include: {
+        coverImage: true,
+        bezirk: true,
+        createdBy: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+        reviewer: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return {
+      posts: posts.map((post) => ({
+        ...post,
+        coverImageUrl: post.coverImage?.url,
+        bezirkName: post.bezirk?.name,
+        createdByEmail: post.createdBy?.email,
+        reviewerEmail: post.reviewer?.email,
+      })),
+      exportedAt: new Date().toISOString(),
+      count: posts.length,
+    };
+  }),
+
+  importPosts: adminProcedure
+    .input(
+      z.object({
+        posts: z.array(
+          z.object({
+            title: z.string(),
+            excerpt: z.string().optional().nullable(),
+            content: z.string(),
+            category: z.enum(PostCategory),
+            bezirkId: z.string().optional().nullable(),
+            pinned: z.boolean().optional(),
+            status: z.enum(ContentStatus).optional(),
+            coverImageId: z.string().optional().nullable(),
+            // Optional: original ID for reference
+            originalId: z.string().optional(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const results = await Promise.all(
+        input.posts.map(async (postData) => {
+          const { originalId, ...data } = postData;
+          return await ctx.db.post.create({
+            data: {
+              ...data,
+              status: data.status ?? ContentStatus.DRAFT,
+              pinned: data.pinned ?? false,
+              createdById: ctx.session.user.id,
+            },
+          });
+        }),
+      );
+
+      return {
+        success: true,
+        importedCount: results.length,
+        posts: results,
+      };
     }),
 });
