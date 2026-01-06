@@ -1137,7 +1137,6 @@ export const coursesRouter = createTRPCRouter({
   exportCourses: adminProcedure.query(async ({ ctx }) => {
     const courses = await ctx.db.course.findMany({
       include: {
-        coverImage: true,
         location: true,
         bezirk: true,
         createdBy: {
@@ -1161,7 +1160,6 @@ export const coursesRouter = createTRPCRouter({
     return {
       courses: courses.map((course) => ({
         ...course,
-        coverImageUrl: course.coverImage?.url,
         locationName: course.location?.name,
         bezirkName: course.bezirk?.name,
         createdByEmail: course.createdBy?.email,
@@ -1199,10 +1197,12 @@ export const coursesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.courses.map(async (courseData) => {
-          const { originalId, ...data } = courseData;
+          const { originalId, coverImageId, ...data } = courseData;
           return await ctx.db.course.create({
             data: {
               ...data,
+              description: data.description ?? "",
+              endDate: data.endDate ?? data.startDate,
               status: data.status ?? ContentStatus.DRAFT,
               createdById: ctx.session.user.id,
             },
