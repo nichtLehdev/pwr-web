@@ -135,11 +135,11 @@ export async function POST(
                 title: postData.title as string,
                 excerpt: (postData.excerpt as string) || null,
                 content: postData.content as string,
-                category: (postData.category as string) as PostCategory,
+                category: postData.category as string as PostCategory,
                 bezirkId: (postData.bezirkId as string) || null,
                 pinned: (postData.pinned as boolean) || false,
                 status:
-                  ((postData.status as string) as ContentStatus) ||
+                  (postData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
@@ -172,18 +172,17 @@ export async function POST(
                 description: (eventData.description as string) || null,
                 eventDate: new Date(eventData.eventDate as string),
                 cancelled: (eventData.cancelled as boolean) || false,
-                category: (eventData.category as string) as EventCategory,
+                category: eventData.category as string as EventCategory,
                 bezirkId: (eventData.bezirkId as string) || null,
                 locationId: (eventData.locationId as string) || null,
                 ensembleId: (eventData.ensembleId as string) || null,
                 auswahlChorId: (eventData.auswahlChorId as string) || null,
-                performingEnsembleType:
-                  (eventData.ensembleType as string)
-                    ? ((eventData.ensembleType as string) as EventEnsembleType)
-                    : null,
+                performingEnsembleType: (eventData.ensembleType as string)
+                  ? (eventData.ensembleType as string as EventEnsembleType)
+                  : null,
                 coverImageId: newCoverImageId,
                 status:
-                  ((eventData.status as string) as ContentStatus) ||
+                  (eventData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
               },
             });
@@ -254,7 +253,7 @@ export async function POST(
                   : Prisma.JsonNull,
                 isPublic: (mediaData.isPublic as boolean) ?? true,
                 status:
-                  ((mediaData.status as string) as ContentStatus) ||
+                  (mediaData.status as string as ContentStatus) ||
                   ContentStatus.APPROVED,
                 uploadedById: session.user.id,
               },
@@ -278,14 +277,14 @@ export async function POST(
               data: {
                 title: downloadData.title as string,
                 description: (downloadData.description as string) || null,
-                category: (downloadData.category as string) as DownloadCategory,
+                category: downloadData.category as string as DownloadCategory,
                 fileUrl: downloadData.fileUrl as string,
-                fileType: (downloadData.fileType as string) as FileType,
+                fileType: downloadData.fileType as string as FileType,
                 fileSize: (downloadData.fileSize as number) || null,
                 tags: (downloadData.tags as unknown) || [],
                 isPublic: (downloadData.isPublic as boolean) ?? true,
                 status:
-                  ((downloadData.status as string) as ContentStatus) ||
+                  (downloadData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
                 uploadedById: session.user.id,
               },
@@ -358,9 +357,9 @@ export async function POST(
               data: {
                 title: courseData.title as string,
                 description: (courseData.description as string) || "",
-                courseType: (courseData.courseType as string) as CourseType,
+                courseType: courseData.courseType as string as CourseType,
                 targetAudience:
-                  ((courseData.targetAudience as string) as TargetAudience) ||
+                  (courseData.targetAudience as string as TargetAudience) ||
                   null,
                 startDate: new Date(courseData.startDate as string),
                 endDate: courseData.endDate
@@ -373,7 +372,7 @@ export async function POST(
                 bezirkId: (courseData.bezirkId as string) || null,
                 locationId: (courseData.locationId as string) || null,
                 status:
-                  ((courseData.status as string) as ContentStatus) ||
+                  (courseData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
                 createdById: session.user.id,
               },
