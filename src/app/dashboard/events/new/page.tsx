@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
@@ -13,7 +14,9 @@ import {
   ContentStatus,
   UserRole,
 } from "~/generated/prisma/enums";
-import { Lock, Trash2 } from "lucide-react";
+import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
+import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -88,6 +91,15 @@ export default function NewEventPage() {
   const [isFree, setIsFree] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
+
+  const [coverImageId, setCoverImageId] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [downloadIds, setDownloadIds] = useState<string[]>([]);
+  const [selectedDownloads, setSelectedDownloads] = useState<
+    Array<{ id: string; title: string; fileUrl: string }>
+  >([]);
+  const [showDownloadPicker, setShowDownloadPicker] = useState(false);
 
   const [submitAsDraft, setSubmitAsDraft] = useState(false);
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
@@ -298,6 +310,8 @@ export default function NewEventPage() {
       isFree,
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
+      coverImageId: coverImageId || undefined,
+      downloadIds: downloadIds.length > 0 ? downloadIds : undefined,
       status: submitAsDraft
         ? ContentStatus.DRAFT
         : submitAsApproved
@@ -436,6 +450,108 @@ export default function NewEventPage() {
                   ))}
                 </select>
               </div>
+            </div>
+          </section>
+
+          {/* Cover Image */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Titelbild
+            </h2>
+            <div className="space-y-4">
+              {coverImageUrl ? (
+                <div className="relative">
+                  <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                    <Image
+                      src={coverImageUrl}
+                      alt="Titelbild"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaPicker(true)}
+                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                    >
+                      Bild ändern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCoverImageId(null);
+                        setCoverImageUrl(null);
+                      }}
+                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Bild entfernen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowMediaPicker(true)}
+                  className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
+                >
+                  <ImageIcon className="h-12 w-12 text-gray-400" />
+                  <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                    Titelbild auswählen
+                  </span>
+                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Aus der Medienbibliothek auswählen oder neues Bild hochladen
+                  </span>
+                </button>
+              )}
+            </div>
+          </section>
+
+          {/* Downloads */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Downloads
+            </h2>
+            <div className="space-y-4">
+              {selectedDownloads.length > 0 && (
+                <div className="space-y-2">
+                  {selectedDownloads.map((download) => (
+                    <div
+                      key={download.id}
+                      className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileDown className="h-5 w-5 text-gray-400" />
+                        <span className="dark:text-dark-text text-sm font-medium text-gray-900">
+                          {download.title}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDownloadIds(
+                            downloadIds.filter((id) => id !== download.id),
+                          );
+                          setSelectedDownloads(
+                            selectedDownloads.filter((d) => d.id !== download.id),
+                          );
+                        }}
+                        className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-red-600 dark:hover:bg-gray-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowDownloadPicker(true)}
+                className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <FileDown className="h-5 w-5" />
+                Download hinzufügen
+              </button>
             </div>
           </section>
 
@@ -1227,6 +1343,35 @@ export default function NewEventPage() {
             </button>
           </div>
         </form>
+
+        {/* Media Picker Modal */}
+        <MediaPickerModal
+          isOpen={showMediaPicker}
+          onClose={() => setShowMediaPicker(false)}
+          onSelect={(url, _alt, mediaId) => {
+            if (mediaId) {
+              setCoverImageId(mediaId);
+            }
+            setCoverImageUrl(url);
+            setShowMediaPicker(false);
+          }}
+        />
+
+        {/* Download Picker Modal */}
+        <DownloadPickerModal
+          isOpen={showDownloadPicker}
+          onClose={() => setShowDownloadPicker(false)}
+          onSelect={(title, url, fileType, downloadId) => {
+            if (downloadId && !downloadIds.includes(downloadId)) {
+              setDownloadIds([...downloadIds, downloadId]);
+              setSelectedDownloads([
+                ...selectedDownloads,
+                { id: downloadId, title, fileUrl: url },
+              ]);
+            }
+            setShowDownloadPicker(false);
+          }}
+        />
       </div>
     </main>
   );

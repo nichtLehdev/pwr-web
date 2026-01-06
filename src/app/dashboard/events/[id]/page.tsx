@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
@@ -357,6 +358,60 @@ export default function EventDetailPage() {
 
         {/* Event Details */}
         <div className="space-y-6">
+          {/* Cover Image */}
+          {event.coverImage && (
+            <section className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+              <div className="relative aspect-video w-full">
+                <Image
+                  src={event.coverImage.url}
+                  alt={event.coverImage.alt || event.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Downloads */}
+          {event.downloads && event.downloads.length > 0 && (
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Downloads
+              </h2>
+              <div className="space-y-2">
+                {event.downloads.map((ed) => (
+                  <a
+                    key={ed.download.id}
+                    href={ed.download.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary-dark flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <span className="font-medium">{ed.download.title}</span>
+                    {ed.download.description && (
+                      <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                        {ed.download.description}
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Basic Info */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">

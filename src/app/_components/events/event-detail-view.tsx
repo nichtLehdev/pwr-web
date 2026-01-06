@@ -195,6 +195,60 @@ END:VCALENDAR`;
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Main Content */}
             <div className="space-y-6 lg:col-span-2">
+              {/* Cover Image */}
+              {event.coverImage && (
+                <div className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-md">
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={event.coverImage.url}
+                      alt={event.coverImage.alt || event.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Downloads */}
+              {event.downloads && event.downloads.length > 0 && (
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+                    Downloads
+                  </h2>
+                  <div className="space-y-2">
+                    {event.downloads.map((ed) => (
+                      <a
+                        key={ed.download.id}
+                        href={ed.download.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary-dark flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                      >
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span className="font-medium">{ed.download.title}</span>
+                        {ed.download.description && (
+                          <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                            {ed.download.description}
+                          </span>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Cancelled Warning */}
               {event.cancelled && (
                 <div className="rounded-lg border-2 border-red-500 bg-red-50 p-6 dark:border-red-700 dark:bg-red-950/50">

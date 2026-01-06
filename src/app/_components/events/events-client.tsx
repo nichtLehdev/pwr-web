@@ -624,6 +624,7 @@ export default function EventsClient({
                                 district={item.bezirk?.number}
                                 openToParticipants={item.openToParticipants}
                                 cancelled={item.cancelled}
+                                coverImageUrl={item.coverImage?.url}
                               />
                             ) : (
                               <CourseCard
@@ -635,6 +636,7 @@ export default function EventsClient({
                                 location={item.location?.city || ""}
                                 courseType={item.courseType}
                                 district={item.bezirk?.number}
+                                imageUrl={item.image?.url}
                               />
                             ),
                           )}
@@ -721,6 +723,7 @@ export default function EventsClient({
                                             item.openToParticipants
                                           }
                                           cancelled={item.cancelled}
+                                          coverImageUrl={item.coverImage?.url}
                                         />
                                       ) : (
                                         <CourseCard
@@ -732,6 +735,7 @@ export default function EventsClient({
                                           location={item.location?.city || ""}
                                           courseType={item.courseType}
                                           district={item.bezirk?.number}
+                                          imageUrl={item.image?.url}
                                         />
                                       ),
                                     )}

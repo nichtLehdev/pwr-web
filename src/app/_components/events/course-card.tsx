@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { api } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getDistrictColor } from "@/lib/district-color";
@@ -13,6 +14,7 @@ interface CourseCardProps {
   location: string;
   courseType: string;
   district?: number;
+  imageUrl?: string | null;
 }
 
 export default function CourseCard({
@@ -23,6 +25,7 @@ export default function CourseCard({
   location,
   courseType,
   district,
+  imageUrl,
 }: CourseCardProps) {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -49,12 +52,25 @@ export default function CourseCard({
   return (
     <Link href={`/termine/course/${id}`} className="group block h-full">
       <article
-        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
         style={{
           borderLeftColor: districtColor,
         }}
       >
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+        {/* Course Image */}
+        {imageUrl && (
+          <div className="relative h-48 w-full">
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover"
+            />
+          </div>
+        )}
+
+        <div className="p-6">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div className="flex gap-2">
             <span
               className="rounded-full px-3 py-1 text-xs font-semibold text-white"
@@ -137,11 +153,12 @@ export default function CourseCard({
           )}
         </div>
 
-        <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
-          {registrationOpen && !spotsAvailable.isFull
-            ? "Jetzt anmelden"
-            : "Details ansehen"}
-          <CheckIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
+            {registrationOpen && !spotsAvailable.isFull
+              ? "Jetzt anmelden"
+              : "Details ansehen"}
+            <CheckIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </div>
         </div>
       </article>
     </Link>
