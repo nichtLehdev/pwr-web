@@ -504,8 +504,7 @@ export const coursesRouter = createTRPCRouter({
             !data.registrationDeadline ||
             data.registrationOpensAt <= data.registrationDeadline,
           {
-            message:
-              "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
+            message: "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
             path: ["registrationOpensAt"],
           },
         ),
@@ -619,8 +618,7 @@ export const coursesRouter = createTRPCRouter({
             !data.registrationDeadline ||
             data.registrationOpensAt <= data.registrationDeadline,
           {
-            message:
-              "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
+            message: "Anmeldungsstart muss vor oder am Anmeldeschluss sein",
             path: ["registrationOpensAt"],
           },
         ),

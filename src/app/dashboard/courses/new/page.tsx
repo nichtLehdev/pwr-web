@@ -668,7 +668,8 @@ export default function NewCoursePage() {
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem Zeitpunkt
+                  Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem
+                  Zeitpunkt
                 </p>
               </div>
               <div>
@@ -679,7 +680,13 @@ export default function NewCoursePage() {
                   type="date"
                   value={registrationDeadline}
                   onChange={(e) => setRegistrationDeadline(e.target.value)}
-                  min={registrationOpensAt ? new Date(registrationOpensAt).toISOString().split('T')[0] : undefined}
+                  min={
+                    registrationOpensAt
+                      ? new Date(registrationOpensAt)
+                          .toISOString()
+                          .split("T")[0]
+                      : undefined
+                  }
                   max={startDate || undefined}
                   title="Anmeldeschluss muss vor oder am Startdatum sein"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"

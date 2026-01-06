@@ -106,9 +106,7 @@ export default function DashboardCourseCard({
   const isRegistrationNotOpenYet =
     registrationOpensAt && new Date(registrationOpensAt) > new Date();
   const isEffectivelyOpen =
-    registrationOpen &&
-    !isDeadlinePassed &&
-    !isRegistrationNotOpenYet;
+    registrationOpen && !isDeadlinePassed && !isRegistrationNotOpenYet;
 
   const formatDateRange = () => {
     const start = new Date(startDate);

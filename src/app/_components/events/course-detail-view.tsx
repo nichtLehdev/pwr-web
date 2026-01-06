@@ -602,13 +602,16 @@ export default function CourseDetailView({
                         </p>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                           {isRegistrationNotOpenYet
-                            ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString("de-DE", {
-                                day: "2-digit",
-                                month: "long",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })} Uhr. Die Kursdetails sind bereits verfügbar.`
+                            ? `Die Anmeldung für diesen Kurs öffnet am ${registrationOpensAt?.toLocaleDateString(
+                                "de-DE",
+                                {
+                                  day: "2-digit",
+                                  month: "long",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )} Uhr. Die Kursdetails sind bereits verfügbar.`
                             : isDeadlinePassed
                               ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
                               : spots.isFull && !course.allowWaitingList

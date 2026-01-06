@@ -294,8 +294,8 @@ export default function CourseDetailPage() {
                 {statusLabels[course.status]}
               </span>
               {course.registrationOpen &&
-                course.registrationOpensAt &&
-                new Date(course.registrationOpensAt) > new Date() ? (
+              course.registrationOpensAt &&
+              new Date(course.registrationOpensAt) > new Date() ? (
                 <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                   Öffnet{" "}
                   {new Date(course.registrationOpensAt).toLocaleDateString(
