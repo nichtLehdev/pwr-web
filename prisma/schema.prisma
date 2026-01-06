@@ -296,6 +296,7 @@ model Event {
   auswahlChor  AuswahlChor?       @relation(fields: [auswahlChorId], references: [id], onDelete: SetNull)
   bezirk       Bezirk?            @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
   priceOptions EventPriceOption[]
+  downloads    EventDownload[]
 
   // Meta
   createdById String?
@@ -322,11 +323,28 @@ model EventPriceOption {
   description String?
 }
 
+model EventDownload {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  downloadId String
+  download   Download @relation(fields: [downloadId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, downloadId])
+  @@index([eventId])
+  @@index([downloadId])
+}
+
 model Course {
   id          String  @id @default(uuid())
   title       String
   motto       String?
   description String
+
+  imageId String?
+  image   Media?  @relation("CourseImage", fields: [imageId], references: [id], onDelete: SetNull)
 
   // Dates
   startDate DateTime
@@ -801,6 +819,9 @@ model Download {
   uploadedById String?
   uploadedBy   User?   @relation("DownloadUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
 
+  // Relations
+  events EventDownload[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -888,6 +909,7 @@ model Media {
   foerdervereinMemberImgs FoerdervereinMember[] @relation("FoerdervereinMemberImage")
   historyEventImages      HistoryEvent[]        @relation("HistoryEventImage")
   blaeserheftImages       Blaeserheft[]         @relation("BlaeserheftImage")
+  courseImages            Course[]              @relation("CourseImage")
 
   // Uploaded by
   uploadedById String?

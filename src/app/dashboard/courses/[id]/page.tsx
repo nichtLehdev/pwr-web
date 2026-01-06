@@ -430,6 +430,20 @@ export default function CourseDetailPage() {
               </section>
             )}
 
+            {/* Course Image */}
+            {course.image && (
+              <section className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={course.image.url}
+                    alt={course.image.alt || course.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </section>
+            )}
+
             {/* Course Info */}
             <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">

@@ -109,6 +109,11 @@ export const ensemblesRouter = createTRPCRouter({
             include: {
               coverImage: true,
               location: true,
+              downloads: {
+                include: {
+                  download: true,
+                },
+              },
             },
           },
         },

@@ -299,6 +299,20 @@ export default function CourseDetailView({
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Main Content */}
             <div className="space-y-6 lg:col-span-2">
+              {/* Course Image */}
+              {course.image && (
+                <div className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-md">
+                  <div className="relative aspect-video w-full">
+                    <Image
+                      src={course.image.url}
+                      alt={course.image.alt || course.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Date & Time */}
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
@@ -18,6 +19,7 @@ interface EventCardProps {
   district?: number;
   openToParticipants?: boolean;
   cancelled?: boolean;
+  coverImageUrl?: string | null;
 }
 
 export default function EventCard({
@@ -29,32 +31,46 @@ export default function EventCard({
   district,
   openToParticipants,
   cancelled,
+  coverImageUrl,
 }: EventCardProps) {
   const districtColor = getDistrictColor(district);
 
   return (
     <Link href={`/termine/event/${id}`} className="group block h-full">
       <article
-        className={`dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface relative flex h-full cursor-pointer flex-col rounded-lg border-l-4 p-6 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
+        className={`dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface relative flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
           cancelled ? "opacity-75" : ""
         }`}
         style={{
           borderLeftColor: districtColor,
         }}
       >
-        {/* Cancelled Banner */}
-        {cancelled && (
-          <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-center rounded-t-lg bg-red-600 py-2">
-            <AlertTriangle className="mr-2 h-5 w-5 text-white" />
-            <span className="text-sm font-bold tracking-wider text-white uppercase">
-              Abgesagt
-            </span>
+        {/* Cover Image */}
+        {coverImageUrl && (
+          <div className="relative h-48 w-full">
+            <Image
+              src={coverImageUrl}
+              alt={title}
+              fill
+              className="object-cover"
+            />
           </div>
         )}
 
-        <div
-          className={`mb-4 flex items-start justify-between ${cancelled ? "mt-8" : ""}`}
-        >
+        <div className={`p-6 ${coverImageUrl ? "" : ""}`}>
+          {/* Cancelled Banner */}
+          {cancelled && (
+            <div className="mb-4 flex items-center justify-center rounded-lg bg-red-600 py-2">
+              <AlertTriangle className="mr-2 h-5 w-5 text-white" />
+              <span className="text-sm font-bold tracking-wider text-white uppercase">
+                Abgesagt
+              </span>
+            </div>
+          )}
+
+          <div
+            className={`mb-4 flex items-start justify-between ${cancelled ? "" : ""}`}
+          >
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {capitalizeFirstLetter(category)}
@@ -108,9 +124,10 @@ export default function EventCard({
           </div>
         </div>
 
-        <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
-          Details ansehen
-          <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
+            Details ansehen
+            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </div>
         </div>
       </article>
     </Link>

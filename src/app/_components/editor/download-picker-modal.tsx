@@ -32,7 +32,7 @@ const fileTypeIcons: Record<FileType, string> = {
 interface DownloadPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (title: string, url: string, fileType: string) => void;
+  onSelect: (title: string, url: string, fileType: string, downloadId?: string) => void;
 }
 
 export default function DownloadPickerModal({
@@ -223,6 +223,7 @@ export default function DownloadPickerModal({
         selectedDownload.title,
         selectedDownload.fileUrl,
         selectedDownload.fileType,
+        selectedDownload.id,
       );
       onClose();
     }

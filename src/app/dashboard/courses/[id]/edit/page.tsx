@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
@@ -21,7 +22,9 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   AlertTriangleIcon,
+  ImageIcon,
 } from "lucide-react";
+import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -121,6 +124,10 @@ export default function EditCoursePage() {
   const [whatToBring, setWhatToBring] = useState("");
   const [status, setStatus] = useState<ContentStatus>(ContentStatus.DRAFT);
 
+  const [imageId, setImageId] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
+
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -199,6 +206,11 @@ export default function EditCoursePage() {
           maxParticipants: opt.maxParticipants,
         }));
         setPriceOptions(options);
+      }
+
+      if (course.image) {
+        setImageId(course.image.id);
+        setImageUrl(course.image.url);
       }
 
       if (course.customFields && course.customFields.length > 0) {
@@ -498,6 +510,7 @@ export default function EditCoursePage() {
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
+      imageId: imageId || null,
       priceOptions: preparedPriceOptions,
       customFields: preparedCustomFields,
     });
@@ -696,6 +709,60 @@ export default function EditCoursePage() {
                   </select>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* Image */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Bild
+            </h2>
+            <div className="space-y-4">
+              {imageUrl ? (
+                <div className="relative">
+                  <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
+                    <Image
+                      src={imageUrl}
+                      alt="Kursbild"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaPicker(true)}
+                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                    >
+                      Bild ändern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageId(null);
+                        setImageUrl(null);
+                      }}
+                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Bild entfernen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowMediaPicker(true)}
+                  className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
+                >
+                  <ImageIcon className="h-12 w-12 text-gray-400" />
+                  <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                    Bild auswählen
+                  </span>
+                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Aus der Medienbibliothek auswählen oder neues Bild hochladen
+                  </span>
+                </button>
+              )}
             </div>
           </section>
 
@@ -1578,6 +1645,19 @@ export default function EditCoursePage() {
             </button>
           </div>
         </form>
+
+        {/* Media Picker Modal */}
+        <MediaPickerModal
+          isOpen={showMediaPicker}
+          onClose={() => setShowMediaPicker(false)}
+          onSelect={(url, _alt, mediaId) => {
+            if (mediaId) {
+              setImageId(mediaId);
+            }
+            setImageUrl(url);
+            setShowMediaPicker(false);
+          }}
+        />
       </div>
     </main>
   );

@@ -1,19 +1,8 @@
-import type {
-  Event,
-  Course,
-  Bezirk,
-  Location,
-} from "~/generated/prisma/client";
+import type { RouterOutputs } from "@/trpc/react";
 
-export type EventWithRelations = Event & {
-  bezirk: Bezirk | null;
-  location: Location | null;
-};
-
-export type CourseWithRelations = Course & {
-  bezirk: Bezirk | null;
-  location: Location | null;
-};
+// Use the actual router output types to ensure they match what the API returns
+export type EventWithRelations = RouterOutputs["events"]["getAll"]["events"][number];
+export type CourseWithRelations = RouterOutputs["courses"]["getAll"]["courses"][number];
 
 export type CalendarEventItem = EventWithRelations & {
   type: "event";

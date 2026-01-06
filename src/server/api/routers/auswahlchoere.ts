@@ -25,6 +25,11 @@ export const auswahlchoereRouter = createTRPCRouter({
               location: true,
               priceOptions: true,
               coverImage: true,
+              downloads: {
+                include: {
+                  download: true,
+                },
+              },
             },
           },
         },
@@ -73,6 +78,12 @@ export const auswahlchoereRouter = createTRPCRouter({
               include: {
                 location: true,
                 priceOptions: true,
+                coverImage: true,
+                downloads: {
+                  include: {
+                    download: true,
+                  },
+                },
               },
               take: 5,
             },

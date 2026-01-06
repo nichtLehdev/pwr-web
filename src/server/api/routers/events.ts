@@ -65,6 +65,11 @@ export const eventsRouter = createTRPCRouter({
               },
             },
             priceOptions: true,
+            downloads: {
+              include: {
+                download: true,
+              },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -117,6 +122,11 @@ export const eventsRouter = createTRPCRouter({
             },
           },
           priceOptions: true,
+          downloads: {
+            include: {
+              download: true,
+            },
+          },
         },
       });
 
@@ -176,6 +186,11 @@ export const eventsRouter = createTRPCRouter({
             bezirk: true,
             reviewer: { select: { id: true, displayName: true } },
             priceOptions: true,
+            downloads: {
+              include: {
+                download: true,
+              },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -259,6 +274,11 @@ export const eventsRouter = createTRPCRouter({
             },
             reviewer: { select: { id: true, displayName: true } },
             priceOptions: true,
+            downloads: {
+              include: {
+                download: true,
+              },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -304,6 +324,11 @@ export const eventsRouter = createTRPCRouter({
             bezirk: true,
             createdBy: { select: { id: true, displayName: true, email: true } },
             priceOptions: true,
+            downloads: {
+              include: {
+                download: true,
+              },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -326,6 +351,7 @@ export const eventsRouter = createTRPCRouter({
         motto: z.string().max(500).optional(),
         description: z.string().max(5000).optional(),
         coverImageId: z.string().optional(),
+        downloadIds: z.array(z.string()).optional(),
         eventDate: z.date(),
         locationId: z.string().optional(),
         category: z.enum(EventCategory),
@@ -353,7 +379,7 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { priceOptions, ...eventData } = input;
+      const { priceOptions, downloadIds, ...eventData } = input;
 
       const event = await ctx.db.event.create({
         data: {
@@ -364,11 +390,23 @@ export const eventsRouter = createTRPCRouter({
                 create: priceOptions,
               }
             : undefined,
+          downloads: downloadIds
+            ? {
+                create: downloadIds.map((downloadId) => ({
+                  downloadId,
+                })),
+              }
+            : undefined,
         },
         include: {
           coverImage: true,
           location: true,
           priceOptions: true,
+          downloads: {
+            include: {
+              download: true,
+            },
+          },
         },
       });
 
@@ -383,6 +421,7 @@ export const eventsRouter = createTRPCRouter({
         motto: z.string().max(500).optional(),
         description: z.string().max(5000).optional(),
         coverImageId: z.string().optional().nullable(),
+        downloadIds: z.array(z.string()).optional(),
         eventDate: z.date().optional(),
         locationId: z.string().optional().nullable(),
         category: z.enum(EventCategory).optional(),
@@ -412,7 +451,7 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, priceOptions, ...updateData } = input;
+      const { id, priceOptions, downloadIds, ...updateData } = input;
 
       const event = await ctx.db.event.findUnique({
         where: { id },
@@ -454,6 +493,21 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
+      if (downloadIds !== undefined) {
+        await ctx.db.eventDownload.deleteMany({
+          where: { eventId: id },
+        });
+
+        if (downloadIds.length > 0) {
+          await ctx.db.eventDownload.createMany({
+            data: downloadIds.map((downloadId) => ({
+              eventId: id,
+              downloadId,
+            })),
+          });
+        }
+      }
+
       return await ctx.db.event.update({
         where: { id },
         data: updateData,
@@ -461,6 +515,11 @@ export const eventsRouter = createTRPCRouter({
           coverImage: true,
           location: true,
           priceOptions: true,
+          downloads: {
+            include: {
+              download: true,
+            },
+          },
         },
       });
     }),
@@ -510,7 +569,18 @@ export const eventsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const event = await ctx.db.event.findUnique({
         where: { id: input.id },
-        select: { bezirkId: true },
+        include: {
+          coverImage: {
+            select: { id: true, status: true },
+          },
+          downloads: {
+            include: {
+              download: {
+                select: { id: true, status: true, title: true },
+              },
+            },
+          },
+        },
       });
 
       if (!event) {
@@ -527,6 +597,31 @@ export const eventsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Can only approve events in your district",
+        });
+      }
+
+      // Check coverImage review status
+      if (event.coverImageId && event.coverImage) {
+        if (event.coverImage.status !== ContentStatus.APPROVED) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Das Titelbild muss zuerst freigegeben werden, bevor das Event veröffentlicht werden kann.",
+          });
+        }
+      }
+
+      // Check downloads review status
+      const pendingDownloads = event.downloads.filter(
+        (ed) => ed.download.status !== ContentStatus.APPROVED,
+      );
+      if (pendingDownloads.length > 0) {
+        const titles = pendingDownloads
+          .map((ed) => ed.download.title)
+          .join(", ");
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Folgende Downloads müssen zuerst freigegeben werden: ${titles}`,
         });
       }
 
@@ -637,6 +732,13 @@ export const eventsRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           priceOptions: true,
+          downloads: {
+            include: {
+              download: {
+                select: { id: true },
+              },
+            },
+          },
         },
       });
 
@@ -674,6 +776,14 @@ export const eventsRouter = createTRPCRouter({
               description: po.description,
             })),
           },
+          downloads:
+            original.downloads.length > 0
+              ? {
+                  create: original.downloads.map((ed) => ({
+                    downloadId: ed.download.id,
+                  })),
+                }
+              : undefined,
         },
       });
 
@@ -687,6 +797,13 @@ export const eventsRouter = createTRPCRouter({
         where: { id: { in: input.ids } },
         include: {
           priceOptions: true,
+          downloads: {
+            include: {
+              download: {
+                select: { id: true },
+              },
+            },
+          },
         },
       });
 
@@ -726,6 +843,14 @@ export const eventsRouter = createTRPCRouter({
                   description: po.description,
                 })),
               },
+              downloads:
+                original.downloads.length > 0
+                  ? {
+                      create: original.downloads.map((ed) => ({
+                        downloadId: ed.download.id,
+                      })),
+                    }
+                  : undefined,
             },
           }),
         ),

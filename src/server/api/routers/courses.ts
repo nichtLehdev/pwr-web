@@ -59,6 +59,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.findMany({
           where,
           include: {
+            image: true,
             location: true,
             bezirk: true,
             instructors: {
@@ -116,6 +117,7 @@ export const coursesRouter = createTRPCRouter({
       const courseRaw = await ctx.db.course.findUnique({
         where: { id: input.id },
         include: {
+          image: true,
           location: true,
           bezirk: true,
           instructors: {
@@ -222,6 +224,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.findMany({
           where,
           include: {
+            image: true,
             location: true,
             bezirk: true,
             priceOptions: true,
@@ -316,6 +319,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.findMany({
           where,
           include: {
+            image: true,
             location: true,
             bezirk: true,
             createdBy: {
@@ -390,6 +394,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db.course.findMany({
           where,
           include: {
+            image: true,
             location: true,
             bezirk: true,
             priceOptions: true,
@@ -440,6 +445,7 @@ export const coursesRouter = createTRPCRouter({
           title: z.string().min(1).max(200),
           motto: z.string().max(500).optional(),
           description: z.string().min(1).max(10000),
+          imageId: z.string().optional(),
           startDate: z.date(),
           endDate: z.date(),
           locationId: z.string().optional(),
@@ -535,6 +541,7 @@ export const coursesRouter = createTRPCRouter({
           title: z.string().min(1).max(200).optional(),
           motto: z.string().max(500).optional(),
           description: z.string().max(10000).optional(),
+          imageId: z.string().optional().nullable(),
           startDate: z.date().optional(),
           endDate: z.date().optional(),
           locationId: z.string().optional().nullable(),
@@ -671,6 +678,7 @@ export const coursesRouter = createTRPCRouter({
         where: { id },
         data: updateData,
         include: {
+          image: true,
           location: true,
           instructors: true,
           priceOptions: true,
@@ -721,6 +729,33 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const course = await ctx.db.course.findUnique({
+        where: { id: input.id },
+        include: {
+          image: {
+            select: { id: true, status: true },
+          },
+        },
+      });
+
+      if (!course) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course not found",
+        });
+      }
+
+      // Check image review status
+      if (course.imageId && course.image) {
+        if (course.image.status !== ContentStatus.APPROVED) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Das Bild muss zuerst freigegeben werden, bevor der Kurs veröffentlicht werden kann.",
+          });
+        }
+      }
+
       return await ctx.db.course.update({
         where: { id: input.id },
         data: {

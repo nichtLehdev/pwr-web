@@ -101,6 +101,11 @@ export const bezirkeRouter = createTRPCRouter({
             include: {
               coverImage: true,
               location: true,
+              downloads: {
+                include: {
+                  download: true,
+                },
+              },
             },
           },
           courses: {
