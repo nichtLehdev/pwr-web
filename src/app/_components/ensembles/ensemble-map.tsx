@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { ExternalLinkIcon } from "lucide-react";
 
 // Fix for default marker icon issue in Next.js
 import icon from "leaflet/dist/images/marker-icon.png";
@@ -138,9 +139,11 @@ export default function EnsembleMap({
           href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=15`}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          Größere Karte anzeigen
+          <span>Größere Karte anzeigen</span>
+          <ExternalLinkIcon className="h-3 w-3" aria-hidden="true" />
+          <span className="sr-only">(Externe Seite)</span>
         </Link>
       </div>
     </div>
