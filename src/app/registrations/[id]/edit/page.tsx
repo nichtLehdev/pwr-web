@@ -1071,7 +1071,7 @@ export default function EditRegistrationPage() {
                             <div className="flex flex-wrap items-center gap-2">
                               {activeParticipants
                                 .filter((p) => p.id !== participant.id)
-                                .map((otherParticipant) => { 
+                                .map((otherParticipant) => {
                                   const isLinked =
                                     participant.siblingGroupId &&
                                     participant.siblingGroupId ===
