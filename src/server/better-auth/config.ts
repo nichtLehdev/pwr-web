@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { username } from "better-auth/plugins/username";
+import { twoFactor } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { env } from "@/env";
@@ -77,6 +78,75 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true, // Require email verification
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string | null };
+      url: string;
+    }) => {
+      console.log("[Better Auth] sendResetPassword called for:", user.email);
+      console.log("[Better Auth] Reset URL:", url);
+
+      if (!isEmailConfigured()) {
+        console.error("[Better Auth] Email service is not configured");
+        throw new Error("Email service is not configured");
+      }
+
+      // Better Auth provides a URL that will redirect to redirectTo with the token
+      // The URL format Better Auth provides is: /api/auth/reset-password?token=...&redirectTo=...
+      // When clicked, Better Auth redirects to redirectTo with ?token=...
+      // Since we set redirectTo to /reset-password, Better Auth will redirect there with the token
+      // But we want to include the email in the URL for better UX
+      let resetUrl = url;
+      try {
+        const urlObj = new URL(url, baseUrl);
+        const token = urlObj.searchParams.get("token");
+
+        console.log("[Better Auth] Original URL from Better Auth:", url);
+        console.log(
+          "[Better Auth] Extracted token:",
+          token ? `${token.substring(0, 20)}...` : "NOT FOUND",
+        );
+
+        if (token) {
+          // Create our custom reset password page URL with the token
+          // Better Auth only needs the token to reset the password, email is optional
+          // We include email for better UX (showing it in the form), but it's not required
+          resetUrl = `${baseUrl}/reset-password?token=${token}${user.email ? `&email=${encodeURIComponent(user.email)}` : ""}`;
+          console.log("[Better Auth] Created reset URL:", resetUrl);
+        } else {
+          console.warn(
+            "[Better Auth] No token found in reset URL, using original URL",
+          );
+          // If no token found, Better Auth's URL might work as-is (it will redirect)
+          resetUrl = url;
+        }
+      } catch (error) {
+        console.error("[Better Auth] Error parsing reset URL:", error);
+        // If URL parsing fails, use original URL
+        resetUrl = url;
+      }
+
+      console.log("[Better Auth] Sending password reset email to:", user.email);
+      console.log("[Better Auth] Using reset URL:", resetUrl);
+
+      try {
+        const { sendPasswordResetEmail } = await import("@/server/email");
+        await sendPasswordResetEmail(
+          user.email,
+          resetUrl,
+          user.name || undefined,
+        );
+        console.log("[Better Auth] Password reset email sent successfully");
+      } catch (emailError) {
+        console.error(
+          "[Better Auth] Error sending password reset email:",
+          emailError,
+        );
+        throw emailError;
+      }
+    },
   },
   email: {
     sendVerificationEmail: async ({
@@ -114,7 +184,13 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins,
-  plugins: [username()],
+  appName: "Posaunenwerk Rheinland",
+  plugins: [
+    username(),
+    twoFactor({
+      issuer: "Posaunenwerk Rheinland",
+    }),
+  ],
   socialProviders: {
     github: {
       clientId: env.BETTER_AUTH_GITHUB_CLIENT_ID,

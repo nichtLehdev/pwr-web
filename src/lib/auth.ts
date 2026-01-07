@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { inferAdditionalFields } from "better-auth/client/plugins";
+import { twoFactorClient } from "better-auth/client/plugins";
 import type { auth } from "@/server/better-auth/config";
 
 function getBaseUrl() {
@@ -9,7 +10,25 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-export const { signIn, signUp, signOut, useSession } = createAuthClient({
+export const {
+  signIn,
+  signUp,
+  signOut,
+  useSession,
+  changePassword,
+  twoFactor,
+} = createAuthClient({
   baseURL: getBaseUrl(),
-  plugins: [inferAdditionalFields<typeof auth>()],
+  plugins: [
+    inferAdditionalFields<typeof auth>(),
+    twoFactorClient({
+      onTwoFactorRedirect() {
+        // Redirect to 2FA verification page
+        // Preserve any redirect parameter from the original URL
+        const redirectTo =
+          new URLSearchParams(window.location.search).get("redirect") || "/";
+        window.location.href = `/verify-2fa?redirect=${encodeURIComponent(redirectTo)}`;
+      },
+    }),
+  ],
 });
