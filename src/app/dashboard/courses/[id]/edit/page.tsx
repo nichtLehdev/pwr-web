@@ -117,6 +117,7 @@ export default function EditCoursePage() {
   const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [allowWaitingList, setAllowWaitingList] = useState(false);
+  const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
   const [isFree, setIsFree] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
@@ -205,6 +206,7 @@ export default function EditCoursePage() {
       }
       setMaxParticipants(course.maxParticipants?.toString() || "");
       setAllowWaitingList(course.allowWaitingList);
+      setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
 
       setIsFree(course.isFree);
       setPriceInfo(course.priceInfo || "");
@@ -520,6 +522,10 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: parseInt(maxParticipants),
       allowWaitingList,
+      allowSiblingDiscount:
+        profile?.role === UserRole.LPW || profile?.role === UserRole.ADMIN
+          ? allowSiblingDiscount
+          : undefined,
       isFree,
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
@@ -1140,6 +1146,29 @@ export default function EditCoursePage() {
                   Warteliste aktivieren
                 </label>
               </div>
+
+              {/* Sibling Discount - Only for LPW/Admin */}
+              {(profile?.role === UserRole.LPW ||
+                profile?.role === UserRole.ADMIN) && (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="allowSiblingDiscount"
+                    checked={allowSiblingDiscount}
+                    onChange={(e) =>
+                      setAllowSiblingDiscount(e.target.checked)
+                    }
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  <label
+                    htmlFor="allowSiblingDiscount"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Geschwisterrabatt erlauben (20% für Geschwister ab dem
+                    zweiten Kind)
+                  </label>
+                </div>
+              )}
             </div>
           </section>
 

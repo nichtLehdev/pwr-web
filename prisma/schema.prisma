@@ -187,6 +187,13 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+enum SiblingDiscountStatus {
+  NONE // No discount applied
+  PENDING // Discount applied, awaiting review
+  APPROVED // Discount approved
+  REJECTED // Discount rejected
+}
+
 enum PosaunenwartRoleType {
   LPW // Landesposaunenwart (responsible for all Bezirke)
   RPW // Regionalposaunenwart (responsible for multiple Bezirke)
@@ -367,8 +374,9 @@ model Course {
   allowWaitingList     Boolean   @default(false)
 
   // Pricing
-  isFree    Boolean @default(false)
-  priceInfo String?
+  isFree              Boolean @default(false)
+  priceInfo           String?
+  allowSiblingDiscount Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
 
   // Additional Info
   prerequisites String?
@@ -455,6 +463,12 @@ model CourseRegistration {
   paymentStatus      PaymentStatus      @default(PENDING)
   registrationStatus RegistrationStatus @default(CONFIRMED)
 
+  // Sibling Discount
+  siblingDiscountApplied Boolean              @default(false)
+  siblingDiscountStatus  SiblingDiscountStatus @default(NONE)
+  originalTotalPrice     Float? // Price before discount
+  siblingDiscountAmount  Float? // Discount amount (20% for each sibling after first)
+
   // Invoice
   invoiceGenerated Boolean   @default(false)
   invoiceId        String?
@@ -471,6 +485,7 @@ model CourseRegistration {
 
   @@index([paymentStatus])
   @@index([registrationStatus])
+  @@index([siblingDiscountStatus])
 }
 
 model Participant {
@@ -485,6 +500,7 @@ model Participant {
   instrument   String?
   priceOption  String? // Which price option was selected
   customFields Json? // JSON for custom field values
+  siblingGroupId String? // Groups siblings together for discount calculation (same ID = siblings)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

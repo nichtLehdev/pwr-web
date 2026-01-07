@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { RouterInputs, RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
 import type { User } from "~/generated/prisma/client";
@@ -9,18 +9,12 @@ import { useToast } from "@/app/_components/ui/toast";
 import {
   X,
   AlertTriangle,
-  CheckCircle,
-  ChevronRight,
-  ChevronLeft,
   User as UserIcon,
   Users,
-  MapPin,
-  Mail,
-  Phone,
-  Calendar,
   Plus,
   Trash2,
   FileText,
+  Link as LinkIcon,
 } from "lucide-react";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
@@ -49,6 +43,7 @@ export default function CourseRegistrationForm({
   const toast = useToast();
   const registrationMutation = api.registrations.create.useMutation();
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const groupIdCounterRef = useRef(0);
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
@@ -69,6 +64,7 @@ export default function CourseRegistrationForm({
     billingLastName: "",
     billingEmail: "",
     participants: [],
+    siblingDiscountApplied: false,
   });
 
   useEffect(() => {
@@ -99,11 +95,16 @@ export default function CourseRegistrationForm({
           errors[index] = "Geburtsdatum muss in der Vergangenheit liegen";
         }
       });
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setValidationErrors(errors);
+
+      // Batch state update to avoid cascading renders
+      requestAnimationFrame(() => {
+        setValidationErrors(errors);
+      });
     } else {
       // Clear errors when leaving step 3
-      setValidationErrors({});
+      requestAnimationFrame(() => {
+        setValidationErrors({});
+      });
     }
   }, [currentStep, registrationData.participants]);
 
@@ -129,6 +130,7 @@ export default function CourseRegistrationForm({
           instrument: "",
           priceOptionId: firstPriceOption.id,
           customFields: {},
+          siblingGroupId: undefined,
         },
       ],
     });
@@ -158,6 +160,7 @@ export default function CourseRegistrationForm({
           instrument: "",
           priceOptionId: firstPriceOption.id,
           customFields: {},
+          siblingGroupId: undefined,
         },
       ],
     });
@@ -187,12 +190,140 @@ export default function CourseRegistrationForm({
   };
 
   const calculateTotalPrice = () => {
+    const basePrice = registrationData.participants.reduce(
+      (sum, participant) => {
+        const priceOption = course.priceOptions.find(
+          (p) => p.id === participant.priceOptionId,
+        );
+        return sum + (priceOption?.price || 0);
+      },
+      0,
+    );
+
+    // Apply sibling discount if enabled and applied
+    // Discount is calculated per sibling group (family), not per registration
+    if (
+      registrationData.siblingDiscountApplied &&
+      course.allowSiblingDiscount
+    ) {
+      // Group participants by siblingGroupId
+      const siblingGroups = new Map<
+        string,
+        typeof registrationData.participants
+      >();
+      for (const participant of registrationData.participants) {
+        if (participant.siblingGroupId) {
+          if (!siblingGroups.has(participant.siblingGroupId)) {
+            siblingGroups.set(participant.siblingGroupId, []);
+          }
+          siblingGroups.get(participant.siblingGroupId)?.push(participant);
+        }
+      }
+
+      // Calculate discount for each sibling group (20% for each sibling after the first)
+      let discount = 0;
+      for (const [, groupParticipants] of siblingGroups) {
+        if (groupParticipants.length > 1) {
+          // First participant in group gets no discount, others get 20%
+          for (let i = 1; i < groupParticipants.length; i++) {
+            const participant = groupParticipants[i];
+            if (participant) {
+              const priceOption = course.priceOptions.find(
+                (p) => p.id === participant.priceOptionId,
+              );
+              if (priceOption) {
+                discount += priceOption.price * 0.2;
+              }
+            }
+          }
+        }
+      }
+
+      return basePrice - discount;
+    }
+
+    return basePrice;
+  };
+
+  const calculateOriginalPrice = () => {
     return registrationData.participants.reduce((sum, participant) => {
       const priceOption = course.priceOptions.find(
         (p) => p.id === participant.priceOptionId,
       );
       return sum + (priceOption?.price || 0);
     }, 0);
+  };
+
+  const calculateDiscountAmount = () => {
+    if (
+      registrationData.siblingDiscountApplied &&
+      course.allowSiblingDiscount
+    ) {
+      // Group participants by siblingGroupId
+      const siblingGroups = new Map<
+        string,
+        typeof registrationData.participants
+      >();
+      for (const participant of registrationData.participants) {
+        if (participant.siblingGroupId) {
+          if (!siblingGroups.has(participant.siblingGroupId)) {
+            siblingGroups.set(participant.siblingGroupId, []);
+          }
+          siblingGroups.get(participant.siblingGroupId)?.push(participant);
+        }
+      }
+
+      // Calculate discount for each sibling group
+      let discount = 0;
+      for (const [, groupParticipants] of siblingGroups) {
+        if (groupParticipants.length > 1) {
+          for (let i = 1; i < groupParticipants.length; i++) {
+            const participant = groupParticipants[i];
+            if (participant) {
+              const priceOption = course.priceOptions.find(
+                (p) => p.id === participant.priceOptionId,
+              );
+              if (priceOption) {
+                discount += priceOption.price * 0.2;
+              }
+            }
+          }
+        }
+      }
+      return discount;
+    }
+    return 0;
+  };
+
+  // Helper function to group/ungroup participants as siblings
+  const toggleSiblingGroup = (index1: number, index2: number) => {
+    const participant1 = registrationData.participants[index1];
+    const participant2 = registrationData.participants[index2];
+    if (!participant1 || !participant2) return;
+
+    const updated = [...registrationData.participants];
+
+    // If both are in the same group, ungroup them
+    if (
+      participant1.siblingGroupId &&
+      participant1.siblingGroupId === participant2.siblingGroupId
+    ) {
+      updated[index1] = { ...participant1, siblingGroupId: undefined };
+      updated[index2] = { ...participant2, siblingGroupId: undefined };
+    } else {
+      // Group them together (use existing group ID or create new one)
+      const existingGroupId =
+        participant1.siblingGroupId || participant2.siblingGroupId;
+      let groupId = existingGroupId;
+      if (!groupId) {
+        groupIdCounterRef.current = (groupIdCounterRef.current || 0) + 1;
+        groupId = `group-${groupIdCounterRef.current}`;
+      }
+      updated[index1] = { ...participant1, siblingGroupId: groupId };
+      updated[index2] = { ...participant2, siblingGroupId: groupId };
+    }
+
+    setRegistrationData({ ...registrationData, participants: updated });
   };
 
   const validateStep = (step: Step): boolean => {
@@ -309,6 +440,7 @@ export default function CourseRegistrationForm({
           ...(p.instrument && { instrument: p.instrument }),
           priceOptionId: p.priceOptionId,
           ...(p.customFields && { customFields: p.customFields }),
+          ...(p.siblingGroupId && { siblingGroupId: p.siblingGroupId }),
         })),
       },
       {
@@ -810,11 +942,18 @@ export default function CourseRegistrationForm({
                                 Ich
                               </span>
                             )}
+                            {participant.siblingGroupId && (
+                              <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                <LinkIcon className="h-3 w-3" />
+                                Geschwister
+                              </span>
+                            )}
                           </div>
                           {registrationData.participants.length > 1 && (
                             <button
                               onClick={() => removeParticipant(index)}
                               className="p-1 text-red-600 hover:text-red-700"
+                              title="Teilnehmer entfernen"
                             >
                               <Trash2 className="h-5 w-5" />
                             </button>
@@ -847,266 +986,485 @@ export default function CourseRegistrationForm({
           {/* Step 3: Participant Details */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
-                Details der Teilnehmer
-              </h3>
+              <div className="mb-6">
+                <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                  Details der Teilnehmer
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Bitte füllen Sie die Informationen für alle Teilnehmer aus
+                </p>
+              </div>
 
-              {registrationData.participants.map((participant, index) => (
-                <div
-                  key={index}
-                  className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-6"
-                >
-                  <h4 className="text-dark dark:text-dark-text mb-4 font-bold">
-                    Teilnehmer {index + 1}
-                  </h4>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Vorname *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.firstName}
-                        onChange={(e) =>
-                          updateParticipant(index, "firstName", e.target.value)
-                        }
-                        maxLength={100}
-                        required
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Nachname *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.lastName}
-                        onChange={(e) =>
-                          updateParticipant(index, "lastName", e.target.value)
-                        }
-                        maxLength={100}
-                        required
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Geburtsdatum *
-                      </label>
-                      <input
-                        type="date"
-                        value={
-                          participant.birthDate
-                            ? new Date(participant.birthDate)
-                                .toISOString()
-                                .split("T")[0]
-                            : ""
-                        }
-                        onChange={(e) => {
-                          const newDate = e.target.value
-                            ? new Date(e.target.value)
-                            : ("" as any);
-                          updateParticipant(index, "birthDate", newDate);
-                          // Validate immediately
-                          const newErrors = { ...validationErrors };
-                          if (!e.target.value) {
-                            newErrors[index] = "Geburtsdatum ist erforderlich";
-                          } else if (new Date(e.target.value) >= new Date()) {
-                            newErrors[index] =
-                              "Geburtsdatum muss in der Vergangenheit liegen";
-                          } else {
-                            delete newErrors[index];
-                          }
-                          setValidationErrors(newErrors);
-                        }}
-                        max={new Date().toISOString().split("T")[0]}
-                        required
-                        title="Geburtsdatum muss in der Vergangenheit liegen"
-                        className={`focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 ${
-                          validationErrors[index]
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      {validationErrors[index] && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                          {validationErrors[index]}
+              {/* Sibling Grouping Section - Only show if course allows discount and multiple participants */}
+              {course.allowSiblingDiscount &&
+                registrationData.participants.length > 1 && (
+                  <div className="mb-6 rounded-lg border-2 border-dashed border-blue-200 bg-blue-50 p-5 dark:border-blue-800 dark:bg-blue-900/20">
+                    <div className="mb-3 flex items-start gap-3">
+                      <Users className="mt-0.5 h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <div className="flex-1">
+                        <h4 className="text-dark dark:text-dark-text mb-1 font-semibold">
+                          Geschwister markieren
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Markieren Sie Teilnehmer als Geschwister, um einen
+                          Rabatt von 20% für jedes Geschwisterkind ab dem
+                          zweiten Kind zu erhalten.
                         </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {registrationData.participants.map(
+                        (participant, index) => {
+                          const siblingGroup =
+                            registrationData.participants.filter(
+                              (p) =>
+                                p.siblingGroupId &&
+                                p.siblingGroupId === participant.siblingGroupId,
+                            );
+                          const isInGroup = siblingGroup.length > 1;
+                          const groupMembers = siblingGroup
+                            .map((p) => {
+                              const idx =
+                                registrationData.participants.indexOf(p);
+                              return idx !== index ? idx + 1 : null;
+                            })
+                            .filter((idx): idx is number => idx !== null);
+
+                          return (
+                            <label
+                              key={index}
+                              className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-3 transition-all ${
+                                isInGroup
+                                  ? "border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
+                                  : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isInGroup}
+                                onChange={(e) => {
+                                  // Find another participant in the same group or create new group
+                                  if (e.target.checked) {
+                                    // Find first participant without a group or create new group
+                                    const otherParticipant =
+                                      registrationData.participants.find(
+                                        (p, i) =>
+                                          i !== index &&
+                                          (!p.siblingGroupId ||
+                                            p.siblingGroupId ===
+                                              participant.siblingGroupId),
+                                      );
+                                    if (otherParticipant) {
+                                      const otherIndex =
+                                        registrationData.participants.indexOf(
+                                          otherParticipant,
+                                        );
+                                      toggleSiblingGroup(index, otherIndex);
+                                    } else {
+                                      // Create new group with first available participant
+                                      const firstOther =
+                                        registrationData.participants.find(
+                                          (_, i) => i !== index,
+                                        );
+                                      if (firstOther) {
+                                        const firstIndex =
+                                          registrationData.participants.indexOf(
+                                            firstOther,
+                                          );
+                                        toggleSiblingGroup(index, firstIndex);
+                                      }
+                                    }
+                                  } else {
+                                    // Remove from group
+                                    const updated = [
+                                      ...registrationData.participants,
+                                    ];
+                                    updated[index] = {
+                                      ...participant,
+                                      siblingGroupId: undefined,
+                                    };
+                                    setRegistrationData({
+                                      ...registrationData,
+                                      participants: updated,
+                                    });
+                                  }
+                                }}
+                                className="h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900 dark:text-gray-100">
+                                  Teilnehmer {index + 1}
+                                </div>
+                                {isInGroup && groupMembers.length > 0 && (
+                                  <div className="mt-1 text-xs text-green-700 dark:text-green-400">
+                                    Geschwister mit: {groupMembers.join(", ")}
+                                  </div>
+                                )}
+                              </div>
+                              {isInGroup && (
+                                <LinkIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              )}
+                            </label>
+                          );
+                        },
                       )}
                     </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Wohnort *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.city}
-                        onChange={(e) =>
-                          updateParticipant(index, "city", e.target.value)
-                        }
-                        maxLength={100}
-                        required
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                        placeholder="Düsseldorf"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Instrument
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.instrument || ""}
-                        onChange={(e) =>
-                          updateParticipant(index, "instrument", e.target.value)
-                        }
-                        maxLength={100}
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                        placeholder="Trompete"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                        Preisoption *
-                      </label>
-                      <select
-                        value={participant.priceOptionId}
-                        onChange={(e) =>
-                          updateParticipant(
-                            index,
-                            "priceOptionId",
-                            e.target.value,
-                          )
-                        }
-                        className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                      >
-                        {course.priceOptions.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.label} - {option.price.toFixed(2)} €
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Custom Fields */}
-                    {course.customFields?.map((field) => {
-                      return (
-                        <div key={field.fieldName} className="md:col-span-2">
-                          <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                            {field.fieldName}
-                            {field.isRequired && " *"}
-                          </label>
-                          {field.fieldType === "SELECT" && field.options ? (
-                            <select
-                              value={
-                                (participant.customFields &&
-                                typeof participant.customFields === "object" &&
-                                field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
-                                  : "") || ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                            >
-                              <option value="">Bitte wählen</option>
-                              {typeof field.options === "string" &&
-                                field.options.split(",").map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                            </select>
-                          ) : field.fieldType === "TEXTAREA" ? (
-                            <textarea
-                              value={
-                                typeof participant.customFields === "object" &&
-                                participant.customFields !== null &&
-                                field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              rows={3}
-                              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                              placeholder={field.helpText ? field.helpText : ""}
-                            />
-                          ) : (
-                            <input
-                              type={
-                                field.fieldType === "NUMBER" ? "number" : "text"
-                              }
-                              value={
-                                typeof participant.customFields === "object" &&
-                                participant.customFields !== null &&
-                                field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
-                              placeholder={field.helpText ? field.helpText : ""}
-                            />
-                          )}
-                          {field.helpText && (
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              {field.helpText}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
-                </div>
-              ))}
+                )}
+
+              {registrationData.participants.map((participant, index) => {
+                // Get sibling group info for visual grouping
+                const siblingGroup = registrationData.participants.filter(
+                  (p) =>
+                    p.siblingGroupId &&
+                    p.siblingGroupId === participant.siblingGroupId,
+                );
+                const isInSiblingGroup = siblingGroup.length > 1;
+                const isFirstInGroup =
+                  isInSiblingGroup &&
+                  registrationData.participants.indexOf(participant) ===
+                    registrationData.participants.findIndex(
+                      (p) => p.siblingGroupId === participant.siblingGroupId,
+                    );
+
+                return (
+                  <div
+                    key={index}
+                    className={`dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border p-6 ${
+                      isInSiblingGroup
+                        ? "border-green-300 bg-green-50/50 dark:border-green-800 dark:bg-green-900/10"
+                        : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    {isFirstInGroup && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-100 px-3 py-2 dark:bg-green-900/30">
+                        <Users className="h-4 w-4 text-green-700 dark:text-green-400" />
+                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                          Geschwistergruppe ({siblingGroup.length} Teilnehmer)
+                        </span>
+                      </div>
+                    )}
+                    <h4 className="text-dark dark:text-dark-text mb-4 font-bold">
+                      {isInSiblingGroup
+                        ? `Teilnehmer ${index + 1} (Geschwister)`
+                        : `Teilnehmer ${index + 1}`}
+                    </h4>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Vorname *
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.firstName}
+                          onChange={(e) =>
+                            updateParticipant(
+                              index,
+                              "firstName",
+                              e.target.value,
+                            )
+                          }
+                          maxLength={100}
+                          required
+                          className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Nachname *
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.lastName}
+                          onChange={(e) =>
+                            updateParticipant(index, "lastName", e.target.value)
+                          }
+                          maxLength={100}
+                          required
+                          className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Geburtsdatum *
+                        </label>
+                        <input
+                          type="date"
+                          value={
+                            participant.birthDate
+                              ? new Date(participant.birthDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : ""
+                          }
+                          onChange={(e) => {
+                            const newDate = e.target.value
+                              ? new Date(e.target.value)
+                              : ("" as any);
+                            updateParticipant(index, "birthDate", newDate);
+                            // Validate immediately
+                            const newErrors = { ...validationErrors };
+                            if (!e.target.value) {
+                              newErrors[index] =
+                                "Geburtsdatum ist erforderlich";
+                            } else if (new Date(e.target.value) >= new Date()) {
+                              newErrors[index] =
+                                "Geburtsdatum muss in der Vergangenheit liegen";
+                            } else {
+                              delete newErrors[index];
+                            }
+                            setValidationErrors(newErrors);
+                          }}
+                          max={new Date().toISOString().split("T")[0]}
+                          required
+                          title="Geburtsdatum muss in der Vergangenheit liegen"
+                          className={`focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 ${
+                            validationErrors[index]
+                              ? "border-red-500 dark:border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        />
+                        {validationErrors[index] && (
+                          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                            {validationErrors[index]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Wohnort *
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.city}
+                          onChange={(e) =>
+                            updateParticipant(index, "city", e.target.value)
+                          }
+                          maxLength={100}
+                          required
+                          className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                          placeholder="Düsseldorf"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Instrument
+                        </label>
+                        <input
+                          type="text"
+                          value={participant.instrument || ""}
+                          onChange={(e) =>
+                            updateParticipant(
+                              index,
+                              "instrument",
+                              e.target.value,
+                            )
+                          }
+                          maxLength={100}
+                          className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                          placeholder="Trompete"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          Preisoption *
+                        </label>
+                        <select
+                          value={participant.priceOptionId}
+                          onChange={(e) =>
+                            updateParticipant(
+                              index,
+                              "priceOptionId",
+                              e.target.value,
+                            )
+                          }
+                          className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                        >
+                          {course.priceOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label} - {option.price.toFixed(2)} €
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Custom Fields */}
+                      {course.customFields?.map((field) => {
+                        return (
+                          <div key={field.fieldName} className="md:col-span-2">
+                            <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              {field.fieldName}
+                              {field.isRequired && " *"}
+                            </label>
+                            {field.fieldType === "SELECT" && field.options ? (
+                              <select
+                                value={
+                                  (participant.customFields &&
+                                  typeof participant.customFields ===
+                                    "object" &&
+                                  field.fieldName in participant.customFields
+                                    ? (
+                                        participant.customFields as Record<
+                                          string,
+                                          any
+                                        >
+                                      )[field.fieldName]
+                                    : "") || ""
+                                }
+                                onChange={(e) =>
+                                  updateParticipant(index, "customFields", {
+                                    ...(typeof participant.customFields ===
+                                      "object" &&
+                                    participant.customFields !== null
+                                      ? participant.customFields
+                                      : {}),
+                                    [field.fieldName]: e.target.value,
+                                  })
+                                }
+                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                              >
+                                <option value="">Bitte wählen</option>
+                                {typeof field.options === "string" &&
+                                  field.options.split(",").map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                              </select>
+                            ) : field.fieldType === "TEXTAREA" ? (
+                              <textarea
+                                value={
+                                  typeof participant.customFields ===
+                                    "object" &&
+                                  participant.customFields !== null &&
+                                  field.fieldName in participant.customFields
+                                    ? (
+                                        participant.customFields as Record<
+                                          string,
+                                          any
+                                        >
+                                      )[field.fieldName]
+                                    : ""
+                                }
+                                onChange={(e) =>
+                                  updateParticipant(index, "customFields", {
+                                    ...(typeof participant.customFields ===
+                                      "object" &&
+                                    participant.customFields !== null
+                                      ? participant.customFields
+                                      : {}),
+                                    [field.fieldName]: e.target.value,
+                                  })
+                                }
+                                rows={3}
+                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                placeholder={
+                                  field.helpText ? field.helpText : ""
+                                }
+                              />
+                            ) : (
+                              <input
+                                type={
+                                  field.fieldType === "NUMBER"
+                                    ? "number"
+                                    : "text"
+                                }
+                                value={
+                                  typeof participant.customFields ===
+                                    "object" &&
+                                  participant.customFields !== null &&
+                                  field.fieldName in participant.customFields
+                                    ? (
+                                        participant.customFields as Record<
+                                          string,
+                                          any
+                                        >
+                                      )[field.fieldName]
+                                    : ""
+                                }
+                                onChange={(e) =>
+                                  updateParticipant(index, "customFields", {
+                                    ...(typeof participant.customFields ===
+                                      "object" &&
+                                    participant.customFields !== null
+                                      ? participant.customFields
+                                      : {}),
+                                    [field.fieldName]: e.target.value,
+                                  })
+                                }
+                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                placeholder={
+                                  field.helpText ? field.helpText : ""
+                                }
+                              />
+                            )}
+                            {field.helpText && (
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {field.helpText}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Sibling Discount Checkbox */}
+              {course.allowSiblingDiscount &&
+                registrationData.participants.length > 1 &&
+                (() => {
+                  // Check if any participants are grouped as siblings
+                  const hasSiblingGroups = registrationData.participants.some(
+                    (p) => p.siblingGroupId,
+                  );
+                  return (
+                    <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-6">
+                      {!hasSiblingGroups && (
+                        <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            💡 Tipp: Sie können Teilnehmer als Geschwister
+                            markieren, indem Sie auf das Link-Symbol zwischen
+                            den Teilnehmern klicken (Schritt 2).
+                          </p>
+                        </div>
+                      )}
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={registrationData.siblingDiscountApplied}
+                          onChange={(e) =>
+                            setRegistrationData({
+                              ...registrationData,
+                              siblingDiscountApplied: e.target.checked,
+                            })
+                          }
+                          disabled={!hasSiblingGroups}
+                          className="text-primary focus:ring-primary mt-1 h-4 w-4 rounded border-gray-300 disabled:opacity-50"
+                        />
+                        <div className="flex-1">
+                          <span className="text-dark dark:text-dark-text block text-sm font-semibold">
+                            Geschwisterrabatt beantragen
+                          </span>
+                          <span className="mt-1 block text-xs text-gray-600 dark:text-gray-400">
+                            Der Förderverein gewährt einen Rabatt von 20% für
+                            jedes Geschwisterkind ab dem zweiten Kind in jeder
+                            Familie. Die Bearbeitung kann einige Tage dauern.
+                            {!hasSiblingGroups &&
+                              " Bitte markieren Sie zuerst Geschwister in Schritt 2."}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  );
+                })()}
             </div>
           )}
 
@@ -1226,15 +1584,49 @@ export default function CourseRegistrationForm({
                 </div>
               </div>
 
-              {/* Total Price */}
-              <div className="bg-primary rounded-lg p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">Gesamtpreis</span>
-                  <span className="text-3xl font-bold">
-                    {calculateTotalPrice().toFixed(2)} €
-                  </span>
+              {/* Price Breakdown */}
+              {registrationData.siblingDiscountApplied &&
+              course.allowSiblingDiscount &&
+              calculateDiscountAmount() > 0 ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Zwischensumme
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {calculateOriginalPrice().toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Geschwisterrabatt (20%)
+                    </span>
+                    <span className="text-sm font-semibold text-green-700 dark:text-green-300">
+                      -{calculateDiscountAmount().toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="bg-primary rounded-lg p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold">Gesamtpreis</span>
+                      <span className="text-3xl font-bold">
+                        {calculateTotalPrice().toFixed(2)} €
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs opacity-90">
+                      * Der Rabatt muss noch bestätigt werden
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-primary rounded-lg p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold">Gesamtpreis</span>
+                    <span className="text-3xl font-bold">
+                      {calculateTotalPrice().toFixed(2)} €
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Terms */}
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">

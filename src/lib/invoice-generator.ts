@@ -36,6 +36,11 @@ export interface InvoiceRegistration {
   notes: string | null;
   participants: InvoiceParticipant[];
 
+  // Sibling discount fields
+  siblingDiscountApplied?: boolean;
+  siblingDiscountAmount?: number | null;
+  originalTotalPrice?: number | null;
+
   useSeparateBilling?: boolean;
   billingCompany?: string | null;
   billingFirstName?: string | null;
@@ -261,6 +266,39 @@ export async function createInvoicePdf(
   doc.setDrawColor(0);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
+
+  // Show discount breakdown if sibling discount is applied
+  if (
+    registration.siblingDiscountApplied &&
+    registration.siblingDiscountAmount &&
+    registration.originalTotalPrice
+  ) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Zwischensumme:", margin + 80, y);
+    doc.text(
+      `${registration.originalTotalPrice.toFixed(2)} €`,
+      pageWidth - margin - 20,
+      y,
+    );
+    y += 7;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 150, 0); // Green color for discount
+    doc.text("Geschwisterrabatt (20%):", margin + 80, y);
+    doc.text(
+      `-${registration.siblingDiscountAmount.toFixed(2)} €`,
+      pageWidth - margin - 20,
+      y,
+    );
+    doc.setTextColor(0); // Reset to black
+    y += 7;
+
+    doc.setDrawColor(200);
+    doc.line(margin + 80, y, pageWidth - margin - 20, y);
+    y += 8;
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.text("Gesamtbetrag:", margin + 80, y);

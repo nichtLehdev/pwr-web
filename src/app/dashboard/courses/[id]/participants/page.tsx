@@ -10,6 +10,7 @@ import {
   UserRole,
   RegistrationStatus,
   PaymentStatus,
+  SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, DownloadIcon, SearchIcon } from "lucide-react";
 import { FileIcon, UserIcon } from "lucide-react";
@@ -39,6 +40,22 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+};
+
+const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
+  NONE: "",
+  PENDING: "Rabatt prüfen",
+  APPROVED: "Rabatt genehmigt",
+  REJECTED: "Rabatt abgelehnt",
+};
+
+const siblingDiscountStatusColors: Record<SiblingDiscountStatus, string> = {
+  NONE: "",
+  PENDING:
+    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  APPROVED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -134,11 +151,28 @@ export default function CourseParticipantsPage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  const { data: registrationsData, isLoading: registrationsLoading } =
-    api.courses.getRegistrations.useQuery(
-      { courseId, page: 1, limit: 100 },
-      { enabled: !!courseId && !!session?.user },
-    );
+  const {
+    data: registrationsData,
+    isLoading: registrationsLoading,
+    refetch: refetchRegistrations,
+  } = api.courses.getRegistrations.useQuery(
+    { courseId, page: 1, limit: 100 },
+    { enabled: !!courseId && !!session?.user },
+  );
+
+  const approveDiscountMutation =
+    api.registrations.approveSiblingDiscount.useMutation({
+      onSuccess: () => {
+        void refetchRegistrations();
+      },
+    });
+
+  const rejectDiscountMutation =
+    api.registrations.rejectSiblingDiscount.useMutation({
+      onSuccess: () => {
+        void refetchRegistrations();
+      },
+    });
 
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
@@ -800,6 +834,19 @@ export default function CourseParticipantsPage() {
                       >
                         {paymentStatusLabels[registration.paymentStatus]}
                       </span>
+                      {registration.siblingDiscountStatus &&
+                        registration.siblingDiscountStatus !==
+                          SiblingDiscountStatus.NONE && (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                          >
+                            {
+                              siblingDiscountStatusLabels[
+                                registration.siblingDiscountStatus
+                              ]
+                            }
+                          </span>
+                        )}
                     </div>
                   </div>
 

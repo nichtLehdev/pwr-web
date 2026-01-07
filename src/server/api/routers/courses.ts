@@ -457,6 +457,7 @@ export const coursesRouter = createTRPCRouter({
           registrationDeadline: z.date().optional(),
           maxParticipants: z.number().min(1).max(500),
           allowWaitingList: z.boolean().default(false),
+          allowSiblingDiscount: z.boolean().default(false),
           isFree: z.boolean().default(false),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
@@ -513,6 +514,18 @@ export const coursesRouter = createTRPCRouter({
       const { priceOptions, customFields, instructorIds, ...courseData } =
         input;
 
+      // Only LPW and Admin can enable sibling discount
+      if (
+        input.allowSiblingDiscount &&
+        ctx.session.user.role !== UserRole.LPW &&
+        ctx.session.user.role !== UserRole.ADMIN
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only LPW and Admin can enable sibling discount",
+        });
+      }
+
       const course = await ctx.db.course.create({
         data: {
           ...courseData,
@@ -564,6 +577,7 @@ export const coursesRouter = createTRPCRouter({
           registrationDeadline: z.date().optional().nullable(),
           maxParticipants: z.number().min(1).max(500).optional(),
           allowWaitingList: z.boolean().optional(),
+          allowSiblingDiscount: z.boolean().optional(),
           isFree: z.boolean().optional(),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
@@ -648,6 +662,18 @@ export const coursesRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions",
+        });
+      }
+
+      // Only LPW and Admin can enable/disable sibling discount
+      if (
+        input.allowSiblingDiscount !== undefined &&
+        ctx.session.user.role !== UserRole.LPW &&
+        ctx.session.user.role !== UserRole.ADMIN
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only LPW and Admin can modify sibling discount setting",
         });
       }
 

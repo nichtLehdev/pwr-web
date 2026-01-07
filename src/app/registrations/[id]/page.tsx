@@ -448,21 +448,74 @@ export default function ViewRegistrationPage() {
 
         {/* Price Summary */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                Gesamtpreis
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {registration.participants.length} Teilnehmer
-                {registration.participants.length !== 1 && ""}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-primary text-3xl font-bold">
-                {registration.totalPrice.toFixed(2)} €
-              </p>
-            </div>
+          <div>
+            <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+              Preisübersicht
+            </h2>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              {registration.participants.length} Teilnehmer
+              {registration.participants.length !== 1 && ""}
+            </p>
+            {registration.siblingDiscountApplied &&
+            registration.originalTotalPrice &&
+            registration.siblingDiscountAmount ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Zwischensumme
+                  </span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {registration.originalTotalPrice.toFixed(2)} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+                  <span className="text-green-600 dark:text-green-400">
+                    Geschwisterrabatt (20%)
+                  </span>
+                  <span className="text-green-600 dark:text-green-400 font-semibold">
+                    -{registration.siblingDiscountAmount.toFixed(2)} €
+                  </span>
+                </div>
+                {registration.siblingDiscountStatus === "PENDING" && (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                    <p className="text-sm text-orange-700 dark:text-orange-300">
+                      ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten eine
+                      Benachrichtigung, sobald eine Entscheidung getroffen wurde.
+                    </p>
+                  </div>
+                )}
+                {registration.siblingDiscountStatus === "APPROVED" && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      ✓ Ihr Rabattantrag wurde genehmigt.
+                    </p>
+                  </div>
+                )}
+                {registration.siblingDiscountStatus === "REJECTED" && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      ✗ Ihr Rabattantrag wurde leider abgelehnt. Der Preis wurde
+                      auf den vollen Betrag angepasst.
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 dark:border-gray-600">
+                  <span className="text-dark dark:text-dark-text text-lg font-semibold">
+                    Gesamtpreis
+                  </span>
+                  <span className="text-primary text-3xl font-bold">
+                    {registration.totalPrice.toFixed(2)} €
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Betrag</span>
+                <span className="text-primary text-3xl font-bold">
+                  {registration.totalPrice.toFixed(2)} €
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
