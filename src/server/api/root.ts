@@ -13,6 +13,7 @@ import { locationsRouter, newsletterRouter } from "./routers/utils";
 import { organizationRouter } from "./routers/organization";
 import { usersRouter } from "./routers/users";
 import { searchRouter } from "./routers/search";
+import { savedParticipantsRouter } from "./routers/saved-participants";
 
 /**
  * This is the primary router for your server.
@@ -34,6 +35,7 @@ export const appRouter = createTRPCRouter({
   locations: locationsRouter,
   newsletter: newsletterRouter,
   search: searchRouter,
+  savedParticipants: savedParticipantsRouter,
 });
 
 export type AppRouter = typeof appRouter;

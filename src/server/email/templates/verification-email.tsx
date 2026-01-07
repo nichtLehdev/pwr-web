@@ -7,9 +7,7 @@ import {
   Text,
   Button,
   Hr,
-  Img,
 } from "@react-email/components";
-import * as React from "react";
 
 interface VerificationEmailProps {
   verificationUrl: string;
@@ -20,11 +18,6 @@ export function VerificationEmail({
   verificationUrl,
   userName,
 }: VerificationEmailProps) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.BETTER_AUTH_URL ||
-    "http://localhost:3000";
-
   return (
     <Html lang="de">
       <Head />

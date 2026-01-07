@@ -8,27 +8,31 @@ import {
   Hr,
 } from "@react-email/components";
 
-interface CourseRegistrationConfirmedProps {
+interface CourseRegistrationPendingDiscountProps {
   registrantFirstName: string;
   registrantLastName: string;
   courseTitle: string;
   startDate: Date;
   endDate: Date;
-  totalPrice: number;
+  originalTotalPrice: number;
+  discountAmount: number;
+  finalTotalPrice: number;
   participantsCount: number;
   registrationId: string;
 }
 
-export function CourseRegistrationConfirmed({
+export function CourseRegistrationPendingDiscount({
   registrantFirstName,
   registrantLastName,
   courseTitle,
   startDate,
   endDate,
-  totalPrice,
+  originalTotalPrice,
+  discountAmount,
+  finalTotalPrice,
   participantsCount,
   registrationId,
-}: CourseRegistrationConfirmedProps) {
+}: CourseRegistrationPendingDiscountProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
       day: "2-digit",
@@ -58,15 +62,15 @@ export function CourseRegistrationConfirmed({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Anmeldung bestätigt</Text>
+            <Text style={heading}>Anmeldung erhalten</Text>
 
             <Text style={paragraph}>
               Hallo {registrantFirstName} {registrantLastName},
             </Text>
 
             <Text style={paragraph}>
-              vielen Dank für deine Anmeldung! Deine Anmeldung für den folgenden
-              Kurs wurde erfolgreich bestätigt:
+              vielen Dank für deine Anmeldung! Wir haben deine Anmeldung für den
+              folgenden Kurs erhalten:
             </Text>
 
             <Section style={courseInfo}>
@@ -81,8 +85,32 @@ export function CourseRegistrationConfirmed({
                 <strong>Teilnehmer:</strong> {participantsCount}{" "}
                 {participantsCount === 1 ? "Person" : "Personen"}
               </Text>
-              <Text style={courseDetail}>
-                <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
+            </Section>
+
+            <Section style={priceInfo}>
+              <Text style={priceTitle}>Preisübersicht</Text>
+              <Text style={priceDetail}>
+                <strong>Ursprünglicher Gesamtbetrag:</strong>{" "}
+                {formatPrice(originalTotalPrice)}
+              </Text>
+              <Text style={priceDetailDiscount}>
+                <strong>Geschwisterrabatt (20%):</strong> -
+                {formatPrice(discountAmount)}
+              </Text>
+              <Hr style={priceHr} />
+              <Text style={priceTotal}>
+                <strong>Gesamtbetrag (vorbehaltlich Genehmigung):</strong>{" "}
+                {formatPrice(finalTotalPrice)}
+              </Text>
+            </Section>
+
+            <Section style={pendingWarning}>
+              <Text style={pendingWarningTitle}>⏳ Rabatt prüfen</Text>
+              <Text style={pendingWarningText}>
+                Dein Antrag auf Geschwisterrabatt wird derzeit geprüft. Du
+                erhältst eine separate E-Mail, sobald der Rabatt genehmigt oder
+                abgelehnt wurde. Deine Anmeldung ist bereits reserviert, auch
+                während der Prüfung.
               </Text>
             </Section>
 
@@ -198,6 +226,71 @@ const courseDetail = {
   lineHeight: "24px",
   color: "#58595b",
   marginBottom: "8px",
+};
+
+const priceInfo = {
+  backgroundColor: "#fef3c7",
+  padding: "20px",
+  borderRadius: "8px",
+  margin: "24px 0",
+  border: "2px solid #fbbf24",
+};
+
+const priceTitle = {
+  fontSize: "18px",
+  fontWeight: "bold",
+  color: "#92400e",
+  marginBottom: "16px",
+};
+
+const priceDetail = {
+  fontSize: "16px",
+  lineHeight: "24px",
+  color: "#58595b",
+  marginBottom: "8px",
+};
+
+const priceDetailDiscount = {
+  fontSize: "16px",
+  lineHeight: "24px",
+  color: "#92400e",
+  marginBottom: "8px",
+  fontWeight: "600",
+};
+
+const priceHr = {
+  borderColor: "#fbbf24",
+  margin: "16px 0",
+};
+
+const priceTotal = {
+  fontSize: "18px",
+  lineHeight: "28px",
+  color: "#92400e",
+  fontWeight: "bold",
+  marginTop: "8px",
+};
+
+const pendingWarning = {
+  backgroundColor: "#dbeafe",
+  padding: "16px",
+  borderRadius: "8px",
+  margin: "24px 0",
+  border: "2px solid #60a5fa",
+};
+
+const pendingWarningTitle = {
+  fontSize: "16px",
+  fontWeight: "bold",
+  color: "#1e40af",
+  marginBottom: "8px",
+};
+
+const pendingWarningText = {
+  fontSize: "14px",
+  lineHeight: "20px",
+  color: "#1e3a8a",
+  margin: "0",
 };
 
 const hr = {

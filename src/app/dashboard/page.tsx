@@ -23,7 +23,7 @@ import {
   HelpCircle,
   BadgeCheck,
   Heart,
-  Image,
+  ImageIcon,
   Download,
   BookOpen,
   Mail,
@@ -388,7 +388,7 @@ const BadgeCheckIcon = () => <BadgeCheck className="h-5 w-5" />;
 
 const HeartIcon = () => <Heart className="h-5 w-5" />;
 
-const PhotographIcon = () => <Image className="h-5 w-5" />;
+const PhotographIcon = () => <ImageIcon className="h-5 w-5" />;
 
 const DownloadIcon = () => <Download className="h-5 w-5" />;
 

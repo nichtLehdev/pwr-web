@@ -1025,6 +1025,7 @@ export const eventsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.events.map(async (eventData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = eventData;
           return await ctx.db.event.create({
             data: {

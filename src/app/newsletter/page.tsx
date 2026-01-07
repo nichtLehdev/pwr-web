@@ -36,7 +36,7 @@ export default function NewsletterPage() {
         setStatus("error");
         setMessage(data.message || "Ein Fehler ist aufgetreten.");
       }
-    } catch (error) {
+    } catch {
       setStatus("error");
       setMessage("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
     }

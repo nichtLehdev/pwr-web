@@ -17,8 +17,6 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  X,
-  Check,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";

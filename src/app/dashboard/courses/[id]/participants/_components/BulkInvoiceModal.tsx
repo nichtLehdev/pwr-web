@@ -8,6 +8,7 @@ import {
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { useToast } from "@/app/_components/ui/toast";
+import { SiblingDiscountStatus } from "~/generated/prisma/enums";
 import {
   X,
   Upload,
@@ -15,6 +16,7 @@ import {
   FileText,
   CheckCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 type SignatureMode = "none" | "upload" | "draw";
@@ -51,6 +53,11 @@ export function BulkInvoiceModal({
 
   if (!isOpen) return null;
 
+  // Check if there are any registrations with pending sibling discounts
+  const hasPendingDiscounts = registrations.some(
+    (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
+  );
+
   const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -84,6 +91,14 @@ export function BulkInvoiceModal({
   };
 
   const handleGenerate = async () => {
+    // Prevent generation if there are pending discounts
+    if (hasPendingDiscounts) {
+      toast.error(
+        "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen.",
+      );
+      return;
+    }
+
     setIsGenerating(true);
     setProgress({ current: 0, total: registrations.length });
     setIsComplete(false);
@@ -151,6 +166,23 @@ export function BulkInvoiceModal({
             {registrations.length !== 1 ? "en" : ""} werden generiert
           </p>
         </div>
+
+        {/* Warning if pending discounts */}
+        {hasPendingDiscounts && (
+          <div className="mb-4 flex items-start gap-3 rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-yellow-800">
+                Rechnungen können nicht generiert werden
+              </p>
+              <p className="mt-1 text-xs text-yellow-700">
+                Es gibt noch Anmeldungen mit ausstehenden Geschwisterrabatten.
+                Bitte prüfen und genehmigen oder ablehnen Sie alle Rabatte,
+                bevor Sie Rechnungen generieren.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Settings */}
         <div className="space-y-4">
@@ -363,8 +395,15 @@ export function BulkInvoiceModal({
           </button>
           <button
             onClick={handleGenerate}
-            disabled={isGenerating || registrations.length === 0}
+            disabled={
+              isGenerating || registrations.length === 0 || hasPendingDiscounts
+            }
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            title={
+              hasPendingDiscounts
+                ? "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen."
+                : undefined
+            }
           >
             {isGenerating ? (
               <>

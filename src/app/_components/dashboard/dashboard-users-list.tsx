@@ -12,7 +12,6 @@ import {
   Filter,
   Users,
   Search,
-  X,
 } from "lucide-react";
 
 const roleLabels: Record<UserRole, string> = {

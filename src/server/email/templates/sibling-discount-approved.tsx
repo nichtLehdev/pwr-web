@@ -8,27 +8,31 @@ import {
   Hr,
 } from "@react-email/components";
 
-interface CourseRegistrationConfirmedProps {
+interface SiblingDiscountApprovedProps {
   registrantFirstName: string;
   registrantLastName: string;
   courseTitle: string;
   startDate: Date;
   endDate: Date;
-  totalPrice: number;
+  originalTotalPrice: number;
+  discountAmount: number;
+  finalTotalPrice: number;
   participantsCount: number;
   registrationId: string;
 }
 
-export function CourseRegistrationConfirmed({
+export function SiblingDiscountApproved({
   registrantFirstName,
   registrantLastName,
   courseTitle,
   startDate,
   endDate,
-  totalPrice,
+  originalTotalPrice,
+  discountAmount,
+  finalTotalPrice,
   participantsCount,
   registrationId,
-}: CourseRegistrationConfirmedProps) {
+}: SiblingDiscountApprovedProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
       day: "2-digit",
@@ -58,15 +62,15 @@ export function CourseRegistrationConfirmed({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Anmeldung bestätigt</Text>
+            <Text style={heading}>Geschwisterrabatt genehmigt</Text>
 
             <Text style={paragraph}>
               Hallo {registrantFirstName} {registrantLastName},
             </Text>
 
             <Text style={paragraph}>
-              vielen Dank für deine Anmeldung! Deine Anmeldung für den folgenden
-              Kurs wurde erfolgreich bestätigt:
+              wir freuen uns, dir mitteilen zu können, dass dein Antrag auf
+              Geschwisterrabatt für die folgende Anmeldung genehmigt wurde:
             </Text>
 
             <Section style={courseInfo}>
@@ -81,30 +85,37 @@ export function CourseRegistrationConfirmed({
                 <strong>Teilnehmer:</strong> {participantsCount}{" "}
                 {participantsCount === 1 ? "Person" : "Personen"}
               </Text>
-              <Text style={courseDetail}>
-                <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
-              </Text>
             </Section>
 
-            <Hr style={hr} />
-
-            <Section style={betaWarning}>
-              <Text style={betaWarningTitle}>⚠️ Wichtiger Hinweis</Text>
-              <Text style={betaWarningText}>
-                Dies ist eine Beta-Version der Website. Anmeldungen und
-                Buchungen sind noch nicht gültig und werden nicht bearbeitet.
+            <Section style={priceInfo}>
+              <Text style={priceTitle}>Preisübersicht</Text>
+              <Text style={priceDetail}>
+                <strong>Ursprünglicher Gesamtbetrag:</strong>{" "}
+                {formatPrice(originalTotalPrice)}
+              </Text>
+              <Text style={priceDetailDiscount}>
+                <strong>Geschwisterrabatt (20%):</strong> -
+                {formatPrice(discountAmount)}
+              </Text>
+              <Hr style={priceHr} />
+              <Text style={priceTotal}>
+                <strong>Gesamtbetrag:</strong> {formatPrice(finalTotalPrice)}
               </Text>
             </Section>
 
             <Hr style={hr} />
 
             <Text style={paragraph}>
-              Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail.
-              Bei Fragen kannst du dich gerne an uns wenden.
+              Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere
+              Informationen zum Kurs per E-Mail.
             </Text>
 
             <Text style={paragraph}>
               Deine Anmelde-ID: <strong>{registrationId}</strong>
+            </Text>
+
+            <Text style={paragraph}>
+              Bei Fragen kannst du dich gerne an uns wenden.
             </Text>
           </Section>
 
@@ -200,31 +211,52 @@ const courseDetail = {
   marginBottom: "8px",
 };
 
-const hr = {
-  borderColor: "#e5e7eb",
-  margin: "32px 0",
-};
-
-const betaWarning = {
-  backgroundColor: "#fef3c7",
-  padding: "16px",
+const priceInfo = {
+  backgroundColor: "#f0fdf4",
+  padding: "20px",
   borderRadius: "8px",
   margin: "24px 0",
-  border: "2px solid #fbbf24",
+  border: "2px solid #86efac",
 };
 
-const betaWarningTitle = {
-  fontSize: "16px",
+const priceTitle = {
+  fontSize: "18px",
   fontWeight: "bold",
-  color: "#92400e",
+  color: "#166534",
+  marginBottom: "16px",
+};
+
+const priceDetail = {
+  fontSize: "16px",
+  lineHeight: "24px",
+  color: "#58595b",
   marginBottom: "8px",
 };
 
-const betaWarningText = {
-  fontSize: "14px",
-  lineHeight: "20px",
-  color: "#78350f",
-  margin: "0",
+const priceDetailDiscount = {
+  fontSize: "16px",
+  lineHeight: "24px",
+  color: "#16a34a",
+  marginBottom: "8px",
+  fontWeight: "600",
+};
+
+const priceHr = {
+  borderColor: "#86efac",
+  margin: "16px 0",
+};
+
+const priceTotal = {
+  fontSize: "18px",
+  lineHeight: "28px",
+  color: "#166534",
+  fontWeight: "bold",
+  marginTop: "8px",
+};
+
+const hr = {
+  borderColor: "#e5e7eb",
+  margin: "32px 0",
 };
 
 const footerSection = {

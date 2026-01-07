@@ -18,7 +18,6 @@ interface EventCardProps {
   district?: number;
   openToParticipants?: boolean;
   cancelled?: boolean;
-  coverImageUrl?: string | null;
 }
 
 export default function EventCard({
@@ -30,7 +29,6 @@ export default function EventCard({
   district,
   openToParticipants,
   cancelled,
-  coverImageUrl,
 }: EventCardProps) {
   const districtColor = getDistrictColor(district);
 

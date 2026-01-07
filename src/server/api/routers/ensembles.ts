@@ -329,6 +329,7 @@ export const ensemblesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.ensembles.map(async (ensembleData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = ensembleData;
           return await ctx.db.ensemble.create({
             data: {

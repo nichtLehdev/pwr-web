@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       success: true,
       message: "E-Mail-Adresse erfolgreich verifiziert.",
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 },

@@ -18,7 +18,6 @@ interface CourseCardProps {
   location: string;
   courseType: string;
   district?: number;
-  imageUrl?: string | null;
 }
 
 export default function CourseCard({
@@ -29,7 +28,6 @@ export default function CourseCard({
   location,
   courseType,
   district,
-  imageUrl,
 }: CourseCardProps) {
   const start = new Date(startDate);
   const end = new Date(endDate);

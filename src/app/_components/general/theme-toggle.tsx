@@ -75,8 +75,6 @@ export default function ThemeToggle() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get current theme label
-  const currentTheme =
-    themeOptions.find((opt) => opt.value === theme) || themeOptions[0];
   const currentIcon =
     themeOptions.find((opt) => opt.value === resolvedTheme)?.icon ||
     themeOptions[0]!.icon;

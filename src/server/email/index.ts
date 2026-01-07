@@ -3,7 +3,10 @@ import { sendEmail } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
-import { NewsletterEmail } from "./templates/newsletter";
+import { SiblingDiscountApproved } from "./templates/sibling-discount-approved";
+import { SiblingDiscountRejected } from "./templates/sibling-discount-rejected";
+import { CourseRegistrationPendingDiscount } from "./templates/course-registration-pending-discount";
+import { CourseRegistrationCancelled } from "./templates/course-registration-cancelled";
 
 export async function sendVerificationEmail(
   email: string,
@@ -82,6 +85,136 @@ export async function sendCourseRegistrationWaitlistEmail(
   return sendEmail({
     to: email,
     subject: `Auf Warteliste: ${courseTitle} - Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendSiblingDiscountApprovedEmail(
+  email: string,
+  registrantFirstName: string,
+  registrantLastName: string,
+  courseTitle: string,
+  startDate: Date,
+  endDate: Date,
+  originalTotalPrice: number,
+  discountAmount: number,
+  finalTotalPrice: number,
+  participantsCount: number,
+  registrationId: string,
+) {
+  const html = await render(
+    SiblingDiscountApproved({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      participantsCount,
+      registrationId,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: `Geschwisterrabatt genehmigt: ${courseTitle} - Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendCourseRegistrationPendingDiscountEmail(
+  email: string,
+  registrantFirstName: string,
+  registrantLastName: string,
+  courseTitle: string,
+  startDate: Date,
+  endDate: Date,
+  originalTotalPrice: number,
+  discountAmount: number,
+  finalTotalPrice: number,
+  participantsCount: number,
+  registrationId: string,
+) {
+  const html = await render(
+    CourseRegistrationPendingDiscount({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      discountAmount,
+      finalTotalPrice,
+      participantsCount,
+      registrationId,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: `Anmeldung erhalten (Rabatt prüfen): ${courseTitle} - Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendSiblingDiscountRejectedEmail(
+  email: string,
+  registrantFirstName: string,
+  registrantLastName: string,
+  courseTitle: string,
+  startDate: Date,
+  endDate: Date,
+  originalTotalPrice: number,
+  participantsCount: number,
+  registrationId: string,
+) {
+  const html = await render(
+    SiblingDiscountRejected({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      originalTotalPrice,
+      participantsCount,
+      registrationId,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: `Geschwisterrabatt abgelehnt: ${courseTitle} - Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendCourseRegistrationCancelledEmail(
+  email: string,
+  registrantFirstName: string,
+  registrantLastName: string,
+  courseTitle: string,
+  startDate: Date,
+  endDate: Date,
+  participantsCount: number,
+  registrationId: string,
+) {
+  const html = await render(
+    CourseRegistrationCancelled({
+      registrantFirstName,
+      registrantLastName,
+      courseTitle,
+      startDate,
+      endDate,
+      participantsCount,
+      registrationId,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: `Anmeldung storniert: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
   });
 }

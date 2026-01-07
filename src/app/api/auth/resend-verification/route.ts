@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       { message: "Verifizierungs-E-Mail wurde gesendet." },
       { status: 200 },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         message:

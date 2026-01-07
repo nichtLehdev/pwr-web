@@ -12,7 +12,7 @@ import SearchModal from "./search-modal";
 import { useBanner } from "../ui/banner-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/toast";
-import { ChevronDown, Search, Menu, X, LogOut } from "lucide-react";
+import { ChevronDown, Search, Menu, X } from "lucide-react";
 import { UserRole } from "~/generated/prisma/enums";
 
 const DASHBOARD_ROLES: UserRole[] = [
