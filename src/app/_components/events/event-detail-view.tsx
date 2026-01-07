@@ -442,9 +442,12 @@ END:VCALENDAR`;
                               {event.ensemble.description}
                             </p>
                           )}
-                          {event.ensemble.conductor && (
+                          {(event.ensemble.conductorName ||
+                            event.ensemble.conductor) && (
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-500">
-                              Leitung: {event.ensemble.conductor.displayName}
+                              Leitung:{" "}
+                              {event.ensemble.conductorName ||
+                                event.ensemble.conductor?.displayName}
                             </p>
                           )}
                         </div>

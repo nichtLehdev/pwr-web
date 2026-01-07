@@ -311,7 +311,11 @@ export default function DashboardEnsemblesPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {ensemble.conductor ? (
+                        {ensemble.conductorName ? (
+                          <span className="dark:text-dark-text text-sm text-gray-900">
+                            {ensemble.conductorName}
+                          </span>
+                        ) : ensemble.conductor ? (
                           <span className="dark:text-dark-text text-sm text-gray-900">
                             {ensemble.conductor.displayName}
                           </span>
