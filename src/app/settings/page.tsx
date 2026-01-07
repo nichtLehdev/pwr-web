@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useSession, changePassword } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
@@ -21,6 +22,7 @@ import {
   AlertTriangle,
   Users,
   Trash2,
+  ArrowRight,
 } from "lucide-react";
 
 function CollapsibleSection({
@@ -698,6 +700,49 @@ export default function SettingsPage() {
                         : "Passwort ändern"}
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* 2FA Section */}
+              <div className="dark:border-dark-border mt-6 border-t border-gray-200 pt-6">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-base font-semibold">
+                  Zwei-Faktor-Authentifizierung (2FA)
+                </h3>
+                <div className="space-y-4">
+                  {((profile as { twoFactorEnabled?: boolean })
+                    ?.twoFactorEnabled ?? false) ? (
+                    // 2FA is enabled
+                    <div className="space-y-4">
+                      <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:border-green-400 dark:bg-green-900/20">
+                        <p className="text-sm text-green-800 dark:text-green-300">
+                          <strong>2FA ist aktiviert</strong> - Dein Konto ist
+                          zusätzlich geschützt.
+                        </p>
+                      </div>
+                      <Link
+                        href="/settings/two-factor"
+                        className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
+                      >
+                        2FA verwalten
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  ) : (
+                    // 2FA is not enabled
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Zwei-Faktor-Authentifizierung fügt eine zusätzliche
+                        Sicherheitsebene zu deinem Konto hinzu.
+                      </p>
+                      <Link
+                        href="/settings/two-factor"
+                        className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
+                      >
+                        2FA aktivieren
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </CollapsibleSection>

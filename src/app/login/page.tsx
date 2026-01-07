@@ -89,6 +89,13 @@ function LoginForm() {
         return;
       }
 
+      // Check if 2FA verification is required
+      if (signInResult.data?.twoFactorRedirect) {
+        // Redirect to 2FA verification page
+        router.push(`/verify-2fa?redirect=${encodeURIComponent(redirectTo)}`);
+        return;
+      }
+
       const profile = await utils.users.getMyProfile.fetch();
 
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {

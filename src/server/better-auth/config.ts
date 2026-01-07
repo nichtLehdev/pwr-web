@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { username } from "better-auth/plugins/username";
+import { twoFactor } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { env } from "@/env";
@@ -183,7 +184,13 @@ export const auth = betterAuth({
     },
   },
   trustedOrigins,
-  plugins: [username()],
+  appName: "Posaunenwerk Rheinland",
+  plugins: [
+    username(),
+    twoFactor({
+      issuer: "Posaunenwerk Rheinland",
+    }),
+  ],
   socialProviders: {
     github: {
       clientId: env.BETTER_AUTH_GITHUB_CLIENT_ID,

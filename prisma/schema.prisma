@@ -15,6 +15,7 @@ model User {
   lastName      String?
   email         String    @unique
   emailVerified Boolean?  @default(false)
+  twoFactorEnabled Boolean? @default(false)
   phone         String?
   street        String?
   zipCode       String?
@@ -40,6 +41,7 @@ model User {
   // Relations
   accounts                      Account[]
   sessions                      Session[]
+  twoFactor                     TwoFactor?                     @relation("UserTwoFactor")
   bezirk                        Bezirk?                      @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
   uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
   uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
@@ -118,6 +120,18 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model TwoFactor {
+  id          String   @id
+  userId      String   @unique
+  user        User     @relation("UserTwoFactor", fields: [userId], references: [id], onDelete: Cascade)
+  secret      String? //@db.Text
+  backupCodes String? //@db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("twoFactor")
 }
 
 // --------- Enums ---------
