@@ -145,6 +145,14 @@ export const ensemblesRouter = createTRPCRouter({
         locationId: z.string().optional(),
         rehearsalDay: z.string().max(50).optional(),
         rehearsalTime: z.string().max(50).optional(),
+        rehearsalSchedules: z
+          .array(
+            z.object({
+              day: z.string().min(1).max(50),
+              time: z.string().min(1).max(50),
+            }),
+          )
+          .optional(),
         contactEmail: z.string().email().optional(),
         contactPhone: z
           .string()
