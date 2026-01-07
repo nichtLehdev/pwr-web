@@ -375,6 +375,7 @@ export const registrationsRouter = createTRPCRouter({
               registrationOpen: true,
               maxParticipants: true,
               allowWaitingList: true,
+              allowSiblingDiscount: true,
               priceOptions: {
                 select: {
                   id: true,
@@ -455,6 +456,7 @@ export const registrationsRouter = createTRPCRouter({
                 registrationOpen: true,
                 maxParticipants: true,
                 allowWaitingList: true,
+                allowSiblingDiscount: true,
                 priceOptions: {
                   select: {
                     id: true,
@@ -518,8 +520,10 @@ export const registrationsRouter = createTRPCRouter({
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
             customFields: z.record(z.string(), z.any()).optional(),
+            siblingGroupId: z.string().optional(),
           }),
         ),
+        siblingDiscountApplied: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -580,7 +584,7 @@ export const registrationsRouter = createTRPCRouter({
       const course = registration.course;
 
       // Calculate total price server-side and validate
-      let totalPrice = 0;
+      let originalTotalPrice = 0;
       const participantsWithPriceOptions = [];
 
       for (const participant of participants) {
@@ -595,13 +599,69 @@ export const registrationsRouter = createTRPCRouter({
           });
         }
 
-        totalPrice += priceOption.price;
+        originalTotalPrice += priceOption.price;
 
         // Store participant with price option label for database
         participantsWithPriceOptions.push({
           ...participant,
           priceOption: priceOption.label,
         });
+      }
+
+      // Calculate sibling discount if applicable
+      let totalPrice = originalTotalPrice;
+      let siblingDiscountAmount = 0;
+      let siblingDiscountStatus = registration.siblingDiscountStatus;
+
+      if (
+        input.siblingDiscountApplied &&
+        course.allowSiblingDiscount
+      ) {
+        // Group participants by siblingGroupId
+        const siblingGroups = new Map<string, typeof participants>();
+        for (const participant of participants) {
+          if (participant.siblingGroupId) {
+            if (!siblingGroups.has(participant.siblingGroupId)) {
+              siblingGroups.set(participant.siblingGroupId, []);
+            }
+            siblingGroups.get(participant.siblingGroupId)?.push(participant);
+          }
+        }
+
+        // Calculate discount for each sibling group (20% for each sibling after the first)
+        for (const [, groupParticipants] of siblingGroups) {
+          if (groupParticipants.length > 1) {
+            for (let i = 1; i < groupParticipants.length; i++) {
+              const participant = groupParticipants[i];
+              if (participant) {
+                const priceOption = course.priceOptions.find(
+                  (p) => p.id === participant.priceOptionId,
+                );
+                if (priceOption) {
+                  siblingDiscountAmount += priceOption.price * 0.2;
+                }
+              }
+            }
+          }
+        }
+
+        if (siblingDiscountAmount > 0) {
+          totalPrice = originalTotalPrice - siblingDiscountAmount;
+          // Only set to PENDING if it wasn't already approved/rejected
+          if (siblingDiscountStatus === "NONE") {
+            siblingDiscountStatus = SiblingDiscountStatus.PENDING;
+          }
+        } else {
+          // No discount, reset status
+          siblingDiscountStatus = SiblingDiscountStatus.NONE;
+          siblingDiscountAmount = 0;
+          originalTotalPrice = 0;
+        }
+      } else {
+        // Discount not applied, reset
+        siblingDiscountStatus = SiblingDiscountStatus.NONE;
+        siblingDiscountAmount = 0;
+        originalTotalPrice = 0;
       }
 
       const currentParticipantsExcludingThis = await ctx.db.participant.count({
@@ -684,6 +744,8 @@ export const registrationsRouter = createTRPCRouter({
         const {
           id: participantId,
           priceOptionId,
+          priceOption,
+          siblingGroupId,
           ...participantData
         } = participant;
 
@@ -693,6 +755,7 @@ export const registrationsRouter = createTRPCRouter({
             data: {
               ...participantData,
               customFields: participantData.customFields ?? {},
+              siblingGroupId: siblingGroupId ?? null,
             },
           });
         } else {
@@ -700,6 +763,7 @@ export const registrationsRouter = createTRPCRouter({
             data: {
               ...participantData,
               customFields: participantData.customFields ?? {},
+              siblingGroupId: siblingGroupId ?? null,
               registrationId: id,
             },
           });
@@ -711,6 +775,13 @@ export const registrationsRouter = createTRPCRouter({
         data: {
           ...registrationData,
           totalPrice, // Use server-calculated price
+          siblingDiscountApplied:
+            input.siblingDiscountApplied ?? registration.siblingDiscountApplied,
+          siblingDiscountStatus,
+          originalTotalPrice:
+            siblingDiscountAmount > 0 ? originalTotalPrice : null,
+          siblingDiscountAmount:
+            siblingDiscountAmount > 0 ? siblingDiscountAmount : null,
         },
         include: {
           participants: true,

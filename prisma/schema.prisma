@@ -65,6 +65,7 @@ model User {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   courseRegistrations CourseRegistration[]
+  savedParticipants   SavedParticipant[]   @relation("SavedParticipants")
 
   displayUsername String?
 
@@ -504,6 +505,24 @@ model Participant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SavedParticipant {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("SavedParticipants", fields: [userId], references: [id], onDelete: Cascade)
+
+  firstName    String
+  lastName     String
+  birthDate    DateTime
+  city         String
+  instrument   String?
+  customFields Json? // JSON for custom field values that can be reused
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Location {

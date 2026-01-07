@@ -8,7 +8,14 @@ import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import { ArrowLeftIcon, CircleXIcon, PlusIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CircleXIcon,
+  PlusIcon,
+  TrashIcon,
+  Link as LinkIcon,
+  Link2Off,
+} from "lucide-react";
 
 interface Participant {
   id: string;
@@ -19,6 +26,7 @@ interface Participant {
   instrument: string | null;
   priceOptionId: string | null;
   customFields: unknown;
+  siblingGroupId?: string | null;
   isNew?: boolean;
   isDeleted?: boolean;
 }
@@ -40,6 +48,8 @@ export default function EditRegistrationPage() {
   const [birthdateErrors, setBirthdateErrors] = useState<
     Record<string, string>
   >({});
+  const [siblingDiscountApplied, setSiblingDiscountApplied] = useState(false);
+  const groupIdCounterRef = useRef(0);
 
   const [registrantPhone, setRegistrantPhone] = useState("");
 
@@ -123,6 +133,7 @@ export default function EditRegistrationPage() {
             ...participantWithoutLabel,
             birthDate: new Date(p.birthDate),
             priceOptionId: priceOption?.id ?? null,
+            siblingGroupId: p.siblingGroupId ?? null,
             isNew: false,
             isDeleted: false,
           };
@@ -137,6 +148,7 @@ export default function EditRegistrationPage() {
     if (registration) {
       setRegistrantPhone(registration.registrantPhone ?? "");
       setUseSeparateBilling(registration.useSeparateBilling);
+      setSiblingDiscountApplied(registration.siblingDiscountApplied ?? false);
       setBillingData({
         billingCompany: registration.billingCompany ?? "",
         billingFirstName: registration.billingFirstName ?? "",
@@ -271,7 +283,7 @@ export default function EditRegistrationPage() {
     );
   };
 
-  const calculateTotalPrice = () => {
+  const calculateOriginalPrice = () => {
     if (!registration?.course?.priceOptions) return 0;
     return activeParticipants.reduce((sum, p) => {
       const priceOption = registration.course.priceOptions.find(
@@ -279,6 +291,133 @@ export default function EditRegistrationPage() {
       );
       return sum + (priceOption?.price ?? 0);
     }, 0);
+  };
+
+  const calculateDiscountAmount = () => {
+    if (
+      !siblingDiscountApplied ||
+      !registration?.course?.allowSiblingDiscount ||
+      !registration?.course?.priceOptions
+    )
+      return 0;
+
+    const siblingGroups = new Map<string, typeof activeParticipants>();
+    for (const participant of activeParticipants) {
+      if (participant.siblingGroupId) {
+        if (!siblingGroups.has(participant.siblingGroupId)) {
+          siblingGroups.set(participant.siblingGroupId, []);
+        }
+        siblingGroups.get(participant.siblingGroupId)?.push(participant);
+      }
+    }
+
+    let discount = 0;
+    for (const [, groupParticipants] of siblingGroups) {
+      if (groupParticipants.length > 1) {
+        for (let i = 1; i < groupParticipants.length; i++) {
+          const participant = groupParticipants[i];
+          if (participant) {
+            const priceOption = registration.course.priceOptions.find(
+              (p) => p.id === participant.priceOptionId,
+            );
+            if (priceOption) {
+              discount += priceOption.price * 0.2;
+            }
+          }
+        }
+      }
+    }
+    return discount;
+  };
+
+  const calculateTotalPrice = () => {
+    const original = calculateOriginalPrice();
+    const discount = calculateDiscountAmount();
+    return original - discount;
+  };
+
+  const linkSiblings = (participantId1: string, participantId2: string) => {
+    const participant1 = activeParticipants.find((p) => p.id === participantId1);
+    const participant2 = activeParticipants.find((p) => p.id === participantId2);
+    if (!participant1 || !participant2) return;
+
+    const updated = [...participants];
+    const index1 = updated.findIndex((p) => p.id === participantId1);
+    const index2 = updated.findIndex((p) => p.id === participantId2);
+    if (index1 === -1 || index2 === -1) return;
+
+    // If both are already in the same group, unlink them
+    if (
+      participant1.siblingGroupId &&
+      participant1.siblingGroupId === participant2.siblingGroupId
+    ) {
+      // Remove both from group
+      updated[index1] = { ...participant1, siblingGroupId: null };
+      updated[index2] = { ...participant2, siblingGroupId: null };
+    } else {
+      // Link them together - use existing group ID or create new one
+      const existingGroupId =
+        participant1.siblingGroupId || participant2.siblingGroupId;
+      let groupId = existingGroupId;
+      if (!groupId) {
+        groupIdCounterRef.current = (groupIdCounterRef.current || 0) + 1;
+        groupId = `group-${groupIdCounterRef.current}`;
+      }
+      updated[index1] = { ...participant1, siblingGroupId: groupId };
+      updated[index2] = { ...participant2, siblingGroupId: groupId };
+
+      // If one participant was already in a group, merge all participants from that group
+      if (participant1.siblingGroupId && participant1.siblingGroupId !== groupId) {
+        // participant1 was in a different group, merge all its members
+        updated.forEach((p, idx) => {
+          if (
+            p.siblingGroupId === participant1.siblingGroupId &&
+            p.id !== participant1.id
+          ) {
+            updated[idx] = { ...p, siblingGroupId: groupId };
+          }
+        });
+      } else if (
+        participant2.siblingGroupId &&
+        participant2.siblingGroupId !== groupId
+      ) {
+        // participant2 was in a different group, merge all its members
+        updated.forEach((p, idx) => {
+          if (
+            p.siblingGroupId === participant2.siblingGroupId &&
+            p.id !== participant2.id
+          ) {
+            updated[idx] = { ...p, siblingGroupId: groupId };
+          }
+        });
+      }
+    }
+
+    setParticipants(updated);
+  };
+
+
+  const hasSiblingGroups = activeParticipants.some((p) => p.siblingGroupId);
+
+  const getParticipantDisplayName = (
+    firstName: string,
+    lastName: string,
+    participantId?: string,
+  ) => {
+    // Check if there are other participants with the same first name and first letter of last name
+    const firstLetter = lastName.charAt(0).toUpperCase();
+    const hasDuplicate = activeParticipants.some(
+      (p) =>
+        p.id !== participantId &&
+        p.firstName === firstName &&
+        p.lastName.charAt(0).toUpperCase() === firstLetter,
+    );
+
+    // If there's a duplicate, show full name, otherwise show first name + first letter
+    if (hasDuplicate) {
+      return `${firstName} ${lastName}`;
+    }
+    return `${firstName} ${firstLetter}.`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -320,6 +459,7 @@ export default function EditRegistrationPage() {
       priceOptionId: p.priceOptionId || "", // Ensure priceOptionId is never undefined
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       customFields: p.customFields as any,
+      siblingGroupId: p.siblingGroupId ?? undefined,
     }));
 
     updateMutation.mutate({
@@ -327,6 +467,7 @@ export default function EditRegistrationPage() {
       participants: participantsData,
       registrantPhone: registrantPhone || undefined,
       useSeparateBilling,
+      siblingDiscountApplied,
       ...(useSeparateBilling && {
         billingCompany: billingData.billingCompany || undefined,
         billingFirstName: billingData.billingFirstName,
@@ -911,10 +1052,120 @@ export default function EditRegistrationPage() {
                         })}
                       </select>
                     </div>
+
+                    {/* Sibling Grouping */}
+                    {registration.course.allowSiblingDiscount &&
+                      activeParticipants.length > 1 && (
+                        <div className="md:col-span-2">
+                          <div className="space-y-2">
+                            <label className="text-dark dark:text-dark-text block text-sm font-medium">
+                              Geschwister verknüpfen
+                            </label>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {activeParticipants
+                                .filter((p) => p.id !== participant.id)
+                                .map((otherParticipant) => {
+                                  const otherIndex =
+                                    activeParticipants.indexOf(
+                                      otherParticipant,
+                                    );
+                                  const isLinked =
+                                    participant.siblingGroupId &&
+                                    participant.siblingGroupId ===
+                                      otherParticipant.siblingGroupId;
+                                  return (
+                                    <button
+                                      key={otherParticipant.id}
+                                      type="button"
+                                      onClick={() =>
+                                        linkSiblings(
+                                          participant.id,
+                                          otherParticipant.id,
+                                        )
+                                      }
+                                      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                                        isLinked
+                                          ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                      }`}
+                                    >
+                                      {isLinked ? (
+                                        <Link2Off className="h-4 w-4" />
+                                      ) : (
+                                        <LinkIcon className="h-4 w-4" />
+                                      )}
+                                      <span>
+                                        {getParticipantDisplayName(
+                                          otherParticipant.firstName,
+                                          otherParticipant.lastName,
+                                          otherParticipant.id,
+                                        )}
+                                        {isLinked && " ✓"}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                            {participant.siblingGroupId && (
+                              <p className="text-xs text-green-700 dark:text-green-400">
+                                Geschwistergruppe:{" "}
+                                {activeParticipants
+                                  .filter(
+                                    (p) =>
+                                      p.siblingGroupId ===
+                                        participant.siblingGroupId &&
+                                      p.id !== participant.id,
+                                  )
+                                  .map((p) =>
+                                    getParticipantDisplayName(
+                                      p.firstName,
+                                      p.lastName,
+                                      p.id,
+                                    ),
+                                  )
+                                  .join(", ")}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 </div>
               ))}
             </div>
+
+            {/* Sibling Discount Option */}
+            {registration.course.allowSiblingDiscount &&
+              activeParticipants.length > 1 &&
+              hasSiblingGroups && (
+                <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                  <label className="flex cursor-pointer items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={siblingDiscountApplied}
+                      onChange={(e) =>
+                        setSiblingDiscountApplied(e.target.checked)
+                      }
+                      className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900 dark:text-gray-100">
+                        Geschwisterrabatt beantragen
+                      </div>
+                      <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                        Sie erhalten 20% Rabatt für jedes Geschwisterkind ab dem
+                        zweiten Kind. Der Rabatt muss noch bestätigt werden.
+                      </p>
+                      {siblingDiscountApplied &&
+                        calculateDiscountAmount() > 0 && (
+                          <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
+                            Ersparnis: {calculateDiscountAmount().toFixed(2)} €
+                          </div>
+                        )}
+                    </div>
+                  </label>
+                </div>
+              )}
           </div>
 
           {/* Price Summary */}
@@ -930,12 +1181,38 @@ export default function EditRegistrationPage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-primary text-3xl font-bold">
-                  {calculateTotalPrice().toFixed(2)} €
-                </p>
-                {calculateTotalPrice() !== registration.totalPrice && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Ursprünglich: {registration.totalPrice.toFixed(2)} €
+                {siblingDiscountApplied &&
+                registration.course.allowSiblingDiscount &&
+                calculateDiscountAmount() > 0 ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Zwischensumme:
+                      </span>
+                      <span className="text-gray-900 dark:text-gray-100 line-through">
+                        {calculateOriginalPrice().toFixed(2)} €
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 text-sm">
+                      <span className="text-green-600 dark:text-green-400">
+                        Geschwisterrabatt (20%):
+                      </span>
+                      <span className="text-green-600 dark:text-green-400 font-semibold">
+                        -{calculateDiscountAmount().toFixed(2)} €
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-1 dark:border-gray-700">
+                      <p className="text-primary text-3xl font-bold">
+                        {calculateTotalPrice().toFixed(2)} €
+                      </p>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      * Der Rabatt muss noch bestätigt werden
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-primary text-3xl font-bold">
+                    {calculateTotalPrice().toFixed(2)} €
                   </p>
                 )}
               </div>

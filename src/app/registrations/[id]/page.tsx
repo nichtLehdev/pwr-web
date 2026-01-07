@@ -38,6 +38,29 @@ export default function ViewRegistrationPage() {
       { enabled: !!registrationId },
     );
 
+  const getParticipantDisplayName = (
+    firstName: string,
+    lastName: string,
+    participantId?: string,
+  ) => {
+    if (!registration?.participants) return `${firstName} ${lastName}`;
+
+    // Check if there are other participants with the same first name and first letter of last name
+    const firstLetter = lastName.charAt(0).toUpperCase();
+    const hasDuplicate = registration.participants.some(
+      (p) =>
+        p.id !== participantId &&
+        p.firstName === firstName &&
+        p.lastName.charAt(0).toUpperCase() === firstLetter,
+    );
+
+    // If there's a duplicate, show full name, otherwise show first name + first letter
+    if (hasDuplicate) {
+      return `${firstName} ${lastName}`;
+    }
+    return `${firstName} ${firstLetter}.`;
+  };
+
   const cancelMutation = api.registrations.cancel.useMutation({
     onSuccess: () => {
       setCancelModalOpen(false);
@@ -393,16 +416,63 @@ export default function ViewRegistrationPage() {
             </h2>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {registration.participants.map((participant, index) => (
-              <div key={participant.id} className="p-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-dark dark:text-dark-text font-semibold">
-                    {participant.firstName} {participant.lastName}
-                  </h3>
-                  <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                    #{index + 1}
-                  </span>
-                </div>
+            {registration.participants.map((participant, index) => {
+              const siblingGroup = registration.participants.filter(
+                (p) =>
+                  p.siblingGroupId &&
+                  p.siblingGroupId === participant.siblingGroupId,
+              );
+              const isInGroup = siblingGroup.length > 1;
+              const groupMembers = siblingGroup
+                .map((p) => {
+                  const idx = registration.participants.indexOf(p);
+                  return idx !== index ? idx + 1 : null;
+                })
+                .filter((idx) => idx !== null);
+
+              return (
+                <div
+                  key={participant.id}
+                  className={`p-6 ${
+                    isInGroup
+                      ? "bg-green-50 dark:bg-green-900/10"
+                      : ""
+                  }`}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-dark dark:text-dark-text font-semibold">
+                        {participant.firstName} {participant.lastName}
+                      </h3>
+                      {isInGroup && (
+                        <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium text-white dark:bg-green-700">
+                          Geschwistergruppe
+                        </span>
+                      )}
+                    </div>
+                    <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {getParticipantDisplayName(
+                        participant.firstName,
+                        participant.lastName,
+                        participant.id,
+                      )}
+                    </span>
+                  </div>
+                  {isInGroup && groupMembers.length > 0 && (
+                    <div className="mb-3 text-xs text-green-700 dark:text-green-400">
+                      Geschwister mit:{" "}
+                      {siblingGroup
+                        .filter((p) => p.id !== participant.id)
+                        .map((p) =>
+                          getParticipantDisplayName(
+                            p.firstName,
+                            p.lastName,
+                            p.id,
+                          ),
+                        )
+                        .join(", ")}
+                    </div>
+                  )}
                 <div className="grid gap-4 text-sm md:grid-cols-2">
                   <div>
                     <span className="font-medium text-gray-700 dark:text-gray-300">
@@ -441,8 +511,9 @@ export default function ViewRegistrationPage() {
                     </div>
                   )}
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
 

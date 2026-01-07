@@ -334,13 +334,37 @@ export default function MyRegistrationsPage() {
                         </div>
 
                         {/* Price */}
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-dark dark:text-dark-text text-sm font-medium">
-                            Gesamtpreis:
-                          </span>
-                          <span className="text-primary text-xl font-bold">
-                            {registration.totalPrice.toFixed(2)} €
-                          </span>
+                        <div className="space-y-2">
+                          {registration.siblingDiscountApplied &&
+                          registration.originalTotalPrice &&
+                          registration.siblingDiscountAmount ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Zwischensumme:
+                                </span>
+                                <span className="text-gray-900 dark:text-gray-100 line-through">
+                                  {registration.originalTotalPrice.toFixed(2)} €
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-green-600 dark:text-green-400">
+                                  Geschwisterrabatt (20%):
+                                </span>
+                                <span className="text-green-600 dark:text-green-400 font-semibold">
+                                  -{registration.siblingDiscountAmount.toFixed(2)} €
+                                </span>
+                              </div>
+                            </div>
+                          ) : null}
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-dark dark:text-dark-text text-sm font-medium">
+                              Gesamtpreis:
+                            </span>
+                            <span className="text-primary text-xl font-bold">
+                              {registration.totalPrice.toFixed(2)} €
+                            </span>
+                          </div>
                         </div>
                       </div>
 
