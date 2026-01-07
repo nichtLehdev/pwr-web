@@ -51,13 +51,17 @@ export default function CourseRegistrationForm({
   );
   const saveParticipantMutation = api.savedParticipants.create.useMutation({
     onSuccess: () => {
-      toast.success("Teilnehmer gespeichert");
+      toast.success(
+        "Teilnehmer gespeichert. Sie können gespeicherte Teilnehmer in den Einstellungen verwalten.",
+      );
       void savedParticipantsQuery.refetch();
     },
   });
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const groupIdCounterRef = useRef(0);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(140);
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
@@ -91,6 +95,18 @@ export default function CourseRegistrationForm({
       document.body.classList.remove("modal-open");
     };
   }, []);
+
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
+      }
+    };
+
+    updateHeaderHeight();
+    window.addEventListener("resize", updateHeaderHeight);
+    return () => window.removeEventListener("resize", updateHeaderHeight);
+  }, [currentStep]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -570,7 +586,10 @@ export default function CourseRegistrationForm({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-primary sticky top-0 z-10 rounded-t-xl p-6 text-white">
+        <div
+          ref={headerRef}
+          className="bg-primary sticky top-0 z-10 rounded-t-xl p-6 text-white"
+        >
           <div className="mb-4 flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <h2 className="mb-1 text-2xl font-bold">
@@ -964,124 +983,147 @@ export default function CourseRegistrationForm({
           {/* Step 2: Participants */}
           {currentStep === 2 && (
             <div className="flex flex-col">
-              {/* Sticky Header Section */}
-              <div className="sticky top-[180px] z-10 mb-6 space-y-6 bg-white pb-4 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] dark:bg-gray-900 dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)]">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+              {/* Header Section - Not sticky on mobile */}
+              <div className="mb-4 space-y-4 px-2 sm:mb-6 sm:space-y-6 sm:px-0">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-dark dark:text-dark-text mb-1 text-lg font-bold sm:mb-2 sm:text-xl">
                       Teilnehmer
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-gray-600 sm:text-sm dark:text-gray-400">
                       Fügen Sie alle Teilnehmer hinzu, die Sie anmelden möchten
                     </p>
                   </div>
-                  <div className="flex gap-2">
-                    {currentUser && (
-                      <button
-                        onClick={() =>
-                          setShowParticipantLibrary(!showParticipantLibrary)
-                        }
-                        className="flex items-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                      >
-                        <BookOpen className="h-4 w-4" />
-                        <span className="hidden sm:inline">Aus Bibliothek</span>
-                      </button>
-                    )}
-                    {currentUser && (
-                      <button
-                        onClick={addMyselfAsParticipant}
-                        className="flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
-                      >
-                        <UserIcon className="h-4 w-4" />
-                        <span className="hidden sm:inline">Mich selbst</span>
-                      </button>
-                    )}
+                </div>
+              </div>
+
+              {/* Sticky Buttons on mobile only - positioned below orange header */}
+              <div
+                className="dark:bg-dark-surface sticky z-20 -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] sm:dark:bg-transparent sm:dark:shadow-none"
+                style={{ top: `${headerHeight}px` }}
+              >
+                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+                  {currentUser && (
                     <button
-                      onClick={addParticipant}
-                      className="bg-primary hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                      onClick={() =>
+                        setShowParticipantLibrary(!showParticipantLibrary)
+                      }
+                      className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:gap-2 sm:px-4 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                     >
-                      <Plus className="h-4 w-4" />
-                      <span className="hidden sm:inline">Hinzufügen</span>
+                      <BookOpen className="h-4 w-4 shrink-0" />
+                      <span className="hidden sm:inline">Aus Bibliothek</span>
+                    </button>
+                  )}
+                  {currentUser && (
+                    <button
+                      onClick={addMyselfAsParticipant}
+                      className="flex items-center justify-center gap-1.5 rounded-lg bg-gray-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-700 sm:gap-2 sm:px-4 sm:text-sm"
+                    >
+                      <UserIcon className="h-4 w-4 shrink-0" />
+                      <span className="hidden sm:inline">Mich selbst</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={addParticipant}
+                    className="bg-primary hover:bg-primary-dark flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors sm:gap-2 sm:px-4 sm:text-sm"
+                  >
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">Hinzufügen</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Participant Library - Not sticky */}
+              {showParticipantLibrary && currentUser && (
+                <div className="mb-4 rounded-lg border-2 border-blue-200 bg-blue-50 p-3 sm:mb-6 sm:p-4 dark:border-blue-800 dark:bg-blue-900/20">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                      Gespeicherte Teilnehmer
+                    </h4>
+                    <button
+                      onClick={() => setShowParticipantLibrary(false)}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
-                </div>
-
-                {/* Participant Library */}
-                {showParticipantLibrary && currentUser && (
-                  <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                    <div className="mb-3 flex items-center justify-between">
-                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                        Gespeicherte Teilnehmer
-                      </h4>
-                      <button
-                        onClick={() => setShowParticipantLibrary(false)}
-                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    {savedParticipantsQuery.data &&
-                    savedParticipantsQuery.data.length > 0 ? (
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {savedParticipantsQuery.data.map((saved) => (
-                          <button
-                            key={saved.id}
-                            onClick={() => loadSavedParticipant(saved)}
-                            className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                          >
-                            <div>
-                              <div className="font-medium text-gray-900 dark:text-gray-100">
-                                {saved.firstName} {saved.lastName}
-                              </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(saved.birthDate).toLocaleDateString(
-                                  "de-DE",
-                                )}
-                                {saved.city && ` • ${saved.city}`}
-                              </div>
+                  {savedParticipantsQuery.data &&
+                  savedParticipantsQuery.data.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {savedParticipantsQuery.data.map((saved) => (
+                        <button
+                          key={saved.id}
+                          onClick={() => loadSavedParticipant(saved)}
+                          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        >
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                              {saved.firstName} {saved.lastName}
                             </div>
-                            <Plus className="h-4 w-4 text-gray-400" />
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Noch keine Teilnehmer gespeichert. Sie können Teilnehmer
-                        nach dem Hinzufügen speichern.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {new Date(saved.birthDate).toLocaleDateString(
+                                "de-DE",
+                              )}
+                              {saved.city && ` • ${saved.city}`}
+                            </div>
+                          </div>
+                          <Plus className="h-4 w-4 text-gray-400" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Noch keine Teilnehmer gespeichert. Sie können Teilnehmer
+                      nach dem Hinzufügen speichern.
+                    </p>
+                  )}
+                  {savedParticipantsQuery.data &&
+                  savedParticipantsQuery.data.length > 0 ? (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      Gespeicherte Teilnehmer können Sie in den{" "}
+                      <a
+                        href="/settings"
+                        className="text-primary hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Einstellungen
+                      </a>{" "}
+                      verwalten und entfernen.
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
               {/* Scrollable Participants Section */}
               <div className="flex-1">
                 {registrationData.participants.length === 0 ? (
-                  <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-                    <Users className="mx-auto mb-4 h-16 w-16 text-gray-400 dark:text-gray-500" />
-                    <p className="mb-4 text-gray-600 dark:text-gray-400">
+                  <div className="dark:border-dark-border rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center sm:py-12 dark:bg-gray-800">
+                    <Users className="mx-auto mb-3 h-12 w-12 text-gray-400 sm:mb-4 sm:h-16 sm:w-16 dark:text-gray-500" />
+                    <p className="mb-4 text-sm text-gray-600 sm:text-base dark:text-gray-400">
                       Noch keine Teilnehmer hinzugefügt
                     </p>
-                    <div className="flex justify-center gap-3">
+                    <div className="flex flex-col justify-center gap-2 sm:flex-row sm:gap-3">
                       {currentUser && (
                         <button
                           onClick={addMyselfAsParticipant}
-                          className="flex items-center gap-2 rounded-lg bg-gray-600 px-6 py-2 text-white transition-colors hover:bg-gray-700"
+                          className="flex items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm text-white transition-colors hover:bg-gray-700 sm:px-6 sm:text-base"
                         >
-                          <UserIcon className="h-5 w-5" />
+                          <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                           Mich selbst hinzufügen
                         </button>
                       )}
                       <button
                         onClick={addParticipant}
-                        className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-2 text-white transition-colors"
+                        className="bg-primary hover:bg-primary-dark flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm text-white transition-colors sm:px-6 sm:text-base"
                       >
+                        <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
                         Andere Person hinzufügen
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {registrationData.participants.map((participant, index) => {
                       const siblingGroup = registrationData.participants.filter(
                         (p) =>
@@ -1093,24 +1135,24 @@ export default function CourseRegistrationForm({
                       return (
                         <div
                           key={index}
-                          className={`dark:border-dark-border rounded-lg border-2 bg-white p-6 dark:bg-gray-800 ${
+                          className={`rounded-lg border-2 p-4 sm:p-6 ${
                             isInGroup
                               ? "border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
-                              : "border-gray-200 dark:border-gray-700"
+                              : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
                           }`}
                         >
-                          <div className="mb-4 flex items-start justify-between">
-                            <div className="flex items-center gap-3">
-                              <h4 className="text-dark dark:text-dark-text text-lg font-semibold">
+                          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <h4 className="text-dark dark:text-dark-text text-base font-semibold sm:text-lg">
                                 Teilnehmer {index + 1}
                               </h4>
                               {isInGroup && (
-                                <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium text-white dark:bg-green-700">
+                                <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium whitespace-nowrap text-white dark:bg-green-700">
                                   Geschwistergruppe ({siblingGroup.length})
                                 </span>
                               )}
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 self-start sm:self-auto">
                               {currentUser && (
                                 <button
                                   onClick={() => saveParticipant(index)}
@@ -1130,9 +1172,9 @@ export default function CourseRegistrationForm({
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Vorname *
                               </label>
                               <input
@@ -1147,12 +1189,12 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Nachname *
                               </label>
                               <input
@@ -1167,12 +1209,12 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Geburtsdatum *
                               </label>
                               <input
@@ -1209,7 +1251,7 @@ export default function CourseRegistrationForm({
                                 }}
                                 max={new Date().toISOString().split("T")[0]}
                                 required
-                                className={`focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border px-4 py-2 focus:border-transparent focus:ring-2 ${
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
                                   validationErrors[index]
                                     ? "border-red-500 dark:border-red-500"
                                     : "border-gray-300"
@@ -1223,7 +1265,7 @@ export default function CourseRegistrationForm({
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Wohnort *
                               </label>
                               <input
@@ -1238,13 +1280,13 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                                 placeholder="Düsseldorf"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Instrument
                               </label>
                               <input
@@ -1258,13 +1300,13 @@ export default function CourseRegistrationForm({
                                   )
                                 }
                                 maxLength={100}
-                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                                 placeholder="Trompete"
                               />
                             </div>
 
                             <div>
-                              <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                 Preisoption *
                               </label>
                               <select
@@ -1276,7 +1318,7 @@ export default function CourseRegistrationForm({
                                     e.target.value,
                                   )
                                 }
-                                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                               >
                                 {course.priceOptions.map((option) => (
                                   <option key={option.id} value={option.id}>
@@ -1293,7 +1335,7 @@ export default function CourseRegistrationForm({
                                   key={field.fieldName}
                                   className="md:col-span-2"
                                 >
-                                  <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                  <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                                     {field.fieldName}
                                     {field.isRequired && " *"}
                                   </label>
@@ -1328,7 +1370,7 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                                     >
                                       <option value="">Bitte wählen</option>
                                       {typeof field.options === "string" &&
@@ -1369,7 +1411,7 @@ export default function CourseRegistrationForm({
                                         )
                                       }
                                       rows={3}
-                                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }
@@ -1409,7 +1451,7 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }
@@ -1429,7 +1471,7 @@ export default function CourseRegistrationForm({
                           {course.allowSiblingDiscount &&
                             registrationData.participants.length > 1 && (
                               <div className="mt-4 space-y-2">
-                                <label className="text-dark dark:text-dark-text block text-sm font-medium">
+                                <label className="text-dark dark:text-dark-text block text-xs font-medium sm:text-sm">
                                   Geschwister verknüpfen
                                 </label>
                                 <div className="flex flex-wrap items-center gap-2">
@@ -1452,7 +1494,7 @@ export default function CourseRegistrationForm({
                                             onClick={() =>
                                               linkSiblings(index, otherIndex)
                                             }
-                                            className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                                            className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors sm:gap-2 sm:px-3 sm:text-sm ${
                                               isLinked
                                                 ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
                                                 : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"

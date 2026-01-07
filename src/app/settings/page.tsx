@@ -19,6 +19,8 @@ import {
   Settings,
   Calendar,
   AlertTriangle,
+  Users,
+  Trash2,
 } from "lucide-react";
 
 function CollapsibleSection({
@@ -126,6 +128,23 @@ export default function SettingsPage() {
     onError: (err) => {
       toast.error(
         getErrorMessage(err, "Fehler beim Aktualisieren des Profils"),
+      );
+    },
+  });
+
+  const { data: savedParticipants, isLoading: savedParticipantsLoading } =
+    api.savedParticipants.getAll.useQuery(undefined, {
+      enabled: !!session?.user,
+    });
+
+  const deleteSavedParticipant = api.savedParticipants.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Teilnehmer entfernt");
+      void utils.savedParticipants.getAll.invalidate();
+    },
+    onError: (err) => {
+      toast.error(
+        getErrorMessage(err, "Fehler beim Entfernen des Teilnehmers"),
       );
     },
   });
@@ -771,6 +790,72 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 </div>
+              </div>
+            </CollapsibleSection>
+
+            {/* Section: Saved Participants */}
+            <CollapsibleSection
+              title="Gespeicherte Teilnehmer"
+              defaultOpen={false}
+              icon={<Users className="h-5 w-5" />}
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Hier können Sie gespeicherte Teilnehmer löschen, welche Sie
+                  bei der Anmeldung zu Kursen gespeichert haben.
+                </p>
+                {savedParticipantsLoading ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Lädt...
+                  </p>
+                ) : savedParticipants && savedParticipants.length > 0 ? (
+                  <div className="space-y-2">
+                    {savedParticipants.map((participant) => (
+                      <div
+                        key={participant.id}
+                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {participant.firstName} {participant.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(participant.birthDate).toLocaleDateString(
+                              "de-DE",
+                            )}
+                            {participant.city && ` • ${participant.city}`}
+                            {participant.instrument &&
+                              ` • ${participant.instrument}`}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Möchten Sie ${participant.firstName} ${participant.lastName} wirklich entfernen?`,
+                              )
+                            ) {
+                              deleteSavedParticipant.mutate({
+                                id: participant.id,
+                              });
+                            }
+                          }}
+                          disabled={deleteSavedParticipant.isPending}
+                          className="ml-3 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-700 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                          title="Teilnehmer entfernen"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Noch keine Teilnehmer gespeichert. Sie können Teilnehmer bei
+                    der Anmeldung zu Kursen speichern.
+                  </p>
+                )}
               </div>
             </CollapsibleSection>
 
