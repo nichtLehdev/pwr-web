@@ -731,8 +731,8 @@ export default function NewEnsemblePage() {
 
               {rehearsalSchedules.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Keine Probenzeiten hinzugefügt. Klicken Sie auf "Hinzufügen"
-                  um eine Probenzeit hinzuzufügen.
+                  Keine Probenzeiten hinzugefügt. Klicken Sie auf
+                  &quot;Hinzufügen&quot; um eine Probenzeit hinzuzufügen.
                 </p>
               ) : (
                 <div className="space-y-6">
