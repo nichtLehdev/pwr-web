@@ -5,6 +5,7 @@ export interface InvoiceParticipant {
   firstName: string;
   lastName: string;
   priceOption: string | null;
+  siblingGroupId?: string | null;
 }
 
 export interface InvoicePriceOption {
@@ -248,6 +249,56 @@ export async function createInvoicePdf(
   y += 10;
   doc.setFont("helvetica", "normal");
 
+  // Calculate which participants get discounts
+  // Group participants by siblingGroupId to determine discount eligibility
+  const participantDiscounts = new Map<string, number>();
+
+  if (
+    registration.siblingDiscountApplied &&
+    registration.participants.some((p) => p.siblingGroupId)
+  ) {
+    // Group participants by siblingGroupId
+    const siblingGroups = new Map<
+      string | null,
+      typeof registration.participants
+    >();
+    registration.participants.forEach((participant) => {
+      const groupId = participant.siblingGroupId ?? null;
+      if (!siblingGroups.has(groupId)) {
+        siblingGroups.set(groupId, []);
+      }
+      siblingGroups.get(groupId)?.push(participant);
+    });
+
+    // For each sibling group, calculate discount for all except the first
+    siblingGroups.forEach((groupParticipants, groupId) => {
+      if (groupId && groupParticipants.length > 1) {
+        // Sort by name to ensure consistent ordering
+        const sortedGroup = [...groupParticipants].sort((a, b) => {
+          const nameA = `${a.firstName} ${a.lastName}`;
+          const nameB = `${b.firstName} ${b.lastName}`;
+          return nameA.localeCompare(nameB);
+        });
+
+        // Calculate discount for each participant after the first
+        for (let i = 1; i < sortedGroup.length; i++) {
+          const participant = sortedGroup[i];
+          if (!participant) continue;
+
+          const priceOption = course.priceOptions?.find(
+            (p) => p.label === participant.priceOption,
+          );
+          const price = priceOption?.price ?? 0;
+          const discount = price * 0.2; // 20% discount
+
+          // Use a unique key for the participant (firstName + lastName + priceOption)
+          const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
+          participantDiscounts.set(participantKey, discount);
+        }
+      }
+    });
+  }
+
   registration.participants.forEach((participant) => {
     checkPageBreak();
 
@@ -256,48 +307,35 @@ export async function createInvoicePdf(
     );
     const price = priceOption?.price ?? 0;
 
+    // Check if this participant gets a discount
+    const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
+    const participantDiscount = participantDiscounts.get(participantKey) ?? 0;
+
     doc.text(`${participant.firstName} ${participant.lastName}`, margin + 2, y);
     doc.text(participant.priceOption || "-", margin + 80, y);
     doc.text(`${price.toFixed(2)} €`, pageWidth - margin - 20, y);
     y += 7;
+
+    // Show discount under participant if applicable
+    if (participantDiscount > 0) {
+      doc.setFontSize(9);
+      doc.setTextColor(0, 150, 0); // Green color for discount
+      doc.text("Geschwisterrabatt (20%):", margin + 2, y);
+      doc.text(
+        `-${participantDiscount.toFixed(2)} €`,
+        pageWidth - margin - 20,
+        y,
+      );
+      doc.setTextColor(0); // Reset to black
+      doc.setFontSize(10);
+      y += 6;
+    }
   });
 
   y += 3;
   doc.setDrawColor(0);
   doc.line(margin, y, pageWidth - margin, y);
   y += 8;
-
-  // Show discount breakdown if sibling discount is applied
-  if (
-    registration.siblingDiscountApplied &&
-    registration.siblingDiscountAmount &&
-    registration.originalTotalPrice
-  ) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Zwischensumme:", margin + 80, y);
-    doc.text(
-      `${registration.originalTotalPrice.toFixed(2)} €`,
-      pageWidth - margin - 20,
-      y,
-    );
-    y += 7;
-
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(0, 150, 0); // Green color for discount
-    doc.text("Geschwisterrabatt (20%):", margin + 80, y);
-    doc.text(
-      `-${registration.siblingDiscountAmount.toFixed(2)} €`,
-      pageWidth - margin - 20,
-      y,
-    );
-    doc.setTextColor(0); // Reset to black
-    y += 7;
-
-    doc.setDrawColor(200);
-    doc.line(margin + 80, y, pageWidth - margin - 20, y);
-    y += 8;
-  }
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
