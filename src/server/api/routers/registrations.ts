@@ -15,6 +15,10 @@ import {
 import {
   sendCourseRegistrationConfirmedEmail,
   sendCourseRegistrationWaitlistEmail,
+  sendCourseRegistrationPendingDiscountEmail,
+  sendCourseRegistrationCancelledEmail,
+  sendSiblingDiscountApprovedEmail,
+  sendSiblingDiscountRejectedEmail,
   isEmailConfigured,
 } from "@/server/email";
 
@@ -324,7 +328,26 @@ export const registrationsRouter = createTRPCRouter({
       // Send confirmation email
       if (isEmailConfigured()) {
         try {
-          if (registrationStatus === RegistrationStatus.CONFIRMED) {
+          // If discount is pending, send special email
+          if (
+            siblingDiscountStatus === SiblingDiscountStatus.PENDING &&
+            originalTotalPrice &&
+            siblingDiscountAmount
+          ) {
+            await sendCourseRegistrationPendingDiscountEmail(
+              registration.registrantEmail,
+              registration.registrantFirstName,
+              registration.registrantLastName,
+              registration.course.title,
+              registration.course.startDate,
+              registration.course.endDate,
+              originalTotalPrice,
+              siblingDiscountAmount,
+              totalPrice,
+              registration.participants.length,
+              registration.id,
+            );
+          } else if (registrationStatus === RegistrationStatus.CONFIRMED) {
             await sendCourseRegistrationConfirmedEmail(
               registration.registrantEmail,
               registration.registrantFirstName,
@@ -956,9 +979,21 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      let registration;
+
       if (ctx.session) {
-        const registration = await ctx.db.courseRegistration.findUnique({
+        registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
+          include: {
+            participants: true,
+            course: {
+              select: {
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
+          },
         });
         if (!registration) {
           throw new TRPCError({
@@ -976,38 +1011,76 @@ export const registrationsRouter = createTRPCRouter({
             message: "Cannot cancel registration of another user",
           });
         }
-        return await ctx.db.courseRegistration.update({
+      } else {
+        registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
-          data: {
-            registrationStatus: RegistrationStatus.CANCELLED,
+          include: {
+            participants: true,
+            course: {
+              select: {
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
           },
         });
+
+        if (!registration) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Registration not found",
+          });
+        }
+
+        if (registration.registrantEmail !== input.email) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Email does not match registration",
+          });
+        }
       }
 
-      const registration = await ctx.db.courseRegistration.findUnique({
-        where: { id: input.id },
-      });
+      // Only send email if registration is not already cancelled
+      const wasAlreadyCancelled = registration.registrationStatus === RegistrationStatus.CANCELLED;
 
-      if (!registration) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Registration not found",
-        });
-      }
-
-      if (registration.registrantEmail !== input.email) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Email does not match registration",
-        });
-      }
-
-      return await ctx.db.courseRegistration.update({
+      const updated = await ctx.db.courseRegistration.update({
         where: { id: input.id },
         data: {
           registrationStatus: RegistrationStatus.CANCELLED,
         },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
       });
+
+      // Send cancellation email if not already cancelled
+      if (isEmailConfigured() && !wasAlreadyCancelled) {
+        try {
+          await sendCourseRegistrationCancelledEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          // Log error but don't fail the cancellation
+          console.error("Failed to send cancellation email:", error);
+        }
+      }
+
+      return updated;
     }),
 
   delete: lpwProcedure
@@ -1149,22 +1222,24 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send confirmation email if not already sent
-      if (isEmailConfigured() && updated.registrationStatus === RegistrationStatus.CONFIRMED) {
+      // Send discount approval email
+      if (isEmailConfigured() && updated.originalTotalPrice && updated.siblingDiscountAmount) {
         try {
-          await sendCourseRegistrationConfirmedEmail(
+          await sendSiblingDiscountApprovedEmail(
             updated.registrantEmail,
             updated.registrantFirstName,
             updated.registrantLastName,
             updated.course.title,
             updated.course.startDate,
             updated.course.endDate,
+            updated.originalTotalPrice,
+            updated.siblingDiscountAmount,
             updated.totalPrice,
             updated.participants.length,
             updated.id,
           );
         } catch (error) {
-          console.error("Failed to send registration email:", error);
+          console.error("Failed to send discount approval email:", error);
         }
       }
 
@@ -1198,11 +1273,12 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       // Reject discount: remove discount, restore original price, keep registration status
+      const originalPrice = registration.originalTotalPrice ?? registration.totalPrice;
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.registrationId },
         data: {
           siblingDiscountStatus: SiblingDiscountStatus.REJECTED,
-          totalPrice: registration.originalTotalPrice ?? registration.totalPrice,
+          totalPrice: originalPrice,
           siblingDiscountAmount: null,
           originalTotalPrice: null,
         },
@@ -1217,6 +1293,106 @@ export const registrationsRouter = createTRPCRouter({
           },
         },
       });
+
+      // Send discount rejection email
+      if (isEmailConfigured()) {
+        try {
+          await sendSiblingDiscountRejectedEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            originalPrice,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          console.error("Failed to send discount rejection email:", error);
+        }
+      }
+
+      return updated;
+    }),
+
+  confirmAtFullPrice: protectedProcedure
+    .input(
+      z.object({
+        registrationId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: {
+          course: true,
+        },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      // Check if user owns this registration
+      if (registration.registrantEmail !== ctx.session.user.email) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only confirm your own registrations",
+        });
+      }
+
+      // Check if discount was rejected
+      if (registration.siblingDiscountStatus !== SiblingDiscountStatus.REJECTED) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration does not have a rejected discount",
+        });
+      }
+
+      // Update registration: remove discount, confirm registration
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountStatus: SiblingDiscountStatus.NONE,
+          siblingDiscountApplied: false,
+          siblingDiscountAmount: null,
+          originalTotalPrice: null,
+          registrationStatus: RegistrationStatus.CONFIRMED,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      // Send confirmation email
+      if (isEmailConfigured()) {
+        try {
+          await sendCourseRegistrationConfirmedEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            updated.totalPrice,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          console.error("Failed to send confirmation email:", error);
+        }
+      }
 
       return updated;
     }),

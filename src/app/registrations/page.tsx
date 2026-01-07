@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { RegistrationStatus } from "~/generated/prisma/enums";
+import {
+  RegistrationStatus,
+  SiblingDiscountStatus,
+} from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   Calendar,
@@ -48,6 +51,17 @@ export default function MyRegistrationsPage() {
     },
   });
 
+  const confirmAtFullPriceMutation =
+    api.registrations.confirmAtFullPrice.useMutation({
+      onSuccess: () => {
+        toast.success("Anmeldung zum vollen Preis bestätigt");
+        void utils.registrations.getMyRegistrations.invalidate();
+      },
+      onError: (err) => {
+        toast.error(err.message || "Fehler beim Bestätigen der Anmeldung");
+      },
+    });
+
   const handleCancelClick = (registrationId: string) => {
     setRegistrationToCancel(registrationId);
     setCancelModalOpen(true);
@@ -88,6 +102,35 @@ export default function MyRegistrationsPage() {
       CONFIRMED: "Teilnahme Bestätigt",
       WAITLIST: "Auf Warteliste",
       CANCELLED: "Storniert",
+    };
+
+    return (
+      <span
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${badges[status]}`}
+      >
+        {labels[status]}
+      </span>
+    );
+  };
+
+  const getDiscountStatusBadge = (
+    status: SiblingDiscountStatus | null | undefined,
+  ) => {
+    if (!status || status === SiblingDiscountStatus.NONE) return null;
+
+    const badges: Record<SiblingDiscountStatus, string> = {
+      NONE: "",
+      PENDING:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+      APPROVED:
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+      REJECTED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+    };
+    const labels: Record<SiblingDiscountStatus, string> = {
+      NONE: "",
+      PENDING: "Rabatt prüfen",
+      APPROVED: "Rabatt genehmigt",
+      REJECTED: "Rabatt abgelehnt",
     };
 
     return (
@@ -272,6 +315,7 @@ export default function MyRegistrationsPage() {
                             {registration.course.title}
                           </h2>
                           {getStatusBadge(registration.registrationStatus)}
+                          {getDiscountStatusBadge(registration.siblingDiscountStatus)}
                         </div>
 
                         <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -335,7 +379,9 @@ export default function MyRegistrationsPage() {
 
                         {/* Price */}
                         <div className="space-y-2">
-                          {registration.siblingDiscountApplied &&
+                          {registration.siblingDiscountStatus ===
+                            SiblingDiscountStatus.APPROVED &&
+                          registration.siblingDiscountApplied &&
                           registration.originalTotalPrice &&
                           registration.siblingDiscountAmount ? (
                             <div className="space-y-1">
@@ -366,6 +412,40 @@ export default function MyRegistrationsPage() {
                             </span>
                           </div>
                         </div>
+
+                        {/* Discount Rejected Actions */}
+                        {registration.siblingDiscountStatus ===
+                          SiblingDiscountStatus.REJECTED && (
+                          <div className="mt-4 rounded-lg border-2 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+                            <p className="mb-3 text-sm font-medium text-red-800 dark:text-red-300">
+                              Dein Antrag auf Geschwisterrabatt wurde abgelehnt.
+                              Du kannst die Anmeldung zum vollen Preis bestätigen
+                              oder stornieren.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() =>
+                                  confirmAtFullPriceMutation.mutate({
+                                    registrationId: registration.id,
+                                  })
+                                }
+                                disabled={confirmAtFullPriceMutation.isPending}
+                                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                              >
+                                {confirmAtFullPriceMutation.isPending
+                                  ? "Wird bestätigt..."
+                                  : "Zum vollen Preis bestätigen"}
+                              </button>
+                              <button
+                                onClick={() => handleCancelClick(registration.id)}
+                                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                              >
+                                <X className="h-4 w-4" />
+                                Stornieren
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Actions */}
