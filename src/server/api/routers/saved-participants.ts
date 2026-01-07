@@ -70,7 +70,9 @@ export const savedParticipantsRouter = createTRPCRouter({
         data: {
           ...updateData,
           customFields:
-            updateData.customFields ?? savedParticipant.customFields,
+            updateData.customFields !== undefined
+              ? updateData.customFields
+              : (savedParticipant.customFields ?? {}),
         },
       });
     }),
