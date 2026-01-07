@@ -89,13 +89,7 @@ function LoginForm() {
         return;
       }
 
-      // Check if 2FA verification is required
-      if (signInResult.data?.twoFactorRedirect) {
-        // Redirect to 2FA verification page
-        router.push(`/verify-2fa?redirect=${encodeURIComponent(redirectTo)}`);
-        return;
-      }
-
+      // If we get here, login was successful (2FA redirect is handled by the plugin callback)
       const profile = await utils.users.getMyProfile.fetch();
 
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {

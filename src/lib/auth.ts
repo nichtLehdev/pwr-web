@@ -24,7 +24,10 @@ export const {
     twoFactorClient({
       onTwoFactorRedirect() {
         // Redirect to 2FA verification page
-        window.location.href = "/verify-2fa";
+        // Preserve any redirect parameter from the original URL
+        const redirectTo =
+          new URLSearchParams(window.location.search).get("redirect") || "/";
+        window.location.href = `/verify-2fa?redirect=${encodeURIComponent(redirectTo)}`;
       },
     }),
   ],

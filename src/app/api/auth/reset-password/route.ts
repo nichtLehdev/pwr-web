@@ -32,13 +32,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (result.error) {
-      console.error("[Reset Password] Error:", result.error);
+    // Better Auth returns { status: boolean }
+    // If status is false or the call throws, it means the reset failed
+    if (!result.status) {
+      console.error("[Reset Password] Password reset failed");
       return NextResponse.json(
         {
-          error:
-            result.error.message ||
-            "Der Reset-Link ist ungültig oder abgelaufen.",
+          error: "Der Reset-Link ist ungültig oder abgelaufen.",
         },
         { status: 400 },
       );
