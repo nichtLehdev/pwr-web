@@ -51,7 +51,9 @@ export default function CourseRegistrationForm({
   );
   const saveParticipantMutation = api.savedParticipants.create.useMutation({
     onSuccess: () => {
-      toast.success("Teilnehmer gespeichert");
+      toast.success(
+        "Teilnehmer gespeichert. Sie können gespeicherte Teilnehmer in den Einstellungen verwalten.",
+      );
       void savedParticipantsQuery.refetch();
     },
   });
@@ -1050,6 +1052,21 @@ export default function CourseRegistrationForm({
                         nach dem Hinzufügen speichern.
                       </p>
                     )}
+                    {savedParticipantsQuery.data &&
+                    savedParticipantsQuery.data.length > 0 ? (
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Gespeicherte Teilnehmer können Sie in den{" "}
+                        <a
+                          href="/settings"
+                          className="text-primary hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Einstellungen
+                        </a>{" "}
+                        verwalten und entfernen.
+                      </p>
+                    ) : null}
                   </div>
                 )}
               </div>
