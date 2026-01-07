@@ -133,14 +133,20 @@ export default function EditEnsemblePage() {
       setLocationId(ensemble.locationId);
       setRehearsalDay(ensemble.rehearsalDay ?? "");
       setRehearsalTime(ensemble.rehearsalTime ?? "");
+      // Group rehearsal schedules by time, collecting all days with the same time
+      // API format: [{ day: "Montag", time: "19:30" }, { day: "Dienstag", time: "19:30" }]
+      // Form format: [{ selectedDays: ["Montag", "Dienstag"], time: "19:30" }]
+      const schedulesByTime = new Map<string, string[]>();
+      ensemble.rehearsalSchedules?.forEach((s) => {
+        const existing = schedulesByTime.get(s.time) || [];
+        existing.push(s.day);
+        schedulesByTime.set(s.time, existing);
+      });
       setRehearsalSchedules(
-        ensemble.rehearsalSchedules?.map((s) => ({
-          selectedDays: s.day
-            .split(",")
-            .map((d) => d.trim())
-            .filter(Boolean),
-          time: s.time,
-        })) ?? [],
+        Array.from(schedulesByTime.entries()).map(([time, days]) => ({
+          selectedDays: days,
+          time,
+        })),
       );
       setContactEmail(ensemble.contactEmail);
       setContactPhone(ensemble.contactPhone ?? "");
@@ -319,11 +325,16 @@ export default function EditEnsemblePage() {
       rehearsalSchedules:
         rehearsalSchedules.length > 0
           ? rehearsalSchedules
-              .filter((s) => s.selectedDays.length > 0 && s.time.trim())
-              .map((s) => ({
-                day: s.selectedDays.join(", "),
-                time: s.time.trim(),
-              }))
+              .filter(
+                (schedule) =>
+                  schedule.selectedDays.length > 0 && schedule.time.trim(),
+              )
+              .flatMap((schedule) =>
+                schedule.selectedDays.map((day) => ({
+                  day,
+                  time: schedule.time.trim(),
+                })),
+              )
           : undefined,
       contactEmail: contactEmail?.trim() || null,
       contactPhone: contactPhone.trim() || undefined,
