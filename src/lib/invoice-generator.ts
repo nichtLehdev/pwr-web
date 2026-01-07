@@ -39,6 +39,7 @@ export interface InvoiceRegistration {
 
   // Sibling discount fields
   siblingDiscountApplied?: boolean;
+  siblingDiscountStatus?: "NONE" | "PENDING" | "APPROVED" | "REJECTED";
   siblingDiscountAmount?: number | null;
   originalTotalPrice?: number | null;
 

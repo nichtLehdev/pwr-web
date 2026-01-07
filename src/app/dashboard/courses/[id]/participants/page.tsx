@@ -312,6 +312,12 @@ export default function CourseParticipantsPage() {
       .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
+  // Check if there are any registrations with pending sibling discounts
+  const hasPendingDiscounts =
+    registrationsData?.registrations.some(
+      (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
+    ) ?? false;
+
   const handleExport = (format: ExportFormat) => {
     setShowExportMenu(false);
 
@@ -504,7 +510,13 @@ export default function CourseParticipantsPage() {
                           setShowExportMenu(false);
                           setShowBulkInvoiceModal(true);
                         }}
-                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                        disabled={hasPendingDiscounts}
+                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                        title={
+                          hasPendingDiscounts
+                            ? "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen."
+                            : undefined
+                        }
                       >
                         <DownloadIcon
                           className="h-4 w-4 text-blue-600"
@@ -512,6 +524,11 @@ export default function CourseParticipantsPage() {
                         />
                         Alle Rechnungen (ZIP)
                       </button>
+                      {hasPendingDiscounts && (
+                        <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+                          ⚠️ Es gibt noch ausstehende Geschwisterrabatte
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
