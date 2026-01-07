@@ -731,8 +731,8 @@ export default function NewEnsemblePage() {
 
               {rehearsalSchedules.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Keine Probenzeiten hinzugefügt. Klicken Sie auf "Hinzufügen" um eine
-                  Probenzeit hinzuzufügen.
+                  Keine Probenzeiten hinzugefügt. Klicken Sie auf "Hinzufügen"
+                  um eine Probenzeit hinzuzufügen.
                 </p>
               ) : (
                 <div className="space-y-6">
@@ -752,7 +752,7 @@ export default function NewEnsemblePage() {
                               rehearsalSchedules.filter((_, i) => i !== index),
                             );
                           }}
-                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                          className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           Entfernen
                         </button>
@@ -780,7 +780,9 @@ export default function NewEnsemblePage() {
                                     ];
                                   } else {
                                     updated[index]!.selectedDays =
-                                      schedule.selectedDays.filter((d) => d !== day);
+                                      schedule.selectedDays.filter(
+                                        (d) => d !== day,
+                                      );
                                   }
                                   setRehearsalSchedules(updated);
                                 }}
