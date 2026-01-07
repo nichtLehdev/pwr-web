@@ -74,6 +74,19 @@ export default function NewEnsemblePage() {
   const [imageUrl, setImageUrl] = useState("");
   const [rehearsalDay, setRehearsalDay] = useState("");
   const [rehearsalTime, setRehearsalTime] = useState("");
+  const [rehearsalSchedules, setRehearsalSchedules] = useState<
+    Array<{ selectedDays: string[]; time: string }>
+  >([]);
+
+  const DAYS_OF_WEEK = [
+    "Montag",
+    "Dienstag",
+    "Mittwoch",
+    "Donnerstag",
+    "Freitag",
+    "Samstag",
+    "Sonntag",
+  ];
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactWebsite, setContactWebsite] = useState("");
@@ -698,37 +711,138 @@ export default function NewEnsemblePage() {
 
             {/* Rehearsal */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Probe
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Probenzeiten
+                </h2>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRehearsalSchedules([
+                      ...rehearsalSchedules,
+                      { selectedDays: [], time: "" },
+                    ])
+                  }
+                  className="text-primary hover:text-primary-dark text-sm font-medium"
+                >
+                  + Hinzufügen
+                </button>
+              </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                {/* Rehearsal Day */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Probentag
-                  </label>
-                  <input
-                    type="text"
-                    value={rehearsalDay}
-                    onChange={(e) => setRehearsalDay(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. Mittwoch"
-                  />
+              {rehearsalSchedules.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Keine Probenzeiten hinzugefügt. Klicken Sie auf "Hinzufügen" um eine
+                  Probenzeit hinzuzufügen.
+                </p>
+              ) : (
+                <div className="space-y-6">
+                  {rehearsalSchedules.map((schedule, index) => (
+                    <div
+                      key={index}
+                      className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="dark:text-dark-text text-sm font-semibold text-gray-700">
+                          Probenzeit {index + 1}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRehearsalSchedules(
+                              rehearsalSchedules.filter((_, i) => i !== index),
+                            );
+                          }}
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium"
+                        >
+                          Entfernen
+                        </button>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                          Wochentage
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                          {DAYS_OF_WEEK.map((day) => (
+                            <label
+                              key={day}
+                              className="dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={schedule.selectedDays.includes(day)}
+                                onChange={(e) => {
+                                  const updated = [...rehearsalSchedules];
+                                  if (e.target.checked) {
+                                    updated[index]!.selectedDays = [
+                                      ...schedule.selectedDays,
+                                      day,
+                                    ];
+                                  } else {
+                                    updated[index]!.selectedDays =
+                                      schedule.selectedDays.filter((d) => d !== day);
+                                  }
+                                  setRehearsalSchedules(updated);
+                                }}
+                                className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                              />
+                              <span>{day}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                          Probenzeit
+                        </label>
+                        <input
+                          type="text"
+                          value={schedule.time}
+                          onChange={(e) => {
+                            const updated = [...rehearsalSchedules];
+                            updated[index]!.time = e.target.value;
+                            setRehearsalSchedules(updated);
+                          }}
+                          className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                          placeholder="z.B. 8:00-12:00 oder 19:30-21:00"
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              )}
 
-                {/* Rehearsal Time */}
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Probenzeit
-                  </label>
-                  <input
-                    type="text"
-                    value={rehearsalTime}
-                    onChange={(e) => setRehearsalTime(e.target.value)}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="z.B. 19:30 - 21:00 Uhr"
-                  />
+              {/* Legacy fields (for backward compatibility) */}
+              <div className="dark:border-dark-border border-t border-gray-200 pt-4">
+                <p className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                  Legacy (veraltet - nur für Migration)
+                </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Probentag (alt)
+                    </label>
+                    <input
+                      type="text"
+                      value={rehearsalDay}
+                      onChange={(e) => setRehearsalDay(e.target.value)}
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      placeholder="z.B. Mittwoch"
+                    />
+                  </div>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Probenzeit (alt)
+                    </label>
+                    <input
+                      type="text"
+                      value={rehearsalTime}
+                      onChange={(e) => setRehearsalTime(e.target.value)}
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      placeholder="z.B. 19:30 - 21:00 Uhr"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -33,11 +33,20 @@ export default function EnsembleMap({
 }: EnsembleMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const hasInitializedRef = useRef(false);
+  const lastCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    if (hasInitializedRef.current || !mapContainerRef.current) return;
-    hasInitializedRef.current = true;
+    if (!mapContainerRef.current) return;
+
+    // Check if coordinates have changed
+    const coordsChanged =
+      !lastCoordsRef.current ||
+      lastCoordsRef.current.lat !== latitude ||
+      lastCoordsRef.current.lng !== longitude;
+
+    if (!coordsChanged && mapInstanceRef.current) return;
+
+    lastCoordsRef.current = { lat: latitude, lng: longitude };
 
     const initMap = () => {
       if (!mapContainerRef.current) {
