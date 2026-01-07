@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth";
+import Link from "next/link";
+import { useSession, changePassword } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -21,6 +22,7 @@ import {
   AlertTriangle,
   Users,
   Trash2,
+  ArrowRight,
 } from "lucide-react";
 
 function CollapsibleSection({
@@ -114,6 +116,13 @@ export default function SettingsPage() {
     available: null,
     message: "",
   });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -534,6 +543,206 @@ export default function SettingsPage() {
                     placeholder="+49 123 456789"
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
+                </div>
+
+                {/* Password Change Section */}
+                <div className="dark:border-dark-border mt-6 border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-4 text-base font-semibold">
+                    Passwort ändern
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="currentPassword"
+                        className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
+                      >
+                        Aktuelles Passwort
+                      </label>
+                      <input
+                        id="currentPassword"
+                        name="currentPassword"
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            currentPassword: e.target.value,
+                          }))
+                        }
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="newPassword"
+                        className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
+                      >
+                        Neues Passwort
+                      </label>
+                      <input
+                        id="newPassword"
+                        name="newPassword"
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            newPassword: e.target.value,
+                          }))
+                        }
+                        minLength={8}
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                      />
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Mindestens 8 Zeichen
+                      </p>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="confirmPassword"
+                        className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
+                      >
+                        Neues Passwort bestätigen
+                      </label>
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            confirmPassword: e.target.value,
+                          }))
+                        }
+                        minLength={8}
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
+                      />
+                    </div>
+
+                    {passwordError && (
+                      <div className="rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
+                        <p className="text-sm text-red-800 dark:text-red-300">
+                          {passwordError}
+                        </p>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setPasswordError("");
+
+                        // Validation
+                        if (!passwordData.currentPassword) {
+                          setPasswordError(
+                            "Bitte gib dein aktuelles Passwort ein",
+                          );
+                          return;
+                        }
+
+                        if (passwordData.newPassword.length < 8) {
+                          setPasswordError(
+                            "Das neue Passwort muss mindestens 8 Zeichen lang sein",
+                          );
+                          return;
+                        }
+
+                        if (
+                          passwordData.newPassword !==
+                          passwordData.confirmPassword
+                        ) {
+                          setPasswordError(
+                            "Die neuen Passwörter stimmen nicht überein",
+                          );
+                          return;
+                        }
+
+                        setIsChangingPassword(true);
+
+                        try {
+                          const result = await changePassword({
+                            currentPassword: passwordData.currentPassword,
+                            newPassword: passwordData.newPassword,
+                            revokeOtherSessions: false,
+                          });
+
+                          if (result.error) {
+                            setPasswordError(
+                              result.error.message ||
+                                "Fehler beim Ändern des Passworts",
+                            );
+                          } else {
+                            toast.success("Passwort erfolgreich geändert");
+                            setPasswordData({
+                              currentPassword: "",
+                              newPassword: "",
+                              confirmPassword: "",
+                            });
+                          }
+                        } catch (error) {
+                          setPasswordError(
+                            error instanceof Error
+                              ? error.message
+                              : "Fehler beim Ändern des Passworts",
+                          );
+                        } finally {
+                          setIsChangingPassword(false);
+                        }
+                      }}
+                      disabled={isChangingPassword}
+                      className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+                    >
+                      {isChangingPassword
+                        ? "Wird geändert..."
+                        : "Passwort ändern"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2FA Section */}
+              <div className="dark:border-dark-border mt-6 border-t border-gray-200 pt-6">
+                <h3 className="text-dark dark:text-dark-text mb-4 text-base font-semibold">
+                  Zwei-Faktor-Authentifizierung (2FA)
+                </h3>
+                <div className="space-y-4">
+                  {((profile as { twoFactorEnabled?: boolean })
+                    ?.twoFactorEnabled ?? false) ? (
+                    // 2FA is enabled
+                    <div className="space-y-4">
+                      <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:border-green-400 dark:bg-green-900/20">
+                        <p className="text-sm text-green-800 dark:text-green-300">
+                          <strong>2FA ist aktiviert</strong> - Dein Konto ist
+                          zusätzlich geschützt.
+                        </p>
+                      </div>
+                      <Link
+                        href="/settings/two-factor"
+                        className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
+                      >
+                        2FA verwalten
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  ) : (
+                    // 2FA is not enabled
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Zwei-Faktor-Authentifizierung fügt eine zusätzliche
+                        Sicherheitsebene zu deinem Konto hinzu.
+                      </p>
+                      <Link
+                        href="/settings/two-factor"
+                        className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 text-sm font-medium"
+                      >
+                        2FA aktivieren
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </CollapsibleSection>

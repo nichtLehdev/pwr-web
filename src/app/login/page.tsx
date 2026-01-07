@@ -89,6 +89,7 @@ function LoginForm() {
         return;
       }
 
+      // If we get here, login was successful (2FA redirect is handled by the plugin callback)
       const profile = await utils.users.getMyProfile.fetch();
 
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
@@ -157,12 +158,20 @@ function LoginForm() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
-                Passwort
-              </label>
+              <div className="mb-1 flex items-center justify-between">
+                <label
+                  htmlFor="password"
+                  className="text-dark dark:text-dark-text block text-sm font-medium"
+                >
+                  Passwort
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary text-sm font-medium"
+                >
+                  Passwort vergessen?
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"
