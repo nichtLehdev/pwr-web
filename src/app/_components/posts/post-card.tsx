@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getDistrictColor } from "@/lib/district-color";
+import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
 
 interface PostCardProps {
@@ -12,6 +13,7 @@ interface PostCardProps {
   image?: string;
   pinned?: boolean;
   district?: number;
+  content?: string;
 }
 
 export default function PostCard({
@@ -23,8 +25,13 @@ export default function PostCard({
   image,
   pinned = false,
   district,
+  content,
 }: PostCardProps) {
   const districtColor = getDistrictColor(district);
+
+  // Use excerpt if available, otherwise extract plain text from content
+  const displayExcerpt =
+    excerpt || (content ? extractPlainTextFromMarkdown(content) : "");
 
   return (
     <Link href={`/aktuelles/${id}`} className="group block h-full">
@@ -80,9 +87,11 @@ export default function PostCard({
             {title}
           </h3>
 
-          <p className="mb-4 line-clamp-3 grow text-gray-600 dark:text-gray-400">
-            {excerpt}
-          </p>
+          {displayExcerpt && (
+            <p className="mb-4 line-clamp-3 grow text-gray-600 dark:text-gray-400">
+              {displayExcerpt}
+            </p>
+          )}
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
             Weiterlesen
