@@ -434,9 +434,7 @@ export default function ViewRegistrationPage() {
                 <div
                   key={participant.id}
                   className={`p-6 ${
-                    isInGroup
-                      ? "bg-green-50 dark:bg-green-900/10"
-                      : ""
+                    isInGroup ? "bg-green-50 dark:bg-green-900/10" : ""
                   }`}
                 >
                   <div className="mb-3 flex items-center justify-between">
@@ -473,44 +471,44 @@ export default function ViewRegistrationPage() {
                         .join(", ")}
                     </div>
                   )}
-                <div className="grid gap-4 text-sm md:grid-cols-2">
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      Geburtsdatum:
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {formatDate(participant.birthDate)}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      Wohnort:
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {participant.city}
-                    </p>
-                  </div>
-                  {participant.instrument && (
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Instrument:
+                        Geburtsdatum:
                       </span>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {participant.instrument}
+                        {formatDate(participant.birthDate)}
                       </p>
                     </div>
-                  )}
-                  {participant.priceOption && (
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Preisoption:
+                        Wohnort:
                       </span>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {participant.priceOption}
+                        {participant.city}
                       </p>
                     </div>
-                  )}
-                </div>
+                    {participant.instrument && (
+                      <div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Instrument:
+                        </span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {participant.instrument}
+                        </p>
+                      </div>
+                    )}
+                    {participant.priceOption && (
+                      <div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Preisoption:
+                        </span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {participant.priceOption}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -543,15 +541,16 @@ export default function ViewRegistrationPage() {
                   <span className="text-green-600 dark:text-green-400">
                     Geschwisterrabatt (20%)
                   </span>
-                  <span className="text-green-600 dark:text-green-400 font-semibold">
+                  <span className="font-semibold text-green-600 dark:text-green-400">
                     -{registration.siblingDiscountAmount.toFixed(2)} €
                   </span>
                 </div>
                 {registration.siblingDiscountStatus === "PENDING" && (
                   <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                     <p className="text-sm text-orange-700 dark:text-orange-300">
-                      ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten eine
-                      Benachrichtigung, sobald eine Entscheidung getroffen wurde.
+                      ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten
+                      eine Benachrichtigung, sobald eine Entscheidung getroffen
+                      wurde.
                     </p>
                   </div>
                 )}

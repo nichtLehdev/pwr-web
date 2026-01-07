@@ -100,7 +100,8 @@ export function SiblingDiscountApproved({
                 {formatPrice(originalTotalPrice)}
               </Text>
               <Text style={priceDetailDiscount}>
-                <strong>Geschwisterrabatt (20%):</strong> -{formatPrice(discountAmount)}
+                <strong>Geschwisterrabatt (20%):</strong> -
+                {formatPrice(discountAmount)}
               </Text>
               <Hr style={priceHr} />
               <Text style={priceTotal}>
@@ -276,4 +277,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

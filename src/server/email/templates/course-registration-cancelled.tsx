@@ -57,7 +57,8 @@ export function CourseRegistrationCancelled({
             </Text>
 
             <Text style={paragraph}>
-              deine Anmeldung für den folgenden Kurs wurde erfolgreich storniert:
+              deine Anmeldung für den folgenden Kurs wurde erfolgreich
+              storniert:
             </Text>
 
             <Section style={courseInfo}>
@@ -259,4 +260,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

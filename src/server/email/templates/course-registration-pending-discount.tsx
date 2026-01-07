@@ -75,8 +75,8 @@ export function CourseRegistrationPendingDiscount({
             </Text>
 
             <Text style={paragraph}>
-              vielen Dank für deine Anmeldung! Wir haben deine Anmeldung für
-              den folgenden Kurs erhalten:
+              vielen Dank für deine Anmeldung! Wir haben deine Anmeldung für den
+              folgenden Kurs erhalten:
             </Text>
 
             <Section style={courseInfo}>
@@ -100,7 +100,8 @@ export function CourseRegistrationPendingDiscount({
                 {formatPrice(originalTotalPrice)}
               </Text>
               <Text style={priceDetailDiscount}>
-                <strong>Geschwisterrabatt (20%):</strong> -{formatPrice(discountAmount)}
+                <strong>Geschwisterrabatt (20%):</strong> -
+                {formatPrice(discountAmount)}
               </Text>
               <Hr style={priceHr} />
               <Text style={priceTotal}>
@@ -337,4 +338,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

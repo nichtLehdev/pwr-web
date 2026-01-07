@@ -1155,9 +1155,7 @@ export default function EditCoursePage() {
                     type="checkbox"
                     id="allowSiblingDiscount"
                     checked={allowSiblingDiscount}
-                    onChange={(e) =>
-                      setAllowSiblingDiscount(e.target.checked)
-                    }
+                    onChange={(e) => setAllowSiblingDiscount(e.target.checked)}
                     className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                   />
                   <label

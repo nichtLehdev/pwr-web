@@ -69,7 +69,8 @@ export const savedParticipantsRouter = createTRPCRouter({
         where: { id },
         data: {
           ...updateData,
-          customFields: updateData.customFields ?? savedParticipant.customFields,
+          customFields:
+            updateData.customFields ?? savedParticipant.customFields,
         },
       });
     }),
@@ -103,4 +104,3 @@ export const savedParticipantsRouter = createTRPCRouter({
       return { success: true };
     }),
 });
-

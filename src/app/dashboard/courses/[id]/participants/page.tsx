@@ -797,14 +797,14 @@ export default function CourseParticipantsPage() {
                 <div key={registration.id} className="p-4 sm:p-6">
                   {/* Registration Header */}
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <Link
-                      href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                      className="dark:text-dark-text text-lg font-medium text-gray-900 hover:text-primary transition-colors"
-                    >
-                      {registration.registrantFirstName}{" "}
-                      {registration.registrantLastName}
-                    </Link>
+                    <div>
+                      <Link
+                        href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                        className="dark:text-dark-text hover:text-primary text-lg font-medium text-gray-900 transition-colors"
+                      >
+                        {registration.registrantFirstName}{" "}
+                        {registration.registrantLastName}
+                      </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                         <a
                           href={`mailto:${registration.registrantEmail}`}

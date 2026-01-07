@@ -636,10 +636,7 @@ export const registrationsRouter = createTRPCRouter({
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus = registration.siblingDiscountStatus;
 
-      if (
-        input.siblingDiscountApplied &&
-        course.allowSiblingDiscount
-      ) {
+      if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
         // Group participants by siblingGroupId
         const siblingGroups = new Map<string, typeof participants>();
         for (const participant of participants) {
@@ -1042,7 +1039,8 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       // Only send email if registration is not already cancelled
-      const wasAlreadyCancelled = registration.registrationStatus === RegistrationStatus.CANCELLED;
+      const wasAlreadyCancelled =
+        registration.registrationStatus === RegistrationStatus.CANCELLED;
 
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.id },
@@ -1196,7 +1194,9 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING) {
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Registration does not have a pending sibling discount",
@@ -1223,7 +1223,11 @@ export const registrationsRouter = createTRPCRouter({
       });
 
       // Send discount approval email
-      if (isEmailConfigured() && updated.originalTotalPrice && updated.siblingDiscountAmount) {
+      if (
+        isEmailConfigured() &&
+        updated.originalTotalPrice &&
+        updated.siblingDiscountAmount
+      ) {
         try {
           await sendSiblingDiscountApprovedEmail(
             updated.registrantEmail,
@@ -1265,7 +1269,9 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING) {
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Registration does not have a pending sibling discount",
@@ -1273,7 +1279,8 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       // Reject discount: remove discount, restore original price, keep registration status
-      const originalPrice = registration.originalTotalPrice ?? registration.totalPrice;
+      const originalPrice =
+        registration.originalTotalPrice ?? registration.totalPrice;
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.registrationId },
         data: {
@@ -1346,7 +1353,9 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       // Check if discount was rejected
-      if (registration.siblingDiscountStatus !== SiblingDiscountStatus.REJECTED) {
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.REJECTED
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Registration does not have a rejected discount",

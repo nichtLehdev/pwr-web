@@ -260,4 +260,3 @@ const footerText = {
   color: "#9ca3af",
   margin: "0",
 };
-

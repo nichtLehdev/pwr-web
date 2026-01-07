@@ -315,7 +315,9 @@ export default function MyRegistrationsPage() {
                             {registration.course.title}
                           </h2>
                           {getStatusBadge(registration.registrationStatus)}
-                          {getDiscountStatusBadge(registration.siblingDiscountStatus)}
+                          {getDiscountStatusBadge(
+                            registration.siblingDiscountStatus,
+                          )}
                         </div>
 
                         <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
@@ -389,7 +391,7 @@ export default function MyRegistrationsPage() {
                                 <span className="text-gray-600 dark:text-gray-400">
                                   Zwischensumme:
                                 </span>
-                                <span className="text-gray-900 dark:text-gray-100 line-through">
+                                <span className="text-gray-900 line-through dark:text-gray-100">
                                   {registration.originalTotalPrice.toFixed(2)} €
                                 </span>
                               </div>
@@ -397,8 +399,12 @@ export default function MyRegistrationsPage() {
                                 <span className="text-green-600 dark:text-green-400">
                                   Geschwisterrabatt (20%):
                                 </span>
-                                <span className="text-green-600 dark:text-green-400 font-semibold">
-                                  -{registration.siblingDiscountAmount.toFixed(2)} €
+                                <span className="font-semibold text-green-600 dark:text-green-400">
+                                  -
+                                  {registration.siblingDiscountAmount.toFixed(
+                                    2,
+                                  )}{" "}
+                                  €
                                 </span>
                               </div>
                             </div>
@@ -419,8 +425,8 @@ export default function MyRegistrationsPage() {
                           <div className="mt-4 rounded-lg border-2 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
                             <p className="mb-3 text-sm font-medium text-red-800 dark:text-red-300">
                               Dein Antrag auf Geschwisterrabatt wurde abgelehnt.
-                              Du kannst die Anmeldung zum vollen Preis bestätigen
-                              oder stornieren.
+                              Du kannst die Anmeldung zum vollen Preis
+                              bestätigen oder stornieren.
                             </p>
                             <div className="flex flex-wrap gap-2">
                               <button
@@ -437,7 +443,9 @@ export default function MyRegistrationsPage() {
                                   : "Zum vollen Preis bestätigen"}
                               </button>
                               <button
-                                onClick={() => handleCancelClick(registration.id)}
+                                onClick={() =>
+                                  handleCancelClick(registration.id)
+                                }
                                 className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
                               >
                                 <X className="h-4 w-4" />

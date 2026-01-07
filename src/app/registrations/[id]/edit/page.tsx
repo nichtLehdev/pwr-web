@@ -337,8 +337,12 @@ export default function EditRegistrationPage() {
   };
 
   const linkSiblings = (participantId1: string, participantId2: string) => {
-    const participant1 = activeParticipants.find((p) => p.id === participantId1);
-    const participant2 = activeParticipants.find((p) => p.id === participantId2);
+    const participant1 = activeParticipants.find(
+      (p) => p.id === participantId1,
+    );
+    const participant2 = activeParticipants.find(
+      (p) => p.id === participantId2,
+    );
     if (!participant1 || !participant2) return;
 
     const updated = [...participants];
@@ -367,7 +371,10 @@ export default function EditRegistrationPage() {
       updated[index2] = { ...participant2, siblingGroupId: groupId };
 
       // If one participant was already in a group, merge all participants from that group
-      if (participant1.siblingGroupId && participant1.siblingGroupId !== groupId) {
+      if (
+        participant1.siblingGroupId &&
+        participant1.siblingGroupId !== groupId
+      ) {
         // participant1 was in a different group, merge all its members
         updated.forEach((p, idx) => {
           if (
@@ -395,7 +402,6 @@ export default function EditRegistrationPage() {
 
     setParticipants(updated);
   };
-
 
   const hasSiblingGroups = activeParticipants.some((p) => p.siblingGroupId);
 
@@ -1189,7 +1195,7 @@ export default function EditRegistrationPage() {
                       <span className="text-gray-600 dark:text-gray-400">
                         Zwischensumme:
                       </span>
-                      <span className="text-gray-900 dark:text-gray-100 line-through">
+                      <span className="text-gray-900 line-through dark:text-gray-100">
                         {calculateOriginalPrice().toFixed(2)} €
                       </span>
                     </div>
@@ -1197,7 +1203,7 @@ export default function EditRegistrationPage() {
                       <span className="text-green-600 dark:text-green-400">
                         Geschwisterrabatt (20%):
                       </span>
-                      <span className="text-green-600 dark:text-green-400 font-semibold">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
                         -{calculateDiscountAmount().toFixed(2)} €
                       </span>
                     </div>
