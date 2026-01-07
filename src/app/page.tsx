@@ -76,9 +76,9 @@ export default function Home() {
                   date={event.eventDate}
                   location={event.location?.city || ""}
                   category={event.category}
-                   district={event.bezirk?.number}
-                   cancelled={event.cancelled}
-                 />
+                  district={event.bezirk?.number}
+                  cancelled={event.cancelled}
+                />
               ))}
             </div>
           ) : (
