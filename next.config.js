@@ -41,7 +41,7 @@ const config = {
               img-src 'self' data: https: blob:;
               font-src 'self' https:;
               connect-src 'self';
-              frame-ancestors 'none';
+              frame-ancestors 'self';
               base-uri 'self';
               form-action 'self';
             `.replace(/\s{2,}/g, " "),
@@ -52,7 +52,7 @@ const config = {
           },
           {
             key: "X-Frame-Options",
-            value: "DENY",
+            value: "SAMEORIGIN",
           },
           {
             key: "X-Content-Type-Options",
