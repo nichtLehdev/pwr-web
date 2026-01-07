@@ -50,27 +50,53 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
         | "district-13"
         | undefined);
 
-  // Geocode address if coordinates are missing
-  let latitude = ensemble.location?.latitude;
-  let longitude = ensemble.location?.longitude;
+  // Geocode address to get coordinates for map display
+  let latitude: number | null = null;
+  let longitude: number | null = null;
 
-  if (!latitude || !longitude) {
-    if (ensemble.location?.city) {
+  if (ensemble.location?.city) {
+    // Try stored coordinates first
+    if (ensemble.location.latitude && ensemble.location.longitude) {
+      latitude = ensemble.location.latitude;
+      longitude = ensemble.location.longitude;
+    } else {
+      // Geocode from address if coordinates not stored
       try {
         const geocodeResult = await api.locations.geocode({
           street: ensemble.location.street ?? undefined,
           zipCode: ensemble.location.zipCode ?? undefined,
           city: ensemble.location.city,
         });
-        if (geocodeResult.latitude && geocodeResult.longitude) {
+        if (
+          geocodeResult?.latitude != null &&
+          geocodeResult?.longitude != null
+        ) {
           latitude = geocodeResult.latitude;
           longitude = geocodeResult.longitude;
+        } else {
+          console.warn("Geocoding returned no coordinates for address:", {
+            street: ensemble.location.street,
+            zipCode: ensemble.location.zipCode,
+            city: ensemble.location.city,
+            result: geocodeResult,
+          });
         }
       } catch (error) {
-        // Silently fail - map just won't show
         console.error("Geocoding failed:", error);
       }
     }
+  }
+
+  // Debug: Log coordinates for troubleshooting
+  if (ensemble.location && !latitude && !longitude) {
+    console.log("No coordinates available for location:", {
+      name: ensemble.location.name,
+      street: ensemble.location.street,
+      zipCode: ensemble.location.zipCode,
+      city: ensemble.location.city,
+      storedLat: ensemble.location.latitude,
+      storedLng: ensemble.location.longitude,
+    });
   }
 
   return (
@@ -211,40 +237,82 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                     ) : null}
 
                     {/* OpenStreetMap Map */}
-                    {latitude && longitude && (
-                      <EnsembleMapWrapper
-                        latitude={latitude}
-                        longitude={longitude}
-                        locationName={ensemble.location.name}
-                      />
-                    )}
+                    {latitude != null &&
+                      longitude != null &&
+                      !isNaN(latitude) &&
+                      !isNaN(longitude) &&
+                      typeof latitude === "number" &&
+                      typeof longitude === "number" && (
+                        <EnsembleMapWrapper
+                          latitude={latitude}
+                          longitude={longitude}
+                          locationName={ensemble.location.name}
+                        />
+                      )}
                   </div>
                 </div>
               )}
 
               {/* Rehearsal Schedule */}
-              {(ensemble.rehearsalDay || ensemble.rehearsalTime) && (
+              {(ensemble.rehearsalSchedules &&
+                ensemble.rehearsalSchedules.length > 0) ||
+              ensemble.rehearsalDay ||
+              ensemble.rehearsalTime ? (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                     <ClockIcon className="text-primary h-5 w-5" />
                     Probenzeiten
                   </h2>
-                  <div className="space-y-2">
-                    {ensemble.rehearsalDay && (
-                      <p className="text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">Tag:</span>{" "}
-                        {ensemble.rehearsalDay}
-                      </p>
-                    )}
-                    {ensemble.rehearsalTime && (
-                      <p className="text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">Uhrzeit:</span>{" "}
-                        {ensemble.rehearsalTime}
-                      </p>
-                    )}
+                  <div className="space-y-3">
+                    {ensemble.rehearsalSchedules &&
+                      ensemble.rehearsalSchedules.length > 0 &&
+                      ensemble.rehearsalSchedules.map((schedule, index) => (
+                        <div
+                          key={index}
+                          className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3"
+                        >
+                          <div className="flex-1">
+                            <p className="text-gray-700 dark:text-gray-300">
+                              <span className="font-medium">
+                                {schedule.day}
+                              </span>
+                              {schedule.time && (
+                                <>
+                                  {" "}
+                                  um{" "}
+                                  <span className="font-medium">
+                                    {schedule.time}
+                                  </span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    {/* Legacy fallback */}
+                    {(ensemble.rehearsalDay || ensemble.rehearsalTime) &&
+                      (!ensemble.rehearsalSchedules ||
+                        ensemble.rehearsalSchedules.length === 0) && (
+                        <div className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3">
+                          <div className="flex-1">
+                            {ensemble.rehearsalDay && (
+                              <p className="text-gray-700 dark:text-gray-300">
+                                <span className="font-medium">Tag:</span>{" "}
+                                {ensemble.rehearsalDay}
+                              </p>
+                            )}
+                            {ensemble.rehearsalTime && (
+                              <p className="text-gray-700 dark:text-gray-300">
+                                <span className="font-medium">Uhrzeit:</span>{" "}
+                                {ensemble.rehearsalTime}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* Upcoming Concerts */}
               {ensemble.events &&

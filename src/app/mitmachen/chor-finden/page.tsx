@@ -633,7 +633,9 @@ function ChorFindenContent() {
                           </div>
 
                           <div className="mb-4 space-y-2">
-                            {choir.rehearsalDay && choir.rehearsalTime && (
+                            {((choir.rehearsalSchedules &&
+                              choir.rehearsalSchedules.length > 0) ||
+                              (choir.rehearsalDay && choir.rehearsalTime)) && (
                               <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                                 <ClockIcon
                                   className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
@@ -649,8 +651,15 @@ function ChorFindenContent() {
                                   />
                                 </ClockIcon>
                                 <span>
-                                  Proben: {choir.rehearsalDay} um{" "}
-                                  {choir.rehearsalTime} Uhr
+                                  Proben:{" "}
+                                  {choir.rehearsalSchedules &&
+                                  choir.rehearsalSchedules.length > 0
+                                    ? choir.rehearsalSchedules
+                                        .map((s) => `${s.day} ${s.time}`)
+                                        .join(", ")
+                                    : choir.rehearsalDay && choir.rehearsalTime
+                                      ? `${choir.rehearsalDay} um ${choir.rehearsalTime} Uhr`
+                                      : ""}
                                 </span>
                               </div>
                             )}

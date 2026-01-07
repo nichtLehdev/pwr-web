@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -15,7 +14,7 @@ model User {
   firstName     String?
   lastName      String?
   email         String    @unique
-  emailVerified Boolean? @default(false)
+  emailVerified Boolean?  @default(false)
   phone         String?
   street        String?
   zipCode       String?
@@ -29,7 +28,7 @@ model User {
   role        UserRole @default(USER)
   roleType    String?
   displayRole String?
-  obleuteRole String?  // Legacy: "Bezirksobmann" or "Bezirksobfrau" for OBLEUTE users
+  obleuteRole String? // Legacy: "Bezirksobmann" or "Bezirksobfrau" for OBLEUTE users
 
   // Bezirk association (works for all roles - OBLEUTE, RPW, LPW, ADMIN can all have a Bezirk)
   bezirkId String?
@@ -85,8 +84,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
-  @@map("session")
   @@index([userId])
+  @@map("session")
 }
 
 model Account {
@@ -105,8 +104,8 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  @@map("account")
   @@index([userId])
+  @@map("account")
 }
 
 model Verification {
@@ -117,8 +116,8 @@ model Verification {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
-  @@map("verification")
   @@index([identifier])
+  @@map("verification")
 }
 
 // --------- Enums ---------
@@ -268,7 +267,7 @@ model Event {
 
   // Date & Time
   eventDate DateTime
-  cancelled Boolean @default(false)
+  cancelled Boolean  @default(false)
 
   // Location - use new Location model
   locationId String?
@@ -332,9 +331,9 @@ model EventPriceOption {
 }
 
 model EventDownload {
-  id        String   @id @default(uuid())
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   downloadId String
   download   Download @relation(fields: [downloadId], references: [id], onDelete: Cascade)
 
@@ -375,8 +374,8 @@ model Course {
   allowWaitingList     Boolean   @default(false)
 
   // Pricing
-  isFree              Boolean @default(false)
-  priceInfo           String?
+  isFree               Boolean @default(false)
+  priceInfo            String?
   allowSiblingDiscount Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
 
   // Additional Info
@@ -465,7 +464,7 @@ model CourseRegistration {
   registrationStatus RegistrationStatus @default(CONFIRMED)
 
   // Sibling Discount
-  siblingDiscountApplied Boolean              @default(false)
+  siblingDiscountApplied Boolean               @default(false)
   siblingDiscountStatus  SiblingDiscountStatus @default(NONE)
   originalTotalPrice     Float? // Price before discount
   siblingDiscountAmount  Float? // Discount amount (20% for each sibling after first)
@@ -494,13 +493,13 @@ model Participant {
   registrationId String
   registration   CourseRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 
-  firstName    String
-  lastName     String
-  birthDate    DateTime
-  city         String
-  instrument   String?
-  priceOption  String? // Which price option was selected
-  customFields Json? // JSON for custom field values
+  firstName      String
+  lastName       String
+  birthDate      DateTime
+  city           String
+  instrument     String?
+  priceOption    String? // Which price option was selected
+  customFields   Json? // JSON for custom field values
   siblingGroupId String? // Groups siblings together for discount calculation (same ID = siblings)
 
   createdAt DateTime @default(now())
@@ -508,9 +507,9 @@ model Participant {
 }
 
 model SavedParticipant {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation("SavedParticipants", fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("SavedParticipants", fields: [userId], references: [id], onDelete: Cascade)
 
   firstName    String
   lastName     String
@@ -603,7 +602,10 @@ model Ensemble {
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  // Rehearsal schedule
+  // Rehearsal schedules (multiple)
+  rehearsalSchedules RehearsalSchedule[]
+
+  // Legacy fields (deprecated - kept for migration)
   rehearsalDay  String? // e.g., "Montag", "Dienstag", etc.
   rehearsalTime String? // e.g., "19:30", "20:00-21:30"
 
@@ -613,24 +615,38 @@ model Ensemble {
   contactWebsite String?
 
   // Representative (defaults to conductor)
-  representativeId String?
-  representative   User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
+  representativeId   String?
+  representative     User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
   representativeName String? // Custom name if not linked to a user
 
   // Status
   isActive Boolean @default(true)
 
   // Relations
-  conductorId String?
-  conductor   User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  conductorId   String?
+  conductor     User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
   conductorName String? // Custom name if not linked to a user
-  events      Event[]
+  events        Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([bezirkId])
   @@index([isActive])
+}
+
+model RehearsalSchedule {
+  id         String   @id @default(uuid())
+  ensembleId String
+  ensemble   Ensemble @relation(fields: [ensembleId], references: [id], onDelete: Cascade)
+
+  day  String // e.g., "Montag", "Dienstag", "Samstag", etc.
+  time String // e.g., "19:30", "20:00-21:30", "8:00-12:00"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ensembleId])
 }
 
 model AuswahlChor {

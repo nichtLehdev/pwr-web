@@ -59,6 +59,9 @@ export const ensemblesRouter = createTRPCRouter({
                 profileImage: true,
               },
             },
+            rehearsalSchedules: {
+              orderBy: { day: "asc" },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -116,6 +119,9 @@ export const ensemblesRouter = createTRPCRouter({
               },
             },
           },
+          rehearsalSchedules: {
+            orderBy: { day: "asc" },
+          },
         },
       });
 
@@ -154,14 +160,23 @@ export const ensemblesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const { rehearsalSchedules, ...ensembleData } = input;
       const ensemble = await ctx.db.ensemble.create({
-        data: input,
+        data: {
+          ...ensembleData,
+          rehearsalSchedules: rehearsalSchedules
+            ? {
+                create: rehearsalSchedules,
+              }
+            : undefined,
+        },
         include: {
           image: true,
           location: true,
           bezirk: true,
           conductor: true,
           representative: true,
+          rehearsalSchedules: true,
         },
       });
 
@@ -179,6 +194,14 @@ export const ensemblesRouter = createTRPCRouter({
         locationId: z.string().optional().nullable(),
         rehearsalDay: z.string().max(50).optional(),
         rehearsalTime: z.string().max(50).optional(),
+        rehearsalSchedules: z
+          .array(
+            z.object({
+              day: z.string().min(1).max(50),
+              time: z.string().min(1).max(50),
+            }),
+          )
+          .optional(),
         contactEmail: z.string().email().optional().nullable(),
         contactPhone: z
           .string()
@@ -194,7 +217,7 @@ export const ensemblesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, rehearsalSchedules, ...updateData } = input;
 
       const ensemble = await ctx.db.ensemble.findUnique({
         where: { id },
@@ -222,15 +245,30 @@ export const ensemblesRouter = createTRPCRouter({
         });
       }
 
+      // Delete existing rehearsal schedules and create new ones if provided
+      if (rehearsalSchedules !== undefined) {
+        await ctx.db.rehearsalSchedule.deleteMany({
+          where: { ensembleId: id },
+        });
+      }
+
       return await ctx.db.ensemble.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...updateData,
+          ...(rehearsalSchedules !== undefined && {
+            rehearsalSchedules: {
+              create: rehearsalSchedules,
+            },
+          }),
+        },
         include: {
           image: true,
           location: true,
           bezirk: true,
           conductor: true,
           representative: true,
+          rehearsalSchedules: true,
         },
       });
     }),
@@ -261,6 +299,9 @@ export const ensemblesRouter = createTRPCRouter({
               id: true,
               displayName: true,
             },
+          },
+          rehearsalSchedules: {
+            orderBy: { day: "asc" },
           },
         },
         orderBy: { name: "asc" },
