@@ -10,6 +10,7 @@ import {
   UserRole,
   RegistrationStatus,
   PaymentStatus,
+  SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, DownloadIcon, SearchIcon } from "lucide-react";
 import { FileIcon, UserIcon } from "lucide-react";
@@ -39,6 +40,22 @@ const paymentStatusColors: Record<PaymentStatus, string> = {
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
+};
+
+const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
+  NONE: "",
+  PENDING: "Rabatt prüfen",
+  APPROVED: "Rabatt genehmigt",
+  REJECTED: "Rabatt abgelehnt",
+};
+
+const siblingDiscountStatusColors: Record<SiblingDiscountStatus, string> = {
+  NONE: "",
+  PENDING:
+    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  APPROVED:
+    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+  REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -278,6 +295,12 @@ export default function CourseParticipantsPage() {
       .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
+  // Check if there are any registrations with pending sibling discounts
+  const hasPendingDiscounts =
+    registrationsData?.registrations.some(
+      (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
+    ) ?? false;
+
   const handleExport = (format: ExportFormat) => {
     setShowExportMenu(false);
 
@@ -470,7 +493,13 @@ export default function CourseParticipantsPage() {
                           setShowExportMenu(false);
                           setShowBulkInvoiceModal(true);
                         }}
-                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                        disabled={hasPendingDiscounts}
+                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                        title={
+                          hasPendingDiscounts
+                            ? "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen."
+                            : undefined
+                        }
                       >
                         <DownloadIcon
                           className="h-4 w-4 text-blue-600"
@@ -478,6 +507,11 @@ export default function CourseParticipantsPage() {
                         />
                         Alle Rechnungen (ZIP)
                       </button>
+                      {hasPendingDiscounts && (
+                        <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
+                          ⚠️ Es gibt noch ausstehende Geschwisterrabatte
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -764,10 +798,13 @@ export default function CourseParticipantsPage() {
                   {/* Registration Header */}
                   <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="dark:text-dark-text text-lg font-medium text-gray-900">
+                      <Link
+                        href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                        className="dark:text-dark-text hover:text-primary text-lg font-medium text-gray-900 transition-colors"
+                      >
                         {registration.registrantFirstName}{" "}
                         {registration.registrantLastName}
-                      </h3>
+                      </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
                         <a
                           href={`mailto:${registration.registrantEmail}`}
@@ -800,6 +837,19 @@ export default function CourseParticipantsPage() {
                       >
                         {paymentStatusLabels[registration.paymentStatus]}
                       </span>
+                      {registration.siblingDiscountStatus &&
+                        registration.siblingDiscountStatus !==
+                          SiblingDiscountStatus.NONE && (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                          >
+                            {
+                              siblingDiscountStatusLabels[
+                                registration.siblingDiscountStatus
+                              ]
+                            }
+                          </span>
+                        )}
                     </div>
                   </div>
 

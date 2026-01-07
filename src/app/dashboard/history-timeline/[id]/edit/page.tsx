@@ -158,14 +158,6 @@ export default function EditHistoryEventPage() {
     );
   }
 
-  const categoryLabels: Record<string, string> = {
-    FOUNDING: "Gründung",
-    MILESTONE: "Meilenstein",
-    EXPANSION: "Erweiterung",
-    MODERNIZATION: "Modernisierung",
-    PARTNERSHIP: "Partnerschaft",
-  };
-
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">

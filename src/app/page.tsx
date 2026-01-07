@@ -78,7 +78,6 @@ export default function Home() {
                   category={event.category}
                   district={event.bezirk?.number}
                   cancelled={event.cancelled}
-                  coverImageUrl={event.coverImage?.url}
                 />
               ))}
             </div>

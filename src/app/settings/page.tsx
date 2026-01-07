@@ -11,7 +11,7 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useTheme } from "@/app/_components/general/theme-provider";
 import {
   ChevronDown,
-  Image,
+  ImageIcon,
   User,
   Key,
   MapPin,
@@ -292,7 +292,7 @@ export default function SettingsPage() {
             <CollapsibleSection
               title="Profilbild"
               defaultOpen={true}
-              icon={<Image className="h-5 w-5" />}
+              icon={<ImageIcon className="h-5 w-5" />}
             >
               <ProfileImageUpload
                 currentImage={profile?.profileImage}

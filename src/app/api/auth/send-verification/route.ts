@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
       { success: true, message: "Verifizierungs-E-Mail wurde gesendet." },
       { status: 200 },
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         success: false,

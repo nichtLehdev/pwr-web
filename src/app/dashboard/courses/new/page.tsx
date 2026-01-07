@@ -116,6 +116,7 @@ export default function NewCoursePage() {
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [allowWaitingList, setAllowWaitingList] = useState(false);
+  const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
 
   const [isFree, setIsFree] = useState(false);
   const [priceInfo, setPriceInfo] = useState("");
@@ -405,6 +406,7 @@ export default function NewCoursePage() {
       maxParticipants,
       registrationOpen,
       allowWaitingList,
+      allowSiblingDiscount: isHigherRole ? allowSiblingDiscount : false,
       isFree,
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
@@ -979,6 +981,24 @@ export default function NewCoursePage() {
                     Warteliste erlauben
                   </span>
                 </label>
+
+                {/* Sibling Discount - Only for LPW/Admin */}
+                {isHigherRole && (
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={allowSiblingDiscount}
+                      onChange={(e) =>
+                        setAllowSiblingDiscount(e.target.checked)
+                      }
+                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="dark:text-dark-text text-sm text-gray-700">
+                      Geschwisterrabatt erlauben (20% für Geschwister ab dem
+                      zweiten Kind)
+                    </span>
+                  </label>
+                )}
               </div>
             </div>
           </section>

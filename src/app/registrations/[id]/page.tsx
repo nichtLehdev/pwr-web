@@ -13,11 +13,9 @@ import {
   BuildingIcon,
   CalendarIcon,
   CircleXIcon,
-  Edit,
   EditIcon,
   PencilIcon,
   UsersIcon,
-  X,
 } from "lucide-react";
 import { UserIcon } from "lucide-react";
 
@@ -37,6 +35,29 @@ export default function ViewRegistrationPage() {
       { id: registrationId },
       { enabled: !!registrationId },
     );
+
+  const getParticipantDisplayName = (
+    firstName: string,
+    lastName: string,
+    participantId?: string,
+  ) => {
+    if (!registration?.participants) return `${firstName} ${lastName}`;
+
+    // Check if there are other participants with the same first name and first letter of last name
+    const firstLetter = lastName.charAt(0).toUpperCase();
+    const hasDuplicate = registration.participants.some(
+      (p) =>
+        p.id !== participantId &&
+        p.firstName === firstName &&
+        p.lastName.charAt(0).toUpperCase() === firstLetter,
+    );
+
+    // If there's a duplicate, show full name, otherwise show first name + first letter
+    if (hasDuplicate) {
+      return `${firstName} ${lastName}`;
+    }
+    return `${firstName} ${firstLetter}.`;
+  };
 
   const cancelMutation = api.registrations.cancel.useMutation({
     onSuccess: () => {
@@ -393,76 +414,176 @@ export default function ViewRegistrationPage() {
             </h2>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {registration.participants.map((participant, index) => (
-              <div key={participant.id} className="p-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-dark dark:text-dark-text font-semibold">
-                    {participant.firstName} {participant.lastName}
-                  </h3>
-                  <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                    #{index + 1}
-                  </span>
-                </div>
-                <div className="grid gap-4 text-sm md:grid-cols-2">
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      Geburtsdatum:
+            {registration.participants.map((participant, index) => {
+              const siblingGroup = registration.participants.filter(
+                (p) =>
+                  p.siblingGroupId &&
+                  p.siblingGroupId === participant.siblingGroupId,
+              );
+              const isInGroup = siblingGroup.length > 1;
+              const groupMembers = siblingGroup
+                .map((p) => {
+                  const idx = registration.participants.indexOf(p);
+                  return idx !== index ? idx + 1 : null;
+                })
+                .filter((idx) => idx !== null);
+
+              return (
+                <div
+                  key={participant.id}
+                  className={`p-6 ${
+                    isInGroup ? "bg-green-50 dark:bg-green-900/10" : ""
+                  }`}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-dark dark:text-dark-text font-semibold">
+                        {participant.firstName} {participant.lastName}
+                      </h3>
+                      {isInGroup && (
+                        <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium text-white dark:bg-green-700">
+                          Geschwistergruppe
+                        </span>
+                      )}
+                    </div>
+                    <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {getParticipantDisplayName(
+                        participant.firstName,
+                        participant.lastName,
+                        participant.id,
+                      )}
                     </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {formatDate(participant.birthDate)}
-                    </p>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">
-                      Wohnort:
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {participant.city}
-                    </p>
-                  </div>
-                  {participant.instrument && (
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Instrument:
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {participant.instrument}
-                      </p>
+                  {isInGroup && groupMembers.length > 0 && (
+                    <div className="mb-3 text-xs text-green-700 dark:text-green-400">
+                      Geschwister mit:{" "}
+                      {siblingGroup
+                        .filter((p) => p.id !== participant.id)
+                        .map((p) =>
+                          getParticipantDisplayName(
+                            p.firstName,
+                            p.lastName,
+                            p.id,
+                          ),
+                        )
+                        .join(", ")}
                     </div>
                   )}
-                  {participant.priceOption && (
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Preisoption:
+                        Geburtsdatum:
                       </span>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {participant.priceOption}
+                        {formatDate(participant.birthDate)}
                       </p>
                     </div>
-                  )}
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        Wohnort:
+                      </span>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {participant.city}
+                      </p>
+                    </div>
+                    {participant.instrument && (
+                      <div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Instrument:
+                        </span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {participant.instrument}
+                        </p>
+                      </div>
+                    )}
+                    {participant.priceOption && (
+                      <div>
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Preisoption:
+                        </span>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          {participant.priceOption}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {/* Price Summary */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                Gesamtpreis
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {registration.participants.length} Teilnehmer
-                {registration.participants.length !== 1 && ""}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-primary text-3xl font-bold">
-                {registration.totalPrice.toFixed(2)} €
-              </p>
-            </div>
+          <div>
+            <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+              Preisübersicht
+            </h2>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              {registration.participants.length} Teilnehmer
+              {registration.participants.length !== 1 && ""}
+            </p>
+            {registration.siblingDiscountApplied &&
+            registration.originalTotalPrice &&
+            registration.siblingDiscountAmount ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Zwischensumme
+                  </span>
+                  <span className="text-gray-900 dark:text-gray-100">
+                    {registration.originalTotalPrice.toFixed(2)} €
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
+                  <span className="text-green-600 dark:text-green-400">
+                    Geschwisterrabatt (20%)
+                  </span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    -{registration.siblingDiscountAmount.toFixed(2)} €
+                  </span>
+                </div>
+                {registration.siblingDiscountStatus === "PENDING" && (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                    <p className="text-sm text-orange-700 dark:text-orange-300">
+                      ⏳ Ihr Rabattantrag wird derzeit geprüft. Sie erhalten
+                      eine Benachrichtigung, sobald eine Entscheidung getroffen
+                      wurde.
+                    </p>
+                  </div>
+                )}
+                {registration.siblingDiscountStatus === "APPROVED" && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+                    <p className="text-sm text-green-700 dark:text-green-300">
+                      ✓ Ihr Rabattantrag wurde genehmigt.
+                    </p>
+                  </div>
+                )}
+                {registration.siblingDiscountStatus === "REJECTED" && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      ✗ Ihr Rabattantrag wurde leider abgelehnt. Der Preis wurde
+                      auf den vollen Betrag angepasst.
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t-2 border-gray-300 pt-3 dark:border-gray-600">
+                  <span className="text-dark dark:text-dark-text text-lg font-semibold">
+                    Gesamtpreis
+                  </span>
+                  <span className="text-primary text-3xl font-bold">
+                    {registration.totalPrice.toFixed(2)} €
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <span className="text-gray-600 dark:text-gray-400">Betrag</span>
+                <span className="text-primary text-3xl font-bold">
+                  {registration.totalPrice.toFixed(2)} €
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

@@ -62,7 +62,7 @@ export async function verifyEmailConnection() {
   try {
     await transporter.verify();
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

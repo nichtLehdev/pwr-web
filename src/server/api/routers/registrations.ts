@@ -10,10 +10,15 @@ import {
   PaymentStatus,
   RegistrationStatus,
   UserRole,
+  SiblingDiscountStatus,
 } from "~/generated/prisma/client";
 import {
   sendCourseRegistrationConfirmedEmail,
   sendCourseRegistrationWaitlistEmail,
+  sendCourseRegistrationPendingDiscountEmail,
+  sendCourseRegistrationCancelledEmail,
+  sendSiblingDiscountApprovedEmail,
+  sendSiblingDiscountRejectedEmail,
   isEmailConfigured,
 } from "@/server/email";
 
@@ -42,6 +47,7 @@ export const registrationsRouter = createTRPCRouter({
         billingCity: z.string().max(100).optional(),
         billingEmail: z.email().optional(),
         notes: z.string().max(2000).optional(),
+        siblingDiscountApplied: z.boolean().optional().default(false),
         participants: z.array(
           z.object({
             firstName: z.string().min(1).max(100),
@@ -53,6 +59,7 @@ export const registrationsRouter = createTRPCRouter({
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
             customFields: z.record(z.string(), z.any()).optional(),
+            siblingGroupId: z.string().optional(), // Groups siblings together for discount
           }),
         ),
       }),
@@ -110,6 +117,14 @@ export const registrationsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Registration deadline has passed",
+        });
+      }
+
+      // Validate sibling discount eligibility
+      if (input.siblingDiscountApplied && !course.allowSiblingDiscount) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Sibling discount is not available for this course",
         });
       }
 
@@ -173,12 +188,68 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Count actual participants from confirmed registrations, not just registrations
+      // Calculate sibling discount if applied
+      // Discount is calculated per sibling group (family), not per registration
+      const originalTotalPrice = totalPrice;
+      let siblingDiscountAmount = 0;
+      let siblingDiscountStatus: SiblingDiscountStatus =
+        SiblingDiscountStatus.NONE;
+
+      if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
+        // Group participants by siblingGroupId
+        const siblingGroups = new Map<string, typeof participants>();
+        const soloParticipants: typeof participants = [];
+
+        for (const participant of participants) {
+          if (participant.siblingGroupId) {
+            if (!siblingGroups.has(participant.siblingGroupId)) {
+              siblingGroups.set(participant.siblingGroupId, []);
+            }
+            siblingGroups.get(participant.siblingGroupId)?.push(participant);
+          } else {
+            soloParticipants.push(participant);
+          }
+        }
+
+        // Calculate discount for each sibling group
+        // 20% discount for each sibling after the first in each group
+        for (const [, groupParticipants] of siblingGroups) {
+          if (groupParticipants.length > 1) {
+            // Sort to ensure consistent ordering (first participant = no discount)
+            // Calculate discount for siblings after the first
+            for (let i = 1; i < groupParticipants.length; i++) {
+              const participant = groupParticipants[i];
+              if (participant) {
+                const priceOption = course.priceOptions.find(
+                  (p) => p.id === participant.priceOptionId,
+                );
+                if (priceOption) {
+                  // 20% discount for this sibling
+                  siblingDiscountAmount += priceOption.price * 0.2;
+                }
+              }
+            }
+          }
+        }
+
+        if (siblingDiscountAmount > 0) {
+          totalPrice = originalTotalPrice - siblingDiscountAmount;
+          siblingDiscountStatus = SiblingDiscountStatus.PENDING;
+        }
+      }
+
+      // Count actual participants from confirmed registrations AND registrations with pending discount
+      // This ensures spots are reserved even if discount is pending review
       const currentParticipantsCount = await ctx.db.participant.count({
         where: {
           registration: {
             courseId: input.courseId,
-            registrationStatus: RegistrationStatus.CONFIRMED,
+            OR: [
+              { registrationStatus: RegistrationStatus.CONFIRMED },
+              {
+                siblingDiscountStatus: SiblingDiscountStatus.PENDING,
+              },
+            ],
           },
         },
       });
@@ -219,14 +290,26 @@ export const registrationsRouter = createTRPCRouter({
       const registration = await ctx.db.courseRegistration.create({
         data: {
           ...registrationData,
-          totalPrice, // Use server-calculated price
+          totalPrice, // Use server-calculated price (after discount if applied)
+          originalTotalPrice:
+            input.siblingDiscountApplied && siblingDiscountAmount > 0
+              ? originalTotalPrice
+              : null,
+          siblingDiscountAmount:
+            input.siblingDiscountApplied && siblingDiscountAmount > 0
+              ? siblingDiscountAmount
+              : null,
+          siblingDiscountApplied: input.siblingDiscountApplied ?? false,
+          siblingDiscountStatus,
           registrationStatus,
           participants: {
             create: participantsWithPriceOptions.map((participant) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { priceOptionId, ...participantData } = participant;
               return {
                 ...participantData,
                 customFields: participantData.customFields || {},
+                siblingGroupId: participant.siblingGroupId || null,
               };
             }),
           },
@@ -246,7 +329,26 @@ export const registrationsRouter = createTRPCRouter({
       // Send confirmation email
       if (isEmailConfigured()) {
         try {
-          if (registrationStatus === RegistrationStatus.CONFIRMED) {
+          // If discount is pending, send special email
+          if (
+            siblingDiscountStatus === SiblingDiscountStatus.PENDING &&
+            originalTotalPrice &&
+            siblingDiscountAmount
+          ) {
+            await sendCourseRegistrationPendingDiscountEmail(
+              registration.registrantEmail,
+              registration.registrantFirstName,
+              registration.registrantLastName,
+              registration.course.title,
+              registration.course.startDate,
+              registration.course.endDate,
+              originalTotalPrice,
+              siblingDiscountAmount,
+              totalPrice,
+              registration.participants.length,
+              registration.id,
+            );
+          } else if (registrationStatus === RegistrationStatus.CONFIRMED) {
             await sendCourseRegistrationConfirmedEmail(
               registration.registrantEmail,
               registration.registrantFirstName,
@@ -297,6 +399,7 @@ export const registrationsRouter = createTRPCRouter({
               registrationOpen: true,
               maxParticipants: true,
               allowWaitingList: true,
+              allowSiblingDiscount: true,
               priceOptions: {
                 select: {
                   id: true,
@@ -353,7 +456,7 @@ export const registrationsRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-        status: z.nativeEnum(RegistrationStatus).optional(),
+        status: z.enum(RegistrationStatus).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -377,6 +480,7 @@ export const registrationsRouter = createTRPCRouter({
                 registrationOpen: true,
                 maxParticipants: true,
                 allowWaitingList: true,
+                allowSiblingDiscount: true,
                 priceOptions: {
                   select: {
                     id: true,
@@ -426,7 +530,7 @@ export const registrationsRouter = createTRPCRouter({
         billingStreet: z.string().max(200).optional(),
         billingZipCode: z.string().max(20).optional(),
         billingCity: z.string().max(100).optional(),
-        billingEmail: z.string().email().optional(),
+        billingEmail: z.email().optional(),
         notes: z.string().max(2000).optional(),
         participants: z.array(
           z.object({
@@ -440,8 +544,10 @@ export const registrationsRouter = createTRPCRouter({
             instrument: z.string().max(100).optional(),
             priceOptionId: z.string().min(1),
             customFields: z.record(z.string(), z.any()).optional(),
+            siblingGroupId: z.string().optional(),
           }),
         ),
+        siblingDiscountApplied: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -502,7 +608,7 @@ export const registrationsRouter = createTRPCRouter({
       const course = registration.course;
 
       // Calculate total price server-side and validate
-      let totalPrice = 0;
+      let originalTotalPrice = 0;
       const participantsWithPriceOptions = [];
 
       for (const participant of participants) {
@@ -517,13 +623,66 @@ export const registrationsRouter = createTRPCRouter({
           });
         }
 
-        totalPrice += priceOption.price;
+        originalTotalPrice += priceOption.price;
 
         // Store participant with price option label for database
         participantsWithPriceOptions.push({
           ...participant,
           priceOption: priceOption.label,
         });
+      }
+
+      // Calculate sibling discount if applicable
+      let totalPrice = originalTotalPrice;
+      let siblingDiscountAmount = 0;
+      let siblingDiscountStatus = registration.siblingDiscountStatus;
+
+      if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
+        // Group participants by siblingGroupId
+        const siblingGroups = new Map<string, typeof participants>();
+        for (const participant of participants) {
+          if (participant.siblingGroupId) {
+            if (!siblingGroups.has(participant.siblingGroupId)) {
+              siblingGroups.set(participant.siblingGroupId, []);
+            }
+            siblingGroups.get(participant.siblingGroupId)?.push(participant);
+          }
+        }
+
+        // Calculate discount for each sibling group (20% for each sibling after the first)
+        for (const [, groupParticipants] of siblingGroups) {
+          if (groupParticipants.length > 1) {
+            for (let i = 1; i < groupParticipants.length; i++) {
+              const participant = groupParticipants[i];
+              if (participant) {
+                const priceOption = course.priceOptions.find(
+                  (p) => p.id === participant.priceOptionId,
+                );
+                if (priceOption) {
+                  siblingDiscountAmount += priceOption.price * 0.2;
+                }
+              }
+            }
+          }
+        }
+
+        if (siblingDiscountAmount > 0) {
+          totalPrice = originalTotalPrice - siblingDiscountAmount;
+          // Only set to PENDING if it wasn't already approved/rejected
+          if (siblingDiscountStatus === "NONE") {
+            siblingDiscountStatus = SiblingDiscountStatus.PENDING;
+          }
+        } else {
+          // No discount, reset status
+          siblingDiscountStatus = SiblingDiscountStatus.NONE;
+          siblingDiscountAmount = 0;
+          originalTotalPrice = 0;
+        }
+      } else {
+        // Discount not applied, reset
+        siblingDiscountStatus = SiblingDiscountStatus.NONE;
+        siblingDiscountAmount = 0;
+        originalTotalPrice = 0;
       }
 
       const currentParticipantsExcludingThis = await ctx.db.participant.count({
@@ -605,7 +764,7 @@ export const registrationsRouter = createTRPCRouter({
       for (const participant of participantsWithPriceOptions) {
         const {
           id: participantId,
-          priceOptionId,
+          siblingGroupId,
           ...participantData
         } = participant;
 
@@ -615,6 +774,7 @@ export const registrationsRouter = createTRPCRouter({
             data: {
               ...participantData,
               customFields: participantData.customFields ?? {},
+              siblingGroupId: siblingGroupId ?? null,
             },
           });
         } else {
@@ -622,6 +782,7 @@ export const registrationsRouter = createTRPCRouter({
             data: {
               ...participantData,
               customFields: participantData.customFields ?? {},
+              siblingGroupId: siblingGroupId ?? null,
               registrationId: id,
             },
           });
@@ -633,6 +794,13 @@ export const registrationsRouter = createTRPCRouter({
         data: {
           ...registrationData,
           totalPrice, // Use server-calculated price
+          siblingDiscountApplied:
+            input.siblingDiscountApplied ?? registration.siblingDiscountApplied,
+          siblingDiscountStatus,
+          originalTotalPrice:
+            siblingDiscountAmount > 0 ? originalTotalPrice : null,
+          siblingDiscountAmount:
+            siblingDiscountAmount > 0 ? siblingDiscountAmount : null,
         },
         include: {
           participants: true,
@@ -807,9 +975,21 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      let registration;
+
       if (ctx.session) {
-        const registration = await ctx.db.courseRegistration.findUnique({
+        registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
+          include: {
+            participants: true,
+            course: {
+              select: {
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
+          },
         });
         if (!registration) {
           throw new TRPCError({
@@ -827,38 +1007,77 @@ export const registrationsRouter = createTRPCRouter({
             message: "Cannot cancel registration of another user",
           });
         }
-        return await ctx.db.courseRegistration.update({
+      } else {
+        registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
-          data: {
-            registrationStatus: RegistrationStatus.CANCELLED,
+          include: {
+            participants: true,
+            course: {
+              select: {
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
+            },
           },
         });
+
+        if (!registration) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Registration not found",
+          });
+        }
+
+        if (registration.registrantEmail !== input.email) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Email does not match registration",
+          });
+        }
       }
 
-      const registration = await ctx.db.courseRegistration.findUnique({
-        where: { id: input.id },
-      });
+      // Only send email if registration is not already cancelled
+      const wasAlreadyCancelled =
+        registration.registrationStatus === RegistrationStatus.CANCELLED;
 
-      if (!registration) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Registration not found",
-        });
-      }
-
-      if (registration.registrantEmail !== input.email) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Email does not match registration",
-        });
-      }
-
-      return await ctx.db.courseRegistration.update({
+      const updated = await ctx.db.courseRegistration.update({
         where: { id: input.id },
         data: {
           registrationStatus: RegistrationStatus.CANCELLED,
         },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
       });
+
+      // Send cancellation email if not already cancelled
+      if (isEmailConfigured() && !wasAlreadyCancelled) {
+        try {
+          await sendCourseRegistrationCancelledEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          // Log error but don't fail the cancellation
+          console.error("Failed to send cancellation email:", error);
+        }
+      }
+
+      return updated;
     }),
 
   delete: lpwProcedure
@@ -953,5 +1172,236 @@ export const registrationsRouter = createTRPCRouter({
         paidCount,
         pendingPayment,
       };
+    }),
+
+  approveSiblingDiscount: lpwProcedure
+    .input(
+      z.object({
+        registrationId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: { course: true },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration does not have a pending sibling discount",
+        });
+      }
+
+      // Update registration: approve discount and confirm if not already confirmed
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
+          registrationStatus: RegistrationStatus.CONFIRMED,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      // Send discount approval email
+      if (
+        isEmailConfigured() &&
+        updated.originalTotalPrice &&
+        updated.siblingDiscountAmount
+      ) {
+        try {
+          await sendSiblingDiscountApprovedEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            updated.originalTotalPrice,
+            updated.siblingDiscountAmount,
+            updated.totalPrice,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          console.error("Failed to send discount approval email:", error);
+        }
+      }
+
+      return updated;
+    }),
+
+  rejectSiblingDiscount: lpwProcedure
+    .input(
+      z.object({
+        registrationId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: { course: true },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.PENDING
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration does not have a pending sibling discount",
+        });
+      }
+
+      // Reject discount: remove discount, restore original price, keep registration status
+      const originalPrice =
+        registration.originalTotalPrice ?? registration.totalPrice;
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountStatus: SiblingDiscountStatus.REJECTED,
+          totalPrice: originalPrice,
+          siblingDiscountAmount: null,
+          originalTotalPrice: null,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      // Send discount rejection email
+      if (isEmailConfigured()) {
+        try {
+          await sendSiblingDiscountRejectedEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            originalPrice,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          console.error("Failed to send discount rejection email:", error);
+        }
+      }
+
+      return updated;
+    }),
+
+  confirmAtFullPrice: protectedProcedure
+    .input(
+      z.object({
+        registrationId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: {
+          course: true,
+        },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      // Check if user owns this registration
+      if (registration.registrantEmail !== ctx.session.user.email) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only confirm your own registrations",
+        });
+      }
+
+      // Check if discount was rejected
+      if (
+        registration.siblingDiscountStatus !== SiblingDiscountStatus.REJECTED
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Registration does not have a rejected discount",
+        });
+      }
+
+      // Update registration: remove discount, confirm registration
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountStatus: SiblingDiscountStatus.NONE,
+          siblingDiscountApplied: false,
+          siblingDiscountAmount: null,
+          originalTotalPrice: null,
+          registrationStatus: RegistrationStatus.CONFIRMED,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      // Send confirmation email
+      if (isEmailConfigured()) {
+        try {
+          await sendCourseRegistrationConfirmedEmail(
+            updated.registrantEmail,
+            updated.registrantFirstName,
+            updated.registrantLastName,
+            updated.course.title,
+            updated.course.startDate,
+            updated.course.endDate,
+            updated.totalPrice,
+            updated.participants.length,
+            updated.id,
+          );
+        } catch (error) {
+          console.error("Failed to send confirmation email:", error);
+        }
+      }
+
+      return updated;
     }),
 });

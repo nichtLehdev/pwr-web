@@ -5,12 +5,9 @@ import {
   Container,
   Section,
   Text,
-  Button,
   Hr,
-  Img,
   Link,
 } from "@react-email/components";
-import * as React from "react";
 import { marked } from "marked";
 
 marked.use({
@@ -19,14 +16,12 @@ marked.use({
 });
 
 interface NewsletterEmailProps {
-  subject: string;
   content: string; // HTML content
   unsubscribeUrl: string;
   subscriberName?: string;
 }
 
 export function NewsletterEmail({
-  subject,
   content,
   unsubscribeUrl,
   subscriberName,

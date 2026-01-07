@@ -7,41 +7,33 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
+import * as React from "react";
 
-interface CourseRegistrationConfirmedProps {
+interface CourseRegistrationCancelledProps {
   registrantFirstName: string;
   registrantLastName: string;
   courseTitle: string;
   startDate: Date;
   endDate: Date;
-  totalPrice: number;
   participantsCount: number;
   registrationId: string;
 }
 
-export function CourseRegistrationConfirmed({
+export function CourseRegistrationCancelled({
   registrantFirstName,
   registrantLastName,
   courseTitle,
   startDate,
   endDate,
-  totalPrice,
   participantsCount,
   registrationId,
-}: CourseRegistrationConfirmedProps) {
+}: CourseRegistrationCancelledProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     }).format(date);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
   };
 
   return (
@@ -58,15 +50,15 @@ export function CourseRegistrationConfirmed({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Anmeldung bestätigt</Text>
+            <Text style={heading}>Anmeldung storniert</Text>
 
             <Text style={paragraph}>
               Hallo {registrantFirstName} {registrantLastName},
             </Text>
 
             <Text style={paragraph}>
-              vielen Dank für deine Anmeldung! Deine Anmeldung für den folgenden
-              Kurs wurde erfolgreich bestätigt:
+              deine Anmeldung für den folgenden Kurs wurde erfolgreich
+              storniert:
             </Text>
 
             <Section style={courseInfo}>
@@ -81,8 +73,16 @@ export function CourseRegistrationConfirmed({
                 <strong>Teilnehmer:</strong> {participantsCount}{" "}
                 {participantsCount === 1 ? "Person" : "Personen"}
               </Text>
-              <Text style={courseDetail}>
-                <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
+            </Section>
+
+            <Hr style={hr} />
+
+            <Section style={infoBox}>
+              <Text style={infoBoxTitle}>ℹ️ Wichtige Informationen</Text>
+              <Text style={infoBoxText}>
+                Deine Anmeldung wurde vollständig storniert. Falls bereits eine
+                Zahlung erfolgt ist, wende dich bitte an uns, um die
+                Rückerstattung zu klären.
               </Text>
             </Section>
 
@@ -99,7 +99,6 @@ export function CourseRegistrationConfirmed({
             <Hr style={hr} />
 
             <Text style={paragraph}>
-              Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail.
               Bei Fragen kannst du dich gerne an uns wenden.
             </Text>
 
@@ -203,6 +202,28 @@ const courseDetail = {
 const hr = {
   borderColor: "#e5e7eb",
   margin: "32px 0",
+};
+
+const infoBox = {
+  backgroundColor: "#eff6ff",
+  padding: "16px",
+  borderRadius: "8px",
+  margin: "24px 0",
+  border: "2px solid #3b82f6",
+};
+
+const infoBoxTitle = {
+  fontSize: "16px",
+  fontWeight: "bold",
+  color: "#1e40af",
+  marginBottom: "8px",
+};
+
+const infoBoxText = {
+  fontSize: "14px",
+  lineHeight: "20px",
+  color: "#1e3a8a",
+  margin: "0",
 };
 
 const betaWarning = {
