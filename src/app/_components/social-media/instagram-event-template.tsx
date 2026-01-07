@@ -116,6 +116,7 @@ export default function InstagramEventTemplate({
       {/* Image Section - larger and more prominent */}
       {imageUrl && imageAlt ? (
         <div className="relative h-[540px] w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl || ""}
             alt={imageAlt}
@@ -293,6 +294,7 @@ export default function InstagramEventTemplate({
         >
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logo-icon.svg"
                 alt="Logo"

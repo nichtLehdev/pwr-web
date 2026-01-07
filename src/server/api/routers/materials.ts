@@ -420,6 +420,7 @@ export const materialsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.downloads.map(async (downloadData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = downloadData;
           return await ctx.db.download.create({
             data: {
@@ -489,6 +490,7 @@ export const materialsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.blaeserhefte.map(async (heftData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = heftData;
           return await ctx.db.blaeserheft.create({
             data: {

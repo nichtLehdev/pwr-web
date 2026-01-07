@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { TRPCError } from "@trpc/server";
 
 export async function POST(request: NextRequest) {
   try {

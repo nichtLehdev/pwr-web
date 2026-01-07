@@ -8,7 +8,7 @@ import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
 import SocialMediaExportModal from "../../_components/social-media/social-media-export-modal";
 import { UserRole } from "~/generated/prisma/enums";
-import { ImageIcon, InstagramIcon, Plus } from "lucide-react";
+import { InstagramIcon, Plus } from "lucide-react";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,

@@ -151,28 +151,11 @@ export default function CourseParticipantsPage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  const {
-    data: registrationsData,
-    isLoading: registrationsLoading,
-    refetch: refetchRegistrations,
-  } = api.courses.getRegistrations.useQuery(
-    { courseId, page: 1, limit: 100 },
-    { enabled: !!courseId && !!session?.user },
-  );
-
-  const approveDiscountMutation =
-    api.registrations.approveSiblingDiscount.useMutation({
-      onSuccess: () => {
-        void refetchRegistrations();
-      },
-    });
-
-  const rejectDiscountMutation =
-    api.registrations.rejectSiblingDiscount.useMutation({
-      onSuccess: () => {
-        void refetchRegistrations();
-      },
-    });
+  const { data: registrationsData, isLoading: registrationsLoading } =
+    api.courses.getRegistrations.useQuery(
+      { courseId, page: 1, limit: 100 },
+      { enabled: !!courseId && !!session?.user },
+    );
 
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {

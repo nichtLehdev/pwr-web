@@ -101,8 +101,9 @@ export const auth = betterAuth({
         verificationUrl = token
           ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
           : url; // Fallback to original URL if token not found
-      } catch (error) {
+      } catch {
         // If URL parsing fails, use original URL
+        verificationUrl = url;
       }
 
       await sendVerificationEmail(

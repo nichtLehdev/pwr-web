@@ -440,6 +440,7 @@ export const mediaRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.media.map(async (mediaData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = mediaData;
           return await ctx.db.media.create({
             data: {

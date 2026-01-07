@@ -190,7 +190,7 @@ export const registrationsRouter = createTRPCRouter({
 
       // Calculate sibling discount if applied
       // Discount is calculated per sibling group (family), not per registration
-      let originalTotalPrice = totalPrice;
+      const originalTotalPrice = totalPrice;
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus: SiblingDiscountStatus =
         SiblingDiscountStatus.NONE;
@@ -213,7 +213,7 @@ export const registrationsRouter = createTRPCRouter({
 
         // Calculate discount for each sibling group
         // 20% discount for each sibling after the first in each group
-        for (const [groupId, groupParticipants] of siblingGroups) {
+        for (const [, groupParticipants] of siblingGroups) {
           if (groupParticipants.length > 1) {
             // Sort to ensure consistent ordering (first participant = no discount)
             // Calculate discount for siblings after the first
@@ -304,6 +304,7 @@ export const registrationsRouter = createTRPCRouter({
           registrationStatus,
           participants: {
             create: participantsWithPriceOptions.map((participant) => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { priceOptionId, ...participantData } = participant;
               return {
                 ...participantData,
@@ -455,7 +456,7 @@ export const registrationsRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-        status: z.nativeEnum(RegistrationStatus).optional(),
+        status: z.enum(RegistrationStatus).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -529,7 +530,7 @@ export const registrationsRouter = createTRPCRouter({
         billingStreet: z.string().max(200).optional(),
         billingZipCode: z.string().max(20).optional(),
         billingCity: z.string().max(100).optional(),
-        billingEmail: z.string().email().optional(),
+        billingEmail: z.email().optional(),
         notes: z.string().max(2000).optional(),
         participants: z.array(
           z.object({
@@ -763,8 +764,6 @@ export const registrationsRouter = createTRPCRouter({
       for (const participant of participantsWithPriceOptions) {
         const {
           id: participantId,
-          priceOptionId,
-          priceOption,
           siblingGroupId,
           ...participantData
         } = participant;

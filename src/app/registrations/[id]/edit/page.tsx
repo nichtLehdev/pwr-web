@@ -9,7 +9,6 @@ import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
-  ArrowLeftIcon,
   CircleXIcon,
   PlusIcon,
   TrashIcon,
@@ -128,7 +127,9 @@ export default function EditRegistrationPage() {
           const priceOption = registration.course.priceOptions.find(
             (po) => po.label === p.priceOption,
           );
-          const { priceOption: _, ...participantWithoutLabel } = p;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { priceOption: priceOptionLabel, ...participantWithoutLabel } =
+            p;
           return {
             ...participantWithoutLabel,
             birthDate: new Date(p.birthDate),
@@ -1070,11 +1071,7 @@ export default function EditRegistrationPage() {
                             <div className="flex flex-wrap items-center gap-2">
                               {activeParticipants
                                 .filter((p) => p.id !== participant.id)
-                                .map((otherParticipant) => {
-                                  const otherIndex =
-                                    activeParticipants.indexOf(
-                                      otherParticipant,
-                                    );
+                                .map((otherParticipant) => { 
                                   const isLinked =
                                     participant.siblingGroupId &&
                                     participant.siblingGroupId ===

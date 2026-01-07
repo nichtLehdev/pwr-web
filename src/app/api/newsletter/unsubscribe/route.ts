@@ -4,7 +4,7 @@ import { db } from "@/server/db";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, token } = body;
+    const { email } = body;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(

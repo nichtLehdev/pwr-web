@@ -953,6 +953,7 @@ export const postsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.posts.map(async (postData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, ...data } = postData;
           return await ctx.db.post.create({
             data: {

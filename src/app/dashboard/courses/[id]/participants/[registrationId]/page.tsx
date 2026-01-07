@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -88,7 +88,6 @@ function getCustomFieldValue(
 
 export default function RegistrationDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const courseId = params.id as string;
   const registrationId = params.registrationId as string;
   const { data: session, isPending: sessionLoading } = useSession();
@@ -439,7 +438,7 @@ export default function RegistrationDetailPage() {
             </h2>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {registration.participants.map((participant, index) => {
+            {registration.participants.map((participant) => {
               const siblingGroup = registration.participants.filter(
                 (p) =>
                   p.siblingGroupId &&

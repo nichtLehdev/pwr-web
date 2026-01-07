@@ -1280,6 +1280,7 @@ export const coursesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const results = await Promise.all(
         input.courses.map(async (courseData) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { originalId, coverImageId, ...data } = courseData;
           return await ctx.db.course.create({
             data: {

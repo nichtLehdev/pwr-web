@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn, signUp } from "@/lib/auth";
+import { signUp } from "@/lib/auth";
 import { api } from "@/trpc/react";
 
 export default function RegisterPage() {
@@ -176,7 +176,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const signUpResult = await signUp.email({
+      await signUp.email({
         email: formData.email,
         password: formData.password,
         name: `${formData.firstName} ${formData.lastName}`.trim(),

@@ -3,7 +3,6 @@ import { sendEmail } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
-import { NewsletterEmail } from "./templates/newsletter";
 import { SiblingDiscountApproved } from "./templates/sibling-discount-approved";
 import { SiblingDiscountRejected } from "./templates/sibling-discount-rejected";
 import { CourseRegistrationPendingDiscount } from "./templates/course-registration-pending-discount";

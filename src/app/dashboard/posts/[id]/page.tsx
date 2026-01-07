@@ -14,7 +14,6 @@ import {
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
 import {
-  Star,
   Edit,
   Trash2,
   PinIcon,

@@ -7,7 +7,6 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
-import * as React from "react";
 
 interface CourseRegistrationConfirmedProps {
   registrantFirstName: string;
@@ -30,11 +29,6 @@ export function CourseRegistrationConfirmed({
   participantsCount,
   registrationId,
 }: CourseRegistrationConfirmedProps) {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.BETTER_AUTH_URL ||
-    "http://localhost:3000";
-
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
       day: "2-digit",

@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
-import { CheckCircle, XCircle, Mail } from "lucide-react";
+import { CheckCircle, Mail } from "lucide-react";
 
 function VerifyEmailContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
   const email = searchParams.get("email");
@@ -24,6 +23,7 @@ function VerifyEmailContent() {
     if (token) {
       verifyEmail(token);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const verifyEmail = async (verificationToken: string) => {
@@ -63,7 +63,7 @@ function VerifyEmailContent() {
         );
         setVerificationStatus("error");
       }
-    } catch (err) {
+    } catch {
       setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
       setVerificationStatus("error");
     } finally {
@@ -101,7 +101,7 @@ function VerifyEmailContent() {
             "Fehler beim Senden der E-Mail. Bitte versuche es später erneut.",
         );
       }
-    } catch (err) {
+    } catch {
       setError("Ein Fehler ist aufgetreten. Bitte versuche es erneut.");
     } finally {
       setIsVerifying(false);
