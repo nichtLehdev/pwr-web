@@ -11,6 +11,7 @@ import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
+import { geocodeAddress } from "@/server/utils/geocoding";
 
 marked.use({
   gfm: true,
@@ -128,8 +129,28 @@ export const locationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      // Auto-geocode if coordinates are not provided
+      let latitude = input.latitude;
+      let longitude = input.longitude;
+
+      if (!latitude || !longitude) {
+        const geocodeResult = await geocodeAddress({
+          street: input.street,
+          zipCode: input.zipCode,
+          city: input.city,
+        });
+        if (geocodeResult.latitude && geocodeResult.longitude) {
+          latitude = geocodeResult.latitude;
+          longitude = geocodeResult.longitude;
+        }
+      }
+
       return await ctx.db.location.create({
-        data: input,
+        data: {
+          ...input,
+          latitude,
+          longitude,
+        },
       });
     }),
 
@@ -148,6 +169,47 @@ export const locationsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
+
+      // Get existing location to check if address changed
+      const existingLocation = await ctx.db.location.findUnique({
+        where: { id },
+      });
+
+      if (!existingLocation) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Location not found",
+        });
+      }
+
+      // Auto-geocode if:
+      // 1. Coordinates are not provided in input, AND
+      // 2. Address fields changed, OR coordinates are currently null
+      const addressChanged =
+        (input.street !== undefined &&
+          input.street !== existingLocation.street) ||
+        (input.zipCode !== undefined &&
+          input.zipCode !== existingLocation.zipCode) ||
+        (input.city !== undefined && input.city !== existingLocation.city);
+
+      const needsGeocoding =
+        !input.latitude &&
+        !input.longitude &&
+        (addressChanged ||
+          !existingLocation.latitude ||
+          !existingLocation.longitude);
+
+      if (needsGeocoding) {
+        const geocodeResult = await geocodeAddress({
+          street: input.street ?? existingLocation.street,
+          zipCode: input.zipCode ?? existingLocation.zipCode,
+          city: input.city ?? existingLocation.city,
+        });
+        if (geocodeResult.latitude && geocodeResult.longitude) {
+          updateData.latitude = geocodeResult.latitude;
+          updateData.longitude = geocodeResult.longitude;
+        }
+      }
 
       return await ctx.db.location.update({
         where: { id },
@@ -207,6 +269,18 @@ export const locationsRouter = createTRPCRouter({
       });
 
       return locations;
+    }),
+
+  geocode: publicProcedure
+    .input(
+      z.object({
+        street: z.string().optional(),
+        zipCode: z.string().optional(),
+        city: z.string().min(1),
+      }),
+    )
+    .query(async ({ input }) => {
+      return await geocodeAddress(input);
     }),
 });
 

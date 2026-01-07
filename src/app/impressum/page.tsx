@@ -1013,6 +1013,94 @@ export default function ImpressumPage() {
                     </div>
                   </div>
 
+                  {/* Leaflet */}
+                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
+                    <div className="mb-2 flex items-start justify-between">
+                      <h3 className="text-dark dark:text-dark-text text-lg font-semibold">
+                        Leaflet
+                      </h3>
+                      <span className="bg-primary/10 text-primary dark:bg-primary/20 rounded px-2 py-1 text-xs font-semibold">
+                        BSD 2-Clause
+                      </span>
+                    </div>
+                    <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                      JavaScript-Bibliothek für interaktive Karten
+                    </p>
+                    <a
+                      href="https://leafletjs.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary text-sm hover:underline"
+                    >
+                      https://leafletjs.com
+                    </a>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 font-semibold text-gray-700 dark:text-gray-300">
+                        BSD 2-Clause License:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Copyright (c) 2010-2024, Vladimir Agafonkin
+                        <br />
+                        Copyright (c) 2010-2011, CloudMade
+                        <br />
+                        All rights reserved.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Redistribution and use in source and binary forms, with
+                        or without modification, are permitted provided that the
+                        following conditions are met:
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        1. Redistributions of source code must retain the above
+                        copyright notice, this list of conditions and the
+                        following disclaimer.
+                      </p>
+                      <p className="mb-2 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        2. Redistributions in binary form must reproduce the
+                        above copyright notice, this list of conditions and the
+                        following disclaimer in the documentation and/or other
+                        materials provided with the distribution.
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+                        CONTRIBUTORS &quot;AS IS&quot; AND ANY EXPRESS OR
+                        IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+                        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+                        PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+                        COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY
+                        DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+                        CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+                        PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+                        USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+                        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+                        CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+                        NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+                        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+                        OF SUCH DAMAGE.
+                      </p>
+                    </div>
+                    <div className="dark:bg-dark-background-secondary mt-3 rounded bg-gray-50 p-3">
+                      <p className="mb-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        Hinweis zu Kartenkacheln:
+                      </p>
+                      <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
+                        Diese Website nutzt Kartenkacheln von OpenStreetMap. Die
+                        Karten werden mit folgender Attribution angezeigt:
+                        &quot;© OpenStreetMap contributors&quot;. Weitere
+                        Informationen finden Sie unter{" "}
+                        <a
+                          href="https://www.openstreetmap.org/copyright"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          www.openstreetmap.org/copyright
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Lucide React */}
                   <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
                     <div className="mb-2 flex items-start justify-between">

@@ -1,0 +1,139 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import Link from "next/link";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix for default marker icon issue in Next.js
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: typeof icon === "string" ? icon : icon.src,
+  shadowUrl: typeof iconShadow === "string" ? iconShadow : iconShadow.src,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+interface EnsembleMapProps {
+  latitude: number;
+  longitude: number;
+  locationName?: string | null;
+}
+
+export default function EnsembleMap({
+  latitude,
+  longitude,
+  locationName,
+}: EnsembleMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const hasInitializedRef = useRef(false);
+
+  useEffect(() => {
+    if (hasInitializedRef.current || !mapContainerRef.current) return;
+    hasInitializedRef.current = true;
+
+    const initMap = () => {
+      if (!mapContainerRef.current) {
+        console.error("Map container not found");
+        return;
+      }
+
+      try {
+        // Clean up existing map
+        if (mapInstanceRef.current) {
+          try {
+            mapInstanceRef.current.remove();
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+
+        // Clear container
+        mapContainerRef.current.innerHTML = "";
+
+        // Ensure container has dimensions
+        if (
+          mapContainerRef.current.offsetWidth === 0 ||
+          mapContainerRef.current.offsetHeight === 0
+        ) {
+          console.warn("Map container has no dimensions, retrying...");
+          setTimeout(initMap, 200);
+          return;
+        }
+
+        // Initialize map
+        const map = L.map(mapContainerRef.current).setView(
+          [latitude, longitude],
+          15,
+        );
+        mapInstanceRef.current = map;
+
+        // Add OpenStreetMap tiles
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        }).addTo(map);
+
+        // Add marker
+        L.marker([latitude, longitude])
+          .addTo(map)
+          .bindPopup(locationName || "Probenort")
+          .openPopup();
+
+        // Invalidate size to ensure map renders correctly
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+      } catch (error) {
+        console.error("Error initializing map:", error);
+        if (mapContainerRef.current) {
+          mapContainerRef.current.innerHTML =
+            '<div class="flex h-full items-center justify-center text-red-500 p-4">Fehler beim Initialisieren der Karte</div>';
+        }
+      }
+    };
+
+    // Small delay to ensure DOM is ready
+    setTimeout(initMap, 100);
+
+    // Cleanup
+    return () => {
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch {
+          // Ignore cleanup errors
+        }
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [latitude, longitude, locationName]);
+
+  return (
+    <div className="mt-4 space-y-2">
+      <div
+        ref={mapContainerRef}
+        className="dark:border-dark-border h-[300px] w-full overflow-hidden rounded-lg border border-gray-200"
+        style={{ minHeight: "300px" }}
+      />
+      <div className="dark:border-dark-border dark:bg-dark-background-secondary border-t border-gray-200 bg-gray-50 p-2 text-center">
+        <Link
+          href={`https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=15`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+        >
+          Größere Karte anzeigen
+        </Link>
+      </div>
+    </div>
+  );
+}

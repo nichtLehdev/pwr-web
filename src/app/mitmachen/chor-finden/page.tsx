@@ -600,9 +600,12 @@ function ChorFindenContent() {
                         >
                           <div className="mb-4 flex items-start justify-between">
                             <div className="flex-1">
-                              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                              <Link
+                                href={`/ensembles/${choir.id}`}
+                                className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
+                              >
                                 {choir.name}
-                              </h3>
+                              </Link>
                               <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                                 <div className="flex items-center gap-1">
                                   <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
