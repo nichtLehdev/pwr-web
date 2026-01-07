@@ -9,7 +9,8 @@ function getBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 3000}`;
 }
 
-export const { signIn, signUp, signOut, useSession } = createAuthClient({
-  baseURL: getBaseUrl(),
-  plugins: [inferAdditionalFields<typeof auth>()],
-});
+export const { signIn, signUp, signOut, useSession, changePassword } =
+  createAuthClient({
+    baseURL: getBaseUrl(),
+    plugins: [inferAdditionalFields<typeof auth>()],
+  });
