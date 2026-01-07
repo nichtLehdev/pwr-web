@@ -325,8 +325,24 @@ export default function DashboardEnsemblesPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {ensemble.rehearsalDay || ensemble.rehearsalTime ? (
+                      <td className="px-6 py-4">
+                        {ensemble.rehearsalSchedules &&
+                        ensemble.rehearsalSchedules.length > 0 ? (
+                          <div className="space-y-1">
+                            {ensemble.rehearsalSchedules.map(
+                              (schedule, index) => (
+                                <div
+                                  key={index}
+                                  className="dark:text-dark-muted text-sm text-gray-600"
+                                >
+                                  {schedule.day}
+                                  {schedule.time && `, ${schedule.time}`}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ) : ensemble.rehearsalDay || ensemble.rehearsalTime ? (
+                          // Legacy fallback
                           <span className="dark:text-dark-muted text-sm text-gray-600">
                             {ensemble.rehearsalDay}
                             {ensemble.rehearsalDay &&

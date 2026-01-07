@@ -291,20 +291,51 @@ export default function EnsembleDetailPage() {
             Probendetails
           </h2>
           <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Probentag
+            {/* Rehearsal Schedules */}
+            <div className="sm:col-span-2">
+              <dt className="dark:text-dark-muted mb-2 text-sm text-gray-500">
+                Probenzeiten
               </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {ensemble.rehearsalDay || "–"}
-              </dd>
-            </div>
-            <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Probenzeit
-              </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {ensemble.rehearsalTime || "–"}
+              <dd className="space-y-2">
+                {ensemble.rehearsalSchedules &&
+                ensemble.rehearsalSchedules.length > 0 ? (
+                  ensemble.rehearsalSchedules.map((schedule, index) => (
+                    <div
+                      key={index}
+                      className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3"
+                    >
+                      <div className="flex-1">
+                        <p className="dark:text-dark-text font-medium text-gray-900">
+                          <span>{schedule.day}</span>
+                          {schedule.time && (
+                            <>
+                              {" "}
+                              um <span>{schedule.time}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : ensemble.rehearsalDay || ensemble.rehearsalTime ? (
+                  // Legacy fallback
+                  <div className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3">
+                    <div className="flex-1">
+                      {ensemble.rehearsalDay && (
+                        <p className="dark:text-dark-text font-medium text-gray-900">
+                          <span>Tag:</span> {ensemble.rehearsalDay}
+                        </p>
+                      )}
+                      {ensemble.rehearsalTime && (
+                        <p className="dark:text-dark-text mt-1 font-medium text-gray-900">
+                          <span>Uhrzeit:</span> {ensemble.rehearsalTime}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="dark:text-dark-muted text-gray-500 italic">–</p>
+                )}
               </dd>
             </div>
             <div className="sm:col-span-2">
