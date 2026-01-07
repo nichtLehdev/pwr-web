@@ -116,6 +116,7 @@ export default function Home() {
                   image={post.coverImage?.url}
                   pinned={post.pinned}
                   district={post.bezirk?.number}
+                  content={post.content}
                 />
               ))}
             </div>

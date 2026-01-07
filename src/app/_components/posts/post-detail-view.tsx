@@ -409,6 +409,7 @@ export default function PostDetailView({
                   excerpt={relatedPost.excerpt || ""}
                   image={relatedPost.coverImage?.url}
                   district={relatedPost.bezirk?.number}
+                  content={relatedPost.content}
                 />
               ))}
             </div>
