@@ -40,20 +40,21 @@ export default function RootLayout({
     <html lang="de" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
                   const theme = localStorage.getItem('theme');
                   const root = document.documentElement;
-                  
+
                   if (theme === 'dark') {
                     root.classList.add('dark');
                   } else if (theme === 'light') {
                     root.classList.add('light');
                   } else {
-                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-                      ? 'dark' 
+                    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+                      ? 'dark'
                       : 'light';
                     root.classList.add(systemTheme);
                   }
