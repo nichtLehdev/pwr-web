@@ -238,14 +238,31 @@ export default function NewEnsemblePage() {
     setError("");
     setIsSubmitting(true);
 
+    // Transform rehearsal schedules from form format to API format
+    // Form format: [{ selectedDays: ["Montag", "Dienstag"], time: "19:30" }]
+    // API format: [{ day: "Montag", time: "19:30" }, { day: "Dienstag", time: "19:30" }]
+    const transformedRehearsalSchedules =
+      rehearsalSchedules.length > 0
+        ? rehearsalSchedules
+            .filter(
+              (schedule) =>
+                schedule.selectedDays.length > 0 && schedule.time.trim(),
+            )
+            .flatMap((schedule) =>
+              schedule.selectedDays.map((day) => ({
+                day,
+                time: schedule.time.trim(),
+              })),
+            )
+        : undefined;
+
     createMutation.mutate({
       name: name.trim(),
       description: description.trim() || undefined,
       bezirkId: bezirkId || undefined,
       imageId: imageId || undefined,
       locationId: locationId || undefined,
-      rehearsalDay: rehearsalDay.trim() || undefined,
-      rehearsalTime: rehearsalTime.trim() || undefined,
+      rehearsalSchedules: transformedRehearsalSchedules,
       contactEmail: contactEmail.trim() || undefined,
       contactPhone: contactPhone.trim() || undefined,
       contactWebsite: contactWebsite.trim() || undefined,
