@@ -184,7 +184,18 @@ export default function EnsembleDetailPage() {
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Chorleitung
             </h2>
-            {ensemble.conductor ? (
+            {ensemble.conductorName ? (
+              <div className="flex items-center gap-3">
+                <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                  <UserIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="dark:text-dark-text font-medium text-gray-900">
+                    {ensemble.conductorName}
+                  </p>
+                </div>
+              </div>
+            ) : ensemble.conductor ? (
               <div className="flex items-center gap-3">
                 {ensemble.conductor.profileImage ? (
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
@@ -223,7 +234,18 @@ export default function EnsembleDetailPage() {
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Ansprechpartner
             </h2>
-            {ensemble.representative ? (
+            {ensemble.representativeName ? (
+              <div className="flex items-center gap-3">
+                <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                  <UserIcon className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="dark:text-dark-text font-medium text-gray-900">
+                    {ensemble.representativeName}
+                  </p>
+                </div>
+              </div>
+            ) : ensemble.representative ? (
               <div className="flex items-center gap-3">
                 {ensemble.representative.profileImage ? (
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">

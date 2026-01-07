@@ -57,11 +57,15 @@ export default function NewEnsemblePage() {
   const [conductorId, setConductorId] = useState<string | null>(null);
   const [conductorSearch, setConductorSearch] = useState("");
   const [showConductorDropdown, setShowConductorDropdown] = useState(false);
+  const [conductorName, setConductorName] = useState("");
+  const [useCustomConductor, setUseCustomConductor] = useState(false);
 
   const [representativeId, setRepresentativeId] = useState<string | null>(null);
   const [representativeSearch, setRepresentativeSearch] = useState("");
   const [showRepresentativeDropdown, setShowRepresentativeDropdown] =
     useState(false);
+  const [representativeName, setRepresentativeName] = useState("");
+  const [useCustomRepresentative, setUseCustomRepresentative] = useState(false);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -195,6 +199,8 @@ export default function NewEnsemblePage() {
   const handleClearConductor = () => {
     setConductorId(null);
     setConductorSearch("");
+    setConductorName("");
+    setUseCustomConductor(false);
   };
 
   const handleRepresentativeSelect = (user: {
@@ -210,6 +216,8 @@ export default function NewEnsemblePage() {
   const handleClearRepresentative = () => {
     setRepresentativeId(null);
     setRepresentativeSearch("");
+    setRepresentativeName("");
+    setUseCustomRepresentative(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -228,8 +236,16 @@ export default function NewEnsemblePage() {
       contactEmail: contactEmail.trim() || undefined,
       contactPhone: contactPhone.trim() || undefined,
       contactWebsite: contactWebsite.trim() || undefined,
-      conductorId: conductorId || undefined,
-      representativeId: representativeId || undefined,
+      conductorId: useCustomConductor ? undefined : conductorId || undefined,
+      conductorName: useCustomConductor
+        ? conductorName.trim() || undefined
+        : undefined,
+      representativeId: useCustomRepresentative
+        ? undefined
+        : representativeId || undefined,
+      representativeName: useCustomRepresentative
+        ? representativeName.trim() || undefined
+        : undefined,
       isActive,
     });
   };
@@ -431,35 +447,71 @@ export default function NewEnsemblePage() {
 
               {/* Conductor */}
               <div className="relative" data-dropdown>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Chorleitung
-                </label>
-                <div className="relative">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                    Chorleitung
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="useCustomConductor"
+                      checked={useCustomConductor}
+                      onChange={(e) => {
+                        setUseCustomConductor(e.target.checked);
+                        if (e.target.checked) {
+                          setConductorId(null);
+                          setConductorSearch("");
+                        } else {
+                          setConductorName("");
+                        }
+                      }}
+                      className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor="useCustomConductor"
+                      className="dark:text-dark-text text-xs text-gray-600"
+                    >
+                      Benutzerdefiniert
+                    </label>
+                  </div>
+                </div>
+                {useCustomConductor ? (
                   <input
                     type="text"
-                    value={conductorSearch}
-                    onChange={(e) => {
-                      setConductorSearch(e.target.value);
-                      setShowConductorDropdown(true);
-                      if (!e.target.value) setConductorId(null);
-                    }}
-                    onFocus={() => setShowConductorDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    value={conductorName}
+                    onChange={(e) => setConductorName(e.target.value)}
+                    placeholder="z.B. Max Mustermann"
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   />
-                  {conductorId && (
-                    <button
-                      type="button"
-                      onClick={handleClearConductor}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={conductorSearch}
+                      onChange={(e) => {
+                        setConductorSearch(e.target.value);
+                        setShowConductorDropdown(true);
+                        if (!e.target.value) setConductorId(null);
+                      }}
+                      onFocus={() => setShowConductorDropdown(true)}
+                      placeholder="Name oder E-Mail eingeben..."
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                    {conductorId && (
+                      <button
+                        type="button"
+                        onClick={handleClearConductor}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Conductor Dropdown */}
-                {showConductorDropdown && (
+                {!useCustomConductor && showConductorDropdown && (
                   <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                     <div
                       className="overflow-y-auto"
@@ -506,44 +558,85 @@ export default function NewEnsemblePage() {
                 )}
 
                 {/* Selected conductor indicator */}
-                {conductorId && (
+                {!useCustomConductor && conductorId && (
                   <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                     ✓ Chorleitung verknüpft
+                  </p>
+                )}
+                {useCustomConductor && conductorName && (
+                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                    ✓ Benutzerdefinierte Chorleitung
                   </p>
                 )}
               </div>
 
               {/* Representative */}
               <div className="relative" data-dropdown>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Ansprechpartner
-                </label>
-                <div className="relative">
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                    Ansprechpartner
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="useCustomRepresentative"
+                      checked={useCustomRepresentative}
+                      onChange={(e) => {
+                        setUseCustomRepresentative(e.target.checked);
+                        if (e.target.checked) {
+                          setRepresentativeId(null);
+                          setRepresentativeSearch("");
+                        } else {
+                          setRepresentativeName("");
+                        }
+                      }}
+                      className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor="useCustomRepresentative"
+                      className="dark:text-dark-text text-xs text-gray-600"
+                    >
+                      Benutzerdefiniert
+                    </label>
+                  </div>
+                </div>
+                {useCustomRepresentative ? (
                   <input
                     type="text"
-                    value={representativeSearch}
-                    onChange={(e) => {
-                      setRepresentativeSearch(e.target.value);
-                      setShowRepresentativeDropdown(true);
-                      if (!e.target.value) setRepresentativeId(null);
-                    }}
-                    onFocus={() => setShowRepresentativeDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    value={representativeName}
+                    onChange={(e) => setRepresentativeName(e.target.value)}
+                    placeholder="z.B. Max Mustermann"
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   />
-                  {representativeId && (
-                    <button
-                      type="button"
-                      onClick={handleClearRepresentative}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <XIcon className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={representativeSearch}
+                      onChange={(e) => {
+                        setRepresentativeSearch(e.target.value);
+                        setShowRepresentativeDropdown(true);
+                        if (!e.target.value) setRepresentativeId(null);
+                      }}
+                      onFocus={() => setShowRepresentativeDropdown(true)}
+                      placeholder="Name oder E-Mail eingeben..."
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                    {representativeId && (
+                      <button
+                        type="button"
+                        onClick={handleClearRepresentative}
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {/* Representative Dropdown */}
-                {showRepresentativeDropdown && (
+                {!useCustomRepresentative && showRepresentativeDropdown && (
                   <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
                     <div
                       className="overflow-y-auto"
@@ -590,9 +683,14 @@ export default function NewEnsemblePage() {
                 )}
 
                 {/* Selected representative indicator */}
-                {representativeId && (
+                {!useCustomRepresentative && representativeId && (
                   <p className="mt-2 text-sm text-green-600 dark:text-green-400">
                     ✓ Ansprechpartner verknüpft
+                  </p>
+                )}
+                {useCustomRepresentative && representativeName && (
+                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                    ✓ Benutzerdefinierter Ansprechpartner
                   </p>
                 )}
               </div>

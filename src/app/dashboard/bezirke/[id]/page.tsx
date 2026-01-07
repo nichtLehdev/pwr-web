@@ -263,9 +263,11 @@ export default function BezirkDetailPage() {
                     <p className="dark:text-dark-text font-medium text-gray-900">
                       {ensemble.name}
                     </p>
-                    {ensemble.conductor && (
+                    {(ensemble.conductorName || ensemble.conductor) && (
                       <p className="dark:text-dark-muted text-sm text-gray-500">
-                        Leitung: {ensemble.conductor.displayName}
+                        Leitung:{" "}
+                        {ensemble.conductorName ||
+                          ensemble.conductor?.displayName}
                       </p>
                     )}
                   </div>

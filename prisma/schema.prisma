@@ -615,6 +615,7 @@ model Ensemble {
   // Representative (defaults to conductor)
   representativeId String?
   representative   User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
+  representativeName String? // Custom name if not linked to a user
 
   // Status
   isActive Boolean @default(true)
@@ -622,6 +623,7 @@ model Ensemble {
   // Relations
   conductorId String?
   conductor   User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  conductorName String? // Custom name if not linked to a user
   events      Event[]
 
   createdAt DateTime @default(now())

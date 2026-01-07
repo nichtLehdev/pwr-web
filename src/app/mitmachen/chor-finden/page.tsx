@@ -622,8 +622,7 @@ function ChorFindenContent() {
                                       ),
                                     }}
                                   >
-                                    Bezirk {choir.bezirk.number} (
-                                    {choir.bezirk.shortName})
+                                    Bezirk {choir.bezirk.number}
                                   </span>
                                 )}
                               </div>
