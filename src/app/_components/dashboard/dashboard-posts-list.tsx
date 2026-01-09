@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
 import { useToast } from "@/app/_components/ui/toast";
+import { Button, Select, Badge } from "@/app/_components/ui";
 import {
   ArrowDownIcon,
   ArrowLeftIcon,
@@ -351,39 +352,35 @@ export default function DashboardPostsList({
               {/* Status Filter */}
               <div className="flex flex-wrap gap-2">
                 {availableFilters.map((filter) => (
-                  <button
+                  <Button
                     key={filter.value}
                     onClick={() => {
                       setStatusFilter(filter.value);
                       setPage(1);
                     }}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                      statusFilter === filter.value
-                        ? "bg-primary text-white"
-                        : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    }`}
+                    variant={statusFilter === filter.value ? "primary" : "secondary"}
+                    size="sm"
                   >
                     {filter.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
               {/* Category Filter */}
               <div className="dark:border-dark-border border-l border-gray-200 pl-4">
-                <select
+                <Select
                   value={categoryFilter}
                   onChange={(e) => {
                     setCategoryFilter(e.target.value as PostCategory | "all");
                     setPage(1);
                   }}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
                 >
                   {categoryFilters.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* Sort Controls */}

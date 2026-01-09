@@ -11,6 +11,16 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { ImageIcon, X } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/app/_components/ui";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -201,112 +211,98 @@ export default function NewAuswahlchorPage() {
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* Basic Information */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Grundinformationen
-              </h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Grundinformationen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Name */}
+                  <div>
+                    <Label required>Name</Label>
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      maxLength={255}
+                      placeholder="z.B. Con Spirito"
+                    />
+                  </div>
 
-              {/* Name */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  maxLength={255}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Con Spirito"
-                />
-              </div>
+                  {/* Slug */}
+                  <div>
+                    <Label required>Slug</Label>
+                    <Input
+                      type="text"
+                      value={slug}
+                      onChange={(e) =>
+                        setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                      }
+                      required
+                      maxLength={15}
+                      placeholder="z.B. conspirito"
+                    />
+                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                      URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
+                      und Bindestriche)
+                    </p>
+                  </div>
 
-              {/* Slug */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Slug *
-                </label>
-                <input
-                  type="text"
-                  value={slug}
-                  onChange={(e) =>
-                    setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
-                  }
-                  required
-                  maxLength={15}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. conspirito"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
-                  und Bindestriche)
-                </p>
-              </div>
+                  {/* Subtitle */}
+                  <div>
+                    <Label required>Untertitel</Label>
+                    <Input
+                      type="text"
+                      value={subtitle}
+                      onChange={(e) => setSubtitle(e.target.value)}
+                      required
+                      maxLength={200}
+                      placeholder="z.B. Das Spitzenensemble"
+                    />
+                  </div>
 
-              {/* Subtitle */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Untertitel *
-                </label>
-                <input
-                  type="text"
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Das Spitzenensemble"
-                />
-              </div>
+                  {/* Founded */}
+                  <div>
+                    <Label required>Gegründet</Label>
+                    <Input
+                      type="text"
+                      value={founded}
+                      onChange={(e) => setFounded(e.target.value)}
+                      required
+                      maxLength={100}
+                      placeholder="z.B. 1995"
+                    />
+                  </div>
 
-              {/* Founded */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Gegründet *
-                </label>
-                <input
-                  type="text"
-                  value={founded}
-                  onChange={(e) => setFounded(e.target.value)}
-                  required
-                  maxLength={100}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. 1995"
-                />
-              </div>
+                  {/* Members */}
+                  <div>
+                    <Label required>Mitglieder</Label>
+                    <Input
+                      type="text"
+                      value={members}
+                      onChange={(e) => setMembers(e.target.value)}
+                      required
+                      maxLength={200}
+                      placeholder="z.B. ca. 25 Bläser"
+                    />
+                  </div>
 
-              {/* Members */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Mitglieder *
-                </label>
-                <input
-                  type="text"
-                  value={members}
-                  onChange={(e) => setMembers(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. ca. 25 Bläser"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung *
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  rows={6}
-                  maxLength={5000}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beschreibe den Auswahlchor..."
-                />
-              </div>
+                  {/* Description */}
+                  <div>
+                    <Label required>Beschreibung</Label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      required
+                      rows={6}
+                      maxLength={5000}
+                      placeholder="Beschreibe den Auswahlchor..."
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
               {/* Image */}
               <div>
@@ -526,15 +522,13 @@ export default function NewAuswahlchorPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
+              <Button
                 type="submit"
                 disabled={isSubmitting || createMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+                isLoading={isSubmitting || createMutation.isPending}
               >
-                {isSubmitting || createMutation.isPending
-                  ? "Wird erstellt..."
-                  : "Auswahlchor erstellen"}
-              </button>
+                Auswahlchor erstellen
+              </Button>
               <Link
                 href="/dashboard/auswahlchoere"
                 className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"

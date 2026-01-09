@@ -23,6 +23,17 @@ import {
   ImageIcon,
 } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Select,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/app/_components/ui";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -478,72 +489,61 @@ export default function NewCoursePage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="z.B. Bläserfreizeit 2025"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  required
-                  maxLength={200}
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label required>Titel</Label>
+                  <Input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="z.B. Bläserfreizeit 2025"
+                    required
+                    maxLength={200}
+                  />
+                </div>
 
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Motto
-                </label>
-                <input
-                  type="text"
-                  value={motto}
-                  onChange={(e) => setMotto(e.target.value)}
-                  placeholder="z.B. Gemeinsam musizieren"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <Label>Motto</Label>
+                  <Input
+                    type="text"
+                    value={motto}
+                    onChange={(e) => setMotto(e.target.value)}
+                    placeholder="z.B. Gemeinsam musizieren"
+                  />
+                </div>
 
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung *
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  placeholder="Beschreibe den Kurs..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  required
+                <div>
+                  <Label required>Beschreibung</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    placeholder="Beschreibe den Kurs..."
+                    required
                   maxLength={10000}
                 />
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Kursart *
-                  </label>
-                  <select
+                  <Label required>Kursart</Label>
+                  <Select
                     value={courseType}
                     onChange={(e) =>
                       setCourseType(e.target.value as CourseType)
                     }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   >
                     {Object.entries(courseTypeLabels).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -1465,19 +1465,17 @@ export default function NewCoursePage() {
             >
               Abbrechen
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting || createCourseMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting || createCourseMutation.isPending}
             >
-              {isSubmitting || createCourseMutation.isPending
-                ? "Wird erstellt..."
-                : submitAsDraft
-                  ? "Entwurf speichern"
-                  : submitAsApproved
-                    ? "Veröffentlichen"
-                    : "Kurs einreichen"}
-            </button>
+              {submitAsDraft
+                ? "Entwurf speichern"
+                : submitAsApproved
+                  ? "Veröffentlichen"
+                  : "Kurs einreichen"}
+            </Button>
           </div>
         </form>
 

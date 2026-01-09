@@ -13,6 +13,7 @@ import PostCard from "../_components/posts/post-card";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import { CircleXIcon } from "lucide-react";
 import FeedConfigModal from "../_components/feeds/feed-config-modal";
+import { Button } from "@/app/_components/ui";
 
 type FilterCategory = PostCategory | "all";
 
@@ -23,13 +24,20 @@ type PostWithRelations = Post & {
 
 export default function AktuellesPage() {
   useEffect(() => {
+    // Store original overflow value
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const timer = setTimeout(() => {
-      document.body.style.overflow = "unset";
+      // Use empty string to remove inline style, allowing CSS to take over
+      document.body.style.overflow = originalOverflow || "";
     }, 50);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      // Ensure overflow is restored on cleanup
+      document.body.style.overflow = originalOverflow || "";
+    };
   }, []);
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -187,33 +195,34 @@ export default function AktuellesPage() {
 
             {/* Right: RSS Feed & Filter Toggle Button */}
             <div className="flex gap-1">
-              <button
+              <Button
                 onClick={() => setRssModalOpen(true)}
-                className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
+                variant="secondary"
+                size="sm"
                 aria-label="RSS Feed"
                 title="RSS Feed abonnieren"
               >
                 <Rss className="h-4 w-4" />
                 <span className="hidden sm:inline">RSS</span>
-              </button>
+              </Button>
               {!filtersOpen && hasActiveFilters && (
-                <button
+                <Button
                   onClick={() => {
                     setSelectedCategory("all");
                     setSelectedDistrict("all");
                   }}
+                  variant="ghost"
+                  size="icon"
                   aria-label="Filter zurücksetzen"
                 >
                   <XCircleIcon className="h-5 w-5" />
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 onClick={() => setFiltersOpen(!filtersOpen)}
-                className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
-                  filtersOpen
-                    ? "bg-primary text-white"
-                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border bg-gray-100 hover:bg-gray-200"
-                }`}
+                variant={filtersOpen ? "primary" : "secondary"}
+                size="icon"
+                className="relative"
                 aria-label="Filter öffnen"
               >
                 <FilterIcon className="h-5 w-5" />
@@ -221,7 +230,7 @@ export default function AktuellesPage() {
                 {hasActiveFilters && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
                 )}
-              </button>
+              </Button>
             </div>
           </div>
 

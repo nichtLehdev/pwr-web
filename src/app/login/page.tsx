@@ -6,6 +6,14 @@ import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
 import { UserRole } from "~/generated/prisma/enums";
+import {
+  Button,
+  Input,
+  Label,
+  Checkbox,
+  Alert,
+  AlertDescription,
+} from "@/app/_components/ui";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -120,28 +128,23 @@ function LoginForm() {
 
         <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
           {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+            <Alert variant="error" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
               {error.includes("verifiziert") && loginEmail && (
                 <Link
                   href={`/verify-email?email=${encodeURIComponent(loginEmail)}`}
-                  className="mt-2 block text-sm font-medium text-red-700 underline dark:text-red-300"
+                  className="mt-2 block text-sm font-medium underline"
                 >
                   Verifizierungs-E-Mail erneut senden
                 </Link>
               )}
-            </div>
+            </Alert>
           )}
 
           <form className="space-y-4" onSubmit={handleEmailLogin}>
             <div>
-              <label
-                htmlFor="emailOrUsername"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
-                E-Mail oder Benutzername
-              </label>
-              <input
+              <Label htmlFor="emailOrUsername">E-Mail oder Benutzername</Label>
+              <Input
                 id="emailOrUsername"
                 name="emailOrUsername"
                 type="text"
@@ -149,18 +152,12 @@ function LoginForm() {
                 required
                 value={emailOrUsername}
                 onChange={(e) => setEmailOrUsername(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
             </div>
 
             <div>
               <div className="mb-1 flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="text-dark dark:text-dark-text block text-sm font-medium"
-                >
-                  Passwort
-                </label>
+                <Label htmlFor="password">Passwort</Label>
                 <Link
                   href="/forgot-password"
                   className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary text-sm font-medium"
@@ -168,7 +165,7 @@ function LoginForm() {
                   Passwort vergessen?
                 </Link>
               </div>
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -176,34 +173,24 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
             </div>
 
             <div className="flex items-center">
-              <input
+              <Checkbox
                 id="rememberMe"
                 name="rememberMe"
-                type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
               />
-              <label
-                htmlFor="rememberMe"
-                className="text-dark dark:text-dark-text ml-2 block text-sm"
-              >
+              <Label htmlFor="rememberMe" className="mb-0 ml-2">
                 Angemeldet bleiben
-              </label>
+              </Label>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
-            >
-              {isLoading ? "Wird angemeldet..." : "Anmelden"}
-            </button>
+            <Button type="submit" isLoading={isLoading} className="w-full">
+              Anmelden
+            </Button>
           </form>
         </div>
       </div>

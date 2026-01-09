@@ -1,5 +1,13 @@
 import type { JSX } from "react";
 
+/**
+ * Utility function to merge class names.
+ * Handles strings, arrays, and conditional classes.
+ */
+export function cn(...classes: (string | undefined | null | false)[]): string {
+  return classes.filter(Boolean).join(" ");
+}
+
 export function capitalizeFirstLetter(string: string): string {
   return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 }
