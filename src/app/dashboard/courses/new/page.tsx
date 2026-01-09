@@ -527,9 +527,9 @@ export default function NewCoursePage() {
                     required
                   maxLength={10000}
                 />
-              </div>
+                </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <Label required>Kursart</Label>
                   <Select
@@ -568,7 +568,8 @@ export default function NewCoursePage() {
                 </div>
               </div>
             </div>
-          </section>
+            </CardContent>
+          </Card>
 
           {/* Image */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

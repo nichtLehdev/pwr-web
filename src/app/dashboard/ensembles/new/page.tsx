@@ -405,11 +405,12 @@ export default function NewEnsemblePage() {
               </CardContent>
             </Card>
 
-              {/* Image */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bild
-                </label>
+            {/* Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bild</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {imageUrl ? (
                   <div className="flex items-start gap-4">
                     <div className="relative h-24 w-24 overflow-hidden rounded-lg">
@@ -452,25 +453,29 @@ export default function NewEnsemblePage() {
                     </div>
                   </button>
                 )}
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Active */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="isActive"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
-                  Aktiv
-                </label>
-              </div>
-            </div>
+            {/* Active */}
+            <Card>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="isActive"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Aktiv
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* People */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

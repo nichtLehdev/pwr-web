@@ -237,15 +237,17 @@ export default function NewAuswahlchorPage() {
                       type="text"
                       value={slug}
                       onChange={(e) =>
-                        setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                        setSlug(
+                          e.target.value.toLowerCase().replace(/\s+/g, "-"),
+                        )
                       }
                       required
                       maxLength={15}
                       placeholder="z.B. conspirito"
                     />
                     <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
-                      und Bindestriche)
+                      URL-freundlicher Name (max. 15 Zeichen, nur
+                      Kleinbuchstaben und Bindestriche)
                     </p>
                   </div>
 
@@ -304,11 +306,12 @@ export default function NewAuswahlchorPage() {
               </CardContent>
             </Card>
 
-              {/* Image */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bild
-                </label>
+            {/* Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bild</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {imageUrl ? (
                   <div className="flex items-start gap-4">
                     <div className="relative h-24 w-24 overflow-hidden rounded-lg">
@@ -351,8 +354,8 @@ export default function NewAuswahlchorPage() {
                     </div>
                   </button>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* Styling */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
