@@ -81,8 +81,16 @@ export default function EditPostPage() {
     post?.authorId ?? null,
   );
   const [authorName, setAuthorName] = useState<string>(post?.authorName ?? "");
-  const [authorSearch, setAuthorSearch] = useState("");
+  const [authorSearch, setAuthorSearch] = useState(() => {
+    if (post?.author) {
+      return post.author.displayName || post.author.email || "";
+    }
+    return "";
+  });
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
+
+  // Track if we've initialized from post to avoid overwriting user changes
+  const initializedFromPost = useRef(false);
 
   const [status, setStatus] = useState<ContentStatus>(post?.status ?? "DRAFT");
 
@@ -121,14 +129,22 @@ export default function EditPostPage() {
     setAuthorSearch("");
   };
 
-  // Initialize author search when post loads
+  // Initialize author state from post when it becomes available (only once)
+  // Using a ref to track initialization and avoid overwriting user changes
+  // This is acceptable because we're syncing state from external query data
   useEffect(() => {
-    if (post?.author) {
-      setAuthorSearch(post.author.displayName || post.author.email || "");
-    } else if (post?.authorName) {
-      setAuthorName(post.authorName);
+    if (post && !initializedFromPost.current) {
+      if (post.author && post.author.id !== authorId) {
+        setAuthorId(post.author.id);
+        setAuthorSearch(post.author.displayName || post.author.email || "");
+      } else if (post.authorName && !authorId && !authorName) {
+        setAuthorName(post.authorName);
+      }
+      initializedFromPost.current = true;
     }
-  }, [post]);
+    // Only run when post becomes available
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post?.id]);
 
   const utils = api.useUtils();
 
