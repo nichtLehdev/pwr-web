@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
-import { marked } from "marked";
-
-// Configure marked
-marked.use({
-  gfm: true,
-  breaks: true,
-});
 
 /**
  * Escapes XML special characters
@@ -31,54 +24,43 @@ function formatRssDate(date: Date): string {
 
 /**
  * Converts markdown to plain text for RSS description
- * Safely decodes HTML entities without double-unescaping
- * Ensures no HTML tags or angle brackets remain after processing
+ * Directly strips markdown syntax without converting to HTML first
+ * This avoids all HTML sanitization issues since we never create HTML
  */
-async function markdownToPlainText(markdown: string): Promise<string> {
-  const html = await marked.parse(markdown);
+function markdownToPlainText(markdown: string): string {
+  if (!markdown) return "";
 
-  // Comprehensive HTML tag removal to prevent tag injection:
-  // Handle all edge cases including complete tags, incomplete tags, and malformed tags
-  // This multi-step approach ensures no <script> or similar tags can exist
-  let text = html
-    // Step 1: Explicitly remove script tags and other dangerous tags first
-    // Handle both complete tags and incomplete tags (case-insensitive)
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<script[^>]*>/gi, "")
-    .replace(/<script/gi, "")
-    // Step 2: Remove all other complete HTML tags (including attributes, multiline)
-    .replace(/<[^>]*>/gi, "")
-    // Step 3: Remove incomplete/malformed tags (e.g., <div without closing >)
-    // Match < followed by word characters that might form tag names
-    .replace(/<\w+[^\w>]*/gi, "")
-    // Step 4: Remove any remaining < characters (prevents any tag formation)
-    .replace(/</g, "")
-    // Step 5: Remove any remaining > characters (prevents any tag formation)
-    .replace(/>/g, "");
+  // Remove markdown syntax directly:
+  // - Headers (# ## ### etc.)
+  let text = markdown.replace(/^#{1,6}\s+/gm, "");
+  // - Links [text](url) -> text
+  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
+  // - Images ![alt](url) -> alt
+  text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
+  // - Bold **text** -> text
+  text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
+  // - Italic *text* -> text
+  text = text.replace(/\*([^*]+)\*/g, "$1");
+  // - Strikethrough ~~text~~ -> text
+  text = text.replace(/~~([^~]+)~~/g, "$1");
+  // - Inline code `code` -> code
+  text = text.replace(/`([^`]+)`/g, "$1");
+  // - Code blocks ```...``` -> (removed)
+  text = text.replace(/```[\s\S]*?```/g, "");
+  // - Lists (-, *, +)
+  text = text.replace(/^[\s]*[-*+]\s+/gm, "");
+  // - Numbered lists
+  text = text.replace(/^\d+\.\s+/gm, "");
+  // - Blockquotes >
+  text = text.replace(/^>\s+/gm, "");
+  // - Horizontal rules
+  text = text.replace(/^---+/gm, "");
+  // - HTML tags (in case markdown contains raw HTML)
+  text = text.replace(/<[^>]+>/g, "");
 
-  // Remove angle bracket entities without decoding them to prevent tag injection
-  // This ensures < and > characters are never reintroduced into the text
-  text = text.replace(/&lt;/gi, "").replace(/&gt;/gi, "");
-
-  // Decode safe HTML entities (excluding &lt; and &gt; which we already removed)
-  // Process &amp; last to prevent double-decoding
-  const entityDecodeMap: Array<[string, string]> = [
-    ["&nbsp;", " "],
-    ["&quot;", '"'],
-    ["&apos;", "'"],
-    ["&amp;", "&"], // Must be decoded last
-  ];
-
-  // Single pass: decode each entity type once
-  for (const [entity, char] of entityDecodeMap) {
-    // Escape special regex characters in entity
-    const escapedEntity = entity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    text = text.replace(new RegExp(escapedEntity, "g"), char);
-  }
-
-  // Final sanitization: ensure no HTML tags or angle brackets remain
-  // This is a safety net in case any tags or brackets were missed
-  text = text.replace(/<[^>]*>/g, "").replace(/[<>]/g, "");
+  // Normalize whitespace: collapse multiple newlines and spaces
+  text = text.replace(/\n\s*\n\s*\n/g, "\n\n");
+  text = text.replace(/[ \t]+/g, " ");
 
   return text.trim();
 }
@@ -186,19 +168,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate RSS items
-    const items = await Promise.all(
-      posts.map(async (post) => {
-        const postUrl = `${baseUrl}/aktuelles/${post.id}`;
-        const pubDate = post.publishedAt || post.createdAt;
-        const description = await markdownToPlainText(
-          post.excerpt || post.content,
-        );
-        const author =
-          post.createdBy?.displayName ||
-          post.createdBy?.email ||
-          "Posaunenwerk";
+    const items = posts.map((post) => {
+      const postUrl = `${baseUrl}/aktuelles/${post.id}`;
+      const pubDate = post.publishedAt || post.createdAt;
+      const description = markdownToPlainText(post.excerpt || post.content);
+      const author =
+        post.createdBy?.displayName || post.createdBy?.email || "Posaunenwerk";
 
-        return `    <item>
+      return `    <item>
       <title>${escapeXml(post.title)}</title>
       <link>${postUrl}</link>
       <guid isPermaLink="true">${postUrl}</guid>
@@ -207,8 +184,7 @@ export async function GET(request: NextRequest) {
       <author>${escapeXml(author)}</author>
       ${post.bezirk ? `<category>${escapeXml(post.bezirk.name)}</category>` : ""}
     </item>`;
-      }),
-    );
+    });
 
     // Build RSS feed
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
