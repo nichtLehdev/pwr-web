@@ -25,7 +25,8 @@ import {
   FunnelIcon,
   FunnelXIcon,
 } from "lucide-react";
-import { ListIcon } from "lucide-react";
+import { ListIcon, Calendar } from "lucide-react";
+import FeedConfigModal from "../feeds/feed-config-modal";
 
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
@@ -124,6 +125,7 @@ export default function EventsClient({
     params.get("category") || "all",
   );
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [icalModalOpen, setIcalModalOpen] = useState(false);
 
   const now = useMemo(() => {
     const date = new Date();
@@ -408,8 +410,17 @@ export default function EventsClient({
               </span>
             </div>
 
-            {/* Right: Filter Toggle Button */}
+            {/* Right: iCal Feed & Filter Toggle Button */}
             <div className="flex gap-1">
+              <button
+                onClick={() => setIcalModalOpen(true)}
+                className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
+                aria-label="iCal Feed"
+                title="Kalender-Feed abonnieren"
+              >
+                <Calendar className="h-4 w-4" />
+                <span className="hidden sm:inline">iCal</span>
+              </button>
               {!filtersOpen &&
                 (filterType !== "all" ||
                   selectedDistrict !== "all" ||
@@ -753,6 +764,13 @@ export default function EventsClient({
           )}
         </div>
       </section>
+
+      {/* iCal Feed Modal */}
+      <FeedConfigModal
+        isOpen={icalModalOpen}
+        onClose={() => setIcalModalOpen(false)}
+        feedType="ical"
+      />
     </div>
   );
 }

@@ -10,8 +10,9 @@ import {
 } from "~/generated/prisma/client";
 import PageHeader from "../_components/general/page-header";
 import PostCard from "../_components/posts/post-card";
-import { FilterIcon, PinIcon, XCircleIcon } from "lucide-react";
+import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import { CircleXIcon } from "lucide-react";
+import FeedConfigModal from "../_components/feeds/feed-config-modal";
 
 type FilterCategory = PostCategory | "all";
 
@@ -35,6 +36,7 @@ export default function AktuellesPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<FilterCategory>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [rssModalOpen, setRssModalOpen] = useState(false);
 
   const { data: postsData, isLoading: postsLoading } =
     api.posts.getAll.useQuery(
@@ -183,8 +185,17 @@ export default function AktuellesPage() {
               </span>
             </div>
 
-            {/* Right: Filter Toggle Button */}
+            {/* Right: RSS Feed & Filter Toggle Button */}
             <div className="flex gap-1">
+              <button
+                onClick={() => setRssModalOpen(true)}
+                className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-border flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
+                aria-label="RSS Feed"
+                title="RSS Feed abonnieren"
+              >
+                <Rss className="h-4 w-4" />
+                <span className="hidden sm:inline">RSS</span>
+              </button>
               {!filtersOpen && hasActiveFilters && (
                 <button
                   onClick={() => {
@@ -353,6 +364,13 @@ export default function AktuellesPage() {
           )}
         </div>
       </section>
+
+      {/* RSS Feed Modal */}
+      <FeedConfigModal
+        isOpen={rssModalOpen}
+        onClose={() => setRssModalOpen(false)}
+        feedType="rss"
+      />
     </div>
   );
 }
