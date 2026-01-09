@@ -32,7 +32,7 @@ function formatRssDate(date: Date): string {
 /**
  * Converts markdown to plain text for RSS description
  * Safely decodes HTML entities without double-unescaping
- * Ensures no HTML tags remain after entity decoding
+ * Ensures no HTML tags or angle brackets remain after processing
  */
 async function markdownToPlainText(markdown: string): Promise<string> {
   const html = await marked.parse(markdown);
@@ -40,15 +40,16 @@ async function markdownToPlainText(markdown: string): Promise<string> {
   // First pass: strip HTML tags
   let text = html.replace(/<[^>]*>/g, "");
 
-  // Decode HTML entities in a single pass to avoid double-unescaping
-  // Process from longest to shortest to handle compound entities correctly
-  // and decode &amp; last to prevent double-decoding
+  // Remove angle bracket entities without decoding them to prevent tag injection
+  // This ensures < and > characters are never reintroduced into the text
+  text = text.replace(/&lt;/gi, "").replace(/&gt;/gi, "");
+
+  // Decode safe HTML entities (excluding &lt; and &gt; which we already removed)
+  // Process &amp; last to prevent double-decoding
   const entityDecodeMap: Array<[string, string]> = [
     ["&nbsp;", " "],
     ["&quot;", '"'],
     ["&apos;", "'"],
-    ["&lt;", "<"],
-    ["&gt;", ">"],
     ["&amp;", "&"], // Must be decoded last
   ];
 
@@ -59,9 +60,8 @@ async function markdownToPlainText(markdown: string): Promise<string> {
     text = text.replace(new RegExp(escapedEntity, "g"), char);
   }
 
-  // Final sanitization: strip any HTML tags that may have been reintroduced
-  // by entity decoding, and remove any remaining angle brackets to prevent
-  // tag formation (e.g., <script> cannot be formed)
+  // Final sanitization: ensure no HTML tags or angle brackets remain
+  // This is a safety net in case any tags or brackets were missed
   text = text.replace(/<[^>]*>/g, "").replace(/[<>]/g, "");
 
   return text.trim();
