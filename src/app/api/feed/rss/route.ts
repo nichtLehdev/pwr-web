@@ -37,8 +37,24 @@ function formatRssDate(date: Date): string {
 async function markdownToPlainText(markdown: string): Promise<string> {
   const html = await marked.parse(markdown);
 
-  // First pass: strip HTML tags
-  let text = html.replace(/<[^>]*>/g, "");
+  // Comprehensive HTML tag removal to prevent tag injection:
+  // Handle all edge cases including complete tags, incomplete tags, and malformed tags
+  // This multi-step approach ensures no <script> or similar tags can exist
+  let text = html
+    // Step 1: Explicitly remove script tags and other dangerous tags first
+    // Handle both complete tags and incomplete tags (case-insensitive)
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<script[^>]*>/gi, "")
+    .replace(/<script/gi, "")
+    // Step 2: Remove all other complete HTML tags (including attributes, multiline)
+    .replace(/<[^>]*>/gi, "")
+    // Step 3: Remove incomplete/malformed tags (e.g., <div without closing >)
+    // Match < followed by word characters that might form tag names
+    .replace(/<\w+[^\w>]*/gi, "")
+    // Step 4: Remove any remaining < characters (prevents any tag formation)
+    .replace(/</g, "")
+    // Step 5: Remove any remaining > characters (prevents any tag formation)
+    .replace(/>/g, "");
 
   // Remove angle bracket entities without decoding them to prevent tag injection
   // This ensures < and > characters are never reintroduced into the text
