@@ -1,13 +1,11 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import { Mail, ArrowLeft } from "lucide-react";
 
 function ForgotPasswordForm() {
-  const router = useRouter();
   const toast = useToast();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
