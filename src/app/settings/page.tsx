@@ -185,7 +185,6 @@ export default function SettingsPage() {
               : profile.preferences;
           const newPreferences = { ...defaultPreferences, ...parsed };
           setPreferences(newPreferences);
-          // Sync theme with ThemeProvider if user has a preference
           if (newPreferences.theme && newPreferences.theme !== currentTheme) {
             setCurrentTheme(newPreferences.theme);
           }
@@ -193,7 +192,6 @@ export default function SettingsPage() {
           setPreferences(defaultPreferences);
         }
       } else {
-        // If no preferences, use current theme from ThemeProvider
         setPreferences({ ...defaultPreferences, theme: currentTheme });
       }
     }
@@ -403,7 +401,6 @@ export default function SettingsPage() {
                     value={formData.birthDate}
                     onChange={(e) => {
                       handleChange(e);
-                      // Validate immediately
                       if (!e.target.value) {
                         setBirthdateError("");
                       } else if (new Date(e.target.value) >= new Date()) {
@@ -635,7 +632,6 @@ export default function SettingsPage() {
                       onClick={async () => {
                         setPasswordError("");
 
-                        // Validation
                         if (!passwordData.currentPassword) {
                           setPasswordError(
                             "Bitte gib dein aktuelles Passwort ein",
@@ -711,7 +707,6 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   {((profile as { twoFactorEnabled?: boolean })
                     ?.twoFactorEnabled ?? false) ? (
-                    // 2FA is enabled
                     <div className="space-y-4">
                       <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-3 dark:border-green-400 dark:bg-green-900/20">
                         <p className="text-sm text-green-800 dark:text-green-300">
@@ -728,7 +723,6 @@ export default function SettingsPage() {
                       </Link>
                     </div>
                   ) : (
-                    // 2FA is not enabled
                     <div className="space-y-4">
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Zwei-Faktor-Authentifizierung fügt eine zusätzliche

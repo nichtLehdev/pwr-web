@@ -109,7 +109,6 @@ export default function Navigation() {
       href: "/materialien",
       label: "Materialien",
       dropdown: [
-        //{ href: "/materialien/uebungen", label: "Übungen & Tipps" },
         { href: "/materialien/blechblatt", label: "Rheinisches Blechblatt" },
         { href: "/materialien/literatur", label: "Literatur & CDs" },
       ],
@@ -178,10 +177,8 @@ export default function Navigation() {
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between lg:h-20">
-          {/* Logo - immer sichtbar */}
           <Link href="/" className="shrink-0">
             <div className="relative h-10 lg:h-14">
-              {/* Desktop: Komplettes Logo mit Text */}
               <Image
                 src={
                   isDarkMode
@@ -195,7 +192,6 @@ export default function Navigation() {
                 priority
                 unoptimized
               />
-              {/* Mobile: Nur Icon */}
               <Image
                 src={
                   isDarkMode
@@ -212,7 +208,6 @@ export default function Navigation() {
             </div>
           </Link>
 
-          {/* Desktop Navigation - ab lg: sichtbar */}
           <div className="hidden items-center space-x-6 text-nowrap lg:flex">
             {navLinks.map((link) => (
               <div
@@ -275,7 +270,6 @@ export default function Navigation() {
               </div>
             ))}
 
-            {/* Suche & Login/User Menu */}
             <div className="ml-4 flex items-center space-x-4">
               <ThemeToggle />
               <button

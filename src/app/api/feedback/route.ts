@@ -9,7 +9,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Prepare GitHub issue data
   const title = `[${type === "bug" ? "🐞 Bug" : type === "feature" ? "✨ Feature" : "💬 Feedback"}] ${subject}`;
   let body = `**Typ:** ${type || "other"}\n`;
   body += `**Betreff:** ${subject}\n`;
@@ -18,9 +17,8 @@ export async function POST(req: NextRequest) {
   if (device) body += `\n**Gerät/Betriebssystem & Browser:** ${device}`;
   body += `\n\n**E-Mail:** ${email || "Nicht angegeben"}`;
 
-  // Get GitHub token and repo info from environment variables
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const GITHUB_REPO = process.env.GITHUB_REPO; // e.g. 'lehdev/posaunenwerk'
+  const GITHUB_REPO = process.env.GITHUB_REPO;
 
   if (!GITHUB_TOKEN || !GITHUB_REPO) {
     return NextResponse.json(
@@ -29,7 +27,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Create issue via GitHub API
   const res = await fetch(
     `https://api.github.com/repos/${GITHUB_REPO}/issues`,
     {

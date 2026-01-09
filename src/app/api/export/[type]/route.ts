@@ -190,7 +190,6 @@ export async function GET(
           count: media.length,
         };
 
-        // For media export, include all media files
         const mediaList = await db.media.findMany();
         const zipBuffer = await createExportZip(
           jsonData,
@@ -230,7 +229,6 @@ export async function GET(
           count: downloads.length,
         };
 
-        // Downloads don't have media references, just return JSON in ZIP
         const { createExportZip } =
           await import("@/server/utils/export-import");
         const zipBuffer = await createExportZip(jsonData, [], "downloads.json");
@@ -300,7 +298,6 @@ export async function GET(
           count: courses.length,
         };
 
-        // Courses don't have media references
         const zipBuffer = await createExportZip(jsonData, [], "courses.json");
 
         return new NextResponse(zipBuffer as unknown as BodyInit, {
@@ -318,7 +315,6 @@ export async function GET(
         );
     }
 
-    // Collect media files and create ZIP
     const mediaList = collectMediaFromEntities(mediaFiles);
     const zipBuffer = await createExportZip(
       jsonData,

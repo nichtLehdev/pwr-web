@@ -50,17 +50,14 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
         | "district-13"
         | undefined);
 
-  // Geocode address to get coordinates for map display
   let latitude: number | null = null;
   let longitude: number | null = null;
 
   if (ensemble.location?.city) {
-    // Try stored coordinates first
     if (ensemble.location.latitude && ensemble.location.longitude) {
       latitude = ensemble.location.latitude;
       longitude = ensemble.location.longitude;
     } else {
-      // Geocode from address if coordinates not stored
       try {
         const geocodeResult = await api.locations.geocode({
           street: ensemble.location.street ?? undefined,
@@ -85,18 +82,6 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
         console.error("Geocoding failed:", error);
       }
     }
-  }
-
-  // Debug: Log coordinates for troubleshooting
-  if (ensemble.location && !latitude && !longitude) {
-    console.log("No coordinates available for location:", {
-      name: ensemble.location.name,
-      street: ensemble.location.street,
-      zipCode: ensemble.location.zipCode,
-      city: ensemble.location.city,
-      storedLat: ensemble.location.latitude,
-      storedLng: ensemble.location.longitude,
-    });
   }
 
   return (

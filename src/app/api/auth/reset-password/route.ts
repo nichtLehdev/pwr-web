@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate password strength
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Das Passwort muss mindestens 8 Zeichen lang sein" },
@@ -21,8 +20,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use Better Auth's built-in resetPassword API method
-    // See: https://www.better-auth.com/docs/authentication/email-password#request-password-reset
     console.log("[Reset Password] Attempting to reset password with token");
 
     const result = await auth.api.resetPassword({
@@ -32,8 +29,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Better Auth returns { status: boolean }
-    // If status is false or the call throws, it means the reset failed
     if (!result.status) {
       console.error("[Reset Password] Password reset failed");
       return NextResponse.json(

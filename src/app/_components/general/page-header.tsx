@@ -39,14 +39,13 @@ export default function PageHeader({
     };
 
     const updateTopPosition = () => {
-      // 64px (top-16) on mobile, 80px (top-20) on desktop
       const baseTop = window.innerWidth >= 768 ? 80 : 64;
       setTopPosition(baseTop + bannerHeight);
     };
 
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", updateTopPosition);
-    updateTopPosition(); // Initial calculation
+    updateTopPosition();
 
     return () => {
       window.removeEventListener("scroll", handleScroll);

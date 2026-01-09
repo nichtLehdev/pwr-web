@@ -67,7 +67,6 @@ export const registrationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { participants, ...registrationData } = input;
 
-      // Fetch course with all necessary data including custom fields
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
@@ -99,7 +98,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if registration has opened yet
       if (
         course.registrationOpensAt &&
         new Date() < course.registrationOpensAt
@@ -120,7 +118,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Validate sibling discount eligibility
       if (input.siblingDiscountApplied && !course.allowSiblingDiscount) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -128,12 +125,10 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Validate participants and calculate total price server-side
       let totalPrice = 0;
       const participantsWithPriceOptions = [];
 
       for (const participant of participants) {
-        // Validate price option exists by ID
         const priceOption = course.priceOptions.find(
           (p) => p.id === participant.priceOptionId,
         );
@@ -147,18 +142,15 @@ export const registrationsRouter = createTRPCRouter({
 
         totalPrice += priceOption.price;
 
-        // Store participant with price option label for database
         participantsWithPriceOptions.push({
           ...participant,
           priceOption: priceOption.label,
         });
 
-        // Validate custom fields
         if (participant.customFields && course.customFields) {
           for (const customField of course.customFields) {
             const value = participant.customFields[customField.fieldName];
 
-            // Check required fields
             if (customField.isRequired && !value) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
@@ -166,7 +158,6 @@ export const registrationsRouter = createTRPCRouter({
               });
             }
 
-            // Validate select options
             if (
               value &&
               customField.fieldType === "SELECT" &&
@@ -188,15 +179,12 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Calculate sibling discount if applied
-      // Discount is calculated per sibling group (family), not per registration
       const originalTotalPrice = totalPrice;
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus: SiblingDiscountStatus =
         SiblingDiscountStatus.NONE;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        // Group participants by siblingGroupId
         const siblingGroups = new Map<string, typeof participants>();
         const soloParticipants: typeof participants = [];
 
@@ -211,12 +199,8 @@ export const registrationsRouter = createTRPCRouter({
           }
         }
 
-        // Calculate discount for each sibling group
-        // 20% discount for each sibling after the first in each group
         for (const [, groupParticipants] of siblingGroups) {
           if (groupParticipants.length > 1) {
-            // Sort to ensure consistent ordering (first participant = no discount)
-            // Calculate discount for siblings after the first
             for (let i = 1; i < groupParticipants.length; i++) {
               const participant = groupParticipants[i];
               if (participant) {
@@ -224,7 +208,6 @@ export const registrationsRouter = createTRPCRouter({
                   (p) => p.id === participant.priceOptionId,
                 );
                 if (priceOption) {
-                  // 20% discount for this sibling
                   siblingDiscountAmount += priceOption.price * 0.2;
                 }
               }
@@ -238,8 +221,6 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Count actual participants from confirmed registrations AND registrations with pending discount
-      // This ensures spots are reserved even if discount is pending review
       const currentParticipantsCount = await ctx.db.participant.count({
         where: {
           registration: {
@@ -269,10 +250,8 @@ export const registrationsRouter = createTRPCRouter({
 
       let registrationStatus: RegistrationStatus = RegistrationStatus.CONFIRMED;
 
-      // If the entire registration doesn't fit, put it on waitlist or reject
       if (totalAfterRegistration > maxParticipants) {
         if (!course.allowWaitingList) {
-          // Check if there are some spots available but not enough for all participants
           if (availableSpots > 0 && availableSpots < newParticipants) {
             throw new TRPCError({
               code: "BAD_REQUEST",
@@ -326,10 +305,8 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send confirmation email
       if (isEmailConfigured()) {
         try {
-          // If discount is pending, send special email
           if (
             siblingDiscountStatus === SiblingDiscountStatus.PENDING &&
             originalTotalPrice &&
@@ -374,7 +351,6 @@ export const registrationsRouter = createTRPCRouter({
             );
           }
         } catch (error) {
-          // Log error but don't fail the registration
           console.error("Failed to send registration email:", error);
         }
       }
@@ -607,7 +583,6 @@ export const registrationsRouter = createTRPCRouter({
 
       const course = registration.course;
 
-      // Calculate total price server-side and validate
       let originalTotalPrice = 0;
       const participantsWithPriceOptions = [];
 
@@ -625,20 +600,17 @@ export const registrationsRouter = createTRPCRouter({
 
         originalTotalPrice += priceOption.price;
 
-        // Store participant with price option label for database
         participantsWithPriceOptions.push({
           ...participant,
           priceOption: priceOption.label,
         });
       }
 
-      // Calculate sibling discount if applicable
       let totalPrice = originalTotalPrice;
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus = registration.siblingDiscountStatus;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        // Group participants by siblingGroupId
         const siblingGroups = new Map<string, typeof participants>();
         for (const participant of participants) {
           if (participant.siblingGroupId) {
@@ -649,7 +621,6 @@ export const registrationsRouter = createTRPCRouter({
           }
         }
 
-        // Calculate discount for each sibling group (20% for each sibling after the first)
         for (const [, groupParticipants] of siblingGroups) {
           if (groupParticipants.length > 1) {
             for (let i = 1; i < groupParticipants.length; i++) {
@@ -668,18 +639,15 @@ export const registrationsRouter = createTRPCRouter({
 
         if (siblingDiscountAmount > 0) {
           totalPrice = originalTotalPrice - siblingDiscountAmount;
-          // Only set to PENDING if it wasn't already approved/rejected
           if (siblingDiscountStatus === "NONE") {
             siblingDiscountStatus = SiblingDiscountStatus.PENDING;
           }
         } else {
-          // No discount, reset status
           siblingDiscountStatus = SiblingDiscountStatus.NONE;
           siblingDiscountAmount = 0;
           originalTotalPrice = 0;
         }
       } else {
-        // Discount not applied, reset
         siblingDiscountStatus = SiblingDiscountStatus.NONE;
         siblingDiscountAmount = 0;
         originalTotalPrice = 0;
@@ -703,7 +671,6 @@ export const registrationsRouter = createTRPCRouter({
         if (!course.allowWaitingList) {
           const availableSpots =
             maxParticipants - currentParticipantsExcludingThis;
-          // Check if there are some spots available but not enough for all participants
           if (availableSpots > 0 && availableSpots < participants.length) {
             throw new TRPCError({
               code: "BAD_REQUEST",
@@ -890,7 +857,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send confirmation email if status changed from WAITLIST to CONFIRMED
       if (isEmailConfigured() && wasWaitlist && isNowConfirmed) {
         try {
           await sendCourseRegistrationConfirmedEmail(
@@ -905,7 +871,6 @@ export const registrationsRouter = createTRPCRouter({
             updatedRegistration.id,
           );
         } catch (error) {
-          // Log error but don't fail the status update
           console.error("Failed to send confirmation email:", error);
         }
       }
@@ -1037,7 +1002,6 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      // Only send email if registration is not already cancelled
       const wasAlreadyCancelled =
         registration.registrationStatus === RegistrationStatus.CANCELLED;
 
@@ -1058,7 +1022,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send cancellation email if not already cancelled
       if (isEmailConfigured() && !wasAlreadyCancelled) {
         try {
           await sendCourseRegistrationCancelledEmail(
@@ -1072,7 +1035,6 @@ export const registrationsRouter = createTRPCRouter({
             updated.id,
           );
         } catch (error) {
-          // Log error but don't fail the cancellation
           console.error("Failed to send cancellation email:", error);
         }
       }
@@ -1202,7 +1164,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Update registration: approve discount and confirm if not already confirmed
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.registrationId },
         data: {
@@ -1221,7 +1182,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send discount approval email
       if (
         isEmailConfigured() &&
         updated.originalTotalPrice &&
@@ -1277,7 +1237,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Reject discount: remove discount, restore original price, keep registration status
       const originalPrice =
         registration.originalTotalPrice ?? registration.totalPrice;
       const updated = await ctx.db.courseRegistration.update({
@@ -1300,7 +1259,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send discount rejection email
       if (isEmailConfigured()) {
         try {
           await sendSiblingDiscountRejectedEmail(
@@ -1343,7 +1301,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if user owns this registration
       if (registration.registrantEmail !== ctx.session.user.email) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -1351,7 +1308,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Check if discount was rejected
       if (
         registration.siblingDiscountStatus !== SiblingDiscountStatus.REJECTED
       ) {
@@ -1361,7 +1317,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      // Update registration: remove discount, confirm registration
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.registrationId },
         data: {
@@ -1383,7 +1338,6 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      // Send confirmation email
       if (isEmailConfigured()) {
         try {
           await sendCourseRegistrationConfirmedEmail(

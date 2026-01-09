@@ -7,7 +7,6 @@ import Link from "next/link";
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
 
-  // Initialize email from URL params without using useEffect
   const initialEmail = useMemo(() => {
     const emailParam = searchParams.get("email");
     return emailParam ? decodeURIComponent(emailParam) : "";

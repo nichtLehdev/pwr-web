@@ -239,7 +239,6 @@ export async function sendCourseRegistrationCancelledEmail(
   });
 }
 
-// Export other email functions here as needed
 export { sendEmail } from "./send-email";
 export {
   transporter,

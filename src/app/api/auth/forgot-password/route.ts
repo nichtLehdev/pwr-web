@@ -14,12 +14,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get base URL for redirect
     const baseUrl = getBaseUrl(request);
     const redirectTo = `${baseUrl}/reset-password`;
 
-    // Use Better Auth's built-in requestPasswordReset API method
-    // See: https://www.better-auth.com/docs/authentication/email-password#request-password-reset
     await auth.api.requestPasswordReset({
       body: {
         email,
@@ -27,8 +24,6 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Better Auth handles user existence checking internally
-    // It will return success even if user doesn't exist (security best practice)
     return NextResponse.json(
       {
         success: true,

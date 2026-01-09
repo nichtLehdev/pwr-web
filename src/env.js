@@ -19,7 +19,6 @@ export const env = createEnv({
       .default("development"),
     GITHUB_TOKEN: z.string(),
     GITHUB_REPO: z.string(),
-    // SMTP Configuration for Mailcow
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.coerce.number().default(587).optional(),
     SMTP_SECURE: z
@@ -39,9 +38,7 @@ export const env = createEnv({
    * isn't built with invalid env vars. To expose them to the client, prefix them with
    * `NEXT_PUBLIC_`.
    */
-  client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
-  },
+  client: {},
 
   /**
    * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.

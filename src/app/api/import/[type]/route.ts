@@ -37,7 +37,6 @@ export async function POST(
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // Handle both ZIP and JSON files for backward compatibility
     const isZip = file.name.endsWith(".zip") || file.type === "application/zip";
     let jsonData: Record<string, unknown>;
     let mediaFiles: Map<string, Buffer> = new Map();
@@ -51,12 +50,10 @@ export async function POST(
       mediaFiles = extracted.mediaFiles;
       mediaMapping = extracted.mediaMapping;
     } else {
-      // JSON file (backward compatibility)
       const text = await file.text();
       jsonData = JSON.parse(text);
     }
 
-    // Upload media files and create mapping from old IDs to new IDs
     const mediaIdMap: Record<string, string> = {}; // oldId -> newId
 
     if (mediaFiles.size > 0 && Object.keys(mediaMapping).length > 0) {
@@ -70,7 +67,6 @@ export async function POST(
           continue;
         }
 
-        // Determine mime type and extension from filename
         const extension = filename.split(".").pop()?.toLowerCase() || "bin";
         const mimeTypes: Record<string, string> = {
           jpg: "image/jpeg",
@@ -82,14 +78,12 @@ export async function POST(
         };
         const mimeType = mimeTypes[extension] || "application/octet-stream";
 
-        // Generate new filename
         const baseName = filename
           .replace(/\.[^/.]+$/, "")
           .replace(/[^a-zA-Z0-9-_]/g, "-")
           .substring(0, 50);
         const newFilename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
-        // Save file
         const uploadDir = join(process.cwd(), "public", "uploads", "media");
         await mkdir(uploadDir, { recursive: true });
         const filePath = join(uploadDir, newFilename);
@@ -97,7 +91,6 @@ export async function POST(
 
         const url = `/api/uploads/media/${newFilename}`;
 
-        // Create media record
         const media = await db.media.create({
           data: {
             name: filename,
@@ -117,7 +110,6 @@ export async function POST(
       }
     }
 
-    // Import the data with updated media IDs
     let result: { success: boolean; importedCount: number };
 
     switch (type) {
@@ -231,8 +223,6 @@ export async function POST(
         const media = (jsonData.media as Array<Record<string, unknown>>) || [];
         const results = await Promise.all(
           media.map(async (mediaData: Record<string, unknown>) => {
-            // For media import, we've already created the media records above
-            // This is mainly for metadata-only imports
             return await db.media.create({
               data: {
                 name: mediaData.name as string,

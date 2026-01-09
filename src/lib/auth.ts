@@ -23,8 +23,6 @@ export const {
     inferAdditionalFields<typeof auth>(),
     twoFactorClient({
       onTwoFactorRedirect() {
-        // Redirect to 2FA verification page
-        // Preserve any redirect parameter from the original URL
         const redirectTo =
           new URLSearchParams(window.location.search).get("redirect") || "/";
         window.location.href = `/verify-2fa?redirect=${encodeURIComponent(redirectTo)}`;

@@ -14,7 +14,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find verification record
     const verification = await db.verification.findFirst({
       where: {
         identifier: email,
@@ -32,7 +31,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find user
     const user = await db.user.findUnique({
       where: { email },
     });
@@ -44,7 +42,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Mark email as verified
     await db.user.update({
       where: { id: user.id },
       data: {
@@ -52,7 +49,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Delete the verification token (one-time use)
     await db.verification.delete({
       where: { id: verification.id },
     });
