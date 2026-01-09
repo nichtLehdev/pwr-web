@@ -87,12 +87,12 @@ export default function InstagramEventTemplate({
   });
 
   const descriptionText = event.description
-    ? event.description
-        .replace(/<[^>]*>/g, "")
-        .replace(/</g, "")
-        .replace(/>/g, "")
-        .trim()
+    ? event.description.replace(/[<>]/g, "").trim()
     : "";
+
+
+
+
 
   const performer =
     event.ensemble?.name ||
