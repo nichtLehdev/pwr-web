@@ -14,6 +14,7 @@ import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import { CircleXIcon } from "lucide-react";
 import FeedConfigModal from "../_components/feeds/feed-config-modal";
 import { Button } from "@/app/_components/ui";
+import { useBanner } from "../_components/ui/banner-context";
 
 type FilterCategory = PostCategory | "all";
 
@@ -23,6 +24,9 @@ type PostWithRelations = Post & {
 };
 
 export default function AktuellesPage() {
+  const { bannerHeight } = useBanner();
+  const [filterBarTop, setFilterBarTop] = useState(112);
+
   useEffect(() => {
     // Store original overflow value
     const originalOverflow = document.body.style.overflow;
@@ -38,6 +42,19 @@ export default function AktuellesPage() {
       // Ensure overflow is restored on cleanup
       document.body.style.overflow = originalOverflow || "";
     };
+  }, []);
+
+  useEffect(() => {
+    const updateFilterBarTop = () => {
+      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
+      // We add bannerHeight to these original values
+      const baseTop = window.innerWidth >= 768 ? 144 : 112;
+      setFilterBarTop(baseTop);
+    };
+
+    updateFilterBarTop();
+    window.addEventListener("resize", updateFilterBarTop);
+    return () => window.removeEventListener("resize", updateFilterBarTop);
   }, []);
 
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
@@ -177,7 +194,12 @@ export default function AktuellesPage() {
       </section>
 
       {/* Filter Bar */}
-      <section className="dark:bg-dark-surface dark:border-dark-border sticky top-28 z-20 border-b bg-white shadow-sm md:top-36">
+      <section
+        className="dark:bg-dark-surface dark:border-dark-border sticky z-20 border-b bg-white shadow-sm"
+        style={{
+          top: `${bannerHeight + filterBarTop}px`,
+        }}
+      >
         <div className="container mx-auto px-4 py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">

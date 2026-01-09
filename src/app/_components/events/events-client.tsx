@@ -14,6 +14,7 @@ import type { Bezirk } from "~/generated/prisma/client";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import PageHeader from "../general/page-header";
+import { useBanner } from "../ui/banner-context";
 import EventCard from "./event-card";
 import CourseCard from "./course-card";
 import CalendarView from "./calendar/calendar-view";
@@ -66,10 +67,25 @@ export default function EventsClient({
   bezirke,
 }: EventsClientProps) {
   const { data: session } = useSession();
+  const { bannerHeight } = useBanner();
+  const [filterBarTop, setFilterBarTop] = useState(112);
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
+
+  useEffect(() => {
+    const updateFilterBarTop = () => {
+      // Original values were top-28 (112px) mobile and md:top-36 (144px) desktop
+      // We add bannerHeight to these original values
+      const baseTop = window.innerWidth >= 768 ? 144 : 112;
+      setFilterBarTop(baseTop);
+    };
+
+    updateFilterBarTop();
+    window.addEventListener("resize", updateFilterBarTop);
+    return () => window.removeEventListener("resize", updateFilterBarTop);
+  }, []);
 
   const userDefaultView = useMemo((): ViewMode => {
     if (profile?.preferences) {
@@ -361,7 +377,12 @@ export default function EventsClient({
       </section>
 
       {/* Filter & View Toggle */}
-      <section className="dark:border-dark-border dark:bg-dark-surface sticky top-28 z-20 border-b border-gray-200 bg-white shadow-sm md:top-36">
+      <section
+        className="dark:border-dark-border dark:bg-dark-surface sticky z-20 border-b border-gray-200 bg-white shadow-sm"
+        style={{
+          top: `${bannerHeight + filterBarTop}px`,
+        }}
+      >
         <div className="container mx-auto px-4 py-3">
           {/* Mobile: Compact Row */}
           <div className="flex items-center justify-between gap-2">
