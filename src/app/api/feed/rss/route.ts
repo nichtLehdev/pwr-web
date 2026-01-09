@@ -55,8 +55,8 @@ function markdownToPlainText(markdown: string): string {
   text = text.replace(/^>\s+/gm, "");
   // - Horizontal rules
   text = text.replace(/^---+/gm, "");
-  // - HTML tags (in case markdown contains raw HTML)
-  text = text.replace(/<[^>]+>/g, "");
+  // - Remove any remaining angle brackets to avoid leftover HTML-like fragments
+  text = text.replace(/[<>]/g, "");
 
   // Normalize whitespace: collapse multiple newlines and spaces
   text = text.replace(/\n\s*\n\s*\n/g, "\n\n");
