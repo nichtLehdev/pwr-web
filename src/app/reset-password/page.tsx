@@ -11,7 +11,6 @@ function ResetPasswordContent() {
   const router = useRouter();
   const toast = useToast();
   const token = searchParams.get("token");
-  const email = searchParams.get("email");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
