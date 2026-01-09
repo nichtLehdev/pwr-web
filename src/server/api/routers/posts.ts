@@ -92,6 +92,13 @@ export const postsRouter = createTRPCRouter({
                 profileImage: true,
               },
             },
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+                profileImage: true,
+              },
+            },
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -121,6 +128,15 @@ export const postsRouter = createTRPCRouter({
             select: {
               id: true,
               displayName: true,
+              profileImage: true,
+              bio: true,
+            },
+          },
+          author: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
               profileImage: true,
               bio: true,
             },
@@ -347,6 +363,8 @@ export const postsRouter = createTRPCRouter({
         bezirkId: z.string().optional(),
         pinned: z.boolean().default(false),
         status: z.enum(ContentStatus).default(ContentStatus.PENDING),
+        authorId: z.string().optional().nullable(),
+        authorName: z.string().max(200).optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -379,6 +397,9 @@ export const postsRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
           publishedAt:
             input.status === ContentStatus.APPROVED ? new Date() : null,
+          // Only set authorId if provided, otherwise leave null
+          authorId: input.authorId ?? null,
+          authorName: input.authorName ?? null,
         },
         include: {
           coverImage: true,
@@ -401,6 +422,8 @@ export const postsRouter = createTRPCRouter({
         bezirkId: z.string().optional().nullable(),
         pinned: z.boolean().optional(),
         status: z.enum(ContentStatus).optional(),
+        authorId: z.string().optional().nullable(),
+        authorName: z.string().max(200).optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -479,6 +502,14 @@ export const postsRouter = createTRPCRouter({
         finalData.publishedAt = new Date();
       } else if (updateData.status === ContentStatus.DRAFT) {
         finalData.publishedAt = null;
+      }
+
+      // Handle author fields - if authorId is explicitly set to null, clear it
+      if (updateData.authorId !== undefined) {
+        finalData.authorId = updateData.authorId;
+      }
+      if (updateData.authorName !== undefined) {
+        finalData.authorName = updateData.authorName;
       }
 
       return await ctx.db.post.update({
@@ -704,6 +735,12 @@ export const postsRouter = createTRPCRouter({
                 displayName: true,
               },
             },
+            author: {
+              select: {
+                id: true,
+                displayName: true,
+              },
+            },
             reviewer: { select: { id: true, displayName: true } },
           },
           skip: (input.page - 1) * input.limit,
@@ -779,6 +816,8 @@ export const postsRouter = createTRPCRouter({
           pinned: false,
           status: ContentStatus.DRAFT,
           createdById: ctx.session.user.id,
+          authorId: original.authorId,
+          authorName: original.authorName,
         },
       });
 
@@ -812,6 +851,8 @@ export const postsRouter = createTRPCRouter({
               pinned: false,
               status: ContentStatus.DRAFT,
               createdById: ctx.session.user.id,
+              authorId: original.authorId,
+              authorName: original.authorName,
             },
           }),
         ),
@@ -907,6 +948,13 @@ export const postsRouter = createTRPCRouter({
             email: true,
           },
         },
+        author: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
         reviewer: {
           select: {
             id: true,
@@ -924,6 +972,7 @@ export const postsRouter = createTRPCRouter({
         coverImageUrl: post.coverImage?.url,
         bezirkName: post.bezirk?.name,
         createdByEmail: post.createdBy?.email,
+        authorEmail: post.author?.email,
         reviewerEmail: post.reviewer?.email,
       })),
       exportedAt: new Date().toISOString(),

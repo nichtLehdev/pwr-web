@@ -15,7 +15,7 @@ import {
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
-import { ImageIcon, AlertTriangle } from "lucide-react";
+import { ImageIcon, AlertTriangle, X } from "lucide-react";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -77,6 +77,14 @@ export default function EditPostPage() {
   );
 
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [authorId, setAuthorId] = useState<string | null>(
+    post?.authorId ?? null,
+  );
+  const [authorName, setAuthorName] = useState<string>(
+    post?.authorName ?? "",
+  );
+  const [authorSearch, setAuthorSearch] = useState("");
+  const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
 
   const [status, setStatus] = useState<ContentStatus>(post?.status ?? "DRAFT");
 
@@ -84,6 +92,45 @@ export default function EditPostPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
+  const { data: users } = api.users.list.useQuery(
+    { page: 1, limit: 100 },
+    { enabled: !!session?.user },
+  );
+
+  const filteredUsers = users?.users.filter((user) => {
+    if (!authorSearch.trim()) return true;
+    const searchLower = authorSearch.toLowerCase();
+    return (
+      user.displayName?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const handleAuthorSelect = (user: {
+    id: string;
+    displayName: string | null;
+    email: string;
+  }) => {
+    setAuthorId(user.id);
+    setAuthorName("");
+    setAuthorSearch(user.displayName || user.email);
+    setShowAuthorDropdown(false);
+  };
+
+  const handleClearAuthor = () => {
+    setAuthorId(null);
+    setAuthorName("");
+    setAuthorSearch("");
+  };
+
+  // Initialize author search when post loads
+  useEffect(() => {
+    if (post?.author) {
+      setAuthorSearch(post.author.displayName || post.author.email || "");
+    } else if (post?.authorName) {
+      setAuthorName(post.authorName);
+    }
+  }, [post]);
 
   const utils = api.useUtils();
 
@@ -129,6 +176,23 @@ export default function EditPostPage() {
     }
   }, [post, profile, session, router, postId]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".author-dropdown-container")) {
+        setShowAuthorDropdown(false);
+      }
+    };
+
+    if (showAuthorDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showAuthorDropdown]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -166,6 +230,8 @@ export default function EditPostPage() {
       coverImageId: coverImageId || null,
       pinned,
       status: finalStatus,
+      authorId: authorId || null,
+      authorName: authorName.trim() || null,
     });
   };
 
@@ -403,6 +469,106 @@ export default function EditPostPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+          </section>
+
+          {/* Author */}
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Autor
+            </h2>
+            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+              Optional: Wenn der Beitrag von jemand anderem geschrieben wurde oder
+              du einen benutzerdefinierten Autorennamen verwenden möchtest.
+            </p>
+            <div className="space-y-4">
+              <div className="author-dropdown-container relative">
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Autor suchen (Benutzer verknüpfen)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={authorSearch}
+                    onChange={(e) => {
+                      setAuthorSearch(e.target.value);
+                      setShowAuthorDropdown(true);
+                      if (!e.target.value) {
+                        setAuthorId(null);
+                        setAuthorName("");
+                      }
+                    }}
+                    onFocus={() => setShowAuthorDropdown(true)}
+                    placeholder="Name oder E-Mail eingeben..."
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:ring-1 focus:outline-none"
+                  />
+                  {authorId && (
+                    <button
+                      type="button"
+                      onClick={handleClearAuthor}
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* User Dropdown */}
+                {showAuthorDropdown &&
+                  authorSearch &&
+                  filteredUsers &&
+                  filteredUsers.length > 0 && (
+                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                      {filteredUsers.slice(0, 10).map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => handleAuthorSelect(user)}
+                          className="dark:hover:bg-dark-background-secondary hover:bg-gray-50 w-full px-4 py-2 text-left text-sm transition-colors"
+                        >
+                          <div className="dark:text-dark-text font-medium text-gray-900">
+                            {user.displayName || "Kein Name"}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {user.email}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+              </div>
+
+              <div className="relative">
+                <div className="dark:border-dark-border my-4 flex items-center gap-2 border-t border-gray-200">
+                  <span className="dark:text-dark-muted bg-white px-2 text-sm text-gray-500 dark:bg-dark-surface">
+                    Oder
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Benutzerdefinierter Autorenname
+                </label>
+                <input
+                  type="text"
+                  value={authorName}
+                  onChange={(e) => {
+                    setAuthorName(e.target.value);
+                    if (e.target.value) {
+                      setAuthorId(null);
+                      setAuthorSearch("");
+                    }
+                  }}
+                  placeholder="z.B. Redaktionsteam, Pressestelle..."
+                  maxLength={200}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Wenn kein Autor ausgewählt wird, wird der Ersteller des Beitrags
+                  als Autor angezeigt.
+                </p>
               </div>
             </div>
           </section>

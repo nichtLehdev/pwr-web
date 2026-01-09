@@ -226,14 +226,14 @@ export default function PostDetailView({
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl">
             {/* Author Info */}
-            {post.createdBy && (
+            {(post.author || post.authorName || post.createdBy) && (
               <div className="dark:border-dark-border mb-8 flex items-center gap-4 border-b border-gray-200 pb-8">
-                {post.createdBy.profileImage?.url && (
+                {post.author?.profileImage?.url && (
                   <Image
-                    src={post.createdBy.profileImage.url}
+                    src={post.author.profileImage.url}
                     alt={
-                      post.createdBy.profileImage.alt ||
-                      post.createdBy.displayName ||
+                      post.author.profileImage.alt ||
+                      post.author.displayName ||
                       "Autor Bild"
                     }
                     width={200}
@@ -243,11 +243,14 @@ export default function PostDetailView({
                 )}
                 <div>
                   <p className="text-dark dark:text-dark-text font-semibold">
-                    {post.createdBy.displayName}
+                    {post.authorName ||
+                      post.author?.displayName ||
+                      post.createdBy?.displayName ||
+                      "Unbekannt"}
                   </p>
-                  {post.createdBy.bio && (
+                  {post.author?.bio && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {post.createdBy.bio}
+                      {post.author.bio}
                     </p>
                   )}
                 </div>
