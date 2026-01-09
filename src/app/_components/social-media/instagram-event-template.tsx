@@ -90,10 +90,6 @@ export default function InstagramEventTemplate({
     ? event.description.replace(/[<>]/g, "").trim()
     : "";
 
-
-
-
-
   const performer =
     event.ensemble?.name ||
     event.auswahlChor?.name ||
