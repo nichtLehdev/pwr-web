@@ -390,8 +390,8 @@ export default function NewEnsemblePage() {
                   <div>
                     <Label>Bezirk</Label>
                     <Select
-                  value={bezirkId}
-                  onChange={(e) => setBezirkId(e.target.value)}
+                      value={bezirkId}
+                      onChange={(e) => setBezirkId(e.target.value)}
                     >
                       <option value="">Kein Bezirk</option>
                       {bezirke?.map((bezirk) => (

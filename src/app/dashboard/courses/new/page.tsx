@@ -525,49 +525,51 @@ export default function NewCoursePage() {
                     rows={4}
                     placeholder="Beschreibe den Kurs..."
                     required
-                  maxLength={10000}
-                />
+                    maxLength={10000}
+                  />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label required>Kursart</Label>
-                  <Select
-                    value={courseType}
-                    onChange={(e) =>
-                      setCourseType(e.target.value as CourseType)
-                    }
-                  >
-                    {Object.entries(courseTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+                  <div>
+                    <Label required>Kursart</Label>
+                    <Select
+                      value={courseType}
+                      onChange={(e) =>
+                        setCourseType(e.target.value as CourseType)
+                      }
+                    >
+                      {Object.entries(courseTypeLabels).map(
+                        ([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </Select>
+                  </div>
 
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Zielgruppe
-                  </label>
-                  <select
-                    value={targetAudience}
-                    onChange={(e) =>
-                      setTargetAudience(e.target.value as TargetAudience)
-                    }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  >
-                    {Object.entries(targetAudienceLabels).map(
-                      ([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Zielgruppe
+                    </label>
+                    <select
+                      value={targetAudience}
+                      onChange={(e) =>
+                        setTargetAudience(e.target.value as TargetAudience)
+                      }
+                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    >
+                      {Object.entries(targetAudienceLabels).map(
+                        ([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
             </CardContent>
           </Card>
 
