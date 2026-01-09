@@ -88,7 +88,6 @@ export default function PostDetailView({
   const districtColor = getDistrictColor(post.bezirk?.number);
   const publishDate = new Date(post.publishedAt || post.createdAt);
 
-  // Check if user can edit this post
   const canEdit =
     session?.user &&
     profile &&

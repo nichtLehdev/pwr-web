@@ -2,7 +2,6 @@ import nodemailer from "nodemailer";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// Load .env file explicitly (tsx doesn't auto-load .env)
 config({ path: resolve(process.cwd(), ".env") });
 
 /**
@@ -12,7 +11,6 @@ config({ path: resolve(process.cwd(), ".env") });
 async function testEmail() {
   console.log("🧪 Testing email configuration...\n");
 
-  // Check SMTP configuration directly from environment
   const smtpHost = process.env.SMTP_HOST;
   const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_PASSWORD;
@@ -39,7 +37,6 @@ async function testEmail() {
     process.exit(1);
   }
 
-  // Create transporter for testing
   const transporter = nodemailer.createTransport({
     host: smtpHost,
     port: smtpPort,
@@ -53,7 +50,6 @@ async function testEmail() {
     },
   });
 
-  // Test connection
   console.log("1. Testing SMTP connection...");
   try {
     await transporter.verify();
@@ -63,7 +59,6 @@ async function testEmail() {
     process.exit(1);
   }
 
-  // Test sending a simple email
   console.log("\n2. Sending test email...");
 
   const testEmail = process.env.TEST_EMAIL;
@@ -116,7 +111,6 @@ async function testEmail() {
   console.log("\n✅ All email tests passed!");
 }
 
-// Run if called directly (tsx will execute this)
 testEmail().catch((error) => {
   console.error("Unexpected error:", error);
   process.exit(1);

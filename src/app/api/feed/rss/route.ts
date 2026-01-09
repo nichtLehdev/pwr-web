@@ -30,35 +30,20 @@ function formatRssDate(date: Date): string {
 function markdownToPlainText(markdown: string): string {
   if (!markdown) return "";
 
-  // Remove markdown syntax directly:
-  // - Headers (# ## ### etc.)
   let text = markdown.replace(/^#{1,6}\s+/gm, "");
-  // - Links [text](url) -> text
   text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
-  // - Images ![alt](url) -> alt
   text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
-  // - Bold **text** -> text
   text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
-  // - Italic *text* -> text
   text = text.replace(/\*([^*]+)\*/g, "$1");
-  // - Strikethrough ~~text~~ -> text
   text = text.replace(/~~([^~]+)~~/g, "$1");
-  // - Inline code `code` -> code
   text = text.replace(/`([^`]+)`/g, "$1");
-  // - Code blocks ```...``` -> (removed)
   text = text.replace(/```[\s\S]*?```/g, "");
-  // - Lists (-, *, +)
   text = text.replace(/^[\s]*[-*+]\s+/gm, "");
-  // - Numbered lists
   text = text.replace(/^\d+\.\s+/gm, "");
-  // - Blockquotes >
   text = text.replace(/^>\s+/gm, "");
-  // - Horizontal rules
   text = text.replace(/^---+/gm, "");
-  // - Remove any remaining angle brackets to avoid leftover HTML-like fragments
   text = text.replace(/[<>]/g, "");
 
-  // Normalize whitespace: collapse multiple newlines and spaces
   text = text.replace(/\n\s*\n\s*\n/g, "\n\n");
   text = text.replace(/[ \t]+/g, " ");
 
@@ -68,7 +53,6 @@ function markdownToPlainText(markdown: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    // Support both comma-separated and multiple query params
     const bezirkIdParam = searchParams.getAll("bezirkId");
     const bezirkIds =
       bezirkIdParam.length > 0
@@ -82,7 +66,6 @@ export async function GET(request: NextRequest) {
 
     const baseUrl = getBaseUrl({ headers: request.headers });
 
-    // Build where clause - support OR logic for bezirksübergreifend + districts
     const where: {
       status: ContentStatus;
       OR?: Array<{ bezirkId: string | { in: string[] } | null }>;
@@ -91,19 +74,16 @@ export async function GET(request: NextRequest) {
       status: ContentStatus.APPROVED,
     };
 
-    // If both bezirksübergreifend and districts are selected, use OR logic
     if (bezirksuebergreifend && bezirkIds.length > 0) {
       where.OR = [
-        { bezirkId: null }, // Bezirksübergreifend items
+        { bezirkId: null },
         ...(bezirkIds.length === 1
           ? [{ bezirkId: bezirkIds[0]! }]
           : [{ bezirkId: { in: bezirkIds } }]),
       ];
     } else if (bezirksuebergreifend) {
-      // Only bezirksübergreifend
       where.bezirkId = null;
     } else if (bezirkIds.length > 0) {
-      // Only districts
       if (bezirkIds.length === 1) {
         where.bezirkId = bezirkIds[0]!;
       } else {
@@ -111,7 +91,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch posts
     const posts = await db.post.findMany({
       where,
       include: {
@@ -124,16 +103,14 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: [{ pinned: "desc" }, { publishedAt: "desc" }],
-      take: Math.min(limit, 100), // Cap at 100
+      take: Math.min(limit, 100),
     });
 
-    // Get district names for feed title
     let feedTitle = "Posaunenwerk - Aktuelles";
     let feedDescription = "Aktuelle Nachrichten und Beiträge vom Posaunenwerk";
     let feedLink = `${baseUrl}/aktuelles`;
 
     if (bezirkIds.length > 0) {
-      // Fetch bezirke to get their names
       const bezirke = await db.bezirk.findMany({
         where: { id: { in: bezirkIds } },
         orderBy: { number: "asc" },
@@ -167,7 +144,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Generate RSS items
     const items = posts.map((post) => {
       const postUrl = `${baseUrl}/aktuelles/${post.id}`;
       const pubDate = post.publishedAt || post.createdAt;
@@ -186,7 +162,6 @@ export async function GET(request: NextRequest) {
     </item>`;
     });
 
-    // Build RSS feed
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>

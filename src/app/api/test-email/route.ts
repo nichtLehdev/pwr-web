@@ -4,7 +4,6 @@ import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 
 export async function POST(request: NextRequest) {
-  // Only allow in development
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
       { message: "Not available in production" },
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Test connection
     const connectionOk = await verifyEmailConnection();
     if (!connectionOk) {
       return NextResponse.json(
@@ -32,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send test email
     const baseUrl = getBaseUrl(request);
     const testVerificationUrl = `${baseUrl}/verify-email?token=test-token-123&email=${encodeURIComponent(email)}`;
 
@@ -55,7 +52,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  // Only allow in development
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
       { message: "Not available in production" },

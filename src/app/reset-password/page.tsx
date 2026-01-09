@@ -18,7 +18,6 @@ function ResetPasswordContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Check if token is present (email is optional, Better Auth only needs token)
   if (!token) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-8">
@@ -62,7 +61,6 @@ function ResetPasswordContent() {
     e.preventDefault();
     setError("");
 
-    // Validate passwords
     if (password.length < 8) {
       setError("Das Passwort muss mindestens 8 Zeichen lang sein.");
       return;
@@ -94,7 +92,6 @@ function ResetPasswordContent() {
         toast.success(
           data.message || "Passwort wurde erfolgreich zurückgesetzt.",
         );
-        // Redirect to login after 2 seconds
         setTimeout(() => {
           router.push("/login");
         }, 2000);

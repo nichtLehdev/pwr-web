@@ -21,7 +21,6 @@ export async function geocodeAddress(address: {
   city: string;
 }): Promise<GeocodeResult> {
   try {
-    // Build the query string
     const queryParts: string[] = [];
 
     if (address.street) {
@@ -34,7 +33,6 @@ export async function geocodeAddress(address: {
       queryParts.push(address.city);
     }
 
-    // Add "Germany" for better results
     queryParts.push("Germany");
 
     const query = queryParts.join(", ");
@@ -43,14 +41,12 @@ export async function geocodeAddress(address: {
       return { latitude: null, longitude: null };
     }
 
-    // Use Nominatim API (OpenStreetMap's geocoding service)
-    // Rate limit: 1 request per second, so we add a small delay
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`;
 
     const userAgentEmail = env.SMTP_FROM || "noreply@posaunenwerk.de";
     const response = await fetch(url, {
       headers: {
-        "User-Agent": `Posaunenwerk/1.0 (${userAgentEmail})`, // Required by Nominatim
+        "User-Agent": `Posaunenwerk/1.0 (${userAgentEmail})`,
       },
     });
 

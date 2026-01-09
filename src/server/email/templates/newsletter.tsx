@@ -81,7 +81,6 @@ export function NewsletterEmail({
   );
 }
 
-// Styles matching your website's design
 const main = {
   backgroundColor: "#f5f5f5",
   fontFamily:

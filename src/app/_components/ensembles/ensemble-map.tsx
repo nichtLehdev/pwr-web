@@ -6,7 +6,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ExternalLinkIcon } from "lucide-react";
 
-// Fix for default marker icon issue in Next.js
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
@@ -39,7 +38,6 @@ export default function EnsembleMap({
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Check if coordinates have changed
     const coordsChanged =
       !lastCoordsRef.current ||
       lastCoordsRef.current.lat !== latitude ||
@@ -56,19 +54,14 @@ export default function EnsembleMap({
       }
 
       try {
-        // Clean up existing map
         if (mapInstanceRef.current) {
           try {
             mapInstanceRef.current.remove();
-          } catch {
-            // Ignore cleanup errors
-          }
+          } catch {}
         }
 
-        // Clear container
         mapContainerRef.current.innerHTML = "";
 
-        // Ensure container has dimensions
         if (
           mapContainerRef.current.offsetWidth === 0 ||
           mapContainerRef.current.offsetHeight === 0
@@ -78,27 +71,23 @@ export default function EnsembleMap({
           return;
         }
 
-        // Initialize map
         const map = L.map(mapContainerRef.current).setView(
           [latitude, longitude],
           15,
         );
         mapInstanceRef.current = map;
 
-        // Add OpenStreetMap tiles
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           maxZoom: 19,
         }).addTo(map);
 
-        // Add marker
         L.marker([latitude, longitude])
           .addTo(map)
           .bindPopup(locationName || "Probenort")
           .openPopup();
 
-        // Invalidate size to ensure map renders correctly
         setTimeout(() => {
           map.invalidateSize();
         }, 100);
@@ -111,17 +100,13 @@ export default function EnsembleMap({
       }
     };
 
-    // Small delay to ensure DOM is ready
     setTimeout(initMap, 100);
 
-    // Cleanup
     return () => {
       if (mapInstanceRef.current) {
         try {
           mapInstanceRef.current.remove();
-        } catch {
-          // Ignore cleanup errors
-        }
+        } catch {}
         mapInstanceRef.current = null;
       }
     };

@@ -238,9 +238,6 @@ export default function NewEnsemblePage() {
     setError("");
     setIsSubmitting(true);
 
-    // Transform rehearsal schedules from form format to API format
-    // Form format: [{ selectedDays: ["Montag", "Dienstag"], time: "19:30" }]
-    // API format: [{ day: "Montag", time: "19:30" }, { day: "Dienstag", time: "19:30" }]
     const transformedRehearsalSchedules =
       rehearsalSchedules.length > 0
         ? rehearsalSchedules

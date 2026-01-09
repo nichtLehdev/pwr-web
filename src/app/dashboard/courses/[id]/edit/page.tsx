@@ -192,7 +192,6 @@ export default function EditCoursePage() {
       setRegistrationOpen(course.registrationOpen);
       if (course.registrationOpensAt) {
         const opensAt = new Date(course.registrationOpensAt);
-        // Convert to local time for datetime-local input
         const year = opensAt.getFullYear();
         const month = String(opensAt.getMonth() + 1).padStart(2, "0");
         const day = String(opensAt.getDate()).padStart(2, "0");

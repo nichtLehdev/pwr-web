@@ -89,7 +89,6 @@ export default function EditPostPage() {
   });
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
 
-  // Track if we've initialized from post to avoid overwriting user changes
   const initializedFromPost = useRef(false);
 
   const [status, setStatus] = useState<ContentStatus>(post?.status ?? "DRAFT");
@@ -129,9 +128,6 @@ export default function EditPostPage() {
     setAuthorSearch("");
   };
 
-  // Initialize author state from post when it becomes available (only once)
-  // Using a ref to track initialization and avoid overwriting user changes
-  // This is acceptable because we're syncing state from external query data
   useEffect(() => {
     if (post && !initializedFromPost.current) {
       if (post.author && post.author.id !== authorId) {
@@ -142,7 +138,6 @@ export default function EditPostPage() {
       }
       initializedFromPost.current = true;
     }
-    // Only run when post becomes available
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post?.id]);
 
@@ -190,7 +185,6 @@ export default function EditPostPage() {
     }
   }, [post, profile, session, router, postId]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;

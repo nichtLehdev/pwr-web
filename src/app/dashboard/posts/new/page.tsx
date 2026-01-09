@@ -128,7 +128,6 @@ export default function NewPostPage() {
     }
   }, [profile, profileLoading, router]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;

@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
     });
 
     if (!subscriber) {
-      // Don't reveal if email exists or not for privacy
       return NextResponse.json({
         success: true,
         message: "Unsubscribed successfully",

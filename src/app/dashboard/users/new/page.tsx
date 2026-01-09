@@ -237,7 +237,6 @@ export default function NewUserPage() {
       return;
     }
 
-    // Validate username if provided
     if (username.trim()) {
       if (username.trim().length < 3) {
         setError("Benutzername muss mindestens 3 Zeichen haben.");

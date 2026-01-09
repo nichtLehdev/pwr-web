@@ -145,7 +145,6 @@ export function getGermanPublicHolidays(year: number): Holiday[] {
   const holidays: Holiday[] = [];
   const easter = getEasterSunday(year);
 
-  // Fixed holidays
   holidays.push({
     name: "Neujahr",
     date: new Date(year, 0, 1),

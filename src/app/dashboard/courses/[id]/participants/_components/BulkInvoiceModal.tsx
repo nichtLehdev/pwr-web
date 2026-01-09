@@ -53,7 +53,6 @@ export function BulkInvoiceModal({
 
   if (!isOpen) return null;
 
-  // Check if there are any registrations with pending sibling discounts
   const hasPendingDiscounts = registrations.some(
     (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
   );
@@ -91,7 +90,6 @@ export function BulkInvoiceModal({
   };
 
   const handleGenerate = async () => {
-    // Prevent generation if there are pending discounts
     if (hasPendingDiscounts) {
       toast.error(
         "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen.",

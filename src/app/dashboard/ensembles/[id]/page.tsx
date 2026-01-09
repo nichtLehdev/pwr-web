@@ -318,7 +318,6 @@ export default function EnsembleDetailPage() {
                     </div>
                   ))
                 ) : ensemble.rehearsalDay || ensemble.rehearsalTime ? (
-                  // Legacy fallback
                   <div className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-200 p-3">
                     <div className="flex-1">
                       {ensemble.rehearsalDay && (

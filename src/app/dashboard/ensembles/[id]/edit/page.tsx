@@ -133,9 +133,6 @@ export default function EditEnsemblePage() {
       setLocationId(ensemble.locationId);
       setRehearsalDay(ensemble.rehearsalDay ?? "");
       setRehearsalTime(ensemble.rehearsalTime ?? "");
-      // Group rehearsal schedules by time, collecting all days with the same time
-      // API format: [{ day: "Montag", time: "19:30" }, { day: "Dienstag", time: "19:30" }]
-      // Form format: [{ selectedDays: ["Montag", "Dienstag"], time: "19:30" }]
       const schedulesByTime = new Map<string, string[]>();
       ensemble.rehearsalSchedules?.forEach((s) => {
         const existing = schedulesByTime.get(s.time) || [];
@@ -155,7 +152,6 @@ export default function EditEnsemblePage() {
       setRepresentativeId(ensemble.representativeId);
       setIsActive(ensemble.isActive);
 
-      // Handle custom names
       if (ensemble.conductorName) {
         setConductorName(ensemble.conductorName);
         setUseCustomConductor(true);

@@ -397,7 +397,6 @@ export const postsRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
           publishedAt:
             input.status === ContentStatus.APPROVED ? new Date() : null,
-          // Only set authorId if provided, otherwise leave null
           authorId: input.authorId ?? null,
           authorName: input.authorName ?? null,
         },
@@ -504,7 +503,6 @@ export const postsRouter = createTRPCRouter({
         finalData.publishedAt = null;
       }
 
-      // Handle author fields - if authorId is explicitly set to null, clear it
       if (updateData.authorId !== undefined) {
         finalData.authorId = updateData.authorId;
       }
@@ -993,7 +991,6 @@ export const postsRouter = createTRPCRouter({
             pinned: z.boolean().optional(),
             status: z.enum(ContentStatus).optional(),
             coverImageId: z.string().optional().nullable(),
-            // Optional: original ID for reference
             originalId: z.string().optional(),
           }),
         ),
