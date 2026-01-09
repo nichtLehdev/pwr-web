@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     const where: {
       status: ContentStatus;
       OR?: Array<{ bezirkId: string | { in: string[] } | null }>;
-      bezirkId?: string | { in: string[] };
+      bezirkId?: string | { in: string[] } | null;
     } = {
       status: ContentStatus.APPROVED,
     };
