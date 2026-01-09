@@ -46,7 +46,6 @@ export default function DashboardNewsletterSubscribersPage() {
 
   const deleteSubscriber = api.newsletter.deleteSubscriber.useMutation({
     onSuccess: () => {
-      // Refetch subscribers
       window.location.reload();
     },
   });

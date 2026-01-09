@@ -59,7 +59,6 @@ export default function CourseDetailView({
       { enabled: !!session?.user },
     );
 
-  // Check if user can edit this course
   const canEdit =
     session?.user &&
     userProfile &&

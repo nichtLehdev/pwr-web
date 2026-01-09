@@ -188,7 +188,6 @@ export default function RegisterPage() {
 
       console.log("Registration successful, sending verification email...");
 
-      // Manually trigger verification email after signup
       try {
         const response = await fetch("/api/auth/send-verification", {
           method: "POST",
@@ -208,10 +207,8 @@ export default function RegisterPage() {
         }
       } catch (emailError) {
         console.error("Error triggering verification email:", emailError);
-        // Don't fail registration if email fails, user can resend
       }
 
-      // Redirect to verification page instead of auto-signing in
       router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
       setError(

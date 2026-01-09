@@ -38,7 +38,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
 
-  // Check if user can edit this event
   const canEdit =
     session?.user &&
     profile &&

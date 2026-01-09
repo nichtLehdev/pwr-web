@@ -253,7 +253,6 @@ export const ensemblesRouter = createTRPCRouter({
         });
       }
 
-      // Delete existing rehearsal schedules and create new ones if provided
       if (rehearsalSchedules !== undefined) {
         await ctx.db.rehearsalSchedule.deleteMany({
           where: { ensembleId: id },

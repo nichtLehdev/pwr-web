@@ -6,18 +6,13 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
-  // Disable source maps in production to reduce memory usage during build
   productionBrowserSourceMaps: false,
   crossOrigin: "anonymous",
 
-  // Experimental features for better performance
   experimental: {
-    // Reduce memory usage during build
     webpackMemoryOptimizations: true,
   },
 
-  // Rewrite legacy /uploads/* URLs to /api/uploads/* for dynamic file serving
-  // This ensures files uploaded at runtime are served correctly
   async rewrites() {
     return [
       {

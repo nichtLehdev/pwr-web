@@ -42,7 +42,6 @@ export default function ExportImportSection({
 
   const handleExport = async (type: ContentType) => {
     try {
-      // Use new ZIP export API that includes media files
       const response = await fetch(`/api/export/${type}`);
 
       if (!response.ok) {
@@ -54,7 +53,6 @@ export default function ExportImportSection({
       const a = document.createElement("a");
       a.href = url;
 
-      // Get filename from Content-Disposition header or use default
       const contentDisposition = response.headers.get("Content-Disposition");
       let filename = `${type}-export-${new Date().toISOString().split("T")[0]}.zip`;
       if (contentDisposition) {
@@ -86,7 +84,6 @@ export default function ExportImportSection({
     setImportSuccess(null);
 
     try {
-      // Use new ZIP import API that handles media files
       const formData = new FormData();
       formData.append("file", importFile);
 

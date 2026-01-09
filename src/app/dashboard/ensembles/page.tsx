@@ -342,7 +342,6 @@ export default function DashboardEnsemblesPage() {
                             )}
                           </div>
                         ) : ensemble.rehearsalDay || ensemble.rehearsalTime ? (
-                          // Legacy fallback
                           <span className="dark:text-dark-muted text-sm text-gray-600">
                             {ensemble.rehearsalDay}
                             {ensemble.rehearsalDay &&

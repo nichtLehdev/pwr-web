@@ -123,7 +123,6 @@ export default function EditRegistrationPage() {
     if (registration?.participants && registration?.course?.priceOptions) {
       setParticipants(
         registration.participants.map((p) => {
-          // Convert priceOption label to priceOptionId
           const priceOption = registration.course.priceOptions.find(
             (po) => po.label === p.priceOption,
           );
@@ -351,16 +350,13 @@ export default function EditRegistrationPage() {
     const index2 = updated.findIndex((p) => p.id === participantId2);
     if (index1 === -1 || index2 === -1) return;
 
-    // If both are already in the same group, unlink them
     if (
       participant1.siblingGroupId &&
       participant1.siblingGroupId === participant2.siblingGroupId
     ) {
-      // Remove both from group
       updated[index1] = { ...participant1, siblingGroupId: null };
       updated[index2] = { ...participant2, siblingGroupId: null };
     } else {
-      // Link them together - use existing group ID or create new one
       const existingGroupId =
         participant1.siblingGroupId || participant2.siblingGroupId;
       let groupId = existingGroupId;
@@ -371,12 +367,10 @@ export default function EditRegistrationPage() {
       updated[index1] = { ...participant1, siblingGroupId: groupId };
       updated[index2] = { ...participant2, siblingGroupId: groupId };
 
-      // If one participant was already in a group, merge all participants from that group
       if (
         participant1.siblingGroupId &&
         participant1.siblingGroupId !== groupId
       ) {
-        // participant1 was in a different group, merge all its members
         updated.forEach((p, idx) => {
           if (
             p.siblingGroupId === participant1.siblingGroupId &&
@@ -389,7 +383,6 @@ export default function EditRegistrationPage() {
         participant2.siblingGroupId &&
         participant2.siblingGroupId !== groupId
       ) {
-        // participant2 was in a different group, merge all its members
         updated.forEach((p, idx) => {
           if (
             p.siblingGroupId === participant2.siblingGroupId &&
@@ -411,7 +404,6 @@ export default function EditRegistrationPage() {
     lastName: string,
     participantId?: string,
   ) => {
-    // Check if there are other participants with the same first name and first letter of last name
     const firstLetter = lastName.charAt(0).toUpperCase();
     const hasDuplicate = activeParticipants.some(
       (p) =>
@@ -420,7 +412,6 @@ export default function EditRegistrationPage() {
         p.lastName.charAt(0).toUpperCase() === firstLetter,
     );
 
-    // If there's a duplicate, show full name, otherwise show first name + first letter
     if (hasDuplicate) {
       return `${firstName} ${lastName}`;
     }
@@ -955,7 +946,6 @@ export default function EditRegistrationPage() {
                             "birthDate",
                             newDate,
                           );
-                          // Validate immediately
                           const newErrors = { ...birthdateErrors };
                           if (!e.target.value) {
                             newErrors[participant.id] =

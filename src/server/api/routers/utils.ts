@@ -129,7 +129,6 @@ export const locationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      // Auto-geocode if coordinates are not provided
       let latitude = input.latitude;
       let longitude = input.longitude;
 
@@ -170,7 +169,6 @@ export const locationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      // Get existing location to check if address changed
       const existingLocation = await ctx.db.location.findUnique({
         where: { id },
       });
@@ -182,9 +180,6 @@ export const locationsRouter = createTRPCRouter({
         });
       }
 
-      // Auto-geocode if:
-      // 1. Coordinates are not provided in input, AND
-      // 2. Address fields changed, OR coordinates are currently null
       const addressChanged =
         (input.street !== undefined &&
           input.street !== existingLocation.street) ||
@@ -419,10 +414,8 @@ export const newsletterRouter = createTRPCRouter({
       );
       const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe`;
 
-      // Convert markdown to HTML
       const htmlContent = String(await marked.parse(input.content));
 
-      // Ensure content is not empty
       if (!htmlContent || htmlContent.trim().length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -430,9 +423,7 @@ export const newsletterRouter = createTRPCRouter({
         });
       }
 
-      // If test email is provided, send only to that email
       if (input.testEmail) {
-        // Generate HTML email manually
         const emailHtml = generateNewsletterHtml({
           content: htmlContent,
           unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(input.testEmail)}`,
@@ -451,7 +442,6 @@ export const newsletterRouter = createTRPCRouter({
         };
       }
 
-      // Get all active subscribers
       const subscribers = await ctx.db.newsletterSubscriber.findMany({
         where: { isActive: true },
       });
@@ -463,13 +453,11 @@ export const newsletterRouter = createTRPCRouter({
         });
       }
 
-      // Send to all subscribers
       let successCount = 0;
       let errorCount = 0;
 
       for (const subscriber of subscribers) {
         try {
-          // Generate HTML email manually
           const emailHtml = generateNewsletterHtml({
             content: htmlContent,
             unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}`,
@@ -518,7 +506,6 @@ export const newsletterRouter = createTRPCRouter({
 
       const sections: string[] = [];
 
-      // Get recent news posts
       if (input.includeNews) {
         const recentPosts = await ctx.db.post.findMany({
           where: {
@@ -559,7 +546,6 @@ export const newsletterRouter = createTRPCRouter({
         }
       }
 
-      // Get upcoming events
       if (input.includeEvents) {
         const upcomingEvents = await ctx.db.event.findMany({
           where: {

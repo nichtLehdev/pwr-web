@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 
-// Dynamically import map component with SSR disabled to avoid hydration issues
 const EnsembleMap = dynamic(
   () => import("@/app/_components/ensembles/ensemble-map"),
   {

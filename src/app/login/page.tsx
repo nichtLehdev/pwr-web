@@ -59,7 +59,6 @@ function LoginForm() {
         }
       }
 
-      // Attempt login - the signIn process will handle email verification errors
       const signInResult = await signIn.email({
         email: loginEmail,
         password,
@@ -67,18 +66,16 @@ function LoginForm() {
       });
 
       if (signInResult.error) {
-        // Better Auth might return a specific error for unverified email
         const errorMessage = (
           signInResult.error.message || signInResult.error.toString()
         ).toLowerCase();
-        // Only check for specific verification-related terms, not just "email"
         if (
           errorMessage.includes("verif") ||
           errorMessage.includes("not verified") ||
           errorMessage.includes("email verification") ||
           errorMessage.includes("verify your email")
         ) {
-          setLoginEmail(loginEmail); // Store for resend link
+          setLoginEmail(loginEmail);
           setError(
             "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte überprüfe dein E-Mail-Postfach und klicke auf den Verifizierungslink.",
           );
@@ -89,7 +86,6 @@ function LoginForm() {
         return;
       }
 
-      // If we get here, login was successful (2FA redirect is handled by the plugin callback)
       const profile = await utils.users.getMyProfile.fetch();
 
       if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {

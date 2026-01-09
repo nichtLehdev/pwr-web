@@ -16,7 +16,6 @@ function VerifyEmailContent() {
   >("pending");
   const [error, setError] = useState("");
 
-  // Check if user came from email link
   const token = searchParams.get("token");
 
   useEffect(() => {
@@ -31,7 +30,6 @@ function VerifyEmailContent() {
     setError("");
 
     try {
-      // Use our custom verification endpoint
       const verificationUrl = new URL(
         "/api/auth/verify-email-custom",
         window.location.origin,

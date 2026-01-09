@@ -52,12 +52,10 @@ export default function DashboardNewsletterComposePage() {
   const sendNewsletter = api.newsletter.sendNewsletter.useMutation({
     onSuccess: (data, variables) => {
       if (variables.testEmail) {
-        // Test email - don't clear fields
         toast.success(
           `Test-Newsletter erfolgreich an ${variables.testEmail} gesendet!`,
         );
       } else {
-        // Sent to all subscribers - clear all fields
         toast.success(
           `Newsletter erfolgreich gesendet! ${data.sentTo} Abonnenten erreicht.`,
         );

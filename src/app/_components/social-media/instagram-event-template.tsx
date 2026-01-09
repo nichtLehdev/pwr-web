@@ -86,16 +86,10 @@ export default function InstagramEventTemplate({
     weekday: "long",
   });
 
-  // Extract description text without HTML and sanitize
   const descriptionText = event.description
-    ? event.description
-        .replace(/<[^>]*>/g, "") // Remove HTML tags
-        .replace(/</g, "") // Remove any remaining < characters
-        .replace(/>/g, "") // Remove any remaining > characters
-        .trim()
+    ? event.description.replace(/[<>]/g, "").trim()
     : "";
 
-  // Determine who is performing
   const performer =
     event.ensemble?.name ||
     event.auswahlChor?.name ||
@@ -168,7 +162,6 @@ export default function InstagramEventTemplate({
           </div>
         </div>
       ) : (
-        // Decorative background when no image - fixed gradient
         <div
           className="relative h-[540px] w-full overflow-hidden"
           style={{

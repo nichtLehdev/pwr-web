@@ -78,9 +78,8 @@ export function VerificationEmail({
   );
 }
 
-// Styles matching your website's design
 const main = {
-  backgroundColor: "#f5f5f5", // Background secondary color
+  backgroundColor: "#f5f5f5",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
 };
@@ -96,7 +95,7 @@ const container = {
 };
 
 const header = {
-  backgroundColor: "#faa619", // Primary brand color (orange)
+  backgroundColor: "#faa619",
   padding: "32px 24px",
   textAlign: "center" as const,
   borderRadius: "8px 8px 0 0",

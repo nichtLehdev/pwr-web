@@ -105,7 +105,6 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
         {/* Main Content */}
         <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
           {twoFactorEnabled ? (
-            // 2FA is enabled - show disable option
             <div className="space-y-6">
               <div className="rounded-md border-l-4 border-green-500 bg-green-50 p-4 dark:border-green-400 dark:bg-green-900/20">
                 <div className="flex items-start gap-3">
@@ -337,7 +336,6 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
               </div>
             </div>
           ) : (
-            // 2FA is not enabled - show enable option
             <div className="space-y-6">
               <div className="rounded-md border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                 <div className="flex items-start gap-3">
@@ -357,7 +355,6 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
               </div>
 
               {!twoFactorQRCode ? (
-                // Step 1: Enable 2FA
                 <div>
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
                     2FA aktivieren
@@ -447,7 +444,6 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                   </button>
                 </div>
               ) : (
-                // Step 2: Show QR code and verify
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">

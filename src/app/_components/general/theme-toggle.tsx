@@ -74,12 +74,10 @@ export default function ThemeToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get current theme label
   const currentIcon =
     themeOptions.find((opt) => opt.value === resolvedTheme)?.icon ||
     themeOptions[0]!.icon;
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

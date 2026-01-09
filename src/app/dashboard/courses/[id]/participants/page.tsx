@@ -295,7 +295,6 @@ export default function CourseParticipantsPage() {
       .filter((r) => r.paymentStatus === PaymentStatus.PAID)
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
 
-  // Check if there are any registrations with pending sibling discounts
   const hasPendingDiscounts =
     registrationsData?.registrations.some(
       (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,

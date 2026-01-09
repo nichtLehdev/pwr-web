@@ -514,7 +514,6 @@ export const coursesRouter = createTRPCRouter({
       const { priceOptions, customFields, instructorIds, ...courseData } =
         input;
 
-      // Only LPW and Admin can enable sibling discount
       if (
         input.allowSiblingDiscount &&
         ctx.session.user.role !== UserRole.LPW &&
@@ -665,7 +664,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Only LPW and Admin can enable/disable sibling discount
       if (
         input.allowSiblingDiscount !== undefined &&
         ctx.session.user.role !== UserRole.LPW &&
@@ -793,7 +791,6 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Check image review status
       if (course.imageId && course.image) {
         if (course.image.status !== ContentStatus.APPROVED) {
           throw new TRPCError({

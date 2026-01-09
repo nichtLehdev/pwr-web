@@ -116,7 +116,6 @@ export default function CourseRegistrationForm({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [onClose]);
 
-  // Validate birthdates when step 2 (participants) is reached
   useEffect(() => {
     if (currentStep === 2) {
       const errors: Record<number, string> = {};
@@ -379,7 +378,6 @@ export default function CourseRegistrationForm({
     lastName: string,
     participantIndex?: number,
   ) => {
-    // Check if there are other participants with the same first name and first letter of last name
     const firstLetter = lastName.charAt(0).toUpperCase();
     const hasDuplicate = registrationData.participants.some(
       (p, idx) =>
@@ -388,7 +386,6 @@ export default function CourseRegistrationForm({
         p.lastName.charAt(0).toUpperCase() === firstLetter,
     );
 
-    // If there's a duplicate, show full name, otherwise show first name + first letter
     if (hasDuplicate) {
       return `${firstName} ${lastName}`;
     }
@@ -402,16 +399,13 @@ export default function CourseRegistrationForm({
 
     const updated = [...registrationData.participants];
 
-    // If both are already in the same group, unlink them
     if (
       participant1.siblingGroupId &&
       participant1.siblingGroupId === participant2.siblingGroupId
     ) {
-      // Remove both from group
       updated[index1] = { ...participant1, siblingGroupId: undefined };
       updated[index2] = { ...participant2, siblingGroupId: undefined };
     } else {
-      // Link them together - use existing group ID or create new one
       const existingGroupId =
         participant1.siblingGroupId || participant2.siblingGroupId;
       let groupId = existingGroupId;
@@ -422,12 +416,10 @@ export default function CourseRegistrationForm({
       updated[index1] = { ...participant1, siblingGroupId: groupId };
       updated[index2] = { ...participant2, siblingGroupId: groupId };
 
-      // If one participant was already in a group, merge all participants from that group
       if (
         participant1.siblingGroupId &&
         participant1.siblingGroupId !== groupId
       ) {
-        // participant1 was in a different group, merge all its members
         updated.forEach((p, idx) => {
           if (
             p.siblingGroupId === participant1.siblingGroupId &&
@@ -440,7 +432,6 @@ export default function CourseRegistrationForm({
         participant2.siblingGroupId &&
         participant2.siblingGroupId !== groupId
       ) {
-        // participant2 was in a different group, merge all its members
         updated.forEach((p, idx) => {
           if (
             p.siblingGroupId === participant2.siblingGroupId &&

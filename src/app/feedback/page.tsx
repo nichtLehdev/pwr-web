@@ -24,13 +24,11 @@ interface Issue {
 }
 
 function IssueCard({ issue }: { issue: Issue }) {
-  // Determine type from labels
   const typeLabel = issue.labels?.find((l) =>
     ["bug", "feature", "other"].includes(l.name),
   )?.name;
   const typeIcon =
     typeLabel === "bug" ? "🐞" : typeLabel === "feature" ? "✨" : "💬";
-  // Remove everything in [] from the title
   const cleanTitle = issue.title.replace(/\s*\[[^\]]*\]/g, "").trim();
   return (
     <a
@@ -67,7 +65,6 @@ export default function FeedbackPage() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [issuesLoading, setIssuesLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  // Fetch issues on mount
   useEffect(() => {
     fetch("/api/feedback/issues")
       .then((res) => res.json())

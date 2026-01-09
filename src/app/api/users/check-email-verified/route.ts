@@ -4,7 +4,6 @@ import { auth } from "@/server/better-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Require authentication to prevent email enumeration
     const session = await auth.api.getSession({
       headers: request.headers,
     });
@@ -13,7 +12,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only allow users to check their own email verification status
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -25,7 +23,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Return only email verification status (no exists field to prevent enumeration)
     return NextResponse.json({
       emailVerified: user.emailVerified ?? false,
     });

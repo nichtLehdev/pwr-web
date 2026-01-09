@@ -78,7 +78,6 @@ export function PasswordResetEmail({
   );
 }
 
-// Styles matching your website's design
 const main = {
   backgroundColor: "#f5f5f5", // Background secondary color
   fontFamily:

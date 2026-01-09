@@ -124,46 +124,29 @@ export function extractPlainTextFromMarkdown(
 ): string {
   if (!markdown) return "";
 
-  // Remove markdown syntax:
-  // - Headers (# ## ### etc.)
   let text = markdown.replace(/^#{1,6}\s+/gm, "");
-  // - Links [text](url) -> text
   text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
-  // - Images ![alt](url) -> alt
   text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
-  // - Bold **text** -> text
   text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
-  // - Italic *text* -> text
   text = text.replace(/\*([^*]+)\*/g, "$1");
-  // - Strikethrough ~~text~~ -> text
   text = text.replace(/~~([^~]+)~~/g, "$1");
-  // - Inline code `code` -> code
   text = text.replace(/`([^`]+)`/g, "$1");
-  // - Code blocks ```...``` -> (removed)
   text = text.replace(/```[\s\S]*?```/g, "");
-  // - Lists (-, *, +)
   text = text.replace(/^[\s]*[-*+]\s+/gm, "");
-  // - Numbered lists
   text = text.replace(/^\d+\.\s+/gm, "");
-  // - Blockquotes >
   text = text.replace(/^>\s+/gm, "");
-  // - Horizontal rules
   text = text.replace(/^---+/gm, "");
-  // - HTML tags
   text = text.replace(/<[^>]+>/g, "");
 
-  // Split into lines and take first maxLines
   const lines = text
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .slice(0, maxLines);
 
-  // Join lines and limit total length
   let result = lines.join(" ").trim();
   if (result.length > maxLength) {
     result = result.substring(0, maxLength).trim();
-    // Try to cut at word boundary
     const lastSpace = result.lastIndexOf(" ");
     if (lastSpace > maxLength * 0.8) {
       result = result.substring(0, lastSpace);

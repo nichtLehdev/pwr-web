@@ -49,6 +49,7 @@ model User {
   createdEvents                 Event[]                      @relation("EventCreator")
   createdCourses                Course[]                     @relation("CourseCreator")
   createdPosts                  Post[]                       @relation("PostCreator")
+  authoredPosts                 Post[]                       @relation("PostAuthor")
   reviewedEvents                Event[]                      @relation("EventReviewer")
   reviewedCourses               Course[]                     @relation("CourseReviewer")
   reviewedPosts                 Post[]                       @relation("PostReviewer")
@@ -576,6 +577,11 @@ model Post {
   category PostCategory
   bezirkId String?
   bezirk   Bezirk?      @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+
+  // Author (optional - if not set, createdBy is used as author)
+  authorId   String?
+  author     User?      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorName String? // Custom author name if not linked to a user
 
   // Pinning
   pinned Boolean @default(false)

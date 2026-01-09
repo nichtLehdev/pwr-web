@@ -31,7 +31,6 @@ import FeedConfigModal from "../feeds/feed-config-modal";
 type ViewMode = "list" | "calendar";
 type FilterType = "all" | "events" | "courses";
 
-// Category mapping constants
 const EVENT_CATEGORY_MAP: Record<string, string> = {
   Konzert: "KONZERT",
   Gottesdienst: "GOTTESDIENST",
@@ -143,7 +142,6 @@ export default function EventsClient({
     [initialEvents, initialCourses],
   );
 
-  // Shared filtering logic for items
   const applyFilters = useCallback(
     (items: CalendarItem[]) => {
       return items.filter((item) => {
@@ -170,7 +168,6 @@ export default function EventsClient({
             const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
             const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
 
-            // Check if category matches courseType or targetAudience
             if (courseTypeEnum || targetAudienceEnum) {
               const matchesCourseType =
                 courseTypeEnum && item.courseType === courseTypeEnum;
@@ -178,7 +175,6 @@ export default function EventsClient({
                 targetAudienceEnum &&
                 item.targetAudience === targetAudienceEnum;
 
-              // Include the course if it matches either courseType or targetAudience
               if (!matchesCourseType && !matchesTargetAudience) {
                 return false;
               }

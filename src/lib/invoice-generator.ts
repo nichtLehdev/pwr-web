@@ -37,7 +37,6 @@ export interface InvoiceRegistration {
   notes: string | null;
   participants: InvoiceParticipant[];
 
-  // Sibling discount fields
   siblingDiscountApplied?: boolean;
   siblingDiscountStatus?: "NONE" | "PENDING" | "APPROVED" | "REJECTED";
   siblingDiscountAmount?: number | null;
@@ -250,15 +249,12 @@ export async function createInvoicePdf(
   y += 10;
   doc.setFont("helvetica", "normal");
 
-  // Calculate which participants get discounts
-  // Group participants by siblingGroupId to determine discount eligibility
   const participantDiscounts = new Map<string, number>();
 
   if (
     registration.siblingDiscountApplied &&
     registration.participants.some((p) => p.siblingGroupId)
   ) {
-    // Group participants by siblingGroupId
     const siblingGroups = new Map<
       string | null,
       typeof registration.participants
@@ -271,17 +267,14 @@ export async function createInvoicePdf(
       siblingGroups.get(groupId)?.push(participant);
     });
 
-    // For each sibling group, calculate discount for all except the first
     siblingGroups.forEach((groupParticipants, groupId) => {
       if (groupId && groupParticipants.length > 1) {
-        // Sort by name to ensure consistent ordering
         const sortedGroup = [...groupParticipants].sort((a, b) => {
           const nameA = `${a.firstName} ${a.lastName}`;
           const nameB = `${b.firstName} ${b.lastName}`;
           return nameA.localeCompare(nameB);
         });
 
-        // Calculate discount for each participant after the first
         for (let i = 1; i < sortedGroup.length; i++) {
           const participant = sortedGroup[i];
           if (!participant) continue;
@@ -290,9 +283,8 @@ export async function createInvoicePdf(
             (p) => p.label === participant.priceOption,
           );
           const price = priceOption?.price ?? 0;
-          const discount = price * 0.2; // 20% discount
+          const discount = price * 0.2;
 
-          // Use a unique key for the participant (firstName + lastName + priceOption)
           const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
           participantDiscounts.set(participantKey, discount);
         }
@@ -308,7 +300,6 @@ export async function createInvoicePdf(
     );
     const price = priceOption?.price ?? 0;
 
-    // Check if this participant gets a discount
     const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
     const participantDiscount = participantDiscounts.get(participantKey) ?? 0;
 
@@ -317,7 +308,6 @@ export async function createInvoicePdf(
     doc.text(`${price.toFixed(2)} €`, pageWidth - margin - 20, y);
     y += 7;
 
-    // Show discount under participant if applicable
     if (participantDiscount > 0) {
       doc.setFontSize(9);
       doc.setTextColor(0, 150, 0); // Green color for discount

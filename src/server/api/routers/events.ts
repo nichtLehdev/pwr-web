@@ -254,7 +254,6 @@ export const eventsRouter = createTRPCRouter({
         };
       }
 
-      // Add upcoming filter
       if (input.upcomingOnly) {
         where.eventDate = { gte: new Date() };
       }
@@ -600,7 +599,6 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      // Check coverImage review status
       if (event.coverImageId && event.coverImage) {
         if (event.coverImage.status !== ContentStatus.APPROVED) {
           throw new TRPCError({
@@ -611,7 +609,6 @@ export const eventsRouter = createTRPCRouter({
         }
       }
 
-      // Check downloads review status
       const pendingDownloads = event.downloads.filter(
         (ed) => ed.download.status !== ContentStatus.APPROVED,
       );

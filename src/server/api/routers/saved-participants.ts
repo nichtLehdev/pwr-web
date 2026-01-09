@@ -46,7 +46,6 @@ export const savedParticipantsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      // Verify ownership
       const savedParticipant = await ctx.db.savedParticipant.findUnique({
         where: { id },
       });
@@ -80,7 +79,6 @@ export const savedParticipantsRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Verify ownership
       const savedParticipant = await ctx.db.savedParticipant.findUnique({
         where: { id: input.id },
       });

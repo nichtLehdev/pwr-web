@@ -16,7 +16,6 @@ export function ThemeSync() {
     enabled: !!session?.user,
   });
 
-  // Load theme from user preferences when profile is available
   useEffect(() => {
     if (profile?.preferences) {
       try {
@@ -29,15 +28,12 @@ export function ThemeSync() {
           ["light", "dark", "system"].includes(parsed.theme)
         ) {
           const userTheme = parsed.theme as "light" | "dark" | "system";
-          // Only update if different from current theme to avoid unnecessary updates
           if (userTheme !== currentTheme) {
             setTheme(userTheme);
             localStorage.setItem("theme", userTheme);
           }
         }
-      } catch {
-        // Ignore parsing errors
-      }
+      } catch {}
     }
   }, [profile, currentTheme, setTheme]);
 

@@ -29,7 +29,6 @@ export default function PostCard({
 }: PostCardProps) {
   const districtColor = getDistrictColor(district);
 
-  // Use excerpt if available, otherwise extract plain text from content
   const displayExcerpt =
     excerpt || (content ? extractPlainTextFromMarkdown(content) : "");
 

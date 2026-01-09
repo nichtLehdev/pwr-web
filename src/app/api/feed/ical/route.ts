@@ -39,7 +39,6 @@ function generateEventUid(eventId: string, baseUrl: string): string {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    // Support both comma-separated and multiple query params
     const bezirkIdParam = searchParams.getAll("bezirkId");
     const bezirkIds =
       bezirkIdParam.length > 0
@@ -47,21 +46,19 @@ export async function GET(request: NextRequest) {
             .flatMap((id) => id.split(",").map((s) => s.trim()))
             .filter(Boolean)
         : [];
-    const type = searchParams.get("type") || "both"; // "events", "courses", or "both"
+    const type = searchParams.get("type") || "both";
     const limit = parseInt(searchParams.get("limit") || "100", 10);
     const bezirksuebergreifend =
       searchParams.get("bezirksuebergreifend") === "true";
 
     const baseUrl = getBaseUrl({ headers: request.headers });
 
-    // Build where clause - only get future events/courses or from the last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const now = new Date();
     const icalEvents: string[] = [];
 
-    // Fetch events if type is "events" or "both"
     if (type === "events" || type === "both") {
       const eventWhere: {
         status: ContentStatus;
@@ -75,10 +72,9 @@ export async function GET(request: NextRequest) {
         eventDate: { gte: thirtyDaysAgo },
       };
 
-      // If both bezirksübergreifend and districts are selected, use OR logic
       if (bezirksuebergreifend && bezirkIds.length > 0) {
         eventWhere.OR = [
-          { bezirkId: null }, // Bezirksübergreifend items
+          { bezirkId: null },
           ...(bezirkIds.length === 1
             ? [{ bezirkId: bezirkIds[0]! }]
             : [{ bezirkId: { in: bezirkIds } }]),
@@ -111,12 +107,10 @@ export async function GET(request: NextRequest) {
           const uid = generateEventUid(`event-${event.id}`, baseUrl);
           const dtstart = formatIcalDate(event.eventDate);
 
-          // Default to 2 hours duration if not specified
           const endDate = new Date(event.eventDate);
           endDate.setHours(endDate.getHours() + 2);
           const dtend = formatIcalDate(endDate);
 
-          // Build location string
           const locationParts: string[] = [];
           if (event.location) {
             if (event.location.name) locationParts.push(event.location.name);
@@ -133,7 +127,6 @@ export async function GET(request: NextRequest) {
           const location =
             locationParts.length > 0 ? locationParts.join(", ") : "";
 
-          // Build description
           const descriptionParts: string[] = [];
           if (event.description) {
             descriptionParts.push(event.description);
@@ -156,7 +149,6 @@ export async function GET(request: NextRequest) {
           descriptionParts.push(`\nMehr Informationen: ${eventUrl}`);
           const description = descriptionParts.join("\\n");
 
-          // Build summary (title)
           let summary = event.title;
           if (event.bezirk) {
             summary += ` (${event.bezirk.shortName})`;
@@ -177,7 +169,6 @@ END:VEVENT`;
       );
     }
 
-    // Fetch courses if type is "courses" or "both"
     if (type === "courses" || type === "both") {
       const courseWhere: {
         status: ContentStatus;
@@ -189,10 +180,9 @@ END:VEVENT`;
         endDate: { gte: thirtyDaysAgo },
       };
 
-      // If both bezirksübergreifend and districts are selected, use OR logic
       if (bezirksuebergreifend && bezirkIds.length > 0) {
         courseWhere.OR = [
-          { bezirkId: null }, // Bezirksübergreifend items
+          { bezirkId: null },
           ...(bezirkIds.length === 1
             ? [{ bezirkId: bezirkIds[0]! }]
             : [{ bezirkId: { in: bezirkIds } }]),
@@ -229,7 +219,6 @@ END:VEVENT`;
           const dtstart = formatIcalDate(course.startDate);
           const dtend = formatIcalDate(course.endDate);
 
-          // Build location string
           const locationParts: string[] = [];
           if (course.location) {
             if (course.location.name) locationParts.push(course.location.name);
@@ -246,7 +235,6 @@ END:VEVENT`;
           const location =
             locationParts.length > 0 ? locationParts.join(", ") : "";
 
-          // Build description
           const descriptionParts: string[] = [];
           if (course.description) {
             descriptionParts.push(course.description);
@@ -269,7 +257,6 @@ END:VEVENT`;
           descriptionParts.push(`\nMehr Informationen: ${courseUrl}`);
           const description = descriptionParts.join("\\n");
 
-          // Build summary (title)
           let summary = course.title;
           if (course.bezirk) {
             summary += ` (${course.bezirk.shortName})`;
@@ -291,7 +278,6 @@ END:VEVENT`;
       );
     }
 
-    // Get district names for calendar name
     let calendarName = "Posaunenwerk - Veranstaltungen";
     let calendarDescription = "Veranstaltungen und Termine vom Posaunenwerk";
 
@@ -304,7 +290,6 @@ END:VEVENT`;
     }
 
     if (bezirkIds.length > 0) {
-      // Fetch bezirke to get their names
       const bezirke = await db.bezirk.findMany({
         where: { id: { in: bezirkIds } },
         orderBy: { number: "asc" },
@@ -335,7 +320,6 @@ END:VEVENT`;
         "Bezirksübergreifende Veranstaltungen und Termine vom Posaunenwerk";
     }
 
-    // Build iCal file
     const ical = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Posaunenwerk//Event Calendar//DE

@@ -43,7 +43,6 @@ export default function ViewRegistrationPage() {
   ) => {
     if (!registration?.participants) return `${firstName} ${lastName}`;
 
-    // Check if there are other participants with the same first name and first letter of last name
     const firstLetter = lastName.charAt(0).toUpperCase();
     const hasDuplicate = registration.participants.some(
       (p) =>
@@ -52,7 +51,6 @@ export default function ViewRegistrationPage() {
         p.lastName.charAt(0).toUpperCase() === firstLetter,
     );
 
-    // If there's a duplicate, show full name, otherwise show first name + first letter
     if (hasDuplicate) {
       return `${firstName} ${lastName}`;
     }

@@ -64,8 +64,6 @@ export default function SocialMediaExportModal({
 
     const currentPos = imagePositions[event.id] || { x: 50, y: 50 };
 
-    // Scale movement based on preview size (540px = 0.5 scale)
-    // Moving 54px on preview = 10% position change on full image
     const newX = Math.max(0, Math.min(100, currentPos.x - deltaX / 5.4));
     const newY = Math.max(0, Math.min(100, currentPos.y - deltaY / 5.4));
 
@@ -131,19 +129,16 @@ export default function SocialMediaExportModal({
     }
   };
 
-  // Filter events by selected categories
   const filteredEvents =
     events && selectedCategories.length > 0
       ? events.filter((event) => selectedCategories.includes(event.category))
       : events;
 
-  // Calculate how many summary pages we need (5 events per page)
   const eventsPerPage = 5;
   const summaryPageCount = filteredEvents
     ? Math.ceil(filteredEvents.length / eventsPerPage)
     : 0;
 
-  // Group events by district if needed
   const groupedEvents =
     filteredEvents && groupByDistrict
       ? filteredEvents.reduce(
@@ -164,7 +159,6 @@ export default function SocialMediaExportModal({
   const downloadImage = async (element: HTMLElement): Promise<Blob> => {
     await document.fonts.ready;
 
-    // Wait for all images in the element to load
     const images = element.querySelectorAll("img");
 
     await Promise.all(
@@ -186,7 +180,6 @@ export default function SocialMediaExportModal({
       }),
     );
 
-    // Additional wait to ensure rendering is complete
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     const dataUrl = await toPng(element, {
@@ -198,7 +191,6 @@ export default function SocialMediaExportModal({
       skipFonts: true,
     });
 
-    // Convert data URL to blob without using fetch
     const base64Response = dataUrl.split(",")[1];
     if (!base64Response) {
       throw new Error("Invalid data URL");
@@ -279,7 +271,6 @@ export default function SocialMediaExportModal({
     try {
       const zip = new JSZip();
 
-      // Add all summary images - switch to summary tab first
       setActiveTab("summary");
       await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -299,14 +290,11 @@ export default function SocialMediaExportModal({
         }
       }
 
-      // Add individual event images - switch to each event tab one by one
       for (let i = 0; i < filteredEvents.length; i++) {
         const event = filteredEvents[i];
         if (!event) continue;
 
-        // Switch to this event's tab
         setActiveTab(i);
-        // Wait for the tab to render
         await new Promise((resolve) => setTimeout(resolve, 300));
 
         const element = eventRefs.current.get(event.id);
@@ -325,7 +313,6 @@ export default function SocialMediaExportModal({
         zip.file(`${dayNum}-${safeTitle}.png`, blob);
       }
 
-      // Generate and download ZIP
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
@@ -341,7 +328,6 @@ export default function SocialMediaExportModal({
       console.error("Error generating ZIP:", error);
       toast.error("Fehler beim Erstellen des ZIP-Archivs");
     } finally {
-      // Restore original tab
       setActiveTab(originalTab);
       setIsGenerating(false);
     }

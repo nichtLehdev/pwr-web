@@ -108,7 +108,6 @@ export default function EditUserPage() {
   );
 
   const usernameStatus = useMemo(() => {
-    // If username is empty or less than 3 characters, don't show status
     if (username.length === 0) {
       return {
         checking: false,
@@ -123,7 +122,6 @@ export default function EditUserPage() {
         message: "Mindestens 3 Zeichen",
       };
     }
-    // If username hasn't changed or is the same as the original, consider it available
     if (username === user?.username) {
       return {
         checking: false,
@@ -131,7 +129,6 @@ export default function EditUserPage() {
         message: "",
       };
     }
-    // If still debouncing or loading, show checking
     if (username !== debouncedUsername || checkUsernameQuery.isLoading) {
       return {
         checking: true,
@@ -139,7 +136,6 @@ export default function EditUserPage() {
         message: "Wird geprüft...",
       };
     }
-    // If we have data, show the result
     if (checkUsernameQuery.data) {
       return {
         checking: false,
@@ -202,7 +198,6 @@ export default function EditUserPage() {
       return;
     }
 
-    // Validate username if provided
     if (username.trim()) {
       if (username.trim().length < 3) {
         setError("Benutzername muss mindestens 3 Zeichen haben.");
@@ -221,7 +216,6 @@ export default function EditUserPage() {
         setIsSubmitting(false);
         return;
       }
-      // Check availability if username changed
       if (
         username.trim() !== user?.username &&
         usernameStatus.available === false
