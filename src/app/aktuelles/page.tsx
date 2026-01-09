@@ -13,7 +13,6 @@ import PostCard from "../_components/posts/post-card";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import { CircleXIcon } from "lucide-react";
 import FeedConfigModal from "../_components/feeds/feed-config-modal";
-import { Button } from "@/app/_components/ui";
 import { useBanner } from "../_components/ui/banner-context";
 
 type FilterCategory = PostCategory | "all";
@@ -217,42 +216,41 @@ export default function AktuellesPage() {
 
             {/* Right: RSS Feed & Filter Toggle Button */}
             <div className="flex gap-1">
-              <Button
+              <button
                 onClick={() => setRssModalOpen(true)}
-                variant="secondary"
-                size="sm"
+                className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
                 aria-label="RSS Feed"
                 title="RSS Feed abonnieren"
               >
                 <Rss className="h-4 w-4" />
                 <span className="hidden sm:inline">RSS</span>
-              </Button>
+              </button>
               {!filtersOpen && hasActiveFilters && (
-                <Button
+                <button
                   onClick={() => {
                     setSelectedCategory("all");
                     setSelectedDistrict("all");
                   }}
-                  variant="ghost"
-                  size="icon"
                   aria-label="Filter zurücksetzen"
                 >
-                  <XCircleIcon className="h-5 w-5" />
-                </Button>
+                  <XCircleIcon className="h-5 w-5 text-gray-400 transition-colors hover:text-gray-600" />
+                </button>
               )}
-              <Button
+              <button
                 onClick={() => setFiltersOpen(!filtersOpen)}
-                variant={filtersOpen ? "primary" : "secondary"}
-                size="icon"
-                className="relative"
+                className={`relative cursor-pointer rounded-lg p-2 transition-colors ${
+                  filtersOpen
+                    ? "bg-primary text-white"
+                    : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
+                }`}
                 aria-label="Filter öffnen"
               >
-                <FilterIcon className="h-5 w-5" />
+                <FilterIcon className="h-4 w-4" />
                 {/* Active Filter Badge */}
                 {hasActiveFilters && (
                   <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500"></span>
                 )}
-              </Button>
+              </button>
             </div>
           </div>
 
