@@ -11,6 +11,7 @@ import { useToast } from "@/app/_components/ui/toast";
 import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
 import { EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
+import { Button, Input, Label } from "@/app/_components/ui";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -503,21 +504,23 @@ export default function DashboardMediaPage() {
                 <div className="absolute right-2 bottom-14 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   {/* Edit button for reviewers */}
                   {isReviewer && (
-                    <button
+                    <Button
                       onClick={(e) => {
                         e.stopPropagation();
                         openEditModal(media);
                       }}
-                      className="rounded bg-gray-600 p-1.5 text-white shadow hover:bg-gray-700"
+                      variant="secondary"
+                      size="icon"
+                      className="bg-gray-600 hover:bg-gray-700"
                       title="Bearbeiten"
                     >
                       <EditIcon className="h-4 w-4" />
-                    </button>
+                    </Button>
                   )}
 
                   {/* Approve button for reviewers */}
                   {isReviewer && media.status === ContentStatus.PENDING && (
-                    <button
+                    <Button
                       onClick={() =>
                         reviewMutation.mutate({
                           id: media.id,
@@ -525,22 +528,24 @@ export default function DashboardMediaPage() {
                         })
                       }
                       disabled={reviewMutation.isPending}
-                      className="rounded bg-green-600 p-1.5 text-white shadow hover:bg-green-700"
+                      variant="success"
+                      size="icon"
                       title="Freigeben"
                     >
                       <CheckIcon className="h-4 w-4" />
-                    </button>
+                    </Button>
                   )}
 
                   {/* Delete button */}
                   {canDelete && (
-                    <button
+                    <Button
                       onClick={() => setShowDeleteModal(media.id)}
-                      className="rounded bg-red-600 p-1.5 text-white shadow hover:bg-red-700"
+                      variant="danger"
+                      size="icon"
                       title="Löschen"
                     >
                       <TrashIcon className="h-4 w-4" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -555,20 +560,22 @@ export default function DashboardMediaPage() {
               Seite {page} von {data.pages} ({data.total} Medien)
             </p>
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-border rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:text-gray-300"
+                variant="outline"
+                size="sm"
               >
                 Zurück
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
                 disabled={page === data.pages}
-                className="dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-border rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:text-gray-300"
+                variant="outline"
+                size="sm"
               >
                 Weiter
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -585,9 +592,7 @@ export default function DashboardMediaPage() {
             <div className="space-y-4">
               {/* File Upload */}
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Datei
-                </label>
+                <Label>Datei</Label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -619,14 +624,11 @@ export default function DashboardMediaPage() {
 
               {/* Name */}
               <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
+                <Label required>Name</Label>
+                <Input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
 
@@ -636,22 +638,24 @@ export default function DashboardMediaPage() {
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <Button
                 onClick={() => {
                   resetUploadForm();
                   setShowUploadModal(false);
                 }}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                variant="outline"
+                size="sm"
               >
                 Abbrechen
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleCreate}
                 disabled={!uploadedFile || !newName || createMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                isLoading={createMutation.isPending}
+                size="sm"
               >
-                {createMutation.isPending ? "Speichern..." : "Speichern"}
-              </button>
+                Speichern
+              </Button>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import { Mail, ArrowLeft } from "lucide-react";
+import { Button, Input, Label } from "@/app/_components/ui";
 
 function ForgotPasswordForm() {
   const toast = useToast();
@@ -91,13 +92,8 @@ function ForgotPasswordForm() {
         <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label
-                htmlFor="email"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
-                E-Mail-Adresse
-              </label>
-              <input
+              <Label htmlFor="email">E-Mail-Adresse</Label>
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -105,18 +101,18 @@ function ForgotPasswordForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 placeholder="deine@email.de"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+              isLoading={isLoading}
+              className="w-full"
             >
-              {isLoading ? "Wird gesendet..." : "Link senden"}
-            </button>
+              Link senden
+            </Button>
           </form>
 
           <div className="mt-6 text-center">

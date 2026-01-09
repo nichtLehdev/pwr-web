@@ -168,7 +168,7 @@ export function BulkInvoiceModal({
         {/* Warning if pending discounts */}
         {hasPendingDiscounts && (
           <div className="mb-4 flex items-start gap-3 rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-yellow-600" />
+            <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-600" />
             <div className="flex-1">
               <p className="text-sm font-medium text-yellow-800">
                 Rechnungen können nicht generiert werden

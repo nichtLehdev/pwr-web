@@ -24,6 +24,7 @@ import {
   Trash2,
   ArrowRight,
 } from "lucide-react";
+import { Input, Label } from "@/app/_components/ui";
 
 function CollapsibleSection({
   title,
@@ -352,49 +353,32 @@ export default function SettingsPage() {
             >
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label
-                    htmlFor="firstName"
-                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                  >
-                    Vorname
-                  </label>
-                  <input
+                  <Label htmlFor="firstName">Vorname</Label>
+                  <Input
                     id="firstName"
                     name="firstName"
                     type="text"
                     value={formData.firstName}
                     maxLength={100}
                     onChange={handleChange}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="lastName"
-                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                  >
-                    Nachname
-                  </label>
-                  <input
+                  <Label htmlFor="lastName">Nachname</Label>
+                  <Input
                     id="lastName"
                     name="lastName"
                     type="text"
                     value={formData.lastName}
                     maxLength={100}
                     onChange={handleChange}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="birthDate"
-                    className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                  >
-                    Geburtsdatum
-                  </label>
-                  <input
+                  <Label htmlFor="birthDate">Geburtsdatum</Label>
+                  <Input
                     id="birthDate"
                     name="birthDate"
                     type="date"
@@ -413,11 +397,7 @@ export default function SettingsPage() {
                     }}
                     max={new Date().toISOString().split("T")[0]}
                     title="Geburtsdatum muss in der Vergangenheit liegen"
-                    className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
-                      birthdateError
-                        ? "border-2 border-red-500"
-                        : "border border-gray-300"
-                    }`}
+                    error={!!birthdateError}
                   />
                   {birthdateError && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">

@@ -11,6 +11,17 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Select,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/app/_components/ui";
 
 const ALLOWED_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -344,66 +355,62 @@ export default function NewEnsemblePage() {
         <form onSubmit={handleSubmit}>
           <div className="space-y-6">
             {/* Basic Information */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Grundinformationen
-              </h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Grundinformationen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Name */}
+                  <div>
+                    <Label required>Name</Label>
+                    <Input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      maxLength={200}
+                      placeholder="z.B. Posaunenchor Musterstadt"
+                    />
+                  </div>
 
-              {/* Name */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Posaunenchor Musterstadt"
-                />
-              </div>
+                  {/* Description */}
+                  <div>
+                    <Label>Beschreibung</Label>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={4}
+                      maxLength={5000}
+                      placeholder="Beschreibe das Ensemble..."
+                    />
+                  </div>
 
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  maxLength={5000}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beschreibe das Ensemble..."
-                />
-              </div>
+                  {/* Bezirk */}
+                  <div>
+                    <Label>Bezirk</Label>
+                    <Select
+                      value={bezirkId}
+                      onChange={(e) => setBezirkId(e.target.value)}
+                    >
+                      <option value="">Kein Bezirk</option>
+                      {bezirke?.map((bezirk) => (
+                        <option key={bezirk.id} value={bezirk.id}>
+                          {bezirk.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              {/* Bezirk */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirk
-                </label>
-                <select
-                  value={bezirkId}
-                  onChange={(e) => setBezirkId(e.target.value)}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Kein Bezirk</option>
-                  {bezirke?.map((bezirk) => (
-                    <option key={bezirk.id} value={bezirk.id}>
-                      {bezirk.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Image */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bild
-                </label>
+            {/* Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Bild</CardTitle>
+              </CardHeader>
+              <CardContent>
                 {imageUrl ? (
                   <div className="flex items-start gap-4">
                     <div className="relative h-24 w-24 overflow-hidden rounded-lg">
@@ -446,25 +453,29 @@ export default function NewEnsemblePage() {
                     </div>
                   </button>
                 )}
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Active */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="isActive"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
-                  Aktiv
-                </label>
-              </div>
-            </div>
+            {/* Active */}
+            <Card>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="isActive"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Aktiv
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* People */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -1092,23 +1103,14 @@ export default function NewEnsemblePage() {
 
           {/* Actions */}
           <div className="mt-6 flex flex-wrap gap-3">
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Erstellen...
-                </>
-              ) : (
-                <>
-                  <CheckIcon className="h-4 w-4" />
-                  Ensemble erstellen
-                </>
-              )}
-            </button>
+              <CheckIcon className="h-4 w-4" />
+              Ensemble erstellen
+            </Button>
             <Link
               href="/dashboard/ensembles"
               className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"

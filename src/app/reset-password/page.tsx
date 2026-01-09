@@ -5,6 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import { CheckCircle, Lock, ArrowLeft } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Alert,
+  AlertDescription,
+} from "@/app/_components/ui";
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -149,20 +156,15 @@ function ResetPasswordContent() {
 
         <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-lg md:p-8">
           {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-            </div>
+            <Alert variant="error" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label
-                htmlFor="password"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
-                Neues Passwort
-              </label>
-              <input
+              <Label htmlFor="password">Neues Passwort</Label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -170,20 +172,14 @@ function ResetPasswordContent() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 placeholder="Mindestens 8 Zeichen"
                 minLength={8}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="confirmPassword"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
-                Passwort bestätigen
-              </label>
-              <input
+              <Label htmlFor="confirmPassword">Passwort bestätigen</Label>
+              <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
@@ -191,19 +187,19 @@ function ResetPasswordContent() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text dark:border-dark-border block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 placeholder="Passwort wiederholen"
                 minLength={8}
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
+              isLoading={isLoading}
+              className="w-full"
             >
-              {isLoading ? "Wird zurückgesetzt..." : "Passwort zurücksetzen"}
-            </button>
+              Passwort zurücksetzen
+            </Button>
           </form>
 
           <div className="mt-6 text-center">

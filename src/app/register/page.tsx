@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signUp } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import {
+  Button,
+  Input,
+  Label,
+  Alert,
+  AlertDescription,
+} from "@/app/_components/ui";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -240,21 +247,18 @@ export default function RegisterPage() {
 
         <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8">
           {error && (
-            <div className="mb-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:bg-red-900/20">
-              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-            </div>
+            <Alert variant="error" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label
-                  htmlFor="firstName"
-                  className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                >
+                <Label htmlFor="firstName" required>
                   Vorname
-                </label>
-                <input
+                </Label>
+                <Input
                   id="firstName"
                   name="firstName"
                   type="text"
@@ -262,18 +266,14 @@ export default function RegisterPage() {
                   maxLength={100}
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="lastName"
-                  className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-                >
+                <Label htmlFor="lastName" required>
                   Nachname
-                </label>
-                <input
+                </Label>
+                <Input
                   id="lastName"
                   name="lastName"
                   type="text"
@@ -281,19 +281,15 @@ export default function RegisterPage() {
                   maxLength={100}
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="username"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
+              <Label htmlFor="username" required>
                 Benutzername
-              </label>
-              <input
+              </Label>
+              <Input
                 id="username"
                 name="username"
                 type="text"
@@ -305,13 +301,12 @@ export default function RegisterPage() {
                 pattern="[a-zA-Z0-9_.-]+"
                 title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
                 onChange={handleChange}
-                className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
+                error={usernameStatus.available === false}
+                className={
                   usernameStatus.available === true
-                    ? "border-green-500"
-                    : usernameStatus.available === false
-                      ? "border-red-500"
-                      : "dark:border-dark-border border-gray-300"
-                }`}
+                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    : ""
+                }
               />
               {usernameStatus.message ? (
                 <p
@@ -336,13 +331,10 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="email"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
+              <Label htmlFor="email" required>
                 E-Mail-Adresse
-              </label>
-              <input
+              </Label>
+              <Input
                 id="email"
                 name="email"
                 type="email"
@@ -350,13 +342,12 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className={`focus:border-primary focus:ring-primary dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none ${
+                error={emailStatus.available === false}
+                className={
                   emailStatus.available === true
-                    ? "border-green-500"
-                    : emailStatus.available === false
-                      ? "border-red-500"
-                      : "dark:border-dark-border border-gray-300"
-                }`}
+                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    : ""
+                }
               />
               {emailStatus.message && (
                 <p
@@ -377,13 +368,10 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="text-dark dark:text-dark-text mb-1 block text-sm font-medium"
-              >
+              <Label htmlFor="password" required>
                 Passwort
-              </label>
-              <input
+              </Label>
+              <Input
                 id="password"
                 name="password"
                 type="password"
@@ -391,20 +379,15 @@ export default function RegisterPage() {
                 required
                 value={formData.password}
                 onChange={handleChange}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Mindestens 8 Zeichen
               </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="bg-primary hover:bg-primary-dark w-full rounded-lg px-4 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
-            >
-              {isLoading ? "Wird erstellt..." : "Konto erstellen"}
-            </button>
+            <Button type="submit" isLoading={isLoading} className="w-full">
+              Konto erstellen
+            </Button>
           </form>
         </div>
       </div>

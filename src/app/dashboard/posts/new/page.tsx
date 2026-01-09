@@ -16,6 +16,17 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, Lock, X } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Select,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/app/_components/ui";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -239,58 +250,53 @@ export default function NewPostPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Information */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="z.B. Neues Bläserheft erschienen"
-                  maxLength={200}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  required
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label required>Titel</Label>
+                  <Input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="z.B. Neues Bläserheft erschienen"
+                    maxLength={200}
+                    required
+                  />
+                </div>
 
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kurzfassung
-                </label>
-                <textarea
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  rows={2}
-                  placeholder="Eine kurze Zusammenfassung des Beitrags (wird in Übersichten angezeigt)"
-                  maxLength={500}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
+                <div>
+                  <Label>Kurzfassung</Label>
+                  <Textarea
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    rows={2}
+                    placeholder="Eine kurze Zusammenfassung des Beitrags (wird in Übersichten angezeigt)"
+                    maxLength={500}
+                  />
+                </div>
 
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kategorie *
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as PostCategory)}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <Label required>Kategorie</Label>
+                  <Select
+                    value={category}
+                    onChange={(e) =>
+                      setCategory(e.target.value as PostCategory)
+                    }
+                  >
+                    {Object.entries(categoryLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
 
           {/* Cover Image */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -309,23 +315,26 @@ export default function NewPostPage() {
                     />
                   </div>
                   <div className="mt-3 flex gap-2">
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                      variant="outline"
+                      size="sm"
                     >
                       Bild ändern
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => {
                         setCoverImageId(null);
                         setCoverImageUrl(null);
                       }}
-                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                      variant="outline"
+                      size="sm"
+                      className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                     >
                       Bild entfernen
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -662,19 +671,17 @@ export default function NewPostPage() {
             >
               Abbrechen
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting || createPostMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting || createPostMutation.isPending}
             >
-              {isSubmitting || createPostMutation.isPending
-                ? "Wird erstellt..."
-                : submitAsDraft
-                  ? "Entwurf speichern"
-                  : submitAsApproved
-                    ? "Veröffentlichen"
-                    : "Beitrag einreichen"}
-            </button>
+              {submitAsDraft
+                ? "Entwurf speichern"
+                : submitAsApproved
+                  ? "Veröffentlichen"
+                  : "Beitrag einreichen"}
+            </Button>
           </div>
         </form>
 

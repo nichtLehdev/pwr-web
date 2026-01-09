@@ -9,6 +9,17 @@ import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { Info } from "lucide-react";
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Select,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/app/_components/ui";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
@@ -360,272 +371,242 @@ export default function NewUserPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label required>Vorname</Label>
+                    <Input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => handleFirstNameChange(e.target.value)}
+                      placeholder="Max"
+                      maxLength={100}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label required>Nachname</Label>
+                    <Input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => handleLastNameChange(e.target.value)}
+                      placeholder="Mustermann"
+                      maxLength={100}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Vorname *
-                  </label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => handleFirstNameChange(e.target.value)}
-                    placeholder="Max"
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  <Label required>E-Mail</Label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    error={emailStatus.available === false}
+                    className={
+                      emailStatus.available === true
+                        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                        : ""
+                    }
                     required
                   />
+                  {emailStatus.message && (
+                    <p
+                      className={`mt-1 text-xs ${
+                        emailStatus.available === false
+                          ? "text-red-600 dark:text-red-400"
+                          : emailStatus.available === true
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {emailStatus.checking && (
+                        <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      )}
+                      {emailStatus.message}
+                    </p>
+                  )}
                 </div>
+
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Nachname *
-                  </label>
-                  <input
+                  <Label>Benutzername</Label>
+                  <Input
                     type="text"
-                    value={lastName}
-                    onChange={(e) => handleLastNameChange(e.target.value)}
-                    placeholder="Mustermann"
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                    required
+                    value={username}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    placeholder="vorname.nachname"
+                    minLength={3}
+                    maxLength={30}
+                    pattern="[a-zA-Z0-9_.-]+"
+                    title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                    error={usernameStatus.available === false}
+                    className={
+                      usernameStatus.available === true
+                        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                        : ""
+                    }
+                  />
+                  {usernameStatus.message ? (
+                    <p
+                      className={`mt-1 text-xs ${
+                        usernameStatus.available === false
+                          ? "text-red-600 dark:text-red-400"
+                          : usernameStatus.available === true
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {usernameStatus.checking && (
+                        <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      )}
+                      {usernameStatus.message}
+                    </p>
+                  ) : (
+                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                      Wird automatisch aus Vor- und Nachname generiert. Kann
+                      manuell angepasst werden.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label>Bio</Label>
+                  <Textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    placeholder="Kurze Beschreibung..."
+                    maxLength={2000}
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail *
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
-                    emailStatus.available === false
-                      ? "border-red-500"
-                      : emailStatus.available === true
-                        ? "border-green-500"
-                        : "border-gray-300"
-                  }`}
-                  required
-                />
-                {emailStatus.message && (
-                  <p
-                    className={`mt-1 text-xs ${
-                      emailStatus.available === false
-                        ? "text-red-600 dark:text-red-400"
-                        : emailStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {emailStatus.checking && (
-                      <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    )}
-                    {emailStatus.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Benutzername
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
-                  placeholder="vorname.nachname"
-                  minLength={3}
-                  maxLength={30}
-                  pattern="[a-zA-Z0-9_.-]+"
-                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
-                  className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none ${
-                    usernameStatus.available === false
-                      ? "border-red-500"
-                      : usernameStatus.available === true
-                        ? "border-green-500"
-                        : "border-gray-300"
-                  }`}
-                />
-                {usernameStatus.message ? (
-                  <p
-                    className={`mt-1 text-xs ${
-                      usernameStatus.available === false
-                        ? "text-red-600 dark:text-red-400"
-                        : usernameStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {usernameStatus.checking && (
-                      <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    )}
-                    {usernameStatus.message}
-                  </p>
-                ) : (
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Wird automatisch aus Vor- und Nachname generiert. Kann
-                    manuell angepasst werden.
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bio
-                </label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
-                  placeholder="Kurze Beschreibung..."
-                  maxLength={2000}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
 
           {/* Address */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Adresse
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Straße und Hausnummer
-                </label>
-                <input
-                  type="text"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                  placeholder="Musterstraße 1"
-                  maxLength={200}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>Adresse</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    PLZ
-                  </label>
-                  <input
+                  <Label>Straße und Hausnummer</Label>
+                  <Input
                     type="text"
-                    value={zipCode}
-                    onChange={(e) => setZipCode(e.target.value)}
-                    placeholder="12345"
-                    maxLength={20}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    placeholder="Musterstraße 1"
+                    maxLength={200}
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Stadt
-                  </label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Musterstadt"
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label>PLZ</Label>
+                    <Input
+                      type="text"
+                      value={zipCode}
+                      onChange={(e) => setZipCode(e.target.value)}
+                      placeholder="12345"
+                      maxLength={20}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label>Stadt</Label>
+                    <Input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Musterstadt"
+                      maxLength={100}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
 
           {/* Role & Permissions */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Rolle & Berechtigungen
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Rolle *
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                >
-                  {Object.entries(roleLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Die Rolle bestimmt die grundlegenden Berechtigungen des
-                  Benutzers.
-                </p>
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Angezeigte Rolle
-                </label>
-                <input
-                  type="text"
-                  value={displayRole}
-                  onChange={(e) => setDisplayRole(e.target.value)}
-                  placeholder="z.B. Webmaster, Geschäftsführer"
-                  maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Diese Rolle wird öffentlich angezeigt und hat keine Auswirkung
-                  auf Berechtigungen.
-                </p>
-              </div>
-
-              {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Rolle & Berechtigungen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Bezirk
-                  </label>
-                  <select
-                    value={bezirkId ?? ""}
-                    onChange={(e) => setBezirkId(e.target.value || null)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  <Label required>Rolle</Label>
+                  <Select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as UserRole)}
                   >
-                    <option value="">Kein Bezirk</option>
-                    {bezirke?.map((bezirk) => (
-                      <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.shortName}
+                    {Object.entries(roleLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Die Rolle bestimmt die grundlegenden Berechtigungen des
+                    Benutzers.
+                  </p>
                 </div>
-              )}
 
-              {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
                 <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Obleute-Funktion
-                  </label>
-                  <input
+                  <Label>Angezeigte Rolle</Label>
+                  <Input
                     type="text"
-                    value={obleuteRole}
-                    onChange={(e) => setObleuteRole(e.target.value)}
-                    placeholder="z.B. Bezirksobmann, Bezirksobfrau"
+                    value={displayRole}
+                    onChange={(e) => setDisplayRole(e.target.value)}
+                    placeholder="z.B. Webmaster, Geschäftsführer"
                     maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Diese Rolle wird öffentlich angezeigt und hat keine
+                    Auswirkung auf Berechtigungen.
+                  </p>
                 </div>
-              )}
-            </div>
-          </section>
+
+                {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
+                  <div>
+                    <Label>Bezirk</Label>
+                    <Select
+                      value={bezirkId ?? ""}
+                      onChange={(e) => setBezirkId(e.target.value || null)}
+                    >
+                      <option value="">Kein Bezirk</option>
+                      {bezirke?.map((bezirk) => (
+                        <option key={bezirk.id} value={bezirk.id}>
+                          Bezirk {bezirk.number} – {bezirk.shortName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
+                {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
+                  <div>
+                    <Label>Obleute-Funktion</Label>
+                    <Input
+                      type="text"
+                      value={obleuteRole}
+                      onChange={(e) => setObleuteRole(e.target.value)}
+                      placeholder="z.B. Bezirksobmann, Bezirksobfrau"
+                      maxLength={100}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -635,15 +616,13 @@ export default function NewUserPage() {
             >
               Abbrechen
             </Link>
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting || createUserMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+              isLoading={isSubmitting || createUserMutation.isPending}
             >
-              {isSubmitting || createUserMutation.isPending
-                ? "Wird erstellt..."
-                : "Benutzer erstellen"}
-            </button>
+              Benutzer erstellen
+            </Button>
           </div>
         </form>
       </div>
