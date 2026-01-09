@@ -19,13 +19,7 @@ import {
   Link as LinkIcon,
   Link2Off,
 } from "lucide-react";
-import {
-  Button,
-  Input,
-  Label,
-  Textarea,
-  Select,
-} from "@/app/_components/ui";
+import { Button, Input, Label, Textarea, Select } from "@/app/_components/ui";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -1333,7 +1327,10 @@ export default function CourseRegistrationForm({
                                   key={field.fieldName}
                                   className="md:col-span-2"
                                 >
-                                  <Label className="mb-1 text-xs sm:text-sm" required={field.isRequired}>
+                                  <Label
+                                    className="mb-1 text-xs sm:text-sm"
+                                    required={field.isRequired}
+                                  >
                                     {field.fieldName}
                                   </Label>
                                   {field.fieldType === "SELECT" &&

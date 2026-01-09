@@ -229,11 +229,7 @@ export default function DashboardCoursesList({
             Auswählen
           </Button>
         ) : (
-          <Button
-            onClick={exitSelectionMode}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={exitSelectionMode} variant="outline" size="sm">
             <X className="h-4 w-4" />
             Abbrechen
           </Button>
@@ -270,7 +266,7 @@ export default function DashboardCoursesList({
                 disabled={duplicateMutation.isPending}
                 variant="secondary"
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={duplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -284,7 +280,7 @@ export default function DashboardCoursesList({
                 disabled={bulkDuplicateMutation.isPending}
                 variant="secondary"
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={bulkDuplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -297,7 +293,7 @@ export default function DashboardCoursesList({
               disabled={selectedIds.size === 0}
               variant="secondary"
               size="sm"
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               <PencilIcon className="h-4 w-4" />
               Status ändern
@@ -350,7 +346,9 @@ export default function DashboardCoursesList({
                     setStatusFilter(filter.value);
                     setPage(1);
                   }}
-                  variant={statusFilter === filter.value ? "primary" : "secondary"}
+                  variant={
+                    statusFilter === filter.value ? "primary" : "secondary"
+                  }
                   size="sm"
                 >
                   {filter.label}

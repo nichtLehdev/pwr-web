@@ -253,11 +253,7 @@ export default function DashboardEventsList({
             Auswählen
           </Button>
         ) : (
-          <Button
-            onClick={exitSelectionMode}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={exitSelectionMode} variant="outline" size="sm">
             <X className="h-4 w-4" />
             Abbrechen
           </Button>
@@ -294,7 +290,7 @@ export default function DashboardEventsList({
                 disabled={duplicateMutation.isPending}
                 variant="secondary"
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={duplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -308,7 +304,7 @@ export default function DashboardEventsList({
                 disabled={bulkDuplicateMutation.isPending}
                 variant="secondary"
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={bulkDuplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -321,7 +317,7 @@ export default function DashboardEventsList({
               disabled={selectedIds.size === 0}
               variant="secondary"
               size="sm"
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               <PencilIcon className="h-4 w-4" />
               Status ändern
@@ -332,7 +328,7 @@ export default function DashboardEventsList({
               disabled={selectedIds.size === 0 || bulkCancelMutation.isPending}
               variant="secondary"
               size="sm"
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-amber-600 text-white hover:bg-amber-700"
               isLoading={bulkCancelMutation.isPending}
             >
               <BanIcon className="h-4 w-4" />
@@ -399,7 +395,9 @@ export default function DashboardEventsList({
                     setStatusFilter(filter.value);
                     setPage(1);
                   }}
-                  variant={statusFilter === filter.value ? "primary" : "secondary"}
+                  variant={
+                    statusFilter === filter.value ? "primary" : "secondary"
+                  }
                   size="sm"
                 >
                   {filter.label}

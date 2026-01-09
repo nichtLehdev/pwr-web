@@ -402,91 +402,91 @@ export default function NewUserPage() {
                   </div>
                 </div>
 
-              <div>
-                <Label required>E-Mail</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  error={emailStatus.available === false}
-                  className={
-                    emailStatus.available === true
-                      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-                      : ""
-                  }
-                  required
-                />
-                {emailStatus.message && (
-                  <p
-                    className={`mt-1 text-xs ${
-                      emailStatus.available === false
-                        ? "text-red-600 dark:text-red-400"
-                        : emailStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {emailStatus.checking && (
-                      <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    )}
-                    {emailStatus.message}
-                  </p>
-                )}
-              </div>
+                <div>
+                  <Label required>E-Mail</Label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    error={emailStatus.available === false}
+                    className={
+                      emailStatus.available === true
+                        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                        : ""
+                    }
+                    required
+                  />
+                  {emailStatus.message && (
+                    <p
+                      className={`mt-1 text-xs ${
+                        emailStatus.available === false
+                          ? "text-red-600 dark:text-red-400"
+                          : emailStatus.available === true
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {emailStatus.checking && (
+                        <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      )}
+                      {emailStatus.message}
+                    </p>
+                  )}
+                </div>
 
-              <div>
-                <Label>Benutzername</Label>
-                <Input
-                  type="text"
-                  value={username}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
-                  placeholder="vorname.nachname"
-                  minLength={3}
-                  maxLength={30}
-                  pattern="[a-zA-Z0-9_.-]+"
-                  title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
-                  error={usernameStatus.available === false}
-                  className={
-                    usernameStatus.available === true
-                      ? "border-green-500 focus:border-green-500 focus:ring-green-500"
-                      : ""
-                  }
-                />
-                {usernameStatus.message ? (
-                  <p
-                    className={`mt-1 text-xs ${
-                      usernameStatus.available === false
-                        ? "text-red-600 dark:text-red-400"
-                        : usernameStatus.available === true
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {usernameStatus.checking && (
-                      <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    )}
-                    {usernameStatus.message}
-                  </p>
-                ) : (
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Wird automatisch aus Vor- und Nachname generiert. Kann
-                    manuell angepasst werden.
-                  </p>
-                )}
-              </div>
+                <div>
+                  <Label>Benutzername</Label>
+                  <Input
+                    type="text"
+                    value={username}
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    placeholder="vorname.nachname"
+                    minLength={3}
+                    maxLength={30}
+                    pattern="[a-zA-Z0-9_.-]+"
+                    title="Nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt erlaubt"
+                    error={usernameStatus.available === false}
+                    className={
+                      usernameStatus.available === true
+                        ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                        : ""
+                    }
+                  />
+                  {usernameStatus.message ? (
+                    <p
+                      className={`mt-1 text-xs ${
+                        usernameStatus.available === false
+                          ? "text-red-600 dark:text-red-400"
+                          : usernameStatus.available === true
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
+                      }`}
+                    >
+                      {usernameStatus.checking && (
+                        <span className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      )}
+                      {usernameStatus.message}
+                    </p>
+                  ) : (
+                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                      Wird automatisch aus Vor- und Nachname generiert. Kann
+                      manuell angepasst werden.
+                    </p>
+                  )}
+                </div>
 
-              <div>
-                <Label>Bio</Label>
-                <Textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={3}
-                  placeholder="Kurze Beschreibung..."
-                  maxLength={2000}
-                />
+                <div>
+                  <Label>Bio</Label>
+                  <Textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    placeholder="Kurze Beschreibung..."
+                    maxLength={2000}
+                  />
+                </div>
               </div>
-            </div>
             </CardContent>
           </Card>
 
@@ -547,12 +547,12 @@ export default function NewUserPage() {
                   <Select
                     value={role}
                     onChange={(e) => setRole(e.target.value as UserRole)}
-                >
-                  {Object.entries(roleLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
+                  >
+                    {Object.entries(roleLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </Select>
                   <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
                     Die Rolle bestimmt die grundlegenden Berechtigungen des
@@ -570,8 +570,8 @@ export default function NewUserPage() {
                     maxLength={100}
                   />
                   <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Diese Rolle wird öffentlich angezeigt und hat keine Auswirkung
-                    auf Berechtigungen.
+                    Diese Rolle wird öffentlich angezeigt und hat keine
+                    Auswirkung auf Berechtigungen.
                   </p>
                 </div>
 

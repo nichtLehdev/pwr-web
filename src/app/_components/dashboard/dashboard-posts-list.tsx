@@ -358,7 +358,9 @@ export default function DashboardPostsList({
                       setStatusFilter(filter.value);
                       setPage(1);
                     }}
-                    variant={statusFilter === filter.value ? "primary" : "secondary"}
+                    variant={
+                      statusFilter === filter.value ? "primary" : "secondary"
+                    }
                     size="sm"
                   >
                     {filter.label}

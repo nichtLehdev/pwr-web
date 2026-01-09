@@ -20,16 +20,11 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     const variants = {
       default:
         "bg-gray-100 text-gray-800 dark:bg-dark-background-secondary dark:text-dark-text",
-      primary:
-        "bg-primary text-white dark:bg-primary-light",
-      secondary:
-        "bg-gray-600 text-white dark:bg-gray-500",
-      success:
-        "bg-green-600 text-white dark:bg-green-500",
-      danger:
-        "bg-red-600 text-white dark:bg-red-500",
-      warning:
-        "bg-yellow-500 text-white dark:bg-yellow-400",
+      primary: "bg-primary text-white dark:bg-primary-light",
+      secondary: "bg-gray-600 text-white dark:bg-gray-500",
+      success: "bg-green-600 text-white dark:bg-green-500",
+      danger: "bg-red-600 text-white dark:bg-red-500",
+      warning: "bg-yellow-500 text-white dark:bg-yellow-400",
       outline:
         "border-2 border-gray-300 bg-transparent text-gray-700 dark:border-dark-border dark:text-dark-text",
     };

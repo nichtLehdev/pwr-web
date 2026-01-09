@@ -15,9 +15,4 @@ export {
   type CardProps,
 } from "./card";
 export { Badge, type BadgeProps } from "./badge";
-export {
-  Alert,
-  AlertTitle,
-  AlertDescription,
-  type AlertProps,
-} from "./alert";
+export { Alert, AlertTitle, AlertDescription, type AlertProps } from "./alert";
