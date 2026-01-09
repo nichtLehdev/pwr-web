@@ -433,8 +433,8 @@ export default function NewPostPage() {
               Autor
             </h2>
             <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Optional: Wenn der Beitrag von jemand anderem geschrieben wurde oder
-              du einen benutzerdefinierten Autorennamen verwenden möchtest.
+              Optional: Wenn der Beitrag von jemand anderem geschrieben wurde
+              oder du einen benutzerdefinierten Autorennamen verwenden möchtest.
             </p>
             <div className="space-y-4">
               <div className="author-dropdown-container relative">
@@ -479,7 +479,7 @@ export default function NewPostPage() {
                           key={user.id}
                           type="button"
                           onClick={() => handleAuthorSelect(user)}
-                          className="dark:hover:bg-dark-background-secondary hover:bg-gray-50 w-full px-4 py-2 text-left text-sm transition-colors"
+                          className="dark:hover:bg-dark-background-secondary w-full px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50"
                         >
                           <div className="dark:text-dark-text font-medium text-gray-900">
                             {user.displayName || "Kein Name"}
@@ -495,7 +495,7 @@ export default function NewPostPage() {
 
               <div className="relative">
                 <div className="dark:border-dark-border my-4 flex items-center gap-2 border-t border-gray-200">
-                  <span className="dark:text-dark-muted bg-white px-2 text-sm text-gray-500 dark:bg-dark-surface">
+                  <span className="dark:text-dark-muted dark:bg-dark-surface bg-white px-2 text-sm text-gray-500">
                     Oder
                   </span>
                 </div>
@@ -520,8 +520,8 @@ export default function NewPostPage() {
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Wenn kein Autor ausgewählt wird, wird der Ersteller des Beitrags
-                  als Autor angezeigt.
+                  Wenn kein Autor ausgewählt wird, wird der Ersteller des
+                  Beitrags als Autor angezeigt.
                 </p>
               </div>
             </div>
