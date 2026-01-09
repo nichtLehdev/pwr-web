@@ -31,19 +31,40 @@ function formatRssDate(date: Date): string {
 
 /**
  * Converts markdown to plain text for RSS description
+ * Safely decodes HTML entities without double-unescaping
+ * Ensures no HTML tags remain after entity decoding
  */
 async function markdownToPlainText(markdown: string): Promise<string> {
   const html = await marked.parse(markdown);
-  // Remove HTML tags and decode entities
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .trim();
+
+  // First pass: strip HTML tags
+  let text = html.replace(/<[^>]*>/g, "");
+
+  // Decode HTML entities in a single pass to avoid double-unescaping
+  // Process from longest to shortest to handle compound entities correctly
+  // and decode &amp; last to prevent double-decoding
+  const entityDecodeMap: Array<[string, string]> = [
+    ["&nbsp;", " "],
+    ["&quot;", '"'],
+    ["&apos;", "'"],
+    ["&lt;", "<"],
+    ["&gt;", ">"],
+    ["&amp;", "&"], // Must be decoded last
+  ];
+
+  // Single pass: decode each entity type once
+  for (const [entity, char] of entityDecodeMap) {
+    // Escape special regex characters in entity
+    const escapedEntity = entity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    text = text.replace(new RegExp(escapedEntity, "g"), char);
+  }
+
+  // Final sanitization: strip any HTML tags that may have been reintroduced
+  // by entity decoding, and remove any remaining angle brackets to prevent
+  // tag formation (e.g., <script> cannot be formed)
+  text = text.replace(/<[^>]*>/g, "").replace(/[<>]/g, "");
+
+  return text.trim();
 }
 
 export async function GET(request: NextRequest) {
