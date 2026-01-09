@@ -19,6 +19,7 @@ import {
   Link as LinkIcon,
   Link2Off,
 } from "lucide-react";
+import { Button, Input, Label, Textarea, Select } from "@/app/_components/ui";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -1326,13 +1327,15 @@ export default function CourseRegistrationForm({
                                   key={field.fieldName}
                                   className="md:col-span-2"
                                 >
-                                  <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                                  <Label
+                                    className="mb-1 text-xs sm:text-sm"
+                                    required={field.isRequired}
+                                  >
                                     {field.fieldName}
-                                    {field.isRequired && " *"}
-                                  </label>
+                                  </Label>
                                   {field.fieldType === "SELECT" &&
                                   field.options ? (
-                                    <select
+                                    <Select
                                       value={
                                         (participant.customFields &&
                                         typeof participant.customFields ===
@@ -1361,7 +1364,7 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                      className="text-sm sm:text-base"
                                     >
                                       <option value="">Bitte wählen</option>
                                       {typeof field.options === "string" &&
@@ -1370,9 +1373,9 @@ export default function CourseRegistrationForm({
                                             {opt}
                                           </option>
                                         ))}
-                                    </select>
+                                    </Select>
                                   ) : field.fieldType === "TEXTAREA" ? (
-                                    <textarea
+                                    <Textarea
                                       value={
                                         typeof participant.customFields ===
                                           "object" &&
@@ -1402,13 +1405,13 @@ export default function CourseRegistrationForm({
                                         )
                                       }
                                       rows={3}
-                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                      className="text-sm sm:text-base"
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }
                                     />
                                   ) : (
-                                    <input
+                                    <Input
                                       type={
                                         field.fieldType === "NUMBER"
                                           ? "number"
@@ -1442,7 +1445,7 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                      className="text-sm sm:text-base"
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }

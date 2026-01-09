@@ -19,6 +19,7 @@ import {
   TrashIcon,
   X,
 } from "lucide-react";
+import { Button, Select } from "@/app/_components/ui";
 
 interface DashboardCoursesListProps {
   userRole: string;
@@ -219,21 +220,19 @@ export default function DashboardCoursesList({
 
         {/* Selection Mode Toggle */}
         {!selectionMode ? (
-          <button
+          <Button
             onClick={() => setSelectionMode(true)}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            variant="outline"
+            size="sm"
           >
             <SquareDashed className="h-4 w-4" />
             Auswählen
-          </button>
+          </Button>
         ) : (
-          <button
-            onClick={exitSelectionMode}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
+          <Button onClick={exitSelectionMode} variant="outline" size="sm">
             <X className="h-4 w-4" />
             Abbrechen
-          </button>
+          </Button>
         )}
       </div>
 
@@ -262,46 +261,54 @@ export default function DashboardCoursesList({
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             {selectedIds.size === 1 && (
-              <button
+              <Button
                 onClick={handleDuplicate}
                 disabled={duplicateMutation.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                variant="secondary"
+                size="sm"
+                className="bg-blue-600 text-white hover:bg-blue-700"
+                isLoading={duplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
-                {duplicateMutation.isPending ? "..." : "Duplizieren"}
-              </button>
+                Duplizieren
+              </Button>
             )}
 
             {selectedIds.size > 1 && (
-              <button
+              <Button
                 onClick={handleBulkDuplicate}
                 disabled={bulkDuplicateMutation.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                variant="secondary"
+                size="sm"
+                className="bg-blue-600 text-white hover:bg-blue-700"
+                isLoading={bulkDuplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
-                {bulkDuplicateMutation.isPending
-                  ? "..."
-                  : `${selectedIds.size} duplizieren`}
-              </button>
+                {selectedIds.size} duplizieren
+              </Button>
             )}
 
-            <button
+            <Button
               onClick={() => setShowStatusChange(true)}
               disabled={selectedIds.size === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              variant="secondary"
+              size="sm"
+              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               <PencilIcon className="h-4 w-4" />
               Status ändern
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
-              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              variant="danger"
+              size="sm"
+              isLoading={bulkDeleteMutation.isPending}
             >
               <TrashIcon className="h-4 w-4" />
               Löschen
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -333,26 +340,25 @@ export default function DashboardCoursesList({
             {/* Status Filter */}
             <div className="flex flex-wrap gap-2">
               {availableFilters.map((filter) => (
-                <button
+                <Button
                   key={filter.value}
                   onClick={() => {
                     setStatusFilter(filter.value);
                     setPage(1);
                   }}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    statusFilter === filter.value
-                      ? "bg-primary text-white"
-                      : "text-dark dark:bg-dark-background-secondary dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-                  }`}
+                  variant={
+                    statusFilter === filter.value ? "primary" : "secondary"
+                  }
+                  size="sm"
                 >
                   {filter.label}
-                </button>
+                </Button>
               ))}
             </div>
 
             {/* Sort Controls */}
             <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200 pl-4">
-              <select
+              <Select
                 value={sortBy}
                 onChange={(e) => {
                   setSortBy(
@@ -364,14 +370,13 @@ export default function DashboardCoursesList({
                   );
                   setPage(1);
                 }}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               <button
                 onClick={toggleSortOrder}
                 className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white p-1.5 text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
