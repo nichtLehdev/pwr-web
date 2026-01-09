@@ -462,7 +462,7 @@ export default function EventsClient({
                 }`}
                 aria-label="Filter öffnen"
               >
-                <FunnelIcon className="h-5 w-5" />
+                <FunnelIcon className="h-4 w-4" />
                 {/* Active Filter Badge */}
                 {(filterType !== "all" ||
                   selectedDistrict !== "all" ||
