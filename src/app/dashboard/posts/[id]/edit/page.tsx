@@ -130,11 +130,22 @@ export default function EditPostPage() {
 
   useEffect(() => {
     if (post && !initializedFromPost.current) {
+      setTitle(post.title || "");
+      setExcerpt(post.excerpt || "");
+      setContent(post.content || "");
+      setCategory(post.category || "MAGAZIN");
+      setBezirkId(post.bezirkId || "");
+      setPinned(post.pinned || false);
+      setCoverImageId(post.coverImageId || null);
+      setCoverImageUrl(post.coverImage?.url || null);
+      setStatus(post.status || "DRAFT");
+
       if (post.author && post.author.id !== authorId) {
         setAuthorId(post.author.id);
         setAuthorSearch(post.author.displayName || post.author.email || "");
       } else if (post.authorName && !authorId && !authorName) {
         setAuthorName(post.authorName);
+        setAuthorSearch(post.authorName);
       }
       initializedFromPost.current = true;
     }
