@@ -207,7 +207,7 @@ function Toolbar({
   if (!editor) return null;
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 p-2">
+    <div className="dark:border-dark-border dark:bg-dark-surface bg-opacity-95 dark:bg-opacity-95 sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 p-2 backdrop-blur-sm">
       {/* Text formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -657,7 +657,8 @@ export default function RichTextEditor({
   return (
     <>
       <div
-        className={`dark:border-dark-border dark:bg-dark-background-secondary overflow-hidden rounded-lg border border-gray-300 bg-white ${className}`}
+        className={`dark:border-dark-border dark:bg-dark-background-secondary relative flex flex-col rounded-lg border border-gray-300 bg-white ${className}`}
+        style={{ maxHeight: "600px", overflowY: "auto" }}
       >
         <Toolbar
           editor={editor}

@@ -162,6 +162,7 @@ export default function MediaPickerModal({
             Bild einfügen
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
           >
@@ -172,6 +173,7 @@ export default function MediaPickerModal({
         {/* Tabs */}
         <div className="dark:border-dark-border flex border-b border-gray-200">
           <button
+            type="button"
             onClick={() => setActiveTab("library")}
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === "library"
@@ -182,6 +184,7 @@ export default function MediaPickerModal({
             Medienbibliothek
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("upload")}
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === "upload"
@@ -225,6 +228,7 @@ export default function MediaPickerModal({
                   {mediaData?.media.map((media) => (
                     <button
                       key={media.id}
+                      type="button"
                       onClick={() =>
                         setSelectedMedia({
                           id: media.id,
@@ -340,12 +344,14 @@ export default function MediaPickerModal({
           </div>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100"
             >
               Abbrechen
             </button>
             <button
+              type="button"
               onClick={handleInsert}
               disabled={!selectedMedia}
               className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
