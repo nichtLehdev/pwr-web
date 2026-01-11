@@ -56,6 +56,7 @@ export default function NewUserPage() {
   const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
+  const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
@@ -287,6 +288,7 @@ export default function NewUserPage() {
           ? obleuteRole.trim() || undefined
           : undefined,
       bio: bio.trim() || undefined,
+      phone: phone.trim() || undefined,
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
       city: city.trim() || undefined,
@@ -484,6 +486,17 @@ export default function NewUserPage() {
                     rows={3}
                     placeholder="Kurze Beschreibung..."
                     maxLength={2000}
+                  />
+                </div>
+
+                <div>
+                  <Label>Telefonnummer</Label>
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+49 123 456789"
+                    maxLength={50}
                   />
                 </div>
               </div>

@@ -55,6 +55,7 @@ export default function EditUserPage() {
   const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
+  const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
@@ -80,6 +81,7 @@ export default function EditUserPage() {
       setBezirkId(user.bezirkId ?? null);
       setObleuteRole(user.obleuteRole ?? "");
       setBio(user.bio ?? "");
+      setPhone(user.phone ?? "");
       setStreet(user.street ?? "");
       setZipCode(user.zipCode ?? "");
       setCity(user.city ?? "");
@@ -240,6 +242,7 @@ export default function EditUserPage() {
           ? obleuteRole.trim() || undefined
           : undefined,
       bio: bio.trim() || undefined,
+      phone: phone.trim() || undefined,
       profileImageId,
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
@@ -462,6 +465,20 @@ export default function EditUserPage() {
                   rows={3}
                   placeholder="Kurze Beschreibung..."
                   maxLength={2000}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Telefonnummer
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+49 123 456789"
+                  maxLength={50}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>

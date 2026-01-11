@@ -521,6 +521,11 @@ export const usersRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -565,6 +570,7 @@ export const usersRouter = createTRPCRouter({
           street: input.street,
           zipCode: input.zipCode,
           city: input.city,
+          phone: input.phone,
         },
         include: {
           profileImage: true,
@@ -600,6 +606,11 @@ export const usersRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
+        phone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
