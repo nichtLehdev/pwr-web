@@ -222,11 +222,6 @@ export default function CourseDetailView({
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
                   {course.courseType}
                 </span>
-                {course.targetAudience && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {course.targetAudience}
-                  </span>
-                )}
                 {course.bezirk && (
                   <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
                     {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}

@@ -11,7 +11,6 @@ import {
   ContentStatus,
   CourseType,
   CustomFieldType,
-  TargetAudience,
   UserRole,
   RegistrationStatus,
   PaymentStatus,
@@ -24,14 +23,6 @@ const courseTypeLabels: Record<CourseType, string> = {
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
   OTHER: "Sonstiges",
-};
-
-const targetAudienceLabels: Record<TargetAudience, string> = {
-  ANFAENGER: "Anfänger",
-  FORTGESCHRITTENE: "Fortgeschrittene",
-  DIRIGENTEN: "Dirigenten",
-  JUGEND: "Jugend",
-  ALLE: "Alle",
 };
 
 const statusLabels: Record<ContentStatus, string> = {
@@ -471,16 +462,6 @@ export default function CourseDetailPage() {
                     {courseTypeLabels[course.courseType]}
                   </dd>
                 </div>
-                {course.targetAudience && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Zielgruppe
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {targetAudienceLabels[course.targetAudience]}
-                    </dd>
-                  </div>
-                )}
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Beginn

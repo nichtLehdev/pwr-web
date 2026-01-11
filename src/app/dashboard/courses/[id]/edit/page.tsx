@@ -10,7 +10,6 @@ import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
-  TargetAudience,
   ContentStatus,
   UserRole,
   CustomFieldType,
@@ -34,14 +33,6 @@ const courseTypeLabels: Record<CourseType, string> = {
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
   OTHER: "Sonstiges",
-};
-
-const targetAudienceLabels: Record<TargetAudience, string> = {
-  ANFAENGER: "Anfänger",
-  FORTGESCHRITTENE: "Fortgeschrittene",
-  DIRIGENTEN: "Dirigenten",
-  JUGEND: "Jugend",
-  ALLE: "Alle",
 };
 
 const statusLabels: Record<ContentStatus, string> = {
@@ -101,7 +92,6 @@ export default function EditCoursePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [courseType, setCourseType] = useState<CourseType>(CourseType.LEHRGANG);
-  const [targetAudience, setTargetAudience] = useState<TargetAudience | "">("");
   const [bezirkId, setBezirkId] = useState("");
   const [locationId, setLocationId] = useState("");
   const [locationSearch, setLocationSearch] = useState("");
@@ -145,7 +135,6 @@ export default function EditCoursePage() {
     motto: string;
     description: string;
     courseType: CourseType;
-    targetAudience: string;
     startDate: string;
     endDate: string;
     registrationDeadline: string;
@@ -181,7 +170,6 @@ export default function EditCoursePage() {
       motto,
       description,
       courseType,
-      targetAudience,
       startDate,
       endDate,
       registrationDeadline,
@@ -206,7 +194,6 @@ export default function EditCoursePage() {
       motto,
       description,
       courseType,
-      targetAudience,
       startDate,
       endDate,
       registrationDeadline,
@@ -252,7 +239,6 @@ export default function EditCoursePage() {
           setMotto(saved.motto || "");
           setDescription(saved.description || "");
           setCourseType(saved.courseType || CourseType.LEHRGANG);
-          setTargetAudience(saved.targetAudience || "");
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
@@ -286,7 +272,6 @@ export default function EditCoursePage() {
         motto: course.motto || "",
         description: course.description || "",
         courseType: course.courseType || CourseType.LEHRGANG,
-        targetAudience: course.targetAudience || "",
         startDate: start.toISOString().split("T")[0] || "",
         endDate: end.toISOString().split("T")[0] || "",
         registrationDeadline: course.registrationDeadline
@@ -373,7 +358,6 @@ export default function EditCoursePage() {
         setEndDate(end.toISOString().split("T")[0] || "");
 
         setCourseType(course.courseType);
-        setTargetAudience(course.targetAudience || "");
         setBezirkId(course.bezirkId || "");
         setStatus(course.status);
 
@@ -705,7 +689,6 @@ export default function EditCoursePage() {
       endDate: new Date(endDate),
       locationId: locationId || null,
       courseType,
-      targetAudience: targetAudience || null,
       bezirkId: bezirkId || null,
       registrationOpen,
       registrationOpensAt: registrationOpensAt
@@ -894,32 +877,6 @@ export default function EditCoursePage() {
                         {label}
                       </option>
                     ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="targetAudience"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Zielgruppe (optional)
-                  </label>
-                  <select
-                    id="targetAudience"
-                    value={targetAudience}
-                    onChange={(e) =>
-                      setTargetAudience(e.target.value as TargetAudience | "")
-                    }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
-                  >
-                    <option value="">Keine Angabe</option>
-                    {Object.entries(targetAudienceLabels).map(
-                      ([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ),
-                    )}
                   </select>
                 </div>
               </div>

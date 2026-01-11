@@ -47,13 +47,6 @@ const COURSE_TYPE_MAP: Record<string, string> = {
   Andere: "ANDERE",
 };
 
-const TARGET_AUDIENCE_MAP: Record<string, string> = {
-  Alle: "ALLE",
-  Anfänger: "ANFAENGER",
-  Fortgeschrittene: "FORTGESCHRITTENE",
-  Dirigenten: "DIRIGENTEN",
-  Jugend: "JUGEND",
-};
 
 interface EventsClientProps {
   initialEvents: EventWithRelations[];
@@ -182,18 +175,9 @@ export default function EventsClient({
             if (enumValue && item.category !== enumValue) return false;
           } else {
             const courseTypeEnum = COURSE_TYPE_MAP[selectedCategory];
-            const targetAudienceEnum = TARGET_AUDIENCE_MAP[selectedCategory];
 
-            if (courseTypeEnum || targetAudienceEnum) {
-              const matchesCourseType =
-                courseTypeEnum && item.courseType === courseTypeEnum;
-              const matchesTargetAudience =
-                targetAudienceEnum &&
-                item.targetAudience === targetAudienceEnum;
-
-              if (!matchesCourseType && !matchesTargetAudience) {
-                return false;
-              }
+            if (courseTypeEnum && item.courseType !== courseTypeEnum) {
+              return false;
             }
           }
         }
@@ -344,13 +328,6 @@ export default function EventsClient({
     "Workshop",
     "Komponistenportrait",
     "Andere",
-  ];
-  const courseTargetAudiences = [
-    "Alle",
-    "Anfänger",
-    "Fortgeschrittene",
-    "Dirigenten",
-    "Jugend",
   ];
 
   return (
@@ -560,13 +537,6 @@ export default function EventsClient({
                           {courseCategories.map((cat) => (
                             <option key={cat} value={cat}>
                               {cat}
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="Für wen?">
-                          {courseTargetAudiences.map((audience) => (
-                            <option key={audience} value={audience}>
-                              {audience}
                             </option>
                           ))}
                         </optgroup>
