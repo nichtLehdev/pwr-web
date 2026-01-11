@@ -88,6 +88,22 @@ export default function PostDetailView({
   const districtColor = getDistrictColor(post.bezirk?.number);
   const publishDate = new Date(post.publishedAt || post.createdAt);
 
+  const displayUser = post.author || post.createdBy;
+  const displayName =
+    post.authorName || displayUser?.displayName || "Unbekannt";
+  const displayBio = post.author?.bio || post.createdBy?.bio;
+  const displayImage =
+    post.author?.profileImage || post.createdBy?.profileImage;
+  const userId = displayUser?.id;
+
+  const canViewUserProfile =
+    session?.user &&
+    profile &&
+    (profile.role === UserRole.ADMIN ||
+      profile.role === UserRole.LPW ||
+      profile.role === UserRole.RPW ||
+      profile.role === UserRole.OBLEUTE);
+
   const canEdit =
     session?.user &&
     profile &&
@@ -227,29 +243,31 @@ export default function PostDetailView({
             {/* Author Info */}
             {(post.author || post.authorName || post.createdBy) && (
               <div className="dark:border-dark-border mb-8 flex items-center gap-4 border-b border-gray-200 pb-8">
-                {post.author?.profileImage?.url && (
+                {displayImage?.url && (
                   <Image
-                    src={post.author.profileImage.url}
-                    alt={
-                      post.author.profileImage.alt ||
-                      post.author.displayName ||
-                      "Autor Bild"
-                    }
+                    src={displayImage.url}
+                    alt={displayImage.alt || displayName || "Autor Bild"}
                     width={200}
                     height={200}
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 )}
-                <div>
-                  <p className="text-dark dark:text-dark-text font-semibold">
-                    {post.authorName ||
-                      post.author?.displayName ||
-                      post.createdBy?.displayName ||
-                      "Unbekannt"}
-                  </p>
-                  {post.author?.bio && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {post.author.bio}
+                <div className="flex-1">
+                  {userId && canViewUserProfile ? (
+                    <Link
+                      href={`/dashboard/users/${userId}`}
+                      className="text-dark dark:text-dark-text hover:text-primary dark:hover:text-primary font-semibold transition-colors"
+                    >
+                      {displayName}
+                    </Link>
+                  ) : (
+                    <p className="text-dark dark:text-dark-text font-semibold">
+                      {displayName}
+                    </p>
+                  )}
+                  {displayBio && (
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                      {displayBio}
                     </p>
                   )}
                 </div>
