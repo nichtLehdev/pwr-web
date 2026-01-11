@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,6 +25,8 @@ import {
   ImageIcon,
 } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -137,8 +139,32 @@ export default function EditCoursePage() {
   const [originalCustomFields, setOriginalCustomFields] = useState<
     CustomField[]
   >([]);
-
-  const locationDropdownRef = useRef<HTMLDivElement>(null);
+  const hasRestoredRef = useRef(false);
+  const originalDataRef = useRef<{
+    title: string;
+    motto: string;
+    description: string;
+    courseType: CourseType;
+    targetAudience: string;
+    startDate: string;
+    endDate: string;
+    registrationDeadline: string;
+    registrationOpensAt: string;
+    locationId: string;
+    bezirkId: string;
+    maxParticipants: string;
+    registrationOpen: boolean;
+    allowWaitingList: boolean;
+    allowSiblingDiscount: boolean;
+    isFree: boolean;
+    priceInfo: string;
+    priceOptions: PriceOption[];
+    prerequisites: string;
+    whatToBring: string;
+    imageId: string | null;
+    customFields: CustomField[];
+    status: ContentStatus;
+  } | null>(null);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
@@ -148,6 +174,175 @@ export default function EditCoursePage() {
       { id: courseId },
       { enabled: !!courseId && !!session?.user },
     );
+
+  const formData = useMemo(
+    () => ({
+      title,
+      motto,
+      description,
+      courseType,
+      targetAudience,
+      startDate,
+      endDate,
+      registrationDeadline,
+      registrationOpensAt,
+      locationId,
+      bezirkId,
+      maxParticipants,
+      registrationOpen,
+      allowWaitingList,
+      allowSiblingDiscount,
+      isFree,
+      priceInfo,
+      priceOptions,
+      prerequisites,
+      whatToBring,
+      imageId,
+      customFields,
+      status,
+    }),
+    [
+      title,
+      motto,
+      description,
+      courseType,
+      targetAudience,
+      startDate,
+      endDate,
+      registrationDeadline,
+      registrationOpensAt,
+      locationId,
+      bezirkId,
+      maxParticipants,
+      registrationOpen,
+      allowWaitingList,
+      allowSiblingDiscount,
+      isFree,
+      priceInfo,
+      priceOptions,
+      prerequisites,
+      whatToBring,
+      imageId,
+      customFields,
+      status,
+    ],
+  );
+
+  const { restore, clear } = useAutosave(`course-${courseId}-edit`, formData);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    const hasChanges = originalDataRef.current
+      ? JSON.stringify(formData) !== JSON.stringify(originalDataRef.current)
+      : Boolean(title.trim() || description.trim() || startDate);
+    startTransition(() => {
+      setHasUnsavedChanges(hasChanges);
+    });
+  }, [formData, title, description, startDate]);
+
+  useBeforeUnload(Boolean(hasUnsavedChanges && !isSubmitting));
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !courseLoading && !course) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setMotto(saved.motto || "");
+          setDescription(saved.description || "");
+          setCourseType(saved.courseType || CourseType.LEHRGANG);
+          setTargetAudience(saved.targetAudience || "");
+          setStartDate(saved.startDate || "");
+          setEndDate(saved.endDate || "");
+          setRegistrationDeadline(saved.registrationDeadline || "");
+          setRegistrationOpensAt(saved.registrationOpensAt || "");
+          setLocationId(saved.locationId || "");
+          setBezirkId(saved.bezirkId || "");
+          setMaxParticipants(saved.maxParticipants || "");
+          setRegistrationOpen(saved.registrationOpen || false);
+          setAllowWaitingList(saved.allowWaitingList || false);
+          setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
+          setIsFree(saved.isFree ?? true);
+          setPriceInfo(saved.priceInfo || "");
+          setPriceOptions(saved.priceOptions || []);
+          setPrerequisites(saved.prerequisites || "");
+          setWhatToBring(saved.whatToBring || "");
+          setImageId(saved.imageId || null);
+          setCustomFields(saved.customFields || []);
+          setStatus(saved.status || ContentStatus.DRAFT);
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, courseLoading, course]);
+
+  useEffect(() => {
+    if (course && isInitialized && !originalDataRef.current) {
+      const start = new Date(course.startDate);
+      const end = new Date(course.endDate);
+      originalDataRef.current = {
+        title: course.title || "",
+        motto: course.motto || "",
+        description: course.description || "",
+        courseType: course.courseType || CourseType.LEHRGANG,
+        targetAudience: course.targetAudience || "",
+        startDate: start.toISOString().split("T")[0] || "",
+        endDate: end.toISOString().split("T")[0] || "",
+        registrationDeadline: course.registrationDeadline
+          ? (new Date(course.registrationDeadline)
+              .toISOString()
+              .split("T")[0] ?? "")
+          : "",
+        registrationOpensAt: course.registrationOpensAt
+          ? (() => {
+              const opensAt = new Date(course.registrationOpensAt);
+              const year = opensAt.getFullYear();
+              const month = String(opensAt.getMonth() + 1).padStart(2, "0");
+              const day = String(opensAt.getDate()).padStart(2, "0");
+              const hours = String(opensAt.getHours()).padStart(2, "0");
+              const minutes = String(opensAt.getMinutes()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}`;
+            })()
+          : "",
+        locationId: course.locationId || "",
+        bezirkId: course.bezirkId || "",
+        maxParticipants: course.maxParticipants?.toString() || "",
+        registrationOpen: course.registrationOpen || false,
+        allowWaitingList: course.allowWaitingList || false,
+        allowSiblingDiscount: course.allowSiblingDiscount || false,
+        isFree: course.isFree ?? true,
+        priceInfo: course.priceInfo || "",
+        priceOptions:
+          course.priceOptions?.map((opt) => ({
+            id: opt.id,
+            price: opt.price,
+            label: opt.label,
+            description: opt.description || "",
+            maxParticipants: opt.maxParticipants || null,
+          })) || [],
+        prerequisites: course.prerequisites || "",
+        whatToBring: course.whatToBring || "",
+        imageId: course.imageId || null,
+        customFields:
+          course.customFields?.map((cf) => ({
+            id: cf.id,
+            fieldName: cf.fieldName,
+            fieldType: cf.fieldType,
+            options:
+              typeof cf.options === "string"
+                ? cf.options
+                : JSON.stringify(cf.options ?? ""),
+            isRequired: cf.isRequired,
+            helpText: cf.helpText || "",
+            sortOrder: cf.sortOrder,
+          })) || [],
+        status: course.status || ContentStatus.DRAFT,
+      };
+    }
+  }, [course, isInitialized]);
+
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -165,97 +360,97 @@ export default function EditCoursePage() {
   const isHigherRole = profile && HIGHER_ROLES.includes(profile.role);
   const userBezirkId = profile?.bezirkId ?? null;
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (course && !isInitialized) {
-      setTitle(course.title);
-      setMotto(course.motto || "");
-      setDescription(course.description);
+      startTransition(() => {
+        setTitle(course.title);
+        setMotto(course.motto || "");
+        setDescription(course.description);
 
-      const start = new Date(course.startDate);
-      setStartDate(start.toISOString().split("T")[0] || "");
-      const end = new Date(course.endDate);
-      setEndDate(end.toISOString().split("T")[0] || "");
+        const start = new Date(course.startDate);
+        setStartDate(start.toISOString().split("T")[0] || "");
+        const end = new Date(course.endDate);
+        setEndDate(end.toISOString().split("T")[0] || "");
 
-      setCourseType(course.courseType);
-      setTargetAudience(course.targetAudience || "");
-      setBezirkId(course.bezirkId || "");
-      setStatus(course.status);
+        setCourseType(course.courseType);
+        setTargetAudience(course.targetAudience || "");
+        setBezirkId(course.bezirkId || "");
+        setStatus(course.status);
 
-      if (course.location) {
-        setLocationId(course.location.id);
-        setLocationSearch(
-          `${course.location.name ? course.location.name + ", " : ""}${course.location.city}`,
-        );
-      }
+        if (course.location) {
+          setLocationId(course.location.id);
+          setLocationSearch(
+            `${course.location.name ? course.location.name + ", " : ""}${course.location.city}`,
+          );
+        }
 
-      setRegistrationOpen(course.registrationOpen);
-      if (course.registrationOpensAt) {
-        const opensAt = new Date(course.registrationOpensAt);
-        const year = opensAt.getFullYear();
-        const month = String(opensAt.getMonth() + 1).padStart(2, "0");
-        const day = String(opensAt.getDate()).padStart(2, "0");
-        const hours = String(opensAt.getHours()).padStart(2, "0");
-        const minutes = String(opensAt.getMinutes()).padStart(2, "0");
-        setRegistrationOpensAt(`${year}-${month}-${day}T${hours}:${minutes}`);
-      }
-      if (course.registrationDeadline) {
-        const deadline = new Date(course.registrationDeadline);
-        setRegistrationDeadline(deadline.toISOString().split("T")[0] || "");
-      }
-      setMaxParticipants(course.maxParticipants?.toString() || "");
-      setAllowWaitingList(course.allowWaitingList);
-      setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
+        setRegistrationOpen(course.registrationOpen);
+        if (course.registrationOpensAt) {
+          const opensAt = new Date(course.registrationOpensAt);
+          const year = opensAt.getFullYear();
+          const month = String(opensAt.getMonth() + 1).padStart(2, "0");
+          const day = String(opensAt.getDate()).padStart(2, "0");
+          const hours = String(opensAt.getHours()).padStart(2, "0");
+          const minutes = String(opensAt.getMinutes()).padStart(2, "0");
+          setRegistrationOpensAt(`${year}-${month}-${day}T${hours}:${minutes}`);
+        }
+        if (course.registrationDeadline) {
+          const deadline = new Date(course.registrationDeadline);
+          setRegistrationDeadline(deadline.toISOString().split("T")[0] || "");
+        }
+        setMaxParticipants(course.maxParticipants?.toString() || "");
+        setAllowWaitingList(course.allowWaitingList);
+        setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
 
-      setIsFree(course.isFree);
-      setPriceInfo(course.priceInfo || "");
-      if (course.priceOptions && course.priceOptions.length > 0) {
-        const options = course.priceOptions.map((opt) => ({
-          id: opt.id,
-          price: opt.price,
-          label: opt.label,
-          description: opt.description || "",
-          maxParticipants: opt.maxParticipants,
-        }));
-        setPriceOptions(options);
-      }
+        setIsFree(course.isFree);
+        setPriceInfo(course.priceInfo || "");
+        if (course.priceOptions && course.priceOptions.length > 0) {
+          const options = course.priceOptions.map((opt) => ({
+            id: opt.id,
+            price: opt.price,
+            label: opt.label,
+            description: opt.description || "",
+            maxParticipants: opt.maxParticipants,
+          }));
+          setPriceOptions(options);
+        }
 
-      if (course.image) {
-        setImageId(course.image.id);
-        setImageUrl(course.image.url);
-      }
+        if (course.image) {
+          setImageId(course.image.id);
+          setImageUrl(course.image.url);
+        }
 
-      if (course.customFields && course.customFields.length > 0) {
-        const fields: CustomField[] = course.customFields.map((cf) => ({
-          id: cf.id,
-          fieldName: cf.fieldName,
-          fieldType: cf.fieldType,
-          options:
-            typeof cf.options === "string"
-              ? cf.options
-              : cf.options
-                ? JSON.stringify(cf.options)
-                : "",
-          isRequired: cf.isRequired,
-          helpText: cf.helpText || "",
-          sortOrder: cf.sortOrder,
-        }));
-        setCustomFields(fields);
-        setOriginalCustomFields(fields);
-      }
+        if (course.customFields && course.customFields.length > 0) {
+          const fields: CustomField[] = course.customFields.map((cf) => ({
+            id: cf.id,
+            fieldName: cf.fieldName,
+            fieldType: cf.fieldType,
+            options:
+              typeof cf.options === "string"
+                ? cf.options
+                : cf.options
+                  ? JSON.stringify(cf.options)
+                  : "",
+            isRequired: cf.isRequired,
+            helpText: cf.helpText || "",
+            sortOrder: cf.sortOrder,
+          }));
+          setCustomFields(fields);
+          setOriginalCustomFields(fields);
+        }
 
-      setPrerequisites(course.prerequisites || "");
-      setWhatToBring(course.whatToBring || "");
-
-      setIsInitialized(true);
+        setPrerequisites(course.prerequisites || "");
+        setWhatToBring(course.whatToBring || "");
+        setIsInitialized(true);
+      });
     }
   }, [course, isInitialized]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const utils = api.useUtils();
 
   const updateCourseMutation = api.courses.update.useMutation({
     onSuccess: async () => {
+      clear();
       await utils.courses.getById.invalidate({ id: courseId });
       toast.success("Kurs erfolgreich aktualisiert");
       router.push(`/dashboard/courses/${courseId}`);
@@ -1698,6 +1893,8 @@ export default function EditCoursePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/courses/${courseId}`}
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen

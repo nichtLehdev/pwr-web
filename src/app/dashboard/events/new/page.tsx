@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,6 +17,8 @@ import {
 import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -105,6 +107,73 @@ export default function NewEventPage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasRestoredRef = useRef(false);
+
+  const formData = {
+    title,
+    motto,
+    description,
+    eventDate,
+    eventTime,
+    category,
+    bezirkId,
+    districtName,
+    locationId,
+    performingEnsembleType,
+    ensembleId,
+    auswahlChorId,
+    performingEnsembleName,
+    leitung,
+    openToParticipants,
+    participationInfo,
+    isFree,
+    priceInfo,
+    priceOptions,
+    coverImageId,
+    downloadIds,
+    submitAsDraft,
+    submitAsApproved,
+  };
+
+  const { restore, clear } = useAutosave("event-new", formData);
+  const hasUnsavedChanges = Boolean(
+    title.trim() || description.trim() || eventDate,
+  );
+  useBeforeUnload(hasUnsavedChanges && !isSubmitting);
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setMotto(saved.motto || "");
+          setDescription(saved.description || "");
+          setEventDate(saved.eventDate || "");
+          setEventTime(saved.eventTime || "18:00");
+          setCategory(saved.category || "KONZERT");
+          setBezirkId(saved.bezirkId || "");
+          setDistrictName(saved.districtName || "");
+          setLocationId(saved.locationId || "");
+          setPerformingEnsembleType(saved.performingEnsembleType || null);
+          setEnsembleId(saved.ensembleId || "");
+          setAuswahlChorId(saved.auswahlChorId || "");
+          setPerformingEnsembleName(saved.performingEnsembleName || "");
+          setLeitung(saved.leitung || "");
+          setOpenToParticipants(saved.openToParticipants || false);
+          setParticipationInfo(saved.participationInfo || "");
+          setIsFree(saved.isFree ?? true);
+          setPriceInfo(saved.priceInfo || "");
+          setPriceOptions(saved.priceOptions || []);
+          setCoverImageId(saved.coverImageId || null);
+          setDownloadIds(saved.downloadIds || []);
+          setSubmitAsDraft(saved.submitAsDraft || false);
+          setSubmitAsApproved(saved.submitAsApproved || false);
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, sessionLoading, profileLoading]);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -132,6 +201,7 @@ export default function NewEventPage() {
 
   const createEventMutation = api.events.create.useMutation({
     onSuccess: (event) => {
+      clear();
       toast.success("Termin erfolgreich erstellt");
       router.push(`/dashboard/events/${event.id}`);
     },
@@ -1326,6 +1396,8 @@ export default function NewEventPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/events"
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen

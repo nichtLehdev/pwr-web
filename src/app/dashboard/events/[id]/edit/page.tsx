@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,6 +17,8 @@ import {
 import { Trash2, AlertTriangle, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -128,6 +130,180 @@ export default function EditEventPage() {
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasRestoredRef = useRef(false);
+  const originalDataRef = useRef<{
+    title: string;
+    motto: string;
+    description: string;
+    eventDate: string;
+    eventTime: string;
+    category: EventCategory;
+    bezirkId: string;
+    districtName: string;
+    cancelled: boolean;
+    locationId: string;
+    performingEnsembleType: string | null;
+    ensembleId: string;
+    auswahlChorId: string;
+    performingEnsembleName: string;
+    leitung: string;
+    openToParticipants: boolean;
+    participationInfo: string;
+    isFree: boolean;
+    priceInfo: string;
+    priceOptions: Array<{
+      id: string;
+      price: number;
+      label: string;
+      description: string;
+    }>;
+    coverImageId: string | null;
+    downloadIds: string[];
+    status: ContentStatus;
+  } | null>(null);
+
+  const formData = useMemo(
+    () => ({
+      title,
+      motto,
+      description,
+      eventDate,
+      eventTime,
+      category,
+      bezirkId,
+      districtName,
+      cancelled,
+      locationId,
+      performingEnsembleType,
+      ensembleId,
+      auswahlChorId,
+      performingEnsembleName,
+      leitung,
+      openToParticipants,
+      participationInfo,
+      isFree,
+      priceInfo,
+      priceOptions,
+      coverImageId,
+      downloadIds,
+      status,
+    }),
+    [
+      title,
+      motto,
+      description,
+      eventDate,
+      eventTime,
+      category,
+      bezirkId,
+      districtName,
+      cancelled,
+      locationId,
+      performingEnsembleType,
+      ensembleId,
+      auswahlChorId,
+      performingEnsembleName,
+      leitung,
+      openToParticipants,
+      participationInfo,
+      isFree,
+      priceInfo,
+      priceOptions,
+      coverImageId,
+      downloadIds,
+      status,
+    ],
+  );
+
+  const { restore, clear } = useAutosave(`event-${eventId}-edit`, formData);
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    const hasChanges = originalDataRef.current
+      ? JSON.stringify(formData) !== JSON.stringify(originalDataRef.current)
+      : Boolean(title.trim() || description.trim() || eventDate);
+    startTransition(() => {
+      setHasUnsavedChanges(hasChanges);
+    });
+  }, [formData, title, description, eventDate]);
+
+  useBeforeUnload(hasUnsavedChanges && !isSubmitting);
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !eventLoading && !event) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setMotto(saved.motto || "");
+          setDescription(saved.description || "");
+          setEventDate(saved.eventDate || "");
+          setEventTime(saved.eventTime || "18:00");
+          setCategory(saved.category || "KONZERT");
+          setBezirkId(saved.bezirkId || "");
+          setDistrictName(saved.districtName || "");
+          setCancelled(saved.cancelled || false);
+          setLocationId(saved.locationId || "");
+          setPerformingEnsembleType(saved.performingEnsembleType || null);
+          setEnsembleId(saved.ensembleId || "");
+          setAuswahlChorId(saved.auswahlChorId || "");
+          setPerformingEnsembleName(saved.performingEnsembleName || "");
+          setLeitung(saved.leitung || "");
+          setOpenToParticipants(saved.openToParticipants || false);
+          setParticipationInfo(saved.participationInfo || "");
+          setIsFree(saved.isFree ?? true);
+          setPriceInfo(saved.priceInfo || "");
+          setPriceOptions(saved.priceOptions || []);
+          setCoverImageId(saved.coverImageId || null);
+          setDownloadIds(saved.downloadIds || []);
+          setStatus(saved.status || "DRAFT");
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, eventLoading, event]);
+
+  useEffect(() => {
+    if (event && isInitialized && !originalDataRef.current) {
+      const date = new Date(event.eventDate);
+      originalDataRef.current = {
+        title: event.title || "",
+        motto: event.motto || "",
+        description: event.description || "",
+        eventDate: date.toISOString().split("T")[0] || "",
+        eventTime: date.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }),
+        category: event.category || "KONZERT",
+        bezirkId: event.bezirkId || "",
+        districtName: event.districtName || "",
+        cancelled: event.cancelled || false,
+        locationId: event.locationId || "",
+        performingEnsembleType: event.performingEnsembleType || null,
+        ensembleId: event.ensembleId || "",
+        auswahlChorId: event.auswahlChorId || "",
+        performingEnsembleName: event.performingEnsembleName || "",
+        leitung: event.leitung || "",
+        openToParticipants: event.openToParticipants || false,
+        participationInfo: event.participationInfo || "",
+        isFree: event.isFree ?? true,
+        priceInfo: event.priceInfo || "",
+        priceOptions:
+          event.priceOptions?.map((opt) => ({
+            id: opt.id,
+            price: opt.price,
+            label: opt.label,
+            description: opt.description || "",
+          })) || [],
+        coverImageId: event.coverImageId || null,
+        downloadIds: event.downloads?.map((d) => d.id) || [],
+        status: event.status || "DRAFT",
+      };
+    }
+  }, [event, isInitialized]);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -143,90 +319,94 @@ export default function EditEventPage() {
     { enabled: isHigherRole },
   );
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (event && !isInitialized) {
-      setTitle(event.title);
-      setMotto(event.motto || "");
-      setDescription(event.description || "");
-      setCancelled(event.cancelled);
-      setCategory(event.category);
-      setBezirkId(event.bezirkId || "");
-      setDistrictName(event.districtName || "");
-      setStatus(event.status);
+      startTransition(() => {
+        setTitle(event.title);
+        setMotto(event.motto || "");
+        setDescription(event.description || "");
+        setCancelled(event.cancelled);
+        setCategory(event.category);
+        setBezirkId(event.bezirkId || "");
+        setDistrictName(event.districtName || "");
+        setStatus(event.status);
 
-      const date = new Date(event.eventDate);
-      setEventDate(date.toISOString().split("T")[0] || "");
-      setEventTime(
-        date.toLocaleTimeString("de-DE", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }),
-      );
-
-      if (event.location) {
-        setLocationId(event.location.id);
-        setLocationSearch(
-          `${event.location.name ? event.location.name + ", " : ""}${event.location.city}`,
+        const date = new Date(event.eventDate);
+        setEventDate(date.toISOString().split("T")[0] || "");
+        setEventTime(
+          date.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
         );
-      }
 
-      setPerformingEnsembleType(event.performingEnsembleType);
-      if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
-        setEnsembleId(event.ensemble.id);
-        setEnsembleSearch(event.ensemble.name);
-      }
-      if (event.performingEnsembleType === "AUSWAHLCHOR" && event.auswahlChor) {
-        setAuswahlChorId(event.auswahlChor.id);
-        setAuswahlChorSearch(event.auswahlChor.name);
-      }
-      if (event.performingEnsembleType === "CUSTOM") {
-        setPerformingEnsembleName(event.performingEnsembleName || "");
-      }
-      setLeitung(event.leitung || "");
+        if (event.location) {
+          setLocationId(event.location.id);
+          setLocationSearch(
+            `${event.location.name ? event.location.name + ", " : ""}${event.location.city}`,
+          );
+        }
 
-      setOpenToParticipants(event.openToParticipants);
-      setParticipationInfo(event.participationInfo || "");
+        setPerformingEnsembleType(event.performingEnsembleType);
+        if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
+          setEnsembleId(event.ensemble.id);
+          setEnsembleSearch(event.ensemble.name);
+        }
+        if (
+          event.performingEnsembleType === "AUSWAHLCHOR" &&
+          event.auswahlChor
+        ) {
+          setAuswahlChorId(event.auswahlChor.id);
+          setAuswahlChorSearch(event.auswahlChor.name);
+        }
+        if (event.performingEnsembleType === "CUSTOM") {
+          setPerformingEnsembleName(event.performingEnsembleName || "");
+        }
+        setLeitung(event.leitung || "");
 
-      setIsFree(event.isFree);
-      setPriceInfo(event.priceInfo || "");
-      if (event.priceOptions && event.priceOptions.length > 0) {
-        setPriceOptions(
-          event.priceOptions.map((opt) => ({
-            id: opt.id,
-            price: opt.price,
-            label: opt.label,
-            description: opt.description || "",
-          })),
-        );
-      }
+        setOpenToParticipants(event.openToParticipants);
+        setParticipationInfo(event.participationInfo || "");
 
-      if (event.coverImage) {
-        setCoverImageId(event.coverImage.id);
-        setCoverImageUrl(event.coverImage.url);
-      }
+        setIsFree(event.isFree);
+        setPriceInfo(event.priceInfo || "");
+        if (event.priceOptions && event.priceOptions.length > 0) {
+          setPriceOptions(
+            event.priceOptions.map((opt) => ({
+              id: opt.id,
+              price: opt.price,
+              label: opt.label,
+              description: opt.description || "",
+            })),
+          );
+        }
 
-      if (event.downloads && event.downloads.length > 0) {
-        const downloadIdsList = event.downloads.map((ed) => ed.download.id);
-        const downloadsList = event.downloads.map((ed) => ({
-          id: ed.download.id,
-          title: ed.download.title,
-          fileUrl: ed.download.fileUrl,
-        }));
-        setDownloadIds(downloadIdsList);
-        setSelectedDownloads(downloadsList);
-      }
+        if (event.coverImage) {
+          setCoverImageId(event.coverImage.id);
+          setCoverImageUrl(event.coverImage.url);
+        }
 
-      setIsInitialized(true);
+        if (event.downloads && event.downloads.length > 0) {
+          const downloadIdsList = event.downloads.map((ed) => ed.download.id);
+          const downloadsList = event.downloads.map((ed) => ({
+            id: ed.download.id,
+            title: ed.download.title,
+            fileUrl: ed.download.fileUrl,
+          }));
+          setDownloadIds(downloadIdsList);
+          setSelectedDownloads(downloadsList);
+        }
+
+        setIsInitialized(true);
+      });
     }
   }, [event, isInitialized]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   const utils = api.useUtils();
 
   const updateEventMutation = api.events.update.useMutation({
     onSuccess: async () => {
+      clear();
       await utils.events.getById.invalidate({ id: eventId });
       toast.success("Termin erfolgreich aktualisiert");
       router.push(`/dashboard/events/${eventId}`);
@@ -1409,6 +1589,8 @@ export default function EditEventPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/events/${eventId}`}
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen

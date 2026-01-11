@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +16,8 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, Lock, X } from "lucide-react";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 import {
   Button,
   Input,
@@ -71,6 +73,49 @@ export default function NewPostPage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasRestoredRef = useRef(false);
+
+  const formData = {
+    title,
+    excerpt,
+    content,
+    category,
+    bezirkId,
+    pinned,
+    coverImageId,
+    authorId,
+    authorName,
+    submitAsDraft,
+    submitAsApproved,
+  };
+
+  const { restore, clear } = useAutosave("post-new", formData);
+  const hasUnsavedChanges = Boolean(
+    title.trim() || excerpt.trim() || content.trim(),
+  );
+  useBeforeUnload(hasUnsavedChanges && !isSubmitting);
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setExcerpt(saved.excerpt || "");
+          setContent(saved.content || "");
+          setCategory(saved.category || "MAGAZIN");
+          setBezirkId(saved.bezirkId || "");
+          setPinned(saved.pinned || false);
+          setCoverImageId(saved.coverImageId || null);
+          setAuthorId(saved.authorId || null);
+          setAuthorName(saved.authorName || "");
+          setSubmitAsDraft(saved.submitAsDraft || false);
+          setSubmitAsApproved(saved.submitAsApproved || false);
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, sessionLoading, profileLoading]);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
   const { data: users } = api.users.list.useQuery(
@@ -106,6 +151,7 @@ export default function NewPostPage() {
 
   const createPostMutation = api.posts.create.useMutation({
     onSuccess: (post) => {
+      clear();
       toast.success("Beitrag erfolgreich erstellt");
       router.push(`/dashboard/posts/${post.id}`);
     },
@@ -667,6 +713,8 @@ export default function NewPostPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/posts"
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen
