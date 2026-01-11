@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,6 +16,8 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, AlertTriangle, X } from "lucide-react";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -95,6 +97,78 @@ export default function EditPostPage() {
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasRestoredRef = useRef(false);
+  const originalDataRef = useRef<{
+    title: string;
+    excerpt: string;
+    content: string;
+    category: PostCategory;
+    bezirkId: string;
+    pinned: boolean;
+    coverImageId: string | null;
+    authorId: string | null;
+    authorName: string;
+    status: ContentStatus;
+  } | null>(null);
+
+  const formData = {
+    title,
+    excerpt,
+    content,
+    category,
+    bezirkId,
+    pinned,
+    coverImageId,
+    authorId,
+    authorName,
+    status,
+  };
+
+  const { restore, clear } = useAutosave(`post-${postId}-edit`, formData);
+
+  const hasUnsavedChanges = originalDataRef.current
+    ? JSON.stringify(formData) !== JSON.stringify(originalDataRef.current)
+    : Boolean(title.trim() || excerpt.trim() || content.trim());
+
+  useBeforeUnload(hasUnsavedChanges && !isSubmitting);
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !postLoading && !post) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setExcerpt(saved.excerpt || "");
+          setContent(saved.content || "");
+          setCategory(saved.category || "MAGAZIN");
+          setBezirkId(saved.bezirkId || "");
+          setPinned(saved.pinned || false);
+          setCoverImageId(saved.coverImageId || null);
+          setAuthorId(saved.authorId || null);
+          setAuthorName(saved.authorName || "");
+          setStatus(saved.status || "DRAFT");
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, postLoading, post]);
+
+  useEffect(() => {
+    if (post && initializedFromPost.current && !originalDataRef.current) {
+      originalDataRef.current = {
+        title: post.title || "",
+        excerpt: post.excerpt || "",
+        content: post.content || "",
+        category: post.category || "MAGAZIN",
+        bezirkId: post.bezirkId || "",
+        pinned: post.pinned || false,
+        coverImageId: post.coverImageId || null,
+        authorId: post.authorId || null,
+        authorName: post.authorName || "",
+        status: post.status || "DRAFT",
+      };
+    }
+  }, [post]);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
   const { data: users } = api.users.list.useQuery(
@@ -156,6 +230,7 @@ export default function EditPostPage() {
 
   const updatePostMutation = api.posts.update.useMutation({
     onSuccess: async () => {
+      clear();
       await utils.posts.getById.invalidate({ id: postId });
       toast.success("Änderungen gespeichert");
       router.push(`/dashboard/posts/${postId}`);
@@ -691,6 +766,8 @@ export default function EditPostPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/posts/${postId}`}
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen

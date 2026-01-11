@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -23,6 +23,8 @@ import {
   ImageIcon,
 } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { useAutosave } from "@/lib/useAutosave";
+import { useBeforeUnload } from "@/lib/useBeforeUnload";
 import {
   Button,
   Input,
@@ -146,6 +148,75 @@ export default function NewCoursePage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasRestoredRef = useRef(false);
+
+  const formData = {
+    title,
+    motto,
+    description,
+    courseType,
+    targetAudience,
+    startDate,
+    endDate,
+    registrationDeadline,
+    registrationOpensAt,
+    locationId,
+    bezirkId,
+    maxParticipants,
+    registrationOpen,
+    allowWaitingList,
+    allowSiblingDiscount,
+    isFree,
+    priceInfo,
+    priceOptions,
+    prerequisites,
+    whatToBring,
+    imageId,
+    customFields,
+    submitAsDraft,
+    submitAsApproved,
+  };
+
+  const { restore, clear } = useAutosave("course-new", formData);
+  const hasUnsavedChanges = Boolean(
+    title.trim() || description.trim() || startDate,
+  );
+  useBeforeUnload(hasUnsavedChanges && !isSubmitting);
+
+  useEffect(() => {
+    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
+      const saved = restore();
+      if (saved) {
+        startTransition(() => {
+          setTitle(saved.title || "");
+          setMotto(saved.motto || "");
+          setDescription(saved.description || "");
+          setCourseType(saved.courseType || "LEHRGANG");
+          setTargetAudience(saved.targetAudience || "ALLE");
+          setStartDate(saved.startDate || "");
+          setEndDate(saved.endDate || "");
+          setRegistrationDeadline(saved.registrationDeadline || "");
+          setRegistrationOpensAt(saved.registrationOpensAt || "");
+          setLocationId(saved.locationId || "");
+          setBezirkId(saved.bezirkId || "");
+          setMaxParticipants(saved.maxParticipants || 20);
+          setRegistrationOpen(saved.registrationOpen || false);
+          setAllowWaitingList(saved.allowWaitingList || false);
+          setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
+          setIsFree(saved.isFree ?? false);
+          setPriceInfo(saved.priceInfo || "");
+          setPriceOptions(saved.priceOptions || []);
+          setPrerequisites(saved.prerequisites || "");
+          setWhatToBring(saved.whatToBring || "");
+          setImageId(saved.imageId || null);
+          setCustomFields(saved.customFields || []);
+          setSubmitAsDraft(saved.submitAsDraft || false);
+          setSubmitAsApproved(saved.submitAsApproved || false);
+        });
+      }
+      hasRestoredRef.current = true;
+    }
+  }, [restore, sessionLoading, profileLoading]);
 
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
@@ -185,6 +256,7 @@ export default function NewCoursePage() {
 
   const createCourseMutation = api.courses.create.useMutation({
     onSuccess: (course) => {
+      clear();
       toast.success("Kurs erfolgreich erstellt");
       router.push(`/dashboard/courses/${course.id}`);
     },
@@ -1464,6 +1536,8 @@ export default function NewCoursePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/courses"
+              data-skip-warning
+              onClick={() => clear()}
               className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               Abbrechen
