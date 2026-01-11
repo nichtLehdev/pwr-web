@@ -6,7 +6,7 @@
 
 FROM postgres:16-alpine
 
-# Install cron and ensure scripts are executable
+# Install cron for scheduled backups
 RUN apk add --no-cache dcron
 
 # Create scripts directory
