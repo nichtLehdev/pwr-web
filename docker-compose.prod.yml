@@ -88,6 +88,7 @@ services:
     image: ghcr.io/nichtlehdev/pwr-backup:latest
     container_name: posaunenwerk-backup
     restart: unless-stopped
+    init: true
     depends_on:
       posaunenwerk-db:
         condition: service_healthy
