@@ -10,7 +10,6 @@ import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
-  TargetAudience,
   CustomFieldType,
   UserRole,
 } from "~/generated/prisma/enums";
@@ -43,14 +42,6 @@ const courseTypeLabels: Record<CourseType, string> = {
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
   OTHER: "Sonstiges",
-};
-
-const targetAudienceLabels: Record<TargetAudience, string> = {
-  ANFAENGER: "Anfänger",
-  FORTGESCHRITTENE: "Fortgeschrittene",
-  DIRIGENTEN: "Dirigenten",
-  JUGEND: "Jugend",
-  ALLE: "Alle",
 };
 
 const customFieldTypeLabels: Record<CustomFieldType, string> = {
@@ -104,7 +95,6 @@ export default function NewCoursePage() {
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [courseType, setCourseType] = useState<CourseType>("LEHRGANG");
-  const [targetAudience, setTargetAudience] = useState<TargetAudience>("ALLE");
 
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -155,7 +145,6 @@ export default function NewCoursePage() {
     motto,
     description,
     courseType,
-    targetAudience,
     startDate,
     endDate,
     registrationDeadline,
@@ -192,7 +181,6 @@ export default function NewCoursePage() {
           setMotto(saved.motto || "");
           setDescription(saved.description || "");
           setCourseType(saved.courseType || "LEHRGANG");
-          setTargetAudience(saved.targetAudience || "ALLE");
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
@@ -485,7 +473,6 @@ export default function NewCoursePage() {
       locationId: locationId || undefined,
       bezirkId: bezirkId || undefined,
       courseType,
-      targetAudience,
       maxParticipants,
       registrationOpen,
       allowWaitingList,
@@ -618,27 +605,6 @@ export default function NewCoursePage() {
                         ),
                       )}
                     </Select>
-                  </div>
-
-                  <div>
-                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                      Zielgruppe
-                    </label>
-                    <select
-                      value={targetAudience}
-                      onChange={(e) =>
-                        setTargetAudience(e.target.value as TargetAudience)
-                      }
-                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                    >
-                      {Object.entries(targetAudienceLabels).map(
-                        ([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ),
-                      )}
-                    </select>
                   </div>
                 </div>
               </div>

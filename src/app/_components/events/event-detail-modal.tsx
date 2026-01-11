@@ -254,17 +254,6 @@ export default function EventDetailModal({
                 </div>
               )}
 
-              {event.targetAudience && (
-                <div>
-                  <h3 className="text-dark dark:text-dark-text mb-2 font-semibold">
-                    Zielgruppe
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {event.targetAudience}
-                  </p>
-                </div>
-              )}
-
               {event.maxParticipants && (
                 <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
