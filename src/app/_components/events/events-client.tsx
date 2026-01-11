@@ -47,7 +47,6 @@ const COURSE_TYPE_MAP: Record<string, string> = {
   Andere: "ANDERE",
 };
 
-
 interface EventsClientProps {
   initialEvents: EventWithRelations[];
   initialCourses: CourseWithRelations[];
