@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { useTheme } from "./theme-provider";
@@ -11,13 +11,14 @@ import { useTheme } from "./theme-provider";
  */
 export function ThemeSync() {
   const { data: session } = useSession();
-  const { theme: currentTheme, setTheme } = useTheme();
+  const { setTheme } = useTheme();
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
+  const hasSyncedRef = useRef(false);
 
   useEffect(() => {
-    if (profile?.preferences) {
+    if (!hasSyncedRef.current && profile?.preferences) {
       try {
         const parsed =
           typeof profile.preferences === "string"
@@ -28,14 +29,14 @@ export function ThemeSync() {
           ["light", "dark", "system"].includes(parsed.theme)
         ) {
           const userTheme = parsed.theme as "light" | "dark" | "system";
-          if (userTheme !== currentTheme) {
-            setTheme(userTheme);
-            localStorage.setItem("theme", userTheme);
-          }
+          setTheme(userTheme);
+          hasSyncedRef.current = true;
         }
       } catch {}
+    } else if (profile && !hasSyncedRef.current) {
+      hasSyncedRef.current = true;
     }
-  }, [profile, currentTheme, setTheme]);
+  }, [profile, setTheme]);
 
   return null;
 }

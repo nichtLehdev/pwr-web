@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, changePassword } from "@/lib/auth";
@@ -124,6 +124,7 @@ export default function SettingsPage() {
   });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const hasInitializedRef = useRef(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -160,7 +161,7 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !hasInitializedRef.current) {
       setFormData({
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
@@ -186,7 +187,7 @@ export default function SettingsPage() {
               : profile.preferences;
           const newPreferences = { ...defaultPreferences, ...parsed };
           setPreferences(newPreferences);
-          if (newPreferences.theme && newPreferences.theme !== currentTheme) {
+          if (newPreferences.theme) {
             setCurrentTheme(newPreferences.theme);
           }
         } catch {
@@ -195,8 +196,27 @@ export default function SettingsPage() {
       } else {
         setPreferences({ ...defaultPreferences, theme: currentTheme });
       }
+      hasInitializedRef.current = true;
+    } else if (profile && hasInitializedRef.current) {
+      setFormData({
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        displayName: profile.displayName || "",
+        username: profile.username || "",
+        email: profile.email || "",
+        phone: profile.phone || "",
+        street: profile.street || "",
+        zipCode: profile.zipCode || "",
+        city: profile.city || "",
+        bio: profile.bio || "",
+        birthDate: profile.birthDate
+          ? new Date(profile.birthDate).toISOString().split("T")[0]!
+          : "",
+        profileImageId: profile.profileImageId || null,
+      });
     }
-  }, [profile, currentTheme, setCurrentTheme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, setCurrentTheme]);
 
   useEffect(() => {
     if (!sessionLoading && !session?.user) {

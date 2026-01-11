@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useTheme } from "./theme-provider";
+import { useSession } from "@/lib/auth";
+import { api } from "@/trpc/react";
 
 type ThemeOption = {
   value: "light" | "dark" | "system";
@@ -73,6 +75,17 @@ export default function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
+  const utils = api.useUtils();
+  const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
+
+  const updatePreferences = api.users.updateMyPreferences.useMutation({
+    onSuccess: () => {
+      void utils.users.getMyProfile.invalidate();
+    },
+  });
 
   const currentIcon =
     themeOptions.find((opt) => opt.value === resolvedTheme)?.icon ||
@@ -100,6 +113,28 @@ export default function ThemeToggle() {
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);
     setIsOpen(false);
+
+    if (session?.user && profile) {
+      try {
+        const currentPreferences =
+          typeof profile.preferences === "string"
+            ? JSON.parse(profile.preferences)
+            : profile.preferences || {};
+
+        const updatedPreferences = {
+          ...currentPreferences,
+          theme: newTheme,
+        };
+
+        updatePreferences.mutate({
+          preferences: JSON.stringify(updatedPreferences),
+        });
+      } catch {
+        updatePreferences.mutate({
+          preferences: JSON.stringify({ theme: newTheme }),
+        });
+      }
+    }
   };
 
   return (
