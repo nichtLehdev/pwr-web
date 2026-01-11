@@ -43,13 +43,31 @@ docker compose -f docker-compose.prod.yml down
 
 ## Database Backups
 
-```bash
-# Backup
-docker compose exec db pg_dump -U posaunenwerk posaunenwerk > backup.sql
+The application includes an automated backup system. See [Backups Documentation](./backups.md) for complete details.
 
-# Restore
-docker compose exec -T db psql -U posaunenwerk posaunenwerk < backup.sql
+### Quick Reference
+
+**Automated Backups:**
+- Backups run automatically on a schedule (default: daily at 2 AM)
+- Configure via `BACKUP_SCHEDULE` and `BACKUP_RETENTION_DAYS` environment variables
+- Backups are stored in the `posaunenwerk_backup_data` Docker volume
+
+**Manual Backup:**
+```bash
+docker compose exec db-backup /scripts/backup-db.sh /backups
 ```
+
+**List Backups:**
+```bash
+docker compose exec db-backup ls -lh /backups
+```
+
+**Restore from Backup:**
+```bash
+docker compose exec db-backup /scripts/restore-db.sh /backups/posaunenwerk_backup_YYYYMMDD_HHMMSS.sql.gz
+```
+
+For detailed backup and restore procedures, see [Backups Documentation](./backups.md).
 
 ## Reverse Proxy (nginx example)
 

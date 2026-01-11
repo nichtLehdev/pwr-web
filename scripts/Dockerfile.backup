@@ -1,0 +1,27 @@
+# =============================================================================
+# Backup Service Dockerfile
+# =============================================================================
+# Lightweight image for running scheduled database backups
+# =============================================================================
+
+FROM postgres:16-alpine
+
+# Install cron and ensure scripts are executable
+RUN apk add --no-cache dcron
+
+# Create scripts directory
+WORKDIR /scripts
+
+# Copy backup scripts
+COPY scripts/backup-db.sh /scripts/backup-db.sh
+COPY scripts/restore-db.sh /scripts/restore-db.sh
+COPY scripts/backup-scheduler.sh /scripts/backup-scheduler.sh
+
+# Make scripts executable
+RUN chmod +x /scripts/*.sh
+
+# Create log directory
+RUN mkdir -p /var/log
+
+# Set entrypoint
+ENTRYPOINT ["/scripts/backup-scheduler.sh"]
