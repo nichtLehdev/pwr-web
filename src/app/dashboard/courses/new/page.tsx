@@ -458,6 +458,8 @@ export default function NewCoursePage() {
         }),
       );
 
+    clear();
+
     createCourseMutation.mutate({
       title: title.trim(),
       motto: motto.trim() || undefined,
