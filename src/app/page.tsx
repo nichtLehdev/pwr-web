@@ -8,9 +8,13 @@ import PostCard from "./_components/posts/post-card";
 import { api } from "@/trpc/react";
 import LoadingSpinner from "./_components/general/loading-spinner";
 import { Building2, ChevronRight } from "lucide-react";
+import HeroCarousel from "./_components/homepage/hero-carousel";
 
 export default function Home() {
   const startDate = useMemo(() => new Date(), []);
+
+  const { data: carouselItems, isLoading: isLoadingCarousel } =
+    api.homepage.getCarouselItems.useQuery();
 
   const { data: upcomingEvents, isLoading: isLoadingEvents } =
     api.events.getAll.useQuery({
@@ -24,35 +28,53 @@ export default function Home() {
       limit: 3,
     });
 
+  const defaultTitle = "Posaunenwerk Rheinland";
+  const defaultSubtitle = "Gemeinsam Musik machen, Glauben leben";
+
   return (
     <div>
-      <section className="bg-primary relative flex h-[50vh] items-center justify-center md:h-[60vh] lg:h-[70vh]">
-        {/* Gradient Overlay für bessere Lesbarkeit */}
-        <div className="absolute inset-0 bg-linear-to-b from-black/30 to-black/50" />
-
-        <div className="relative z-10 container px-4 text-center text-white">
-          <h1 className="mb-4 text-3xl font-bold md:mb-6 md:text-5xl lg:text-6xl">
-            Posaunenwerk Rheinland
-          </h1>
-          <p className="mx-auto mb-6 max-w-2xl text-lg md:mb-8 md:text-xl lg:text-2xl">
-            Gemeinsam Musik machen, Glauben leben
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
-            <Link
-              href="/mitmachen"
-              className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-3 font-semibold text-white shadow-lg"
-            >
-              Jetzt mitmachen
-            </Link>
-            <Link
-              href="/termine"
-              className="rounded-lg border-2 border-white bg-transparent px-6 py-3 font-semibold text-white shadow-lg hover:bg-white/10"
-            >
-              Termine ansehen
-            </Link>
+      {/* Hero Section - Carousel or Fallback */}
+      {isLoadingCarousel ? (
+        <section className="bg-primary relative flex h-[50vh] items-center justify-center md:h-[60vh] lg:h-[70vh]">
+          <div className="relative z-10 container px-4 text-center text-white">
+            <LoadingSpinner text="Lade..." />
           </div>
-        </div>
-      </section>
+        </section>
+      ) : carouselItems && carouselItems.length > 0 ? (
+        <HeroCarousel
+          items={carouselItems}
+          defaultTitle={defaultTitle}
+          defaultSubtitle={defaultSubtitle}
+        />
+      ) : (
+        <section className="bg-primary relative flex h-[50vh] items-center justify-center md:h-[60vh] lg:h-[70vh]">
+          {/* Gradient Overlay für bessere Lesbarkeit */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/50" />
+
+          <div className="relative z-10 container px-4 text-center text-white">
+            <h1 className="mb-4 text-3xl font-bold md:mb-6 md:text-5xl lg:text-6xl">
+              {defaultTitle}
+            </h1>
+            <p className="mx-auto mb-6 max-w-2xl text-lg md:mb-8 md:text-xl lg:text-2xl">
+              {defaultSubtitle}
+            </p>
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <Link
+                href="/mitmachen"
+                className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-3 font-semibold text-white shadow-lg"
+              >
+                Jetzt mitmachen
+              </Link>
+              <Link
+                href="/termine"
+                className="rounded-lg border-2 border-white bg-transparent px-6 py-3 font-semibold text-white shadow-lg hover:bg-white/10"
+              >
+                Termine ansehen
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
       {/* Termine Section */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
