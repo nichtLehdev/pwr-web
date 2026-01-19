@@ -607,6 +607,7 @@ export default function EventsClient({
                                 id={item.id}
                                 title={item.title}
                                 date={item.eventDate}
+                                duration={item.duration}
                                 location={item.location?.city || ""}
                                 category={item.category}
                                 district={item.bezirk?.number}
@@ -702,6 +703,7 @@ export default function EventsClient({
                                           id={item.id}
                                           title={item.title}
                                           date={item.eventDate}
+                                          duration={item.duration}
                                           location={item.location?.city || ""}
                                           category={item.category}
                                           district={item.bezirk?.number}

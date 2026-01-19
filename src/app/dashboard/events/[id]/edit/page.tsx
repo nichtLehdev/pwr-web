@@ -82,6 +82,7 @@ export default function EditEventPage() {
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventTime, setEventTime] = useState("18:00");
+  const [duration, setDuration] = useState<number | undefined>(undefined);
   const [category, setCategory] = useState<EventCategory>("KONZERT");
   const [bezirkId, setBezirkId] = useState<string>("");
   const [districtName, setDistrictName] = useState("");
@@ -340,6 +341,7 @@ export default function EditEventPage() {
             hour12: false,
           }),
         );
+        setDuration(event.duration ?? undefined);
 
         if (event.location) {
           setLocationId(event.location.id);
@@ -581,6 +583,7 @@ export default function EditEventPage() {
       motto: motto.trim() || undefined,
       description: description.trim() || undefined,
       eventDate: dateTime,
+      duration: duration ?? null,
       locationId: locationId || null,
       category,
       bezirkId: bezirkId || null,
@@ -885,7 +888,7 @@ export default function EditEventPage() {
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Datum & Uhrzeit
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Datum *
@@ -908,6 +911,24 @@ export default function EditEventPage() {
                   onChange={(e) => setEventTime(e.target.value)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
+                />
+              </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Dauer (Minuten)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="15"
+                  value={duration ?? ""}
+                  onChange={(e) =>
+                    setDuration(
+                      e.target.value ? parseInt(e.target.value, 10) : undefined,
+                    )
+                  }
+                  placeholder="z.B. 120"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>

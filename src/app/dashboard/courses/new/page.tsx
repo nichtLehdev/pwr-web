@@ -97,7 +97,9 @@ export default function NewCoursePage() {
   const [courseType, setCourseType] = useState<CourseType>("LEHRGANG");
 
   const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
   const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("17:00");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
 
@@ -464,8 +466,8 @@ export default function NewCoursePage() {
       title: title.trim(),
       motto: motto.trim() || undefined,
       description: description.trim(),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: new Date(`${startDate}T${startTime}`),
+      endDate: new Date(`${endDate}T${endTime}`),
       registrationDeadline: registrationDeadline
         ? new Date(registrationDeadline)
         : undefined,
@@ -672,7 +674,7 @@ export default function NewCoursePage() {
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Datum & Zeit
             </h2>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Startdatum *
@@ -681,6 +683,18 @@ export default function NewCoursePage() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Startzeit *
+                </label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                   required
                 />
@@ -699,6 +713,20 @@ export default function NewCoursePage() {
                   required
                 />
               </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Endzeit *
+                </label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Anmeldung öffnet ab (optional)

@@ -90,7 +90,9 @@ export default function EditCoursePage() {
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
   const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("17:00");
   const [courseType, setCourseType] = useState<CourseType>(CourseType.LEHRGANG);
   const [bezirkId, setBezirkId] = useState("");
   const [locationId, setLocationId] = useState("");
@@ -354,8 +356,22 @@ export default function EditCoursePage() {
 
         const start = new Date(course.startDate);
         setStartDate(start.toISOString().split("T")[0] || "");
+        setStartTime(
+          start.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+        );
         const end = new Date(course.endDate);
         setEndDate(end.toISOString().split("T")[0] || "");
+        setEndTime(
+          end.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+        );
 
         setCourseType(course.courseType);
         setBezirkId(course.bezirkId || "");
@@ -685,8 +701,8 @@ export default function EditCoursePage() {
       title: title.trim(),
       motto: motto.trim() || undefined,
       description: description.trim(),
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
+      startDate: new Date(`${startDate}T${startTime}`),
+      endDate: new Date(`${endDate}T${endTime}`),
       locationId: locationId || null,
       courseType,
       bezirkId: bezirkId || null,
@@ -943,7 +959,7 @@ export default function EditCoursePage() {
               Datum & Ort
             </h2>
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-4">
                 <div>
                   <label
                     htmlFor="startDate"
@@ -960,7 +976,22 @@ export default function EditCoursePage() {
                     required
                   />
                 </div>
-
+                <div>
+                  <label
+                    htmlFor="startTime"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Startzeit *
+                  </label>
+                  <input
+                    type="time"
+                    id="startTime"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
+                </div>
                 <div>
                   <label
                     htmlFor="endDate"
@@ -975,6 +1006,22 @@ export default function EditCoursePage() {
                     onChange={(e) => setEndDate(e.target.value)}
                     min={startDate || undefined}
                     title="Enddatum muss nach oder gleich dem Startdatum sein"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="endTime"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Endzeit *
+                  </label>
+                  <input
+                    type="time"
+                    id="endTime"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                     required
                   />

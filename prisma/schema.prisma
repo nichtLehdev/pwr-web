@@ -8,19 +8,19 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  username      String?   @unique
-  displayName   String?
-  firstName     String?
-  lastName      String?
-  email         String    @unique
-  emailVerified Boolean?  @default(false)
-  twoFactorEnabled Boolean? @default(false)
-  phone         String?
-  street        String?
-  zipCode       String?
-  city          String?
-  birthDate     DateTime?
+  id               String    @id @default(uuid())
+  username         String?   @unique
+  displayName      String?
+  firstName        String?
+  lastName         String?
+  email            String    @unique
+  emailVerified    Boolean?  @default(false)
+  twoFactorEnabled Boolean?  @default(false)
+  phone            String?
+  street           String?
+  zipCode          String?
+  city             String?
+  birthDate        DateTime?
 
   profileImageId String?
   profileImage   Media?  @relation("UserProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
@@ -41,7 +41,7 @@ model User {
   // Relations
   accounts                      Account[]
   sessions                      Session[]
-  twoFactor                     TwoFactor?                     @relation("UserTwoFactor")
+  twoFactor                     TwoFactor?                   @relation("UserTwoFactor")
   bezirk                        Bezirk?                      @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
   uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
   uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
@@ -282,6 +282,7 @@ model Event {
 
   // Date & Time
   eventDate DateTime
+  duration  Int?
   cancelled Boolean  @default(false)
 
   // Location - use new Location model
@@ -580,7 +581,7 @@ model Post {
 
   // Author (optional - if not set, createdBy is used as author)
   authorId   String?
-  author     User?      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  author     User?   @relation("PostAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorName String? // Custom author name if not linked to a user
 
   // Pinning

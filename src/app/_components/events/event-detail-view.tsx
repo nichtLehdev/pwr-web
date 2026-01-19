@@ -46,7 +46,9 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       profile.role === UserRole.ADMIN ||
       profile.role === UserRole.LPW);
 
-  const endDate = new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
+  const endDate = event.duration
+    ? new Date(eventDate.getTime() + event.duration * 60 * 1000)
+    : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
   const isPast = eventDate < new Date();
 
   const handleDownloadIcs = () => {
@@ -315,7 +317,17 @@ END:VCALENDAR`;
                     {eventDate.toLocaleTimeString("de-DE", {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}{" "}
+                    })}
+                    {event.duration && event.duration > 0 && (
+                      <span>
+                        {" "}
+                        ({Math.floor(event.duration / 60)}h{" "}
+                        {event.duration % 60 > 0
+                          ? `${event.duration % 60}min`
+                          : ""}
+                        )
+                      </span>
+                    )}{" "}
                     Uhr
                   </p>
                 </div>

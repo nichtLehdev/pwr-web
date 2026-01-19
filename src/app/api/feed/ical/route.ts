@@ -107,8 +107,13 @@ export async function GET(request: NextRequest) {
           const uid = generateEventUid(`event-${event.id}`, baseUrl);
           const dtstart = formatIcalDate(event.eventDate);
 
-          const endDate = new Date(event.eventDate);
-          endDate.setHours(endDate.getHours() + 2);
+          const endDate = event.duration
+            ? new Date(event.eventDate.getTime() + event.duration * 60 * 1000)
+            : (() => {
+                const defaultEnd = new Date(event.eventDate);
+                defaultEnd.setHours(defaultEnd.getHours() + 2);
+                return defaultEnd;
+              })();
           const dtend = formatIcalDate(endDate);
 
           const locationParts: string[] = [];
