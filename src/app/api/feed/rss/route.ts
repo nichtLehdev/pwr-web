@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: [{ pinned: "desc" }, { publishedAt: "desc" }],
+      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
       take: Math.min(limit, 100),
     });
 

@@ -693,7 +693,7 @@ export const searchRouter = createTRPCRouter({
           coverImage: { select: { url: true } },
         },
         take: limitPerType,
-        orderBy: { publishedAt: "desc" },
+        orderBy: { createdAt: "desc" },
       });
 
       const eventsPromise = ctx.db.event.findMany({
