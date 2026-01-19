@@ -14,6 +14,7 @@ import {
 } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, Lock, X } from "lucide-react";
 import { useAutosave } from "@/lib/useAutosave";
@@ -63,7 +64,10 @@ export default function NewPostPage() {
   const [pinned, setPinned] = useState(false);
   const [coverImageId, setCoverImageId] = useState<string | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [coverImagePositionX, setCoverImagePositionX] = useState<number | null>(null);
+  const [coverImagePositionY, setCoverImagePositionY] = useState<number | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [showImagePositionEditor, setShowImagePositionEditor] = useState(false);
   const [authorId, setAuthorId] = useState<string | null>(null);
   const [authorName, setAuthorName] = useState<string>("");
   const [authorSearch, setAuthorSearch] = useState("");
@@ -83,6 +87,8 @@ export default function NewPostPage() {
     bezirkId,
     pinned,
     coverImageId,
+    coverImagePositionX,
+    coverImagePositionY,
     authorId,
     authorName,
     submitAsDraft,
@@ -107,6 +113,8 @@ export default function NewPostPage() {
           setBezirkId(saved.bezirkId || "");
           setPinned(saved.pinned || false);
           setCoverImageId(saved.coverImageId || null);
+          setCoverImagePositionX(saved.coverImagePositionX || null);
+          setCoverImagePositionY(saved.coverImagePositionY || null);
           setAuthorId(saved.authorId || null);
           setAuthorName(saved.authorName || "");
           setSubmitAsDraft(saved.submitAsDraft || false);
@@ -226,6 +234,8 @@ export default function NewPostPage() {
       bezirkId: bezirkId || undefined,
       pinned,
       coverImageId: coverImageId || undefined,
+      coverImagePositionX: coverImagePositionX,
+      coverImagePositionY: coverImagePositionY,
       authorId: authorId || null,
       authorName: authorName.trim() || null,
       status: submitAsDraft
@@ -358,6 +368,11 @@ export default function NewPostPage() {
                       alt="Titelbild"
                       fill
                       className="object-cover"
+                      style={{
+                        objectPosition: coverImagePositionX !== null && coverImagePositionY !== null
+                          ? `${coverImagePositionX}% ${coverImagePositionY}%`
+                          : undefined,
+                      }}
                     />
                   </div>
                   <div className="mt-3 flex gap-2">
@@ -371,9 +386,19 @@ export default function NewPostPage() {
                     </Button>
                     <Button
                       type="button"
+                      onClick={() => setShowImagePositionEditor(true)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Position anpassen
+                    </Button>
+                    <Button
+                      type="button"
                       onClick={() => {
                         setCoverImageId(null);
                         setCoverImageUrl(null);
+                        setCoverImagePositionX(null);
+                        setCoverImagePositionY(null);
                       }}
                       variant="outline"
                       size="sm"
@@ -740,9 +765,25 @@ export default function NewPostPage() {
           onSelect={(url, _alt, mediaId) => {
             setCoverImageUrl(url);
             setCoverImageId(mediaId ?? null);
+            setCoverImagePositionX(null);
+            setCoverImagePositionY(null);
             setShowMediaPicker(false);
           }}
         />
+
+        {/* Image Position Editor */}
+        {showImagePositionEditor && coverImageUrl && (
+          <ImagePositionEditor
+            imageUrl={coverImageUrl}
+            positionX={coverImagePositionX}
+            positionY={coverImagePositionY}
+            onPositionChange={(x, y) => {
+              setCoverImagePositionX(x);
+              setCoverImagePositionY(y);
+            }}
+            onClose={() => setShowImagePositionEditor(false)}
+          />
+        )}
       </div>
     </main>
   );

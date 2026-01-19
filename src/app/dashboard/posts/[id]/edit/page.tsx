@@ -14,6 +14,7 @@ import {
 } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, AlertTriangle, X } from "lucide-react";
 import { useAutosave } from "@/lib/useAutosave";
@@ -77,8 +78,15 @@ export default function EditPostPage() {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(
     post?.coverImage?.url ?? null,
   );
+  const [coverImagePositionX, setCoverImagePositionX] = useState<number | null>(
+    post?.coverImagePositionX ?? null,
+  );
+  const [coverImagePositionY, setCoverImagePositionY] = useState<number | null>(
+    post?.coverImagePositionY ?? null,
+  );
 
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [showImagePositionEditor, setShowImagePositionEditor] = useState(false);
   const [authorId, setAuthorId] = useState<string | null>(
     post?.authorId ?? null,
   );
@@ -119,6 +127,8 @@ export default function EditPostPage() {
     bezirkId,
     pinned,
     coverImageId,
+    coverImagePositionX,
+    coverImagePositionY,
     authorId,
     authorName,
     status,
@@ -144,6 +154,8 @@ export default function EditPostPage() {
           setBezirkId(saved.bezirkId || "");
           setPinned(saved.pinned || false);
           setCoverImageId(saved.coverImageId || null);
+          setCoverImagePositionX(saved.coverImagePositionX || null);
+          setCoverImagePositionY(saved.coverImagePositionY || null);
           setAuthorId(saved.authorId || null);
           setAuthorName(saved.authorName || "");
           setStatus(saved.status || "DRAFT");
@@ -163,6 +175,8 @@ export default function EditPostPage() {
         bezirkId: post.bezirkId || "",
         pinned: post.pinned || false,
         coverImageId: post.coverImageId || null,
+        coverImagePositionX: post.coverImagePositionX || null,
+        coverImagePositionY: post.coverImagePositionY || null,
         authorId: post.authorId || null,
         authorName: post.authorName || "",
         status: post.status || "DRAFT",
@@ -212,6 +226,8 @@ export default function EditPostPage() {
       setPinned(post.pinned || false);
       setCoverImageId(post.coverImageId || null);
       setCoverImageUrl(post.coverImage?.url || null);
+      setCoverImagePositionX(post.coverImagePositionX || null);
+      setCoverImagePositionY(post.coverImagePositionY || null);
       setStatus(post.status || "DRAFT");
 
       if (post.author && post.author.id !== authorId) {
@@ -322,6 +338,8 @@ export default function EditPostPage() {
       category,
       bezirkId: bezirkId || null,
       coverImageId: coverImageId || null,
+      coverImagePositionX: coverImagePositionX,
+      coverImagePositionY: coverImagePositionY,
       pinned,
       status: finalStatus,
       authorId: authorId || null,
@@ -479,6 +497,11 @@ export default function EditPostPage() {
                       alt="Titelbild"
                       fill
                       className="object-cover"
+                      style={{
+                        objectPosition: coverImagePositionX !== null && coverImagePositionY !== null
+                          ? `${coverImagePositionX}% ${coverImagePositionY}%`
+                          : undefined,
+                      }}
                     />
                   </div>
                   <div className="mt-3 flex gap-2">
@@ -491,9 +514,18 @@ export default function EditPostPage() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setShowImagePositionEditor(true)}
+                      className="text-primary hover:text-primary/80 text-sm font-medium"
+                    >
+                      Position anpassen
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setCoverImageId(null);
                         setCoverImageUrl(null);
+                        setCoverImagePositionX(null);
+                        setCoverImagePositionY(null);
                       }}
                       className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"
                     >
@@ -792,9 +824,25 @@ export default function EditPostPage() {
         onSelect={(url, _alt, mediaId) => {
           setCoverImageUrl(url);
           setCoverImageId(mediaId || null);
+          setCoverImagePositionX(null);
+          setCoverImagePositionY(null);
           setIsMediaPickerOpen(false);
         }}
       />
+
+      {/* Image Position Editor */}
+      {showImagePositionEditor && coverImageUrl && (
+        <ImagePositionEditor
+          imageUrl={coverImageUrl}
+          positionX={coverImagePositionX}
+          positionY={coverImagePositionY}
+          onPositionChange={(x, y) => {
+            setCoverImagePositionX(x);
+            setCoverImagePositionY(y);
+          }}
+          onClose={() => setShowImagePositionEditor(false)}
+        />
+      )}
     </main>
   );
 }

@@ -11,6 +11,8 @@ interface PostCardProps {
   date: Date;
   category: string;
   image?: string;
+  imagePositionX?: number | null;
+  imagePositionY?: number | null;
   pinned?: boolean;
   district?: number;
   content?: string;
@@ -23,6 +25,8 @@ export default function PostCard({
   date,
   category,
   image,
+  imagePositionX,
+  imagePositionY,
   pinned = false,
   district,
   content,
@@ -46,6 +50,13 @@ export default function PostCard({
               alt={title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              style={{
+                objectPosition:
+                  imagePositionX !== null && imagePositionX !== undefined &&
+                  imagePositionY !== null && imagePositionY !== undefined
+                    ? `${imagePositionX}% ${imagePositionY}%`
+                    : undefined,
+              }}
             />
           </div>
         )}
