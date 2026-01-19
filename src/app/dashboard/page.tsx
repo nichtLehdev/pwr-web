@@ -27,6 +27,7 @@ import {
   Download,
   BookOpen,
   Mail,
+  Layout,
 } from "lucide-react";
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -214,6 +215,12 @@ export default function DashboardPage() {
               Medien & Ressourcen
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DashboardCard
+                title="Homepage"
+                description="Homepage Carousel"
+                icon={<Layout />}
+                href="/dashboard/homepage"
+              />
               <DashboardCard
                 title="Medien"
                 description="Bilder & Dateien"
