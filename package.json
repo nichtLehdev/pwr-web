@@ -57,7 +57,7 @@
     "pg": "^8.16.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react-email": "^5.1.1",
+    "react-email": "^5.2.1",
     "server-only": "^0.0.1",
     "superjson": "^2.2.6",
     "turndown": "^7.2.2",
