@@ -411,7 +411,8 @@ export default function CourseDetailView({
                           hour: "2-digit",
                           minute: "2-digit",
                         })}{" "}
-                        Uhr ({durationDays} {durationDays === 1 ? "Tag" : "Tage"})
+                        Uhr ({durationDays}{" "}
+                        {durationDays === 1 ? "Tag" : "Tage"})
                       </p>
                     </>
                   )}
