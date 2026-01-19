@@ -102,7 +102,7 @@ export const postsRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: [{ pinned: "desc" }, { publishedAt: "desc" }],
+          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
         }),
         ctx.db.post.count({ where }),
       ]);
