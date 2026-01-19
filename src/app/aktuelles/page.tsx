@@ -335,6 +335,8 @@ export default function AktuellesPage() {
                     date={post.publishedAt || post.createdAt}
                     category={post.category}
                     image={post.coverImage?.url}
+                    imagePositionX={post.coverImagePositionX}
+                    imagePositionY={post.coverImagePositionY}
                     pinned={post.pinned}
                     district={post.bezirk?.number}
                     content={post.content}
@@ -362,6 +364,8 @@ export default function AktuellesPage() {
                     date={post.publishedAt || post.createdAt}
                     category={post.category}
                     image={post.coverImage?.url}
+                    imagePositionX={post.coverImagePositionX}
+                    imagePositionY={post.coverImagePositionY}
                     pinned={false}
                     district={post.bezirk?.number}
                     content={post.content}

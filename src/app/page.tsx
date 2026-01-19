@@ -114,6 +114,8 @@ export default function Home() {
                   date={post.publishedAt || post.createdAt}
                   category={post.category}
                   image={post.coverImage?.url}
+                  imagePositionX={post.coverImagePositionX}
+                  imagePositionY={post.coverImagePositionY}
                   pinned={post.pinned}
                   district={post.bezirk?.number}
                   content={post.content}
