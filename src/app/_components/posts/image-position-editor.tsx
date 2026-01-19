@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { Button } from "@/app/_components/ui";
 
@@ -24,11 +24,6 @@ export default function ImagePositionEditor({
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setCurrentX(positionX ?? 50);
-    setCurrentY(positionY ?? 50);
-  }, [positionX, positionY]);
-
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     updatePosition(e);
@@ -48,14 +43,25 @@ export default function ImagePositionEditor({
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const x =
-      ((e.clientX || (e as React.TouchEvent).touches[0]?.clientX || 0) -
-        rect.left) /
-      rect.width;
-    const y =
-      ((e.clientY || (e as React.TouchEvent).touches[0]?.clientY || 0) -
-        rect.top) /
-      rect.height;
+    let clientX: number;
+    let clientY: number;
+
+    if ("touches" in e) {
+      const touchEvent = e as React.TouchEvent;
+      if (touchEvent.touches.length > 0) {
+        clientX = touchEvent.touches[0]?.clientX ?? 0;
+        clientY = touchEvent.touches[0]?.clientY ?? 0;
+      } else {
+        return;
+      }
+    } else {
+      const mouseEvent = e as React.MouseEvent;
+      clientX = mouseEvent.clientX;
+      clientY = mouseEvent.clientY;
+    }
+
+    const x = (clientX - rect.left) / rect.width;
+    const y = (clientY - rect.top) / rect.height;
 
     const newX = Math.max(0, Math.min(100, x * 100));
     const newY = Math.max(0, Math.min(100, y * 100));
