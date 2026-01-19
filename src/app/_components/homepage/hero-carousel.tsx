@@ -57,6 +57,10 @@ export default function HeroCarousel({
   };
 
   const currentItem = items[currentIndex];
+  if (!currentItem) {
+    return null;
+  }
+
   const displayTitle = currentItem.title || defaultTitle;
   const displaySubtitle = currentItem.subtitle || defaultSubtitle;
 

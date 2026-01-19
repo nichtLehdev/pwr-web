@@ -151,9 +151,14 @@ export default function DashboardHomepagePage() {
     if (!items || index === 0) return;
 
     const newItems = [...items];
-    const temp = newItems[index].sortOrder;
-    newItems[index].sortOrder = newItems[index - 1].sortOrder;
-    newItems[index - 1].sortOrder = temp;
+    const currentItem = newItems[index];
+    const previousItem = newItems[index - 1];
+
+    if (!currentItem || !previousItem) return;
+
+    const temp = currentItem.sortOrder;
+    currentItem.sortOrder = previousItem.sortOrder;
+    previousItem.sortOrder = temp;
 
     reorderMutation.mutate({
       items: newItems.map((item) => ({
@@ -167,9 +172,14 @@ export default function DashboardHomepagePage() {
     if (!items || index === items.length - 1) return;
 
     const newItems = [...items];
-    const temp = newItems[index].sortOrder;
-    newItems[index].sortOrder = newItems[index + 1].sortOrder;
-    newItems[index + 1].sortOrder = temp;
+    const currentItem = newItems[index];
+    const nextItem = newItems[index + 1];
+
+    if (!currentItem || !nextItem) return;
+
+    const temp = currentItem.sortOrder;
+    currentItem.sortOrder = nextItem.sortOrder;
+    nextItem.sortOrder = temp;
 
     reorderMutation.mutate({
       items: newItems.map((item) => ({
@@ -179,7 +189,7 @@ export default function DashboardHomepagePage() {
     });
   };
 
-  const handleToggleActive = (item: (typeof items)[0]) => {
+  const handleToggleActive = (item: NonNullable<typeof items>[0]) => {
     updateMutation.mutate({
       id: item.id,
       isActive: !item.isActive,
@@ -264,7 +274,7 @@ export default function DashboardHomepagePage() {
               >
                 <div className="flex items-start gap-4">
                   {/* Image Preview */}
-                  <div className="relative h-24 w-32 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                  <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                     {item.media.mimeType.startsWith("image/") ? (
                       <Image
                         src={item.media.url}
@@ -336,7 +346,7 @@ export default function DashboardHomepagePage() {
                       </button>
                       <button
                         onClick={() => setShowDeleteModal(item.id)}
-                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1.5 text-red-600 hover:bg-red-50"
                         title="Löschen"
                       >
                         <Trash2 className="h-4 w-4" />
