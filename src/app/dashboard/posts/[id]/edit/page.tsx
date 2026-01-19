@@ -498,9 +498,11 @@ export default function EditPostPage() {
                       fill
                       className="object-cover"
                       style={{
-                        objectPosition: coverImagePositionX !== null && coverImagePositionY !== null
-                          ? `${coverImagePositionX}% ${coverImagePositionY}%`
-                          : undefined,
+                        objectPosition:
+                          coverImagePositionX !== null &&
+                          coverImagePositionY !== null
+                            ? `${coverImagePositionX}% ${coverImagePositionY}%`
+                            : undefined,
                       }}
                     />
                   </div>

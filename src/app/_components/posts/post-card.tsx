@@ -52,8 +52,10 @@ export default function PostCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               style={{
                 objectPosition:
-                  imagePositionX !== null && imagePositionX !== undefined &&
-                  imagePositionY !== null && imagePositionY !== undefined
+                  imagePositionX !== null &&
+                  imagePositionX !== undefined &&
+                  imagePositionY !== null &&
+                  imagePositionY !== undefined
                     ? `${imagePositionX}% ${imagePositionY}%`
                     : undefined,
               }}

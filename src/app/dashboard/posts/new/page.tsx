@@ -64,8 +64,12 @@ export default function NewPostPage() {
   const [pinned, setPinned] = useState(false);
   const [coverImageId, setCoverImageId] = useState<string | null>(null);
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
-  const [coverImagePositionX, setCoverImagePositionX] = useState<number | null>(null);
-  const [coverImagePositionY, setCoverImagePositionY] = useState<number | null>(null);
+  const [coverImagePositionX, setCoverImagePositionX] = useState<number | null>(
+    null,
+  );
+  const [coverImagePositionY, setCoverImagePositionY] = useState<number | null>(
+    null,
+  );
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showImagePositionEditor, setShowImagePositionEditor] = useState(false);
   const [authorId, setAuthorId] = useState<string | null>(null);
@@ -369,9 +373,11 @@ export default function NewPostPage() {
                       fill
                       className="object-cover"
                       style={{
-                        objectPosition: coverImagePositionX !== null && coverImagePositionY !== null
-                          ? `${coverImagePositionX}% ${coverImagePositionY}%`
-                          : undefined,
+                        objectPosition:
+                          coverImagePositionX !== null &&
+                          coverImagePositionY !== null
+                            ? `${coverImagePositionX}% ${coverImagePositionY}%`
+                            : undefined,
                       }}
                     />
                   </div>

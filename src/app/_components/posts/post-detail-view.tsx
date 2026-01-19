@@ -125,7 +125,8 @@ export default function PostDetailView({
             priority
             style={{
               objectPosition:
-                post.coverImagePositionX !== null && post.coverImagePositionY !== null
+                post.coverImagePositionX !== null &&
+                post.coverImagePositionY !== null
                   ? `${post.coverImagePositionX}% ${post.coverImagePositionY}%`
                   : undefined,
             }}

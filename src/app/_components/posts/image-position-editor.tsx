@@ -48,8 +48,14 @@ export default function ImagePositionEditor({
     if (!containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX || (e as React.TouchEvent).touches[0]?.clientX || 0) - rect.left) / rect.width;
-    const y = ((e.clientY || (e as React.TouchEvent).touches[0]?.clientY || 0) - rect.top) / rect.height;
+    const x =
+      ((e.clientX || (e as React.TouchEvent).touches[0]?.clientX || 0) -
+        rect.left) /
+      rect.width;
+    const y =
+      ((e.clientY || (e as React.TouchEvent).touches[0]?.clientY || 0) -
+        rect.top) /
+      rect.height;
 
     const newX = Math.max(0, Math.min(100, x * 100));
     const newY = Math.max(0, Math.min(100, y * 100));
@@ -85,10 +91,10 @@ export default function ImagePositionEditor({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="bg-white dark:bg-dark-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+      <div className="dark:bg-dark-surface max-h-[90vh] w-full max-w-4xl overflow-auto rounded-lg bg-white shadow-xl">
         {/* Header */}
-        <div className="border-b border-gray-200 dark:border-dark-border p-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text">
+        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
+          <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
             Bildposition anpassen
           </h2>
           <button
@@ -113,9 +119,11 @@ export default function ImagePositionEditor({
         </div>
 
         {/* Instructions */}
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-dark-border">
+        <div className="dark:border-dark-border border-b border-gray-200 bg-blue-50 p-4 dark:bg-blue-900/20">
           <p className="text-sm text-blue-800 dark:text-blue-300">
-            Klicke oder ziehe auf das Bild, um den Fokuspunkt zu setzen. Der Fokuspunkt bestimmt, welcher Teil des Bildes beim Zuschneiden im Vordergrund steht.
+            Klicke oder ziehe auf das Bild, um den Fokuspunkt zu setzen. Der
+            Fokuspunkt bestimmt, welcher Teil des Bildes beim Zuschneiden im
+            Vordergrund steht.
           </p>
         </div>
 
@@ -123,7 +131,7 @@ export default function ImagePositionEditor({
         <div className="p-6">
           <div
             ref={containerRef}
-            className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-gray-300 dark:border-dark-border bg-gray-100 dark:bg-gray-800 cursor-crosshair select-none"
+            className="dark:border-dark-border relative aspect-video w-full cursor-crosshair overflow-hidden rounded-lg border-2 border-gray-300 bg-gray-100 select-none dark:bg-gray-800"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -143,7 +151,7 @@ export default function ImagePositionEditor({
             />
             {/* Focal Point Indicator */}
             <div
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 transform"
               style={{
                 left: `${currentX}%`,
                 top: `${currentY}%`,
@@ -153,7 +161,7 @@ export default function ImagePositionEditor({
                 {/* Crosshair */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="h-8 w-0.5 bg-white shadow-lg" />
-                  <div className="w-8 h-0.5 bg-white shadow-lg" />
+                  <div className="h-0.5 w-8 bg-white shadow-lg" />
                 </div>
                 {/* Circle */}
                 <div className="h-12 w-12 rounded-full border-4 border-white shadow-lg" />
@@ -164,34 +172,29 @@ export default function ImagePositionEditor({
           {/* Position Display */}
           <div className="mt-4 flex items-center justify-center gap-4 text-sm">
             <div className="text-gray-600 dark:text-gray-400">
-              X: <span className="font-mono font-semibold">{currentX.toFixed(1)}%</span>
+              X:{" "}
+              <span className="font-mono font-semibold">
+                {currentX.toFixed(1)}%
+              </span>
             </div>
             <div className="text-gray-600 dark:text-gray-400">
-              Y: <span className="font-mono font-semibold">{currentY.toFixed(1)}%</span>
+              Y:{" "}
+              <span className="font-mono font-semibold">
+                {currentY.toFixed(1)}%
+              </span>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="border-t border-gray-200 dark:border-dark-border p-4 flex items-center justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleReset}
-          >
+        <div className="dark:border-dark-border flex items-center justify-end gap-3 border-t border-gray-200 p-4">
+          <Button type="button" variant="outline" onClick={handleReset}>
             Zurücksetzen
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             Abbrechen
           </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-          >
+          <Button type="button" onClick={handleSave}>
             Speichern
           </Button>
         </div>
