@@ -83,9 +83,7 @@ export default async function KontaktPage() {
                     <MapPin className="text-primary mt-0.5 h-5 w-5 shrink-0" />
                     <div>
                       <p className="text-gray-700 dark:text-gray-300">
-                        Evangelisches Posaunenwerk
-                        <br />
-                        in der Evangelischen Kirche im Rheinland
+                        Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                         <br />
                         Rudolf-Harbig-Str. 20
                         <br />
