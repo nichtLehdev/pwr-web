@@ -217,7 +217,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <DashboardCard
                 title="Homepage"
-                description="Homepage Carousel"
+                description="Homepage Bildkarussell"
                 icon={<Layout />}
                 href="/dashboard/homepage"
               />
