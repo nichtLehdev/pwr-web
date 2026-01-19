@@ -987,6 +987,7 @@ model Media {
   historyEventImages      HistoryEvent[]        @relation("HistoryEventImage")
   blaeserheftImages       Blaeserheft[]         @relation("BlaeserheftImage")
   courseImages            Course[]              @relation("CourseImage")
+  homepageCarouselItems   HomepageCarouselItem[] @relation("HomepageCarouselMedia")
 
   // Uploaded by
   uploadedById String?
@@ -1009,4 +1010,23 @@ model NewsletterSubscriber {
 
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
+}
+
+model HomepageCarouselItem {
+  id String @id @default(uuid())
+
+  mediaId String
+  media   Media  @relation("HomepageCarouselMedia", fields: [mediaId], references: [id], onDelete: Cascade)
+
+  title    String? // Custom title (replaces "Posaunenwerk Rheinland")
+  subtitle String? // Custom subtitle (replaces "Gemeinsam Musik machen, Glauben leben")
+
+  isActive Boolean @default(true)
+  sortOrder Int    @default(0) // Lower number = appears first
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sortOrder])
+  @@index([isActive])
 }

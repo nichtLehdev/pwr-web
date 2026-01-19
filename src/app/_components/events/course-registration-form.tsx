@@ -19,7 +19,7 @@ import {
   Link as LinkIcon,
   Link2Off,
 } from "lucide-react";
-import { Button, Input, Label, Textarea, Select } from "@/app/_components/ui";
+import { Input, Label, Textarea, Select } from "@/app/_components/ui";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
 import { useToast } from "@/app/_components/ui/toast";
-import { Button, Select, Badge } from "@/app/_components/ui";
+import { Button, Select } from "@/app/_components/ui";
 import {
   ArrowDownIcon,
   ArrowLeftIcon,

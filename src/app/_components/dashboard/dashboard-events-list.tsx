@@ -21,7 +21,7 @@ import {
   TrashIcon,
   X,
 } from "lucide-react";
-import { Button, Select, Badge } from "@/app/_components/ui";
+import { Button, Select } from "@/app/_components/ui";
 
 interface DashboardEventsListProps {
   userRole: string;
