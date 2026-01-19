@@ -114,6 +114,8 @@ export default function EditPostPage() {
     bezirkId: string;
     pinned: boolean;
     coverImageId: string | null;
+    coverImagePositionX: number | null;
+    coverImagePositionY: number | null;
     authorId: string | null;
     authorName: string;
     status: ContentStatus;
