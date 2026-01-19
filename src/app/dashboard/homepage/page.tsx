@@ -245,7 +245,7 @@ export default function DashboardHomepagePage() {
               setCustomSubtitle("");
             }}
             disabled={items && items.length >= 5}
-            className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
             Neues Element
@@ -317,7 +317,8 @@ export default function DashboardHomepagePage() {
                       <button
                         onClick={() => handleMoveDown(index)}
                         disabled={
-                          index === items.length - 1 || reorderMutation.isPending
+                          index === items.length - 1 ||
+                          reorderMutation.isPending
                         }
                         className="dark:bg-dark-background dark:hover:bg-dark-border rounded p-1 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
                         title="Nach unten"
@@ -419,7 +420,7 @@ export default function DashboardHomepagePage() {
                   ) : (
                     <button
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary"
+                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border hover:border-primary w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center"
                     >
                       <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
                       <p className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
@@ -480,9 +481,11 @@ export default function DashboardHomepagePage() {
                 <button
                   onClick={handleAdd}
                   disabled={!selectedMediaId || createMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-lg px-4 py-2 text-white"
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
                 >
-                  {createMutation.isPending ? "Wird hinzugefügt..." : "Hinzufügen"}
+                  {createMutation.isPending
+                    ? "Wird hinzugefügt..."
+                    : "Hinzufügen"}
                 </button>
               </div>
             </div>
@@ -537,7 +540,7 @@ export default function DashboardHomepagePage() {
                   ) : (
                     <button
                       onClick={() => setShowMediaPicker(true)}
-                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-primary"
+                      className="dark:bg-dark-background dark:border-dark-border dark:hover:bg-dark-border hover:border-primary w-full rounded-lg border-2 border-dashed border-gray-300 p-8 text-center"
                     >
                       <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
                       <p className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
@@ -598,9 +601,11 @@ export default function DashboardHomepagePage() {
                 <button
                   onClick={handleUpdate}
                   disabled={!selectedMediaId || updateMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-lg px-4 py-2 text-white"
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
                 >
-                  {updateMutation.isPending ? "Wird gespeichert..." : "Speichern"}
+                  {updateMutation.isPending
+                    ? "Wird gespeichert..."
+                    : "Speichern"}
                 </button>
               </div>
             </div>
@@ -628,7 +633,7 @@ export default function DashboardHomepagePage() {
                 <button
                   onClick={() => handleDelete(showDeleteModal)}
                   disabled={deleteMutation.isPending}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg px-4 py-2 text-white"
+                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
                 </button>

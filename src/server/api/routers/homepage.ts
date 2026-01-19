@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { UserRole } from "~/generated/prisma/client";
 
 export const homepageRouter = createTRPCRouter({
