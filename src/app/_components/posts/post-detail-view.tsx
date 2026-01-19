@@ -123,6 +123,13 @@ export default function PostDetailView({
             fill
             className="object-cover"
             priority
+            style={{
+              objectPosition:
+                post.coverImagePositionX !== null &&
+                post.coverImagePositionY !== null
+                  ? `${post.coverImagePositionX}% ${post.coverImagePositionY}%`
+                  : undefined,
+            }}
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
 
@@ -428,6 +435,8 @@ export default function PostDetailView({
                   title={relatedPost.title}
                   excerpt={relatedPost.excerpt || ""}
                   image={relatedPost.coverImage?.url}
+                  imagePositionX={relatedPost.coverImagePositionX}
+                  imagePositionY={relatedPost.coverImagePositionY}
                   district={relatedPost.bezirk?.number}
                   content={relatedPost.content}
                 />
