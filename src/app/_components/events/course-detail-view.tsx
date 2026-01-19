@@ -402,7 +402,16 @@ export default function CourseDetailView({
                         })}
                       </p>
                       <p className="text-gray-600 dark:text-gray-400">
-                        {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
+                        {startDate.toLocaleTimeString("de-DE", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        Uhr -{" "}
+                        {endDate.toLocaleTimeString("de-DE", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        Uhr ({durationDays} {durationDays === 1 ? "Tag" : "Tage"})
                       </p>
                     </>
                   )}

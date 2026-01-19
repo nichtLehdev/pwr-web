@@ -127,6 +127,16 @@ export default function CourseCard({
                     month: "long",
                     year: "numeric",
                   })}
+                  {", "}
+                  {start.toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  {" - "}
+                  {end.toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
               ) : (
                 <span>
@@ -134,11 +144,21 @@ export default function CourseCard({
                     day: "2-digit",
                     month: "short",
                   })}
+                  {", "}
+                  {start.toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                   {" - "}
                   {end.toLocaleDateString("de-DE", {
                     day: "2-digit",
                     month: "short",
                     year: "numeric",
+                  })}
+                  {", "}
+                  {end.toLocaleTimeString("de-DE", {
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </span>
               )}
