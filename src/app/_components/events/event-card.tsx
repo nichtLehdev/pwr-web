@@ -13,6 +13,7 @@ interface EventCardProps {
   id: string;
   title: string;
   date: Date;
+  duration?: number | null;
   location: string;
   category: string;
   district?: number;
@@ -24,6 +25,7 @@ export default function EventCard({
   id,
   title,
   date,
+  duration,
   location,
   category,
   district,
@@ -94,14 +96,23 @@ export default function EventCard({
           >
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              {`${date.toLocaleDateString("de-DE", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}, ${date.toLocaleTimeString("de-DE", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`}
+              <span>
+                {`${date.toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}, ${date.toLocaleTimeString("de-DE", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}`}
+                {duration && duration > 0 && (
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {" "}
+                    ({Math.floor(duration / 60)}h{" "}
+                    {duration % 60 > 0 ? `${duration % 60}min` : ""})
+                  </span>
+                )}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
