@@ -26,22 +26,56 @@ export default function EventDetailModal({
 }: EventDetailModalProps) {
   const districtColor = getDistrictColor(event.bezirk?.number);
 
-  const isMultiDay = event.type === "course" && event.endDate;
-  const startDate = event.date.toLocaleDateString("de-DE", {
-    weekday: "long",
+  const eventDate = event.type === "event" ? event.date : null;
+  const eventDuration =
+    event.type === "event" && event.duration ? event.duration : null;
+
+  const courseStartDate =
+    event.type === "course" ? new Date(event.startDate) : null;
+  const courseEndDate =
+    event.type === "course" ? new Date(event.endDate) : null;
+
+  const isMultiDay =
+    event.type === "course" &&
+    courseStartDate &&
+    courseEndDate &&
+    courseStartDate.toDateString() !== courseEndDate.toDateString();
+
+  const displayStartDate =
+    event.type === "event"
+      ? eventDate!.toLocaleDateString("de-DE", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : courseStartDate!.toLocaleDateString("de-DE", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+  const startTime =
+    event.type === "event"
+      ? eventDate!.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : courseStartDate!.toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+  const endDateString = courseEndDate?.toLocaleDateString("de-DE", {
     day: "numeric",
     month: "long",
     year: "numeric",
-  });
-  const startTime = event.date.toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
   });
 
-  const endDate = event.endDate?.toLocaleDateString("de-DE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
+  const endTime = courseEndDate?.toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
   useEffect(() => {
@@ -139,15 +173,27 @@ export default function EventDetailModal({
             <CalendarIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
             <div>
               <p className="text-dark dark:text-dark-text font-semibold">
-                {startDate}
+                {displayStartDate}
               </p>
-              {isMultiDay ? (
+              {event.type === "course" && isMultiDay ? (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  bis {endDate}
+                  {startTime} Uhr - {endDateString}, {endTime} Uhr
+                </p>
+              ) : event.type === "course" ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {startTime} Uhr - {endTime} Uhr
                 </p>
               ) : (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   {startTime} Uhr
+                  {eventDuration && eventDuration > 0 && (
+                    <span>
+                      {" "}
+                      ({Math.floor(eventDuration / 60)}h{" "}
+                      {eventDuration % 60 > 0 ? `${eventDuration % 60}min` : ""}
+                      )
+                    </span>
+                  )}
                 </p>
               )}
             </div>

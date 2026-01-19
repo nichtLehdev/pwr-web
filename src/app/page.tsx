@@ -74,6 +74,7 @@ export default function Home() {
                   id={event.id}
                   title={event.title}
                   date={event.eventDate}
+                  duration={event.duration}
                   location={event.location?.city || ""}
                   category={event.category}
                   district={event.bezirk?.number}
