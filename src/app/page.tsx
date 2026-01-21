@@ -177,9 +177,9 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/mitmachen/chor-finden"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <Search className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -192,9 +192,9 @@ export default function Home() {
 
             <Link
               href="/mitmachen/bildung"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <GraduationCap className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -207,9 +207,9 @@ export default function Home() {
 
             <Link
               href="/ueber-uns/auswahlchoere"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <Users className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -222,9 +222,9 @@ export default function Home() {
 
             <Link
               href="/materialien/blechblatt"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <FileText className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -237,9 +237,9 @@ export default function Home() {
 
             <Link
               href="/ueber-uns/posaunenwarte"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <UserCheck className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -252,9 +252,9 @@ export default function Home() {
 
             <Link
               href="/materialien"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <BookOpen className="h-6 w-6" />
               </div>
               <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -269,16 +269,16 @@ export default function Home() {
               href="https://www.ekir.de"
               target="_blank"
               rel="noopener noreferrer"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <Church className="h-6 w-6" />
               </div>
               <div className="flex items-center gap-2">
                 <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                   EKiR
                 </h3>
-                <ExternalLink className="text-gray-400 h-4 w-4 group-hover:text-primary" />
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
               </div>
               <p className="text-gray-600 dark:text-gray-400">
                 Evangelische Kirche im Rheinland
@@ -289,16 +289,16 @@ export default function Home() {
               href="https://www.epid.de"
               target="_blank"
               rel="noopener noreferrer"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <Music className="h-6 w-6" />
               </div>
               <div className="flex items-center gap-2">
                 <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                   EPiD
                 </h3>
-                <ExternalLink className="text-gray-400 h-4 w-4 group-hover:text-primary" />
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
               </div>
               <p className="text-gray-600 dark:text-gray-400">
                 Evangelischer Posaunendienst in Deutschland
@@ -309,16 +309,16 @@ export default function Home() {
               href="https://www.bmco.de"
               target="_blank"
               rel="noopener noreferrer"
-              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary/50 hover:shadow-lg dark:border"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
             >
-              <div className="bg-primary/10 dark:bg-primary/20 mb-4 flex h-12 w-12 items-center justify-center rounded-lg text-primary">
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
                 <Music className="h-6 w-6" />
               </div>
               <div className="flex items-center gap-2">
                 <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
                   BMCO
                 </h3>
-                <ExternalLink className="text-gray-400 h-4 w-4 group-hover:text-primary" />
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
               </div>
               <p className="text-gray-600 dark:text-gray-400">
                 Bundesverband Musik in der Kirche
