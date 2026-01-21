@@ -7,7 +7,17 @@ import EventCard from "./_components/events/event-card";
 import PostCard from "./_components/posts/post-card";
 import { api } from "@/trpc/react";
 import LoadingSpinner from "./_components/general/loading-spinner";
-import { Building2, ChevronRight } from "lucide-react";
+import {
+  Search,
+  GraduationCap,
+  Users,
+  BookOpen,
+  ExternalLink,
+  Church,
+  Music,
+  FileText,
+  UserCheck,
+} from "lucide-react";
 import HeroCarousel from "./_components/homepage/hero-carousel";
 
 export default function Home() {
@@ -152,56 +162,168 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Förderverein Teaser */}
-      <section className="bg-foerderverein dark:bg-foerderverein-dark py-12 text-white md:py-16 lg:py-20">
+      {/* Popular Links Section */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
-          <div className="mx-auto max-w-4xl text-center">
-            <div className="mb-6 inline-block rounded-full bg-white/10 p-3">
-              <Building2 className="h-12 w-12" />
-            </div>
-            <h2 className="mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Förderverein – Gemeinsam stark für die Posaunenchormusik
+          <div className="mb-8 text-center">
+            <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
+              Beliebte Seiten & Partner
             </h2>
-            <p className="mx-auto mb-8 max-w-3xl text-lg leading-relaxed opacity-95 md:text-xl">
-              Seit 2008 unterstützt unser Förderverein die Arbeit des
-              Posaunenwerks: von Auswahlchören über Lehrgänge bis zu
-              CD-Produktionen. Werden Sie Teil unserer Gemeinschaft!
+            <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-400">
+              Entdecke unsere wichtigsten Seiten und Partnerorganisationen
             </p>
+          </div>
 
-            <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
-                <div className="mb-2 text-3xl font-bold">36 €</div>
-                <p className="text-sm opacity-90">Jahresbeitrag</p>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <Link
+              href="/mitmachen/chor-finden"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Search className="h-6 w-6" />
               </div>
-              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
-                <div className="mb-2 text-3xl font-bold">2025</div>
-                <p className="text-sm opacity-90">
-                  Geschenk-CD für Neumitglieder
-                </p>
-              </div>
-              <div className="rounded-lg bg-white/10 p-6 backdrop-blur-sm">
-                <div className="mb-2 text-3xl font-bold">1.000 €</div>
-                <p className="text-sm opacity-90">
-                  p.a. für Lehrgangsförderung
-                </p>
-              </div>
-            </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Chor finden
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Finde einen Posaunenchor in deiner Nähe
+              </p>
+            </Link>
 
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/foerderverein"
-                className="text-foerderverein inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 font-bold shadow-lg transition-colors hover:bg-gray-100"
-              >
-                Mehr erfahren
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Link>
-              <a
-                href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-transparent px-8 py-3 font-semibold text-white transition-colors hover:bg-white/10"
-              >
-                Mitglied werden
-              </a>
-            </div>
+            <Link
+              href="/mitmachen/bildung"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Aus- und Weiterbildung
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Lehrgänge und Fortbildungen für Bläserinnen und Bläser
+              </p>
+            </Link>
+
+            <Link
+              href="/ueber-uns/auswahlchoere"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Auswahlchöre
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Unsere Ensembles und Auswahlchöre
+              </p>
+            </Link>
+
+            <Link
+              href="/materialien/blechblatt"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <FileText className="h-6 w-6" />
+              </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Rheinisches Blechblatt
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Unser Magazin für die Posaunenchorarbeit
+              </p>
+            </Link>
+
+            <Link
+              href="/ueber-uns/posaunenwarte"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <UserCheck className="h-6 w-6" />
+              </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Posaunenwarte
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Unsere Ansprechpartner in den Bezirken
+              </p>
+            </Link>
+
+            <Link
+              href="/materialien"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <BookOpen className="h-6 w-6" />
+              </div>
+              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                Materialien
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Noten, CDs und weitere Materialien
+              </p>
+            </Link>
+
+            <a
+              href="https://www.ekir.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Church className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                  EKiR
+                </h3>
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Evangelische Kirche im Rheinland
+              </p>
+            </a>
+
+            <a
+              href="https://www.epid.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Music className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                  EPiD
+                </h3>
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Evangelischer Posaunendienst in Deutschland
+              </p>
+            </a>
+
+            <a
+              href="https://www.bmco.de"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
+            >
+              <div className="bg-primary/10 dark:bg-primary/20 text-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg">
+                <Music className="h-6 w-6" />
+              </div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                  BMCO
+                </h3>
+                <ExternalLink className="group-hover:text-primary h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Bundesverband Musik in der Kirche
+              </p>
+            </a>
           </div>
         </div>
       </section>
