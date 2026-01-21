@@ -115,104 +115,77 @@ export default function PostDetailView({
   return (
     <div className="bg-background dark:bg-dark-background min-h-screen">
       {/* Header with Image */}
-      {post.coverImage?.url ? (
-        <section className="relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
-          <Image
-            src={post.coverImage.url}
-            alt={post.coverImage.alt || post.title}
-            fill
-            className="object-cover"
-            priority
-            style={{
-              objectPosition:
-                post.coverImagePositionX !== null &&
-                post.coverImagePositionY !== null
-                  ? `${post.coverImagePositionX}% ${post.coverImagePositionY}%`
-                  : undefined,
-            }}
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
-
-          {/* Breadcrumb & Meta */}
-          <div className="absolute right-0 bottom-0 left-0 text-white">
-            <div className="container mx-auto px-4 pb-6 md:pb-8">
-              {/* Breadcrumb */}
-              <nav className="mb-4 flex items-center gap-2 text-sm">
-                <Link href="/" className="hover:text-primary transition-colors">
-                  Start
-                </Link>
-                <span>/</span>
-                <Link
-                  href="/aktuelles"
-                  className="hover:text-primary transition-colors"
-                >
-                  Aktuelles
-                </Link>
-                <span>/</span>
-                <span className="opacity-80">Beitrag</span>
-              </nav>
-
-              {/* Meta Info */}
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-semibold"
-                  style={{ backgroundColor: districtColor }}
-                >
-                  {post.category}
-                </span>
-                <span className="text-sm">
-                  {publishDate.toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
-                {post.bezirk && (
-                  <span
-                    className="rounded-full border-2 px-3 py-1 text-xs font-semibold text-white"
-                    style={{ borderColor: districtColor }}
-                  >
-                    Bezirk {post.bezirk.number} ({post.bezirk.shortName})
-                  </span>
-                )}
-                {post.pinned && (
-                  <span className="flex items-center gap-1 text-sm">
-                    <PinIcon className="h-4 w-4" />
-                    Angepinnt
-                  </span>
-                )}
-              </div>
-
-              {/* Title */}
-              <h1 className="max-w-4xl text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl">
-                {post.title}
-              </h1>
-            </div>
+      <section className="relative h-[40vh] md:h-[50vh] lg:h-[60vh]">
+        {post.coverImage?.url ? (
+          <>
+            <Image
+              src={post.coverImage.url}
+              alt={post.coverImage.alt || post.title}
+              fill
+              className="object-cover"
+              priority
+              style={{
+                objectPosition:
+                  post.coverImagePositionX !== null &&
+                  post.coverImagePositionY !== null
+                    ? `${post.coverImagePositionX}% ${post.coverImagePositionY}%`
+                    : undefined,
+              }}
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+          </>
+        ) : (
+          <div className="relative flex h-full items-center justify-center bg-gray-100 px-4 dark:bg-gray-800">
+            <Image
+              src="/images/logo-horizontal.svg"
+              alt="Posaunenwerk Rheinland"
+              width={300}
+              height={84}
+              className="h-auto w-auto max-w-[70%] md:max-w-[60%] lg:max-w-[50%] dark:hidden"
+              style={{
+                mixBlendMode: "multiply",
+                filter: "brightness(1.1)",
+              }}
+              unoptimized
+            />
+            <Image
+              src="/images/logo-horizontal-dark.svg"
+              alt="Posaunenwerk Rheinland"
+              width={300}
+              height={84}
+              className="hidden h-auto w-auto max-w-[70%] md:max-w-[60%] lg:max-w-[50%] dark:block"
+              unoptimized
+            />
           </div>
-        </section>
-      ) : (
-        /* Header without Image */
-        <section className="bg-primary py-8 text-white md:py-12 lg:py-16">
-          <div className="container mx-auto px-4">
+        )}
+
+        {/* Breadcrumb & Meta */}
+        <div
+          className={`absolute right-0 bottom-0 left-0 ${post.coverImage?.url ? "text-white" : "text-dark dark:text-dark-text"}`}
+        >
+          <div className="container mx-auto px-4 pb-6 md:pb-8">
             {/* Breadcrumb */}
-            <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-              <Link href="/" className="transition-colors hover:text-white">
+            <nav className="mb-4 flex items-center gap-2 text-sm">
+              <Link href="/" className="hover:text-primary transition-colors">
                 Start
               </Link>
               <span>/</span>
               <Link
                 href="/aktuelles"
-                className="transition-colors hover:text-white"
+                className="hover:text-primary transition-colors"
               >
                 Aktuelles
               </Link>
               <span>/</span>
-              <span>Beitrag</span>
+              <span className="opacity-80">Beitrag</span>
             </nav>
 
             {/* Meta Info */}
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+              <span
+                className="rounded-full px-3 py-1 text-xs font-semibold"
+                style={{ backgroundColor: districtColor }}
+              >
                 {post.category}
               </span>
               <span className="text-sm">
@@ -223,7 +196,10 @@ export default function PostDetailView({
                 })}
               </span>
               {post.bezirk && (
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                <span
+                  className={`rounded-full border-2 px-3 py-1 text-xs font-semibold ${post.coverImage?.url ? "text-white" : "text-dark dark:text-dark-text"}`}
+                  style={{ borderColor: districtColor }}
+                >
                   Bezirk {post.bezirk.number} ({post.bezirk.shortName})
                 </span>
               )}
@@ -240,8 +216,8 @@ export default function PostDetailView({
               {post.title}
             </h1>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Content */}
       <article className="py-8 md:py-12 lg:py-16">

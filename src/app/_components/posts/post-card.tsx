@@ -43,8 +43,8 @@ export default function PostCard({
         style={{ borderLeftColor: districtColor || "transparent" }}
       >
         {/* Beitragsbild */}
-        {image && (
-          <div className="relative h-48 w-full overflow-hidden bg-gray-200">
+        <div className="relative h-48 w-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+          {image ? (
             <Image
               src={image}
               alt={title}
@@ -60,8 +60,31 @@ export default function PostCard({
                     : undefined,
               }}
             />
-          </div>
-        )}
+          ) : (
+            <div className="relative flex h-full items-center justify-center bg-gray-800 px-4 dark:bg-gray-100">
+              <Image
+                src="/images/logo-horizontal-dark.svg"
+                alt="Posaunenwerk Rheinland"
+                width={200}
+                height={56}
+                className="h-auto w-auto max-w-[80%] dark:hidden"
+                unoptimized
+              />
+              <Image
+                src="/images/logo-horizontal.svg"
+                alt="Posaunenwerk Rheinland"
+                width={200}
+                height={56}
+                className="hidden h-auto w-auto max-w-[80%] dark:block"
+                style={{
+                  mixBlendMode: "multiply",
+                  filter: "brightness(1.1)",
+                }}
+                unoptimized
+              />
+            </div>
+          )}
+        </div>
 
         <div className="flex grow flex-col p-6">
           <div className="mb-3 flex items-center justify-between">
