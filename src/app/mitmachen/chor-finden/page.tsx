@@ -564,7 +564,6 @@ function ChorFindenContent() {
                         onMouseEnter={() => setHoveredBezirk(1)}
                         onMouseLeave={() => setHoveredBezirk(null)}
                       />
-
                     </svg>
                     {/* Tooltip */}
                     {hoveredBezirk && (
