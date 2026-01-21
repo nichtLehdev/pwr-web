@@ -306,7 +306,7 @@ export default function Home() {
             </a>
 
             <a
-              href="https://www.bmco.de"
+              href="https://bundesmusikverband.de/"
               target="_blank"
               rel="noopener noreferrer"
               className="group dark:bg-dark-surface dark:border-dark-border dark:hover:border-primary/50 hover:border-primary/50 flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:shadow-lg dark:border"
