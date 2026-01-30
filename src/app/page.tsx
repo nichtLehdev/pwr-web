@@ -59,7 +59,7 @@ export default function Home() {
       ) : (
         <section className="bg-primary relative flex h-[50vh] items-center justify-center md:h-[60vh] lg:h-[70vh]">
           {/* Gradient Overlay für bessere Lesbarkeit */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/50" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/30 to-black/50" />
 
           <div className="relative z-10 container px-4 text-center text-white">
             <h1 className="mb-4 text-3xl font-bold md:mb-6 md:text-5xl lg:text-6xl">
