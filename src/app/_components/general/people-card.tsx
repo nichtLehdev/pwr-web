@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { type Media } from "~/generated/prisma/client";
 import { MailIcon } from "lucide-react";
+import MediaCredit from "./media-credit";
 
 interface PeopleCardProps {
   image?: Media;
@@ -20,13 +21,23 @@ export default function PeopleCard({
     <div className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start gap-3">
         {image && (
-          <div className="relative my-auto h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
-            <Image
-              src={image.url}
-              alt={image.alt || name || "Profilbild"}
-              fill
-              className="object-cover"
-            />
+          <div className="shrink-0">
+            <div className="relative my-auto h-12 w-12 overflow-hidden rounded-full bg-gray-200">
+              <Image
+                src={image.url}
+                alt={image.alt || name || "Profilbild"}
+                fill
+                className="object-cover"
+              />
+            </div>
+            {(image.copyright || image.creator) && (
+              <MediaCredit
+                copyright={image.copyright}
+                creator={image.creator}
+                showCreatorIcon
+                className="mt-0.5 max-w-32 text-right text-[10px]"
+              />
+            )}
           </div>
         )}
         <div className="min-w-0">
