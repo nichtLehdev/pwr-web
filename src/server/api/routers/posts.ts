@@ -59,9 +59,10 @@ async function enrichContentHtmlWithMediaCredits(
   html: string,
   db: {
     media: {
-      findMany: (
-        args: unknown,
-      ) => Promise<
+      findMany: (args: {
+        where: { url: { in: string[] } };
+        select: { url: true; copyright: true; creator: true };
+      }) => Promise<
         { url: string; copyright: string | null; creator: string | null }[]
       >;
     };
@@ -74,10 +75,10 @@ async function enrichContentHtmlWithMediaCredits(
   const imgTags: { full: string; src: string }[] = [];
   while ((match = imgTagRegex.exec(html)) !== null) {
     const full = match[0];
-    const attrs = match[1];
+    const attrs = match[1] ?? "";
     const srcMatch = attrs.match(srcRegex);
-    const src = srcMatch ? srcMatch[1] : "";
-    if (MEDIA_URL_PATTERN.test(src)) {
+    const src = srcMatch?.[1] ?? "";
+    if (src && MEDIA_URL_PATTERN.test(src)) {
       urlsFromHtml.push(src);
       imgTags.push({ full, src });
     }
