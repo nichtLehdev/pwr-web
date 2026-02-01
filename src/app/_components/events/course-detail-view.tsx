@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import PageHeader from "../general/page-header";
+import MediaCredit from "@/app/_components/general/media-credit";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
 import { UserRole } from "~/generated/prisma/enums";
@@ -353,6 +354,16 @@ export default function CourseDetailView({
                       fill
                       className="object-cover"
                     />
+                    {(course.image.copyright || course.image.creator) && (
+                      <div className="absolute bottom-2 right-2 flex justify-end">
+                        <MediaCredit
+                          copyright={course.image.copyright}
+                          creator={course.image.creator}
+                          showCreatorIcon
+                          className="text-right text-white/90 drop-shadow-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

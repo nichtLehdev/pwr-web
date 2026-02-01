@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import type { RouterOutputs } from "@/trpc/react";
+import MediaCredit from "@/app/_components/general/media-credit";
 import {
   GraduationCap,
   Star,
@@ -154,18 +155,28 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
       >
         <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-2 lg:p-8">
           {/* Bild */}
-          <div className="relative h-64 min-h-[300px] overflow-hidden rounded-lg bg-gray-200 lg:h-full">
-            {event.image ? (
-              <Image
-                src={event.image.url}
-                alt={event.image.alt || event.title || "Ereignisbild"}
-                fill
-                className="object-cover"
+          <div className="flex flex-col gap-1">
+            <div className="relative h-64 min-h-[300px] overflow-hidden rounded-lg bg-gray-200 lg:h-full">
+              {event.image ? (
+                <Image
+                  src={event.image.url}
+                  alt={event.image.alt || event.title || "Ereignisbild"}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-gray-400">{config.icon}</div>
+                </div>
+              )}
+            </div>
+            {event.image && (
+              <MediaCredit
+                copyright={event.image.copyright}
+                creator={event.image.creator}
+                showCreatorIcon
+                className="text-right"
               />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-gray-400">{config.icon}</div>
-              </div>
             )}
           </div>
 

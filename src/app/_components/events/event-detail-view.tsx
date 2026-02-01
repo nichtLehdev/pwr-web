@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import PageHeader from "../general/page-header";
 import Image from "next/image";
+import MediaCredit from "@/app/_components/general/media-credit";
 import type { RouterOutputs } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { useSession } from "@/lib/auth";
@@ -76,8 +77,6 @@ END:VCALENDAR`;
     link.download = `${event.title.replace(/[^a-z0-9]/gi, "_")}.ics`;
     link.click();
   };
-
-  const deviceWidth = typeof window !== "undefined" ? window.innerWidth : 0;
 
   const shareEvent = async () => {
     const shareData = {
@@ -232,6 +231,16 @@ END:VCALENDAR`;
                       fill
                       className="object-cover"
                     />
+                    {(event.coverImage.copyright || event.coverImage.creator) && (
+                      <div className="absolute bottom-2 right-2 flex justify-end">
+                        <MediaCredit
+                          copyright={event.coverImage.copyright}
+                          creator={event.coverImage.creator}
+                          showCreatorIcon
+                          className="text-right text-white/90 drop-shadow-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -428,16 +437,35 @@ END:VCALENDAR`;
                           )}
                         </div>
                         {event.auswahlChor.image && (
-                          <Image
-                            src={event.auswahlChor.image.url}
-                            alt={
-                              event.auswahlChor.image.alt ||
-                              event.auswahlChor.name
-                            }
-                            width={deviceWidth > 768 ? 200 : 600}
-                            height={deviceWidth > 768 ? 150 : 450}
-                            className="ml-auto rounded-md object-cover *:h-24 *:w-32 md:h-auto md:w-full"
-                          />
+                          <div className="group relative ml-auto w-full shrink-0 overflow-hidden rounded-lg md:w-80 md:min-w-[320px]">
+                            <div className="relative aspect-4/3 w-full">
+                              <Image
+                                src={event.auswahlChor.image.url}
+                                alt={
+                                  event.auswahlChor.image.alt ||
+                                  event.auswahlChor.name
+                                }
+                                fill
+                                className="object-cover"
+                              />
+                              {(event.auswahlChor.image.copyright ||
+                                event.auswahlChor.image.creator) && (
+                                <div className="absolute bottom-2 right-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                  <MediaCredit
+                                    copyright={
+                                      event.auswahlChor.image.copyright
+                                    }
+                                    creator={
+                                      event.auswahlChor.image.creator
+                                    }
+                                    variant="light"
+                                    showCreatorIcon
+                                    className="text-right"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -463,15 +491,31 @@ END:VCALENDAR`;
                           )}
                         </div>
                         {event.ensemble.image && (
-                          <Image
-                            src={event.ensemble.image.url}
-                            alt={
-                              event.ensemble.image.alt || event.ensemble.name
-                            }
-                            width={deviceWidth > 768 ? 200 : 600}
-                            height={deviceWidth > 768 ? 150 : 450}
-                            className="ml-auto rounded-md object-cover *:h-24 *:w-32 md:h-auto md:w-full"
-                          />
+                          <div className="group relative ml-auto w-full shrink-0 overflow-hidden rounded-lg md:w-80 md:min-w-[320px]">
+                            <div className="relative aspect-4/3 w-full">
+                              <Image
+                                src={event.ensemble.image.url}
+                                alt={
+                                  event.ensemble.image.alt ||
+                                  event.ensemble.name
+                                }
+                                fill
+                                className="object-cover"
+                              />
+                              {(event.ensemble.image.copyright ||
+                                event.ensemble.image.creator) && (
+                                <div className="absolute bottom-2 right-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                  <MediaCredit
+                                    copyright={event.ensemble.image.copyright}
+                                    creator={event.ensemble.image.creator}
+                                    variant="light"
+                                    showCreatorIcon
+                                    className="text-right"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
