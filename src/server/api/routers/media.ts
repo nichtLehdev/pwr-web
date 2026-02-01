@@ -78,6 +78,8 @@ export const mediaRouter = createTRPCRouter({
           { alt: { contains: input.search, mode: "insensitive" } },
           { caption: { contains: input.search, mode: "insensitive" } },
           { title: { contains: input.search, mode: "insensitive" } },
+          { copyright: { contains: input.search, mode: "insensitive" } },
+          { creator: { contains: input.search, mode: "insensitive" } },
         ];
       }
 
@@ -170,6 +172,8 @@ export const mediaRouter = createTRPCRouter({
         alt: z.string().max(500).optional(),
         caption: z.string().max(1000).optional(),
         title: z.string().max(200).optional(),
+        copyright: z.string().max(500).optional(),
+        creator: z.string().max(255).optional(),
         folder: z.string().optional(),
         tags: z.string().optional(),
         isPublic: z.boolean().default(true),
@@ -201,6 +205,8 @@ export const mediaRouter = createTRPCRouter({
         alt: z.string().max(500).optional(),
         caption: z.string().max(1000).optional(),
         title: z.string().max(200).optional(),
+        copyright: z.string().max(500).optional(),
+        creator: z.string().max(255).optional(),
         folder: z.string().optional(),
         tags: z.string().optional(),
         isPublic: z.boolean().optional(),
@@ -428,6 +434,8 @@ export const mediaRouter = createTRPCRouter({
             alt: z.string().optional().nullable(),
             caption: z.string().optional().nullable(),
             title: z.string().optional().nullable(),
+            copyright: z.string().optional().nullable(),
+            creator: z.string().optional().nullable(),
             folder: z.string().optional().nullable(),
             tags: z.any().optional(),
             isPublic: z.boolean().optional(),

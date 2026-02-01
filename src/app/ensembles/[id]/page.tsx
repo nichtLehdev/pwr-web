@@ -5,6 +5,7 @@ import { api } from "@/trpc/server";
 import { getDistrictColor } from "@/lib/district-color";
 import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper";
 import PageHeader from "@/app/_components/general/page-header";
+import MediaCredit from "@/app/_components/general/media-credit";
 import {
   ClockIcon,
   GlobeIcon,
@@ -135,12 +136,20 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
 
             {/* Ensemble Image */}
             {ensemble.image?.url && (
-              <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-lg shadow-lg md:h-40 md:w-40">
-                <Image
-                  src={ensemble.image.url}
-                  alt={ensemble.name}
-                  fill
-                  className="object-cover"
+              <div className="flex shrink-0 flex-col gap-1">
+                <div className="relative h-32 w-32 overflow-hidden rounded-lg shadow-lg md:h-40 md:w-40">
+                  <Image
+                    src={ensemble.image.url}
+                    alt={ensemble.name}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <MediaCredit
+                  copyright={ensemble.image.copyright}
+                  creator={ensemble.image.creator}
+                  showCreatorIcon
+                  className="max-w-40 text-right"
                 />
               </div>
             )}

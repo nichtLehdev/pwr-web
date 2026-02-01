@@ -82,6 +82,8 @@ export default function DashboardMediaPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [newName, setNewName] = useState("");
+  const [newCopyright, setNewCopyright] = useState("");
+  const [newCreator, setNewCreator] = useState("");
   const [uploadedFile, setUploadedFile] = useState<{
     url: string;
     filename: string;
@@ -96,6 +98,8 @@ export default function DashboardMediaPage() {
   const [editAlt, setEditAlt] = useState("");
   const [editCaption, setEditCaption] = useState("");
   const [editTitle, setEditTitle] = useState("");
+  const [editCopyright, setEditCopyright] = useState("");
+  const [editCreator, setEditCreator] = useState("");
   const [editTags, setEditTags] = useState("");
   const [editIsPublic, setEditIsPublic] = useState(true);
   const [editError, setEditError] = useState("");
@@ -182,6 +186,8 @@ export default function DashboardMediaPage() {
 
   const resetUploadForm = () => {
     setNewName("");
+    setNewCopyright("");
+    setNewCreator("");
     setUploadedFile(null);
     setUploadError("");
     setIsUploading(false);
@@ -195,6 +201,8 @@ export default function DashboardMediaPage() {
     setEditAlt(media.alt ?? "");
     setEditCaption(media.caption ?? "");
     setEditTitle(media.title ?? "");
+    setEditCopyright(media.copyright ?? "");
+    setEditCreator(media.creator ?? "");
     setEditTags(typeof media.tags === "string" ? media.tags : "");
     setEditIsPublic(media.isPublic);
     setEditError("");
@@ -209,6 +217,8 @@ export default function DashboardMediaPage() {
       alt: editAlt || undefined,
       caption: editCaption || undefined,
       title: editTitle || undefined,
+      copyright: editCopyright || undefined,
+      creator: editCreator || undefined,
       tags: editTags || undefined,
       isPublic: editIsPublic,
     });
@@ -282,6 +292,8 @@ export default function DashboardMediaPage() {
       mimeType: uploadedFile.mimeType,
       size: uploadedFile.size,
       extension: uploadedFile.extension,
+      copyright: newCopyright || undefined,
+      creator: newCreator || undefined,
     });
   };
 
@@ -632,6 +644,30 @@ export default function DashboardMediaPage() {
                 />
               </div>
 
+              {/* Copyright */}
+              <div>
+                <Label>Copyright / Urheberrecht</Label>
+                <Input
+                  type="text"
+                  value={newCopyright}
+                  onChange={(e) => setNewCopyright(e.target.value)}
+                  placeholder="z. B. © 2025 Posaunenwerk"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary"
+                />
+              </div>
+
+              {/* Creator / Photographer */}
+              <div>
+                <Label>Fotograf:in / Urheber:in</Label>
+                <Input
+                  type="text"
+                  value={newCreator}
+                  onChange={(e) => setNewCreator(e.target.value)}
+                  placeholder="Name des Fotografen oder der Fotografin"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary"
+                />
+              </div>
+
               {uploadError && (
                 <p className="text-sm text-red-600">{uploadError}</p>
               )}
@@ -720,6 +756,13 @@ export default function DashboardMediaPage() {
                     {previewItem.uploadedBy &&
                       ` • ${previewItem.uploadedBy.displayName}`}
                   </p>
+                  {(previewItem.copyright || previewItem.creator) && (
+                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                      {[previewItem.copyright, previewItem.creator]
+                        .filter(Boolean)
+                        .join(" • ")}
+                    </p>
+                  )}
                 </div>
                 <span
                   className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[previewItem.status]}`}
@@ -850,6 +893,34 @@ export default function DashboardMediaPage() {
                   onChange={(e) => setEditCaption(e.target.value)}
                   rows={2}
                   placeholder="Optionale Bildunterschrift"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Copyright */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Copyright / Urheberrecht
+                </label>
+                <input
+                  type="text"
+                  value={editCopyright}
+                  onChange={(e) => setEditCopyright(e.target.value)}
+                  placeholder="z. B. © 2025 Posaunenwerk"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+
+              {/* Creator / Photographer */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Fotograf:in / Urheber:in
+                </label>
+                <input
+                  type="text"
+                  value={editCreator}
+                  onChange={(e) => setEditCreator(e.target.value)}
+                  placeholder="Name des Fotografen oder der Fotografin"
                   className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>

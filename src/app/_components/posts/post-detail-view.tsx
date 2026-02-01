@@ -8,6 +8,7 @@ import type { RouterOutputs } from "@/trpc/react";
 import { getDistrictColor } from "@/lib/district-color";
 import ImageLightbox from "./image-lightbox";
 import PostCard from "./post-card";
+import MediaCredit from "@/app/_components/general/media-credit";
 import type { FileType } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -58,6 +59,8 @@ export default function PostDetailView({
   const [lightboxImage, setLightboxImage] = useState<{
     src: string;
     alt: string;
+    copyright?: string | null;
+    creator?: string | null;
   } | null>(null);
   const { data: session } = useSession();
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
@@ -69,11 +72,17 @@ export default function PostDetailView({
     if (!container) return;
 
     const handleContainerClick = (event: Event) => {
-      const target = event.target as HTMLImageElement | null;
-      if (target && target.tagName === "IMG") {
+      const target = event.target as HTMLElement | null;
+      const img =
+        target?.tagName === "IMG"
+          ? (target as HTMLImageElement)
+          : target?.closest("figure")?.querySelector("img");
+      if (img && img.tagName === "IMG") {
         setLightboxImage({
-          src: target.getAttribute("src") || "",
-          alt: target.getAttribute("alt") || "",
+          src: img.getAttribute("src") || "",
+          alt: img.getAttribute("alt") || "",
+          copyright: img.getAttribute("data-copyright") ?? undefined,
+          creator: img.getAttribute("data-creator") ?? undefined,
         });
       }
     };
@@ -133,6 +142,17 @@ export default function PostDetailView({
               }}
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+            {(post.coverImage.copyright || post.coverImage.creator) && (
+              <div className="absolute right-4 bottom-4 z-10 flex justify-end">
+                <MediaCredit
+                  copyright={post.coverImage.copyright}
+                  creator={post.coverImage.creator}
+                  variant="light"
+                  showCreatorIcon
+                  className="text-right"
+                />
+              </div>
+            )}
           </>
         ) : (
           <div className="relative flex h-full items-center justify-center bg-gray-100 px-4 dark:bg-gray-800">
@@ -427,6 +447,8 @@ export default function PostDetailView({
         <ImageLightbox
           src={lightboxImage.src}
           alt={lightboxImage.alt}
+          copyright={lightboxImage.copyright}
+          creator={lightboxImage.creator}
           onClose={() => setLightboxImage(null)}
         />
       )}
