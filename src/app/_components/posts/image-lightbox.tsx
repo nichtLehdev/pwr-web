@@ -3,16 +3,21 @@
 import Image from "next/image";
 import { useEffect } from "react";
 import { XIcon } from "lucide-react";
+import MediaCredit from "@/app/_components/general/media-credit";
 
 interface ImageLightboxProps {
   src: string;
   alt: string;
+  copyright?: string | null;
+  creator?: string | null;
   onClose: () => void;
 }
 
 export default function ImageLightbox({
   src,
   alt,
+  copyright,
+  creator,
   onClose,
 }: ImageLightboxProps) {
   useEffect(() => {
@@ -60,12 +65,25 @@ export default function ImageLightbox({
         />
       </div>
 
-      {/* Caption */}
+      {/* Caption (alt) */}
       {alt && (
         <div className="absolute right-4 bottom-4 left-4 text-center">
           <p className="inline-block max-w-3xl rounded-lg bg-black/50 px-4 py-2 text-sm text-white backdrop-blur-sm md:text-base">
             {alt}
           </p>
+        </div>
+      )}
+
+      {/* Copyright / Creator – bottom right */}
+      {(copyright || creator) && (
+        <div className="absolute right-4 bottom-4 z-10 flex justify-end">
+          <MediaCredit
+            copyright={copyright}
+            creator={creator}
+            variant="light"
+            showCreatorIcon
+            className="text-right"
+          />
         </div>
       )}
     </div>

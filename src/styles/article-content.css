@@ -152,6 +152,38 @@
     0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Image with credit (figure + figcaption) */
+.article-content-figure {
+  position: relative !important;
+  display: inline-block !important;
+  max-width: 100% !important;
+  margin: 2rem auto !important;
+}
+
+.article-content-figure img {
+  margin: 0 !important;
+}
+
+.article-content-figcaption {
+  position: absolute !important;
+  bottom: 0.5rem !important;
+  right: 0.5rem !important;
+  max-width: 85% !important;
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+  line-height: 1.3 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  border-radius: 0.25rem !important;
+  text-align: right !important;
+  pointer-events: none !important;
+}
+
+:root.dark .article-content-figcaption {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
 /* Blockquotes */
 .article-content blockquote {
   border-left: 4px solid #faa619 !important;

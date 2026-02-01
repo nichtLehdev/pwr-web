@@ -48,6 +48,82 @@ async function addContentHtmlToMany<T extends { content: string }>(
   return await Promise.all(posts.map(addContentHtml));
 }
 
+const MEDIA_URL_PATTERN = /\/api\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/;
+
+/**
+ * Enriches post content HTML with media credits: finds img tags whose src
+ * points to our media, looks up copyright/creator, and wraps them in figure
+ * with a figcaption credit (and adds data-copyright, data-creator for the lightbox).
+ */
+async function enrichContentHtmlWithMediaCredits(
+  html: string,
+  db: {
+    media: {
+      findMany: (args: {
+        where: { url: { in: string[] } };
+        select: { url: true; copyright: true; creator: true };
+      }) => Promise<
+        { url: string; copyright: string | null; creator: string | null }[]
+      >;
+    };
+  },
+): Promise<string> {
+  const imgTagRegex = /<img\s+([^>]*?)>/gi;
+  const srcRegex = /src=["']([^"']+)["']/i;
+  const urlsFromHtml: string[] = [];
+  let match: RegExpExecArray | null;
+  const imgTags: { full: string; src: string }[] = [];
+  while ((match = imgTagRegex.exec(html)) !== null) {
+    const full = match[0];
+    const attrs = match[1] ?? "";
+    const srcMatch = attrs.match(srcRegex);
+    const src = srcMatch?.[1] ?? "";
+    if (src && MEDIA_URL_PATTERN.test(src)) {
+      urlsFromHtml.push(src);
+      imgTags.push({ full, src });
+    }
+  }
+  const uniqueUrls = [...new Set(urlsFromHtml)];
+  if (uniqueUrls.length === 0) return html;
+
+  const mediaList = await db.media.findMany({
+    where: { url: { in: uniqueUrls } },
+    select: { url: true, copyright: true, creator: true },
+  });
+  const mediaByUrl = new Map(
+    mediaList.map((m) => [
+      m.url,
+      { copyright: m.copyright, creator: m.creator },
+    ]),
+  );
+
+  const escapeAttr = (s: string | null) =>
+    (s ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  let result = html;
+  for (const { full, src } of imgTags) {
+    const meta = mediaByUrl.get(src);
+    const hasCredit = meta && (meta.copyright || meta.creator);
+    if (!hasCredit) continue;
+
+    const creditParts = [meta!.copyright, meta!.creator].filter(Boolean);
+    const creditText = (meta!.creator ? "📷 " : "") + creditParts.join(" • ");
+    const newImg = full.replace(
+      /\s*\/?\s*>$/,
+      ` data-copyright="${escapeAttr(meta!.copyright)}" data-creator="${escapeAttr(meta!.creator)}">`,
+    );
+    const figure = `<figure class="article-content-figure">${newImg}<figcaption class="article-content-figcaption">${escapeHtml(creditText)}</figcaption></figure>`;
+    result = result.replace(full, figure);
+  }
+  return result;
+}
+
 export const postsRouter = createTRPCRouter({
   getAll: publicProcedure
     .input(
@@ -207,8 +283,13 @@ export const postsRouter = createTRPCRouter({
           : [];
 
       const postWithHtml = await addContentHtml(rawPost);
+      const contentHtml = await enrichContentHtmlWithMediaCredits(
+        postWithHtml.contentHtml,
+        ctx.db,
+      );
       return {
         ...postWithHtml,
+        contentHtml,
         attachedDownloads,
       };
     }),

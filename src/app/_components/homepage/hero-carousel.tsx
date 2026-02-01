@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import MediaCredit from "@/app/_components/general/media-credit";
 
 interface CarouselItem {
   id: string;
@@ -11,6 +12,8 @@ interface CarouselItem {
     url: string;
     alt: string | null;
     name: string;
+    copyright?: string | null;
+    creator?: string | null;
   };
   title: string | null;
   subtitle: string | null;
@@ -83,7 +86,7 @@ export default function HeroCarousel({
               priority={index === 0}
             />
             {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/50" />
+            <div className="absolute inset-0 bg-linear-to-b from-black/30 to-black/50" />
           </div>
         ))}
       </div>
@@ -147,6 +150,19 @@ export default function HeroCarousel({
               aria-label={`Gehe zu Slide ${index + 1}`}
             />
           ))}
+        </div>
+      )}
+
+      {/* Media credit for current slide – bottom right */}
+      {(currentItem.media.copyright || currentItem.media.creator) && (
+        <div className="absolute right-4 bottom-4 z-20 flex justify-end md:right-8">
+          <MediaCredit
+            copyright={currentItem.media.copyright}
+            creator={currentItem.media.creator}
+            variant="light"
+            showCreatorIcon
+            className="text-right"
+          />
         </div>
       )}
     </section>
