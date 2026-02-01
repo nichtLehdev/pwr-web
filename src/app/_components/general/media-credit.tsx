@@ -41,11 +41,7 @@ export default function MediaCredit({
       {creator && (
         <span className="inline-flex items-center gap-1">
           {showCreatorIcon && (
-            <Camera
-              size={14}
-              className="shrink-0 opacity-80"
-              aria-hidden
-            />
+            <Camera size={14} className="shrink-0 opacity-80" aria-hidden />
           )}
           {creator}
         </span>

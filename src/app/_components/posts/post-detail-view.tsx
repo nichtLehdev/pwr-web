@@ -143,7 +143,7 @@ export default function PostDetailView({
             />
             <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
             {(post.coverImage.copyright || post.coverImage.creator) && (
-              <div className="absolute bottom-4 right-4 z-10 flex justify-end">
+              <div className="absolute right-4 bottom-4 z-10 flex justify-end">
                 <MediaCredit
                   copyright={post.coverImage.copyright}
                   creator={post.coverImage.creator}

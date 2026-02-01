@@ -48,8 +48,7 @@ async function addContentHtmlToMany<T extends { content: string }>(
   return await Promise.all(posts.map(addContentHtml));
 }
 
-const MEDIA_URL_PATTERN =
-  /\/api\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/;
+const MEDIA_URL_PATTERN = /\/api\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/;
 
 /**
  * Enriches post content HTML with media credits: finds img tags whose src
@@ -58,7 +57,15 @@ const MEDIA_URL_PATTERN =
  */
 async function enrichContentHtmlWithMediaCredits(
   html: string,
-  db: { media: { findMany: (args: unknown) => Promise<{ url: string; copyright: string | null; creator: string | null }[]> } },
+  db: {
+    media: {
+      findMany: (
+        args: unknown,
+      ) => Promise<
+        { url: string; copyright: string | null; creator: string | null }[]
+      >;
+    };
+  },
 ): Promise<string> {
   const imgTagRegex = /<img\s+([^>]*?)>/gi;
   const srcRegex = /src=["']([^"']+)["']/i;
@@ -83,7 +90,10 @@ async function enrichContentHtmlWithMediaCredits(
     select: { url: true, copyright: true, creator: true },
   });
   const mediaByUrl = new Map(
-    mediaList.map((m) => [m.url, { copyright: m.copyright, creator: m.creator }]),
+    mediaList.map((m) => [
+      m.url,
+      { copyright: m.copyright, creator: m.creator },
+    ]),
   );
 
   const escapeAttr = (s: string | null) =>
@@ -102,8 +112,7 @@ async function enrichContentHtmlWithMediaCredits(
     if (!hasCredit) continue;
 
     const creditParts = [meta!.copyright, meta!.creator].filter(Boolean);
-    const creditText =
-      (meta!.creator ? "📷 " : "") + creditParts.join(" • ");
+    const creditText = (meta!.creator ? "📷 " : "") + creditParts.join(" • ");
     const newImg = full.replace(
       /\s*\/?\s*>$/,
       ` data-copyright="${escapeAttr(meta!.copyright)}" data-creator="${escapeAttr(meta!.creator)}">`,

@@ -76,7 +76,7 @@ export default function ImageLightbox({
 
       {/* Copyright / Creator – bottom right */}
       {(copyright || creator) && (
-        <div className="absolute bottom-4 right-4 z-10 flex justify-end">
+        <div className="absolute right-4 bottom-4 z-10 flex justify-end">
           <MediaCredit
             copyright={copyright}
             creator={creator}

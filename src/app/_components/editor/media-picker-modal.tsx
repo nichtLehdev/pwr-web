@@ -485,7 +485,7 @@ export default function MediaPickerModal({
                     className={`dark:border-dark-border cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-colors ${
                       isDragging
                         ? "border-primary bg-primary/5 dark:bg-primary/10"
-                        : "border-gray-300 hover:border-primary dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                        : "hover:border-primary dark:hover:bg-dark-background-secondary border-gray-300 hover:bg-gray-50"
                     }`}
                   >
                     <ArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />

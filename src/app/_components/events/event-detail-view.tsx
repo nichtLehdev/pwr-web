@@ -231,8 +231,9 @@ END:VCALENDAR`;
                       fill
                       className="object-cover"
                     />
-                    {(event.coverImage.copyright || event.coverImage.creator) && (
-                      <div className="absolute bottom-2 right-2 flex justify-end">
+                    {(event.coverImage.copyright ||
+                      event.coverImage.creator) && (
+                      <div className="absolute right-2 bottom-2 flex justify-end">
                         <MediaCredit
                           copyright={event.coverImage.copyright}
                           creator={event.coverImage.creator}
@@ -450,14 +451,12 @@ END:VCALENDAR`;
                               />
                               {(event.auswahlChor.image.copyright ||
                                 event.auswahlChor.image.creator) && (
-                                <div className="absolute bottom-2 right-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                <div className="absolute right-2 bottom-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                   <MediaCredit
                                     copyright={
                                       event.auswahlChor.image.copyright
                                     }
-                                    creator={
-                                      event.auswahlChor.image.creator
-                                    }
+                                    creator={event.auswahlChor.image.creator}
                                     variant="light"
                                     showCreatorIcon
                                     className="text-right"
@@ -504,7 +503,7 @@ END:VCALENDAR`;
                               />
                               {(event.ensemble.image.copyright ||
                                 event.ensemble.image.creator) && (
-                                <div className="absolute bottom-2 right-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                <div className="absolute right-2 bottom-2 flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                   <MediaCredit
                                     copyright={event.ensemble.image.copyright}
                                     creator={event.ensemble.image.creator}

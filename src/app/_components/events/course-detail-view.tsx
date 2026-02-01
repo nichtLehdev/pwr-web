@@ -355,7 +355,7 @@ export default function CourseDetailView({
                       className="object-cover"
                     />
                     {(course.image.copyright || course.image.creator) && (
-                      <div className="absolute bottom-2 right-2 flex justify-end">
+                      <div className="absolute right-2 bottom-2 flex justify-end">
                         <MediaCredit
                           copyright={course.image.copyright}
                           creator={course.image.creator}
