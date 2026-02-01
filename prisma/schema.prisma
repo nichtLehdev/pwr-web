@@ -965,6 +965,8 @@ model Media {
   alt     String? // Alt text for images
   caption String? // Caption/description
   title   String? // Title
+  copyright String? // Optional copyright notice
+  creator   String? // Optional photographer/creator name
 
   // Organization
   folder String? // Folder path (e.g., "events/2025", "news")
