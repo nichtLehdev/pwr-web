@@ -11,6 +11,8 @@ import { BetaBanner } from "./_components/ui/banner";
 import { BannerProvider } from "./_components/ui/banner-context";
 import { MainContent } from "./_components/ui/main-content";
 import { PageViewTracker } from "./_components/stats/page-view-tracker";
+import { TrackingConsentProvider } from "./_components/stats/tracking-consent-context";
+import { TrackingConsentBanner } from "./_components/stats/tracking-consent-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -72,13 +74,16 @@ export default function RootLayout({
           <ToastProvider>
             <TRPCReactProvider>
               <ThemeSync />
-              <PageViewTracker />
-              <BannerProvider>
-                <BetaBanner />
-                <Navigation />
-                <MainContent>{children}</MainContent>
-                <Footer />
-              </BannerProvider>
+              <TrackingConsentProvider>
+                <TrackingConsentBanner />
+                <PageViewTracker />
+                <BannerProvider>
+                  <BetaBanner />
+                  <Navigation />
+                  <MainContent>{children}</MainContent>
+                  <Footer />
+                </BannerProvider>
+              </TrackingConsentProvider>
               <Toaster />
             </TRPCReactProvider>
           </ToastProvider>
