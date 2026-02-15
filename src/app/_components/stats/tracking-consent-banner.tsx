@@ -9,7 +9,10 @@ export function TrackingConsentBanner() {
   const [mounted, setMounted] = useState(false);
   const ctx = useTrackingConsent();
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   if (!ctx) return null;
   const { setConsent, hasChosen } = ctx;
