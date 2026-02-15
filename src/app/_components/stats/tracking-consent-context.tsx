@@ -21,19 +21,14 @@ interface TrackingConsentContextValue {
   hasChosen: boolean;
 }
 
-const TrackingConsentContext = createContext<TrackingConsentContextValue | null>(
-  null,
-);
+const TrackingConsentContext =
+  createContext<TrackingConsentContextValue | null>(null);
 
 function readStored(): TrackingConsent | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (
-      raw === "none" ||
-      raw === "anonymous" ||
-      raw === "anonymous_and_user"
-    ) {
+    if (raw === "none" || raw === "anonymous" || raw === "anonymous_and_user") {
       return raw;
     }
     return null;

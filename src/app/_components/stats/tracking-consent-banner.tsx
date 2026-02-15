@@ -19,9 +19,9 @@ export function TrackingConsentBanner() {
       <div
         role="dialog"
         aria-label="Tracking-Einstellung"
-        className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-[env(safe-area-inset-bottom)] sm:p-6"
+        className="fixed right-0 bottom-0 left-0 z-50 p-4 pb-[env(safe-area-inset-bottom)] sm:p-6"
       >
-        <div className="dark:bg-dark-surface dark:border-dark-border mx-auto max-w-2xl rounded-t-2xl border border-gray-200 border-b-0 bg-white shadow-2xl shadow-black/25">
+        <div className="dark:bg-dark-surface dark:border-dark-border mx-auto max-w-2xl rounded-t-2xl border border-b-0 border-gray-200 bg-white shadow-2xl shadow-black/25">
           <div className="flex flex-col gap-5 p-5 sm:gap-6 sm:p-6">
             <div className="flex items-start gap-3">
               <div className="bg-primary/15 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
@@ -32,9 +32,10 @@ export function TrackingConsentBanner() {
                   Nutzungsstatistik
                 </h3>
                 <p className="dark:text-dark-muted mt-1 text-sm text-gray-600">
-                  Wir erfassen anonym die Nutzung unserer Webseite (Seitenaufrufe),
-                  um sie zu verbessern. Es werden keine personenbezogenen Daten
-                  gespeichert, sofern Sie es nicht erlauben.
+                  Wir erfassen anonym die Nutzung unserer Webseite
+                  (Seitenaufrufe), um sie zu verbessern. Es werden keine
+                  personenbezogenen Daten gespeichert, sofern Sie es nicht
+                  erlauben.
                 </p>
                 <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
                   Sie können die Erfassung ablehnen oder zulassen, dass Aufrufe

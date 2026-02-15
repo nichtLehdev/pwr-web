@@ -16,18 +16,29 @@ export function PageViewTracker() {
   const { consent } = useTrackingConsent() ?? { consent: null };
   const { data: session } = useSession();
   const recordView = api.stats.recordView.useMutation();
-  const lastRecorded = useRef<{ path: string; section: string | null; at: number } | null>(null);
+  const lastRecorded = useRef<{
+    path: string;
+    section: string | null;
+    at: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!pathname || consent === "none" || consent === null) return;
     const now = Date.now();
     const last = lastRecorded.current;
-    if (last && last.path === pathname && last.section === null && now - last.at < THROTTLE_MS) {
+    if (
+      last &&
+      last.path === pathname &&
+      last.section === null &&
+      now - last.at < THROTTLE_MS
+    ) {
       return;
     }
     lastRecorded.current = { path: pathname, section: null, at: now };
     const userId =
-      consent === "anonymous_and_user" && session?.user?.id ? session.user.id : undefined;
+      consent === "anonymous_and_user" && session?.user?.id
+        ? session.user.id
+        : undefined;
     recordView.mutate({ path: pathname, consent, userId });
   }, [pathname, consent, session?.user?.id, recordView.mutate]);
 
@@ -51,7 +62,9 @@ export function useRecordSection(section: string, path?: string) {
     if (!p || !section || recorded.current) return;
     recorded.current = true;
     const userId =
-      consent === "anonymous_and_user" && session?.user?.id ? session.user.id : undefined;
+      consent === "anonymous_and_user" && session?.user?.id
+        ? session.user.id
+        : undefined;
     recordView.mutate({ path: p, section, consent, userId });
   }, [path, pathname, section, consent, session?.user?.id, recordView.mutate]);
 }

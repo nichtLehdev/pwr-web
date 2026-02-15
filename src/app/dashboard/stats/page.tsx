@@ -105,15 +105,15 @@ export default function StatsPage() {
           Übersicht über Inhalte und Nutzung.
         </p>
 
-        {(statsLoading || siteStatsLoading) ? (
+        {statsLoading || siteStatsLoading ? (
           <div className="flex justify-center py-12">
             <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
           </div>
         ) : stats ? (
           <div className="space-y-8">
             {siteStats && (
-              <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
-                <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
                   <h2 className="dark:text-dark-text font-semibold text-gray-900">
                     Übersicht: Inhalte & Nutzung
                   </h2>
@@ -160,8 +160,8 @@ export default function StatsPage() {
                     value={siteStats.locationsCount}
                   />
                 </div>
-                <div className="border-t border-gray-200 px-4 pb-4 dark:border-dark-border sm:px-6 sm:pb-5">
-                  <h3 className="dark:text-dark-muted mb-3 mt-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <div className="dark:border-dark-border border-t border-gray-200 px-4 pb-4 sm:px-6 sm:pb-5">
+                  <h3 className="dark:text-dark-muted mt-4 mb-3 text-xs font-semibold tracking-wider text-gray-500 uppercase">
                     Neu in den letzten 30 Tagen
                   </h3>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -190,8 +190,8 @@ export default function StatsPage() {
               </div>
             )}
 
-            <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
-              <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+            <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
+              <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="text-primary h-5 w-5" />
                   <h2 className="dark:text-dark-text font-semibold text-gray-900">
@@ -200,33 +200,33 @@ export default function StatsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 sm:px-6 sm:py-5">
-                <div className="dark:bg-dark-background rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-border">
+                <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
                   <p className="dark:text-dark-muted text-sm text-gray-500">
                     Heute
                   </p>
-                  <p className="dark:text-dark-text mt-1 text-2xl font-bold tabular-nums text-gray-900">
+                  <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
                     {stats.viewsToday.toLocaleString("de-DE")}
                   </p>
                 </div>
-                <div className="dark:bg-dark-background rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-border">
+                <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
                   <p className="dark:text-dark-muted text-sm text-gray-500">
                     Letzte 7 Tage
                   </p>
-                  <p className="dark:text-dark-text mt-1 text-2xl font-bold tabular-nums text-gray-900">
+                  <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
                     {stats.viewsLast7Days.toLocaleString("de-DE")}
                   </p>
                 </div>
-                <div className="dark:bg-dark-background rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-border">
+                <div className="dark:bg-dark-background dark:border-dark-border rounded-lg border border-gray-100 bg-gray-50 p-4">
                   <p className="dark:text-dark-muted text-sm text-gray-500">
                     Letzte 30 Tage
                   </p>
-                  <p className="dark:text-dark-text mt-1 text-2xl font-bold tabular-nums text-gray-900">
+                  <p className="dark:text-dark-text mt-1 text-2xl font-bold text-gray-900 tabular-nums">
                     {stats.viewsLast30Days.toLocaleString("de-DE")}
                   </p>
                 </div>
               </div>
               {stats.viewsWithUser > 0 && (
-                <div className="border-t border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+                <div className="dark:border-dark-border border-t border-gray-200 px-4 py-3 sm:px-6">
                   <p className="dark:text-dark-muted text-sm text-gray-500">
                     davon mit Konto zugeordnet (gesamt):{" "}
                     <span className="dark:text-dark-text font-medium text-gray-700">
@@ -238,8 +238,8 @@ export default function StatsPage() {
             </div>
 
             {stats.byPath.length > 0 && (
-              <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
-                <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <div className="flex items-center gap-2">
@@ -249,17 +249,18 @@ export default function StatsPage() {
                         </h2>
                       </div>
                       <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                        Strg+Klick bzw. Cmd+Klick auf einen Pfad öffnet die Seite
+                        Strg+Klick bzw. Cmd+Klick auf einen Pfad öffnet die
+                        Seite
                       </p>
                     </div>
-                    <div className="flex rounded-lg border border-gray-200 dark:border-dark-border p-0.5">
+                    <div className="dark:border-dark-border flex rounded-lg border border-gray-200 p-0.5">
                       <button
                         type="button"
                         onClick={() => setPathPeriod("today")}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "today"
                             ? "bg-primary text-white"
-                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                            : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
                         }`}
                       >
                         Heute
@@ -270,7 +271,7 @@ export default function StatsPage() {
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "last30Days"
                             ? "bg-primary text-white"
-                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                            : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
                         }`}
                       >
                         30 Tage
@@ -281,7 +282,7 @@ export default function StatsPage() {
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "overall"
                             ? "bg-primary text-white"
-                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                            : "dark:text-dark-muted dark:hover:bg-dark-background text-gray-600 hover:bg-gray-100"
                         }`}
                       >
                         Gesamt
@@ -290,24 +291,24 @@ export default function StatsPage() {
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                  <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
                     <thead>
                       <tr>
-                        <th className="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Pfad
                         </th>
-                        <th className="bg-gray-50 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Aufrufe
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
+                    <tbody className="dark:divide-dark-border divide-y divide-gray-200">
                       {(showAllPaths
                         ? stats.byPath
                         : stats.byPath.slice(0, 5)
                       ).map((row) => (
                         <tr key={row.path}>
-                          <td className="dark:text-dark-text whitespace-nowrap px-4 py-3 font-mono text-sm text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text px-4 py-3 font-mono text-sm whitespace-nowrap text-gray-900 sm:px-6">
                             <Link
                               href={row.path || "/"}
                               onClick={(e) => {
@@ -319,10 +320,13 @@ export default function StatsPage() {
                               className="hover:text-primary dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
                             >
                               {row.path || "/"}
-                              <ExternalLink className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+                              <ExternalLink
+                                className="h-3 w-3 shrink-0 opacity-60"
+                                aria-hidden
+                              />
                             </Link>
                           </td>
-                          <td className="dark:text-dark-text relative whitespace-nowrap px-4 py-3 text-right tabular-nums text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text relative px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
                             <PathCountWithPopup
                               count={row.count}
                               path={row.path}
@@ -337,7 +341,7 @@ export default function StatsPage() {
                   </table>
                 </div>
                 {stats.byPath.length > 5 && (
-                  <div className="border-t border-gray-200 px-4 py-2 dark:border-dark-border sm:px-6">
+                  <div className="dark:border-dark-border border-t border-gray-200 px-4 py-2 sm:px-6">
                     <button
                       type="button"
                       onClick={() => setShowAllPaths((v) => !v)}
@@ -353,8 +357,8 @@ export default function StatsPage() {
             )}
 
             {stats.bySection.length > 0 && (
-              <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
-                <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
                   <div className="flex items-center gap-2">
                     <Layout className="text-primary h-5 w-5" />
                     <h2 className="dark:text-dark-text font-semibold text-gray-900">
@@ -363,24 +367,24 @@ export default function StatsPage() {
                   </div>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                  <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
                     <thead>
                       <tr>
-                        <th className="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Bereich
                         </th>
-                        <th className="bg-gray-50 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Aufrufe
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
+                    <tbody className="dark:divide-dark-border divide-y divide-gray-200">
                       {stats.bySection.map((row) => (
                         <tr key={row.section ?? ""}>
-                          <td className="dark:text-dark-text whitespace-nowrap px-4 py-3 text-sm text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text px-4 py-3 text-sm whitespace-nowrap text-gray-900 sm:px-6">
                             {row.section}
                           </td>
-                          <td className="dark:text-dark-text whitespace-nowrap px-4 py-3 text-right tabular-nums text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
                             {row.count.toLocaleString("de-DE")}
                           </td>
                         </tr>
@@ -392,8 +396,8 @@ export default function StatsPage() {
             )}
 
             {stats.recentDays.length > 0 && (
-              <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
-                <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
+              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-xl border border-gray-200 bg-white">
+                <div className="dark:border-dark-border border-b border-gray-200 px-4 py-3 sm:px-6">
                   <div className="flex items-center gap-2">
                     <Calendar className="text-primary h-5 w-5" />
                     <h2 className="dark:text-dark-text font-semibold text-gray-900">
@@ -434,28 +438,38 @@ export default function StatsPage() {
                         </defs>
                         <CartesianGrid
                           strokeDasharray="3 3"
-                          stroke={isDark ? CHART_GRID_STROKE_DARK : CHART_GRID_STROKE_LIGHT}
+                          stroke={
+                            isDark
+                              ? CHART_GRID_STROKE_DARK
+                              : CHART_GRID_STROKE_LIGHT
+                          }
                           vertical={false}
                         />
                         <XAxis
                           dataKey="date"
                           tick={{
                             fontSize: 12,
-                            fill: isDark ? CHART_AXIS_TICK_DARK : CHART_AXIS_TICK_LIGHT,
+                            fill: isDark
+                              ? CHART_AXIS_TICK_DARK
+                              : CHART_AXIS_TICK_LIGHT,
                           }}
                           tickFormatter={(value: string) => {
                             const [y, m, d] = value.split("-");
                             return `${d}.${m}`;
                           }}
                           axisLine={{
-                            stroke: isDark ? CHART_GRID_STROKE_DARK : CHART_GRID_STROKE_LIGHT,
+                            stroke: isDark
+                              ? CHART_GRID_STROKE_DARK
+                              : CHART_GRID_STROKE_LIGHT,
                           }}
                           tickLine={false}
                         />
                         <YAxis
                           tick={{
                             fontSize: 12,
-                            fill: isDark ? CHART_AXIS_TICK_DARK : CHART_AXIS_TICK_LIGHT,
+                            fill: isDark
+                              ? CHART_AXIS_TICK_DARK
+                              : CHART_AXIS_TICK_LIGHT,
                           }}
                           axisLine={false}
                           tickLine={false}
@@ -469,7 +483,8 @@ export default function StatsPage() {
                               : "1px solid #e5e7eb",
                             backgroundColor: isDark ? "#252b36" : "#ffffff",
                             color: isDark ? "#e4e6eb" : "#111827",
-                            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+                            boxShadow:
+                              "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
                           }}
                           content={(props) => (
                             <ChartDayTooltipContent
@@ -490,25 +505,25 @@ export default function StatsPage() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="overflow-x-auto border-t border-gray-200 dark:border-dark-border">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                <div className="dark:border-dark-border overflow-x-auto border-t border-gray-200">
+                  <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
                     <thead>
                       <tr>
-                        <th className="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Datum
                         </th>
-                        <th className="bg-gray-50 px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-600 dark:bg-dark-surface dark:text-dark-text sm:px-6">
+                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
                           Aufrufe
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
+                    <tbody className="dark:divide-dark-border divide-y divide-gray-200">
                       {stats.recentDays.map((row) => (
                         <tr key={row.date}>
-                          <td className="dark:text-dark-text whitespace-nowrap px-4 py-3 text-sm text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text px-4 py-3 text-sm whitespace-nowrap text-gray-900 sm:px-6">
                             {row.date}
                           </td>
-                          <td className="dark:text-dark-text relative whitespace-nowrap px-4 py-3 text-right tabular-nums text-gray-900 sm:px-6">
+                          <td className="dark:text-dark-text relative px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
                             <PathCountWithPopup
                               count={row.count}
                               path={row.date}
@@ -563,8 +578,7 @@ function ChartDayTooltipContent({
   const value = payload[0]?.value ?? 0;
   const details = dayVisitorDetails?.[label];
   const hasDetails =
-    details &&
-    (details.topVisitors.length > 0 || details.otherViews > 0);
+    details && (details.topVisitors.length > 0 || details.otherViews > 0);
 
   const bg = isDark ? "#252b36" : "#ffffff";
   const color = isDark ? "#e4e6eb" : "#111827";
@@ -588,7 +602,7 @@ function ChartDayTooltipContent({
       {hasDetails && details && (
         <>
           <p
-            className="mt-2 text-xs font-medium uppercase tracking-wider"
+            className="mt-2 text-xs font-medium tracking-wider uppercase"
             style={{ color: muted }}
           >
             Mit Konto zugeordnet
@@ -612,7 +626,9 @@ function ChartDayTooltipContent({
             >
               {details.otherViews.toLocaleString("de-DE")} Aufrufe von{" "}
               {details.otherUsers}{" "}
-              {details.otherUsers === 1 ? "weiterem Nutzer" : "weiteren Nutzern"}
+              {details.otherUsers === 1
+                ? "weiterem Nutzer"
+                : "weiteren Nutzern"}
             </p>
           )}
         </>
@@ -635,8 +651,7 @@ function PathCountWithPopup({
 }) {
   const hasDetails =
     visitorDetails &&
-    (visitorDetails.topVisitors.length > 0 ||
-      visitorDetails.otherViews > 0);
+    (visitorDetails.topVisitors.length > 0 || visitorDetails.otherViews > 0);
 
   return (
     <span className="group relative inline-block">
@@ -652,9 +667,9 @@ function PathCountWithPopup({
       {hasDetails && visitorDetails && (
         <span
           role="tooltip"
-          className="dark:bg-dark-surface dark:border-dark-border pointer-events-none absolute bottom-full right-0 z-50 mb-1 hidden w-56 rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-3 text-left shadow-lg group-hover:block"
+          className="dark:bg-dark-surface dark:border-dark-border pointer-events-none absolute right-0 bottom-full z-50 mb-1 hidden w-56 rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-3 text-left shadow-lg group-hover:block"
         >
-          <p className="dark:text-dark-muted mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+          <p className="dark:text-dark-muted mb-2 text-xs font-medium tracking-wider text-gray-500 uppercase">
             Mit Konto zugeordnet
           </p>
           <ul className="space-y-1">
@@ -673,10 +688,12 @@ function PathCountWithPopup({
             ))}
           </ul>
           {visitorDetails.otherViews > 0 && (
-            <p className="dark:text-dark-muted mt-2 border-t border-gray-100 pt-2 text-sm text-gray-500 dark:border-dark-border">
+            <p className="dark:text-dark-muted dark:border-dark-border mt-2 border-t border-gray-100 pt-2 text-sm text-gray-500">
               {visitorDetails.otherViews.toLocaleString("de-DE")} Aufrufe von{" "}
               {visitorDetails.otherUsers}{" "}
-              {visitorDetails.otherUsers === 1 ? "weiterem Nutzer" : "weiteren Nutzern"}
+              {visitorDetails.otherUsers === 1
+                ? "weiterem Nutzer"
+                : "weiteren Nutzern"}
             </p>
           )}
         </span>
@@ -695,9 +712,9 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="dark:bg-dark-background flex flex-col gap-1 rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-dark-border">
+    <div className="dark:bg-dark-background dark:border-dark-border flex flex-col gap-1 rounded-lg border border-gray-100 bg-gray-50 p-3">
       <span className="text-primary flex items-center gap-2">{icon}</span>
-      <p className="dark:text-dark-text text-xl font-semibold tabular-nums text-gray-900">
+      <p className="dark:text-dark-text text-xl font-semibold text-gray-900 tabular-nums">
         {value.toLocaleString("de-DE")}
       </p>
       <p className="dark:text-dark-muted text-xs text-gray-500">{label}</p>

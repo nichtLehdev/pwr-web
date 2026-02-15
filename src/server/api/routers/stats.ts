@@ -429,7 +429,12 @@ export const statsRouter = createTRPCRouter({
       const key = (uid: string, p: string) => `${uid}${SEP}${p}`;
       const counts = new Map<
         string,
-        { count: number; lastViewedAt: Date; userDisplayName: string; userEmail: string }
+        {
+          count: number;
+          lastViewedAt: Date;
+          userDisplayName: string;
+          userEmail: string;
+        }
       >();
       for (const v of views) {
         if (!v.userId || !v.user) continue;

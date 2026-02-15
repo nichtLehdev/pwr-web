@@ -13,11 +13,7 @@ export function TrackingConsentLink({
   if (!ctx) return null;
 
   return (
-    <button
-      type="button"
-      onClick={ctx.clearConsent}
-      className={className}
-    >
+    <button type="button" onClick={ctx.clearConsent} className={className}>
       {children}
     </button>
   );
