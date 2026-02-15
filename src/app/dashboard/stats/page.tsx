@@ -453,15 +453,18 @@ export default function StatsPage() {
                         />
                         <XAxis
                           dataKey="date"
+                          interval={0}
                           tick={{
-                            fontSize: 12,
+                            fontSize: 10,
                             fill: isDark
                               ? CHART_AXIS_TICK_DARK
                               : CHART_AXIS_TICK_LIGHT,
                           }}
                           tickFormatter={(value: string) => {
-                            const [, m, d] = value.split("-");
-                            return `${d}.${m}`;
+                            const parts = value.split("-");
+                            const m = parts[1];
+                            const d = parts[2];
+                            return m && d ? `${d}.${m}` : value;
                           }}
                           axisLine={{
                             stroke: isDark
@@ -516,38 +519,6 @@ export default function StatsPage() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                </div>
-                <div className="dark:border-dark-border overflow-x-auto border-t border-gray-200">
-                  <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-                    <thead>
-                      <tr>
-                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                          Datum
-                        </th>
-                        <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                          Aufrufe
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="dark:divide-dark-border divide-y divide-gray-200">
-                      {stats.recentDays.map((row) => (
-                        <tr key={row.date}>
-                          <td className="dark:text-dark-text px-4 py-3 text-sm whitespace-nowrap text-gray-900 sm:px-6">
-                            {row.date}
-                          </td>
-                          <td className="dark:text-dark-text relative px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
-                            <PathCountWithPopup
-                              count={row.count}
-                              path={row.date}
-                              visitorDetails={
-                                stats.dayVisitorDetails?.[row.date]
-                              }
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               </div>
             )}
@@ -608,7 +579,10 @@ function ChartDayTooltipContent({
       }}
     >
       <p className="font-medium">Datum: {label}</p>
-      <p className="text-sm" style={{ color: muted }}>
+      <p
+        className="text-sm font-medium"
+        style={{ color: "var(--color-primary)" }}
+      >
         Aufrufe: {value.toLocaleString("de-DE")}
       </p>
       {hasDetails && details && (
