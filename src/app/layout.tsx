@@ -10,6 +10,7 @@ import { ToastProvider, Toaster } from "./_components/ui/toast";
 import { BetaBanner } from "./_components/ui/banner";
 import { BannerProvider } from "./_components/ui/banner-context";
 import { MainContent } from "./_components/ui/main-content";
+import { PageViewTracker } from "./_components/stats/page-view-tracker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -71,6 +72,7 @@ export default function RootLayout({
           <ToastProvider>
             <TRPCReactProvider>
               <ThemeSync />
+              <PageViewTracker />
               <BannerProvider>
                 <BetaBanner />
                 <Navigation />

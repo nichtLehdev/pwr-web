@@ -1032,3 +1032,16 @@ model HomepageCarouselItem {
   @@index([sortOrder])
   @@index([isActive])
 }
+
+// Anonymous page/section views for statistics (no user id, no IP)
+model PageView {
+  id        String   @id @default(uuid())
+  path      String   // e.g. "/", "/aktuelles", "/termine"
+  section   String?  // optional: "hero", "footer", "sidebar", etc.
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([section])
+  @@index([createdAt])
+  @@map("page_view")
+}
