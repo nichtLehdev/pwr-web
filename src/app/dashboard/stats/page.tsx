@@ -50,9 +50,6 @@ export default function StatsPage() {
     "today" | "last30Days" | "overall"
   >("last30Days");
   const [showAllPaths, setShowAllPaths] = useState(false);
-  useEffect(() => {
-    setShowAllPaths(false);
-  }, [pathPeriod]);
   const { data: stats, isLoading: statsLoading } = api.stats.getStats.useQuery(
     { pathPeriod },
     { enabled: !!canView },
@@ -256,7 +253,10 @@ export default function StatsPage() {
                     <div className="dark:border-dark-border flex rounded-lg border border-gray-200 p-0.5">
                       <button
                         type="button"
-                        onClick={() => setPathPeriod("today")}
+                        onClick={() => {
+                          setPathPeriod("today");
+                          setShowAllPaths(false);
+                        }}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "today"
                             ? "bg-primary text-white"
@@ -267,7 +267,10 @@ export default function StatsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPathPeriod("last30Days")}
+                        onClick={() => {
+                          setPathPeriod("last30Days");
+                          setShowAllPaths(false);
+                        }}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "last30Days"
                             ? "bg-primary text-white"
@@ -278,7 +281,10 @@ export default function StatsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setPathPeriod("overall")}
+                        onClick={() => {
+                          setPathPeriod("overall");
+                          setShowAllPaths(false);
+                        }}
                         className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
                           pathPeriod === "overall"
                             ? "bg-primary text-white"
@@ -454,7 +460,7 @@ export default function StatsPage() {
                               : CHART_AXIS_TICK_LIGHT,
                           }}
                           tickFormatter={(value: string) => {
-                            const [y, m, d] = value.split("-");
+                            const [, m, d] = value.split("-");
                             return `${d}.${m}`;
                           }}
                           axisLine={{
@@ -488,7 +494,13 @@ export default function StatsPage() {
                           }}
                           content={(props) => (
                             <ChartDayTooltipContent
-                              {...props}
+                              active={props.active}
+                              payload={props.payload}
+                              label={
+                                props.label != null
+                                  ? String(props.label)
+                                  : undefined
+                              }
                               dayVisitorDetails={stats.dayVisitorDetails}
                               isDark={isDark}
                             />
@@ -555,10 +567,10 @@ export default function StatsPage() {
   );
 }
 
-const visitorDetailsShape = {
-  topVisitors: [] as { userDisplayName: string; count: number }[],
-  otherViews: 0,
-  otherUsers: 0,
+type VisitorDetails = {
+  topVisitors: { userDisplayName: string; count: number }[];
+  otherViews: number;
+  otherUsers: number;
 };
 
 function ChartDayTooltipContent({
@@ -569,9 +581,9 @@ function ChartDayTooltipContent({
   isDark,
 }: {
   active?: boolean;
-  payload?: Array<{ value: number; name: string }>;
+  payload?: readonly { value: number; name: string }[];
   label?: string;
-  dayVisitorDetails?: Record<string, typeof visitorDetailsShape>;
+  dayVisitorDetails?: Record<string, VisitorDetails>;
   isDark?: boolean;
 }) {
   if (!active || !payload?.length || label == null) return null;

@@ -40,7 +40,7 @@ export function PageViewTracker() {
         ? session.user.id
         : undefined;
     recordView.mutate({ path: pathname, consent, userId });
-  }, [pathname, consent, session?.user?.id, recordView.mutate]);
+  }, [pathname, consent, session?.user?.id, recordView]);
 
   return null;
 }
@@ -66,5 +66,5 @@ export function useRecordSection(section: string, path?: string) {
         ? session.user.id
         : undefined;
     recordView.mutate({ path: p, section, consent, userId });
-  }, [path, pathname, section, consent, session?.user?.id, recordView.mutate]);
+  }, [path, pathname, section, consent, session?.user?.id, recordView]);
 }

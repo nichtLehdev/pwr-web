@@ -5,7 +5,6 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from "react";
 
@@ -38,11 +37,9 @@ function readStored(): TrackingConsent | null {
 }
 
 export function TrackingConsentProvider({ children }: { children: ReactNode }) {
-  const [consent, setConsentState] = useState<TrackingConsent | null>(null);
-
-  useEffect(() => {
-    setConsentState(readStored());
-  }, []);
+  const [consent, setConsentState] = useState<TrackingConsent | null>(() =>
+    typeof window === "undefined" ? null : readStored(),
+  );
 
   const setConsent = useCallback((value: TrackingConsent) => {
     try {

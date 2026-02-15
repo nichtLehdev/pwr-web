@@ -4,7 +4,9 @@ import { useTrackingConsent } from "./tracking-consent-context";
 import { BarChart3 } from "lucide-react";
 
 export function TrackingConsentBanner() {
-  const { consent, setConsent, hasChosen } = useTrackingConsent();
+  const ctx = useTrackingConsent();
+  if (!ctx) return null;
+  const { setConsent, hasChosen } = ctx;
 
   if (hasChosen) return null;
 
