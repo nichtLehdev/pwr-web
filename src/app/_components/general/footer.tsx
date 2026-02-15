@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackingConsentLink } from "@/app/_components/stats/tracking-consent-link";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -178,7 +179,7 @@ export default function Footer() {
               © {currentYear} Posaunenwerk Rheinland. Alle Rechte vorbehalten.
             </p>
 
-            <div className="flex gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-6">
               {footerLinks.legal.map((link) => (
                 <Link
                   key={link.href}
@@ -188,6 +189,7 @@ export default function Footer() {
                   {link.label}
                 </Link>
               ))}
+              <TrackingConsentLink className="hover:text-primary dark:hover:text-primary-light transition-colors" />
             </div>
           </div>
         </div>
