@@ -2,7 +2,7 @@
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
@@ -19,6 +19,7 @@ import {
   Users,
   Music,
   MapPin,
+  ExternalLink,
 } from "lucide-react";
 import {
   AreaChart,
@@ -45,8 +46,15 @@ export default function StatsPage() {
     api.stats.canViewStats.useQuery(undefined, {
       enabled: !!session?.user,
     });
+  const [pathPeriod, setPathPeriod] = useState<
+    "today" | "last30Days" | "overall"
+  >("last30Days");
+  const [showAllPaths, setShowAllPaths] = useState(false);
+  useEffect(() => {
+    setShowAllPaths(false);
+  }, [pathPeriod]);
   const { data: stats, isLoading: statsLoading } = api.stats.getStats.useQuery(
-    undefined,
+    { pathPeriod },
     { enabled: !!canView },
   );
   const { data: siteStats, isLoading: siteStatsLoading } =
@@ -232,11 +240,53 @@ export default function StatsPage() {
             {stats.byPath.length > 0 && (
               <div className="dark:bg-dark-surface overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-border">
                 <div className="border-b border-gray-200 px-4 py-3 dark:border-dark-border sm:px-6">
-                  <div className="flex items-center gap-2">
-                    <FileText className="text-primary h-5 w-5" />
-                    <h2 className="dark:text-dark-text font-semibold text-gray-900">
-                      Aufrufe nach Seite
-                    </h2>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <FileText className="text-primary h-5 w-5" />
+                        <h2 className="dark:text-dark-text font-semibold text-gray-900">
+                          Aufrufe nach Seite
+                        </h2>
+                      </div>
+                      <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                        Strg+Klick bzw. Cmd+Klick auf einen Pfad öffnet die Seite
+                      </p>
+                    </div>
+                    <div className="flex rounded-lg border border-gray-200 dark:border-dark-border p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setPathPeriod("today")}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                          pathPeriod === "today"
+                            ? "bg-primary text-white"
+                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                        }`}
+                      >
+                        Heute
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPathPeriod("last30Days")}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                          pathPeriod === "last30Days"
+                            ? "bg-primary text-white"
+                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                        }`}
+                      >
+                        30 Tage
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPathPeriod("overall")}
+                        className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                          pathPeriod === "overall"
+                            ? "bg-primary text-white"
+                            : "dark:text-dark-muted text-gray-600 hover:bg-gray-100 dark:hover:bg-dark-background"
+                        }`}
+                      >
+                        Gesamt
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -252,10 +302,25 @@ export default function StatsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
-                      {stats.byPath.map((row) => (
+                      {(showAllPaths
+                        ? stats.byPath
+                        : stats.byPath.slice(0, 5)
+                      ).map((row) => (
                         <tr key={row.path}>
                           <td className="dark:text-dark-text whitespace-nowrap px-4 py-3 font-mono text-sm text-gray-900 sm:px-6">
-                            {row.path || "/"}
+                            <Link
+                              href={row.path || "/"}
+                              onClick={(e) => {
+                                if (!e.ctrlKey && !e.metaKey) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              title="Strg+Klick (bzw. Cmd+Klick) zum Öffnen der Seite"
+                              className="hover:text-primary dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
+                            >
+                              {row.path || "/"}
+                              <ExternalLink className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+                            </Link>
                           </td>
                           <td className="dark:text-dark-text relative whitespace-nowrap px-4 py-3 text-right tabular-nums text-gray-900 sm:px-6">
                             <PathCountWithPopup
@@ -271,6 +336,19 @@ export default function StatsPage() {
                     </tbody>
                   </table>
                 </div>
+                {stats.byPath.length > 5 && (
+                  <div className="border-t border-gray-200 px-4 py-2 dark:border-dark-border sm:px-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllPaths((v) => !v)}
+                      className="dark:text-primary text-primary text-sm font-medium hover:underline"
+                    >
+                      {showAllPaths
+                        ? "Weniger anzeigen"
+                        : `Alle anzeigen (${stats.byPath.length})`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

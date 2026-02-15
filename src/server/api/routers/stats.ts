@@ -58,10 +58,14 @@ export const statsRouter = createTRPCRouter({
         .object({
           from: z.string().datetime().optional(),
           to: z.string().datetime().optional(),
+          pathPeriod: z
+            .enum(["today", "last30Days", "overall"])
+            .default("last30Days"),
         })
         .optional(),
     )
     .query(async ({ ctx, input }) => {
+      const pathPeriod = input?.pathPeriod ?? "last30Days";
       const user = await ctx.db.user.findUnique({
         where: { id: ctx.session.user.id },
         select: { email: true, username: true },
@@ -100,6 +104,13 @@ export const statsRouter = createTRPCRouter({
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
 
+      const wherePath =
+        pathPeriod === "today"
+          ? { createdAt: { gte: startOfToday } }
+          : pathPeriod === "last30Days"
+            ? { createdAt: { gte: thirtyDaysAgo } }
+            : {};
+
       const [
         totalViews,
         viewsWithUser,
@@ -124,7 +135,7 @@ export const statsRouter = createTRPCRouter({
         }),
         ctx.db.pageView.groupBy({
           by: ["path"],
-          where,
+          where: wherePath,
           _count: { id: true },
           orderBy: { _count: { path: "desc" } },
         }),
@@ -177,8 +188,13 @@ export const statsRouter = createTRPCRouter({
         string,
         Map<string, { count: number; userDisplayName: string }>
       >();
+      const pathPeriodFilter = (v: { createdAt: Date }) => {
+        if (pathPeriod === "today") return v.createdAt >= startOfToday;
+        if (pathPeriod === "last30Days") return v.createdAt >= thirtyDaysAgo;
+        return true;
+      };
       for (const v of viewsWithUserId) {
-        if (!v.userId || !v.user) continue;
+        if (!v.userId || !v.user || !pathPeriodFilter(v)) continue;
         const u = v.user;
         const displayName =
           u.displayName ??
