@@ -68,6 +68,7 @@ model User {
   updatedAt           DateTime             @updatedAt
   courseRegistrations CourseRegistration[]
   savedParticipants   SavedParticipant[]   @relation("SavedParticipants")
+  pageViews           PageView[]           @relation("PageViewUser")
 
   displayUsername String?
 
@@ -1031,4 +1032,20 @@ model HomepageCarouselItem {
 
   @@index([sortOrder])
   @@index([isActive])
+}
+
+// Page/section views for statistics. Anonymous unless user opted in to "track by user".
+model PageView {
+  id        String   @id @default(uuid())
+  path      String   // e.g. "/", "/aktuelles", "/termine"
+  section   String?  // optional: "hero", "footer", "sidebar", etc.
+  userId    String?  // set when user consented to "track views by user"
+  user      User?   @relation("PageViewUser", fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([section])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("page_view")
 }

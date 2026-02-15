@@ -28,6 +28,7 @@ import {
   BookOpen,
   Mail,
   Layout,
+  BarChart3,
 } from "lucide-react";
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -45,6 +46,9 @@ export default function DashboardPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+  const { data: canViewStats } = api.stats.canViewStats.useQuery(undefined, {
+    enabled: !!session?.user && !!profile,
+  });
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -255,6 +259,23 @@ export default function DashboardPage() {
         {/* Export & Import - Admin only */}
         {profile.role === UserRole.ADMIN && (
           <ExportImportSection userRole={profile.role} />
+        )}
+
+        {/* Stats - only for hardcoded allowlist */}
+        {canViewStats && (
+          <section className="mb-10">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Statistik
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DashboardCard
+                title="Statistik"
+                description="Anonyme Seitenaufrufe"
+                icon={<BarChart3 className="h-5 w-5" />}
+                href="/dashboard/stats"
+              />
+            </div>
+          </section>
         )}
 
         {/* Quick Links */}
