@@ -167,14 +167,26 @@ export const statsRouter = createTRPCRouter({
         }),
       ]);
 
+      // Use local date (same as startOfToday / viewsToday) so chart "today" matches the summary card
+      const toLocalDateString = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      };
       const byDay: Record<string, number> = {};
       for (const v of recentViews) {
-        const key = v.createdAt.toISOString().slice(0, 10);
+        const key = toLocalDateString(v.createdAt);
         byDay[key] = (byDay[key] ?? 0) + 1;
       }
-      const recentDays = Object.entries(byDay)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, count]) => ({ date, count }));
+      // Last 30 days ending with today (same “today” as viewsToday)
+      const recentDays: { date: string; count: number }[] = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(startOfToday);
+        d.setDate(d.getDate() - (29 - i));
+        const dateStr = toLocalDateString(d);
+        recentDays.push({ date: dateStr, count: byDay[dateStr] ?? 0 });
+      }
 
       const pathVisitorDetails: Record<
         string,
@@ -242,7 +254,7 @@ export const statsRouter = createTRPCRouter({
       >();
       for (const v of viewsWithUserId) {
         if (!v.userId || !v.user || v.createdAt < thirtyDaysAgo) continue;
-        const dateKey = v.createdAt.toISOString().slice(0, 10);
+        const dateKey = toLocalDateString(v.createdAt);
         const u = v.user;
         const displayName =
           u.displayName ??

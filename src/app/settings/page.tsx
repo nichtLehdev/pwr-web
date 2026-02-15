@@ -23,7 +23,9 @@ import {
   Users,
   Trash2,
   ArrowRight,
+  BarChart3,
 } from "lucide-react";
+import { useTrackingConsent } from "@/app/_components/stats/tracking-consent-context";
 import { Input, Label } from "@/app/_components/ui";
 
 function CollapsibleSection({
@@ -82,6 +84,80 @@ const defaultPreferences: UserPreferences = {
   termineDefaultView: "list",
   theme: "system",
 };
+
+function TrackingConsentSection() {
+  const ctx = useTrackingConsent();
+  if (!ctx) return null;
+  const { consent, setConsent } = ctx;
+  const current = consent ?? "none";
+  const hasChosen = consent !== null;
+
+  return (
+    <CollapsibleSection
+      title="Nutzungsstatistik"
+      defaultOpen={false}
+      icon={<BarChart3 className="h-5 w-5" />}
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Wir erfassen anonym die Nutzung der Webseite (Seitenaufrufe), um sie
+          zu verbessern. Du kannst die Erfassung ablehnen, nur anonym zulassen
+          oder Aufrufe deinem Konto zuordnen (nur wenn du eingeloggt bist).
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => setConsent("none")}
+            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
+              current === "none"
+                ? "border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/25 dark:text-primary-light"
+                : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-surface border border-gray-300 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <span>Ablehnen</span>
+            {current === "none" && hasChosen && (
+              <span className="text-primary dark:text-primary-light text-xs">
+                Aktuell
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConsent("anonymous")}
+            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
+              current === "anonymous"
+                ? "border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/25 dark:text-primary-light"
+                : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-surface border border-gray-300 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <span>Nur anonym</span>
+            {current === "anonymous" && hasChosen && (
+              <span className="text-primary dark:text-primary-light text-xs">
+                Aktuell
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConsent("anonymous_and_user")}
+            className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm font-medium transition-colors ${
+              current === "anonymous_and_user"
+                ? "border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/25 dark:text-primary-light"
+                : "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-surface border border-gray-300 bg-white hover:bg-gray-50"
+            }`}
+          >
+            <span>Anonym + Zuordnung zu meinem Konto</span>
+            {current === "anonymous_and_user" && hasChosen && (
+              <span className="text-primary dark:text-primary-light text-xs">
+                Aktuell
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+    </CollapsibleSection>
+  );
+}
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -995,6 +1071,9 @@ export default function SettingsPage() {
                 </div>
               </div>
             </CollapsibleSection>
+
+            {/* Section: Nutzungsstatistik (Tracking Consent) */}
+            <TrackingConsentSection />
 
             {/* Section: Saved Participants */}
             <CollapsibleSection
