@@ -41,6 +41,34 @@ docker compose -f docker-compose.prod.yml logs -f app
 docker compose -f docker-compose.prod.yml down
 ```
 
+### Resolving failed migrations
+
+If the `db-migrate` service exits with an error like **"migrate found failed migrations in the target database"** (P3009), you need to resolve the failed migration before new ones can run.
+
+**Option A – Migration actually succeeded (e.g. timeout after applying):**  
+If the migration’s SQL has already been applied (e.g. columns exist), mark it as applied:
+
+```bash
+# Production (docker-compose.prod.yml)
+docker compose -f docker-compose.prod.yml run --rm db-migrate pnpm prisma migrate resolve --applied 20260201120000_add_media_copyright_creator
+
+# Local (docker-compose.yml)
+docker compose run --rm db-migrate pnpm prisma migrate resolve --applied 20260201120000_add_media_copyright_creator
+```
+
+Then start the stack again; the app should come up.
+
+**Option B – Migration did not apply:**  
+If the migration never ran successfully, mark it as rolled back so it will run again on the next deploy:
+
+```bash
+docker compose -f docker-compose.prod.yml run --rm db-migrate pnpm prisma migrate resolve --rolled-back 20260201120000_add_media_copyright_creator
+```
+
+Then run `docker compose -f docker-compose.prod.yml up -d` again so `db-migrate` runs and applies the migration.
+
+For other failed migrations, replace `20260201120000_add_media_copyright_creator` with the migration name shown in the error.
+
 ## Database Backups
 
 The application includes an automated backup system. See [Backups Documentation](./backups.md) for complete details.

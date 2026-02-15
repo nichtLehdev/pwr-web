@@ -512,8 +512,8 @@ export default function DashboardMediaPage() {
                   </p>
                 </div>
 
-                {/* Actions Overlay */}
-                <div className="absolute right-2 bottom-14 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                {/* Actions Overlay: always visible on touch/mobile, hover on desktop */}
+                <div className="absolute right-2 bottom-14 flex gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                   {/* Edit button for reviewers */}
                   {isReviewer && (
                     <Button
