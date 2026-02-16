@@ -22,6 +22,11 @@ import {
   CircleXIcon,
   EditIcon,
 } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+} from "@/app/_components/ui/scrollable-modal";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -718,44 +723,46 @@ export default function CourseDetailView({
 
       {/* Registration Options Modal */}
       {showRegistrationOptions && existingRegistration && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
-              Bestehende Anmeldung gefunden
-            </h2>
-            <p className="mb-6 text-gray-700 dark:text-gray-300">
-              Sie haben bereits eine aktive Anmeldung für diesen Kurs mit{" "}
-              <strong>
-                {existingRegistration.participants.length}{" "}
-                {existingRegistration.participants.length === 1
-                  ? "Teilnehmer"
-                  : "Teilnehmern"}
-              </strong>
-              . Möchten Sie Ihre bestehende Anmeldung bearbeiten oder eine
-              zusätzliche Anmeldung erstellen?
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={handleEditExisting}
-                className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-              >
-                Bestehende Anmeldung bearbeiten
-              </button>
-              <button
-                onClick={handleCreateNew}
-                className="dark:border-dark-border dark:hover:bg-dark-surface w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
-              >
-                Zusätzliche Anmeldung erstellen
-              </button>
-              <button
-                onClick={() => setShowRegistrationOptions(false)}
-                className="w-full rounded-lg px-6 py-3 font-semibold text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                Abbrechen
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
+                Bestehende Anmeldung gefunden
+              </h2>
+              <p className="mb-6 text-gray-700 dark:text-gray-300">
+                Sie haben bereits eine aktive Anmeldung für diesen Kurs mit{" "}
+                <strong>
+                  {existingRegistration.participants.length}{" "}
+                  {existingRegistration.participants.length === 1
+                    ? "Teilnehmer"
+                    : "Teilnehmern"}
+                </strong>
+                . Möchten Sie Ihre bestehende Anmeldung bearbeiten oder eine
+                zusätzliche Anmeldung erstellen?
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={handleEditExisting}
+                  className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+                >
+                  Bestehende Anmeldung bearbeiten
+                </button>
+                <button
+                  onClick={handleCreateNew}
+                  className="dark:border-dark-border dark:hover:bg-dark-surface w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
+                >
+                  Zusätzliche Anmeldung erstellen
+                </button>
+                <button
+                  onClick={() => setShowRegistrationOptions(false)}
+                  className="w-full rounded-lg px-6 py-3 font-semibold text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </ScrollableModalBody>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Registration Form Modal */}

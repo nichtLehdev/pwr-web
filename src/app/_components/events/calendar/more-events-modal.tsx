@@ -4,6 +4,12 @@ import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItemInternal } from "./desktop-calendar-view";
 import { useEffect } from "react";
 import { X, Users } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalHeader,
+  ScrollableModalBody,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface MoreEventsModalProps {
   day: number;
@@ -30,38 +36,34 @@ export default function MoreEventsModal({
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="more-events-title"
-    >
-      <div
-        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border max-h-[80vh] w-full max-w-md overflow-hidden rounded-lg shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+    <ScrollableModal zIndex="z-40" onBackdropClick={onClose}>
+      <ScrollableModalCard
+        maxW="md"
+        className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border overflow-hidden"
       >
-        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
-          <h3
-            id="more-events-title"
-            className="text-dark dark:text-dark-text text-lg font-bold"
-          >
-            Events am {day}.{" "}
-            {currentMonth.toLocaleDateString("de-DE", {
-              month: "long",
-              year: "numeric",
-            })}
-          </h3>
-          <button
-            onClick={onClose}
-            className="dark:hover:bg-dark-background-secondary rounded p-1 transition-colors hover:bg-gray-100"
-            aria-label="Modal schließen"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+          <div className="flex items-center justify-between">
+            <h3
+              id="more-events-title"
+              className="text-dark dark:text-dark-text text-lg font-bold"
+            >
+              Events am {day}.{" "}
+              {currentMonth.toLocaleDateString("de-DE", {
+                month: "long",
+                year: "numeric",
+              })}
+            </h3>
+            <button
+              onClick={onClose}
+              className="dark:hover:bg-dark-background-secondary rounded p-1 transition-colors hover:bg-gray-100"
+              aria-label="Modal schließen"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </ScrollableModalHeader>
 
-        <div className="max-h-[calc(80vh-80px)] space-y-2 overflow-y-auto p-4">
+        <ScrollableModalBody className="space-y-2 p-4">
           {events.map((item, idx) => {
             const isCourse = item.type === "course";
             const isCancelled = item.type === "event" && item.cancelled;
@@ -136,8 +138,8 @@ export default function MoreEventsModal({
               </button>
             );
           })}
-        </div>
-      </div>
-    </div>
+        </ScrollableModalBody>
+      </ScrollableModalCard>
+    </ScrollableModal>
   );
 }

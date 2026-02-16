@@ -13,6 +13,12 @@ import {
   Users,
   Search,
 } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrator",
@@ -396,32 +402,36 @@ export default function DashboardUsersList() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text text-lg font-bold">
-              Benutzer löschen?
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Möchtest du diesen Benutzer wirklich unwiderruflich löschen? Diese
-              Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(null)}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "Löschen..." : "Löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text text-lg font-bold">
+                Benutzer löschen?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Möchtest du diesen Benutzer wirklich unwiderruflich löschen?
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(null)}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
+                  disabled={deleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </div>
   );

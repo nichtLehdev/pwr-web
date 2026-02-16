@@ -4,6 +4,13 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { api } from "@/trpc/react";
 import { ArrowUpIcon, CheckIcon, X } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalHeader,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface MediaPickerModalProps {
   isOpen: boolean;
@@ -247,21 +254,25 @@ export default function MediaPickerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50">
-      <div className="dark:bg-dark-surface max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-white shadow-2xl">
-        {/* Header */}
-        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
-          <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
-            Bild einfügen
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+    <ScrollableModal zIndex="z-100">
+      <ScrollableModalCard
+        maxW="4xl"
+        className="dark:bg-dark-surface overflow-hidden rounded-xl shadow-2xl"
+      >
+        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+              Bild einfügen
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </ScrollableModalHeader>
 
         {/* Tabs */}
         <div className="dark:border-dark-border flex border-b border-gray-200">
@@ -289,8 +300,7 @@ export default function MediaPickerModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto p-4">
+        <ScrollableModalBody className="min-h-0 p-4">
           {activeTab === "library" ? (
             <div>
               {/* Search */}
@@ -517,10 +527,9 @@ export default function MediaPickerModal({
               />
             </div>
           )}
-        </div>
+        </ScrollableModalBody>
 
-        {/* Footer – "Bild einfügen" only on library tab */}
-        <div className="dark:border-dark-border flex items-center justify-between border-t border-gray-200 p-4">
+        <ScrollableModalFooter className="flex items-center justify-between">
           <div className="text-sm text-gray-500 dark:text-gray-400">
             {activeTab === "library" && selectedMedia && (
               <span>Ausgewählt: {selectedMedia.name}</span>
@@ -545,8 +554,8 @@ export default function MediaPickerModal({
               </button>
             )}
           </div>
-        </div>
-      </div>
-    </div>
+        </ScrollableModalFooter>
+      </ScrollableModalCard>
+    </ScrollableModal>
   );
 }

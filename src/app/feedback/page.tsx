@@ -5,6 +5,10 @@ import { useToast } from "../_components/ui/toast";
 import Link from "next/link";
 import PageHeader from "../_components/general/page-header";
 import { X } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+} from "@/app/_components/ui/scrollable-modal";
 interface IssueLabel {
   id: number;
   name: string;
@@ -177,13 +181,13 @@ export default function FeedbackPage() {
 
       {/* Feedback Modal */}
       {showModal && (
-        <div
-          className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setShowModal(false)}
+        <ScrollableModal
+          zIndex="z-100"
+          onBackdropClick={() => setShowModal(false)}
         >
-          <div
-            className="bg-background dark:bg-dark-surface relative w-full max-w-xl rounded-lg p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+          <ScrollableModalCard
+            maxW="2xl"
+            className="bg-background dark:bg-dark-surface relative"
           >
             <button
               onClick={() => setShowModal(false)}
@@ -306,8 +310,8 @@ export default function FeedbackPage() {
                 {status === "loading" ? "Senden..." : "Feedback absenden"}
               </button>
             </form>
-          </div>
-        </div>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </div>
   );

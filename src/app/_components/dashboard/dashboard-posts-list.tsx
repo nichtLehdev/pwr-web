@@ -20,6 +20,12 @@ import {
   TrashIcon,
   X,
 } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface DashboardPostsListProps {
   userRole: string;
@@ -624,83 +630,93 @@ export default function DashboardPostsList({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="text-dark dark:text-dark-text text-lg font-bold">
-              Beiträge löschen?
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Möchtest du wirklich {selectedIds.size} Beitrag/Beiträge
-              unwiderruflich löschen?
-            </p>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                disabled={bulkDeleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-              >
-                {bulkDeleteMutation.isPending ? "Löschen..." : "Löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="text-dark dark:text-dark-text text-lg font-bold">
+                Beiträge löschen?
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Möchtest du wirklich {selectedIds.size} Beitrag/Beiträge
+                unwiderruflich löschen?
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {bulkDeleteMutation.isPending ? "Löschen..." : "Löschen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Status Change Modal */}
       {showStatusChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="text-dark dark:text-dark-text text-lg font-bold">
-              Status ändern
-            </h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Wähle den neuen Status für {selectedIds.size} Beitrag/Beiträge:
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {statusFilters
-                .filter((s) => s.value !== "all")
-                .map((status) => (
-                  <button
-                    key={status.value}
-                    onClick={() => setNewStatus(status.value as ContentStatus)}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      newStatus === status.value
-                        ? "bg-primary text-white"
-                        : "dark:bg-dark-background-secondary dark:text-dark-text bg-gray-100 text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    {status.label}
-                  </button>
-                ))}
-            </div>
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowStatusChange(false);
-                  setNewStatus(null);
-                }}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleBulkStatusChange}
-                disabled={!newStatus || bulkStatusChangeMutation.isPending}
-                className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
-              >
-                {bulkStatusChangeMutation.isPending
-                  ? "Ändern..."
-                  : "Status ändern"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="text-dark dark:text-dark-text text-lg font-bold">
+                Status ändern
+              </h3>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Wähle den neuen Status für {selectedIds.size} Beitrag/Beiträge:
+              </p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {statusFilters
+                  .filter((s) => s.value !== "all")
+                  .map((status) => (
+                    <button
+                      key={status.value}
+                      onClick={() =>
+                        setNewStatus(status.value as ContentStatus)
+                      }
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        newStatus === status.value
+                          ? "bg-primary text-white"
+                          : "dark:bg-dark-background-secondary dark:text-dark-text bg-gray-100 text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      {status.label}
+                    </button>
+                  ))}
+              </div>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowStatusChange(false);
+                    setNewStatus(null);
+                  }}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleBulkStatusChange}
+                  disabled={!newStatus || bulkStatusChangeMutation.isPending}
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {bulkStatusChangeMutation.isPending
+                    ? "Ändern..."
+                    : "Status ändern"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </div>
   );

@@ -14,6 +14,12 @@ import {
 } from "~/generated/prisma/enums";
 import { CheckIcon, EditIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { DownloadIcon, TrashIcon } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -618,307 +624,319 @@ export default function DashboardDownloadsPage() {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
-              Neuer Download
-            </h2>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="lg">
+            <ScrollableModalBody>
+              <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+                Neuer Download
+              </h2>
 
-            <div className="space-y-4">
-              {/* File Upload with Drag & Drop */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Datei
-                </label>
-                <div
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-                    isDragging
-                      ? "border-primary bg-primary/5 dark:bg-primary/10"
-                      : uploadedFileUrl
-                        ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
-                        : "dark:border-dark-border border-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileUpload}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
-                    className="hidden"
-                  />
-                  {isUploading ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Lädt hoch...
-                      </p>
-                    </div>
-                  ) : uploadedFileUrl ? (
-                    <div className="flex flex-col items-center gap-2">
-                      <CheckIcon className="h-10 w-10 text-green-500" />
-                      <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                        Datei hochgeladen
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Klicken oder ziehen, um eine andere Datei auszuwählen
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      <PlusIcon
-                        className={`h-10 w-10 ${isDragging ? "text-primary" : "text-gray-400"}`}
-                      />
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {isDragging
-                          ? "Datei hier ablegen"
-                          : "Datei hierher ziehen"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        oder klicken zum Auswählen
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                        PDF, Word, Excel, ZIP, Audio (max. 50MB)
-                      </p>
-                    </div>
-                  )}
+              <div className="space-y-4">
+                {/* File Upload with Drag & Drop */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Datei
+                  </label>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                      isDragging
+                        ? "border-primary bg-primary/5 dark:bg-primary/10"
+                        : uploadedFileUrl
+                          ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
+                          : "dark:border-dark-border border-gray-300 hover:border-gray-400 dark:hover:border-gray-500"
+                    }`}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileUpload}
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.mp3,.wav,.ogg"
+                      className="hidden"
+                    />
+                    {isUploading ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Lädt hoch...
+                        </p>
+                      </div>
+                    ) : uploadedFileUrl ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <CheckIcon className="h-10 w-10 text-green-500" />
+                        <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                          Datei hochgeladen
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Klicken oder ziehen, um eine andere Datei auszuwählen
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2">
+                        <PlusIcon
+                          className={`h-10 w-10 ${isDragging ? "text-primary" : "text-gray-400"}`}
+                        />
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {isDragging
+                            ? "Datei hier ablegen"
+                            : "Datei hierher ziehen"}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          oder klicken zum Auswählen
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                          PDF, Word, Excel, ZIP, Audio (max. 50MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Title */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
+                {/* Title */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Titel *
+                  </label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                </div>
 
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung
-                </label>
-                <textarea
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                  rows={2}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
+                {/* Description */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Beschreibung
+                  </label>
+                  <textarea
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    rows={2}
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                </div>
 
-              {/* Category */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kategorie
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) =>
-                    setNewCategory(e.target.value as DownloadCategory)
-                  }
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                {/* Category */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Kategorie
+                  </label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) =>
+                      setNewCategory(e.target.value as DownloadCategory)
+                    }
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  >
+                    {Object.entries(categoryLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Tags
+                  </label>
+                  <input
+                    type="text"
+                    value={newTags}
+                    onChange={(e) => setNewTags(e.target.value)}
+                    placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Mehrere Tags mit Komma trennen
+                  </p>
+                </div>
+
+                {uploadError && (
+                  <p className="text-sm text-red-600">{uploadError}</p>
+                )}
+              </div>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    resetUploadForm();
+                    setShowUploadModal(false);
+                  }}
+                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleCreate}
+                  disabled={
+                    !uploadedFileUrl || !newTitle || createMutation.isPending
+                  }
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {createMutation.isPending ? "Speichern..." : "Speichern"}
+                </button>
               </div>
-
-              {/* Tags */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  value={newTags}
-                  onChange={(e) => setNewTags(e.target.value)}
-                  placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Mehrere Tags mit Komma trennen
-                </p>
-              </div>
-
-              {uploadError && (
-                <p className="text-sm text-red-600">{uploadError}</p>
-              )}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  resetUploadForm();
-                  setShowUploadModal(false);
-                }}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={
-                  !uploadedFileUrl || !newTitle || createMutation.isPending
-                }
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {createMutation.isPending ? "Speichern..." : "Speichern"}
-              </button>
-            </div>
-          </div>
-        </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Download löschen
-            </h3>
-            <p className="dark:text-dark-muted mb-4 text-gray-600">
-              Bist du sicher, dass du diesen Download löschen möchtest? Diese
-              Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(null)}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "Löschen..." : "Löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Download löschen
+              </h3>
+              <p className="dark:text-dark-muted mb-4 text-gray-600">
+                Bist du sicher, dass du diesen Download löschen möchtest? Diese
+                Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(null)}
+                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
+                  disabled={deleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
-              Download bearbeiten
-            </h2>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="lg">
+            <ScrollableModalBody>
+              <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+                Download bearbeiten
+              </h2>
 
-            <div className="space-y-4">
-              {/* Title */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
+              <div className="space-y-4">
+                {/* Title */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Titel *
+                  </label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Beschreibung
+                  </label>
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    rows={3}
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                </div>
+
+                {/* Category */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Kategorie
+                  </label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) =>
+                      setEditCategory(e.target.value as DownloadCategory)
+                    }
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  >
+                    {Object.entries(categoryLabels).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Tags
+                  </label>
+                  <input
+                    type="text"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                    placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
+                    className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Mehrere Tags mit Komma trennen
+                  </p>
+                </div>
+
+                {/* Public Toggle */}
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="editIsPublic"
+                    checked={editIsPublic}
+                    onChange={(e) => setEditIsPublic(e.target.checked)}
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  <label
+                    htmlFor="editIsPublic"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Öffentlich sichtbar
+                  </label>
+                </div>
+
+                {editError && (
+                  <p className="text-sm text-red-600">{editError}</p>
+                )}
               </div>
-
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung
-                </label>
-                <textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  rows={3}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kategorie
-                </label>
-                <select
-                  value={editCategory}
-                  onChange={(e) =>
-                    setEditCategory(e.target.value as DownloadCategory)
-                  }
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowEditModal(null)}
+                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
-                  {Object.entries(categoryLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  value={editTags}
-                  onChange={(e) => setEditTags(e.target.value)}
-                  placeholder="Kommagetrennte Tags, z.B. noten, ostern, chor"
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Mehrere Tags mit Komma trennen
-                </p>
-              </div>
-
-              {/* Public Toggle */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="editIsPublic"
-                  checked={editIsPublic}
-                  onChange={(e) => setEditIsPublic(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                />
-                <label
-                  htmlFor="editIsPublic"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  disabled={!editTitle || updateMutation.isPending}
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 >
-                  Öffentlich sichtbar
-                </label>
+                  {updateMutation.isPending ? "Speichern..." : "Speichern"}
+                </button>
               </div>
-
-              {editError && <p className="text-sm text-red-600">{editError}</p>}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowEditModal(null)}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleUpdate}
-                disabled={!editTitle || updateMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {updateMutation.isPending ? "Speichern..." : "Speichern"}
-              </button>
-            </div>
-          </div>
-        </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </main>
   );

@@ -8,6 +8,10 @@ import { useToast } from "@/app/_components/ui/toast";
 import InstagramSummaryTemplate from "./instagram-summary-template";
 import InstagramEventTemplate from "./instagram-event-template";
 import { ArrowUpRightIcon, DownloadIcon, XIcon } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface SocialMediaExportModalProps {
   isOpen: boolean;
@@ -336,8 +340,11 @@ export default function SocialMediaExportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="dark:bg-dark-surface dark:border-dark-border relative max-h-[90vh] w-full max-w-6xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+    <ScrollableModal>
+      <ScrollableModalCard
+        maxW="6xl"
+        className="dark:border-dark-border relative max-h-[90vh] overflow-hidden border border-gray-200"
+      >
         {/* Header */}
         <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
           <div>
@@ -755,7 +762,7 @@ export default function SocialMediaExportModal({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </ScrollableModalCard>
+    </ScrollableModal>
   );
 }
