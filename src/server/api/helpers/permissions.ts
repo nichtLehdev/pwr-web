@@ -1,5 +1,7 @@
-import { type UserRole } from "~/generated/prisma/client";
+import { UserRole } from "~/generated/prisma/client";
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
+
+export type { PermissionKey };
 import { db } from "@/server/db";
 
 /**
