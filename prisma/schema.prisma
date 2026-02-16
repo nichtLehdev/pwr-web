@@ -91,6 +91,11 @@ model Role {
   description String?
   isSystem    Boolean @default(false) // System roles cannot be deleted
 
+  // Hierarchical role support - roles can inherit from parent roles
+  parentRoleId String?
+  parentRole   Role?   @relation("RoleHierarchy", fields: [parentRoleId], references: [id], onDelete: SetNull)
+  childRoles   Role[]  @relation("RoleHierarchy")
+
   // Permissions assigned to this role
   permissions RolePermission[]
 
@@ -102,6 +107,7 @@ model Role {
 
   @@index([name])
   @@index([isSystem])
+  @@index([parentRoleId])
   @@map("role")
 }
 

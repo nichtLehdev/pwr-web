@@ -309,6 +309,13 @@ export const permissionsRouter = createTRPCRouter({
             permission: true,
           },
         },
+        parentRole: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
         users: {
           include: {
             user: {
@@ -356,6 +363,13 @@ export const permissionsRouter = createTRPCRouter({
               permission: true,
             },
           },
+          parentRole: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
           users: {
             include: {
               user: {
@@ -388,6 +402,7 @@ export const permissionsRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1),
         description: z.string().optional(),
+        parentRoleId: z.string().optional().nullable(),
         permissionIds: z.array(z.string()).optional(),
       }),
     )
@@ -420,6 +435,25 @@ export const permissionsRouter = createTRPCRouter({
         });
       }
 
+      // Validate parent role exists if provided
+      if (input.parentRoleId) {
+        const parentRole = await ctx.db.role.findUnique({
+          where: { id: input.parentRoleId },
+        });
+        if (!parentRole) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Parent role not found",
+          });
+        }
+
+        // Check for circular reference
+        const { wouldCreateCircularReference } = await import(
+          "../helpers/role-permissions"
+        );
+        // Note: We can't check circular reference for a new role, but we validate parent exists
+      }
+
       const { permissionIds, ...roleData } = input;
 
       const role = await ctx.db.role.create({
@@ -445,6 +479,13 @@ export const permissionsRouter = createTRPCRouter({
               permission: true,
             },
           },
+          parentRole: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         },
       });
     }),
@@ -458,6 +499,7 @@ export const permissionsRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().min(1).optional(),
         description: z.string().optional().nullable(),
+        parentRoleId: z.string().optional().nullable(),
         permissionIds: z.array(z.string()).optional(),
       }),
     )
@@ -497,11 +539,37 @@ export const permissionsRouter = createTRPCRouter({
         });
       }
 
-      const { id, permissionIds, ...updateData } = input;
+      // Validate parent role if provided
+      if (input.parentRoleId !== undefined) {
+        if (input.parentRoleId) {
+          const parentRole = await ctx.db.role.findUnique({
+            where: { id: input.parentRoleId },
+          });
+          if (!parentRole) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Parent role not found",
+            });
+          }
+
+          // Check for circular reference
+          const { wouldCreateCircularReference } = await import(
+            "../helpers/role-permissions"
+          );
+          if (await wouldCreateCircularReference(roleId, input.parentRoleId)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Cannot set parent role: would create circular reference",
+            });
+          }
+        }
+      }
+
+      const { id: roleId, permissionIds, ...updateData } = input;
 
       // Update role fields
       await ctx.db.role.update({
-        where: { id },
+        where: { id: roleId },
         data: updateData,
       });
 
@@ -509,14 +577,14 @@ export const permissionsRouter = createTRPCRouter({
       if (permissionIds !== undefined) {
         // Delete all existing permissions
         await ctx.db.rolePermission.deleteMany({
-          where: { roleId: id },
+          where: { roleId },
         });
 
         // Add new permissions
         if (permissionIds.length > 0) {
           await ctx.db.rolePermission.createMany({
             data: permissionIds.map((permissionId) => ({
-              roleId: id,
+              roleId,
               permissionId,
             })),
             skipDuplicates: true,
@@ -525,11 +593,18 @@ export const permissionsRouter = createTRPCRouter({
       }
 
       return await ctx.db.role.findUnique({
-        where: { id },
+        where: { id: roleId },
         include: {
           permissions: {
             include: {
               permission: true,
+            },
+          },
+          parentRole: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
             },
           },
         },

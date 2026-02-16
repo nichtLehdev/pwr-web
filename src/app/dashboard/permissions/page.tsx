@@ -953,6 +953,31 @@ function UsersTab() {
     }
   }, [userPermissions]);
 
+  // Clear permission selections when Admin role is selected/deselected
+  useEffect(() => {
+    const adminRole = roles?.find(
+      (role) => role.name.toLowerCase() === "admin",
+    );
+    
+    if (!adminRole) return;
+    
+    const hasAdminRole = selectedRoleIds.includes(adminRole.id);
+    const hasOtherRoles = selectedRoleIds.some((id) => id !== adminRole.id);
+
+    if (hasAdminRole) {
+      // Clear permission selections when Admin role is assigned
+      setSelectedPermissionIds((prev) => {
+        if (prev.length > 0) return [];
+        return prev;
+      });
+      
+      // Keep only Admin role, remove all other roles
+      if (hasOtherRoles) {
+        setSelectedRoleIds([adminRole.id]);
+      }
+    }
+  }, [selectedRoleIds, roles]);
+
   const handleSelectUser = (userId: string | null) => {
     setSelectedUserId(userId);
     setSelectedRoleIds([]);
@@ -977,6 +1002,15 @@ function UsersTab() {
       })),
     });
   };
+
+  // Check if Admin role is assigned (either in selectedRoleIds or in userPermissions)
+  const hasAdminRole =
+    roles?.some(
+      (role) =>
+        role.name.toLowerCase() === "admin" &&
+        (selectedRoleIds.includes(role.id) ||
+          userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
+    ) ?? false;
 
   return (
     <div className="space-y-6">
@@ -1006,30 +1040,71 @@ function UsersTab() {
                 <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
                   Rollen zuweisen
                 </h3>
+                {hasAdminRole && (
+                  <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                    <p className="font-medium">
+                      Admin-Rolle zugewiesen
+                    </p>
+                    <p className="mt-1 text-xs">
+                      Die Admin-Rolle gewährt automatisch alle Berechtigungen.
+                      Andere Rollen sind nicht mehr erforderlich.
+                    </p>
+                  </div>
+                )}
                 {roles && roles.length > 0 ? (
                   <div className="space-y-2">
-                    {roles.map((role) => (
-                      <label
-                        key={role.id}
-                        className="dark:text-dark-text flex items-center gap-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedRoleIds.includes(role.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedRoleIds([...selectedRoleIds, role.id]);
-                            } else {
-                              setSelectedRoleIds(
-                                selectedRoleIds.filter((id) => id !== role.id),
-                              );
-                            }
-                          }}
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                        />
-                        <span>{role.name}</span>
-                      </label>
-                    ))}
+                    {roles.map((role) => {
+                      const isAdminRole = role.name.toLowerCase() === "admin";
+                      const isDisabled = hasAdminRole && !isAdminRole;
+                      
+                      return (
+                        <label
+                          key={role.id}
+                          className={`flex items-center gap-2 text-sm ${
+                            isDisabled
+                              ? "cursor-not-allowed opacity-50"
+                              : "dark:text-dark-text"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedRoleIds.includes(role.id)}
+                            disabled={isDisabled}
+                            onChange={(e) => {
+                              if (isDisabled) return;
+                              
+                              if (e.target.checked) {
+                                if (isAdminRole) {
+                                  // When Admin is selected, clear all other roles
+                                  setSelectedRoleIds([role.id]);
+                                } else {
+                                  // When non-Admin role is selected, remove Admin if it exists
+                                  const adminRole = roles?.find(
+                                    (r) => r.name.toLowerCase() === "admin",
+                                  );
+                                  const newRoleIds = adminRole
+                                    ? selectedRoleIds.filter(
+                                        (id) => id !== adminRole.id,
+                                      )
+                                    : selectedRoleIds;
+                                  setSelectedRoleIds([...newRoleIds, role.id]);
+                                }
+                              } else {
+                                setSelectedRoleIds(
+                                  selectedRoleIds.filter((id) => id !== role.id),
+                                );
+                              }
+                            }}
+                            className={`h-4 w-4 rounded border-gray-300 ${
+                              isDisabled
+                                ? "cursor-not-allowed opacity-50"
+                                : "text-primary focus:ring-primary"
+                            }`}
+                          />
+                          <span>{role.name}</span>
+                        </label>
+                      );
+                    })}
                     <button
                       onClick={handleSaveRoles}
                       className="bg-primary hover:bg-primary/90 mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
@@ -1049,17 +1124,34 @@ function UsersTab() {
                 <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
                   Direkte Berechtigungen
                 </h3>
+                {hasAdminRole && (
+                  <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                    <p className="font-medium">
+                      Admin-Rolle zugewiesen
+                    </p>
+                    <p className="mt-1 text-xs">
+                      Die Admin-Rolle gewährt automatisch alle Berechtigungen.
+                      Einzelne Berechtigungen können nicht mehr zugewiesen werden.
+                    </p>
+                  </div>
+                )}
                 {permissions && permissions.length > 0 ? (
                   <div className="max-h-64 space-y-2 overflow-y-auto">
                     {permissions.map((perm) => (
                       <label
                         key={perm.id}
-                        className="dark:text-dark-text flex items-center gap-2 text-sm"
+                        className={`flex items-center gap-2 text-sm ${
+                          hasAdminRole
+                            ? "cursor-not-allowed opacity-50"
+                            : "dark:text-dark-text"
+                        }`}
                       >
                         <input
                           type="checkbox"
                           checked={selectedPermissionIds.includes(perm.id)}
+                          disabled={hasAdminRole}
                           onChange={(e) => {
+                            if (hasAdminRole) return;
                             if (e.target.checked) {
                               setSelectedPermissionIds([
                                 ...selectedPermissionIds,
@@ -1073,7 +1165,11 @@ function UsersTab() {
                               );
                             }
                           }}
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          className={`h-4 w-4 rounded border-gray-300 ${
+                            hasAdminRole
+                              ? "cursor-not-allowed opacity-50"
+                              : "text-primary focus:ring-primary"
+                          }`}
                         />
                         <span className="font-medium">{perm.name}</span>
                         <span className="text-gray-500">({perm.key})</span>
@@ -1081,7 +1177,12 @@ function UsersTab() {
                     ))}
                     <button
                       onClick={handleSavePermissions}
-                      className="bg-primary hover:bg-primary/90 mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                      disabled={hasAdminRole}
+                      className={`mt-3 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors ${
+                        hasAdminRole
+                          ? "cursor-not-allowed bg-gray-400 opacity-50"
+                          : "bg-primary hover:bg-primary/90"
+                      }`}
                     >
                       Berechtigungen speichern
                     </button>

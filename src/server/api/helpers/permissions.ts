@@ -60,12 +60,14 @@ export async function userHasPermission(
     return directPermission.granted;
   }
 
-  // 2. Check permissions from custom roles
+  // 2. Check permissions from custom roles (including inherited)
+  const { getRolePermissionsIncludingInherited } = await import(
+    "./role-permissions"
+  );
   for (const userRole of user.customRoles) {
-    const hasPermission = userRole.role.permissions.some(
-      (rp) => rp.permission.key === permissionKey,
-    );
-    if (hasPermission) return true;
+    const rolePermissions =
+      await getRolePermissionsIncludingInherited(userRole.role.id);
+    if (rolePermissions.has(permissionKey)) return true;
   }
 
   return false;
@@ -119,18 +121,23 @@ export async function getUserPermissions(
       permissions.add(up.permission.key as PermissionKey);
     });
 
-  // 2. Add permissions from custom roles
-  user.customRoles.forEach((userRole) => {
-    userRole.role.permissions.forEach((rp) => {
+  // 2. Add permissions from custom roles (including inherited)
+  const { getRolePermissionsIncludingInherited } = await import(
+    "./role-permissions"
+  );
+  for (const userRole of user.customRoles) {
+    const rolePermissions =
+      await getRolePermissionsIncludingInherited(userRole.role.id);
+    rolePermissions.forEach((permissionKey) => {
       // Only add if not explicitly denied
       const denied = user.userPermissions.find(
-        (up) => up.permission.key === rp.permission.key && !up.granted,
+        (up) => up.permission.key === permissionKey && !up.granted,
       );
       if (!denied) {
-        permissions.add(rp.permission.key as PermissionKey);
+        permissions.add(permissionKey);
       }
     });
-  });
+  }
 
   return Array.from(permissions);
 }
