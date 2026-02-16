@@ -53,7 +53,7 @@ export default function EnsembleDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   if (sessionLoading || profileLoading || ensembleLoading) {
     return (

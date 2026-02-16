@@ -49,7 +49,7 @@ export default function DashboardPosaunenwartenPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   if (isPending || profileLoading || posaunenwarteLoading) {
     return (

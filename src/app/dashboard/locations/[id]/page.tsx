@@ -49,7 +49,7 @@ export default function LocationDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations]);
+  }, [profile, profileLoading, canManageLocations, router]);
 
   if (sessionLoading || profileLoading || locationLoading) {
     return (

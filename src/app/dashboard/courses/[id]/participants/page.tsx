@@ -191,7 +191,7 @@ export default function CourseParticipantsPage() {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   if (sessionLoading || profileLoading || courseLoading) {
     return (

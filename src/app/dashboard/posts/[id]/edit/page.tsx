@@ -274,7 +274,7 @@ export default function EditPostPage() {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
@@ -291,7 +291,7 @@ export default function EditPostPage() {
         router.push(`/dashboard/posts/${postId}`);
       }
     }
-  }, [post, profile, session, router, postId]);
+  }, [post, profile, session, router, postId, userPermissions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

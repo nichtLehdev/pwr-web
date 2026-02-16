@@ -9,7 +9,6 @@ import { useSession } from "@/lib/auth";
 export default function LoginCallbackPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
-  const utils = api.useUtils();
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,

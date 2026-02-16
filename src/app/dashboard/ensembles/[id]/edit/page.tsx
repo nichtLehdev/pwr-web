@@ -233,7 +233,7 @@ export default function EditEnsemblePage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

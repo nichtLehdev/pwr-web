@@ -74,7 +74,7 @@ export default function DashboardHistoryTimelinePage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async (id: string, title: string) => {
     if (

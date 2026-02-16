@@ -64,7 +64,7 @@ export default function DashboardVorstandPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Vorstandsmitglied wirklich löschen?")) {

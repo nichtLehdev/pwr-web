@@ -80,7 +80,7 @@ export default function DashboardAuswahlchoerePage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere]);
+  }, [profile, profileLoading, canManageAuswahlchoere, router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (

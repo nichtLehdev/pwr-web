@@ -53,7 +53,7 @@ export default function BezirkDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke]);
+  }, [profile, profileLoading, canManageBezirke, router]);
 
   if (sessionLoading || profileLoading || bezirkLoading) {
     return (

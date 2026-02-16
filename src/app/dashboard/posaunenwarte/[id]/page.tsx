@@ -52,7 +52,7 @@ export default function DashboardPosaunenwarteDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   if (isPending || profileLoading || userLoading) {
     return (
@@ -86,10 +86,6 @@ export default function DashboardPosaunenwarteDetailPage() {
     );
   }
 
-  // Check if user has posaunenwart responsibilities
-  const hasPosaunenwartResponsibilities =
-    user.posaunenwarteResponsibilities &&
-    user.posaunenwarteResponsibilities.length > 0;
   const isLPW =
     user.posaunenwarteResponsibilities?.some((r) => r.roleType === "LPW") ??
     false;

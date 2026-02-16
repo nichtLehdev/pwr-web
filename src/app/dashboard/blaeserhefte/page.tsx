@@ -68,7 +68,7 @@ export default function DashboardBlaeserheftePage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageMaterials]);
+  }, [profile, profileLoading, canManageMaterials, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Bläserheft wirklich löschen?")) {

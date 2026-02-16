@@ -1,7 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../trpc";
 import { userHasPermission, type PermissionKey } from "../helpers/permissions";
-import type { PERMISSIONS } from "@/lib/permissions";
 
 /**
  * Create a procedure that requires a specific permission

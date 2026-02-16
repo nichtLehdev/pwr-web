@@ -474,7 +474,7 @@ export const usersRouter = createTRPCRouter({
     return {
       totalUsers,
       usersByRole: usersByRole.reduce(
-        (acc, curr) => {
+        (acc) => {
           // role-based grouping removed
           return acc;
         },

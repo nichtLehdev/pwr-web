@@ -194,7 +194,7 @@ export default function NewPostPage() {
         router.push("/dashboard");
       }
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, router, userPermissions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

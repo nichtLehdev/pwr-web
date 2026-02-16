@@ -98,7 +98,7 @@ export default function EditHistoryEventPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

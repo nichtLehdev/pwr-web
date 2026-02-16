@@ -91,7 +91,7 @@ export default function DashboardPosaunenwarteEditPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleAddBezirk = async (bezirkId: string) => {
     if (!user) return;

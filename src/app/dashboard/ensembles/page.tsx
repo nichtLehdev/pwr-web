@@ -92,7 +92,7 @@ export default function DashboardEnsemblesPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (

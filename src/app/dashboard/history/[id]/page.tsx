@@ -48,7 +48,7 @@ export default function HistoryEventDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   if (sessionLoading || profileLoading || eventLoading) {
     return (

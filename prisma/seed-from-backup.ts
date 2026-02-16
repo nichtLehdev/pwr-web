@@ -37,7 +37,6 @@ import { UserSeedData } from "./seed-data-from-backup/user";
 import { AccountSeedData } from "./seed-data-from-backup/account";
 import { PageViewSeedData } from "./seed-data-from-backup/page_view";
 import { SessionSeedData } from "./seed-data-from-backup/session";
-import { TwoFactorSeedData } from "./seed-data-from-backup/twoFactor";
 import { VerificationSeedData } from "./seed-data-from-backup/verification";
 import { _CourseInstructorsSeedData } from "./seed-data-from-backup/_CourseInstructors";
 
@@ -618,7 +617,7 @@ async function main() {
             },
           });
           instructorLinks++;
-        } catch (error) {
+        } catch {
           // Skip if already connected or other error
         }
       }

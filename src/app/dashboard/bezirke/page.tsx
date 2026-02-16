@@ -69,7 +69,7 @@ export default function DashboardBezirkePage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke]);
+  }, [profile, profileLoading, canManageBezirke, router]);
 
   const handleDelete = async (id: string) => {
     if (

@@ -516,7 +516,7 @@ export default function EditCoursePage() {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (course && profile && !hasRedirected.current) {
@@ -532,7 +532,7 @@ export default function EditCoursePage() {
         router.push(`/dashboard/courses/${courseId}`);
       }
     }
-  }, [course, profile, session, router, courseId]);
+  }, [course, profile, session, router, courseId, hasApprovePermission]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

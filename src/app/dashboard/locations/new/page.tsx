@@ -78,7 +78,7 @@ export default function NewLocationPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations]);
+  }, [profile, profileLoading, canManageLocations, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

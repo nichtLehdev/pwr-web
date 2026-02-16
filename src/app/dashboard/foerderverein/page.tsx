@@ -75,7 +75,7 @@ export default function DashboardFoerdervereinPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async (id: string) => {
     if (

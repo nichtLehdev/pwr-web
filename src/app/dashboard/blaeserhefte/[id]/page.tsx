@@ -51,7 +51,7 @@ export default function DashboardBlaeserheftDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageMaterials]);
+  }, [profile, profileLoading, canManageMaterials, router]);
 
   if (isPending || profileLoading || heftLoading) {
     return (

@@ -447,9 +447,6 @@ export const permissionsRouter = createTRPCRouter({
           });
         }
 
-        // Check for circular reference
-        const { wouldCreateCircularReference } =
-          await import("../helpers/role-permissions");
         // Note: We can't check circular reference for a new role, but we validate parent exists
       }
 

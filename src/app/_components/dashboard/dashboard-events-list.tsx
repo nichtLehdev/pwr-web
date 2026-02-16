@@ -29,7 +29,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-interface DashboardEventsListProps {}
+type DashboardEventsListProps = Record<string, never>;
 
 const statusFilters: { value: ContentStatus | "all"; label: string }[] = [
   { value: "all", label: "Alle" },

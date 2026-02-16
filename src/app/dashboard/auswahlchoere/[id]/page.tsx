@@ -50,7 +50,7 @@ export default function AuswahlchorDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere]);
+  }, [profile, profileLoading, canManageAuswahlchoere, router]);
 
   if (sessionLoading || profileLoading || auswahlchorLoading) {
     return (

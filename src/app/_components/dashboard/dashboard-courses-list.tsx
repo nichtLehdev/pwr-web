@@ -27,7 +27,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-interface DashboardCoursesListProps {}
+type DashboardCoursesListProps = Record<string, never>;
 
 const statusFilters: { value: ContentStatus | "all"; label: string }[] = [
   { value: "all", label: "Alle" },

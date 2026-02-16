@@ -464,7 +464,7 @@ export default function EditEventPage() {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (event && profile && !hasRedirected.current) {
@@ -481,7 +481,7 @@ export default function EditEventPage() {
         router.push(`/dashboard/events/${eventId}`);
       }
     }
-  }, [event, profile, session, router, eventId]);
+  }, [event, profile, session, router, eventId, userPermissions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

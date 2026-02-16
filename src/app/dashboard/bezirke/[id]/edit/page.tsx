@@ -126,7 +126,7 @@ export default function EditBezirkPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke]);
+  }, [profile, profileLoading, canManageBezirke, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +151,7 @@ export default function EditBezirkPage() {
 
       toast.success("Bezirk erfolgreich aktualisiert");
       router.push(`/dashboard/bezirke/${bezirkId}`);
-    } catch (err) {
+    } catch {
       setIsSubmitting(false);
       // Error handling is done in mutation callbacks
     }

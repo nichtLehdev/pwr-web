@@ -68,7 +68,7 @@ export default function TeamDetailPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async () => {
     if (!confirm("Möchtest du dieses Teammitglied wirklich löschen?")) {

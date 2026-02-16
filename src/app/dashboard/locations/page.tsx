@@ -78,7 +78,7 @@ export default function DashboardLocationsPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations]);
+  }, [profile, profileLoading, canManageLocations, router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (

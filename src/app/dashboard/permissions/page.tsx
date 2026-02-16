@@ -2,7 +2,7 @@
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import {
@@ -942,41 +942,52 @@ function UsersTab() {
       },
     });
 
+  // Derive initial values from userPermissions
+  const derivedRoleIds = useMemo(
+    () =>
+      userPermissions
+        ? userPermissions.customRoles.map((ura) => ura.role.id)
+        : [],
+    [userPermissions],
+  );
+
+  const derivedPermissionIds = useMemo(
+    () =>
+      userPermissions
+        ? userPermissions.userPermissions
+            .filter((up) => up.granted)
+            .map((up) => up.permission.id)
+        : [],
+    [userPermissions],
+  );
+
+  // Sync derived values to state only when they change
   useEffect(() => {
     if (userPermissions) {
-      setSelectedRoleIds(userPermissions.customRoles.map((ura) => ura.role.id));
-      setSelectedPermissionIds(
-        userPermissions.userPermissions
-          .filter((up) => up.granted)
-          .map((up) => up.permission.id),
-      );
-    }
-  }, [userPermissions]);
-
-  // Clear permission selections when Admin role is selected/deselected
-  useEffect(() => {
-    const adminRole = roles?.find(
-      (role) => role.name.toLowerCase() === "admin",
-    );
-
-    if (!adminRole) return;
-
-    const hasAdminRole = selectedRoleIds.includes(adminRole.id);
-    const hasOtherRoles = selectedRoleIds.some((id) => id !== adminRole.id);
-
-    if (hasAdminRole) {
-      // Clear permission selections when Admin role is assigned
-      setSelectedPermissionIds((prev) => {
-        if (prev.length > 0) return [];
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing state from async query data is a valid pattern
+      setSelectedRoleIds((prev) => {
+        const newIds = derivedRoleIds;
+        if (
+          prev.length !== newIds.length ||
+          !prev.every((id, idx) => id === newIds[idx])
+        ) {
+          return newIds;
+        }
         return prev;
       });
 
-      // Keep only Admin role, remove all other roles
-      if (hasOtherRoles) {
-        setSelectedRoleIds([adminRole.id]);
-      }
+      setSelectedPermissionIds((prev) => {
+        const newIds = derivedPermissionIds;
+        if (
+          prev.length !== newIds.length ||
+          !prev.every((id, idx) => id === newIds[idx])
+        ) {
+          return newIds;
+        }
+        return prev;
+      });
     }
-  }, [selectedRoleIds, roles]);
+  }, [userPermissions, derivedRoleIds, derivedPermissionIds]);
 
   const handleSelectUser = (userId: string | null) => {
     setSelectedUserId(userId);
@@ -1073,8 +1084,9 @@ function UsersTab() {
 
                               if (e.target.checked) {
                                 if (isAdminRole) {
-                                  // When Admin is selected, clear all other roles
+                                  // When Admin is selected, clear all other roles and permissions
                                   setSelectedRoleIds([role.id]);
+                                  setSelectedPermissionIds([]);
                                 } else {
                                   // When non-Admin role is selected, remove Admin if it exists
                                   const adminRole = roles?.find(

@@ -70,7 +70,7 @@ export default function DashboardPosaunenratPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Posaunenratsmitglied wirklich löschen?")) {

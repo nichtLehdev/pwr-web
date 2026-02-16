@@ -86,7 +86,7 @@ export default function NewBlaeserheftPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageMaterials]);
+  }, [profile, profileLoading, canManageMaterials, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

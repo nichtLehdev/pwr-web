@@ -29,12 +29,7 @@ async function main() {
 
     // 3. Create a comprehensive admin role that inherits from multiple base roles
     console.log("👑 Creating admin role...");
-    const adminRole = await createAdminRole([
-      courseManagerRole.id,
-      eventManagerRole.id,
-      postManagerRole.id,
-      organizationManagerRole.id,
-    ]);
+    const adminRole = await createAdminRole();
 
     console.log("✅ Role seed completed successfully!");
     console.log("\nCreated roles:");
@@ -264,7 +259,7 @@ async function createOrganizationManagerRole() {
   return role;
 }
 
-async function createAdminRole(_parentRoleIds: string[]) {
+async function createAdminRole() {
   // Get all permissions
   const allPermissions = await db.permission.findMany();
 

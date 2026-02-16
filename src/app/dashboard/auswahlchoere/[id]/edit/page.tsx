@@ -127,7 +127,7 @@ export default function EditAuswahlchorPage() {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere]);
+  }, [profile, profileLoading, canManageAuswahlchoere, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
