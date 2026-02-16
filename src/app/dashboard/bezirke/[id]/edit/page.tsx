@@ -56,18 +56,18 @@ export default function EditBezirkPage() {
       setNumber(bezirk.number);
       setName(bezirk.name);
       setShortName(bezirk.shortName);
-      
+
       // Set current users with their custom role names
       // Distinguish between obleute and stell. obleute based on role name
       const allDistrictUsers = bezirk.users || [];
-      
+
       const obleute: UserAssignment[] = [];
       const stellObleute: UserAssignment[] = [];
-      
+
       allDistrictUsers.forEach((u) => {
         const roleName = u.districtRoleName || "Obleute";
         const assignment = { userId: u.id, roleName };
-        
+
         // Check if role name contains "stell" (case-insensitive) to categorize
         if (roleName.toLowerCase().includes("stell")) {
           stellObleute.push(assignment);
@@ -75,10 +75,10 @@ export default function EditBezirkPage() {
           obleute.push(assignment);
         }
       });
-      
+
       setObleuteAssignments(obleute);
       setStellObleuteAssignments(stellObleute);
-      
+
       setInitialized(true);
     }
   }, [bezirk, initialized]);
@@ -410,14 +410,15 @@ function UserAssignmentSelect({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const selectedUserIds = assignments.map((a) => a.userId);
-  const selectedUsers = users?.filter((u) => selectedUserIds.includes(u.id)) || [];
+  const selectedUsers =
+    users?.filter((u) => selectedUserIds.includes(u.id)) || [];
 
   // Filter users based on search query, excluding already selected ones
   const filteredUsers =
     users?.filter((user) => {
       // Exclude already selected users
       if (selectedUserIds.includes(user.id)) return false;
-      
+
       if (!searchQuery.trim()) return true;
       const query = searchQuery.toLowerCase();
       const displayName = user.displayName?.toLowerCase() || "";
@@ -464,9 +465,7 @@ function UserAssignmentSelect({
 
   const handleRoleNameChange = (userId: string, roleName: string) => {
     onAssignmentsChange(
-      assignments.map((a) =>
-        a.userId === userId ? { ...a, roleName } : a,
-      ),
+      assignments.map((a) => (a.userId === userId ? { ...a, roleName } : a)),
     );
   };
 
@@ -498,12 +497,12 @@ function UserAssignmentSelect({
                   }
                   placeholder={defaultRoleName}
                   maxLength={100}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-40 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-40 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:ring-1 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => handleRemove(user.id)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="text-gray-400 transition-colors hover:text-gray-600"
                 >
                   <X className="h-4 w-4" />
                 </button>

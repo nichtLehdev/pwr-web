@@ -68,9 +68,7 @@ async function ensurePermissionsExist() {
       },
     });
   }
-  console.log(
-    `  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`,
-  );
+  console.log(`  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`);
 }
 
 async function createCourseManagerRole() {

@@ -958,9 +958,9 @@ function UsersTab() {
     const adminRole = roles?.find(
       (role) => role.name.toLowerCase() === "admin",
     );
-    
+
     if (!adminRole) return;
-    
+
     const hasAdminRole = selectedRoleIds.includes(adminRole.id);
     const hasOtherRoles = selectedRoleIds.some((id) => id !== adminRole.id);
 
@@ -970,7 +970,7 @@ function UsersTab() {
         if (prev.length > 0) return [];
         return prev;
       });
-      
+
       // Keep only Admin role, remove all other roles
       if (hasOtherRoles) {
         setSelectedRoleIds([adminRole.id]);
@@ -1042,9 +1042,7 @@ function UsersTab() {
                 </h3>
                 {hasAdminRole && (
                   <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                    <p className="font-medium">
-                      Admin-Rolle zugewiesen
-                    </p>
+                    <p className="font-medium">Admin-Rolle zugewiesen</p>
                     <p className="mt-1 text-xs">
                       Die Admin-Rolle gewährt automatisch alle Berechtigungen.
                       Andere Rollen sind nicht mehr erforderlich.
@@ -1056,7 +1054,7 @@ function UsersTab() {
                     {roles.map((role) => {
                       const isAdminRole = role.name.toLowerCase() === "admin";
                       const isDisabled = hasAdminRole && !isAdminRole;
-                      
+
                       return (
                         <label
                           key={role.id}
@@ -1072,7 +1070,7 @@ function UsersTab() {
                             disabled={isDisabled}
                             onChange={(e) => {
                               if (isDisabled) return;
-                              
+
                               if (e.target.checked) {
                                 if (isAdminRole) {
                                   // When Admin is selected, clear all other roles
@@ -1091,7 +1089,9 @@ function UsersTab() {
                                 }
                               } else {
                                 setSelectedRoleIds(
-                                  selectedRoleIds.filter((id) => id !== role.id),
+                                  selectedRoleIds.filter(
+                                    (id) => id !== role.id,
+                                  ),
                                 );
                               }
                             }}
@@ -1126,12 +1126,11 @@ function UsersTab() {
                 </h3>
                 {hasAdminRole && (
                   <div className="mb-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
-                    <p className="font-medium">
-                      Admin-Rolle zugewiesen
-                    </p>
+                    <p className="font-medium">Admin-Rolle zugewiesen</p>
                     <p className="mt-1 text-xs">
                       Die Admin-Rolle gewährt automatisch alle Berechtigungen.
-                      Einzelne Berechtigungen können nicht mehr zugewiesen werden.
+                      Einzelne Berechtigungen können nicht mehr zugewiesen
+                      werden.
                     </p>
                   </div>
                 )}

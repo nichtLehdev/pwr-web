@@ -33,12 +33,18 @@ async function main() {
 
     // Step 3: Assign admin role to admin user
     if (ADMIN_EMAIL) {
-      console.log(`🔐 Step 3: Assigning Administrator role to ${ADMIN_EMAIL}...`);
+      console.log(
+        `🔐 Step 3: Assigning Administrator role to ${ADMIN_EMAIL}...`,
+      );
       await assignAdminRole(ADMIN_EMAIL, adminRole.id);
       console.log("  ✅ Admin role assigned\n");
     } else {
-      console.log("⚠️  Step 3: Skipping admin role assignment (no ADMIN_EMAIL provided)");
-      console.log("  💡 Set ADMIN_EMAIL environment variable or pass as argument\n");
+      console.log(
+        "⚠️  Step 3: Skipping admin role assignment (no ADMIN_EMAIL provided)",
+      );
+      console.log(
+        "  💡 Set ADMIN_EMAIL environment variable or pass as argument\n",
+      );
     }
 
     console.log("✅ Post-migration setup completed successfully!");

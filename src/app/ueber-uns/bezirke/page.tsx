@@ -54,7 +54,7 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
     return bezirk.users.filter(
       (user) =>
         user.districtRoleName &&
-        !user.districtRoleName.toLowerCase().includes("stell")
+        !user.districtRoleName.toLowerCase().includes("stell"),
     );
   };
 
@@ -295,7 +295,11 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
                     {mainObleute.map((obmann, idx) => (
                       <div
                         key={idx}
-                        className={idx > 0 ? "mt-3 pt-3 border-t border-gray-200 dark:border-dark-border" : ""}
+                        className={
+                          idx > 0
+                            ? "dark:border-dark-border mt-3 border-t border-gray-200 pt-3"
+                            : ""
+                        }
                       >
                         <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
                           {obmann.districtRoleName}

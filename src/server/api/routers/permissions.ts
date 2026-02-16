@@ -448,9 +448,8 @@ export const permissionsRouter = createTRPCRouter({
         }
 
         // Check for circular reference
-        const { wouldCreateCircularReference } = await import(
-          "../helpers/role-permissions"
-        );
+        const { wouldCreateCircularReference } =
+          await import("../helpers/role-permissions");
         // Note: We can't check circular reference for a new role, but we validate parent exists
       }
 
@@ -553,13 +552,15 @@ export const permissionsRouter = createTRPCRouter({
           }
 
           // Check for circular reference
-          const { wouldCreateCircularReference } = await import(
-            "../helpers/role-permissions"
-          );
-          if (await wouldCreateCircularReference(input.id, input.parentRoleId)) {
+          const { wouldCreateCircularReference } =
+            await import("../helpers/role-permissions");
+          if (
+            await wouldCreateCircularReference(input.id, input.parentRoleId)
+          ) {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: "Cannot set parent role: would create circular reference",
+              message:
+                "Cannot set parent role: would create circular reference",
             });
           }
         }

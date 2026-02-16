@@ -61,9 +61,7 @@ async function ensurePermissionsExist() {
       },
     });
   }
-  console.log(
-    `  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`,
-  );
+  console.log(`  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`);
 }
 
 async function createOrUpdateUser() {
@@ -131,9 +129,7 @@ async function grantAllPermissions(userId: string) {
     skipDuplicates: true,
   });
 
-  console.log(
-    `  ✓ Granted ${permissionGrants.length} permissions to user`,
-  );
+  console.log(`  ✓ Granted ${permissionGrants.length} permissions to user`);
 }
 
 // ============================================================================

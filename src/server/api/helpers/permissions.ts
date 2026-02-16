@@ -61,12 +61,12 @@ export async function userHasPermission(
   }
 
   // 2. Check permissions from custom roles (including inherited)
-  const { getRolePermissionsIncludingInherited } = await import(
-    "./role-permissions"
-  );
+  const { getRolePermissionsIncludingInherited } =
+    await import("./role-permissions");
   for (const userRole of user.customRoles) {
-    const rolePermissions =
-      await getRolePermissionsIncludingInherited(userRole.role.id);
+    const rolePermissions = await getRolePermissionsIncludingInherited(
+      userRole.role.id,
+    );
     if (rolePermissions.has(permissionKey)) return true;
   }
 
@@ -122,12 +122,12 @@ export async function getUserPermissions(
     });
 
   // 2. Add permissions from custom roles (including inherited)
-  const { getRolePermissionsIncludingInherited } = await import(
-    "./role-permissions"
-  );
+  const { getRolePermissionsIncludingInherited } =
+    await import("./role-permissions");
   for (const userRole of user.customRoles) {
-    const rolePermissions =
-      await getRolePermissionsIncludingInherited(userRole.role.id);
+    const rolePermissions = await getRolePermissionsIncludingInherited(
+      userRole.role.id,
+    );
     rolePermissions.forEach((permissionKey) => {
       // Only add if not explicitly denied
       const denied = user.userPermissions.find(
