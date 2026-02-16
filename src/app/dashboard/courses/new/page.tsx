@@ -8,11 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import {
-  CourseType,
-  CustomFieldType,
-  UserRole,
-} from "~/generated/prisma/enums";
+import { CourseType, CustomFieldType } from "~/generated/prisma/enums";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -52,14 +48,7 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-const ALLOWED_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
-
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
+// Dashboard access is now controlled by permissions
 
 interface PriceOption {
   id: string;
@@ -88,8 +77,17 @@ export default function NewCoursePage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const userRole = profile?.role ?? UserRole.USER;
-  const isHigherRole = HIGHER_ROLES.includes(userRole);
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "courses.approve");
+  const isHigherRole = hasApprovePermission;
 
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
@@ -265,13 +263,16 @@ export default function NewCoursePage() {
   }, [session, sessionLoading, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {

@@ -7,16 +7,11 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import { EditIcon, TrashIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
 
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {
   VORSTAND: "Vorstand",
-  BEZIRKSOBMANN: "Bezirksobmann",
-  BEZIRKSOBFRAU: "Bezirksobfrau",
   LANDESKIRCHENMUSIKDIREKTOR: "Landeskirchenmusikdirektor",
   SACHVERSTAENDIGER: "Sachverständiger",
   SACHVERSTAENDIGE: "Sachverständige",
@@ -35,6 +30,11 @@ export default function PosaunenratDetailPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: member, isLoading: memberLoading } =
     api.organization.getPosaunenratMember.useQuery(
@@ -61,13 +61,16 @@ export default function PosaunenratDetailPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async () => {
     if (!confirm("Möchtest du dieses Posaunenratsmitglied wirklich löschen?")) {
@@ -85,7 +88,7 @@ export default function PosaunenratDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 
@@ -216,16 +219,6 @@ export default function PosaunenratDetailPage() {
                   )}
                 </dd>
               </div>
-              {member.district && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                    Bezirk
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {member.district}
-                  </dd>
-                </div>
-              )}
               <div>
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                   Verknüpfung

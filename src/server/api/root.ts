@@ -16,6 +16,7 @@ import { searchRouter } from "./routers/search";
 import { savedParticipantsRouter } from "./routers/saved-participants";
 import { homepageRouter } from "./routers/homepage";
 import { statsRouter } from "./routers/stats";
+import { permissionsRouter } from "./routers/permissions";
 
 /**
  * This is the primary router for your server.
@@ -40,6 +41,7 @@ export const appRouter = createTRPCRouter({
   savedParticipants: savedParticipantsRouter,
   homepage: homepageRouter,
   stats: statsRouter,
+  permissions: permissionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

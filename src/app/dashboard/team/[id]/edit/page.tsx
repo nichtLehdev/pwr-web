@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole, ContactType } from "~/generated/prisma/enums";
+import { ContactType } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import {
   SocialIcon,
@@ -14,7 +14,7 @@ import {
 } from "@/app/_components/ui/social-icon";
 import { Plus, TrashIcon } from "lucide-react";
 
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
+// Dashboard access is now controlled by permissions
 
 const CONTACT_TYPE_OPTIONS: { value: ContactType | ""; label: string }[] = [
   { value: "", label: "Kein Bereich" },
@@ -40,6 +40,11 @@ export default function EditTeamPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: member, isLoading: memberLoading } =
     api.organization.getTeamMember.useQuery(
@@ -118,13 +123,16 @@ export default function EditTeamPage() {
   }, [session, sessionLoading, router, memberId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +167,7 @@ export default function EditTeamPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 

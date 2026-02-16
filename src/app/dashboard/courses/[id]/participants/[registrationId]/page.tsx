@@ -8,7 +8,6 @@ import {
   RegistrationStatus,
   PaymentStatus,
   SiblingDiscountStatus,
-  UserRole,
 } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -134,9 +133,20 @@ export default function RegistrationDetailPage() {
       },
     });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "courses.approve" || perm === "courses.manage",
+    );
+
   const canApproveDiscount =
     profile &&
-    (profile.role === UserRole.ADMIN || profile.role === UserRole.LPW) &&
+    hasApprovePermission &&
     registration?.siblingDiscountStatus === SiblingDiscountStatus.PENDING;
 
   const getParticipantDisplayName = (

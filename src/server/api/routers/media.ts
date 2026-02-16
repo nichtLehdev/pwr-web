@@ -7,11 +7,9 @@ import {
   reviewerProcedure,
   adminProcedure,
 } from "../trpc";
-import {
-  UserRole,
-  ContentStatus,
-  type Prisma,
-} from "~/generated/prisma/client";
+import { ContentStatus, type Prisma } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const mediaRouter = createTRPCRouter({
   getById: publicProcedure
@@ -59,12 +57,15 @@ export const mediaRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
       const userId = ctx.session.user.id;
-      const isReviewer =
-        userRole === UserRole.RPW ||
-        userRole === UserRole.LPW ||
-        userRole === UserRole.ADMIN;
+      const canApproveMedia = await userHasPermission(
+        userId,
+        PERMISSIONS.MEDIA_APPROVE,
+      );
+      const canUploadMedia = await userHasPermission(
+        userId,
+        PERMISSIONS.MEDIA_UPLOAD,
+      );
 
       const where: Prisma.MediaWhereInput = {
         ...(input.mimeType && { mimeType: { contains: input.mimeType } }),
@@ -84,8 +85,10 @@ export const mediaRouter = createTRPCRouter({
       }
 
       if (input.includeAll) {
-        if (isReviewer) {
-        } else if (userRole === UserRole.OBLEUTE) {
+        if (canApproveMedia) {
+          // Can see all media
+        } else if (canUploadMedia) {
+          // Can see approved + own pending
           where.AND = [
             {
               OR: [
@@ -180,18 +183,18 @@ export const mediaRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
-
-      const isReviewer =
-        userRole === UserRole.RPW ||
-        userRole === UserRole.LPW ||
-        userRole === UserRole.ADMIN;
+      const canApproveMedia = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.MEDIA_APPROVE,
+      );
 
       const media = await ctx.db.media.create({
         data: {
           ...input,
           uploadedById: ctx.session.user.id,
-          status: isReviewer ? ContentStatus.APPROVED : ContentStatus.PENDING,
+          status: canApproveMedia
+            ? ContentStatus.APPROVED
+            : ContentStatus.PENDING,
         },
       });
 
@@ -227,10 +230,12 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
+      const canEditMedia = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.MEDIA_APPROVE,
+      );
       const canEdit =
-        media.uploadedById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+        media.uploadedById === ctx.session.user.id || canEditMedia;
 
       if (!canEdit) {
         throw new TRPCError({
@@ -260,10 +265,12 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
+      const canDeleteMedia = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.MEDIA_DELETE,
+      );
       const canDelete =
-        media.uploadedById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+        media.uploadedById === ctx.session.user.id || canDeleteMedia;
 
       if (!canDelete) {
         throw new TRPCError({

@@ -49,3 +49,8 @@ yarn-error.log*
 # uploads
 /public/uploads/*
 !/public/uploads/.gitkeep
+
+# seed data (contains public/production data)
+/prisma/seed-data/*
+!/prisma/seed-data/permissions.ts
+/prisma/seed-data-from-backup/

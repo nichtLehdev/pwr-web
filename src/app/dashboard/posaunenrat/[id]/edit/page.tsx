@@ -7,16 +7,12 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole, PosaunenratRole } from "~/generated/prisma/enums";
+import { PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
 const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
   { value: PosaunenratRole.VORSTAND, label: "Vorstand" },
-  { value: PosaunenratRole.BEZIRKSOBMANN, label: "Bezirksobmann" },
-  { value: PosaunenratRole.BEZIRKSOBFRAU, label: "Bezirksobfrau" },
   {
     value: PosaunenratRole.LANDESKIRCHENMUSIKDIREKTOR,
     label: "Landeskirchenmusikdirektor",
@@ -38,6 +34,11 @@ export default function EditPosaunenratPage() {
       enabled: !!session?.user,
     });
 
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   const { data: member, isLoading: memberLoading } =
     api.organization.getPosaunenratMember.useQuery(
       { id: memberId },
@@ -52,7 +53,6 @@ export default function EditPosaunenratPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<PosaunenratRole>(PosaunenratRole.VORSTAND);
-  const [district, setDistrict] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState("");
@@ -67,7 +67,6 @@ export default function EditPosaunenratPage() {
       setName(member.name || "");
       setEmail(member.email || "");
       setRole(member.role as PosaunenratRole);
-      setDistrict(member.district || "");
       setSortOrder(member.sortOrder || 0);
       if (member.user) {
         setUserId(member.user.id);
@@ -126,13 +125,16 @@ export default function EditPosaunenratPage() {
   }, [session, sessionLoading, router, memberId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +146,6 @@ export default function EditPosaunenratPage() {
       name: name.trim() || undefined,
       email: email.trim() || undefined,
       role,
-      district: district.trim() || undefined,
       sortOrder,
       userId: userId,
     });
@@ -158,7 +159,7 @@ export default function EditPosaunenratPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 
@@ -432,19 +433,6 @@ export default function EditPosaunenratPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirk (für Bezirksobleute)
-                </label>
-                <input
-                  type="text"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  placeholder="z.B. Bezirk 1 - Düsseldorf"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
               </div>
 
               <div>

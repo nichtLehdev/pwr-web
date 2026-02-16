@@ -11,7 +11,6 @@ import {
   ContentStatus,
   CourseType,
   CustomFieldType,
-  UserRole,
   RegistrationStatus,
   PaymentStatus,
 } from "~/generated/prisma/enums";
@@ -77,14 +76,7 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function CourseDetailPage() {
   const router = useRouter();
@@ -104,6 +96,30 @@ export default function CourseDetailPage() {
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "courses.approve");
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "courses.edit" || perm === "courses.approve",
+    );
+  const hasViewParticipantsPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) =>
+        perm === "courses.view" ||
+        perm === "courses.approve" ||
+        perm === "courses.manage",
+    );
 
   const {
     data: course,
@@ -162,13 +178,16 @@ export default function CourseDetailPage() {
   }, [session, sessionLoading, router, courseId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   if (sessionLoading || profileLoading || courseLoading) {
     return (
@@ -196,22 +215,16 @@ export default function CourseDetailPage() {
     );
   }
 
-  const userRole = profile.role;
-  const isReviewer = REVIEWER_ROLES.includes(userRole);
+  const isReviewer = hasApprovePermission;
   const isOwner = course.createdById === session.user.id;
   const isInstructor = course.instructors?.some(
     (i) => i.id === session.user.id,
   );
-  const canEdit =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
-  const canDelete =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const canEdit = isOwner || hasEditPermission;
+  const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
-    isOwner ||
-    isInstructor ||
-    userRole === UserRole.ADMIN ||
-    userRole === UserRole.LPW;
+    isOwner || isInstructor || hasViewParticipantsPermission;
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);

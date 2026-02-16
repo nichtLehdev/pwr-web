@@ -5,10 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import { Mail } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function DashboardNewsletterSubscribersPage() {
   const { data: session, isPending } = useSession();
@@ -23,6 +20,11 @@ export default function DashboardNewsletterSubscribersPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageNewsletter } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: subscribersData, isLoading: subscribersLoading } =
     api.newsletter.getSubscribers.useQuery(
@@ -58,13 +60,16 @@ export default function DashboardNewsletterSubscribersPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageNewsletter &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/dashboard");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, canManageNewsletter]);
 
   if (isPending || profileLoading) {
     return (
@@ -74,7 +79,7 @@ export default function DashboardNewsletterSubscribersPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageNewsletter) {
     return null;
   }
 

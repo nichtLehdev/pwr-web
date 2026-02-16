@@ -11,7 +11,6 @@ import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
   ContentStatus,
-  UserRole,
   CustomFieldType,
 } from "~/generated/prisma/enums";
 import {
@@ -51,14 +50,7 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 interface PriceOption {
   id: string;
@@ -344,7 +336,17 @@ export default function EditCoursePage() {
     );
   });
 
-  const isHigherRole = profile && HIGHER_ROLES.includes(profile.role);
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "courses.approve");
+  const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
   useEffect(() => {
@@ -505,22 +507,23 @@ export default function EditCoursePage() {
   }, [session, sessionLoading, router, courseId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (course && profile && !hasRedirected.current) {
       const isCreator = course.createdById === session?.user?.id;
-      const isHigherRoleUser = HIGHER_ROLES.includes(profile.role);
+      const isHigherRoleUser = hasApprovePermission;
       const isObleuteForDistrict =
-        profile.role === UserRole.OBLEUTE &&
-        profile.bezirkId &&
-        course.bezirkId === profile.bezirkId;
+        profile.bezirkId && course.bezirkId === profile.bezirkId;
 
       const canEdit = isCreator || isHigherRoleUser || isObleuteForDistrict;
 
@@ -529,7 +532,7 @@ export default function EditCoursePage() {
         router.push(`/dashboard/courses/${courseId}`);
       }
     }
-  }, [course, profile, session, router, courseId]);
+  }, [course, profile, session, router, courseId, hasApprovePermission]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -715,10 +718,9 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: parseInt(maxParticipants),
       allowWaitingList,
-      allowSiblingDiscount:
-        profile?.role === UserRole.LPW || profile?.role === UserRole.ADMIN
-          ? allowSiblingDiscount
-          : undefined,
+      allowSiblingDiscount: hasApprovePermission
+        ? allowSiblingDiscount
+        : undefined,
       isFree,
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
@@ -1345,9 +1347,8 @@ export default function EditCoursePage() {
                 </label>
               </div>
 
-              {/* Sibling Discount - Only for LPW/Admin */}
-              {(profile?.role === UserRole.LPW ||
-                profile?.role === UserRole.ADMIN) && (
+              {/* Sibling Discount - Only for users with approve permission */}
+              {hasApprovePermission && (
                 <div className="flex items-center gap-3">
                   <input
                     type="checkbox"

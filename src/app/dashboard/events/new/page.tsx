@@ -12,7 +12,6 @@ import {
   EventCategory,
   EventEnsembleType,
   ContentStatus,
-  UserRole,
 } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -33,7 +32,7 @@ const ensembleTypeLabels: Record<EventEnsembleType, string> = {
   CUSTOM: "Benutzerdefiniert",
 };
 
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
+// Dashboard access is now controlled by permissions
 
 interface PriceOption {
   id: string;
@@ -51,8 +50,15 @@ export default function NewEventPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const userRole = profile?.role ?? UserRole.USER;
-  const isHigherRole = HIGHER_ROLES.includes(userRole);
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "events.approve");
+  const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
   const [title, setTitle] = useState("");
@@ -248,20 +254,16 @@ export default function NewEventPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      const allowedRoles: UserRole[] = [
-        UserRole.ADMIN,
-        UserRole.LPW,
-        UserRole.RPW,
-        UserRole.OBLEUTE,
-      ];
-      const canCreateEvents = allowedRoles.includes(profile.role);
+      const hasDashboardAccess =
+        Array.isArray(userPermissions) && userPermissions.length > 0;
+      const canCreateEvents = hasDashboardAccess;
 
       if (!canCreateEvents) {
         hasRedirected.current = true;
         router.push("/dashboard");
       }
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, router, userPermissions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

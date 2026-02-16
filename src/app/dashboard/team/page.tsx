@@ -8,10 +8,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import { EditIcon, Plus, TrashIcon, UsersIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const CONTACT_TYPE_LABELS: Record<string, string> = {
   GESCHAEFTSSTELLE: "Geschäftsstelle",
@@ -29,6 +26,11 @@ export default function DashboardTeamPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: teamMembers,
@@ -56,13 +58,16 @@ export default function DashboardTeamPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Teammitglied wirklich löschen?")) {
@@ -80,7 +85,7 @@ export default function DashboardTeamPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 

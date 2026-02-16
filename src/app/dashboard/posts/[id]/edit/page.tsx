@@ -7,11 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
-import {
-  PostCategory,
-  ContentStatus,
-  UserRole,
-} from "~/generated/prisma/enums";
+import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
@@ -36,14 +32,7 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -56,13 +45,22 @@ export default function EditPostPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "posts.approve");
+  const isHigherRole = hasApprovePermission;
+
   const { data: post, isLoading: postLoading } = api.posts.getById.useQuery(
     { id: postId },
     { enabled: !!postId && !!session?.user },
   );
-
-  const userRole = profile?.role ?? UserRole.USER;
-  const isHigherRole = HIGHER_ROLES.includes(userRole);
 
   const [title, setTitle] = useState(post?.title ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
@@ -267,27 +265,33 @@ export default function EditPostPage() {
   }, [session, sessionLoading, router, postId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
+      const hasEditPermission =
+        Array.isArray(userPermissions) &&
+        userPermissions.some(
+          (perm: string) => perm === "posts.edit" || perm === "posts.approve",
+        );
       const canEdit =
-        post.createdById === session?.user?.id ||
-        profile.role === UserRole.ADMIN ||
-        profile.role === UserRole.LPW;
+        post.createdById === session?.user?.id || hasEditPermission;
 
       if (!canEdit) {
         hasRedirected.current = true;
         router.push(`/dashboard/posts/${postId}`);
       }
     }
-  }, [post, profile, session, router, postId]);
+  }, [post, profile, session, router, postId, userPermissions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -703,8 +707,8 @@ export default function EditPostPage() {
             </div>
           </section>
 
-          {/* Options for admins */}
-          {(userRole === UserRole.ADMIN || userRole === UserRole.LPW) && (
+          {/* Options for users with approve permission */}
+          {hasApprovePermission && (
             <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Admin-Optionen

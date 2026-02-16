@@ -6,10 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import DashboardUsersList from "@/app/_components/dashboard/dashboard-users-list";
-import { UserRole } from "~/generated/prisma/enums";
 import { Plus } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardUsersPage() {
   const { data: session, isPending } = useSession();
@@ -20,6 +17,11 @@ export default function DashboardUsersPage() {
       enabled: !!session?.user,
     });
 
+  const { data: canManageUsers } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -28,13 +30,16 @@ export default function DashboardUsersPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageUsers &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/dashboard");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, canManageUsers]);
 
   if (isPending || profileLoading) {
     return (
@@ -44,7 +49,7 @@ export default function DashboardUsersPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageUsers) {
     return null;
   }
 

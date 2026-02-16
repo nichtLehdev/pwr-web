@@ -25,13 +25,12 @@ model User {
   profileImageId String?
   profileImage   Media?  @relation("UserProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
 
-  // Role & Permissions
-  role        UserRole @default(USER)
-  roleType    String?
-  displayRole String?
-  obleuteRole String? // Legacy: "Bezirksobmann" or "Bezirksobfrau" for OBLEUTE users
+  // District Role (for users assigned to a district)
+  // If bezirkId is set, this field can contain the role name (e.g., "Bezirksobmann", "Bezirksobfrau")
+  districtRoleName String?
 
-  // Bezirk association (works for all roles - OBLEUTE, RPW, LPW, ADMIN can all have a Bezirk)
+  // Bezirk association
+  // Users can be assigned to a district with a specific role name
   bezirkId String?
 
   // Bio & Preferences
@@ -72,8 +71,134 @@ model User {
 
   displayUsername String?
 
-  @@index([role])
+  // Custom Roles & Permissions
+  customRoles     UserRoleAssignment[]
+  userPermissions UserPermission[]
+
+  @@index([bezirkId])
   @@map("user")
+}
+
+// --------- Permission System Models ---------
+
+/**
+ * Custom Role model for flexible role-based permissions
+ * Separate from the UserRole enum to allow custom roles
+ */
+model Role {
+  id          String  @id @default(uuid())
+  name        String  @unique // e.g., "Content Moderator", "Event Manager"
+  description String?
+  isSystem    Boolean @default(false) // System roles cannot be deleted
+
+  // Hierarchical role support - roles can inherit from parent roles
+  parentRoleId String?
+  parentRole   Role?   @relation("RoleHierarchy", fields: [parentRoleId], references: [id], onDelete: SetNull)
+  childRoles   Role[]  @relation("RoleHierarchy")
+
+  // Permissions assigned to this role
+  permissions RolePermission[]
+
+  // Users assigned to this role
+  users UserRoleAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([isSystem])
+  @@index([parentRoleId])
+  @@map("role")
+}
+
+/**
+ * Permission model for granular permission control
+ * Permissions are string-based identifiers like "events.create", "posts.approve", etc.
+ */
+model Permission {
+  id          String  @id @default(uuid())
+  key         String  @unique // e.g., "events.create", "posts.approve", "users.manage"
+  name        String // Display name: "Create Events", "Approve Posts"
+  description String? // Detailed description
+  category    String? // Grouping: "events", "posts", "users", "media", etc.
+  isSystem    Boolean @default(false) // System permissions cannot be deleted
+
+  // Roles that have this permission
+  roles RolePermission[]
+
+  // Users that have this permission directly
+  users UserPermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
+  @@index([category])
+  @@index([isSystem])
+  @@map("permission")
+}
+
+/**
+ * Junction table: Role -> Permission
+ * Defines which permissions are assigned to which roles
+ */
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permission")
+}
+
+/**
+ * Junction table: User -> Role
+ * Assigns custom roles to users
+ */
+model UserRoleAssignment {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_role_assignment")
+}
+
+/**
+ * Direct User -> Permission assignment
+ * Allows granting specific permissions to individual users, overriding role-based permissions
+ * Useful for one-off permissions or user-specific access
+ */
+model UserPermission {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  // Optional: grant or deny (useful for denying permissions inherited from roles)
+  granted Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, permissionId])
+  @@index([userId])
+  @@index([permissionId])
+  @@index([granted])
+  @@map("user_permission")
 }
 
 model Session {
@@ -137,14 +262,6 @@ model TwoFactor {
 }
 
 // --------- Enums ---------
-
-enum UserRole {
-  USER // Regular user
-  OBLEUTE // Can create events/posts (needs approval)
-  RPW // Regional Posaunenwart - can approve for their Bezirk
-  LPW // Landesposaunenwart - can approve everything
-  ADMIN // Full admin access
-}
 
 enum EventEnsembleType {
   AUSWAHLCHOR
@@ -222,8 +339,6 @@ enum ContactType {
 
 enum PosaunenratRole {
   VORSTAND
-  BEZIRKSOBMANN
-  BEZIRKSOBFRAU
   LANDESKIRCHENMUSIKDIREKTOR
   SACHVERSTAENDIGER
   SACHVERSTAENDIGE
@@ -572,8 +687,8 @@ model Post {
   content String // Rich text/Markdown
 
   // Media
-  coverImageId String?
-  coverImage   Media?  @relation("PostCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  coverImageId        String?
+  coverImage          Media?  @relation("PostCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
   coverImagePositionX Float? // Focal point X position (0-100, percentage)
   coverImagePositionY Float? // Focal point Y position (0-100, percentage)
 
@@ -812,7 +927,6 @@ model PosaunenratMember {
 
   // Posaunenrat-specific info
   role      PosaunenratRole
-  district  String? // Which district (for Bezirksobleute)
   sortOrder Int             @default(0)
 
   // Optional link to User (some Posaunenrat members have accounts)
@@ -963,9 +1077,9 @@ model Media {
   height Int?
 
   // Metadata
-  alt     String? // Alt text for images
-  caption String? // Caption/description
-  title   String? // Title
+  alt       String? // Alt text for images
+  caption   String? // Caption/description
+  title     String? // Title
   copyright String? // Optional copyright notice
   creator   String? // Optional photographer/creator name
 
@@ -979,17 +1093,17 @@ model Media {
   reviewNotes String?
 
   // Relations - primary usages (kept explicit)
-  usersProfile            User[]                @relation("UserProfileImage")
-  eventsCover             Event[]               @relation("EventCoverImage")
-  postsCover              Post[]                @relation("PostCoverImage")
-  ensembleImages          Ensemble[]            @relation("EnsembleImage")
-  auswahlChorImages       AuswahlChor[]         @relation("AuswahlChorImage")
-  vorstandMemberImages    VorstandMember[]      @relation("VorstandMemberImage")
-  posaunenratMemberImages PosaunenratMember[]   @relation("PosaunenratMemberImage")
-  foerdervereinMemberImgs FoerdervereinMember[] @relation("FoerdervereinMemberImage")
-  historyEventImages      HistoryEvent[]        @relation("HistoryEventImage")
-  blaeserheftImages       Blaeserheft[]         @relation("BlaeserheftImage")
-  courseImages            Course[]              @relation("CourseImage")
+  usersProfile            User[]                 @relation("UserProfileImage")
+  eventsCover             Event[]                @relation("EventCoverImage")
+  postsCover              Post[]                 @relation("PostCoverImage")
+  ensembleImages          Ensemble[]             @relation("EnsembleImage")
+  auswahlChorImages       AuswahlChor[]          @relation("AuswahlChorImage")
+  vorstandMemberImages    VorstandMember[]       @relation("VorstandMemberImage")
+  posaunenratMemberImages PosaunenratMember[]    @relation("PosaunenratMemberImage")
+  foerdervereinMemberImgs FoerdervereinMember[]  @relation("FoerdervereinMemberImage")
+  historyEventImages      HistoryEvent[]         @relation("HistoryEventImage")
+  blaeserheftImages       Blaeserheft[]          @relation("BlaeserheftImage")
+  courseImages            Course[]               @relation("CourseImage")
   homepageCarouselItems   HomepageCarouselItem[] @relation("HomepageCarouselMedia")
 
   // Uploaded by
@@ -1024,8 +1138,8 @@ model HomepageCarouselItem {
   title    String? // Custom title (replaces "Posaunenwerk Rheinland")
   subtitle String? // Custom subtitle (replaces "Gemeinsam Musik machen, Glauben leben")
 
-  isActive Boolean @default(true)
-  sortOrder Int    @default(0) // Lower number = appears first
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0) // Lower number = appears first
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1037,10 +1151,10 @@ model HomepageCarouselItem {
 // Page/section views for statistics. Anonymous unless user opted in to "track by user".
 model PageView {
   id        String   @id @default(uuid())
-  path      String   // e.g. "/", "/aktuelles", "/termine"
-  section   String?  // optional: "hero", "footer", "sidebar", etc.
-  userId    String?  // set when user consented to "track views by user"
-  user      User?   @relation("PageViewUser", fields: [userId], references: [id], onDelete: SetNull)
+  path      String // e.g. "/", "/aktuelles", "/termine"
+  section   String? // optional: "hero", "footer", "sidebar", etc.
+  userId    String? // set when user consented to "track views by user"
+  user      User?    @relation("PageViewUser", fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 
   @@index([path])

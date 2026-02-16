@@ -8,7 +8,6 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   Plus,
   Search,
@@ -20,8 +19,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardAuswahlchoerePage() {
   const router = useRouter();
@@ -38,6 +35,11 @@ export default function DashboardAuswahlchoerePage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageAuswahlchoere } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: auswahlchoereData,
@@ -69,13 +71,16 @@ export default function DashboardAuswahlchoerePage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageAuswahlchoere &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageAuswahlchoere, router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (
@@ -97,7 +102,7 @@ export default function DashboardAuswahlchoerePage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageAuswahlchoere) {
     return null;
   }
 

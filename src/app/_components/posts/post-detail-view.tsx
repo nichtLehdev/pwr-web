@@ -12,7 +12,6 @@ import MediaCredit from "@/app/_components/general/media-credit";
 import type { FileType } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
   ArrowUpRightIcon,
@@ -105,21 +104,27 @@ export default function PostDetailView({
     post.author?.profileImage || post.createdBy?.profileImage;
   const userId = displayUser?.id;
 
-  const canViewUserProfile =
-    session?.user &&
-    profile &&
-    (profile.role === UserRole.ADMIN ||
-      profile.role === UserRole.LPW ||
-      profile.role === UserRole.RPW ||
-      profile.role === UserRole.OBLEUTE);
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasAnyPermission =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "posts.edit" || perm === "posts.approve",
+    );
+
+  const canViewUserProfile = session?.user && profile && hasAnyPermission;
 
   const canEdit =
     session?.user &&
     profile &&
     (post.createdById === session.user.id ||
       post.createdBy?.id === session.user.id ||
-      profile.role === UserRole.ADMIN ||
-      profile.role === UserRole.LPW);
+      hasEditPermission);
 
   return (
     <div className="bg-background dark:bg-dark-background min-h-screen">
