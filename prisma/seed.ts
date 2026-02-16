@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Seed Script for Posaunenwerk Database
- * 
+ *
  * This script seeds system permissions into the database.
  * System permissions are hardcoded core permissions that cannot be deleted/modified via UI.
  */
@@ -33,7 +33,9 @@ async function seedPermissions() {
       create: perm,
     });
   }
-  console.log(`  ✓ Created/Updated ${permissionsData.length} system permissions`);
+  console.log(
+    `  ✓ Created/Updated ${permissionsData.length} system permissions`,
+  );
 }
 
 // ============================================================================

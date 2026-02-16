@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 /**
  * Hardcoded list of usernames or emails allowed to manage permissions.
@@ -50,32 +47,28 @@ export const permissionsRouter = createTRPCRouter({
   /**
    * Get all permissions
    */
-  getAllPermissions: protectedProcedure
-    .query(async ({ ctx }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
+  getAllPermissions: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.db.user.findUnique({
+      where: { id: ctx.session.user.id },
+      select: { email: true, username: true },
+    });
+    if (!user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    const allowed =
+      canManagePermissions(user.email) ||
+      (user.username ? canManagePermissions(user.username) : false);
+    if (!allowed) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "You are not allowed to manage permissions",
       });
-      if (!user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-      const allowed =
-        canManagePermissions(user.email) ||
-        (user.username ? canManagePermissions(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to manage permissions",
-        });
-      }
+    }
 
-      return await ctx.db.permission.findMany({
-        orderBy: [
-          { category: "asc" },
-          { name: "asc" },
-        ],
-      });
-    }),
+    return await ctx.db.permission.findMany({
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+    });
+  }),
 
   /**
    * Get permission by ID
@@ -803,10 +796,7 @@ export const permissionsRouter = createTRPCRouter({
         username: true,
         role: true,
       },
-      orderBy: [
-        { displayName: "asc" },
-        { email: "asc" },
-      ],
+      orderBy: [{ displayName: "asc" }, { email: "asc" }],
     });
   }),
 });

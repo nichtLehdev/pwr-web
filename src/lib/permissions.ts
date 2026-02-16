@@ -1,9 +1,9 @@
 /**
  * Core System Permissions
- * 
+ *
  * These permissions are hardcoded and seeded into the database as system permissions.
  * They represent the core functionality of the application and cannot be deleted/modified via UI.
- * 
+ *
  * Permission keys follow the pattern: {resource}.{action}
  * Examples: events.create, posts.approve, users.manage
  */
@@ -73,7 +73,7 @@ export const PERMISSIONS = {
   PERMISSIONS_MANAGE: "permissions.manage",
 } as const;
 
-export type PermissionKey = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 /**
  * Permission definitions for seeding

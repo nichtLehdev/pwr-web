@@ -4,7 +4,7 @@ import { db } from "@/server/db";
 
 /**
  * Permission checking helper functions
- * 
+ *
  * These functions check if a user has a specific permission, either through:
  * 1. Their role (legacy UserRole enum)
  * 2. Custom roles assigned to them
@@ -155,12 +155,12 @@ export function getRolePermissions(role: UserRole): PermissionKey[] {
 
 /**
  * Check if a user has a specific permission
- * 
+ *
  * Checks in this order:
  * 1. Direct user permissions (granted/denied)
  * 2. Permissions from custom roles
  * 3. Permissions from legacy UserRole enum
- * 
+ *
  * @param userId - User ID to check
  * @param permissionKey - Permission key to check
  * @returns true if user has the permission, false otherwise
@@ -218,12 +218,12 @@ export async function userHasPermission(
 
 /**
  * Get all permission keys a user has
- * 
+ *
  * Combines permissions from:
  * 1. Direct user permissions
  * 2. Custom roles
  * 3. Legacy UserRole enum
- * 
+ *
  * @param userId - User ID
  * @returns Array of permission keys the user has
  */
@@ -270,8 +270,7 @@ export async function getUserPermissions(
     userRole.role.permissions.forEach((rp) => {
       // Only add if not explicitly denied
       const denied = user.userPermissions.find(
-        (up) =>
-          up.permission.key === rp.permission.key && !up.granted,
+        (up) => up.permission.key === rp.permission.key && !up.granted,
       );
       if (!denied) {
         permissions.add(rp.permission.key as PermissionKey);

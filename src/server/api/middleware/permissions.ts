@@ -5,7 +5,7 @@ import type { PERMISSIONS } from "@/lib/permissions";
 
 /**
  * Create a procedure that requires a specific permission
- * 
+ *
  * @example
  * ```ts
  * export const eventsRouter = createTRPCRouter({
@@ -38,7 +38,7 @@ export function permissionProcedure(permission: PermissionKey) {
 
 /**
  * Create a procedure that requires any of the specified permissions
- * 
+ *
  * @example
  * ```ts
  * export const eventsRouter = createTRPCRouter({
@@ -56,9 +56,7 @@ export function permissionProcedure(permission: PermissionKey) {
 export function permissionProcedureAny(permissions: PermissionKey[]) {
   return protectedProcedure.use(async ({ ctx, next }) => {
     const userPermissions = await Promise.all(
-      permissions.map((perm) =>
-        userHasPermission(ctx.session.user.id, perm),
-      ),
+      permissions.map((perm) => userHasPermission(ctx.session.user.id, perm)),
     );
 
     const hasAnyPermission = userPermissions.some((has) => has);
@@ -76,7 +74,7 @@ export function permissionProcedureAny(permissions: PermissionKey[]) {
 
 /**
  * Create a procedure that requires all of the specified permissions
- * 
+ *
  * @example
  * ```ts
  * export const eventsRouter = createTRPCRouter({
@@ -94,9 +92,7 @@ export function permissionProcedureAny(permissions: PermissionKey[]) {
 export function permissionProcedureAll(permissions: PermissionKey[]) {
   return protectedProcedure.use(async ({ ctx, next }) => {
     const userPermissions = await Promise.all(
-      permissions.map((perm) =>
-        userHasPermission(ctx.session.user.id, perm),
-      ),
+      permissions.map((perm) => userHasPermission(ctx.session.user.id, perm)),
     );
 
     const hasAllPermissions = userPermissions.every((has) => has);

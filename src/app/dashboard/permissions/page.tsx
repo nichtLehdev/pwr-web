@@ -123,14 +123,14 @@ export default function PermissionsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200 dark:border-dark-border">
+        <div className="dark:border-dark-border mb-6 border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
               onClick={() => setActiveTab("permissions")}
-              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === "permissions"
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-dark-muted dark:hover:text-dark-text"
+                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
               <Key className="mr-2 inline h-4 w-4" />
@@ -138,10 +138,10 @@ export default function PermissionsPage() {
             </button>
             <button
               onClick={() => setActiveTab("roles")}
-              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === "roles"
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-dark-muted dark:hover:text-dark-text"
+                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
               <Shield className="mr-2 inline h-4 w-4" />
@@ -149,10 +149,10 @@ export default function PermissionsPage() {
             </button>
             <button
               onClick={() => setActiveTab("users")}
-              className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium transition-colors ${
+              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === "users"
                   ? "border-primary text-primary"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-dark-muted dark:hover:text-dark-text"
+                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
               }`}
             >
               <Users className="mr-2 inline h-4 w-4" />
@@ -274,28 +274,28 @@ function PermissionsTab() {
               <h3 className="dark:text-dark-text text-lg font-medium text-gray-900">
                 {category}
               </h3>
-              <div className="dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow dark:border-dark-border">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+                <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
                   <thead className="dark:bg-dark-surface bg-gray-50">
                     <tr>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Schlüssel
                       </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Name
                       </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Beschreibung
                       </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                      <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                         Aktionen
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="dark:bg-dark-surface bg-white divide-y divide-gray-200 dark:divide-dark-border">
+                  <tbody className="dark:bg-dark-surface dark:divide-dark-border divide-y divide-gray-200 bg-white">
                     {perms.map((perm) => (
                       <tr key={perm.id}>
-                        <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-sm font-mono text-gray-900">
+                        <td className="dark:text-dark-text px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
                           {perm.key}
                         </td>
                         <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-900">
@@ -304,7 +304,7 @@ function PermissionsTab() {
                         <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
                           {perm.description || "-"}
                         </td>
-                        <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
                           {perm.isSystem ? (
                             <span className="text-gray-400">System</span>
                           ) : editingId === perm.id ? (
@@ -364,7 +364,7 @@ function PermissionsTab() {
           ))}
         </div>
       ) : (
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-dark-border">
+        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-8 text-center">
           <Key className="mx-auto h-12 w-12 text-gray-400" />
           <p className="dark:text-dark-muted mt-4 text-gray-500">
             Noch keine Berechtigungen vorhanden
@@ -392,7 +392,7 @@ function PermissionsTab() {
                       setFormData({ ...formData, key: e.target.value })
                     }
                     placeholder="z.B. events.create"
-                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                   />
                 </div>
               )}
@@ -407,7 +407,7 @@ function PermissionsTab() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="z.B. Events erstellen"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
               <div>
@@ -421,7 +421,7 @@ function PermissionsTab() {
                     setFormData({ ...formData, category: e.target.value })
                   }
                   placeholder="z.B. events"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
               <div>
@@ -434,7 +434,7 @@ function PermissionsTab() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>
@@ -568,34 +568,36 @@ function RolesTab() {
 
       {/* Roles List */}
       {roles && roles.length > 0 ? (
-        <div className="dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow dark:border-dark-border">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+        <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+          <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
             <thead className="dark:bg-dark-surface bg-gray-50">
               <tr>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Name
                 </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Beschreibung
                 </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Berechtigungen
                 </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Benutzer
                 </th>
-                <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+                <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Aktionen
                 </th>
               </tr>
             </thead>
-            <tbody className="dark:bg-dark-surface bg-white divide-y divide-gray-200 dark:divide-dark-border">
+            <tbody className="dark:bg-dark-surface dark:divide-dark-border divide-y divide-gray-200 bg-white">
               {roles.map((role) => (
                 <tr key={role.id}>
                   <td className="dark:text-dark-text px-6 py-4 text-sm font-medium text-gray-900">
                     {role.name}
                     {role.isSystem && (
-                      <span className="ml-2 text-xs text-gray-500">(System)</span>
+                      <span className="ml-2 text-xs text-gray-500">
+                        (System)
+                      </span>
                     )}
                   </td>
                   <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
@@ -607,7 +609,7 @@ function RolesTab() {
                   <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
                     {role.users.length}
                   </td>
-                  <td className="dark:text-dark-text whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                  <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
                     {role.isSystem ? (
                       <span className="text-gray-400">System</span>
                     ) : (
@@ -639,7 +641,7 @@ function RolesTab() {
           </table>
         </div>
       ) : (
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-dark-border">
+        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-8 text-center">
           <Shield className="mx-auto h-12 w-12 text-gray-400" />
           <p className="dark:text-dark-muted mt-4 text-gray-500">
             Noch keine Rollen vorhanden
@@ -666,7 +668,7 @@ function RolesTab() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   placeholder="z.B. Content Moderator"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
               <div>
@@ -679,14 +681,14 @@ function RolesTab() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
               <div>
                 <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
                   Berechtigungen
                 </label>
-                <div className="dark:bg-dark-surface max-h-64 overflow-y-auto rounded-lg border border-gray-200 p-4 dark:border-dark-border">
+                <div className="dark:bg-dark-surface dark:border-dark-border max-h-64 overflow-y-auto rounded-lg border border-gray-200 p-4">
                   {permissions && permissions.length > 0 ? (
                     <div className="space-y-2">
                       {permissions.map((perm) => (
@@ -698,7 +700,7 @@ function RolesTab() {
                             type="checkbox"
                             checked={formData.permissionIds.includes(perm.id)}
                             onChange={() => togglePermission(perm.id)}
-                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                           />
                           <span className="font-medium">{perm.name}</span>
                           <span className="text-gray-500">({perm.key})</span>
@@ -822,11 +824,15 @@ function UserSearchDropdown({
     <div className="relative" ref={dropdownRef}>
       <div className="relative">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             ref={inputRef}
             type="text"
-            value={isOpen ? searchQuery : selectedUser?.displayName || selectedUser?.email || ""}
+            value={
+              isOpen
+                ? searchQuery
+                : selectedUser?.displayName || selectedUser?.email || ""
+            }
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setIsOpen(true);
@@ -839,7 +845,7 @@ function UserSearchDropdown({
               }
             }}
             placeholder={selectedUser && !isOpen ? undefined : placeholder}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 pl-10 pr-10 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 focus:ring-1 focus:outline-none"
           />
           {selectedUser && (
             <button
@@ -847,7 +853,7 @@ function UserSearchDropdown({
                 e.stopPropagation();
                 handleClear();
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -855,7 +861,7 @@ function UserSearchDropdown({
           {!selectedUser && (
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400"
             >
               {isOpen ? (
                 <ChevronUp className="h-5 w-5" />
@@ -868,7 +874,7 @@ function UserSearchDropdown({
 
         {/* Dropdown */}
         {isOpen && (
-          <div className="dark:bg-dark-surface absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-dark-border">
+          <div className="dark:bg-dark-surface dark:border-dark-border absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
             {filteredUsers.length > 0 ? (
               <div className="py-1">
                 {filteredUsers.map((user) => (
@@ -923,12 +929,11 @@ function UsersTab() {
     { enabled: !!selectedUserId },
   );
 
-  const assignRolesMutation =
-    api.permissions.assignRolesToUser.useMutation({
-      onSuccess: () => {
-        void utils.permissions.getUserPermissions.invalidate();
-      },
-    });
+  const assignRolesMutation = api.permissions.assignRolesToUser.useMutation({
+    onSuccess: () => {
+      void utils.permissions.getUserPermissions.invalidate();
+    },
+  });
 
   const assignPermissionsMutation =
     api.permissions.assignPermissionsToUser.useMutation({
@@ -939,9 +944,7 @@ function UsersTab() {
 
   useEffect(() => {
     if (userPermissions) {
-      setSelectedRoleIds(
-        userPermissions.customRoles.map((ura) => ura.role.id),
-      );
+      setSelectedRoleIds(userPermissions.customRoles.map((ura) => ura.role.id));
       setSelectedPermissionIds(
         userPermissions.userPermissions
           .filter((up) => up.granted)
@@ -999,7 +1002,7 @@ function UsersTab() {
           {selectedUserId && (
             <>
               {/* Role Assignment */}
-              <div className="dark:bg-dark-surface rounded-lg border border-gray-200 p-4 dark:border-dark-border">
+              <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
                 <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
                   Rollen zuweisen
                 </h3>
@@ -1015,17 +1018,14 @@ function UsersTab() {
                           checked={selectedRoleIds.includes(role.id)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedRoleIds([
-                                ...selectedRoleIds,
-                                role.id,
-                              ]);
+                              setSelectedRoleIds([...selectedRoleIds, role.id]);
                             } else {
                               setSelectedRoleIds(
                                 selectedRoleIds.filter((id) => id !== role.id),
                               );
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                         />
                         <span>{role.name}</span>
                       </label>
@@ -1045,12 +1045,12 @@ function UsersTab() {
               </div>
 
               {/* Direct Permission Assignment */}
-              <div className="dark:bg-dark-surface rounded-lg border border-gray-200 p-4 dark:border-dark-border">
+              <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
                 <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
                   Direkte Berechtigungen
                 </h3>
                 {permissions && permissions.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="max-h-64 space-y-2 overflow-y-auto">
                     {permissions.map((perm) => (
                       <label
                         key={perm.id}
@@ -1073,7 +1073,7 @@ function UsersTab() {
                               );
                             }
                           }}
-                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                         />
                         <span className="font-medium">{perm.name}</span>
                         <span className="text-gray-500">({perm.key})</span>
@@ -1097,7 +1097,7 @@ function UsersTab() {
         </div>
 
         {/* Current Assignments */}
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 p-4 dark:border-dark-border">
+        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
           <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
             Aktuelle Zuweisungen
           </h3>

@@ -49,7 +49,12 @@ import { _CourseInstructorsSeedData } from "./seed-data-from-backup/_CourseInstr
  * Convert PostgreSQL values to proper TypeScript types
  */
 function convertValue(value: any, fieldName: string): any {
-  if (value === null || value === undefined || value === "N" || value === "\\N") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "N" ||
+    value === "\\N"
+  ) {
     return null;
   }
 
@@ -58,17 +63,79 @@ function convertValue(value: any, fieldName: string): any {
   if (value === "f" || value === false) return false;
 
   // Define string fields that should never be converted to numbers or dates
-  const stringFields = ["id", "email", "username", "name", "filename", "url", "path", "mimeType", 
-    "extension", "alt", "caption", "title", "folder", "token", "phone", "street", "zipCode", "city",
-    "displayName", "firstName", "lastName", "bio", "description", "content", "excerpt", "motto",
-    "subtitle", "founded", "members", "color", "colorHex", "slug", "position", "role", "district",
-    "shortName", "leitungs", "performingEnsembleName", "conductorName", "representativeName",
-    "authorName", "rehearsalDay", "rehearsalTime", "contactEmail", "contactPhone", "contactWebsite",
-    "audioSample", "identifier", "value", "secret", "backupCodes", "accountId", "providerId",
-    "scope", "password", "fileUrl", "fileType", "registrantEmail", "billingEmail", "fieldName",
-    "label", "priceInfo", "participationInfo", "additionalInfo", "notes", "reviewNotes",
-    "registrantPhone", "registrantZipCode", "registrantStreet", "registrantCity"];
-  
+  const stringFields = [
+    "id",
+    "email",
+    "username",
+    "name",
+    "filename",
+    "url",
+    "path",
+    "mimeType",
+    "extension",
+    "alt",
+    "caption",
+    "title",
+    "folder",
+    "token",
+    "phone",
+    "street",
+    "zipCode",
+    "city",
+    "displayName",
+    "firstName",
+    "lastName",
+    "bio",
+    "description",
+    "content",
+    "excerpt",
+    "motto",
+    "subtitle",
+    "founded",
+    "members",
+    "color",
+    "colorHex",
+    "slug",
+    "position",
+    "role",
+    "district",
+    "shortName",
+    "leitungs",
+    "performingEnsembleName",
+    "conductorName",
+    "representativeName",
+    "authorName",
+    "rehearsalDay",
+    "rehearsalTime",
+    "contactEmail",
+    "contactPhone",
+    "contactWebsite",
+    "audioSample",
+    "identifier",
+    "value",
+    "secret",
+    "backupCodes",
+    "accountId",
+    "providerId",
+    "scope",
+    "password",
+    "fileUrl",
+    "fileType",
+    "registrantEmail",
+    "billingEmail",
+    "fieldName",
+    "label",
+    "priceInfo",
+    "participationInfo",
+    "additionalInfo",
+    "notes",
+    "reviewNotes",
+    "registrantPhone",
+    "registrantZipCode",
+    "registrantStreet",
+    "registrantCity",
+  ];
+
   // If it's a string field, convert to string if it's a number (backup might have mixed types)
   if (stringFields.includes(fieldName)) {
     if (typeof value === "number") {
@@ -78,11 +145,30 @@ function convertValue(value: any, fieldName: string): any {
   }
 
   // Handle dates - only for fields that are actually date fields
-  const dateFields = ["createdAt", "updatedAt", "birthDate", "eventDate", "startDate", "endDate", 
-    "publishedAt", "reviewDate", "expiresAt", "subscribedAt", "unsubscribedAt", "invoiceDate",
-    "registrationOpensAt", "registrationDeadline", "memberSince", "accessTokenExpiresAt", 
-    "refreshTokenExpiresAt"];
-  if (dateFields.includes(fieldName) && typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+  const dateFields = [
+    "createdAt",
+    "updatedAt",
+    "birthDate",
+    "eventDate",
+    "startDate",
+    "endDate",
+    "publishedAt",
+    "reviewDate",
+    "expiresAt",
+    "subscribedAt",
+    "unsubscribedAt",
+    "invoiceDate",
+    "registrationOpensAt",
+    "registrationDeadline",
+    "memberSince",
+    "accessTokenExpiresAt",
+    "refreshTokenExpiresAt",
+  ];
+  if (
+    dateFields.includes(fieldName) &&
+    typeof value === "string" &&
+    /^\d{4}-\d{2}-\d{2}/.test(value)
+  ) {
     const date = new Date(value);
     if (!isNaN(date.getTime())) {
       return date;
@@ -98,7 +184,17 @@ function convertValue(value: any, fieldName: string): any {
   }
 
   // Handle JSON fields
-  if (fieldName.includes("Json") || fieldName === "preferences" || fieldName === "tags" || fieldName === "options" || fieldName === "chapters" || fieldName === "highlights" || fieldName === "socials" || fieldName === "responsibilities" || fieldName === "customFields") {
+  if (
+    fieldName.includes("Json") ||
+    fieldName === "preferences" ||
+    fieldName === "tags" ||
+    fieldName === "options" ||
+    fieldName === "chapters" ||
+    fieldName === "highlights" ||
+    fieldName === "socials" ||
+    fieldName === "responsibilities" ||
+    fieldName === "customFields"
+  ) {
     if (value === "N" || value === null) return null;
     if (typeof value === "string") {
       try {
@@ -128,14 +224,10 @@ function cleanData<T extends Record<string, any>>(data: T): Partial<T> {
  */
 async function upsertRecord<T extends { id: string }>(
   model: {
-    upsert: (args: {
-      where: any;
-      update: any;
-      create: any;
-    }) => Promise<T>;
+    upsert: (args: { where: any; update: any; create: any }) => Promise<T>;
   },
   data: any,
-  whereField: string = "id"
+  whereField: string = "id",
 ): Promise<T> {
   try {
     return await model.upsert({
@@ -150,7 +242,9 @@ async function upsertRecord<T extends { id: string }>(
         return await (model as any).create({ data });
       } catch {
         // If create also fails, try to find and return existing
-        return await (model as any).findUnique({ where: { [whereField]: data[whereField] } });
+        return await (model as any).findUnique({
+          where: { [whereField]: data[whereField] },
+        });
       }
     }
     throw error;
@@ -181,22 +275,25 @@ async function main() {
     console.log("📸 Creating Media...");
     const mediaMap = new Map<string, string>();
     const mediaUploadedByMap = new Map<string, string>(); // Store original uploadedById for later update
-    
+
     for (const data of MediaSeedData) {
       const cleaned = cleanData(data);
       // Handle width/height conversion
       if (cleaned.width === "N" || cleaned.width === null) cleaned.width = null;
-      else if (typeof cleaned.width === "string") cleaned.width = parseInt(cleaned.width, 10);
-      if (cleaned.height === "N" || cleaned.height === null) cleaned.height = null;
-      else if (typeof cleaned.height === "string") cleaned.height = parseInt(cleaned.height, 10);
-      
+      else if (typeof cleaned.width === "string")
+        cleaned.width = parseInt(cleaned.width, 10);
+      if (cleaned.height === "N" || cleaned.height === null)
+        cleaned.height = null;
+      else if (typeof cleaned.height === "string")
+        cleaned.height = parseInt(cleaned.height, 10);
+
       // Store original uploadedById for later update
       if (cleaned.uploadedById) {
         mediaUploadedByMap.set(data.id, cleaned.uploadedById as string);
       }
       // Set uploadedById to null initially (will update after Users are created)
       cleaned.uploadedById = null;
-      
+
       const created = await upsertRecord(db.media, cleaned, "filename");
       mediaMap.set(data.id, created.id);
     }
@@ -208,7 +305,10 @@ async function main() {
     for (const data of UserSeedData) {
       const cleaned = cleanData(data);
       // Map foreign keys
-      if (cleaned.profileImageId && mediaMap.has(cleaned.profileImageId as string)) {
+      if (
+        cleaned.profileImageId &&
+        mediaMap.has(cleaned.profileImageId as string)
+      ) {
         cleaned.profileImageId = mediaMap.get(cleaned.profileImageId as string);
       } else {
         cleaned.profileImageId = null;
@@ -218,10 +318,10 @@ async function main() {
       } else {
         cleaned.bezirkId = null;
       }
-      
+
       // Disable 2FA for all users (backup codes won't work in new environment)
       cleaned.twoFactorEnabled = false;
-      
+
       const created = await upsertRecord(db.user, cleaned, "email");
       usersMap.set(data.id, created.id);
     }
@@ -239,7 +339,9 @@ async function main() {
         updatedMediaCount++;
       }
     }
-    console.log(`  ✓ Updated ${updatedMediaCount} media items with uploadedById`);
+    console.log(
+      `  ✓ Updated ${updatedMediaCount} media items with uploadedById`,
+    );
 
     // 4. Seed Locations (no dependencies)
     console.log("📍 Creating Locations...");
@@ -266,7 +368,7 @@ async function main() {
       } else {
         cleaned.conductorId = null;
       }
-      
+
       const created = await upsertRecord(db.auswahlChor, cleaned, "slug");
       auswahlchoereMap.set(data.id, created.id);
     }
@@ -287,7 +389,10 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      if (cleaned.locationId && locationsMap.has(cleaned.locationId as string)) {
+      if (
+        cleaned.locationId &&
+        locationsMap.has(cleaned.locationId as string)
+      ) {
         cleaned.locationId = locationsMap.get(cleaned.locationId as string);
       } else {
         cleaned.locationId = null;
@@ -297,12 +402,17 @@ async function main() {
       } else {
         cleaned.conductorId = null;
       }
-      if (cleaned.representativeId && usersMap.has(cleaned.representativeId as string)) {
-        cleaned.representativeId = usersMap.get(cleaned.representativeId as string);
+      if (
+        cleaned.representativeId &&
+        usersMap.has(cleaned.representativeId as string)
+      ) {
+        cleaned.representativeId = usersMap.get(
+          cleaned.representativeId as string,
+        );
       } else {
         cleaned.representativeId = null;
       }
-      
+
       const created = await upsertRecord(db.ensemble, cleaned);
       ensemblesMap.set(data.id, created.id);
     }
@@ -312,24 +422,35 @@ async function main() {
     console.log("📅 Creating Rehearsal Schedules...");
     for (const data of RehearsalScheduleSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.ensembleId && ensemblesMap.has(cleaned.ensembleId as string)) {
+      if (
+        cleaned.ensembleId &&
+        ensemblesMap.has(cleaned.ensembleId as string)
+      ) {
         cleaned.ensembleId = ensemblesMap.get(cleaned.ensembleId as string);
         await upsertRecord(db.rehearsalSchedule, cleaned);
       }
     }
-    console.log(`  ✓ Created ${RehearsalScheduleSeedData.length} rehearsal schedules`);
+    console.log(
+      `  ✓ Created ${RehearsalScheduleSeedData.length} rehearsal schedules`,
+    );
 
     // 8. Seed Events (depends on User, Ensemble, AuswahlChor, Location, Media, Bezirk)
     console.log("📅 Creating Events...");
     const eventsMap = new Map<string, string>();
     for (const data of EventSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.coverImageId && mediaMap.has(cleaned.coverImageId as string)) {
+      if (
+        cleaned.coverImageId &&
+        mediaMap.has(cleaned.coverImageId as string)
+      ) {
         cleaned.coverImageId = mediaMap.get(cleaned.coverImageId as string);
       } else {
         cleaned.coverImageId = null;
       }
-      if (cleaned.locationId && locationsMap.has(cleaned.locationId as string)) {
+      if (
+        cleaned.locationId &&
+        locationsMap.has(cleaned.locationId as string)
+      ) {
         cleaned.locationId = locationsMap.get(cleaned.locationId as string);
       } else {
         cleaned.locationId = null;
@@ -339,13 +460,21 @@ async function main() {
       } else {
         cleaned.bezirkId = null;
       }
-      if (cleaned.ensembleId && ensemblesMap.has(cleaned.ensembleId as string)) {
+      if (
+        cleaned.ensembleId &&
+        ensemblesMap.has(cleaned.ensembleId as string)
+      ) {
         cleaned.ensembleId = ensemblesMap.get(cleaned.ensembleId as string);
       } else {
         cleaned.ensembleId = null;
       }
-      if (cleaned.auswahlChorId && auswahlchoereMap.has(cleaned.auswahlChorId as string)) {
-        cleaned.auswahlChorId = auswahlchoereMap.get(cleaned.auswahlChorId as string);
+      if (
+        cleaned.auswahlChorId &&
+        auswahlchoereMap.has(cleaned.auswahlChorId as string)
+      ) {
+        cleaned.auswahlChorId = auswahlchoereMap.get(
+          cleaned.auswahlChorId as string,
+        );
       } else {
         cleaned.auswahlChorId = null;
       }
@@ -359,7 +488,7 @@ async function main() {
       } else {
         cleaned.reviewerId = null;
       }
-      
+
       const created = await upsertRecord(db.event, cleaned);
       eventsMap.set(data.id, created.id);
     }
@@ -374,19 +503,24 @@ async function main() {
         await upsertRecord(db.eventPriceOption, cleaned);
       }
     }
-    console.log(`  ✓ Created ${EventPriceOptionSeedData.length} event price options`);
+    console.log(
+      `  ✓ Created ${EventPriceOptionSeedData.length} event price options`,
+    );
 
     // 10. Seed Downloads (depends on User)
     console.log("📥 Creating Downloads...");
     const downloadsMap = new Map<string, string>();
     for (const data of DownloadSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.uploadedById && usersMap.has(cleaned.uploadedById as string)) {
+      if (
+        cleaned.uploadedById &&
+        usersMap.has(cleaned.uploadedById as string)
+      ) {
         cleaned.uploadedById = usersMap.get(cleaned.uploadedById as string);
       } else {
         cleaned.uploadedById = null;
       }
-      
+
       const created = await upsertRecord(db.download, cleaned);
       downloadsMap.set(data.id, created.id);
     }
@@ -396,7 +530,12 @@ async function main() {
     console.log("🔗 Creating Event Downloads...");
     for (const data of EventDownloadSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.eventId && eventsMap.has(cleaned.eventId as string) && cleaned.downloadId && downloadsMap.has(cleaned.downloadId as string)) {
+      if (
+        cleaned.eventId &&
+        eventsMap.has(cleaned.eventId as string) &&
+        cleaned.downloadId &&
+        downloadsMap.has(cleaned.downloadId as string)
+      ) {
         cleaned.eventId = eventsMap.get(cleaned.eventId as string);
         cleaned.downloadId = downloadsMap.get(cleaned.downloadId as string);
         // EventDownload has composite unique on eventId+downloadId - use create with error handling
@@ -420,7 +559,10 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      if (cleaned.locationId && locationsMap.has(cleaned.locationId as string)) {
+      if (
+        cleaned.locationId &&
+        locationsMap.has(cleaned.locationId as string)
+      ) {
         cleaned.locationId = locationsMap.get(cleaned.locationId as string);
       } else {
         cleaned.locationId = null;
@@ -440,7 +582,7 @@ async function main() {
       } else {
         cleaned.reviewerId = null;
       }
-      
+
       const created = await upsertRecord(db.course, cleaned);
       coursesMap.set(data.id, created.id);
     }
@@ -450,15 +592,22 @@ async function main() {
     console.log("👨‍🏫 Creating Course Instructors...");
     let instructorLinks = 0;
     // UUID regex to filter out corrupted data
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     for (const data of _CourseInstructorsSeedData) {
       const cleaned = cleanData(data);
       // A = courseId, B = userId - filter out non-UUID values
-      if (cleaned.A && cleaned.B && 
-          typeof cleaned.A === 'string' && typeof cleaned.B === 'string' &&
-          uuidRegex.test(cleaned.A) && uuidRegex.test(cleaned.B) &&
-          coursesMap.has(cleaned.A) && usersMap.has(cleaned.B)) {
+      if (
+        cleaned.A &&
+        cleaned.B &&
+        typeof cleaned.A === "string" &&
+        typeof cleaned.B === "string" &&
+        uuidRegex.test(cleaned.A) &&
+        uuidRegex.test(cleaned.B) &&
+        coursesMap.has(cleaned.A) &&
+        usersMap.has(cleaned.B)
+      ) {
         try {
           await db.course.update({
             where: { id: coursesMap.get(cleaned.A)! },
@@ -485,7 +634,9 @@ async function main() {
         await upsertRecord(db.courseCustomField, cleaned);
       }
     }
-    console.log(`  ✓ Created ${CourseCustomFieldSeedData.length} course custom fields`);
+    console.log(
+      `  ✓ Created ${CourseCustomFieldSeedData.length} course custom fields`,
+    );
 
     // 15. Seed Course Price Options (depends on Course)
     console.log("💰 Creating Course Price Options...");
@@ -496,7 +647,9 @@ async function main() {
         await upsertRecord(db.coursePriceOption, cleaned);
       }
     }
-    console.log(`  ✓ Created ${CoursePriceOptionSeedData.length} course price options`);
+    console.log(
+      `  ✓ Created ${CoursePriceOptionSeedData.length} course price options`,
+    );
 
     // 16. Seed Course Registrations (depends on Course, User)
     console.log("📝 Creating Course Registrations...");
@@ -508,12 +661,15 @@ async function main() {
       } else {
         continue; // Skip if course doesn't exist
       }
-      if (cleaned.registrantId && usersMap.has(cleaned.registrantId as string)) {
+      if (
+        cleaned.registrantId &&
+        usersMap.has(cleaned.registrantId as string)
+      ) {
         cleaned.registrantId = usersMap.get(cleaned.registrantId as string);
       } else {
         cleaned.registrantId = null;
       }
-      
+
       const created = await upsertRecord(db.courseRegistration, cleaned);
       registrationsMap.set(data.id, created.id);
     }
@@ -523,8 +679,13 @@ async function main() {
     console.log("👤 Creating Participants...");
     for (const data of ParticipantSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.registrationId && registrationsMap.has(cleaned.registrationId as string)) {
-        cleaned.registrationId = registrationsMap.get(cleaned.registrationId as string);
+      if (
+        cleaned.registrationId &&
+        registrationsMap.has(cleaned.registrationId as string)
+      ) {
+        cleaned.registrationId = registrationsMap.get(
+          cleaned.registrationId as string,
+        );
         await upsertRecord(db.participant, cleaned);
       }
     }
@@ -534,7 +695,10 @@ async function main() {
     console.log("📰 Creating Posts...");
     for (const data of PostSeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.coverImageId && mediaMap.has(cleaned.coverImageId as string)) {
+      if (
+        cleaned.coverImageId &&
+        mediaMap.has(cleaned.coverImageId as string)
+      ) {
         cleaned.coverImageId = mediaMap.get(cleaned.coverImageId as string);
       } else {
         cleaned.coverImageId = null;
@@ -559,7 +723,7 @@ async function main() {
       } else {
         cleaned.reviewerId = null;
       }
-      
+
       await upsertRecord(db.post, cleaned);
     }
     console.log(`  ✓ Created ${PostSeedData.length} posts`);
@@ -589,7 +753,7 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      
+
       // VorstandMember uses userId or imageId as unique, try userId first
       if (cleaned.userId) {
         await upsertRecord(db.vorstandMember, cleaned, "userId");
@@ -599,7 +763,9 @@ async function main() {
         await upsertRecord(db.vorstandMember, cleaned);
       }
     }
-    console.log(`  ✓ Created ${VorstandMemberSeedData.length} vorstand members`);
+    console.log(
+      `  ✓ Created ${VorstandMemberSeedData.length} vorstand members`,
+    );
 
     // 21. Seed Posaunenrat Members (depends on User, Media)
     console.log("🎖️ Creating Posaunenrat Members...");
@@ -615,7 +781,7 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      
+
       // PosaunenratMember uses userId as unique if present
       if (cleaned.userId) {
         await upsertRecord(db.posaunenratMember, cleaned, "userId");
@@ -623,7 +789,9 @@ async function main() {
         await upsertRecord(db.posaunenratMember, cleaned);
       }
     }
-    console.log(`  ✓ Created ${PosaunenratMemberSeedData.length} posaunenrat members`);
+    console.log(
+      `  ✓ Created ${PosaunenratMemberSeedData.length} posaunenrat members`,
+    );
 
     // 22. Seed Förderverein Members (depends on User, Media)
     console.log("🤝 Creating Förderverein Members...");
@@ -639,7 +807,7 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      
+
       // FoerdervereinMember uses userId as unique if present
       if (cleaned.userId) {
         await upsertRecord(db.foerdervereinMember, cleaned, "userId");
@@ -647,13 +815,20 @@ async function main() {
         await upsertRecord(db.foerdervereinMember, cleaned);
       }
     }
-    console.log(`  ✓ Created ${FoerdervereinMemberSeedData.length} förderverein members`);
+    console.log(
+      `  ✓ Created ${FoerdervereinMemberSeedData.length} förderverein members`,
+    );
 
     // 23. Seed Posaunenwarte Responsibilities (depends on User, Bezirk)
     console.log("🎺 Creating Posaunenwarte Responsibilities...");
     for (const data of PosaunenwartResponsibilitySeedData) {
       const cleaned = cleanData(data);
-      if (cleaned.userId && usersMap.has(cleaned.userId as string) && cleaned.bezirkId && bezirkeMap.has(cleaned.bezirkId as string)) {
+      if (
+        cleaned.userId &&
+        usersMap.has(cleaned.userId as string) &&
+        cleaned.bezirkId &&
+        bezirkeMap.has(cleaned.bezirkId as string)
+      ) {
         cleaned.userId = usersMap.get(cleaned.userId as string);
         cleaned.bezirkId = bezirkeMap.get(cleaned.bezirkId as string);
         // PosaunenwartResponsibility has composite unique on userId+bezirkId - use create with error handling
@@ -665,7 +840,9 @@ async function main() {
         }
       }
     }
-    console.log(`  ✓ Created ${PosaunenwartResponsibilitySeedData.length} posaunenwarte responsibilities`);
+    console.log(
+      `  ✓ Created ${PosaunenwartResponsibilitySeedData.length} posaunenwarte responsibilities`,
+    );
 
     // 24. Seed Bläserhefte (depends on Media)
     console.log("📖 Creating Bläserhefte...");
@@ -687,7 +864,7 @@ async function main() {
       } else {
         cleaned.imageId = null;
       }
-      
+
       await upsertRecord(db.historyEvent, cleaned);
     }
     console.log(`  ✓ Created ${HistoryEventSeedData.length} history events`);
@@ -701,7 +878,9 @@ async function main() {
         await upsertRecord(db.homepageCarouselItem, cleaned);
       }
     }
-    console.log(`  ✓ Created ${HomepageCarouselItemSeedData.length} homepage carousel items`);
+    console.log(
+      `  ✓ Created ${HomepageCarouselItemSeedData.length} homepage carousel items`,
+    );
 
     // 27. Seed Saved Participants (depends on User)
     console.log("💾 Creating Saved Participants...");
@@ -712,7 +891,9 @@ async function main() {
         await upsertRecord(db.savedParticipant, cleaned);
       }
     }
-    console.log(`  ✓ Created ${SavedParticipantSeedData.length} saved participants`);
+    console.log(
+      `  ✓ Created ${SavedParticipantSeedData.length} saved participants`,
+    );
 
     // 28. Seed Newsletter Subscribers (no dependencies)
     console.log("📧 Creating Newsletter Subscribers...");
@@ -720,19 +901,24 @@ async function main() {
     for (const data of NewsletterSubscriberSeedData) {
       const cleaned = cleanData(data);
       // Skip records with null, invalid, or non-email values (required field)
-      if (!cleaned.email || 
-          cleaned.email === "N" || 
-          cleaned.email === "\\N" || 
-          cleaned.email === null ||
-          !cleaned.email.includes("@") ||
-          cleaned.id === "." ||
-          cleaned.id === "--" ||
-          cleaned.id.includes("-- Data for")) {
+      if (
+        !cleaned.email ||
+        cleaned.email === "N" ||
+        cleaned.email === "\\N" ||
+        cleaned.email === null ||
+        !cleaned.email.includes("@") ||
+        cleaned.id === "." ||
+        cleaned.id === "--" ||
+        cleaned.id.includes("-- Data for")
+      ) {
         continue;
       }
       // Ensure isActive is boolean
       if (typeof cleaned.isActive !== "boolean") {
-        cleaned.isActive = cleaned.isActive === "t" || cleaned.isActive === true || cleaned.isActive === "true";
+        cleaned.isActive =
+          cleaned.isActive === "t" ||
+          cleaned.isActive === true ||
+          cleaned.isActive === "true";
       }
       await upsertRecord(db.newsletterSubscriber, cleaned, "email");
       subscriberCount++;
@@ -767,7 +953,9 @@ async function main() {
       const cleaned = cleanData(data);
       await upsertRecord(db.verification, cleaned);
     }
-    console.log(`  ✓ Created ${VerificationSeedData.length} verification records`);
+    console.log(
+      `  ✓ Created ${VerificationSeedData.length} verification records`,
+    );
 
     // 30. Seed Page Views (depends on User, but can be null)
     console.log("👁️ Creating Page Views...");
@@ -778,7 +966,7 @@ async function main() {
       } else {
         cleaned.userId = null;
       }
-      
+
       // PageView - use create with error handling for duplicates
       try {
         await db.pageView.create({
@@ -793,7 +981,9 @@ async function main() {
 
     // Final cleanup: Ensure all users have 2FA disabled and delete any TwoFactor records
     console.log("");
-    console.log("🔒 Disabling 2FA for all users and cleaning up TwoFactor records...");
+    console.log(
+      "🔒 Disabling 2FA for all users and cleaning up TwoFactor records...",
+    );
     await db.user.updateMany({
       data: { twoFactorEnabled: false },
     });

@@ -2,7 +2,7 @@ import { PERMISSION_DEFINITIONS } from "@/lib/permissions";
 
 /**
  * System Permissions Seed Data
- * 
+ *
  * These permissions are created as system permissions (isSystem: true)
  * and cannot be deleted or modified via the UI.
  */

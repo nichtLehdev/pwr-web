@@ -50,10 +50,12 @@ export default function DashboardPage() {
   const { data: canViewStats } = api.stats.canViewStats.useQuery(undefined, {
     enabled: !!session?.user && !!profile,
   });
-  const { data: canManagePermissions } =
-    api.permissions.canManage.useQuery(undefined, {
+  const { data: canManagePermissions } = api.permissions.canManage.useQuery(
+    undefined,
+    {
       enabled: !!session?.user && !!profile,
-    });
+    },
+  );
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
