@@ -6,7 +6,14 @@ Diese Checkliste hilft dir dabei, alle Änderungen sicher auf deinem Server zu d
 
 **Das Permission-System wurde komplett refactored!** Nach der Migration hat **NIEMAND** mehr Rechte, bis das Post-Migration-Setup ausgeführt wurde.
 
-**Du MUSST nach dem Deployment folgendes ausführen:**
+**Du MUSST nach dem Deployment folgendes ausführen** (auf dem Server reichen `.env` + `docker-compose.prod.yml` – der Befehl läuft im Container; das Image enthält tsconfig + nötige `src`-Dateien für Path-Aliase wie `@/`).
+
+**Variante A – mit Profil (empfohlen):** E-Mail in `.env` setzen (`ADMIN_EMAIL=deine-email@example.com`), dann:
+```bash
+docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
+```
+
+**Variante B – E-Mail als Argument:** (kein Repo auf dem Server nötig, läuft im App-Image):
 ```bash
 docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
 ```
@@ -158,18 +165,17 @@ docker compose -f docker-compose.prod.yml exec db-backup pg_dump -U postgres pos
 - [ ] **Falls Migration fehlgeschlagen**: Siehe "Fehlerbehebung" unten
 
 ### 2. Post-Migration-Setup ausführen
-**⚠️ KRITISCH: Dieser Schritt ist ESSENTIELL, sonst hast du keinen Zugriff!**
+**⚠️ KRITISCH: Dieser Schritt ist ESSENTIELL, sonst hast du keinen Zugriff!**  
+(Kein Repo auf dem Server nötig – Skript liegt im App-Image.)
 
 - [ ] **Permissions und Rollen erstellen**:
   ```bash
-  # Auf dem Server (via SSH)
+  # E-Mail als Argument (empfohlen)
   docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
   ```
-  
-  Oder mit Environment Variable:
+  Oder mit Profil (wenn ADMIN_EMAIL in .env gesetzt ist):
   ```bash
-  # ADMIN_EMAIL in docker-compose.prod.yml oder .env setzen
-  docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts
+  docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
   ```
 
 - [ ] **Skript erfolgreich ausgeführt**:
@@ -281,7 +287,7 @@ docker compose -f docker-compose.prod.yml up -d
 Die Migrationen entfernen das alte `UserRole` Enum und führen ein neues Permission-System ein:
 
 1. **⚠️ KRITISCH**: Nach der Migration hat NIEMAND mehr Rechte!
-2. **Post-Migration-Setup MUSS ausgeführt werden**:
+2. **Post-Migration-Setup MUSS ausgeführt werden** (läuft im Container, kein Repo auf dem Server nötig):
    ```bash
    docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
    ```
