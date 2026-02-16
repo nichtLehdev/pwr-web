@@ -122,6 +122,7 @@ docker compose exec db-backup cat /var/log/backup.log
 
 If you have a backup file on your host machine:
 
+**Linux/macOS:**
 ```bash
 # Copy backup into container
 docker compose cp ./backup.sql.gz db-backup:/backups/restore.sql.gz
@@ -129,6 +130,24 @@ docker compose cp ./backup.sql.gz db-backup:/backups/restore.sql.gz
 # Restore
 docker compose exec db-backup /scripts/restore-db.sh /backups/restore.sql.gz
 ```
+
+**Windows (PowerShell):**
+```powershell
+# Copy backup into container
+docker compose cp .\backup.sql.gz db-backup:/backups/restore.sql.gz
+
+# Restore (using the script inside container)
+docker compose exec db-backup /scripts/restore-db.sh /backups/restore.sql.gz
+
+# Or restore directly from Windows host (requires PostgreSQL client and 7-Zip/gunzip)
+.\scripts\restore-db.ps1 .\backup.sql.gz
+```
+
+**Windows Requirements:**
+- PostgreSQL client tools (`psql` command) - Install from [PostgreSQL downloads](https://www.postgresql.org/download/windows/)
+- Either:
+  - `gunzip` (comes with Git for Windows or WSL)
+  - 7-Zip (download from [7-zip.org](https://www.7-zip.org/))
 
 ## Backup Storage
 
