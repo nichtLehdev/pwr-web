@@ -556,7 +556,7 @@ export const permissionsRouter = createTRPCRouter({
           const { wouldCreateCircularReference } = await import(
             "../helpers/role-permissions"
           );
-          if (await wouldCreateCircularReference(roleId, input.parentRoleId)) {
+          if (await wouldCreateCircularReference(input.id, input.parentRoleId)) {
             throw new TRPCError({
               code: "BAD_REQUEST",
               message: "Cannot set parent role: would create circular reference",

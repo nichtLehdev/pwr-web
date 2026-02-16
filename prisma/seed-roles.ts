@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Seed Script for Creating Hierarchical Roles
  *
@@ -267,7 +266,7 @@ async function createOrganizationManagerRole() {
   return role;
 }
 
-async function createAdminRole(parentRoleIds: string[]) {
+async function createAdminRole(_parentRoleIds: string[]) {
   // Get all permissions
   const allPermissions = await db.permission.findMany();
 

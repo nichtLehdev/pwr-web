@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Post-Migration Setup Script
  *
@@ -153,7 +152,6 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
     PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
-    PERMISSIONS.ORGANIZATION_VIEW,
   ];
 
   const lpwPermissionIds = lpwPermissionKeys
@@ -205,7 +203,6 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.MEDIA_VIEW,
     PERMISSIONS.DOWNLOADS_UPLOAD,
     PERMISSIONS.DOWNLOADS_VIEW,
-    PERMISSIONS.ORGANIZATION_VIEW,
   ];
 
   const posaunenratPermissionIds = posaunenratPermissionKeys
