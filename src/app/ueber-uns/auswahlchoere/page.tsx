@@ -110,8 +110,8 @@ export default async function AuswahlchoerePage() {
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <User className="h-5 w-5" />
                       <span className="font-semibold">
-                        {ensemble.conductor.displayRole &&
-                          `${ensemble.conductor.displayRole} `}
+                        {ensemble.conductor.districtRoleName &&
+                          `${ensemble.conductor.districtRoleName} `}
                         {ensemble.conductor.displayName}
                       </span>
                     </div>

@@ -4,19 +4,13 @@ import type { RouterOutputs } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Calendar, MapPin } from "lucide-react";
 
-type Event = Omit<
-  RouterOutputs["events"]["getById"],
-  | "bezirk"
-  | "auswahlChor"
-  | "coverImage"
-  | "reviewer"
-  | "createdBy"
-  | "ensemble"
->;
+type Event = RouterOutputs["events"]["getById"];
+type AuswahlChorEvent =
+  RouterOutputs["auswahlchoere"]["getAll"]["auswahlchoere"][0]["events"][0];
 type AuswahlChor = RouterOutputs["auswahlchoere"]["getAll"]["auswahlchoere"][0];
 
 interface ConcertCardProps {
-  concert: Event;
+  concert: Event | AuswahlChorEvent;
   ensemble: AuswahlChor;
   i: number;
 }

@@ -5,7 +5,6 @@ import { redirect, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import { Edit, Trash2 } from "lucide-react";
 import {
   ScrollableModal,
@@ -13,25 +12,6 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
-const roleLabels: Record<UserRole, string> = {
-  ADMIN: "Administrator",
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-  OBLEUTE: "Obleute",
-  USER: "Benutzer",
-};
-
-const roleBadgeColors: Record<UserRole, string> = {
-  ADMIN: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  LPW: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  RPW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  OBLEUTE:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  USER: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-};
 
 export default function UserDetailPage() {
   const router = useRouter();
@@ -46,6 +26,11 @@ export default function UserDetailPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageUsers } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: user, isLoading: userLoading } = api.users.getById.useQuery(
     { id: userId },
@@ -72,13 +57,16 @@ export default function UserDetailPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageUsers &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/dashboard");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, canManageUsers]);
 
   if (isPending || profileLoading || userLoading) {
     return (
@@ -88,7 +76,7 @@ export default function UserDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageUsers) {
     return null;
   }
 
@@ -167,11 +155,11 @@ export default function UserDetailPage() {
                     "Unbenannt")}
               </h1>
               <p className="dark:text-dark-muted text-gray-600">{user.email}</p>
-              <span
-                className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${roleBadgeColors[user.role]}`}
-              >
-                {roleLabels[user.role]}
-              </span>
+              {user.districtRoleName && (
+                <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  {user.districtRoleName}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -313,11 +301,13 @@ export default function UserDetailPage() {
                   Rolle
                 </dt>
                 <dd className="mt-1">
-                  <span
-                    className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${roleBadgeColors[user.role]}`}
-                  >
-                    {roleLabels[user.role]}
-                  </span>
+                  {user.districtRoleName ? (
+                    <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      {user.districtRoleName}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">–</span>
+                  )}
                 </dd>
               </div>
               <div>
@@ -325,20 +315,20 @@ export default function UserDetailPage() {
                   Angezeigte Rolle
                 </dt>
                 <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {user.displayRole ?? "-"}
+                  {user.districtRoleName ?? "-"}
                 </dd>
               </div>
               {user.bezirk && (
                 <div className="sm:col-span-2">
                   <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                    Obleute für Bezirk
+                    Bezirk
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
                     Bezirk {user.bezirk.number} – {user.bezirk.shortName}
-                    {user.obleuteRole && (
+                    {user.districtRoleName && (
                       <span className="text-gray-500">
                         {" "}
-                        ({user.obleuteRole})
+                        ({user.districtRoleName})
                       </span>
                     )}
                   </dd>

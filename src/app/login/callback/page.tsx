@@ -4,14 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
-import { UserRole } from "~/generated/prisma/enums";
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function LoginCallbackPage() {
   const router = useRouter();
@@ -20,6 +13,11 @@ export default function LoginCallbackPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
 
   useEffect(() => {
     if (sessionLoading || profileLoading) return;
@@ -33,12 +31,19 @@ export default function LoginCallbackPage() {
     sessionStorage.removeItem("loginRedirect");
     const redirectTo = storedRedirect ?? "/";
 
-    if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
+    if (userPermissions && userPermissions.length > 0) {
       router.push("/dashboard");
     } else {
       router.push(redirectTo);
     }
-  }, [session, profile, sessionLoading, profileLoading, router]);
+  }, [
+    session,
+    profile,
+    userPermissions,
+    sessionLoading,
+    profileLoading,
+    router,
+  ]);
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">

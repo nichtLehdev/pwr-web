@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import { Plus, Edit, Trash2, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -18,8 +17,6 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-const DASHBOARD_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
-
 export default function DashboardHomepagePage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
@@ -30,10 +27,15 @@ export default function DashboardHomepagePage() {
       enabled: !!session?.user,
     });
 
+  const { data: canManageHomepage } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   const utils = api.useUtils();
 
   const { data: items, isLoading } = api.homepage.getAll.useQuery(undefined, {
-    enabled: !!profile && DASHBOARD_ROLES.includes(profile.role),
+    enabled: !!profile && !!canManageHomepage,
   });
 
   const createMutation = api.homepage.create.useMutation({
@@ -99,13 +101,16 @@ export default function DashboardHomepagePage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageHomepage &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, canManageHomepage]);
 
   const handleAdd = () => {
     if (!selectedMediaId) {
@@ -211,7 +216,7 @@ export default function DashboardHomepagePage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageHomepage) {
     return null;
   }
 

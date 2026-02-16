@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import {
   ArrowUpDown,
@@ -20,33 +19,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-const roleLabels: Record<UserRole, string> = {
-  ADMIN: "Administrator",
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-  OBLEUTE: "Obleute",
-  USER: "Benutzer",
-};
-
-const roleBadgeColors: Record<UserRole, string> = {
-  ADMIN: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  LPW: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  RPW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  OBLEUTE:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  USER: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-};
-
-const roleFilters: { value: UserRole | "all"; label: string }[] = [
-  { value: "all", label: "Alle Rollen" },
-  { value: "ADMIN", label: "Administratoren" },
-  { value: "LPW", label: "LPW" },
-  { value: "RPW", label: "RPW" },
-  { value: "OBLEUTE", label: "Obleute" },
-  { value: "USER", label: "Benutzer" },
-];
-
-type SortField = "displayName" | "email" | "role" | "createdAt";
+type SortField = "displayName" | "email" | "createdAt";
 
 function SortIcon({
   field,
@@ -69,7 +42,6 @@ function SortIcon({
 
 export default function DashboardUsersList() {
   const { data: session } = useSession();
-  const [roleFilter, setRoleFilter] = useState<UserRole | "all">("all");
   const [sortBy, setSortBy] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
@@ -82,7 +54,6 @@ export default function DashboardUsersList() {
   const { data, isLoading, error } = api.users.list.useQuery({
     page,
     limit,
-    role: roleFilter === "all" ? undefined : roleFilter,
     search: search || undefined,
     sortBy,
     sortOrder,
@@ -141,12 +112,6 @@ export default function DashboardUsersList() {
             </p>
           </div>
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4">
-            <p className="dark:text-dark-muted text-sm text-gray-500">Admins</p>
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {stats.usersByRole?.ADMIN ?? 0}
-            </p>
-          </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4">
             <p className="dark:text-dark-muted text-sm text-gray-500">Team</p>
             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {stats.membership?.team ?? 0}
@@ -180,45 +145,7 @@ export default function DashboardUsersList() {
           <Filter className="h-5 w-5" />
           Filter
         </button>
-
-        {/* Desktop Filters */}
-        <div className="hidden items-center gap-3 sm:flex">
-          <select
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value as UserRole | "all");
-              setPage(1);
-            }}
-            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:ring-1 focus:outline-none"
-          >
-            {roleFilters.map((filter) => (
-              <option key={filter.value} value={filter.value}>
-                {filter.label}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
-
-      {/* Mobile Filters */}
-      {filtersOpen && (
-        <div className="dark:border-dark-border dark:bg-dark-surface flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4 sm:hidden">
-          <select
-            value={roleFilter}
-            onChange={(e) => {
-              setRoleFilter(e.target.value as UserRole | "all");
-              setPage(1);
-            }}
-            className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-          >
-            {roleFilters.map((filter) => (
-              <option key={filter.value} value={filter.value}>
-                {filter.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Users Table */}
       {isLoading ? (
@@ -251,19 +178,6 @@ export default function DashboardUsersList() {
                       Benutzer
                       <SortIcon
                         field="displayName"
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                      />
-                    </div>
-                  </th>
-                  <th
-                    className="dark:text-dark-muted dark:hover:text-dark-text cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:text-gray-700"
-                    onClick={() => handleSort("role")}
-                  >
-                    <div className="flex items-center">
-                      Rolle
-                      <SortIcon
-                        field="role"
                         sortBy={sortBy}
                         sortOrder={sortOrder}
                       />
@@ -326,13 +240,13 @@ export default function DashboardUsersList() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${roleBadgeColors[user.role]}`}
-                      >
-                        {roleLabels[user.role]}
-                      </span>
-                    </td>
+                    {user.districtRoleName && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          {user.districtRoleName}
+                        </span>
+                      </td>
+                    )}
                     <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
                       {user.bezirk ? (
                         <span className="dark:text-dark-text text-sm text-gray-900">

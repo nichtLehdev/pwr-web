@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { UserRole } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const homepageRouter = createTRPCRouter({
   /**
@@ -28,10 +29,12 @@ export const homepageRouter = createTRPCRouter({
    * Get all carousel items for dashboard management
    */
   getAll: protectedProcedure.query(async ({ ctx }) => {
-    const userRole = ctx.session.user.role as UserRole;
+    const canManageHomepage = await userHasPermission(
+      ctx.session.user.id,
+      PERMISSIONS.HOMEPAGE_MANAGE,
+    );
 
-    // Only ADMIN and LPW can manage homepage
-    if (userRole !== UserRole.ADMIN && userRole !== UserRole.LPW) {
+    if (!canManageHomepage) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Only administrators can manage homepage carousel",
@@ -64,10 +67,12 @@ export const homepageRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
+      const canManageHomepage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
 
-      // Only ADMIN and LPW can manage homepage
-      if (userRole !== UserRole.ADMIN && userRole !== UserRole.LPW) {
+      if (!canManageHomepage) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can manage homepage carousel",
@@ -126,10 +131,12 @@ export const homepageRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
+      const canManageHomepage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
 
-      // Only ADMIN and LPW can manage homepage
-      if (userRole !== UserRole.ADMIN && userRole !== UserRole.LPW) {
+      if (!canManageHomepage) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can manage homepage carousel",
@@ -202,10 +209,12 @@ export const homepageRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
+      const canManageHomepage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
 
-      // Only ADMIN and LPW can manage homepage
-      if (userRole !== UserRole.ADMIN && userRole !== UserRole.LPW) {
+      if (!canManageHomepage) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can manage homepage carousel",
@@ -245,10 +254,12 @@ export const homepageRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
+      const canManageHomepage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
 
-      // Only ADMIN and LPW can manage homepage
-      if (userRole !== UserRole.ADMIN && userRole !== UserRole.LPW) {
+      if (!canManageHomepage) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can manage homepage carousel",

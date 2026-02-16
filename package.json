@@ -19,7 +19,9 @@
     "preview": "next build && next start",
     "start": "next start",
     "test:email": "tsx src/server/email/test-email.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:user": "tsx prisma/seed-user.ts",
+    "seed:roles": "tsx prisma/seed-roles.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

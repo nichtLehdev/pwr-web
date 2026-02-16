@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, changePassword } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import ProfileImageUpload from "./_components/profile-image-upload";
 import { useToast } from "@/app/_components/ui/toast";
@@ -426,7 +425,7 @@ export default function SettingsPage() {
                   setFormData((prev) => ({ ...prev, profileImageId: null }));
                 }}
               />
-              {profile?.role && profile.role !== UserRole.USER && (
+              {profile && (
                 <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -1163,8 +1162,8 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Danger Zone - Only show for regular users */}
-        {profile?.role === UserRole.USER && (
+        {/* Danger Zone - Show for all users */}
+        {profile && (
           <div className="mt-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
             <h2 className="text-lg font-semibold text-red-800 dark:text-red-300">
               Gefahrenzone

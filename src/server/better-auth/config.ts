@@ -221,16 +221,7 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
-      role: {
-        type: "string",
-        required: true,
-        defaultValue: "USER",
-      },
-      roleType: {
-        type: "string",
-        required: false,
-      },
-      displayRole: {
+      districtRoleName: {
         type: "string",
         required: false,
       },

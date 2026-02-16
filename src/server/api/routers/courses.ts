@@ -11,10 +11,11 @@ import {
 import {
   CourseType,
   ContentStatus,
-  UserRole,
   CustomFieldType,
   RegistrationStatus,
 } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -171,13 +172,16 @@ export const coursesRouter = createTRPCRouter({
             message: "Course not published",
           });
         }
-        const role = ctx.session.user.role;
-
         const canView =
           courseRaw.createdById === ctx.session.user.id ||
-          role == UserRole.ADMIN ||
-          role == UserRole.LPW ||
-          role == UserRole.RPW;
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_VIEW,
+          )) ||
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_APPROVE,
+          ));
 
         if (!canView) {
           throw new TRPCError({
@@ -278,16 +282,23 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApproveAll = await userHasPermission(
+        userId,
+        PERMISSIONS.COURSES_APPROVE,
+      );
+      const canApproveOwn = await userHasPermission(
+        userId,
+        PERMISSIONS.COURSES_CREATE,
+      );
 
       let where: Record<string, unknown> = {};
 
-      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+      if (canApproveAll) {
         if (input.status) {
           where.status = input.status;
         }
-      } else if (userRole === UserRole.RPW) {
+      } else if (canApproveOwn) {
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
             where = {
@@ -510,11 +521,11 @@ export const coursesRouter = createTRPCRouter({
       const { priceOptions, customFields, instructorIds, ...courseData } =
         input;
 
-      if (
-        input.allowSiblingDiscount &&
-        ctx.session.user.role !== UserRole.LPW &&
-        ctx.session.user.role !== UserRole.ADMIN
-      ) {
+      const canManageDiscounts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      if (input.allowSiblingDiscount && !canManageDiscounts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can enable sibling discount",
@@ -647,10 +658,12 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      const canEditCourse = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_EDIT,
+      );
       const canEdit =
-        course.createdById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+        course.createdById === ctx.session.user.id || canEditCourse;
 
       if (!canEdit) {
         throw new TRPCError({
@@ -659,11 +672,11 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      if (
-        input.allowSiblingDiscount !== undefined &&
-        ctx.session.user.role !== UserRole.LPW &&
-        ctx.session.user.role !== UserRole.ADMIN
-      ) {
+      const canManageDiscounts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      if (input.allowSiblingDiscount !== undefined && !canManageDiscounts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can modify sibling discount setting",
@@ -743,10 +756,12 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      const canDeleteCourse = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_DELETE,
+      );
       const canDelete =
-        course.createdById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+        course.createdById === ctx.session.user.id || canDeleteCourse;
 
       if (!canDelete) {
         throw new TRPCError({
@@ -972,9 +987,10 @@ export const coursesRouter = createTRPCRouter({
         (i) => i.id === ctx.session.user.id,
       );
       const isCreator = course.createdById === ctx.session.user.id;
-      const isAdmin =
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+      const isAdmin = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_APPROVE,
+      );
 
       if (!isInstructor && !isCreator && !isAdmin) {
         throw new TRPCError({
@@ -1008,8 +1024,11 @@ export const coursesRouter = createTRPCRouter({
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canDeleteAny = await userHasPermission(
+        userId,
+        PERMISSIONS.COURSES_DELETE,
+      );
 
       const courses = await ctx.db.course.findMany({
         where: { id: { in: input.ids } },
@@ -1017,12 +1036,7 @@ export const coursesRouter = createTRPCRouter({
       });
 
       const canDeleteIds = courses
-        .filter(
-          (course) =>
-            course.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((course) => course.createdById === userId || canDeleteAny)
         .map((c) => c.id);
 
       if (canDeleteIds.length === 0) {
@@ -1165,8 +1179,11 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApprove = await userHasPermission(
+        userId,
+        PERMISSIONS.COURSES_APPROVE,
+      );
 
       const courses = await ctx.db.course.findMany({
         where: { id: { in: input.ids } },
@@ -1174,12 +1191,7 @@ export const coursesRouter = createTRPCRouter({
       });
 
       const canUpdateIds = courses
-        .filter(
-          (course) =>
-            course.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((course) => course.createdById === userId || canApprove)
         .map((c) => c.id);
 
       if (canUpdateIds.length === 0) {

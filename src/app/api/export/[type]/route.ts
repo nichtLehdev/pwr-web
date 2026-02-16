@@ -16,7 +16,18 @@ export async function GET(
       headers: request.headers,
     });
 
-    if (!session?.user || session.user.role !== "ADMIN") {
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    // Check if user has admin permissions
+    const { userHasPermission } =
+      await import("@/server/api/helpers/permissions");
+    const { PERMISSIONS } = await import("@/lib/permissions");
+    const canExport = await userHasPermission(
+      session.user.id,
+      PERMISSIONS.USERS_MANAGE,
+    );
+    if (!canExport) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

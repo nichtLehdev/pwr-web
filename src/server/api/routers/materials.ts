@@ -12,9 +12,10 @@ import {
   DownloadCategory,
   FileType,
   ContentStatus,
-  UserRole,
   type Prisma,
 } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const materialsRouter = createTRPCRouter({
   getDownloads: publicProcedure
@@ -29,12 +30,10 @@ export const materialsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userRole = ctx.session?.user?.role as UserRole | undefined;
-      const isReviewer =
-        userRole === UserRole.RPW ||
-        userRole === UserRole.LPW ||
-        userRole === UserRole.ADMIN;
       const userId = ctx.session?.user?.id;
+      const canApproveDownloads = userId
+        ? await userHasPermission(userId, PERMISSIONS.DOWNLOADS_APPROVE)
+        : false;
 
       const where: Prisma.DownloadWhereInput = {
         isPublic: true,
@@ -49,19 +48,27 @@ export const materialsRouter = createTRPCRouter({
         ];
       }
 
-      if (input.includeAll && ctx.session?.user) {
-        if (isReviewer) {
-        } else if (userRole === UserRole.OBLEUTE && userId) {
-          where.AND = [
-            {
-              OR: [
-                { status: ContentStatus.APPROVED },
-                { status: ContentStatus.PENDING, uploadedById: userId },
-              ],
-            },
-          ];
+      if (input.includeAll && ctx.session?.user && userId) {
+        if (canApproveDownloads) {
+          // Can see all downloads
         } else {
-          where.status = ContentStatus.APPROVED;
+          const canUploadDownloads = await userHasPermission(
+            userId,
+            PERMISSIONS.DOWNLOADS_UPLOAD,
+          );
+          if (canUploadDownloads) {
+            // Can see approved + own pending
+            where.AND = [
+              {
+                OR: [
+                  { status: ContentStatus.APPROVED },
+                  { status: ContentStatus.PENDING, uploadedById: userId },
+                ],
+              },
+            ];
+          } else {
+            where.status = ContentStatus.APPROVED;
+          }
         }
       } else {
         where.status = ContentStatus.APPROVED;
@@ -169,17 +176,17 @@ export const materialsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role as UserRole;
-
-      const isReviewer =
-        userRole === UserRole.RPW ||
-        userRole === UserRole.LPW ||
-        userRole === UserRole.ADMIN;
+      const canApproveDownloads = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.DOWNLOADS_APPROVE,
+      );
 
       return await ctx.db.download.create({
         data: {
           ...input,
-          status: isReviewer ? ContentStatus.APPROVED : ContentStatus.PENDING,
+          status: canApproveDownloads
+            ? ContentStatus.APPROVED
+            : ContentStatus.PENDING,
           uploadedById: ctx.session.user.id,
         },
       });

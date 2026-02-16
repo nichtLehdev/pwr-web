@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -14,8 +13,6 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function DashboardNewsletterComposePage() {
   const { data: session, isPending } = useSession();
@@ -35,6 +32,11 @@ export default function DashboardNewsletterComposePage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageNewsletter } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: statistics } = api.newsletter.getStatistics.useQuery(
     undefined,
@@ -83,13 +85,16 @@ export default function DashboardNewsletterComposePage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageNewsletter &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/dashboard");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, canManageNewsletter]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -150,7 +155,7 @@ export default function DashboardNewsletterComposePage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageNewsletter) {
     return null;
   }
 

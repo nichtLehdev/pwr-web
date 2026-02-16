@@ -7,7 +7,8 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "../trpc";
-import { UserRole } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const ensemblesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -239,12 +240,14 @@ export const ensemblesRouter = createTRPCRouter({
         });
       }
 
+      const canManageEnsembles = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
+      );
       const canEdit =
         ensemble.conductorId === ctx.session.user.id ||
         ensemble.representativeId === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW ||
-        ctx.session.user.role === UserRole.RPW;
+        canManageEnsembles;
 
       if (!canEdit) {
         throw new TRPCError({

@@ -11,7 +11,6 @@ import PageHeader from "../general/page-header";
 import MediaCredit from "@/app/_components/general/media-credit";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   Clock,
   Calendar,
@@ -65,13 +64,23 @@ export default function CourseDetailView({
       { enabled: !!session?.user },
     );
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "courses.edit" || perm === "courses.approve",
+    );
+
   const canEdit =
     session?.user &&
     userProfile &&
     (course.createdById === session.user.id ||
       course.createdBy?.id === session.user.id ||
-      userProfile.role === UserRole.ADMIN ||
-      userProfile.role === UserRole.LPW);
+      hasEditPermission);
 
   const districtColor = getDistrictColor(course.bezirk?.number);
   const startDate = new Date(course.startDate);

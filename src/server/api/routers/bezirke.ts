@@ -7,6 +7,9 @@ export const bezirkeRouter = createTRPCRouter({
     const bezirke = await ctx.db.bezirk.findMany({
       include: {
         users: {
+          where: {
+            districtRoleName: { not: null },
+          },
           select: {
             id: true,
             firstName: true,
@@ -15,7 +18,7 @@ export const bezirkeRouter = createTRPCRouter({
             phone: true,
             email: true,
             profileImage: true,
-            obleuteRole: true,
+            districtRoleName: true,
             street: true,
             zipCode: true,
             city: true,
@@ -64,6 +67,9 @@ export const bezirkeRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           users: {
+            where: {
+              districtRoleName: { not: null },
+            },
             select: {
               id: true,
               firstName: true,
@@ -71,7 +77,7 @@ export const bezirkeRouter = createTRPCRouter({
               displayName: true,
               email: true,
               profileImage: true,
-              obleuteRole: true,
+              districtRoleName: true,
               bio: true,
               street: true,
               zipCode: true,
@@ -155,12 +161,15 @@ export const bezirkeRouter = createTRPCRouter({
         where: { number: input.number },
         include: {
           users: {
+            where: {
+              districtRoleName: { not: null },
+            },
             select: {
               id: true,
               displayName: true,
               email: true,
               profileImage: true,
-              obleuteRole: true,
+              districtRoleName: true,
             },
           },
           _count: {
@@ -241,7 +250,7 @@ export const bezirkeRouter = createTRPCRouter({
               events: { where: { status: "APPROVED" } },
               courses: { where: { status: "APPROVED" } },
               posts: { where: { status: "APPROVED" } },
-              users: true,
+              users: { where: { districtRoleName: { not: null } } },
             },
           },
         },
@@ -279,5 +288,94 @@ export const bezirkeRouter = createTRPCRouter({
         totalPosts: bezirk._count.posts,
         totalObleute: bezirk._count.users,
       };
+    }),
+
+  /**
+   * Get all users for dropdown selection
+   */
+  getUsersForDropdown: adminProcedure.query(async ({ ctx }) => {
+    return await ctx.db.user.findMany({
+      select: {
+        id: true,
+        displayName: true,
+        email: true,
+        username: true,
+      },
+      orderBy: [{ displayName: "asc" }, { email: "asc" }],
+    });
+  }),
+
+  /**
+   * Assign users to district with custom role names
+   * Each user can have a custom role name (e.g., "Bezirksobmann", "Bezirksobfrau", "Obleute")
+   */
+  assignUsers: adminProcedure
+    .input(
+      z.object({
+        bezirkId: z.string(),
+        obleuteAssignments: z
+          .array(
+            z.object({
+              userId: z.string(),
+              roleName: z.string().min(1).max(100), // Custom role name for this user
+            }),
+          )
+          .optional()
+          .default([]),
+        stellObleuteAssignments: z
+          .array(
+            z.object({
+              userId: z.string(),
+              roleName: z.string().min(1).max(100), // Custom role name for this user
+            }),
+          )
+          .optional()
+          .default([]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { bezirkId, obleuteAssignments, stellObleuteAssignments } = input;
+
+      // Verify district exists
+      const bezirk = await ctx.db.bezirk.findUnique({
+        where: { id: bezirkId },
+      });
+
+      if (!bezirk) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Bezirk not found",
+        });
+      }
+
+      // Remove all existing users from this district
+      await ctx.db.user.updateMany({
+        where: { bezirkId },
+        data: { bezirkId: null, districtRoleName: null },
+      });
+
+      // Assign all obleute users with their custom role names
+      for (const assignment of obleuteAssignments) {
+        await ctx.db.user.update({
+          where: { id: assignment.userId },
+          data: {
+            bezirkId,
+            districtRoleName: assignment.roleName,
+          },
+        });
+      }
+
+      // Assign all stell. obleute users with their custom role names
+      for (const assignment of stellObleuteAssignments) {
+        await ctx.db.user.update({
+          where: { id: assignment.userId },
+          data: {
+            bezirkId,
+            districtRoleName: assignment.roleName,
+          },
+        });
+      }
+
+      return { success: true };
     }),
 });

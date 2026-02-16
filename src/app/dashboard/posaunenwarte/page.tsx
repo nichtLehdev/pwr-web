@@ -6,11 +6,8 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, EditIcon, EyeIcon } from "lucide-react";
 import { UserIcon, UsersIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const ROLE_LABELS: Record<string, string> = {
   LPW: "Landesposaunenwart",
@@ -27,6 +24,11 @@ export default function DashboardPosaunenwartenPage() {
       enabled: !!session?.user,
     });
 
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   const { data: posaunenwarte, isLoading: posaunenwarteLoading } =
     api.organization.getPosaunenwarte.useQuery();
 
@@ -38,13 +40,16 @@ export default function DashboardPosaunenwartenPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   if (isPending || profileLoading || posaunenwarteLoading) {
     return (
@@ -54,7 +59,7 @@ export default function DashboardPosaunenwartenPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 
@@ -197,31 +202,41 @@ export default function DashboardPosaunenwartenPage() {
                               : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
                           }`}
                         >
-                          {ROLE_LABELS[person.role] || person.role}
+                          {person.role
+                            ? ROLE_LABELS[person.role] || person.role
+                            : "Unbekannt"}
                         </span>
-                        {person.displayRole && (
+                        {person.districtRoleName && (
                           <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                            {person.displayRole}
+                            {person.districtRoleName}
                           </p>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {person.bezirke && person.bezirke.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
-                            {person.bezirke.map((bezirk) => (
-                              <span
-                                key={bezirk.id}
-                                className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
-                              >
-                                Bezirk {bezirk.number}
-                              </span>
-                            ))}
+                            {person.bezirke.map(
+                              (bezirk: {
+                                id: string;
+                                number: number;
+                                name: string | null;
+                              }) => (
+                                <span
+                                  key={bezirk.id}
+                                  className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                                >
+                                  Bezirk {bezirk.number}
+                                </span>
+                              ),
+                            )}
                           </div>
                         ) : (
                           <span className="dark:text-dark-muted text-sm text-gray-500">
                             {person.role === "LPW"
                               ? "Alle Bezirke"
-                              : "Keine Zuordnung"}
+                              : person.role === "RPW"
+                                ? `${person.bezirke?.length || 0} Bezirk(e)`
+                                : "Keine Zuordnung"}
                           </span>
                         )}
                       </td>

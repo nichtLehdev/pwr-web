@@ -7,12 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole, PosaunenwartRoleType } from "~/generated/prisma/enums";
+import { PosaunenwartRoleType } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, UserIcon } from "lucide-react";
 import { AlertTriangleIcon, TrashIcon } from "lucide-react";
 import { InfoIcon, PlusIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const ROLE_LABELS: Record<string, string> = {
   LPW: "Landesposaunenwart",
@@ -36,6 +34,11 @@ export default function DashboardPosaunenwarteEditPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: user, isLoading: userLoading } = api.users.getById.useQuery(
     { id },
@@ -79,19 +82,16 @@ export default function DashboardPosaunenwarteEditPage() {
   }, [isPending, session, router, id]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
-
-  useEffect(() => {
-    if (user && user.role !== "LPW" && user.role !== "RPW") {
-      router.push("/dashboard/posaunenwarte");
-    }
-  }, [user, router]);
+  }, [profile, profileLoading, canManageOrganization, router]);
 
   const handleAddBezirk = async (bezirkId: string) => {
     if (!user) return;
@@ -101,10 +101,7 @@ export default function DashboardPosaunenwarteEditPage() {
       await addResponsibility.mutateAsync({
         userId: id,
         bezirkId,
-        roleType:
-          user.role === "LPW"
-            ? PosaunenwartRoleType.LPW
-            : PosaunenwartRoleType.RPW,
+        roleType: isLPW ? PosaunenwartRoleType.LPW : PosaunenwartRoleType.RPW,
       });
     } finally {
       setSaving(false);
@@ -132,7 +129,7 @@ export default function DashboardPosaunenwarteEditPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 
@@ -156,11 +153,13 @@ export default function DashboardPosaunenwarteEditPage() {
     );
   }
 
-  const isPosaunenwart = user.role === "LPW" || user.role === "RPW";
-
-  if (!isPosaunenwart) {
-    return null;
-  }
+  // Check if user has posaunenwart responsibilities
+  const isLPW =
+    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "LPW") ??
+    false;
+  const isRPW =
+    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "RPW") ??
+    false;
 
   const assignedBezirkIds = new Set(
     user.posaunenwarteResponsibilities?.map((r) => r.bezirk.id) || [],
@@ -229,15 +228,17 @@ export default function DashboardPosaunenwarteEditPage() {
             </h1>
             <p className="dark:text-dark-muted text-gray-600">
               {user.displayName}{" "}
-              <span
-                className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                  user.role === "LPW"
-                    ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                    : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                }`}
-              >
-                {ROLE_LABELS[user.role] || user.role}
-              </span>
+              {(isLPW || isRPW) && (
+                <span
+                  className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    isLPW
+                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                      : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                  }`}
+                >
+                  {isLPW ? ROLE_LABELS["LPW"] : ROLE_LABELS["RPW"]}
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -253,7 +254,7 @@ export default function DashboardPosaunenwarteEditPage() {
         )}
 
         {/* Info for LPW */}
-        {user.role === "LPW" && (
+        {isLPW && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="flex gap-3">
               <InfoIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   BookIcon,
   CalendarIcon,
@@ -17,8 +16,6 @@ import {
   PencilIcon,
   TrashIcon,
 } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardBezirkePage() {
   const router = useRouter();
@@ -31,6 +28,11 @@ export default function DashboardBezirkePage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageBezirke } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: bezirke,
@@ -58,13 +60,16 @@ export default function DashboardBezirkePage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageBezirke &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageBezirke, router]);
 
   const handleDelete = async (id: string) => {
     if (
@@ -86,7 +91,7 @@ export default function DashboardBezirkePage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageBezirke) {
     return null;
   }
 
@@ -193,9 +198,9 @@ export default function DashboardBezirkePage() {
                                 className="dark:text-dark-muted text-sm text-gray-600"
                               >
                                 {user.displayName}
-                                {user.obleuteRole && (
+                                {user.districtRoleName && (
                                   <span className="ml-1 text-xs text-gray-400">
-                                    ({user.obleuteRole})
+                                    ({user.districtRoleName})
                                   </span>
                                 )}
                               </span>

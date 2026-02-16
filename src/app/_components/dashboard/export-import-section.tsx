@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UserRole } from "~/generated/prisma/enums";
 import { DownloadIcon, UploadIcon } from "lucide-react";
 
 type ContentType =
@@ -13,22 +12,12 @@ type ContentType =
   | "downloads"
   | "blaeserhefte";
 
-interface ExportImportSectionProps {
-  userRole: UserRole;
-}
-
-export default function ExportImportSection({
-  userRole,
-}: ExportImportSectionProps) {
+export default function ExportImportSection() {
   const [selectedType, setSelectedType] = useState<ContentType | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
-
-  if (userRole !== UserRole.ADMIN) {
-    return null;
-  }
 
   const contentTypeLabels: Record<ContentType, string> = {
     posts: "Beiträge",

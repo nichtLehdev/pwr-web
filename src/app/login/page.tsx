@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   Button,
   Input,
@@ -14,13 +13,6 @@ import {
   Alert,
   AlertDescription,
 } from "@/app/_components/ui";
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
 
 function LoginForm() {
   const router = useRouter();
@@ -96,11 +88,16 @@ function LoginForm() {
 
       const profile = await utils.users.getMyProfile.fetch();
 
-      if (profile?.role && DASHBOARD_ROLES.includes(profile.role as UserRole)) {
-        router.push("/dashboard");
-      } else {
-        router.push(redirectTo);
+      if (profile?.id) {
+        const permissions = await utils.permissions.getMyPermissions.fetch();
+
+        if (permissions && permissions.length > 0) {
+          router.push("/dashboard");
+          return;
+        }
       }
+
+      router.push(redirectTo);
     } catch {
       setError("Ungültige Anmeldedaten");
     } finally {

@@ -7,12 +7,9 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { ImageIcon, X } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function EditAuswahlchorPage() {
   const router = useRouter();
@@ -26,6 +23,11 @@ export default function EditAuswahlchorPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageAuswahlchoere } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: auswahlchor, isLoading: auswahlchorLoading } =
     api.auswahlchoere.getById.useQuery(
@@ -116,13 +118,16 @@ export default function EditAuswahlchorPage() {
   }, [session, sessionLoading, router, auswahlchorId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageAuswahlchoere &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageAuswahlchoere, router]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -185,7 +190,7 @@ export default function EditAuswahlchorPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageAuswahlchoere) {
     return null;
   }
 

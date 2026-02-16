@@ -7,7 +7,7 @@ import {
   adminProcedure,
   lpwProcedure,
 } from "../trpc";
-import { UserRole } from "~/generated/prisma/client";
+// UserRole enum removed - using permissions system instead
 
 /**
  * USERS ROUTER
@@ -111,13 +111,13 @@ export const usersRouter = createTRPCRouter({
       z.object({
         query: z.string().min(2),
         limit: z.number().min(1).max(50).default(10),
-        role: z.nativeEnum(UserRole).optional(),
+        // role filter removed - use permissions system instead
       }),
     )
     .query(async ({ ctx, input }) => {
       const users = await ctx.db.user.findMany({
         where: {
-          ...(input.role && { role: input.role }),
+          // role filter removed
           OR: [
             { displayName: { contains: input.query, mode: "insensitive" } },
             { email: { contains: input.query, mode: "insensitive" } },
@@ -129,7 +129,6 @@ export const usersRouter = createTRPCRouter({
           displayName: true,
           username: true,
           email: true,
-          role: true,
           profileImage: {
             select: {
               url: true,
@@ -145,18 +144,19 @@ export const usersRouter = createTRPCRouter({
     }),
 
   /**
-   * Get users by role
+   * Get users by role (deprecated - use permissions system instead)
+   * Returns all users since role filtering is no longer available
    */
   getByRole: publicProcedure
     .input(
       z.object({
-        role: z.nativeEnum(UserRole),
+        // role parameter removed - use permissions system instead
         includeBezirk: z.boolean().default(false),
       }),
     )
     .query(async ({ ctx, input }) => {
       const users = await ctx.db.user.findMany({
-        where: { role: input.role },
+        where: {}, // role filter removed - use permissions system instead
         include: {
           profileImage: true,
           ...(input.includeBezirk && {
@@ -384,17 +384,17 @@ export const usersRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
-        role: z.nativeEnum(UserRole).optional(),
+        // role filter removed - use permissions system instead
         search: z.string().optional(),
         sortBy: z
-          .enum(["displayName", "email", "role", "createdAt"])
+          .enum(["displayName", "email", "createdAt"])
           .default("createdAt"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
       const where = {
-        ...(input.role && { role: input.role }),
+        // role filter removed
         ...(input.search && {
           OR: [
             {
@@ -457,10 +457,7 @@ export const usersRouter = createTRPCRouter({
       recentUsers,
     ] = await Promise.all([
       ctx.db.user.count(),
-      ctx.db.user.groupBy({
-        by: ["role"],
-        _count: true,
-      }),
+      Promise.resolve([]), // Role grouping no longer available
       ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
       ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
       ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
@@ -477,8 +474,8 @@ export const usersRouter = createTRPCRouter({
     return {
       totalUsers,
       usersByRole: usersByRole.reduce(
-        (acc, curr) => {
-          acc[curr.role] = curr._count;
+        (acc) => {
+          // role-based grouping removed
           return acc;
         },
         {} as Record<string, number>,
@@ -512,9 +509,7 @@ export const usersRouter = createTRPCRouter({
             "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
           )
           .optional(),
-        role: z.nativeEnum(UserRole).default("USER"),
-        displayRole: z.string().max(100).optional(),
-        obleuteRole: z.string().max(100).optional(),
+        districtRoleName: z.string().max(100).optional(),
         bio: z.string().max(2000).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional(),
@@ -561,9 +556,7 @@ export const usersRouter = createTRPCRouter({
             input.displayName || `${input.firstName} ${input.lastName}`,
           email: input.email,
           username: input.username,
-          role: input.role,
-          displayRole: input.displayRole,
-          obleuteRole: input.obleuteRole,
+          districtRoleName: input.districtRoleName,
           bio: input.bio,
           bezirkId: input.bezirkId,
           profileImageId: input.profileImageId,
@@ -597,10 +590,9 @@ export const usersRouter = createTRPCRouter({
             "Benutzername darf nur Buchstaben, Zahlen, Unterstrich, Bindestrich und Punkt enthalten",
           )
           .optional(),
-        role: z.nativeEnum(UserRole).optional(),
+        // role filter removed - use permissions system instead
         bio: z.string().max(2000).optional(),
-        displayRole: z.string().max(100).optional(),
-        obleuteRole: z.string().max(100).optional(),
+        districtRoleName: z.string().max(100).optional(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
         street: z.string().max(200).optional(),
@@ -710,9 +702,8 @@ export const usersRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string(),
-        role: z.nativeEnum(UserRole),
+        districtRoleName: z.string().max(100).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
-        displayRole: z.string().optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -747,7 +738,7 @@ export const usersRouter = createTRPCRouter({
         updates: z.array(
           z.object({
             userId: z.string(),
-            role: z.nativeEnum(UserRole),
+            // role removed - use permissions system instead
           }),
         ),
       }),
@@ -757,7 +748,7 @@ export const usersRouter = createTRPCRouter({
         input.updates.map((update) =>
           ctx.db.user.update({
             where: { id: update.userId },
-            data: { role: update.role },
+            data: {}, // role removed - use permissions system instead
           }),
         ),
       );
@@ -824,14 +815,14 @@ export const usersRouter = createTRPCRouter({
   getForSelect: protectedProcedure
     .input(
       z.object({
-        role: z.nativeEnum(UserRole).optional(),
+        // role filter removed - use permissions system instead
         excludeIds: z.array(z.string()).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const users = await ctx.db.user.findMany({
         where: {
-          ...(input.role && { role: input.role }),
+          // role filter removed
           ...(input.excludeIds && {
             id: { notIn: input.excludeIds },
           }),
@@ -841,7 +832,6 @@ export const usersRouter = createTRPCRouter({
           displayName: true,
           email: true,
           username: true,
-          role: true,
         },
         orderBy: { displayName: "asc" },
       });

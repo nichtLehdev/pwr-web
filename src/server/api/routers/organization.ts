@@ -91,9 +91,6 @@ export const organizationRouter = createTRPCRouter({
         (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
       ),
       vorstand: members.filter((m) => m.role === "VORSTAND"),
-      bezirksobleute: members.filter(
-        (m) => m.role === "BEZIRKSOBMANN" || m.role === "BEZIRKSOBFRAU",
-      ),
       sachverstaendige: members.filter(
         (m) => m.role === "SACHVERSTAENDIGER" || m.role === "SACHVERSTAENDIGE",
       ),
@@ -138,7 +135,6 @@ export const organizationRouter = createTRPCRouter({
         email: z.string().email().optional(),
         imageId: z.string().optional(),
         role: z.enum(PosaunenratRole),
-        district: z.string().optional(),
         sortOrder: z.number().default(0),
         userId: z.string().optional(),
       }),
@@ -161,7 +157,6 @@ export const organizationRouter = createTRPCRouter({
         email: z.email().optional(),
         imageId: z.string().optional().nullable(),
         role: z.enum(PosaunenratRole).optional(),
-        district: z.string().optional(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
       }),
@@ -199,7 +194,7 @@ export const organizationRouter = createTRPCRouter({
             email: true,
             profileImage: true,
             bio: true,
-            displayRole: true,
+            districtRoleName: true,
           },
         },
       },
@@ -208,6 +203,7 @@ export const organizationRouter = createTRPCRouter({
 
     return members.map((member) => ({
       ...member,
+      user: member.user,
       responsibilities: member.responsibilities
         ? (member.responsibilities as string[])
         : [],
@@ -230,7 +226,7 @@ export const organizationRouter = createTRPCRouter({
               email: true,
               profileImage: true,
               bio: true,
-              displayRole: true,
+              districtRoleName: true,
             },
           },
         },
@@ -239,6 +235,7 @@ export const organizationRouter = createTRPCRouter({
 
       return members.map((member) => ({
         ...member,
+        user: member.user,
         responsibilities: member.responsibilities
           ? (member.responsibilities as string[])
           : [],
@@ -258,22 +255,28 @@ export const organizationRouter = createTRPCRouter({
             email: true,
             profileImage: true,
             bio: true,
-            displayRole: true,
+            districtRoleName: true,
           },
         },
       },
       orderBy: { sortOrder: "asc" },
     });
 
-    const grouped = {
-      geschaeftsstelle: members.filter(
-        (m) => m.contactType === "GESCHAEFTSSTELLE",
-      ),
-      internetTeam: members.filter((m) => m.contactType === "INTERNET_TEAM"),
-      other: members.filter((m) => !m.contactType),
-    };
+    const geschaeftsstelle = members
+      .filter((m) => m.contactType === "GESCHAEFTSSTELLE")
+      .map((m) => ({ ...m, user: m.user }));
+    const internetTeam = members
+      .filter((m) => m.contactType === "INTERNET_TEAM")
+      .map((m) => ({ ...m, user: m.user }));
+    const other = members
+      .filter((m) => !m.contactType)
+      .map((m) => ({ ...m, user: m.user }));
 
-    return grouped;
+    return {
+      geschaeftsstelle,
+      internetTeam,
+      other,
+    };
   }),
 
   createTeamMember: adminProcedure
@@ -397,7 +400,7 @@ export const organizationRouter = createTRPCRouter({
               email: true,
               profileImage: true,
               bio: true,
-              displayRole: true,
+              districtRoleName: true,
             },
           },
         },
@@ -412,6 +415,7 @@ export const organizationRouter = createTRPCRouter({
 
       return {
         ...member,
+        user: member.user,
         responsibilities: member.responsibilities
           ? (member.responsibilities as string[])
           : [],
@@ -827,10 +831,8 @@ export const organizationRouter = createTRPCRouter({
    * Returns LPW and RPW only (NOT Obleute!)
    */
   getPosaunenwarte: publicProcedure.query(async ({ ctx }) => {
-    const posaunenwarte = await ctx.db.user.findMany({
-      where: {
-        role: { in: ["LPW", "RPW"] },
-      },
+    // Get all users with posaunenwarte responsibilities
+    const allUsers = await ctx.db.user.findMany({
       include: {
         profileImage: true,
         posaunenwarteResponsibilities: {
@@ -842,32 +844,54 @@ export const organizationRouter = createTRPCRouter({
           },
         },
       },
-      orderBy: [
-        {
-          role: "asc",
-        },
-        {
-          displayName: "asc",
-        },
-      ],
     });
 
-    return posaunenwarte.map((person) => ({
-      id: person.id,
-      name: person.displayName,
-      email: person.email,
-      role: person.role,
-      phone: person.phone,
-      displayRole: person.displayRole,
-      bio: person.bio,
-      profileImage: person.profileImage,
-      bezirke: person.posaunenwarteResponsibilities.map((r) => ({
-        ...r.bezirk,
-        roleType: r.roleType,
-        notes: r.notes,
-        priority: r.priority,
-      })),
-    }));
+    // Filter users who have LPW or RPW responsibilities
+    const posaunenwarte = allUsers.filter((user) => {
+      return user.posaunenwarteResponsibilities.some(
+        (r) => r.roleType === "LPW" || r.roleType === "RPW",
+      );
+    });
+
+    return posaunenwarte
+      .map((person) => {
+        const isLPW = person.posaunenwarteResponsibilities.some(
+          (r) => r.roleType === "LPW",
+        );
+        const isRPW = person.posaunenwarteResponsibilities.some(
+          (r) => r.roleType === "RPW",
+        );
+        const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
+
+        return {
+          id: person.id,
+          name: person.displayName,
+          email: person.email,
+          role,
+          phone: person.phone,
+          districtRoleName: person.districtRoleName,
+          bio: person.bio,
+          profileImage: person.profileImage,
+          bezirke: person.posaunenwarteResponsibilities.map((r) => ({
+            id: r.bezirk.id,
+            number: r.bezirk.number,
+            name: r.bezirk.name,
+            shortName: r.bezirk.shortName,
+            roleType: r.roleType,
+            notes: r.notes,
+            priority: r.priority,
+          })),
+        };
+      })
+      .sort((a, b) => {
+        // Sort by role (LPW first), then by name
+        if (a.role !== b.role) {
+          if (a.role === "LPW") return -1;
+          if (b.role === "LPW") return 1;
+          return 0;
+        }
+        return (a.name || "").localeCompare(b.name || "");
+      });
   }),
 
   /**
@@ -880,8 +904,7 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const posaunenwarte = await ctx.db.user.findMany({
-        where: { role: input.role },
+      const allUsers = await ctx.db.user.findMany({
         include: {
           profileImage: true,
           posaunenwarteResponsibilities: {
@@ -893,24 +916,44 @@ export const organizationRouter = createTRPCRouter({
             },
           },
         },
-        orderBy: { displayName: "asc" },
       });
 
-      return posaunenwarte.map((person) => ({
-        id: person.id,
-        name: person.displayName,
-        email: person.email,
-        role: person.role,
-        phone: person.phone,
-        displayRole: person.displayRole,
-        bio: person.bio,
-        profileImage: person.profileImage,
-        bezirke: person.posaunenwarteResponsibilities.map((r) => ({
-          ...r.bezirk,
-          roleType: r.roleType,
-          notes: r.notes,
-        })),
-      }));
+      const posaunenwarte = allUsers.filter((user) => {
+        return user.posaunenwarteResponsibilities.some(
+          (r) => r.roleType === input.role,
+        );
+      });
+
+      return posaunenwarte
+        .map((person) => {
+          const isLPW = person.posaunenwarteResponsibilities.some(
+            (r) => r.roleType === "LPW",
+          );
+          const isRPW = person.posaunenwarteResponsibilities.some(
+            (r) => r.roleType === "RPW",
+          );
+          const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
+
+          return {
+            id: person.id,
+            name: person.displayName,
+            email: person.email,
+            role,
+            phone: person.phone,
+            districtRoleName: person.districtRoleName,
+            bio: person.bio,
+            profileImage: person.profileImage,
+            bezirke: person.posaunenwarteResponsibilities.map((r) => ({
+              id: r.bezirk.id,
+              number: r.bezirk.number,
+              name: r.bezirk.name,
+              shortName: r.bezirk.shortName,
+              roleType: r.roleType,
+              notes: r.notes,
+            })),
+          };
+        })
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     }),
 
   /**
@@ -959,19 +1002,25 @@ export const organizationRouter = createTRPCRouter({
         },
       );
 
-      const posaunenwarte = responsibilities.map((r) => ({
-        id: r.user.id,
-        name: r.user.displayName,
-        email: r.user.email,
-        role: r.user.role,
-        phone: r.user.phone,
-        displayRole: r.user.displayRole,
-        bio: r.user.bio,
-        profileImage: r.user.profileImage,
-        roleType: r.roleType,
-        notes: r.notes,
-        priority: r.priority,
-      }));
+      const posaunenwarte = responsibilities.map((r) => {
+        const isLPW = r.roleType === "LPW";
+        const isRPW = r.roleType === "RPW";
+        const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
+
+        return {
+          id: r.user.id,
+          name: r.user.displayName,
+          email: r.user.email,
+          role,
+          phone: r.user.phone,
+          districtRoleName: r.user.districtRoleName,
+          bio: r.user.bio,
+          profileImage: r.user.profileImage,
+          roleType: r.roleType,
+          notes: r.notes,
+          priority: r.priority,
+        };
+      });
 
       return {
         bezirk,
@@ -1010,7 +1059,7 @@ export const organizationRouter = createTRPCRouter({
                 id: true,
                 displayName: true,
                 email: true,
-                displayRole: true,
+                districtRoleName: true,
                 profileImage: {
                   select: {
                     url: true,
@@ -1033,14 +1082,14 @@ export const organizationRouter = createTRPCRouter({
 
       const obmann = await ctx.db.user.findFirst({
         where: {
-          role: "OBLEUTE",
           bezirkId: bezirk.id,
+          districtRoleName: { not: null },
         },
         select: {
           id: true,
           displayName: true,
           email: true,
-          obleuteRole: true,
+          districtRoleName: true,
           profileImage: {
             select: {
               url: true,
@@ -1067,10 +1116,7 @@ export const organizationRouter = createTRPCRouter({
    * LPW -> RPWs with their Bezirke
    */
   getPosaunenwarteHierarchy: publicProcedure.query(async ({ ctx }) => {
-    const posaunenwarte = await ctx.db.user.findMany({
-      where: {
-        role: { in: ["LPW", "RPW"] },
-      },
+    const allUsers = await ctx.db.user.findMany({
       include: {
         profileImage: true,
         posaunenwarteResponsibilities: {
@@ -1082,22 +1128,45 @@ export const organizationRouter = createTRPCRouter({
           },
         },
       },
-      orderBy: [{ role: "asc" }, { displayName: "asc" }],
+    });
+
+    const posaunenwarte = allUsers.filter((user) => {
+      return user.posaunenwarteResponsibilities.some(
+        (r) => r.roleType === "LPW" || r.roleType === "RPW",
+      );
     });
 
     const lpw = posaunenwarte
-      .filter((p) => p.role === "LPW")
+      .filter((p) =>
+        p.posaunenwarteResponsibilities.some((r) => r.roleType === "LPW"),
+      )
       .map((p) => ({
-        ...p,
+        id: p.id,
+        name: p.displayName,
+        email: p.email,
+        phone: p.phone,
+        districtRoleName: p.districtRoleName,
+        bio: p.bio,
+        profileImage: p.profileImage,
         bezirke: p.posaunenwarteResponsibilities.map((r) => r.bezirk),
-      }));
+      }))
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     const rpw = posaunenwarte
-      .filter((p) => p.role === "RPW")
+      .filter((p) =>
+        p.posaunenwarteResponsibilities.some((r) => r.roleType === "RPW"),
+      )
       .map((p) => ({
-        ...p,
+        id: p.id,
+        name: p.displayName,
+        email: p.email,
+        phone: p.phone,
+        districtRoleName: p.districtRoleName,
+        bio: p.bio,
+        profileImage: p.profileImage,
         bezirke: p.posaunenwarteResponsibilities.map((r) => r.bezirk),
-      }));
+      }))
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     return {
       lpw,
@@ -1109,18 +1178,27 @@ export const organizationRouter = createTRPCRouter({
    * Get Posaunenwarte coverage statistics
    */
   getPosaunenwarteStatistics: publicProcedure.query(async ({ ctx }) => {
-    const [lpwCount, rpwCount, totalBezirke, responsibilities] =
-      await Promise.all([
-        ctx.db.user.count({ where: { role: "LPW" } }),
-        ctx.db.user.count({ where: { role: "RPW" } }),
-        ctx.db.bezirk.count(),
-        ctx.db.posaunenwartResponsibility.findMany({
-          include: {
-            bezirk: true,
-            user: true,
-          },
-        }),
-      ]);
+    const [allUsers, totalBezirke, responsibilities] = await Promise.all([
+      ctx.db.user.findMany({
+        include: {
+          posaunenwarteResponsibilities: true,
+        },
+      }),
+      ctx.db.bezirk.count(),
+      ctx.db.posaunenwartResponsibility.findMany({
+        include: {
+          bezirk: true,
+          user: true,
+        },
+      }),
+    ]);
+
+    const lpwCount = allUsers.filter((u) =>
+      u.posaunenwarteResponsibilities.some((r) => r.roleType === "LPW"),
+    ).length;
+    const rpwCount = allUsers.filter((u) =>
+      u.posaunenwarteResponsibilities.some((r) => r.roleType === "RPW"),
+    ).length;
 
     const bezirkeWithPosaunenwarte = new Set(
       responsibilities.map((r) => r.bezirkId),
@@ -1151,12 +1229,26 @@ export const organizationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
         where: { id: input.userId },
+        include: {
+          posaunenwarteResponsibilities: true,
+        },
       });
 
-      if (!user || (user.role !== "LPW" && user.role !== "RPW")) {
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      const hasLPWOrRPW = user.posaunenwarteResponsibilities.some(
+        (r) => r.roleType === "LPW" || r.roleType === "RPW",
+      );
+
+      if (!hasLPWOrRPW) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "User must have LPW or RPW role",
+          message: "User must have LPW or RPW responsibilities",
         });
       }
 
@@ -1259,12 +1351,26 @@ export const organizationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
         where: { id: input.userId },
+        include: {
+          posaunenwarteResponsibilities: true,
+        },
       });
 
-      if (!user || user.role !== "RPW") {
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      const hasRPW = user.posaunenwarteResponsibilities.some(
+        (r) => r.roleType === "RPW",
+      );
+
+      if (!hasRPW) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "User must have RPW role",
+          message: "User must have RPW responsibilities",
         });
       }
 

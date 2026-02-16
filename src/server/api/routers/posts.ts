@@ -8,11 +8,9 @@ import {
   reviewerProcedure,
   adminProcedure,
 } from "../trpc";
-import {
-  PostCategory,
-  ContentStatus,
-  UserRole,
-} from "~/generated/prisma/client";
+import { PostCategory, ContentStatus } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 marked.use({
   gfm: true,
@@ -241,13 +239,22 @@ export const postsRouter = createTRPCRouter({
           });
         }
 
+        const canViewPost = await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.POSTS_VIEW,
+        );
+        const canApprovePost = await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.POSTS_APPROVE,
+        );
+        const user = await ctx.db.user.findUnique({
+          where: { id: ctx.session.user.id },
+          select: { bezirkId: true },
+        });
         const canView =
           rawPost.createdById === ctx.session.user.id ||
-          ctx.session.user.role === UserRole.ADMIN ||
-          ctx.session.user.role === UserRole.LPW ||
-          ctx.session.user.role === UserRole.RPW ||
-          (ctx.session.user.role === UserRole.OBLEUTE &&
-            rawPost.bezirkId === ctx.session.user.bezirkId);
+          canApprovePost ||
+          (canViewPost && rawPost.bezirkId === user?.bezirkId);
 
         if (!canView) {
           throw new TRPCError({
@@ -405,8 +412,18 @@ export const postsRouter = createTRPCRouter({
         pendingReview: true,
       };
 
-      if (ctx.session.user.role === UserRole.RPW && ctx.session.user.bezirkId) {
-        where.bezirkId = ctx.session.user.bezirkId;
+      // Check if user can only approve for their district
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { bezirkId: true },
+      });
+      const canApproveAll = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_APPROVE,
+      );
+      // If user can't approve all but has a district, limit to their district
+      if (!canApproveAll && user?.bezirkId) {
+        where.bezirkId = user.bezirkId;
       }
 
       const [rawPosts, total] = await Promise.all([
@@ -451,23 +468,22 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (
-        input.pinned &&
-        ctx.session.user.role !== UserRole.ADMIN &&
-        ctx.session.user.role !== UserRole.LPW
-      ) {
+      const canPinPosts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
+      if (input.pinned && !canPinPosts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to pin posts",
         });
       }
 
-      if (
-        input.status === ContentStatus.APPROVED &&
-        ctx.session.user.role !== UserRole.ADMIN &&
-        ctx.session.user.role !== UserRole.LPW &&
-        ctx.session.user.role !== UserRole.RPW
-      ) {
+      const canApprovePosts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_APPROVE,
+      );
+      if (input.status === ContentStatus.APPROVED && !canApprovePosts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to approve posts",
@@ -525,11 +541,11 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      const canEdit =
-        post.createdById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW ||
-        ctx.session.user.role === UserRole.RPW;
+      const canEditPost = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_EDIT,
+      );
+      const canEdit = post.createdById === ctx.session.user.id || canEditPost;
 
       if (!canEdit) {
         throw new TRPCError({
@@ -538,23 +554,22 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
-      if (
-        updateData.pinned !== undefined &&
-        ctx.session.user.role !== UserRole.ADMIN &&
-        ctx.session.user.role !== UserRole.LPW
-      ) {
+      const canPinPosts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.HOMEPAGE_MANAGE,
+      );
+      if (updateData.pinned !== undefined && !canPinPosts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to pin posts",
         });
       }
 
-      if (
-        updateData.status === ContentStatus.APPROVED &&
-        ctx.session.user.role !== UserRole.ADMIN &&
-        ctx.session.user.role !== UserRole.LPW &&
-        ctx.session.user.role !== UserRole.RPW
-      ) {
+      const canApprovePosts = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_APPROVE,
+      );
+      if (updateData.status === ContentStatus.APPROVED && !canApprovePosts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions to approve posts",
@@ -620,11 +635,12 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
+      const canDeletePost = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_DELETE,
+      );
       const canDelete =
-        post.createdById === ctx.session.user.id ||
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW ||
-        ctx.session.user.role === UserRole.RPW;
+        post.createdById === ctx.session.user.id || canDeletePost;
 
       if (!canDelete) {
         throw new TRPCError({
@@ -765,19 +781,26 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApproveAll = await userHasPermission(
+        userId,
+        PERMISSIONS.POSTS_APPROVE,
+      );
+      const canApproveOwn = await userHasPermission(
+        userId,
+        PERMISSIONS.POSTS_CREATE,
+      );
 
       let where: Record<string, unknown> = {};
 
-      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+      if (canApproveAll) {
         if (input.status) {
           where.status = input.status;
         }
         if (input.category) {
           where.category = input.category;
         }
-      } else if (userRole === UserRole.RPW) {
+      } else if (canApproveOwn) {
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
             where = {
@@ -843,8 +866,11 @@ export const postsRouter = createTRPCRouter({
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canDeleteAny = await userHasPermission(
+        userId,
+        PERMISSIONS.POSTS_DELETE,
+      );
 
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
@@ -852,12 +878,7 @@ export const postsRouter = createTRPCRouter({
       });
 
       const canDeleteIds = posts
-        .filter(
-          (post) =>
-            post.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((post) => post.createdById === userId || canDeleteAny)
         .map((p) => p.id);
 
       if (canDeleteIds.length === 0) {
@@ -952,8 +973,11 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApprove = await userHasPermission(
+        userId,
+        PERMISSIONS.POSTS_APPROVE,
+      );
 
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
@@ -961,12 +985,7 @@ export const postsRouter = createTRPCRouter({
       });
 
       const canUpdateIds = posts
-        .filter(
-          (post) =>
-            post.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((post) => post.createdById === userId || canApprove)
         .map((p) => p.id);
 
       if (canUpdateIds.length === 0) {

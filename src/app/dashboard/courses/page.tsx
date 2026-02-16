@@ -6,15 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import DashboardCoursesList from "../../_components/dashboard/dashboard-courses-list";
-import { UserRole } from "~/generated/prisma/enums";
 import { Plus } from "lucide-react";
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
 
 export default function DashboardCoursesPage() {
   const { data: session, isPending } = useSession();
@@ -25,6 +17,14 @@ export default function DashboardCoursesPage() {
       enabled: !!session?.user,
     });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -33,13 +33,16 @@ export default function DashboardCoursesPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   if (isPending || profileLoading) {
     return (
@@ -49,11 +52,9 @@ export default function DashboardCoursesPage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
-
-  const userRole = profile.role;
 
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
@@ -94,7 +95,7 @@ export default function DashboardCoursesPage() {
         </div>
 
         {/* Courses List */}
-        <DashboardCoursesList userRole={userRole} />
+        <DashboardCoursesList />
       </div>
     </main>
   );

@@ -6,7 +6,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -15,16 +14,6 @@ import { User } from "lucide-react";
 const UserPlaceholderIcon = ({ className }: { className?: string }) => (
   <User className={className} />
 );
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
-const roleLabels: Record<UserRole, string> = {
-  ADMIN: "Administrator",
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-  OBLEUTE: "Obleute",
-  USER: "Benutzer",
-};
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -50,10 +39,8 @@ export default function EditUserPage() {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
-  const [role, setRole] = useState<UserRole>(UserRole.USER);
-  const [displayRole, setDisplayRole] = useState("");
+  const [districtRoleName, setDistrictRoleName] = useState("");
   const [bezirkId, setBezirkId] = useState<string | null>(null);
-  const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
@@ -76,10 +63,8 @@ export default function EditUserPage() {
       );
       setEmail(user.email ?? "");
       setUsername(user.username ?? "");
-      setRole(user.role ?? UserRole.USER);
-      setDisplayRole(user.displayRole ?? "");
+      setDistrictRoleName(user.districtRoleName ?? "");
       setBezirkId(user.bezirkId ?? null);
-      setObleuteRole(user.obleuteRole ?? "");
       setBio(user.bio ?? "");
       setPhone(user.phone ?? "");
       setStreet(user.street ?? "");
@@ -180,14 +165,22 @@ export default function EditUserPage() {
     }
   }, [session, sessionLoading, router, userId]);
 
+  const { data: canManageUsers } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageUsers &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageUsers, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,14 +226,8 @@ export default function EditUserPage() {
       displayName: name.trim() || undefined,
       email: email.trim(),
       username: username.trim() || undefined,
-      role,
-      displayRole: displayRole.trim() || undefined,
-      bezirkId:
-        role === UserRole.OBLEUTE || role === UserRole.ADMIN ? bezirkId : null,
-      obleuteRole:
-        role === UserRole.OBLEUTE || role === UserRole.ADMIN
-          ? obleuteRole.trim() || undefined
-          : undefined,
+      districtRoleName: districtRoleName.trim() || undefined,
+      bezirkId: bezirkId || null,
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       profileImageId,
@@ -537,86 +524,48 @@ export default function EditUserPage() {
             </div>
           </section>
 
-          {/* Role & Permissions */}
+          {/* District & Role */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Rolle & Berechtigungen
+              Bezirk & Rolle
             </h2>
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Rolle *
+                  Bezirk
                 </label>
                 <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
+                  value={bezirkId ?? ""}
+                  onChange={(e) => setBezirkId(e.target.value || null)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 >
-                  {Object.entries(roleLabels).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
+                  <option value="">Kein Bezirk</option>
+                  {bezirke?.map((bezirk) => (
+                    <option key={bezirk.id} value={bezirk.id}>
+                      Bezirk {bezirk.number} – {bezirk.shortName}
                     </option>
                   ))}
                 </select>
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Die Rolle bestimmt die grundlegenden Berechtigungen des
-                  Benutzers.
-                </p>
               </div>
 
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Angezeigte Rolle
+                  Bezirksrolle (z.B. Bezirksobmann, Bezirksobfrau)
                 </label>
                 <input
                   type="text"
-                  value={displayRole}
-                  onChange={(e) => setDisplayRole(e.target.value)}
-                  placeholder="z.B. Webmaster, Geschäftsführer"
+                  value={districtRoleName}
+                  onChange={(e) => setDistrictRoleName(e.target.value)}
+                  placeholder="z.B. Bezirksobmann, Bezirksobfrau"
                   maxLength={100}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
                 <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Diese Rolle wird öffentlich angezeigt und hat keine Auswirkung
-                  auf Berechtigungen.
+                  Diese Rolle wird angezeigt, wenn der Benutzer einem Bezirk
+                  zugeordnet ist. Berechtigungen werden über das
+                  Berechtigungssystem verwaltet.
                 </p>
               </div>
-
-              {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Bezirk
-                  </label>
-                  <select
-                    value={bezirkId ?? ""}
-                    onChange={(e) => setBezirkId(e.target.value || null)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  >
-                    <option value="">Kein Bezirk</option>
-                    {bezirke?.map((bezirk) => (
-                      <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.shortName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Obleute-Funktion
-                  </label>
-                  <input
-                    type="text"
-                    value={obleuteRole}
-                    onChange={(e) => setObleuteRole(e.target.value)}
-                    placeholder="z.B. Bezirksobmann, Bezirksobfrau"
-                    maxLength={100}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-              )}
             </div>
           </section>
 

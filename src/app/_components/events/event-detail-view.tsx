@@ -9,7 +9,6 @@ import type { RouterOutputs } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   AlertTriangle,
   CalendarArrowDownIcon,
@@ -36,6 +35,17 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "events.edit" || perm === "events.approve",
+    );
+
   const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
 
@@ -44,8 +54,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
     profile &&
     (event.createdById === session.user.id ||
       event.createdBy?.id === session.user.id ||
-      profile.role === UserRole.ADMIN ||
-      profile.role === UserRole.LPW);
+      hasEditPermission);
 
   const endDate = event.duration
     ? new Date(eventDate.getTime() + event.duration * 60 * 1000)

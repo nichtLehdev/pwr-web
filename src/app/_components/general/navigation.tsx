@@ -13,14 +13,7 @@ import { useBanner } from "../ui/banner-context";
 import { useRouter } from "next/navigation";
 import { useToast } from "../ui/toast";
 import { ChevronDown, Search, Menu, X } from "lucide-react";
-import { UserRole } from "~/generated/prisma/enums";
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function Navigation() {
   const pathname = usePathname();
@@ -40,6 +33,14 @@ export default function Navigation() {
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -313,7 +314,7 @@ export default function Navigation() {
 
                   {userMenuOpen && (
                     <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full right-0 z-50 mt-2 w-48 rounded-lg border border-gray-100 bg-white py-2 shadow-xl dark:shadow-2xl">
-                      {profile && DASHBOARD_ROLES.includes(profile.role) && (
+                      {hasDashboardAccess && (
                         <Link
                           href="/dashboard"
                           onClick={() => setUserMenuOpen(false)}
@@ -483,7 +484,7 @@ export default function Navigation() {
                           "User"}
                       </span>
                     </div>
-                    {profile && DASHBOARD_ROLES.includes(profile.role) && (
+                    {hasDashboardAccess && (
                       <Link
                         href="/dashboard"
                         onClick={() => setMobileMenuOpen(false)}

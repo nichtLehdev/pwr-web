@@ -6,11 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import {
-  ContentStatus,
-  PostCategory,
-  UserRole,
-} from "~/generated/prisma/enums";
+import { ContentStatus, PostCategory } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -56,14 +52,7 @@ const statusColors: Record<ContentStatus, string> = {
   ARCHIVED: "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400",
 };
 
-const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function PostDetailPage() {
   const router = useRouter();
@@ -80,6 +69,22 @@ export default function PostDetailPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "posts.approve");
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "posts.edit" || perm === "posts.approve",
+    );
+
   const {
     data: post,
     isLoading: postLoading,
@@ -93,7 +98,7 @@ export default function PostDetailPage() {
     api.posts.getAttachedContent.useQuery(
       { postId },
       {
-        enabled: !!postId && !!profile && REVIEWER_ROLES.includes(profile.role),
+        enabled: !!postId && !!profile && hasApprovePermission,
       },
     );
 
@@ -144,13 +149,16 @@ export default function PostDetailPage() {
   }, [session, sessionLoading, router, postId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   if (sessionLoading || profileLoading || postLoading) {
     return (
@@ -178,13 +186,10 @@ export default function PostDetailPage() {
     );
   }
 
-  const userRole = profile.role;
-  const isReviewer = REVIEWER_ROLES.includes(userRole);
+  const isReviewer = hasApprovePermission;
   const isOwner = post.createdById === session.user.id;
-  const canEdit =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
-  const canDelete =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const canEdit = isOwner || hasEditPermission;
+  const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && post.status === ContentStatus.PENDING;
 
   const hasPendingDownloads =

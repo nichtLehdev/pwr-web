@@ -7,13 +7,10 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
 import { ImageIcon, MusicIcon, SaveIcon, XIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function EditBlaeserheftPage() {
   const router = useRouter();
@@ -27,6 +24,11 @@ export default function EditBlaeserheftPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageMaterials } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: heft, isLoading: heftLoading } =
     api.materials.getBlaserheftById.useQuery(
@@ -120,13 +122,16 @@ export default function EditBlaeserheftPage() {
   }, [session, sessionLoading, router, heftId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageMaterials &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageMaterials, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +168,7 @@ export default function EditBlaeserheftPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageMaterials) {
     return null;
   }
 

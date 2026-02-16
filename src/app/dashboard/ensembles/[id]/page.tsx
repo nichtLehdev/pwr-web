@@ -6,17 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { EditIcon, MusicIcon } from "lucide-react";
 import { UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
 
 export default function EnsembleDetailPage() {
   const router = useRouter();
@@ -29,6 +21,14 @@ export default function EnsembleDetailPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
 
   const { data: ensemble, isLoading: ensembleLoading } =
     api.ensembles.getById.useQuery(
@@ -44,13 +44,16 @@ export default function EnsembleDetailPage() {
   }, [session, sessionLoading, router, ensembleId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess, router]);
 
   if (sessionLoading || profileLoading || ensembleLoading) {
     return (
@@ -60,7 +63,7 @@ export default function EnsembleDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 
