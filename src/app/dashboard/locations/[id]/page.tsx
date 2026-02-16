@@ -6,11 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { Edit, UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function LocationDetailPage() {
   const router = useRouter();
@@ -23,6 +20,11 @@ export default function LocationDetailPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageLocations } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: location, isLoading: locationLoading } =
     api.locations.getById.useQuery(
@@ -38,13 +40,16 @@ export default function LocationDetailPage() {
   }, [session, sessionLoading, router, locationId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageLocations &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageLocations]);
 
   if (sessionLoading || profileLoading || locationLoading) {
     return (
@@ -54,7 +59,7 @@ export default function LocationDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageLocations) {
     return null;
   }
 

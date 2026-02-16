@@ -281,7 +281,7 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
               {currentBezirk.users && currentBezirk.users[0] && (
                 <div className="dark:border-dark-border border-t border-gray-300 pt-4">
                   <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                    {currentBezirk.users[0].obleuteRole}
+                    {currentBezirk.users[0].districtRoleName}
                   </p>
                   <p className="text-dark dark:text-dark-text font-semibold">
                     {currentBezirk.users[0].displayName}
@@ -479,7 +479,7 @@ export default function BezirkePage() {
                                 <span
                                   className={`mb-0 inline-block rounded-full pt-1 text-xs font-semibold bg-district-${bezirk.number}/20`}
                                 >
-                                  {obmann.obleuteRole}
+                                  {obmann.districtRoleName}
                                 </span>
                                 <h4 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
                                   {obmann.displayName}

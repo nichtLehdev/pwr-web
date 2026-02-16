@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { Info } from "lucide-react";
@@ -20,16 +19,6 @@ import {
   CardTitle,
   CardContent,
 } from "@/app/_components/ui";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
-const roleLabels: Record<UserRole, string> = {
-  ADMIN: "Administrator",
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-  OBLEUTE: "Obleute",
-  USER: "Benutzer",
-};
 
 export default function NewUserPage() {
   const router = useRouter();
@@ -51,10 +40,8 @@ export default function NewUserPage() {
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
-  const [role, setRole] = useState<UserRole>(UserRole.USER);
-  const [displayRole, setDisplayRole] = useState("");
+  const [districtRoleName, setDistrictRoleName] = useState("");
   const [bezirkId, setBezirkId] = useState<string | null>(null);
-  const [obleuteRole, setObleuteRole] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
@@ -211,14 +198,22 @@ export default function NewUserPage() {
     }
   }, [session, sessionLoading, router]);
 
+  const { data: canManageUsers } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageUsers &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageUsers, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,14 +274,8 @@ export default function NewUserPage() {
       lastName: lastName.trim(),
       email: email.trim(),
       username: username.trim() || undefined,
-      role,
-      displayRole: displayRole.trim() || undefined,
-      bezirkId:
-        role === UserRole.OBLEUTE || role === UserRole.ADMIN ? bezirkId : null,
-      obleuteRole:
-        role === UserRole.OBLEUTE || role === UserRole.ADMIN
-          ? obleuteRole.trim() || undefined
-          : undefined,
+      districtRoleName: districtRoleName.trim() || undefined,
+      bezirkId: bezirkId || null,
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       street: street.trim() || undefined,
@@ -303,7 +292,7 @@ export default function NewUserPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageUsers) {
     return null;
   }
 
@@ -548,75 +537,45 @@ export default function NewUserPage() {
             </CardContent>
           </Card>
 
-          {/* Role & Permissions */}
+          {/* District & Role */}
           <Card>
             <CardHeader>
-              <CardTitle>Rolle & Berechtigungen</CardTitle>
+              <CardTitle>Bezirk & Rolle</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <Label required>Rolle</Label>
+                  <Label>Bezirk</Label>
                   <Select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
+                    value={bezirkId ?? ""}
+                    onChange={(e) => setBezirkId(e.target.value || null)}
                   >
-                    {Object.entries(roleLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
+                    <option value="">Kein Bezirk</option>
+                    {bezirke?.map((bezirk) => (
+                      <option key={bezirk.id} value={bezirk.id}>
+                        Bezirk {bezirk.number} – {bezirk.shortName}
                       </option>
                     ))}
                   </Select>
-                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Die Rolle bestimmt die grundlegenden Berechtigungen des
-                    Benutzers.
-                  </p>
                 </div>
 
                 <div>
-                  <Label>Angezeigte Rolle</Label>
+                  <Label>
+                    Bezirksrolle (z.B. Bezirksobmann, Bezirksobfrau)
+                  </Label>
                   <Input
                     type="text"
-                    value={displayRole}
-                    onChange={(e) => setDisplayRole(e.target.value)}
-                    placeholder="z.B. Webmaster, Geschäftsführer"
+                    value={districtRoleName}
+                    onChange={(e) => setDistrictRoleName(e.target.value)}
+                    placeholder="z.B. Bezirksobmann, Bezirksobfrau"
                     maxLength={100}
                   />
                   <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Diese Rolle wird öffentlich angezeigt und hat keine
-                    Auswirkung auf Berechtigungen.
+                    Diese Rolle wird angezeigt, wenn der Benutzer einem Bezirk
+                    zugeordnet ist. Berechtigungen werden über das
+                    Berechtigungssystem verwaltet.
                   </p>
                 </div>
-
-                {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
-                  <div>
-                    <Label>Bezirk</Label>
-                    <Select
-                      value={bezirkId ?? ""}
-                      onChange={(e) => setBezirkId(e.target.value || null)}
-                    >
-                      <option value="">Kein Bezirk</option>
-                      {bezirke?.map((bezirk) => (
-                        <option key={bezirk.id} value={bezirk.id}>
-                          Bezirk {bezirk.number} – {bezirk.shortName}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-                )}
-
-                {(role === UserRole.OBLEUTE || role === UserRole.ADMIN) && (
-                  <div>
-                    <Label>Obleute-Funktion</Label>
-                    <Input
-                      type="text"
-                      value={obleuteRole}
-                      onChange={(e) => setObleuteRole(e.target.value)}
-                      placeholder="z.B. Bezirksobmann, Bezirksobfrau"
-                      maxLength={100}
-                    />
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>

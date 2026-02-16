@@ -25,13 +25,12 @@ model User {
   profileImageId String?
   profileImage   Media?  @relation("UserProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
 
-  // Role & Permissions
-  role        UserRole @default(USER)
-  roleType    String?
-  displayRole String?
-  obleuteRole String? // Legacy: "Bezirksobmann" or "Bezirksobfrau" for OBLEUTE users
+  // District Role (for users assigned to a district)
+  // If bezirkId is set, this field can contain the role name (e.g., "Bezirksobmann", "Bezirksobfrau")
+  districtRoleName String?
 
-  // Bezirk association (works for all roles - OBLEUTE, RPW, LPW, ADMIN can all have a Bezirk)
+  // Bezirk association
+  // Users can be assigned to a district with a specific role name
   bezirkId String?
 
   // Bio & Preferences
@@ -76,7 +75,7 @@ model User {
   customRoles     UserRoleAssignment[]
   userPermissions UserPermission[]
 
-  @@index([role])
+  @@index([bezirkId])
   @@map("user")
 }
 
@@ -257,14 +256,6 @@ model TwoFactor {
 }
 
 // --------- Enums ---------
-
-enum UserRole {
-  USER // Regular user
-  OBLEUTE // Can create events/posts (needs approval)
-  RPW // Regional Posaunenwart - can approve for their Bezirk
-  LPW // Landesposaunenwart - can approve everything
-  ADMIN // Full admin access
-}
 
 enum EventEnsembleType {
   AUSWAHLCHOR

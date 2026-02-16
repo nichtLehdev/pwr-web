@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import ExportImportSection from "@/app/_components/dashboard/export-import-section";
 import {
   Calendar,
@@ -32,13 +31,6 @@ import {
   Shield,
 } from "lucide-react";
 
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
-
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
@@ -57,6 +49,15 @@ export default function DashboardPage() {
     },
   );
 
+  // Check if user has any dashboard permissions
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -65,13 +66,16 @@ export default function DashboardPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   if (isPending || profileLoading) {
     return (
@@ -81,7 +85,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 
@@ -137,8 +141,8 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Organization - Admin/LPW only */}
-        {(profile.role === UserRole.ADMIN || profile.role === UserRole.LPW) && (
+        {/* Organization - Users with manage permissions */}
+        {canManagePermissions && (
           <section className="mb-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Organisation
@@ -172,8 +176,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* People - Admin only */}
-        {profile.role === UserRole.ADMIN && (
+        {/* People - Users with manage permissions */}
+        {canManagePermissions && (
           <section className="mb-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Personen & Gremien
@@ -219,8 +223,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* Media & Resources - Admin/LPW only */}
-        {(profile.role === UserRole.ADMIN || profile.role === UserRole.LPW) && (
+        {/* Media & Resources - Users with manage permissions */}
+        {canManagePermissions && (
           <section className="mb-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Medien & Ressourcen
@@ -250,8 +254,7 @@ export default function DashboardPage() {
                 icon={<BookOpenIcon />}
                 href="/dashboard/blaeserhefte"
               />
-              {(profile.role === UserRole.ADMIN ||
-                profile.role === UserRole.LPW) && (
+              {canManagePermissions && (
                 <DashboardCard
                   title="Newsletter"
                   description="Abonnenten verwalten"
@@ -263,10 +266,8 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* Export & Import - Admin only */}
-        {profile.role === UserRole.ADMIN && (
-          <ExportImportSection userRole={profile.role} />
-        )}
+        {/* Export & Import - Users with manage permissions */}
+        {canManagePermissions && <ExportImportSection />}
 
         {/* Stats - only for hardcoded allowlist */}
         {canViewStats && (

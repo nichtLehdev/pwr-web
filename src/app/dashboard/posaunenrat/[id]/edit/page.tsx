@@ -7,11 +7,9 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole, PosaunenratRole } from "~/generated/prisma/enums";
+import { PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { XIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
   { value: PosaunenratRole.VORSTAND, label: "Vorstand" },
@@ -37,6 +35,11 @@ export default function EditPosaunenratPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: member, isLoading: memberLoading } =
     api.organization.getPosaunenratMember.useQuery(
@@ -126,13 +129,16 @@ export default function EditPosaunenratPage() {
   }, [session, sessionLoading, router, memberId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +164,7 @@ export default function EditPosaunenratPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 

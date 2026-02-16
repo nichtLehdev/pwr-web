@@ -7,11 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
-import {
-  PostCategory,
-  ContentStatus,
-  UserRole,
-} from "~/generated/prisma/enums";
+import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
@@ -39,7 +35,7 @@ const categoryLabels: Record<PostCategory, string> = {
   ANDERE: "Andere",
 };
 
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
+// Dashboard access is now controlled by permissions
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -50,8 +46,15 @@ export default function NewPostPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const userRole = profile?.role ?? UserRole.USER;
-  const isHigherRole = HIGHER_ROLES.includes(userRole);
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "posts.approve");
+  const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
   const [title, setTitle] = useState("");
@@ -182,13 +185,9 @@ export default function NewPostPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      const allowedRoles: UserRole[] = [
-        UserRole.ADMIN,
-        UserRole.LPW,
-        UserRole.RPW,
-        UserRole.OBLEUTE,
-      ];
-      const canCreatePosts = allowedRoles.includes(profile.role);
+      const hasDashboardAccess =
+        Array.isArray(userPermissions) && userPermissions.length > 0;
+      const canCreatePosts = hasDashboardAccess;
 
       if (!canCreatePosts) {
         hasRedirected.current = true;
@@ -612,8 +611,8 @@ export default function NewPostPage() {
             </div>
           </section>
 
-          {/* Options for admins */}
-          {(userRole === UserRole.ADMIN || userRole === UserRole.LPW) && (
+          {/* Options for users with approve permission */}
+          {hasApprovePermission && (
             <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Admin-Optionen

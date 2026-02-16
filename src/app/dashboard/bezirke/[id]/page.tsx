@@ -6,10 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { MusicIcon, PencilIcon, ArrowLeftIcon, UserIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function BezirkDetailPage() {
   const router = useRouter();
@@ -22,6 +19,11 @@ export default function BezirkDetailPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageBezirke } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const { data: bezirk, isLoading: bezirkLoading } =
     api.bezirke.getById.useQuery(
@@ -42,13 +44,16 @@ export default function BezirkDetailPage() {
   }, [session, sessionLoading, router, bezirkId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageBezirke &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageBezirke]);
 
   if (sessionLoading || profileLoading || bezirkLoading) {
     return (
@@ -58,7 +63,7 @@ export default function BezirkDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageBezirke) {
     return null;
   }
 
@@ -207,9 +212,9 @@ export default function BezirkDetailPage() {
                     <p className="dark:text-dark-text font-medium text-gray-900">
                       {user.displayName}
                     </p>
-                    {user.obleuteRole && (
+                    {user.districtRoleName && (
                       <p className="dark:text-dark-muted text-sm text-gray-500">
-                        {user.obleuteRole}
+                        {user.districtRoleName}
                       </p>
                     )}
                     <p className="dark:text-dark-muted text-sm text-gray-500">

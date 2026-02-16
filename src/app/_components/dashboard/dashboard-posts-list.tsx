@@ -27,9 +27,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-interface DashboardPostsListProps {
-  userRole: string;
-}
+interface DashboardPostsListProps {}
 
 const statusFilters: { value: ContentStatus | "all"; label: string }[] = [
   { value: "all", label: "Alle" },
@@ -59,10 +57,13 @@ const sortOptions: {
   { value: "status", label: "Status" },
 ];
 
-export default function DashboardPostsList({
-  userRole,
-}: DashboardPostsListProps) {
+export default function DashboardPostsList({}: DashboardPostsListProps) {
   const router = useRouter();
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery();
+
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "posts.approve");
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
@@ -145,11 +146,10 @@ export default function DashboardPostsList({
   });
 
   const availableFilters = statusFilters.filter((filter) => {
-    if (userRole === "ADMIN" || userRole === "LPW") return true;
+    if (hasApprovePermission) return true;
 
-    if (userRole === "RPW") {
-      return filter.value !== "DRAFT";
-    }
+    // Non-reviewers can't see drafts
+    return filter.value !== "DRAFT";
 
     return true;
   });

@@ -9,9 +9,10 @@ import {
 import {
   PaymentStatus,
   RegistrationStatus,
-  UserRole,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   sendCourseRegistrationConfirmedEmail,
   sendCourseRegistrationWaitlistEmail,
@@ -823,9 +824,11 @@ export const registrationsRouter = createTRPCRouter({
         (i) => i.id === ctx.session.user.id,
       );
       const isCreator = registration.course.createdById === ctx.session.user.id;
-      const isAdmin =
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      const isAdmin = canManageRegistrations;
 
       if (!isInstructor && !isCreator && !isAdmin) {
         throw new TRPCError({
@@ -909,9 +912,11 @@ export const registrationsRouter = createTRPCRouter({
         (i) => i.id === ctx.session.user.id,
       );
       const isCreator = registration.course.createdById === ctx.session.user.id;
-      const isAdmin =
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      const isAdmin = canManageRegistrations;
 
       if (!isInstructor && !isCreator && !isAdmin) {
         throw new TRPCError({
@@ -962,10 +967,13 @@ export const registrationsRouter = createTRPCRouter({
             message: "Registration not found",
           });
         }
+        const canManageRegistrations = await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        );
         if (
           registration.registrantEmail !== ctx.session.user.email &&
-          ctx.session.user.role !== UserRole.ADMIN &&
-          ctx.session.user.role !== UserRole.LPW
+          !canManageRegistrations
         ) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -1074,9 +1082,11 @@ export const registrationsRouter = createTRPCRouter({
         (i) => i.id === ctx.session.user.id,
       );
       const isCreator = course.createdById === ctx.session.user.id;
-      const isAdmin =
-        ctx.session.user.role === UserRole.ADMIN ||
-        ctx.session.user.role === UserRole.LPW;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      const isAdmin = canManageRegistrations;
 
       if (!isInstructor && !isCreator && !isAdmin) {
         throw new TRPCError({

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   Plus,
   Search,
@@ -18,8 +17,6 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 export default function DashboardLocationsPage() {
   const router = useRouter();
@@ -36,6 +33,11 @@ export default function DashboardLocationsPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageLocations } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: locationsData,
@@ -67,13 +69,16 @@ export default function DashboardLocationsPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageLocations &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageLocations]);
 
   const handleDelete = async (id: string, name: string) => {
     if (
@@ -95,7 +100,7 @@ export default function DashboardLocationsPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageLocations) {
     return null;
   }
 

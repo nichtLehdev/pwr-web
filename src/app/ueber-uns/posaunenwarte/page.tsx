@@ -93,7 +93,7 @@ export default async function PosaunenwartePage() {
                       <span
                         className={`bg-primary inline-block rounded-full px-4 py-2 text-sm font-semibold text-white`}
                       >
-                        {pw.displayRole || "Landesposaunenwart"}
+                        {pw.districtRoleName || "Landesposaunenwart"}
                       </span>
                     </div>
 
@@ -170,7 +170,7 @@ export default async function PosaunenwartePage() {
                       <span
                         className={`inline-block rounded-full px-3 py-1 text-xs font-semibold text-white ${pw.color}`}
                       >
-                        {pw.displayRole || "Regionalposaunenwart"}
+                        {pw.districtRoleName || "Regionalposaunenwart"}
                       </span>
                     </div>
 
@@ -184,17 +184,26 @@ export default async function PosaunenwartePage() {
                         Betreute Bezirke:
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {pw.bezirke.map((bezirk, idx) => (
-                          <span
-                            key={idx}
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${pw.color}/20`}
-                            style={{
-                              color: pw.color.replace("bg-", "var(--color-"),
-                            }}
-                          >
-                            {`Bezirk ${bezirk.number} (${bezirk.shortName})`}
-                          </span>
-                        ))}
+                        {pw.bezirke.map(
+                          (
+                            bezirk: {
+                              id: string;
+                              number: number;
+                              name: string | null;
+                            },
+                            idx: number,
+                          ) => (
+                            <span
+                              key={idx}
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${pw.color}/20`}
+                              style={{
+                                color: pw.color.replace("bg-", "var(--color-"),
+                              }}
+                            >
+                              {`Bezirk ${bezirk.number}${bezirk.name ? ` (${bezirk.name})` : ""}`}
+                            </span>
+                          ),
+                        )}
                       </div>
                     </div>
 

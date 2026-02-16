@@ -8,11 +8,8 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import { EditIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { UsersIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
 
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {
   VORSTAND: "Vorstand",
@@ -34,6 +31,11 @@ export default function DashboardPosaunenratPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: members,
@@ -61,13 +63,16 @@ export default function DashboardPosaunenratPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageOrganization &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageOrganization]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Posaunenratsmitglied wirklich löschen?")) {
@@ -85,7 +90,7 @@ export default function DashboardPosaunenratPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageOrganization) {
     return null;
   }
 

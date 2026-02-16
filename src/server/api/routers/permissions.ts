@@ -645,7 +645,17 @@ export const permissionsRouter = createTRPCRouter({
     }),
 
   /**
-   * Get user's roles and permissions
+   * Get current user's own permissions (for UI checks)
+   */
+  getMyPermissions: protectedProcedure.query(async ({ ctx }) => {
+    const { getUserPermissions: getUserPermissionsHelper } =
+      await import("../helpers/permissions");
+    const permissionKeys = await getUserPermissionsHelper(ctx.session.user.id);
+    return permissionKeys;
+  }),
+
+  /**
+   * Get user's roles and permissions (requires permission management access)
    */
   getUserPermissions: protectedProcedure
     .input(z.object({ userId: z.string() }))
@@ -667,38 +677,25 @@ export const permissionsRouter = createTRPCRouter({
         });
       }
 
-      const targetUser = await ctx.db.user.findUnique({
-        where: { id: input.userId },
+      // Return user's roles and permissions
+      const userRoleAssignments = await ctx.db.userRoleAssignment.findMany({
+        where: { userId: input.userId },
         include: {
-          customRoles: {
-            include: {
-              role: {
-                include: {
-                  permissions: {
-                    include: {
-                      permission: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-          userPermissions: {
-            include: {
-              permission: true,
-            },
-          },
+          role: true,
         },
       });
 
-      if (!targetUser) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
+      const userPermissions = await ctx.db.userPermission.findMany({
+        where: { userId: input.userId },
+        include: {
+          permission: true,
+        },
+      });
 
-      return targetUser;
+      return {
+        customRoles: userRoleAssignments,
+        userPermissions: userPermissions,
+      };
     }),
 
   // ========== USER PERMISSIONS (DIRECT) ==========
@@ -794,7 +791,7 @@ export const permissionsRouter = createTRPCRouter({
         displayName: true,
         email: true,
         username: true,
-        role: true,
+        districtRoleName: true,
       },
       orderBy: [{ displayName: "asc" }, { email: "asc" }],
     });

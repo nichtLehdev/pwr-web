@@ -12,7 +12,6 @@ import {
   EventCategory,
   EventEnsembleType,
   ContentStatus,
-  UserRole,
 } from "~/generated/prisma/enums";
 import { Trash2, AlertTriangle, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -41,14 +40,7 @@ const statusLabels: Record<ContentStatus, string> = {
   ARCHIVED: "Archiviert",
 };
 
-const HIGHER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 interface PriceOption {
   id: string;
@@ -69,13 +61,22 @@ export default function EditEventPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "events.approve");
+  const isHigherRole = hasApprovePermission;
+
   const { data: event, isLoading: eventLoading } = api.events.getById.useQuery(
     { id: eventId },
     { enabled: !!eventId && !!session?.user },
   );
-
-  const userRole = profile?.role ?? UserRole.USER;
-  const isHigherRole = HIGHER_ROLES.includes(userRole);
 
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
@@ -454,20 +455,26 @@ export default function EditEventPage() {
   }, [session, sessionLoading, router, eventId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   useEffect(() => {
     if (event && profile && !hasRedirected.current) {
+      const hasEditPermission =
+        Array.isArray(userPermissions) &&
+        userPermissions.some(
+          (perm: string) => perm === "events.edit" || perm === "events.approve",
+        );
       const canEdit =
-        event.createdById === session?.user?.id ||
-        profile.role === UserRole.ADMIN ||
-        profile.role === UserRole.LPW;
+        event.createdById === session?.user?.id || hasEditPermission;
 
       if (!canEdit) {
         hasRedirected.current = true;

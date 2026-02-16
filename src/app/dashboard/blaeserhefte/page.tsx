@@ -8,7 +8,6 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   EyeIcon,
   FileIcon,
@@ -16,8 +15,6 @@ import {
   PlusIcon,
   TrashIcon,
 } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function DashboardBlaeserheftePage() {
   const router = useRouter();
@@ -30,6 +27,11 @@ export default function DashboardBlaeserheftePage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageMaterials } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const {
     data: hefte,
@@ -57,13 +59,16 @@ export default function DashboardBlaeserheftePage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageMaterials &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageMaterials]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Bläserheft wirklich löschen?")) {
@@ -81,7 +86,7 @@ export default function DashboardBlaeserheftePage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageMaterials) {
     return null;
   }
 

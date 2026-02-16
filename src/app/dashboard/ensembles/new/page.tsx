@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
@@ -23,13 +22,6 @@ import {
   CardContent,
 } from "@/app/_components/ui";
 
-const ALLOWED_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
-
 export default function NewEnsemblePage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
@@ -40,6 +32,14 @@ export default function NewEnsemblePage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -169,13 +169,16 @@ export default function NewEnsemblePage() {
   }, [session, sessionLoading, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -302,7 +305,7 @@ export default function NewEnsemblePage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 

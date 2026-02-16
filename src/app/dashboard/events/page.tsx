@@ -7,15 +7,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
 import SocialMediaExportModal from "../../_components/social-media/social-media-export-modal";
-import { UserRole } from "~/generated/prisma/enums";
 import { InstagramIcon, Plus } from "lucide-react";
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
 
 export default function DashboardEventsPage() {
   const { data: session, isPending } = useSession();
@@ -27,6 +19,14 @@ export default function DashboardEventsPage() {
       enabled: !!session?.user,
     });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -35,13 +35,16 @@ export default function DashboardEventsPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   if (isPending || profileLoading) {
     return (
@@ -51,11 +54,11 @@ export default function DashboardEventsPage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 
-  const userRole = profile.role;
+  // User permissions are checked via hasDashboardAccess
 
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
@@ -105,7 +108,7 @@ export default function DashboardEventsPage() {
         </div>
 
         {/* Events List */}
-        <DashboardEventsList userRole={userRole} />
+        <DashboardEventsList />
 
         {/* Social Media Export Modal */}
         <SocialMediaExportModal

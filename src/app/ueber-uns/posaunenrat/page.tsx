@@ -138,7 +138,7 @@ export default async function PosaunenratPage() {
                       key={index}
                       image={member.profileImage ?? undefined}
                       name={member.displayName}
-                      subtitle={`${member.obleuteRole} für Bezirk ${member.districtNumber} (${member.districtName})`}
+                      subtitle={`${member.districtRoleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
                     />
                   ))}
                 </div>

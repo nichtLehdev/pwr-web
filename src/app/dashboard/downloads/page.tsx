@@ -7,7 +7,6 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import {
-  UserRole,
   ContentStatus,
   DownloadCategory,
   FileType,
@@ -21,14 +20,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
-
-const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
+// Dashboard access is now controlled by permissions
 
 const statusLabels: Record<ContentStatus, string> = {
   DRAFT: "Entwurf",
@@ -121,6 +113,23 @@ export default function DashboardDownloadsPage() {
       enabled: !!session?.user,
     });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "downloads.approve");
+  const hasDeletePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) =>
+        perm === "downloads.delete" || perm === "downloads.manage",
+    );
+
   const utils = api.useUtils();
 
   const { data, isLoading } = api.materials.getDownloads.useQuery(
@@ -190,13 +199,16 @@ export default function DashboardDownloadsPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   const resetUploadForm = () => {
     setNewTitle("");
@@ -356,13 +368,12 @@ export default function DashboardDownloadsPage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 
-  const isReviewer = REVIEWER_ROLES.includes(profile.role);
-  const canDelete =
-    profile.role === UserRole.ADMIN || profile.role === UserRole.LPW;
+  const isReviewer = hasApprovePermission;
+  const canDelete = hasDeletePermission;
 
   const filteredDownloads = statusFilter
     ? data?.downloads.filter((d) => d.status === statusFilter)

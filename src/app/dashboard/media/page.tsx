@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole, ContentStatus } from "~/generated/prisma/enums";
+import { ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
 import { EditIcon, XIcon } from "lucide-react";
@@ -20,14 +20,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
-
-const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
+// Dashboard access is now controlled by permissions
 
 const statusLabels: Record<ContentStatus, string> = {
   DRAFT: "Entwurf",
@@ -116,6 +109,22 @@ export default function DashboardMediaPage() {
       enabled: !!session?.user,
     });
 
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "media.approve");
+  const hasDeletePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "media.delete" || perm === "media.manage",
+    );
+
   const utils = api.useUtils();
 
   const { data, isLoading } = api.media.getAll.useQuery(
@@ -183,13 +192,16 @@ export default function DashboardMediaPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        redirect("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      redirect("/");
     }
-  }, [profile, profileLoading]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   const resetUploadForm = () => {
     setNewName("");
@@ -312,17 +324,16 @@ export default function DashboardMediaPage() {
     );
   }
 
-  if (!session || !profile || !DASHBOARD_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
-
-  const isReviewer = REVIEWER_ROLES.includes(profile.role);
-  const canDelete =
-    profile.role === UserRole.ADMIN || profile.role === UserRole.LPW;
 
   const filteredMedia = statusFilter
     ? data?.media.filter((m) => m.status === statusFilter)
     : data?.media;
+
+  const isReviewer = hasApprovePermission;
+  const canDelete = hasDeletePermission;
 
   const previewItem = showPreviewModal
     ? data?.media.find((m) => m.id === showPreviewModal)

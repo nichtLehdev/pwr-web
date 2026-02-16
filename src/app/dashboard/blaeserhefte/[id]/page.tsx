@@ -6,7 +6,6 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
   BookIcon,
@@ -14,8 +13,6 @@ import {
   PencilIcon,
   XIcon,
 } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
 export default function DashboardBlaeserheftDetailPage() {
   const router = useRouter();
@@ -29,6 +26,11 @@ export default function DashboardBlaeserheftDetailPage() {
       enabled: !!session?.user,
     });
 
+  const { data: canManageMaterials } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
+
   const { data: heft, isLoading: heftLoading } =
     api.materials.getBlaserheftById.useQuery({ id }, { enabled: !!id });
 
@@ -40,13 +42,16 @@ export default function DashboardBlaeserheftDetailPage() {
   }, [isPending, session, router, id]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageMaterials &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageMaterials]);
 
   if (isPending || profileLoading || heftLoading) {
     return (
@@ -56,7 +61,7 @@ export default function DashboardBlaeserheftDetailPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageMaterials) {
     return null;
   }
 

@@ -10,9 +10,10 @@ import {
 import {
   EventCategory,
   ContentStatus,
-  UserRole,
   EventEnsembleType,
 } from "~/generated/prisma/client";
+import { userHasPermission } from "../helpers/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -111,14 +112,12 @@ export const eventsRouter = createTRPCRouter({
               id: true,
               displayName: true,
               profileImage: true,
-              role: true,
             },
           },
           reviewer: {
             select: {
               id: true,
               displayName: true,
-              role: true,
             },
           },
           priceOptions: true,
@@ -145,12 +144,16 @@ export const eventsRouter = createTRPCRouter({
           });
         }
 
-        const userRole = ctx.session.user.role;
         const canView =
           event.createdById === ctx.session.user.id ||
-          userRole === UserRole.ADMIN ||
-          userRole === UserRole.LPW ||
-          userRole === UserRole.RPW;
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.EVENTS_VIEW,
+          )) ||
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.EVENTS_APPROVE,
+          ));
 
         if (!canView) {
           throw new TRPCError({
@@ -220,16 +223,23 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApproveAll = await userHasPermission(
+        userId,
+        PERMISSIONS.EVENTS_APPROVE,
+      );
+      const canApproveOwn = await userHasPermission(
+        userId,
+        PERMISSIONS.EVENTS_CREATE,
+      );
 
       let where: Record<string, unknown> = {};
 
-      if (userRole === UserRole.ADMIN || userRole === UserRole.LPW) {
+      if (canApproveAll) {
         if (input.status) {
           where.status = input.status;
         }
-      } else if (userRole === UserRole.RPW) {
+      } else if (canApproveOwn) {
         if (input.status) {
           if (input.status === ContentStatus.DRAFT) {
             where = {
@@ -310,8 +320,18 @@ export const eventsRouter = createTRPCRouter({
         pendingReview: true,
       };
 
-      if (ctx.session.user.role === UserRole.RPW && ctx.session.user.bezirkId) {
-        where.bezirkId = ctx.session.user.bezirkId;
+      // Check if user can only approve for their district
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { bezirkId: true },
+      });
+      const canApproveAll = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_APPROVE,
+      );
+      // If user can't approve all but has a district, limit to their district
+      if (!canApproveAll && user?.bezirkId) {
+        where.bezirkId = user.bezirkId;
       }
 
       const [events, total] = await Promise.all([
@@ -466,11 +486,12 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      const userRole = ctx.session.user.role;
+      const canEditCourse = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_EDIT,
+      );
       const canEdit =
-        event.createdById === ctx.session.user.id ||
-        userRole === UserRole.ADMIN ||
-        userRole === UserRole.LPW;
+        event.createdById === ctx.session.user.id || canEditCourse;
 
       if (!canEdit) {
         throw new TRPCError({
@@ -540,11 +561,12 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      const userRole = ctx.session.user.role;
+      const canDeleteEvent = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_DELETE,
+      );
       const canDelete =
-        event.createdById === ctx.session.user.id ||
-        userRole === UserRole.ADMIN ||
-        userRole === UserRole.LPW;
+        event.createdById === ctx.session.user.id || canDeleteEvent;
 
       if (!canDelete) {
         throw new TRPCError({
@@ -591,9 +613,20 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
+      // Check if user can only approve for their district
+      const userForApproval = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        select: { bezirkId: true },
+      });
+      const canApproveAllEvents = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_APPROVE,
+      );
+      // If user can't approve all but has a district, check district match
       if (
-        ctx.session.user.role === UserRole.RPW &&
-        event.bezirkId !== ctx.session.user.bezirkId
+        !canApproveAllEvents &&
+        userForApproval?.bezirkId &&
+        event.bezirkId !== userForApproval.bezirkId
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -658,8 +691,11 @@ export const eventsRouter = createTRPCRouter({
   bulkDelete: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canDeleteAny = await userHasPermission(
+        userId,
+        PERMISSIONS.EVENTS_DELETE,
+      );
 
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
@@ -667,12 +703,7 @@ export const eventsRouter = createTRPCRouter({
       });
 
       const canDeleteIds = events
-        .filter(
-          (event) =>
-            event.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((event) => event.createdById === userId || canDeleteAny)
         .map((e) => e.id);
 
       if (canDeleteIds.length === 0) {
@@ -692,8 +723,11 @@ export const eventsRouter = createTRPCRouter({
   bulkCancel: protectedProcedure
     .input(z.object({ ids: z.array(z.string()).min(1) }))
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canEditAny = await userHasPermission(
+        userId,
+        PERMISSIONS.EVENTS_EDIT,
+      );
 
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
@@ -701,12 +735,7 @@ export const eventsRouter = createTRPCRouter({
       });
 
       const canUpdateIds = events
-        .filter(
-          (event) =>
-            event.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((event) => event.createdById === userId || canEditAny)
         .map((e) => e.id);
 
       if (canUpdateIds.length === 0) {
@@ -866,8 +895,11 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const userRole = ctx.session.user.role;
       const userId = ctx.session.user.id;
+      const canApprove = await userHasPermission(
+        userId,
+        PERMISSIONS.EVENTS_APPROVE,
+      );
 
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
@@ -875,12 +907,7 @@ export const eventsRouter = createTRPCRouter({
       });
 
       const canUpdateIds = events
-        .filter(
-          (event) =>
-            event.createdById === userId ||
-            userRole === UserRole.ADMIN ||
-            userRole === UserRole.LPW,
-        )
+        .filter((event) => event.createdById === userId || canApprove)
         .map((e) => e.id);
 
       if (canUpdateIds.length === 0) {

@@ -11,7 +11,6 @@ import {
   ContentStatus,
   EventCategory,
   EventEnsembleType,
-  UserRole,
 } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
 import {
@@ -52,14 +51,7 @@ const ensembleTypeLabels: Record<EventEnsembleType, string> = {
   CUSTOM: "Benutzerdefiniert",
 };
 
-const REVIEWER_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW, UserRole.RPW];
-
-const DASHBOARD_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
+// Dashboard access is now controlled by permissions
 
 export default function EventDetailPage() {
   const router = useRouter();
@@ -75,6 +67,22 @@ export default function EventDetailPage() {
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasApprovePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "events.approve");
+  const hasEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) => perm === "events.edit" || perm === "events.approve",
+    );
 
   const {
     data: event,
@@ -125,13 +133,16 @@ export default function EventDetailPage() {
   }, [session, sessionLoading, router, eventId]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!DASHBOARD_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   if (sessionLoading || profileLoading || eventLoading) {
     return (
@@ -159,13 +170,10 @@ export default function EventDetailPage() {
     );
   }
 
-  const userRole = profile.role;
-  const isReviewer = REVIEWER_ROLES.includes(userRole);
+  const isReviewer = hasApprovePermission;
   const isOwner = event.createdById === session.user.id;
-  const canEdit =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
-  const canDelete =
-    isOwner || userRole === UserRole.ADMIN || userRole === UserRole.LPW;
+  const canEdit = isOwner || hasEditPermission;
+  const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && event.status === ContentStatus.PENDING;
 
   const eventDate = new Date(event.eventDate);

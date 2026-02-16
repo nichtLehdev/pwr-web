@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { UserRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import {
   Button,
@@ -21,8 +20,6 @@ import {
   AlertDescription,
 } from "@/app/_components/ui";
 
-const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN];
-
 export default function NewLocationPage() {
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
@@ -33,6 +30,11 @@ export default function NewLocationPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: canManageLocations } = api.permissions.canManage.useQuery(
+    undefined,
+    { enabled: !!session?.user },
+  );
 
   const [name, setName] = useState("");
   const [street, setStreet] = useState("");
@@ -67,13 +69,16 @@ export default function NewLocationPage() {
   }, [session, sessionLoading, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !canManageLocations &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, canManageLocations]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +104,7 @@ export default function NewLocationPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !canManageLocations) {
     return null;
   }
 

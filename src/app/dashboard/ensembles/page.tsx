@@ -8,7 +8,6 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { UserRole } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
   EditIcon,
@@ -17,13 +16,6 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { ArrowRightIcon, EyeIcon, TrashIcon } from "lucide-react";
-
-const ALLOWED_ROLES: UserRole[] = [
-  UserRole.ADMIN,
-  UserRole.LPW,
-  UserRole.RPW,
-  UserRole.OBLEUTE,
-];
 
 export default function DashboardEnsemblesPage() {
   const router = useRouter();
@@ -42,6 +34,20 @@ export default function DashboardEnsemblesPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
+    undefined,
+    { enabled: !!session?.user?.id },
+  );
+
+  const hasDashboardAccess =
+    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const hasManagePermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) =>
+        perm === "ensembles.manage" || perm === "ensembles.delete",
+    );
 
   const {
     data: ensemblesData,
@@ -77,13 +83,16 @@ export default function DashboardEnsemblesPage() {
   }, [isPending, session, router]);
 
   useEffect(() => {
-    if (!profileLoading && profile && !hasRedirected.current) {
-      if (!ALLOWED_ROLES.includes(profile.role)) {
-        hasRedirected.current = true;
-        router.push("/dashboard");
-      }
+    if (
+      !profileLoading &&
+      profile &&
+      !hasDashboardAccess &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      router.push("/dashboard");
     }
-  }, [profile, profileLoading, router]);
+  }, [profile, profileLoading, hasDashboardAccess]);
 
   const handleDelete = async (id: string, name: string) => {
     if (
@@ -105,12 +114,12 @@ export default function DashboardEnsemblesPage() {
     );
   }
 
-  if (!session || !profile || !ALLOWED_ROLES.includes(profile.role)) {
+  if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
 
   const ensembles = ensemblesData?.ensembles ?? [];
-  const isAdmin = profile.role === UserRole.ADMIN;
+  const isAdmin = hasManagePermission;
 
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
