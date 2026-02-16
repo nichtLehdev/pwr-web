@@ -48,6 +48,16 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
     ? bezirke.find((b) => b.number === hoveredBezirk)
     : null;
 
+  // Helper function to get main obleute (not stellvertretend)
+  const getMainObleute = (bezirk: Bezirk) => {
+    if (!bezirk.users) return [];
+    return bezirk.users.filter(
+      (user) =>
+        user.districtRoleName &&
+        !user.districtRoleName.toLowerCase().includes("stell")
+    );
+  };
+
   return (
     <div className="flex flex-col items-start gap-6 lg:flex-row">
       {/* SVG Map */}
@@ -278,16 +288,26 @@ export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
               <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
                 {getBezirkInfo(currentBezirk.number)}
               </p>
-              {currentBezirk.users && currentBezirk.users[0] && (
-                <div className="dark:border-dark-border border-t border-gray-300 pt-4">
-                  <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                    {currentBezirk.users[0].districtRoleName}
-                  </p>
-                  <p className="text-dark dark:text-dark-text font-semibold">
-                    {currentBezirk.users[0].displayName}
-                  </p>
-                </div>
-              )}
+              {(() => {
+                const mainObleute = getMainObleute(currentBezirk);
+                return mainObleute.length > 0 ? (
+                  <div className="dark:border-dark-border border-t border-gray-300 pt-4">
+                    {mainObleute.map((obmann, idx) => (
+                      <div
+                        key={idx}
+                        className={idx > 0 ? "mt-3 pt-3 border-t border-gray-200 dark:border-dark-border" : ""}
+                      >
+                        <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                          {obmann.districtRoleName}
+                        </p>
+                        <p className="text-dark dark:text-dark-text font-semibold">
+                          {obmann.displayName}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           ) : (
             <div className="text-center text-gray-400">

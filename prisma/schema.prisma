@@ -339,8 +339,6 @@ enum ContactType {
 
 enum PosaunenratRole {
   VORSTAND
-  BEZIRKSOBMANN
-  BEZIRKSOBFRAU
   LANDESKIRCHENMUSIKDIREKTOR
   SACHVERSTAENDIGER
   SACHVERSTAENDIGE
@@ -929,7 +927,6 @@ model PosaunenratMember {
 
   // Posaunenrat-specific info
   role      PosaunenratRole
-  district  String? // Which district (for Bezirksobleute)
   sortOrder Int             @default(0)
 
   // Optional link to User (some Posaunenrat members have accounts)

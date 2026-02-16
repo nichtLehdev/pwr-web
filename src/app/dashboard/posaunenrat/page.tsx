@@ -13,8 +13,6 @@ import { UsersIcon } from "lucide-react";
 
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {
   VORSTAND: "Vorstand",
-  BEZIRKSOBMANN: "Bezirksobmann",
-  BEZIRKSOBFRAU: "Bezirksobfrau",
   LANDESKIRCHENMUSIKDIREKTOR: "Landeskirchenmusikdirektor",
   SACHVERSTAENDIGER: "Sachverständiger",
   SACHVERSTAENDIGE: "Sachverständige",

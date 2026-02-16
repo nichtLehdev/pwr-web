@@ -91,9 +91,6 @@ export const organizationRouter = createTRPCRouter({
         (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
       ),
       vorstand: members.filter((m) => m.role === "VORSTAND"),
-      bezirksobleute: members.filter(
-        (m) => m.role === "BEZIRKSOBMANN" || m.role === "BEZIRKSOBFRAU",
-      ),
       sachverstaendige: members.filter(
         (m) => m.role === "SACHVERSTAENDIGER" || m.role === "SACHVERSTAENDIGE",
       ),
@@ -138,7 +135,6 @@ export const organizationRouter = createTRPCRouter({
         email: z.string().email().optional(),
         imageId: z.string().optional(),
         role: z.enum(PosaunenratRole),
-        district: z.string().optional(),
         sortOrder: z.number().default(0),
         userId: z.string().optional(),
       }),
@@ -161,7 +157,6 @@ export const organizationRouter = createTRPCRouter({
         email: z.email().optional(),
         imageId: z.string().optional().nullable(),
         role: z.enum(PosaunenratRole).optional(),
-        district: z.string().optional(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
       }),

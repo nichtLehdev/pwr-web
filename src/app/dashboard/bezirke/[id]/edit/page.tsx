@@ -7,7 +7,7 @@ import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
-import { SaveIcon } from "lucide-react";
+import { SaveIcon, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function EditBezirkPage() {
   const router = useRouter();
@@ -36,9 +36,19 @@ export default function EditBezirkPage() {
   const [number, setNumber] = useState(bezirk?.number ?? 1);
   const [name, setName] = useState(bezirk?.name ?? "");
   const [shortName, setShortName] = useState(bezirk?.shortName ?? "");
+  const [obleuteAssignments, setObleuteAssignments] = useState<
+    Array<{ userId: string; roleName: string }>
+  >([]);
+  const [stellObleuteAssignments, setStellObleuteAssignments] = useState<
+    Array<{ userId: string; roleName: string }>
+  >([]);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  const { data: users } = api.bezirke.getUsersForDropdown.useQuery(undefined, {
+    enabled: !!session?.user && !!canManageBezirke,
+  });
 
   useEffect(() => {
     if (bezirk && !initialized) {
@@ -46,6 +56,29 @@ export default function EditBezirkPage() {
       setNumber(bezirk.number);
       setName(bezirk.name);
       setShortName(bezirk.shortName);
+      
+      // Set current users with their custom role names
+      // Distinguish between obleute and stell. obleute based on role name
+      const allDistrictUsers = bezirk.users || [];
+      
+      const obleute: UserAssignment[] = [];
+      const stellObleute: UserAssignment[] = [];
+      
+      allDistrictUsers.forEach((u) => {
+        const roleName = u.districtRoleName || "Obleute";
+        const assignment = { userId: u.id, roleName };
+        
+        // Check if role name contains "stell" (case-insensitive) to categorize
+        if (roleName.toLowerCase().includes("stell")) {
+          stellObleute.push(assignment);
+        } else {
+          obleute.push(assignment);
+        }
+      });
+      
+      setObleuteAssignments(obleute);
+      setStellObleuteAssignments(stellObleute);
+      
       setInitialized(true);
     }
   }, [bezirk, initialized]);
@@ -63,6 +96,16 @@ export default function EditBezirkPage() {
       setError(getErrorMessage(err));
       setIsSubmitting(false);
       toast.error("Fehler beim Aktualisieren: " + err.message);
+    },
+  });
+
+  const assignUsersMutation = api.bezirke.assignUsers.useMutation({
+    onSuccess: async () => {
+      await utils.bezirke.getAll.invalidate();
+      await utils.bezirke.getById.invalidate({ id: bezirkId });
+    },
+    onError: (err) => {
+      toast.error("Fehler beim Zuweisen der Benutzer: " + err.message);
     },
   });
 
@@ -90,12 +133,28 @@ export default function EditBezirkPage() {
     setError("");
     setIsSubmitting(true);
 
-    updateMutation.mutate({
-      id: bezirkId,
-      number,
-      name: name.trim(),
-      shortName: shortName.trim(),
-    });
+    try {
+      // Update district info
+      await updateMutation.mutateAsync({
+        id: bezirkId,
+        number,
+        name: name.trim(),
+        shortName: shortName.trim(),
+      });
+
+      // Assign users
+      await assignUsersMutation.mutateAsync({
+        bezirkId,
+        obleuteAssignments: obleuteAssignments || [],
+        stellObleuteAssignments: stellObleuteAssignments || [],
+      });
+
+      toast.success("Bezirk erfolgreich aktualisiert");
+      router.push(`/dashboard/bezirke/${bezirkId}`);
+    } catch (err) {
+      setIsSubmitting(false);
+      // Error handling is done in mutation callbacks
+    }
   };
 
   if (sessionLoading || profileLoading || bezirkLoading) {
@@ -258,6 +317,34 @@ export default function EditBezirkPage() {
                 </div>
               </div>
             </div>
+
+            {/* Obleute Selection */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Obleute
+              </label>
+              <UserAssignmentSelect
+                users={users}
+                assignments={obleuteAssignments}
+                onAssignmentsChange={setObleuteAssignments}
+                placeholder="Obleute auswählen..."
+                defaultRoleName="Obleute"
+              />
+            </div>
+
+            {/* Stell. Obleute Selection */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Stell. Obleute
+              </label>
+              <UserAssignmentSelect
+                users={users}
+                assignments={stellObleuteAssignments}
+                onAssignmentsChange={setStellObleuteAssignments}
+                placeholder="Stell. Obleute auswählen..."
+                defaultRoleName="Stell. Obleute"
+              />
+            </div>
           </div>
 
           {/* Actions */}
@@ -289,5 +376,208 @@ export default function EditBezirkPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+type UserOption = {
+  id: string;
+  displayName: string | null;
+  email: string;
+  username: string | null;
+};
+
+type UserAssignment = {
+  userId: string;
+  roleName: string;
+};
+
+function UserAssignmentSelect({
+  users,
+  assignments,
+  onAssignmentsChange,
+  placeholder = "Benutzer suchen...",
+  defaultRoleName = "Obleute",
+}: {
+  users?: UserOption[];
+  assignments: UserAssignment[];
+  onAssignmentsChange: (assignments: UserAssignment[]) => void;
+  placeholder?: string;
+  defaultRoleName?: string;
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selectedUserIds = assignments.map((a) => a.userId);
+  const selectedUsers = users?.filter((u) => selectedUserIds.includes(u.id)) || [];
+
+  // Filter users based on search query, excluding already selected ones
+  const filteredUsers =
+    users?.filter((user) => {
+      // Exclude already selected users
+      if (selectedUserIds.includes(user.id)) return false;
+      
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      const displayName = user.displayName?.toLowerCase() || "";
+      const email = user.email.toLowerCase();
+      const username = user.username?.toLowerCase() || "";
+      return (
+        displayName.includes(query) ||
+        email.includes(query) ||
+        username.includes(query)
+      );
+    }) || [];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [isOpen]);
+
+  const handleSelect = (userId: string) => {
+    onAssignmentsChange([
+      ...assignments,
+      { userId, roleName: defaultRoleName },
+    ]);
+    setSearchQuery("");
+    inputRef.current?.focus();
+  };
+
+  const handleRemove = (userId: string) => {
+    onAssignmentsChange(assignments.filter((a) => a.userId !== userId));
+  };
+
+  const handleRoleNameChange = (userId: string, roleName: string) => {
+    onAssignmentsChange(
+      assignments.map((a) =>
+        a.userId === userId ? { ...a, roleName } : a,
+      ),
+    );
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Selected Users with Role Name Inputs */}
+      {selectedUsers.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {selectedUsers.map((user) => {
+            const assignment = assignments.find((a) => a.userId === user.id);
+            return (
+              <div
+                key={user.id}
+                className="dark:border-dark-border dark:bg-dark-surface flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2"
+              >
+                <div className="flex-1">
+                  <div className="dark:text-dark-text text-sm font-medium">
+                    {user.displayName || user.email}
+                  </div>
+                  {user.displayName && (
+                    <div className="text-xs text-gray-500">{user.email}</div>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={assignment?.roleName || defaultRoleName}
+                  onChange={(e) =>
+                    handleRoleNameChange(user.id, e.target.value)
+                  }
+                  placeholder={defaultRoleName}
+                  maxLength={100}
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-40 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRemove(user.id)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 py-2 pr-10 pl-10 focus:ring-1 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-400"
+        >
+          {isOpen ? (
+            <ChevronUp className="h-5 w-5" />
+          ) : (
+            <ChevronDown className="h-5 w-5" />
+          )}
+        </button>
+      </div>
+
+      {/* Dropdown */}
+      {isOpen && (
+        <div className="dark:bg-dark-surface dark:border-dark-border absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          {filteredUsers.length > 0 ? (
+            <div className="py-1">
+              {filteredUsers.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => handleSelect(user.id)}
+                  className="dark:text-dark-text dark:hover:bg-dark-surface w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                >
+                  <div className="font-medium">
+                    {user.displayName || user.email}
+                  </div>
+                  {user.displayName && (
+                    <div className="text-xs text-gray-500">{user.email}</div>
+                  )}
+                  {user.username && (
+                    <div className="text-xs text-gray-400">
+                      @{user.username}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center text-sm text-gray-500">
+              {searchQuery.trim()
+                ? "Keine weiteren Benutzer gefunden"
+                : selectedUsers.length > 0
+                  ? "Tippen Sie, um weitere Benutzer hinzuzufügen..."
+                  : "Tippen Sie, um zu suchen..."}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

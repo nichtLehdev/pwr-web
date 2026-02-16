@@ -12,8 +12,6 @@ import { XIcon } from "lucide-react";
 
 const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
   { value: PosaunenratRole.VORSTAND, label: "Vorstand" },
-  { value: PosaunenratRole.BEZIRKSOBMANN, label: "Bezirksobmann" },
-  { value: PosaunenratRole.BEZIRKSOBFRAU, label: "Bezirksobfrau" },
   {
     value: PosaunenratRole.LANDESKIRCHENMUSIKDIREKTOR,
     label: "Landeskirchenmusikdirektor",
@@ -46,7 +44,6 @@ export default function NewPosaunenratPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<PosaunenratRole>(PosaunenratRole.VORSTAND);
-  const [district, setDistrict] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState("");
@@ -128,7 +125,6 @@ export default function NewPosaunenratPage() {
       name: name.trim() || undefined,
       email: email.trim() || undefined,
       role,
-      district: district.trim() || undefined,
       sortOrder,
       userId: userId || undefined,
     });
@@ -346,19 +342,6 @@ export default function NewPosaunenratPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirk (für Bezirksobleute)
-                </label>
-                <input
-                  type="text"
-                  value={district}
-                  onChange={(e) => setDistrict(e.target.value)}
-                  placeholder="z.B. Bezirk 1 - Düsseldorf"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
               </div>
 
               <div>
