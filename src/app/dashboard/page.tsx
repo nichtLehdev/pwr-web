@@ -29,6 +29,7 @@ import {
   Mail,
   Layout,
   BarChart3,
+  Shield,
 } from "lucide-react";
 
 const DASHBOARD_ROLES: UserRole[] = [
@@ -49,6 +50,10 @@ export default function DashboardPage() {
   const { data: canViewStats } = api.stats.canViewStats.useQuery(undefined, {
     enabled: !!session?.user && !!profile,
   });
+  const { data: canManagePermissions } =
+    api.permissions.canManage.useQuery(undefined, {
+      enabled: !!session?.user && !!profile,
+    });
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -273,6 +278,23 @@ export default function DashboardPage() {
                 description="Anonyme Seitenaufrufe"
                 icon={<BarChart3 className="h-5 w-5" />}
                 href="/dashboard/stats"
+              />
+            </div>
+          </section>
+        )}
+
+        {/* System - only for hardcoded permission managers */}
+        {canManagePermissions && (
+          <section className="mb-10">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              System
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <DashboardCard
+                title="Berechtigungen"
+                description="Rollen & Berechtigungen verwalten"
+                icon={<Shield className="h-5 w-5" />}
+                href="/dashboard/permissions"
               />
             </div>
           </section>
