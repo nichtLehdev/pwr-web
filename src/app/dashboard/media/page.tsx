@@ -12,6 +12,13 @@ import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
 import { EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import { Button, Input, Label } from "@/app/_components/ui";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalHeader,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const DASHBOARD_ROLES: UserRole[] = [
   UserRole.ADMIN,
@@ -595,13 +602,14 @@ export default function DashboardMediaPage() {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
-              Neues Medium
-            </h2>
-
-            <div className="space-y-4">
+        <ScrollableModal>
+          <ScrollableModalCard>
+            <ScrollableModalHeader>
+              <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                Neues Medium
+              </h2>
+            </ScrollableModalHeader>
+            <ScrollableModalBody className="space-y-4">
               {/* File Upload */}
               <div>
                 <Label>Datei</Label>
@@ -671,37 +679,40 @@ export default function DashboardMediaPage() {
               {uploadError && (
                 <p className="text-sm text-red-600">{uploadError}</p>
               )}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                onClick={() => {
-                  resetUploadForm();
-                  setShowUploadModal(false);
-                }}
-                variant="outline"
-                size="sm"
-              >
-                Abbrechen
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={!uploadedFile || !newName || createMutation.isPending}
-                isLoading={createMutation.isPending}
-                size="sm"
-              >
-                Speichern
-              </Button>
-            </div>
-          </div>
-        </div>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <Button
+                  onClick={() => {
+                    resetUploadForm();
+                    setShowUploadModal(false);
+                  }}
+                  variant="outline"
+                  size="sm"
+                >
+                  Abbrechen
+                </Button>
+                <Button
+                  onClick={handleCreate}
+                  disabled={
+                    !uploadedFile || !newName || createMutation.isPending
+                  }
+                  isLoading={createMutation.isPending}
+                  size="sm"
+                >
+                  Speichern
+                </Button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Preview Modal */}
       {showPreviewModal && previewItem && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setShowPreviewModal(null)}
+        <ScrollableModal
+          onBackdropClick={() => setShowPreviewModal(null)}
+          className="bg-black/80"
         >
           <div
             className="relative max-h-[90vh] max-w-[90vw]"
@@ -780,48 +791,53 @@ export default function DashboardMediaPage() {
               <XIcon className="h-5 w-5" />
             </button>
           </div>
-        </div>
+        </ScrollableModal>
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Medium löschen
-            </h3>
-            <p className="dark:text-dark-muted mb-4 text-gray-600">
-              Bist du sicher, dass du dieses Medium löschen möchtest? Diese
-              Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(null)}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "Löschen..." : "Löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Medium löschen
+              </h3>
+              <p className="dark:text-dark-muted mb-4 text-gray-600">
+                Bist du sicher, dass du dieses Medium löschen möchtest? Diese
+                Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(null)}
+                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => deleteMutation.mutate({ id: showDeleteModal })}
+                  disabled={deleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Löschen..." : "Löschen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-lg rounded-lg bg-white p-6 shadow-xl">
-            <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
-              Medium bearbeiten
-            </h2>
-
-            <div className="space-y-4">
+        <ScrollableModal>
+          <ScrollableModalCard>
+            <ScrollableModalHeader>
+              <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                Medium bearbeiten
+              </h2>
+            </ScrollableModalHeader>
+            <ScrollableModalBody className="space-y-4">
               {/* Preview */}
               {(() => {
                 const editItem = data?.media.find(
@@ -960,25 +976,26 @@ export default function DashboardMediaPage() {
               </div>
 
               {editError && <p className="text-sm text-red-600">{editError}</p>}
-            </div>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowEditModal(null)}
-                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleUpdate}
-                disabled={updateMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {updateMutation.isPending ? "Speichern..." : "Speichern"}
-              </button>
-            </div>
-          </div>
-        </div>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowEditModal(null)}
+                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-border rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  disabled={updateMutation.isPending}
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {updateMutation.isPending ? "Speichern..." : "Speichern"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </main>
   );

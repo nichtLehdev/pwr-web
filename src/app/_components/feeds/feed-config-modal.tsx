@@ -3,6 +3,13 @@
 import { useEffect, useState, useMemo } from "react";
 import { X, Rss, Calendar, Copy, Check } from "lucide-react";
 import { api } from "@/trpc/react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalHeader,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface FeedConfigModalProps {
   isOpen: boolean;
@@ -112,37 +119,34 @@ export default function FeedConfigModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-background dark:bg-dark-surface relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-lg shadow-xl"
-        onClick={(e) => e.stopPropagation()}
+    <ScrollableModal zIndex="z-100" onBackdropClick={onClose}>
+      <ScrollableModalCard
+        maxW="2xl"
+        className="bg-background dark:bg-dark-surface overflow-hidden"
       >
-        {/* Header */}
-        <div className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            {feedType === "rss" ? (
-              <Rss className="h-6 w-6 text-orange-500" />
-            ) : (
-              <Calendar className="h-6 w-6 text-blue-500" />
-            )}
-            <h2 className="text-dark dark:text-dark-text text-xl font-bold">
-              {feedType === "rss" ? "RSS Feed" : "iCal Feed"} konfigurieren
-            </h2>
+        <ScrollableModalHeader className="dark:border-dark-border border-b border-gray-200 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {feedType === "rss" ? (
+                <Rss className="h-6 w-6 text-orange-500" />
+              ) : (
+                <Calendar className="h-6 w-6 text-blue-500" />
+              )}
+              <h2 className="text-dark dark:text-dark-text text-xl font-bold">
+                {feedType === "rss" ? "RSS Feed" : "iCal Feed"} konfigurieren
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="dark:hover:bg-dark-background rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-transparent dark:text-gray-400"
+              aria-label="Schließen"
+            >
+              <X className="h-6 w-6" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="dark:hover:bg-dark-background rounded-full p-1 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-transparent dark:text-gray-400"
-            aria-label="Schließen"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+        </ScrollableModalHeader>
 
-        {/* Content */}
-        <div className="max-h-[calc(90vh-180px)] space-y-6 overflow-y-auto p-6">
+        <ScrollableModalBody className="space-y-6">
           {/* iCal Type Selection */}
           {feedType === "ical" && (
             <div>
@@ -285,29 +289,30 @@ export default function FeedConfigModal({
                 : "Diese URL können Sie in Ihren Kalender importieren (Google Calendar, Outlook, Apple Calendar, etc.)."}
             </p>
           </div>
-        </div>
+        </ScrollableModalBody>
 
-        {/* Footer */}
-        <div className="dark:border-dark-border flex items-center justify-end gap-3 border-t border-gray-200 p-4">
-          <button
-            onClick={onClose}
-            className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary dark:bg-dark-background rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
-          >
-            Schließen
-          </button>
-          {feedType === "rss" && (
-            <a
-              href={feedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+        <ScrollableModalFooter>
+          <div className="flex items-center justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary dark:bg-dark-background rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
             >
-              <Rss className="h-4 w-4" />
-              Feed öffnen
-            </a>
-          )}
-        </div>
-      </div>
-    </div>
+              Schließen
+            </button>
+            {feedType === "rss" && (
+              <a
+                href={feedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+              >
+                <Rss className="h-4 w-4" />
+                Feed öffnen
+              </a>
+            )}
+          </div>
+        </ScrollableModalFooter>
+      </ScrollableModalCard>
+    </ScrollableModal>
   );
 }

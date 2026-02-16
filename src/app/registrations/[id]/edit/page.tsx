@@ -15,6 +15,12 @@ import {
   Link as LinkIcon,
   Link2Off,
 } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface Participant {
   id: string;
@@ -1242,44 +1248,48 @@ export default function EditRegistrationPage() {
 
         {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-              <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                Anmeldung stornieren?
-              </h3>
-              <p className="mb-6 text-gray-600 dark:text-gray-400">
-                Bist du sicher, dass du diese Anmeldung stornieren möchtest?
-                Diese Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              {cancelError && (
-                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
-                  <p className="text-sm text-red-800 dark:text-red-300">
-                    {cancelError}
-                  </p>
+          <ScrollableModal>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                  Anmeldung stornieren?
+                </h3>
+                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                  Bist du sicher, dass du diese Anmeldung stornieren möchtest?
+                  Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+                {cancelError && (
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                    <p className="text-sm text-red-800 dark:text-red-300">
+                      {cancelError}
+                    </p>
+                  </div>
+                )}
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setCancelModalOpen(false);
+                      setCancelError("");
+                    }}
+                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    onClick={confirmCancel}
+                    disabled={cancelMutation.isPending}
+                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {cancelMutation.isPending
+                      ? "Wird storniert..."
+                      : "Stornieren"}
+                  </button>
                 </div>
-              )}
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setCancelModalOpen(false);
-                    setCancelError("");
-                  }}
-                  className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-                >
-                  Zurück
-                </button>
-                <button
-                  onClick={confirmCancel}
-                  disabled={cancelMutation.isPending}
-                  className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                >
-                  {cancelMutation.isPending
-                    ? "Wird storniert..."
-                    : "Stornieren"}
-                </button>
-              </div>
-            </div>
-          </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
       </div>
     </div>

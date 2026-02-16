@@ -11,6 +11,12 @@ import {
   MapPinIcon,
   X,
 } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -99,13 +105,10 @@ export default function EventDetailModal({
     event.type === "course" ? event.courseType : event.category;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="dark:bg-dark-surface dark:shadow-dark-border max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+    <ScrollableModal onBackdropClick={onClose} className="backdrop-blur-sm">
+      <ScrollableModalCard
+        maxW="2xl"
+        className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-xl shadow-2xl"
       >
         {/* Header with color */}
         <div
@@ -149,8 +152,7 @@ export default function EventDetailModal({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="space-y-6 p-6">
+        <ScrollableModalBody className="space-y-6">
           {/* Cancelled Warning */}
           {event.type === "event" && event.cancelled && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/30">
@@ -314,9 +316,9 @@ export default function EventDetailModal({
               )}
             </>
           )}
-
-          {/* Actions */}
-          <div className="dark:border-dark-border flex gap-3 border-t border-gray-200 pt-4">
+        </ScrollableModalBody>
+        <ScrollableModalFooter>
+          <div className="flex gap-3">
             <Link
               href={`/termine/${event.type}/${event.id}`}
               className="bg-primary hover:bg-primary-dark flex-1 rounded-lg px-6 py-3 text-center font-semibold text-white transition-colors"
@@ -331,8 +333,8 @@ export default function EventDetailModal({
               Schließen
             </button>
           </div>
-        </div>
-      </div>
-    </div>
+        </ScrollableModalFooter>
+      </ScrollableModalCard>
+    </ScrollableModal>
   );
 }

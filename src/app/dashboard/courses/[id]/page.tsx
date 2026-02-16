@@ -16,6 +16,12 @@ import {
   PaymentStatus,
 } from "~/generated/prisma/enums";
 import { ArrowRightIcon, Edit, Trash2, UserIcon } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -977,72 +983,82 @@ export default function CourseDetailPage() {
 
         {/* Reject Modal */}
         {showRejectModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Kurs ablehnen
-              </h2>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                Bitte gib einen Grund für die Ablehnung an. Dieser wird dem
-                Ersteller angezeigt.
-              </p>
-              <textarea
-                value={reviewNotes}
-                onChange={(e) => setReviewNotes(e.target.value)}
-                rows={4}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
-                placeholder="Ablehnungsgrund..."
-              />
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setReviewNotes("");
-                  }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleReject}
-                  disabled={!reviewNotes.trim() || rejectMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                >
-                  {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ScrollableModal>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Kurs ablehnen
+                </h2>
+                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                  Bitte gib einen Grund für die Ablehnung an. Dieser wird dem
+                  Ersteller angezeigt.
+                </p>
+                <textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  rows={4}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                  placeholder="Ablehnungsgrund..."
+                />
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setReviewNotes("");
+                    }}
+                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    disabled={!reviewNotes.trim() || rejectMutation.isPending}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {rejectMutation.isPending
+                      ? "Wird abgelehnt..."
+                      : "Ablehnen"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
 
         {/* Delete Modal */}
         {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Kurs löschen
-              </h2>
-              <p className="mb-4 text-gray-600 dark:text-gray-400">
-                Bist du sicher, dass du diesen Kurs löschen möchtest? Diese
-                Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ScrollableModal>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Kurs löschen
+                </h2>
+                <p className="mb-4 text-gray-600 dark:text-gray-400">
+                  Bist du sicher, dass du diesen Kurs löschen möchtest? Diese
+                  Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
       </div>
     </main>

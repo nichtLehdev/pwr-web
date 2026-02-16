@@ -10,6 +10,13 @@ import { Plus, Edit, Trash2, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalHeader,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const DASHBOARD_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -381,27 +388,28 @@ export default function DashboardHomepagePage() {
 
         {/* Add Modal */}
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
-                  Neues Carousel-Element
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setSelectedMediaId(null);
-                    setSelectedMediaUrl(null);
-                    setCustomTitle("");
-                    setCustomSubtitle("");
-                  }}
-                  className="dark:text-dark-text text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
+          <ScrollableModal>
+            <ScrollableModalCard maxW="2xl">
+              <ScrollableModalHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                    Neues Carousel-Element
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setSelectedMediaId(null);
+                      setSelectedMediaUrl(null);
+                      setCustomTitle("");
+                      setCustomSubtitle("");
+                    }}
+                    className="dark:text-dark-text text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </ScrollableModalHeader>
+              <ScrollableModalBody className="space-y-4">
                 {/* Media Selection */}
                 <div>
                   <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
@@ -473,58 +481,60 @@ export default function DashboardHomepagePage() {
                     Leer lassen für Standard-Untertitel
                   </p>
                 </div>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setSelectedMediaId(null);
-                    setSelectedMediaUrl(null);
-                    setCustomTitle("");
-                    setCustomSubtitle("");
-                  }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleAdd}
-                  disabled={!selectedMediaId || createMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
-                >
-                  {createMutation.isPending
-                    ? "Wird hinzugefügt..."
-                    : "Hinzufügen"}
-                </button>
-              </div>
-            </div>
-          </div>
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setSelectedMediaId(null);
+                      setSelectedMediaUrl(null);
+                      setCustomTitle("");
+                      setCustomSubtitle("");
+                    }}
+                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={handleAdd}
+                    disabled={!selectedMediaId || createMutation.isPending}
+                    className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
+                  >
+                    {createMutation.isPending
+                      ? "Wird hinzugefügt..."
+                      : "Hinzufügen"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
 
         {/* Edit Modal */}
         {showEditModal && editingItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
-                  Carousel-Element bearbeiten
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowEditModal(null);
-                    setSelectedMediaId(null);
-                    setSelectedMediaUrl(null);
-                    setCustomTitle("");
-                    setCustomSubtitle("");
-                  }}
-                  className="dark:text-dark-text text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
+          <ScrollableModal>
+            <ScrollableModalCard maxW="2xl">
+              <ScrollableModalHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                    Carousel-Element bearbeiten
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(null);
+                      setSelectedMediaId(null);
+                      setSelectedMediaUrl(null);
+                      setCustomTitle("");
+                      setCustomSubtitle("");
+                    }}
+                    className="dark:text-dark-text text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </ScrollableModalHeader>
+              <ScrollableModalBody className="space-y-4">
                 {/* Media Selection */}
                 <div>
                   <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
@@ -593,63 +603,68 @@ export default function DashboardHomepagePage() {
                     Leer lassen für Standard-Untertitel
                   </p>
                 </div>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowEditModal(null);
-                    setSelectedMediaId(null);
-                    setSelectedMediaUrl(null);
-                    setCustomTitle("");
-                    setCustomSubtitle("");
-                  }}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleUpdate}
-                  disabled={!selectedMediaId || updateMutation.isPending}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
-                >
-                  {updateMutation.isPending
-                    ? "Wird gespeichert..."
-                    : "Speichern"}
-                </button>
-              </div>
-            </div>
-          </div>
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      setShowEditModal(null);
+                      setSelectedMediaId(null);
+                      setSelectedMediaUrl(null);
+                      setCustomTitle("");
+                      setCustomSubtitle("");
+                    }}
+                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={handleUpdate}
+                    disabled={!selectedMediaId || updateMutation.isPending}
+                    className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-white disabled:opacity-50"
+                  >
+                    {updateMutation.isPending
+                      ? "Wird gespeichert..."
+                      : "Speichern"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
 
         {/* Delete Modal */}
         {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-              <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
-                Element löschen?
-              </h2>
-              <p className="dark:text-dark-muted mb-6 text-gray-600">
-                Möchtest du dieses Carousel-Element wirklich löschen? Diese
-                Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(null)}
-                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={() => handleDelete(showDeleteModal)}
-                  disabled={deleteMutation.isPending}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ScrollableModal>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <h2 className="dark:text-dark-text mb-4 text-xl font-semibold text-gray-900">
+                  Element löschen?
+                </h2>
+                <p className="dark:text-dark-muted mb-6 text-gray-600">
+                  Möchtest du dieses Carousel-Element wirklich löschen? Diese
+                  Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowDeleteModal(null)}
+                    className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    onClick={() => handleDelete(showDeleteModal)}
+                    disabled={deleteMutation.isPending}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
         )}
 
         {/* Media Picker Modal */}

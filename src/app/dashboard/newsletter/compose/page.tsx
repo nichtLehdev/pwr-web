@@ -8,6 +8,12 @@ import Link from "next/link";
 import { UserRole } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const ALLOWED_ROLES: UserRole[] = [UserRole.ADMIN, UserRole.LPW];
 
@@ -362,41 +368,39 @@ export default function DashboardNewsletterComposePage() {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setShowConfirmModal(false)}
-        >
-          <div
-            className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="dark:text-dark-text mb-4 text-lg font-bold">
-              Newsletter senden?
-            </h3>
-            <p className="dark:text-dark-muted mb-2 text-sm text-gray-600">
-              Möchtest du diesen Newsletter wirklich an{" "}
-              <strong>{statistics?.active || 0} Abonnenten</strong> senden?
-            </p>
-            <p className="dark:text-dark-muted mb-4 text-xs text-gray-500">
-              Diese Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={confirmSend}
-                disabled={sendNewsletter.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {sendNewsletter.isPending ? "Wird gesendet..." : "Senden"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal onBackdropClick={() => setShowConfirmModal(false)}>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-bold">
+                Newsletter senden?
+              </h3>
+              <p className="dark:text-dark-muted mb-2 text-sm text-gray-600">
+                Möchtest du diesen Newsletter wirklich an{" "}
+                <strong>{statistics?.active || 0} Abonnenten</strong> senden?
+              </p>
+              <p className="dark:text-dark-muted mb-4 text-xs text-gray-500">
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={confirmSend}
+                  disabled={sendNewsletter.isPending}
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {sendNewsletter.isPending ? "Wird gesendet..." : "Senden"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </main>
   );

@@ -14,6 +14,12 @@ import {
   UserRole,
 } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const categoryLabels: Record<EventCategory, string> = {
   KONZERT: "Konzert",
@@ -700,73 +706,81 @@ export default function EventDetailPage() {
 
       {/* Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Termin ablehnen
-            </h3>
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Bitte gib einen Grund für die Ablehnung an. Der Ersteller wird
-              benachrichtigt.
-            </p>
-            <textarea
-              value={reviewNotes}
-              onChange={(e) => setReviewNotes(e.target.value)}
-              rows={4}
-              placeholder="Begründung für die Ablehnung..."
-              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              required
-            />
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setReviewNotes("");
-                }}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleReject}
-                disabled={!reviewNotes.trim() || rejectMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Termin ablehnen
+              </h3>
+              <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+                Bitte gib einen Grund für die Ablehnung an. Der Ersteller wird
+                benachrichtigt.
+              </p>
+              <textarea
+                value={reviewNotes}
+                onChange={(e) => setReviewNotes(e.target.value)}
+                rows={4}
+                placeholder="Begründung für die Ablehnung..."
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mb-4 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                required
+              />
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setReviewNotes("");
+                  }}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={!reviewNotes.trim() || rejectMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {rejectMutation.isPending ? "Wird abgelehnt..." : "Ablehnen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
 
       {/* Delete Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Termin löschen
-            </h3>
-            <p className="dark:text-dark-muted mb-4 text-gray-600">
-              Bist du sicher, dass du diesen Termin löschen möchtest? Diese
-              Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteMutation.isPending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Termin löschen
+              </h3>
+              <p className="dark:text-dark-muted mb-4 text-gray-600">
+                Bist du sicher, dass du diesen Termin löschen möchtest? Diese
+                Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteMutation.isPending ? "Wird gelöscht..." : "Löschen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </main>
   );
