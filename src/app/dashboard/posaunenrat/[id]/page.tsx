@@ -219,16 +219,6 @@ export default function PosaunenratDetailPage() {
                   )}
                 </dd>
               </div>
-              {member.district && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                    Bezirk
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {member.district}
-                  </dd>
-                </div>
-              )}
               <div>
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                   Verknüpfung
