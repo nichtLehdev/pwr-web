@@ -71,6 +71,11 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 # Copy generated Prisma client
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
+# Copy tsconfig + minimal src needed for post-migration-setup.ts (runs with tsx in container)
+COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
+COPY --from=builder --chown=nextjs:nodejs /app/src/server/db.ts ./src/server/
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/permissions.ts ./src/lib/
+
 # Switch to non-root user
 USER nextjs
 
