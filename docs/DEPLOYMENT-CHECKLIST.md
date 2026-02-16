@@ -6,7 +6,14 @@ Diese Checkliste hilft dir dabei, alle Änderungen sicher auf deinem Server zu d
 
 **Das Permission-System wurde komplett refactored!** Nach der Migration hat **NIEMAND** mehr Rechte, bis das Post-Migration-Setup ausgeführt wurde.
 
-**Du MUSST nach dem Deployment folgendes ausführen:**
+**Du MUSST nach dem Deployment folgendes ausführen** (auf dem Server reichen `.env` + `docker-compose.prod.yml` – der Befehl läuft im Container; das Image enthält tsconfig + nötige `src`-Dateien für Path-Aliase wie `@/`).
+
+**Variante A – mit Profil (empfohlen):** E-Mail in `.env` setzen (`ADMIN_EMAIL=deine-email@example.com`), dann:
+```bash
+docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
+```
+
+**Variante B – E-Mail als Argument:** (kein Repo auf dem Server nötig, läuft im App-Image):
 ```bash
 docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
 ```
@@ -27,7 +34,7 @@ Dieses Skript:
 - [ ] **Code-Review durchführen** (falls im Team)
 
 ### 2. Datenbank-Migrationen prüfen
-- [ ] **Alle Migrationen sind committed**: 
+- [ ] **Alle Migrationen sind committed**:
   ```bash
   git status prisma/migrations/
   ```
@@ -37,7 +44,7 @@ Dieses Skript:
   pnpm prisma migrate reset
   pnpm prisma migrate deploy
   ```
-- [ ] **Prisma Client generieren**: 
+- [ ] **Prisma Client generieren**:
   ```bash
   pnpm prisma generate
   ```
@@ -51,7 +58,7 @@ Dieses Skript:
   - `20260216141710_add_custom_permissions`
   - `20260216151701_remove_userrole_add_district_role`
   - `20260216162645_add_role_hierarchy`
-- [ ] **⚠️ KRITISCH: Post-Migration-Setup erforderlich**: 
+- [ ] **⚠️ KRITISCH: Post-Migration-Setup erforderlich**:
   - Permissions müssen geseedet werden
   - Rollen müssen erstellt werden
   - Admin-User muss Administrator-Rolle zugewiesen bekommen
@@ -159,17 +166,16 @@ docker compose -f docker-compose.prod.yml exec db-backup pg_dump -U postgres pos
 
 ### 2. Post-Migration-Setup ausführen
 **⚠️ KRITISCH: Dieser Schritt ist ESSENTIELL, sonst hast du keinen Zugriff!**
+(Kein Repo auf dem Server nötig – Skript liegt im App-Image.)
 
 - [ ] **Permissions und Rollen erstellen**:
   ```bash
-  # Auf dem Server (via SSH)
+  # E-Mail als Argument (empfohlen)
   docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
   ```
-  
-  Oder mit Environment Variable:
+  Oder mit Profil (wenn ADMIN_EMAIL in .env gesetzt ist):
   ```bash
-  # ADMIN_EMAIL in docker-compose.prod.yml oder .env setzen
-  docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts
+  docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
   ```
 
 - [ ] **Skript erfolgreich ausgeführt**:
@@ -260,7 +266,7 @@ docker compose -f docker-compose.prod.yml up -d
    ```bash
    # Bestimmte Version pullen
    docker pull ghcr.io/nichtlehdev/pwr-web:v1.2.2
-   
+
    # docker-compose.prod.yml anpassen (Image-Tag ändern)
    # Oder direkt:
    docker tag ghcr.io/nichtlehdev/pwr-web:v1.2.2 ghcr.io/nichtlehdev/pwr-web:latest
@@ -281,7 +287,7 @@ docker compose -f docker-compose.prod.yml up -d
 Die Migrationen entfernen das alte `UserRole` Enum und führen ein neues Permission-System ein:
 
 1. **⚠️ KRITISCH**: Nach der Migration hat NIEMAND mehr Rechte!
-2. **Post-Migration-Setup MUSS ausgeführt werden**:
+2. **Post-Migration-Setup MUSS ausgeführt werden** (läuft im Container, kein Repo auf dem Server nötig):
    ```bash
    docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
    ```
@@ -289,16 +295,16 @@ Die Migrationen entfernen das alte `UserRole` Enum und führen ein neues Permiss
    - Erstellt alle System-Permissions
    - Erstellt alle System-Rollen (Administrator, Landesposaunenwart, etc.)
    - Weist deinem User automatisch die Administrator-Rolle zu
-4. **Falls du ausgesperrt bist**: 
+4. **Falls du ausgesperrt bist**:
    - Skript erneut ausführen mit deiner E-Mail
    - Oder manuell über Datenbank:
      ```sql
      -- Finde deine User-ID
      SELECT id, email FROM "User" WHERE email = 'deine-email@example.com';
-     
+
      -- Finde Administrator-Rollen-ID
      SELECT id FROM "Role" WHERE name = 'Administrator';
-     
+
      -- Weise Rolle zu
      INSERT INTO "user_role_assignment" (id, "userId", "roleId", "createdAt")
      VALUES (gen_random_uuid(), 'DEINE_USER_ID', 'ADMIN_ROLE_ID', NOW());
@@ -310,9 +316,9 @@ Die Filterung zeigt nur User mit `districtRoleName` an:
 
 1. **Prüfe Datenbank**: Stelle sicher, dass alle Bezirksobleute ein `districtRoleName` haben:
    ```sql
-   SELECT b.number, b.shortName, u.displayName, u.districtRoleName 
-   FROM "Bezirk" b 
-   LEFT JOIN "User" u ON u."bezirkId" = b.id 
+   SELECT b.number, b.shortName, u.displayName, u.districtRoleName
+   FROM "Bezirk" b
+   LEFT JOIN "User" u ON u."bezirkId" = b.id
    WHERE u."districtRoleName" IS NOT NULL;
    ```
 
