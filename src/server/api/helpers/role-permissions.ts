@@ -26,11 +26,7 @@ export async function getRolePermissionsIncludingInherited(
     const role = await db.role.findUnique({
       where: { id: currentRoleId },
       include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
+        permissions: true,
         parentRole: true,
       },
     });
@@ -44,7 +40,7 @@ export async function getRolePermissionsIncludingInherited(
 
     // Then, add permissions from this role
     role.permissions.forEach((rp) => {
-      permissions.add(rp.permission.key as PermissionKey);
+      permissions.add(rp.permissionKey as PermissionKey);
     });
   }
 
@@ -53,29 +49,17 @@ export async function getRolePermissionsIncludingInherited(
 }
 
 /**
- * Get all permission IDs for a role, including inherited permissions
+ * Get all permission keys for a role, including inherited permissions
+ * (This is now just an alias for getRolePermissionsIncludingInherited)
  *
- * @param roleId - Role ID to get permission IDs for
- * @returns Array of permission IDs
+ * @param roleId - Role ID to get permission keys for
+ * @returns Array of permission keys
  */
-export async function getRolePermissionIdsIncludingInherited(
+export async function getRolePermissionKeysIncludingInherited(
   roleId: string,
 ): Promise<string[]> {
   const permissionKeys = await getRolePermissionsIncludingInherited(roleId);
-
-  // Convert permission keys to IDs
-  const permissions = await db.permission.findMany({
-    where: {
-      key: {
-        in: Array.from(permissionKeys),
-      },
-    },
-    select: {
-      id: true,
-    },
-  });
-
-  return permissions.map((p) => p.id);
+  return Array.from(permissionKeys);
 }
 
 /**

@@ -40,12 +40,12 @@ function canManagePermissions(
   );
 }
 
-type Tab = "permissions" | "roles" | "users";
+type Tab = "roles" | "users";
 
 export default function PermissionsPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
-  const [activeTab, setActiveTab] = useState<Tab>("permissions");
+  const [activeTab, setActiveTab] = useState<Tab>("roles");
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -126,17 +126,6 @@ export default function PermissionsPage() {
         <div className="dark:border-dark-border mb-6 border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             <button
-              onClick={() => setActiveTab("permissions")}
-              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === "permissions"
-                  ? "border-primary text-primary"
-                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-              }`}
-            >
-              <Key className="mr-2 inline h-4 w-4" />
-              Berechtigungen
-            </button>
-            <button
               onClick={() => setActiveTab("roles")}
               className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === "roles"
@@ -162,314 +151,10 @@ export default function PermissionsPage() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === "permissions" && <PermissionsTab />}
         {activeTab === "roles" && <RolesTab />}
         {activeTab === "users" && <UsersTab />}
       </div>
     </main>
-  );
-}
-
-function PermissionsTab() {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    key: "",
-    name: "",
-    description: "",
-    category: "",
-  });
-
-  const utils = api.useUtils();
-  const { data: permissions, isLoading } =
-    api.permissions.getAllPermissions.useQuery();
-
-  const createMutation = api.permissions.createPermission.useMutation({
-    onSuccess: () => {
-      setShowCreateModal(false);
-      setFormData({ key: "", name: "", description: "", category: "" });
-      void utils.permissions.getAllPermissions.invalidate();
-    },
-  });
-
-  const updateMutation = api.permissions.updatePermission.useMutation({
-    onSuccess: () => {
-      setEditingId(null);
-      setFormData({ key: "", name: "", description: "", category: "" });
-      void utils.permissions.getAllPermissions.invalidate();
-    },
-  });
-
-  const deleteMutation = api.permissions.deletePermission.useMutation({
-    onSuccess: () => {
-      void utils.permissions.getAllPermissions.invalidate();
-    },
-  });
-
-  const handleEdit = (permission: NonNullable<typeof permissions>[0]) => {
-    setEditingId(permission.id);
-    setFormData({
-      key: permission.key,
-      name: permission.name,
-      description: permission.description || "",
-      category: permission.category || "",
-    });
-  };
-
-  const handleSave = () => {
-    if (editingId) {
-      updateMutation.mutate({
-        id: editingId,
-        name: formData.name,
-        description: formData.description || null,
-        category: formData.category || null,
-      });
-    } else {
-      createMutation.mutate(formData);
-    }
-  };
-
-  const groupedPermissions = permissions?.reduce(
-    (acc, perm) => {
-      const category = perm.category || "Sonstige";
-      if (!acc[category]) acc[category] = [];
-      acc[category]!.push(perm);
-      return acc;
-    },
-    {} as Record<string, NonNullable<typeof permissions>>,
-  );
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between">
-        <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
-          Berechtigungen
-        </h2>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData({ key: "", name: "", description: "", category: "" });
-            setShowCreateModal(true);
-          }}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Neue Berechtigung
-        </button>
-      </div>
-
-      {/* Permissions List */}
-      {groupedPermissions && Object.keys(groupedPermissions).length > 0 ? (
-        <div className="space-y-6">
-          {Object.entries(groupedPermissions).map(([category, perms]) => (
-            <div key={category} className="space-y-2">
-              <h3 className="dark:text-dark-text text-lg font-medium text-gray-900">
-                {category}
-              </h3>
-              <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
-                <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-                  <thead className="dark:bg-dark-surface bg-gray-50">
-                    <tr>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        Schlüssel
-                      </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        Name
-                      </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        Beschreibung
-                      </th>
-                      <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                        Aktionen
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="dark:bg-dark-surface dark:divide-dark-border divide-y divide-gray-200 bg-white">
-                    {perms.map((perm) => (
-                      <tr key={perm.id}>
-                        <td className="dark:text-dark-text px-6 py-4 font-mono text-sm whitespace-nowrap text-gray-900">
-                          {perm.key}
-                        </td>
-                        <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-900">
-                          {perm.name}
-                        </td>
-                        <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
-                          {perm.description || "-"}
-                        </td>
-                        <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                          {perm.isSystem ? (
-                            <span className="text-gray-400">System</span>
-                          ) : editingId === perm.id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={handleSave}
-                                className="text-green-600 hover:text-green-900"
-                              >
-                                <Save className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setEditingId(null);
-                                  setFormData({
-                                    key: "",
-                                    name: "",
-                                    description: "",
-                                    category: "",
-                                  });
-                                }}
-                                className="text-gray-600 hover:text-gray-900"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => handleEdit(perm)}
-                                className="text-blue-600 hover:text-blue-900"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (
-                                    confirm(
-                                      `Berechtigung "${perm.name}" wirklich löschen?`,
-                                    )
-                                  ) {
-                                    deleteMutation.mutate({ id: perm.id });
-                                  }
-                                }}
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-8 text-center">
-          <Key className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="dark:text-dark-muted mt-4 text-gray-500">
-            Noch keine Berechtigungen vorhanden
-          </p>
-        </div>
-      )}
-
-      {/* Create/Edit Modal */}
-      {(showCreateModal || editingId) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              {editingId ? "Berechtigung bearbeiten" : "Neue Berechtigung"}
-            </h3>
-            <div className="space-y-4">
-              {!editingId && (
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Schlüssel *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.key}
-                    onChange={(e) =>
-                      setFormData({ ...formData, key: e.target.value })
-                    }
-                    placeholder="z.B. events.create"
-                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-              )}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="z.B. Events erstellen"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kategorie
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  placeholder="z.B. events"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingId(null);
-                  setFormData({
-                    key: "",
-                    name: "",
-                    description: "",
-                    category: "",
-                  });
-                }}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={
-                  !formData.key && !editingId
-                    ? !formData.name
-                    : !formData.key || !formData.name
-                }
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                Speichern
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -479,7 +164,7 @@ function RolesTab() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    permissionIds: [] as string[],
+    permissionKeys: [] as string[],
   });
 
   const utils = api.useUtils();
@@ -489,7 +174,7 @@ function RolesTab() {
   const createMutation = api.permissions.createRole.useMutation({
     onSuccess: () => {
       setShowCreateModal(false);
-      setFormData({ name: "", description: "", permissionIds: [] });
+      setFormData({ name: "", description: "", permissionKeys: [] });
       void utils.permissions.getAllRoles.invalidate();
     },
   });
@@ -497,7 +182,7 @@ function RolesTab() {
   const updateMutation = api.permissions.updateRole.useMutation({
     onSuccess: () => {
       setEditingId(null);
-      setFormData({ name: "", description: "", permissionIds: [] });
+      setFormData({ name: "", description: "", permissionKeys: [] });
       void utils.permissions.getAllRoles.invalidate();
     },
   });
@@ -513,7 +198,7 @@ function RolesTab() {
     setFormData({
       name: role.name,
       description: role.description || "",
-      permissionIds: role.permissions.map((rp) => rp.permission.id),
+      permissionKeys: role.permissions.map((rp) => rp.permissionKey),
     });
   };
 
@@ -523,19 +208,19 @@ function RolesTab() {
         id: editingId,
         name: formData.name,
         description: formData.description || null,
-        permissionIds: formData.permissionIds,
+        permissionKeys: formData.permissionKeys,
       });
     } else {
       createMutation.mutate(formData);
     }
   };
 
-  const togglePermission = (permissionId: string) => {
+  const togglePermission = (permissionKey: string) => {
     setFormData({
       ...formData,
-      permissionIds: formData.permissionIds.includes(permissionId)
-        ? formData.permissionIds.filter((id) => id !== permissionId)
-        : [...formData.permissionIds, permissionId],
+      permissionKeys: formData.permissionKeys.includes(permissionKey)
+        ? formData.permissionKeys.filter((key) => key !== permissionKey)
+        : [...formData.permissionKeys, permissionKey],
     });
   };
 
@@ -556,7 +241,7 @@ function RolesTab() {
         <button
           onClick={() => {
             setEditingId(null);
-            setFormData({ name: "", description: "", permissionIds: [] });
+            setFormData({ name: "", description: "", permissionKeys: [] });
             setShowCreateModal(true);
           }}
           className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
@@ -581,9 +266,6 @@ function RolesTab() {
                 <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Berechtigungen
                 </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                  Benutzer
-                </th>
                 <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                   Aktionen
                 </th>
@@ -604,14 +286,34 @@ function RolesTab() {
                     {role.description || "-"}
                   </td>
                   <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
-                    {role.permissions.length}
-                  </td>
-                  <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
-                    {role.users.length}
+                    {role.permissions.length} Berechtigung
+                    {role.permissions.length !== 1 ? "en" : ""}
                   </td>
                   <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
                     {role.isSystem ? (
                       <span className="text-gray-400">System</span>
+                    ) : editingId === role.id ? (
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={handleSave}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          <Save className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                              name: "",
+                              description: "",
+                              permissionKeys: [],
+                            });
+                          }}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
                     ) : (
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -652,7 +354,7 @@ function RolesTab() {
       {/* Create/Edit Modal */}
       {(showCreateModal || editingId) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="dark:bg-dark-surface w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl">
+          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               {editingId ? "Rolle bearbeiten" : "Neue Rolle"}
             </h3>
@@ -667,7 +369,7 @@ function RolesTab() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="z.B. Content Moderator"
+                  placeholder="z.B. Content Manager"
                   className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -693,13 +395,13 @@ function RolesTab() {
                     <div className="space-y-2">
                       {permissions.map((perm) => (
                         <label
-                          key={perm.id}
+                          key={perm.key}
                           className="dark:text-dark-text flex items-center gap-2 text-sm"
                         >
                           <input
                             type="checkbox"
-                            checked={formData.permissionIds.includes(perm.id)}
-                            onChange={() => togglePermission(perm.id)}
+                            checked={formData.permissionKeys.includes(perm.key)}
+                            onChange={() => togglePermission(perm.key)}
                             className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                           />
                           <span className="font-medium">{perm.name}</span>
@@ -723,7 +425,7 @@ function RolesTab() {
                   setFormData({
                     name: "",
                     description: "",
-                    permissionIds: [],
+                    permissionKeys: [],
                   });
                 }}
                 className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -916,9 +618,9 @@ function UserSearchDropdown({
 function UsersTab() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-  const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>(
-    [],
-  );
+  const [selectedPermissionKeys, setSelectedPermissionKeys] = useState<
+    string[]
+  >([]);
 
   const utils = api.useUtils();
   const { data: users } = api.permissions.getAllUsers.useQuery();
@@ -951,12 +653,12 @@ function UsersTab() {
     [userPermissions],
   );
 
-  const derivedPermissionIds = useMemo(
+  const derivedPermissionKeys = useMemo(
     () =>
       userPermissions
         ? userPermissions.userPermissions
             .filter((up) => up.granted)
-            .map((up) => up.permission.id)
+            .map((up) => up.permissionKey)
         : [],
     [userPermissions],
   );
@@ -976,23 +678,23 @@ function UsersTab() {
         return prev;
       });
 
-      setSelectedPermissionIds((prev) => {
-        const newIds = derivedPermissionIds;
+      setSelectedPermissionKeys((prev) => {
+        const newKeys = derivedPermissionKeys;
         if (
-          prev.length !== newIds.length ||
-          !prev.every((id, idx) => id === newIds[idx])
+          prev.length !== newKeys.length ||
+          !prev.every((key, idx) => key === newKeys[idx])
         ) {
-          return newIds;
+          return newKeys;
         }
         return prev;
       });
     }
-  }, [userPermissions, derivedRoleIds, derivedPermissionIds]);
+  }, [userPermissions, derivedRoleIds, derivedPermissionKeys]);
 
   const handleSelectUser = (userId: string | null) => {
     setSelectedUserId(userId);
     setSelectedRoleIds([]);
-    setSelectedPermissionIds([]);
+    setSelectedPermissionKeys([]);
   };
 
   const handleSaveRoles = () => {
@@ -1007,18 +709,19 @@ function UsersTab() {
     if (!selectedUserId) return;
     assignPermissionsMutation.mutate({
       userId: selectedUserId,
-      permissions: selectedPermissionIds.map((pid) => ({
-        permissionId: pid,
+      permissions: selectedPermissionKeys.map((permissionKey) => ({
+        permissionKey,
         granted: true,
       })),
     });
   };
 
-  // Check if Admin role is assigned (either in selectedRoleIds or in userPermissions)
+  // Check if Administrator role is assigned (either in selectedRoleIds or in userPermissions)
   const hasAdminRole =
     roles?.some(
       (role) =>
-        role.name.toLowerCase() === "admin" &&
+        (role.name.toLowerCase() === "administrator" ||
+          role.name.toLowerCase() === "admin") &&
         (selectedRoleIds.includes(role.id) ||
           userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
     ) ?? false;
@@ -1063,7 +766,9 @@ function UsersTab() {
                 {roles && roles.length > 0 ? (
                   <div className="space-y-2">
                     {roles.map((role) => {
-                      const isAdminRole = role.name.toLowerCase() === "admin";
+                      const isAdminRole =
+                        role.name.toLowerCase() === "administrator" ||
+                        role.name.toLowerCase() === "admin";
                       const isDisabled = hasAdminRole && !isAdminRole;
 
                       return (
@@ -1086,11 +791,14 @@ function UsersTab() {
                                 if (isAdminRole) {
                                   // When Admin is selected, clear all other roles and permissions
                                   setSelectedRoleIds([role.id]);
-                                  setSelectedPermissionIds([]);
+                                  setSelectedPermissionKeys([]);
                                 } else {
                                   // When non-Admin role is selected, remove Admin if it exists
                                   const adminRole = roles?.find(
-                                    (r) => r.name.toLowerCase() === "admin",
+                                    (r) =>
+                                      r.name.toLowerCase() ===
+                                        "administrator" ||
+                                      r.name.toLowerCase() === "admin",
                                   );
                                   const newRoleIds = adminRole
                                     ? selectedRoleIds.filter(
@@ -1150,7 +858,7 @@ function UsersTab() {
                   <div className="max-h-64 space-y-2 overflow-y-auto">
                     {permissions.map((perm) => (
                       <label
-                        key={perm.id}
+                        key={perm.key}
                         className={`flex items-center gap-2 text-sm ${
                           hasAdminRole
                             ? "cursor-not-allowed opacity-50"
@@ -1159,19 +867,19 @@ function UsersTab() {
                       >
                         <input
                           type="checkbox"
-                          checked={selectedPermissionIds.includes(perm.id)}
+                          checked={selectedPermissionKeys.includes(perm.key)}
                           disabled={hasAdminRole}
                           onChange={(e) => {
                             if (hasAdminRole) return;
                             if (e.target.checked) {
-                              setSelectedPermissionIds([
-                                ...selectedPermissionIds,
-                                perm.id,
+                              setSelectedPermissionKeys([
+                                ...selectedPermissionKeys,
+                                perm.key,
                               ]);
                             } else {
-                              setSelectedPermissionIds(
-                                selectedPermissionIds.filter(
-                                  (id) => id !== perm.id,
+                              setSelectedPermissionKeys(
+                                selectedPermissionKeys.filter(
+                                  (key) => key !== perm.key,
                                 ),
                               );
                             }
@@ -1251,7 +959,14 @@ function UsersTab() {
                             : "bg-red-50 text-red-700 dark:text-red-400"
                         }`}
                       >
-                        {up.permission.name} ({up.permission.key})
+                        {(() => {
+                          const permDef = permissions?.find(
+                            (p) => p.key === up.permissionKey,
+                          );
+                          return permDef
+                            ? `${permDef.name} (${up.permissionKey})`
+                            : up.permissionKey;
+                        })()}
                         {up.granted ? (
                           <Check className="ml-2 inline h-4 w-4" />
                         ) : (

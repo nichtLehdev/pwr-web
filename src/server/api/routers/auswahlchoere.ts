@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { permissionProcedure } from "../middleware/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const auswahlchoereRouter = createTRPCRouter({
   getById: publicProcedure
@@ -226,7 +228,7 @@ export const auswahlchoereRouter = createTRPCRouter({
       return auswahlChor;
     }),
 
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.AUSWAHLCHOERE_DELETE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.auswahlChor.delete({

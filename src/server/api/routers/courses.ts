@@ -16,6 +16,7 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -1219,43 +1220,45 @@ export const coursesRouter = createTRPCRouter({
       return { success: true, updatedCount: canUpdateIds.length };
     }),
 
-  exportCourses: adminProcedure.query(async ({ ctx }) => {
-    const courses = await ctx.db.course.findMany({
-      include: {
-        location: true,
-        bezirk: true,
-        createdBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportCourses: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const courses = await ctx.db.course.findMany({
+        include: {
+          location: true,
+          bezirk: true,
+          createdBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          reviewer: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-        reviewer: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      });
 
-    return {
-      courses: courses.map((course) => ({
-        ...course,
-        locationName: course.location?.name,
-        bezirkName: course.bezirk?.name,
-        createdByEmail: course.createdBy?.email,
-        reviewerEmail: course.reviewer?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: courses.length,
-    };
-  }),
+      return {
+        courses: courses.map((course) => ({
+          ...course,
+          locationName: course.location?.name,
+          bezirkName: course.bezirk?.name,
+          createdByEmail: course.createdBy?.email,
+          reviewerEmail: course.reviewer?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: courses.length,
+      };
+    },
+  ),
 
-  importCourses: adminProcedure
+  importCourses: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         courses: z.array(

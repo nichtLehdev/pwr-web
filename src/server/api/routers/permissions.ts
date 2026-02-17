@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { PERMISSION_DEFINITIONS } from "@/lib/permissions";
 
 /**
  * Hardcoded list of usernames or emails allowed to manage permissions.
@@ -45,7 +46,7 @@ export const permissionsRouter = createTRPCRouter({
   // ========== PERMISSIONS ==========
 
   /**
-   * Get all permissions
+   * Get all permissions (hardcoded definitions)
    */
   getAllPermissions: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.db.user.findUnique({
@@ -65,16 +66,20 @@ export const permissionsRouter = createTRPCRouter({
       });
     }
 
-    return await ctx.db.permission.findMany({
-      orderBy: [{ category: "asc" }, { name: "asc" }],
+    // Return hardcoded permission definitions
+    return PERMISSION_DEFINITIONS.sort((a, b) => {
+      if (a.category !== b.category) {
+        return (a.category || "").localeCompare(b.category || "");
+      }
+      return a.name.localeCompare(b.name);
     });
   }),
 
   /**
-   * Get permission by ID
+   * Get permission by key
    */
-  getPermissionById: protectedProcedure
-    .input(z.object({ id: z.string() }))
+  getPermissionByKey: protectedProcedure
+    .input(z.object({ key: z.string() }))
     .query(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
         where: { id: ctx.session.user.id },
@@ -93,190 +98,52 @@ export const permissionsRouter = createTRPCRouter({
         });
       }
 
-      const permission = await ctx.db.permission.findUnique({
-        where: { id: input.id },
-        include: {
-          roles: {
-            include: {
-              role: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
+      const permission = PERMISSION_DEFINITIONS.find(
+        (p) => p.key === input.key,
+      );
+
+      if (!permission) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Permission not found",
+        });
+      }
+
+      // Get roles and users that have this permission
+      const roles = await ctx.db.role.findMany({
+        where: {
+          permissions: {
+            some: {
+              permissionKey: input.key,
             },
           },
-          users: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  displayName: true,
-                  email: true,
-                },
-              },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+      const users = await ctx.db.userPermission.findMany({
+        where: {
+          permissionKey: input.key,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
             },
           },
         },
       });
 
-      if (!permission) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Permission not found",
-        });
-      }
-
-      return permission;
-    }),
-
-  /**
-   * Create a new permission
-   */
-  createPermission: protectedProcedure
-    .input(
-      z.object({
-        key: z.string().min(1),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        category: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
-      });
-      if (!user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-      const allowed =
-        canManagePermissions(user.email) ||
-        (user.username ? canManagePermissions(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to manage permissions",
-        });
-      }
-
-      // Check if permission key already exists
-      const existing = await ctx.db.permission.findUnique({
-        where: { key: input.key },
-      });
-      if (existing) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "Permission with this key already exists",
-        });
-      }
-
-      return await ctx.db.permission.create({
-        data: input,
-      });
-    }),
-
-  /**
-   * Update a permission
-   */
-  updatePermission: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        name: z.string().min(1).optional(),
-        description: z.string().optional().nullable(),
-        category: z.string().optional().nullable(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
-      });
-      if (!user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-      const allowed =
-        canManagePermissions(user.email) ||
-        (user.username ? canManagePermissions(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to manage permissions",
-        });
-      }
-
-      const permission = await ctx.db.permission.findUnique({
-        where: { id: input.id },
-      });
-
-      if (!permission) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Permission not found",
-        });
-      }
-
-      if (permission.isSystem) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot modify system permissions",
-        });
-      }
-
-      const { id, ...updateData } = input;
-      return await ctx.db.permission.update({
-        where: { id },
-        data: updateData,
-      });
-    }),
-
-  /**
-   * Delete a permission
-   */
-  deletePermission: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
-      });
-      if (!user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-      const allowed =
-        canManagePermissions(user.email) ||
-        (user.username ? canManagePermissions(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to manage permissions",
-        });
-      }
-
-      const permission = await ctx.db.permission.findUnique({
-        where: { id: input.id },
-      });
-
-      if (!permission) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Permission not found",
-        });
-      }
-
-      if (permission.isSystem) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Cannot delete system permissions",
-        });
-      }
-
-      await ctx.db.permission.delete({
-        where: { id: input.id },
-      });
-
-      return { success: true };
+      return {
+        ...permission,
+        roles: roles.map((r) => ({ role: r })),
+        users: users.map((u) => ({ user: u.user })),
+      };
     }),
 
   // ========== ROLES ==========
@@ -304,11 +171,7 @@ export const permissionsRouter = createTRPCRouter({
 
     return await ctx.db.role.findMany({
       include: {
-        permissions: {
-          include: {
-            permission: true,
-          },
-        },
+        permissions: true,
         parentRole: {
           select: {
             id: true,
@@ -358,11 +221,7 @@ export const permissionsRouter = createTRPCRouter({
       const role = await ctx.db.role.findUnique({
         where: { id: input.id },
         include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
+          permissions: true,
           parentRole: {
             select: {
               id: true,
@@ -403,7 +262,7 @@ export const permissionsRouter = createTRPCRouter({
         name: z.string().min(1),
         description: z.string().optional(),
         parentRoleId: z.string().optional().nullable(),
-        permissionIds: z.array(z.string()).optional(),
+        permissionKeys: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -450,18 +309,18 @@ export const permissionsRouter = createTRPCRouter({
         // Note: We can't check circular reference for a new role, but we validate parent exists
       }
 
-      const { permissionIds, ...roleData } = input;
+      const { permissionKeys, ...roleData } = input;
 
       const role = await ctx.db.role.create({
         data: roleData,
       });
 
       // Add permissions if provided
-      if (permissionIds && permissionIds.length > 0) {
+      if (permissionKeys && permissionKeys.length > 0) {
         await ctx.db.rolePermission.createMany({
-          data: permissionIds.map((permissionId) => ({
+          data: permissionKeys.map((permissionKey) => ({
             roleId: role.id,
-            permissionId,
+            permissionKey,
           })),
           skipDuplicates: true,
         });
@@ -470,11 +329,7 @@ export const permissionsRouter = createTRPCRouter({
       return await ctx.db.role.findUnique({
         where: { id: role.id },
         include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
+          permissions: true,
           parentRole: {
             select: {
               id: true,
@@ -496,7 +351,7 @@ export const permissionsRouter = createTRPCRouter({
         name: z.string().min(1).optional(),
         description: z.string().optional().nullable(),
         parentRoleId: z.string().optional().nullable(),
-        permissionIds: z.array(z.string()).optional(),
+        permissionKeys: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -563,7 +418,7 @@ export const permissionsRouter = createTRPCRouter({
         }
       }
 
-      const { id: roleId, permissionIds, ...updateData } = input;
+      const { id: roleId, permissionKeys, ...updateData } = input;
 
       // Update role fields
       await ctx.db.role.update({
@@ -572,18 +427,18 @@ export const permissionsRouter = createTRPCRouter({
       });
 
       // Update permissions if provided
-      if (permissionIds !== undefined) {
+      if (permissionKeys !== undefined) {
         // Delete all existing permissions
         await ctx.db.rolePermission.deleteMany({
           where: { roleId },
         });
 
         // Add new permissions
-        if (permissionIds.length > 0) {
+        if (permissionKeys.length > 0) {
           await ctx.db.rolePermission.createMany({
-            data: permissionIds.map((permissionId) => ({
+            data: permissionKeys.map((permissionKey) => ({
               roleId,
-              permissionId,
+              permissionKey,
             })),
             skipDuplicates: true,
           });
@@ -593,11 +448,7 @@ export const permissionsRouter = createTRPCRouter({
       return await ctx.db.role.findUnique({
         where: { id: roleId },
         include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
+          permissions: true,
           parentRole: {
             select: {
               id: true,
@@ -760,9 +611,6 @@ export const permissionsRouter = createTRPCRouter({
 
       const userPermissions = await ctx.db.userPermission.findMany({
         where: { userId: input.userId },
-        include: {
-          permission: true,
-        },
       });
 
       return {
@@ -782,7 +630,7 @@ export const permissionsRouter = createTRPCRouter({
         userId: z.string(),
         permissions: z.array(
           z.object({
-            permissionId: z.string(),
+            permissionKey: z.string(),
             granted: z.boolean().default(true),
           }),
         ),
@@ -827,7 +675,7 @@ export const permissionsRouter = createTRPCRouter({
         await ctx.db.userPermission.createMany({
           data: input.permissions.map((p) => ({
             userId: input.userId,
-            permissionId: p.permissionId,
+            permissionKey: p.permissionKey,
             granted: p.granted,
           })),
           skipDuplicates: true,

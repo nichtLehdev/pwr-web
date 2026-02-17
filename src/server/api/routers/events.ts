@@ -14,6 +14,7 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -1025,7 +1026,7 @@ export const eventsRouter = createTRPCRouter({
     };
   }),
 
-  importEvents: adminProcedure
+  importEvents: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         events: z.array(

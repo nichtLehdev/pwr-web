@@ -33,20 +33,12 @@ export async function userHasPermission(
         include: {
           role: {
             include: {
-              permissions: {
-                include: {
-                  permission: true,
-                },
-              },
+              permissions: true,
             },
           },
         },
       },
-      userPermissions: {
-        include: {
-          permission: true,
-        },
-      },
+      userPermissions: true,
     },
   });
 
@@ -54,7 +46,7 @@ export async function userHasPermission(
 
   // 1. Check direct user permissions first (explicit grant/deny)
   const directPermission = user.userPermissions.find(
-    (up) => up.permission.key === permissionKey,
+    (up) => up.permissionKey === permissionKey,
   );
   if (directPermission) {
     return directPermission.granted;
@@ -93,20 +85,12 @@ export async function getUserPermissions(
         include: {
           role: {
             include: {
-              permissions: {
-                include: {
-                  permission: true,
-                },
-              },
+              permissions: true,
             },
           },
         },
       },
-      userPermissions: {
-        include: {
-          permission: true,
-        },
-      },
+      userPermissions: true,
     },
   });
 
@@ -118,7 +102,7 @@ export async function getUserPermissions(
   user.userPermissions
     .filter((up) => up.granted)
     .forEach((up) => {
-      permissions.add(up.permission.key as PermissionKey);
+      permissions.add(up.permissionKey as PermissionKey);
     });
 
   // 2. Add permissions from custom roles (including inherited)
@@ -131,7 +115,7 @@ export async function getUserPermissions(
     rolePermissions.forEach((permissionKey) => {
       // Only add if not explicitly denied
       const denied = user.userPermissions.find(
-        (up) => up.permission.key === permissionKey && !up.granted,
+        (up) => up.permissionKey === permissionKey && !up.granted,
       );
       if (!denied) {
         permissions.add(permissionKey);

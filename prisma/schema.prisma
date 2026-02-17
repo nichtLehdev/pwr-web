@@ -112,48 +112,21 @@ model Role {
 }
 
 /**
- * Permission model for granular permission control
- * Permissions are string-based identifiers like "events.create", "posts.approve", etc.
- */
-model Permission {
-  id          String  @id @default(uuid())
-  key         String  @unique // e.g., "events.create", "posts.approve", "users.manage"
-  name        String // Display name: "Create Events", "Approve Posts"
-  description String? // Detailed description
-  category    String? // Grouping: "events", "posts", "users", "media", etc.
-  isSystem    Boolean @default(false) // System permissions cannot be deleted
-
-  // Roles that have this permission
-  roles RolePermission[]
-
-  // Users that have this permission directly
-  users UserPermission[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([key])
-  @@index([category])
-  @@index([isSystem])
-  @@map("permission")
-}
-
-/**
  * Junction table: Role -> Permission
- * Defines which permissions are assigned to which roles
+ * Defines which permissions (by key) are assigned to which roles
+ * Permissions are hardcoded in the codebase (see src/lib/permissions.ts)
  */
 model RolePermission {
-  id           String     @id @default(uuid())
+  id           String @id @default(uuid())
   roleId       String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionKey String // e.g., "events.create", "posts.approve", "users.manage"
 
   createdAt DateTime @default(now())
 
-  @@unique([roleId, permissionId])
+  @@unique([roleId, permissionKey])
   @@index([roleId])
-  @@index([permissionId])
+  @@index([permissionKey])
   @@map("role_permission")
 }
 
@@ -180,13 +153,13 @@ model UserRoleAssignment {
  * Direct User -> Permission assignment
  * Allows granting specific permissions to individual users, overriding role-based permissions
  * Useful for one-off permissions or user-specific access
+ * Permissions are hardcoded in the codebase (see src/lib/permissions.ts)
  */
 model UserPermission {
-  id           String     @id @default(uuid())
+  id           String @id @default(uuid())
   userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permissionId String
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionKey String // e.g., "events.create", "posts.approve", "users.manage"
 
   // Optional: grant or deny (useful for denying permissions inherited from roles)
   granted Boolean @default(true)
@@ -194,9 +167,9 @@ model UserPermission {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, permissionId])
+  @@unique([userId, permissionKey])
   @@index([userId])
-  @@index([permissionId])
+  @@index([permissionKey])
   @@index([granted])
   @@map("user_permission")
 }

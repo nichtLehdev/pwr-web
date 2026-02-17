@@ -13,6 +13,7 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 import {
   sendCourseRegistrationConfirmedEmail,
   sendCourseRegistrationWaitlistEmail,
@@ -881,7 +882,7 @@ export const registrationsRouter = createTRPCRouter({
       return updatedRegistration;
     }),
 
-  updatePaymentStatus: protectedProcedure
+  updatePaymentStatus: permissionProcedure(PERMISSIONS.INVOICES_MANAGE)
     .input(
       z.object({
         id: z.string(),

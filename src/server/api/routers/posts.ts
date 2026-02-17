@@ -11,6 +11,7 @@ import {
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 marked.use({
   gfm: true,
@@ -1038,51 +1039,53 @@ export const postsRouter = createTRPCRouter({
       return { success: true, updatedCount: canUpdateIds.length };
     }),
 
-  exportPosts: adminProcedure.query(async ({ ctx }) => {
-    const posts = await ctx.db.post.findMany({
-      include: {
-        coverImage: true,
-        bezirk: true,
-        createdBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportPosts: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const posts = await ctx.db.post.findMany({
+        include: {
+          coverImage: true,
+          bezirk: true,
+          createdBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          author: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          reviewer: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-        author: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-        reviewer: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      });
 
-    return {
-      posts: posts.map((post) => ({
-        ...post,
-        coverImageUrl: post.coverImage?.url,
-        bezirkName: post.bezirk?.name,
-        createdByEmail: post.createdBy?.email,
-        authorEmail: post.author?.email,
-        reviewerEmail: post.reviewer?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: posts.length,
-    };
-  }),
+      return {
+        posts: posts.map((post) => ({
+          ...post,
+          coverImageUrl: post.coverImage?.url,
+          bezirkName: post.bezirk?.name,
+          createdByEmail: post.createdBy?.email,
+          authorEmail: post.author?.email,
+          reviewerEmail: post.reviewer?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: posts.length,
+      };
+    },
+  ),
 
-  importPosts: adminProcedure
+  importPosts: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         posts: z.array(
