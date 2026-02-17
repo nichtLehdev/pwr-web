@@ -182,14 +182,22 @@ export async function createInvoicePdf(
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(88, 89, 91);
-      doc.text("Posaunenwerk der Evangelischen Kirche im Rheinland e.V.", margin, y);
+      doc.text(
+        "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
+        margin,
+        y,
+      );
       y += 10;
     }
   } else {
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(88, 89, 91);
-    doc.text("Posaunenwerk der Evangelischen Kirche im Rheinland e.V.", margin, y);
+    doc.text(
+      "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
+      margin,
+      y,
+    );
     y += 10;
   }
 
@@ -432,16 +440,19 @@ export async function createInvoicePdf(
 
   const qrSize = 38;
   const bankBlockY = y - 4;
-  
+
   // Calculate height needed for QR code + text below it
   const qrTextHeight = 8; // Height of "QR mit Banking-App scannen" text
   const qrTextMargin = 2; // Minimal margin between QR code and text (directly underneath)
   const qrTotalHeight = qrSize + qrTextMargin + qrTextHeight;
-  
+
   // Calculate the height of the left text block
   const leftTextLineHeights = [6, 5, 5, 6]; // Heights for each line: Bankverbindung, Bank name, IBAN/BIC, Verwendungszweck
-  const leftTextTotalHeight = leftTextLineHeights.reduce((sum, h) => sum + h, 0);
-  
+  const leftTextTotalHeight = leftTextLineHeights.reduce(
+    (sum, h) => sum + h,
+    0,
+  );
+
   // Bank block height needs to accommodate the taller of: QR code + text, or bank details
   // Use minimal padding (4 pixels total: 2 top, 2 bottom) to fit content tightly
   const contentHeight = Math.max(qrTotalHeight, leftTextTotalHeight);
@@ -451,7 +462,8 @@ export async function createInvoicePdf(
   if (opts.iban) {
     try {
       qrDataUrl = await generateEpcQrDataUrl(
-        opts.organizationName ?? "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
+        opts.organizationName ??
+          "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
         opts.iban,
         registration.totalPrice,
         invoiceNumber,
@@ -466,7 +478,8 @@ export async function createInvoicePdf(
   doc.rect(margin, bankBlockY, pageWidth - 2 * margin, bankBlockHeight, "F");
 
   // Calculate starting Y position to center the left text vertically
-  const leftTextStartY = bankBlockY + (bankBlockHeight - leftTextTotalHeight) / 2;
+  const leftTextStartY =
+    bankBlockY + (bankBlockHeight - leftTextTotalHeight) / 2;
   let leftTextY = leftTextStartY;
 
   // Draw left-side bank details, vertically centered
@@ -488,16 +501,9 @@ export async function createInvoicePdf(
       // Center QR code vertically within the block
       const qrTop = bankBlockY + (bankBlockHeight - qrTotalHeight) / 2;
       const qrX = pageWidth - margin - qrSize - 4;
-      
-      doc.addImage(
-        qrDataUrl,
-        "PNG",
-        qrX,
-        qrTop,
-        qrSize,
-        qrSize,
-      );
-      
+
+      doc.addImage(qrDataUrl, "PNG", qrX, qrTop, qrSize, qrSize);
+
       // Position text directly below QR code, centered under it
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
