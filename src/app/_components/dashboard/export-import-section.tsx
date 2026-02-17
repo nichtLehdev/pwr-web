@@ -109,12 +109,8 @@ export default function ExportImportSection() {
   };
 
   return (
-    <section className="mb-10">
-      <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-        Export & Import
-      </h2>
-      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6">
-        <div className="mb-6">
+    <div>
+      <div className="mb-6">
           <h3 className="dark:text-dark-text mb-3 text-base font-medium text-gray-900">
             Export
           </h3>
@@ -215,7 +211,6 @@ export default function ExportImportSection() {
             </button>
           </div>
         </div>
-      </div>
-    </section>
+    </div>
   );
 }

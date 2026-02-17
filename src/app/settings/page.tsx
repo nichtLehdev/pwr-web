@@ -289,7 +289,7 @@ export default function SettingsPage() {
 
   return (
     <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)]">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 overflow-x-hidden">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
@@ -334,7 +334,7 @@ export default function SettingsPage() {
               <form onSubmit={handleSubmit}>
                 {/* Profile Tab */}
                 {activeTab === "profile" && (
-                  <div className="p-6 space-y-6">
+                  <div className="p-4 sm:p-6 space-y-6">
                     <div>
                       <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
                         Profil
@@ -380,7 +380,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Personal Data */}
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                         <div>
                           <Label htmlFor="firstName">Vorname</Label>
                           <Input
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-3">
+                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                           <div>
                             <Label htmlFor="zipCode">PLZ</Label>
                             <Input
@@ -483,11 +483,11 @@ export default function SettingsPage() {
                               value={formData.zipCode}
                               onChange={handleChange}
                               maxLength={20}
-                              className="mt-1"
+                              className="mt-1 w-full"
                             />
                           </div>
 
-                          <div className="md:col-span-2">
+                          <div className="sm:col-span-2">
                             <Label htmlFor="city">Stadt</Label>
                             <Input
                               id="city"
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                               value={formData.city}
                               maxLength={100}
                               onChange={handleChange}
-                              className="mt-1"
+                              className="mt-1 w-full"
                             />
                           </div>
                         </div>
@@ -525,7 +525,7 @@ export default function SettingsPage() {
                         <button
                           type="submit"
                           disabled={isLoading || updateProfile.isPending}
-                          className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark disabled:opacity-50"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark disabled:opacity-50"
                         >
                           <Save className="h-4 w-4" />
                           {isLoading || updateProfile.isPending
