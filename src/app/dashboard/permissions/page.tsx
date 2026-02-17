@@ -325,9 +325,7 @@ function RolesTab() {
                         <button
                           onClick={() => {
                             if (
-                              confirm(
-                                `Rolle "${role.name}" wirklich löschen?`,
-                              )
+                              confirm(`Rolle "${role.name}" wirklich löschen?`)
                             ) {
                               deleteMutation.mutate({ id: role.id });
                             }
@@ -620,9 +618,9 @@ function UserSearchDropdown({
 function UsersTab() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
-  const [selectedPermissionKeys, setSelectedPermissionKeys] = useState<string[]>(
-    [],
-  );
+  const [selectedPermissionKeys, setSelectedPermissionKeys] = useState<
+    string[]
+  >([]);
 
   const utils = api.useUtils();
   const { data: users } = api.permissions.getAllUsers.useQuery();
@@ -798,7 +796,8 @@ function UsersTab() {
                                   // When non-Admin role is selected, remove Admin if it exists
                                   const adminRole = roles?.find(
                                     (r) =>
-                                      r.name.toLowerCase() === "administrator" ||
+                                      r.name.toLowerCase() ===
+                                        "administrator" ||
                                       r.name.toLowerCase() === "admin",
                                   );
                                   const newRoleIds = adminRole

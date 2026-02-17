@@ -1220,41 +1220,43 @@ export const coursesRouter = createTRPCRouter({
       return { success: true, updatedCount: canUpdateIds.length };
     }),
 
-  exportCourses: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
-    const courses = await ctx.db.course.findMany({
-      include: {
-        location: true,
-        bezirk: true,
-        createdBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportCourses: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const courses = await ctx.db.course.findMany({
+        include: {
+          location: true,
+          bezirk: true,
+          createdBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          reviewer: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-        reviewer: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      });
 
-    return {
-      courses: courses.map((course) => ({
-        ...course,
-        locationName: course.location?.name,
-        bezirkName: course.bezirk?.name,
-        createdByEmail: course.createdBy?.email,
-        reviewerEmail: course.reviewer?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: courses.length,
-    };
-  }),
+      return {
+        courses: courses.map((course) => ({
+          ...course,
+          locationName: course.location?.name,
+          bezirkName: course.bezirk?.name,
+          createdByEmail: course.createdBy?.email,
+          reviewerEmail: course.reviewer?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: courses.length,
+      };
+    },
+  ),
 
   importCourses: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(

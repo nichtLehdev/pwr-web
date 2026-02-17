@@ -475,7 +475,8 @@ export const PERMISSION_DEFINITIONS: Array<{
   {
     key: PERMISSIONS.USERS_MANAGE_2FA,
     name: "2FA für Benutzer verwalten",
-    description: "Berechtigung zum Verwalten der Zwei-Faktor-Authentifizierung für andere Benutzer",
+    description:
+      "Berechtigung zum Verwalten der Zwei-Faktor-Authentifizierung für andere Benutzer",
     category: "users",
   },
   {
@@ -489,7 +490,8 @@ export const PERMISSION_DEFINITIONS: Array<{
   {
     key: PERMISSIONS.CONTENT_BULK_MODERATE,
     name: "Inhalte massenweise moderieren",
-    description: "Berechtigung zum Massen-Genehmigen oder -Ablehnen von Inhalten",
+    description:
+      "Berechtigung zum Massen-Genehmigen oder -Ablehnen von Inhalten",
     category: "content",
   },
   {

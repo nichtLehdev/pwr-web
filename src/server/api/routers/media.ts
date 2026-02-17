@@ -231,13 +231,15 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      const canEditMedia = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.MEDIA_EDIT,
-      ) || await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.MEDIA_APPROVE,
-      );
+      const canEditMedia =
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_EDIT,
+        )) ||
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_APPROVE,
+        ));
       const canEdit =
         media.uploadedById === ctx.session.user.id || canEditMedia;
 
@@ -404,29 +406,31 @@ export const mediaRouter = createTRPCRouter({
     };
   }),
 
-  exportMedia: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
-    const media = await ctx.db.media.findMany({
-      include: {
-        uploadedBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportMedia: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const media = await ctx.db.media.findMany({
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      });
 
-    return {
-      media: media.map((item) => ({
-        ...item,
-        uploadedByEmail: item.uploadedBy?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: media.length,
-    };
-  }),
+      return {
+        media: media.map((item) => ({
+          ...item,
+          uploadedByEmail: item.uploadedBy?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: media.length,
+      };
+    },
+  ),
 
   importMedia: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(

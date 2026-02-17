@@ -9,7 +9,9 @@ import { db } from "@/server/db";
 
 async function main() {
   console.log("🌱 Starting database seed...");
-  console.log("ℹ️  Permissions are now hardcoded in the codebase - no seeding needed");
+  console.log(
+    "ℹ️  Permissions are now hardcoded in the codebase - no seeding needed",
+  );
   console.log("✅ Seed completed successfully!");
 }
 

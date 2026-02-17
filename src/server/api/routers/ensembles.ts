@@ -321,43 +321,45 @@ export const ensemblesRouter = createTRPCRouter({
       return ensembles;
     }),
 
-  exportEnsembles: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
-    const ensembles = await ctx.db.ensemble.findMany({
-      include: {
-        image: true,
-        location: true,
-        bezirk: true,
-        conductor: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportEnsembles: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const ensembles = await ctx.db.ensemble.findMany({
+        include: {
+          image: true,
+          location: true,
+          bezirk: true,
+          conductor: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          representative: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-        representative: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      });
 
-    return {
-      ensembles: ensembles.map((ensemble) => ({
-        ...ensemble,
-        imageUrl: ensemble.image?.url,
-        locationName: ensemble.location?.name,
-        bezirkName: ensemble.bezirk?.name,
-        conductorEmail: ensemble.conductor?.email,
-        representativeEmail: ensemble.representative?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: ensembles.length,
-    };
-  }),
+      return {
+        ensembles: ensembles.map((ensemble) => ({
+          ...ensemble,
+          imageUrl: ensemble.image?.url,
+          locationName: ensemble.location?.name,
+          bezirkName: ensemble.bezirk?.name,
+          conductorEmail: ensemble.conductor?.email,
+          representativeEmail: ensemble.representative?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: ensembles.length,
+      };
+    },
+  ),
 
   importEnsembles: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(

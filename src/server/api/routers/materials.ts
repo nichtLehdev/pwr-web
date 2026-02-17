@@ -381,30 +381,32 @@ export const materialsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  exportDownloads: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
-    const downloads = await ctx.db.download.findMany({
-      include: {
-        uploadedBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportDownloads: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const downloads = await ctx.db.download.findMany({
+        include: {
+          uploadedBy: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+      });
 
-    return {
-      downloads: downloads.map((download) => ({
-        ...download,
-        tags: (download.tags as string[]) || [],
-        uploadedByEmail: download.uploadedBy?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: downloads.length,
-    };
-  }),
+      return {
+        downloads: downloads.map((download) => ({
+          ...download,
+          tags: (download.tags as string[]) || [],
+          uploadedByEmail: download.uploadedBy?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: downloads.length,
+      };
+    },
+  ),
 
   importDownloads: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
@@ -448,25 +450,27 @@ export const materialsRouter = createTRPCRouter({
       };
     }),
 
-  exportBlaeserhefte: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
-    const blaeserhefte = await ctx.db.blaeserheft.findMany({
-      include: {
-        image: true,
-      },
-      orderBy: [{ year: "desc" }, { sortOrder: "asc" }],
-    });
+  exportBlaeserhefte: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const blaeserhefte = await ctx.db.blaeserheft.findMany({
+        include: {
+          image: true,
+        },
+        orderBy: [{ year: "desc" }, { sortOrder: "asc" }],
+      });
 
-    return {
-      blaeserhefte: blaeserhefte.map((heft) => ({
-        ...heft,
-        imageUrl: heft.image?.url,
-        highlights: heft.highlights ? (heft.highlights as string[]) : [],
-        chapters: heft.chapters ? (heft.chapters as string[]) : [],
-      })),
-      exportedAt: new Date().toISOString(),
-      count: blaeserhefte.length,
-    };
-  }),
+      return {
+        blaeserhefte: blaeserhefte.map((heft) => ({
+          ...heft,
+          imageUrl: heft.image?.url,
+          highlights: heft.highlights ? (heft.highlights as string[]) : [],
+          chapters: heft.chapters ? (heft.chapters as string[]) : [],
+        })),
+        exportedAt: new Date().toISOString(),
+        count: blaeserhefte.length,
+      };
+    },
+  ),
 
   importBlaeserhefte: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
