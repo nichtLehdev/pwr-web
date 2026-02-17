@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
+import QRCode from "qrcode";
 
 export interface InvoiceParticipant {
   firstName: string;
@@ -68,7 +69,7 @@ export interface InvoiceOptions {
 }
 
 const defaultOptions: InvoiceOptions = {
-  organizationName: "Posaunenwerk der Evang. Kirche im Rheinland e.V.",
+  organizationName: "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
   organizationAddress: "Rudolf-Harbig-Str. 20, 56179 Vallendar",
   organizationContact: "Tel: 0261.300 00 11 | info@posaunenwerk-rheinland.de",
 
@@ -89,6 +90,61 @@ async function loadImageAsBase64(url: string): Promise<string> {
     reader.onloadend = () => resolve(reader.result as string);
     reader.onerror = reject;
     reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Builds the EPC QR code payload for SEPA credit transfer (BCD 002).
+ * Banking apps can scan this to pre-fill recipient, IBAN, amount and reference.
+ */
+function buildEpcQrPayload(
+  beneficiaryName: string,
+  iban: string,
+  amountEur: number,
+  reference: string,
+  bic?: string,
+): string {
+  const ibanClean = iban.replace(/\s/g, "");
+  const name = beneficiaryName.slice(0, 70);
+  const ref = reference.slice(0, 140);
+  const lines = [
+    "BCD", // Service tag
+    "002", // Version
+    "1", // Character set UTF-8
+    "SCT", // SEPA Credit Transfer
+    bic?.replace(/\s/g, "") ?? "", // BIC (optional for domestic)
+    name,
+    ibanClean,
+    `EUR${amountEur.toFixed(2)}`, // Amount
+    "", // Purpose (optional)
+    "", // Structured creditor reference
+    ref, // Remittance (Verwendungszweck)
+    "", // Beneficiary to originator info
+  ];
+  return lines.join("\n");
+}
+
+/**
+ * Generates an EPC SEPA QR code as a data URL for embedding in the PDF.
+ */
+async function generateEpcQrDataUrl(
+  beneficiaryName: string,
+  iban: string,
+  amountEur: number,
+  reference: string,
+  bic?: string,
+): Promise<string> {
+  const payload = buildEpcQrPayload(
+    beneficiaryName,
+    iban,
+    amountEur,
+    reference,
+    bic,
+  );
+  return QRCode.toDataURL(payload, {
+    errorCorrectionLevel: "M",
+    margin: 1,
+    width: 256,
   });
 }
 
@@ -126,14 +182,14 @@ export async function createInvoicePdf(
       doc.setFontSize(22);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(88, 89, 91);
-      doc.text("Posaunenwerk Rheinland", margin, y);
+      doc.text("Posaunenwerk der Evangelischen Kirche im Rheinland e.V.", margin, y);
       y += 10;
     }
   } else {
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(88, 89, 91);
-    doc.text("Posaunenwerk Rheinland", margin, y);
+    doc.text("Posaunenwerk der Evangelischen Kirche im Rheinland e.V.", margin, y);
     y += 10;
   }
 
@@ -372,24 +428,95 @@ export async function createInvoicePdf(
   );
 
   y += 12;
-  checkPageBreak(30);
+  checkPageBreak(40);
+
+  const qrSize = 38;
+  const bankBlockY = y - 4;
+  
+  // Calculate height needed for QR code + text below it
+  const qrTextHeight = 8; // Height of "QR mit Banking-App scannen" text
+  const qrTextMargin = 2; // Minimal margin between QR code and text (directly underneath)
+  const qrTotalHeight = qrSize + qrTextMargin + qrTextHeight;
+  
+  // Calculate the height of the left text block
+  const leftTextLineHeights = [6, 5, 5, 6]; // Heights for each line: Bankverbindung, Bank name, IBAN/BIC, Verwendungszweck
+  const leftTextTotalHeight = leftTextLineHeights.reduce((sum, h) => sum + h, 0);
+  
+  // Bank block height needs to accommodate the taller of: QR code + text, or bank details
+  // Use minimal padding (4 pixels total: 2 top, 2 bottom) to fit content tightly
+  const contentHeight = Math.max(qrTotalHeight, leftTextTotalHeight);
+  const bankBlockHeight = contentHeight + 4;
+
+  let qrDataUrl: string | null = null;
+  if (opts.iban) {
+    try {
+      qrDataUrl = await generateEpcQrDataUrl(
+        opts.organizationName ?? "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
+        opts.iban,
+        registration.totalPrice,
+        invoiceNumber,
+        opts.bic,
+      );
+    } catch {
+      // If QR generation fails, continue without it
+    }
+  }
 
   doc.setFillColor(245, 245, 245);
-  doc.rect(margin, y - 4, pageWidth - 2 * margin, 28, "F");
+  doc.rect(margin, bankBlockY, pageWidth - 2 * margin, bankBlockHeight, "F");
 
+  // Calculate starting Y position to center the left text vertically
+  const leftTextStartY = bankBlockY + (bankBlockHeight - leftTextTotalHeight) / 2;
+  let leftTextY = leftTextStartY;
+
+  // Draw left-side bank details, vertically centered
   doc.setFont("helvetica", "bold");
-  doc.text("Bankverbindung:", margin + 3, y);
-  y += 6;
+  doc.text("Bankverbindung:", margin + 3, leftTextY);
+  leftTextY += 6;
   doc.setFont("helvetica", "normal");
-  doc.text(opts.bankName ?? "", margin + 3, y);
-  y += 5;
-  doc.text(`IBAN: ${opts.iban}`, margin + 3, y);
-  doc.text(`BIC: ${opts.bic}`, margin + 90, y);
-  y += 6;
+  doc.text(opts.bankName ?? "", margin + 3, leftTextY);
+  leftTextY += 5;
+  doc.text(`IBAN: ${opts.iban}`, margin + 3, leftTextY);
+  doc.text(`BIC: ${opts.bic}`, margin + 90, leftTextY);
+  leftTextY += 5;
   doc.setFont("helvetica", "bold");
-  doc.text(`Verwendungszweck: ${invoiceNumber}`, margin + 3, y);
+  doc.text(`Verwendungszweck: ${invoiceNumber}`, margin + 3, leftTextY);
 
-  y += 18;
+  // Position QR code and text on the right, vertically centered
+  if (qrDataUrl) {
+    try {
+      // Center QR code vertically within the block
+      const qrTop = bankBlockY + (bankBlockHeight - qrTotalHeight) / 2;
+      const qrX = pageWidth - margin - qrSize - 4;
+      
+      doc.addImage(
+        qrDataUrl,
+        "PNG",
+        qrX,
+        qrTop,
+        qrSize,
+        qrSize,
+      );
+      
+      // Position text directly below QR code, centered under it
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      const qrCenterX = qrX + qrSize / 2; // Center X position of the QR code
+      doc.text(
+        "QR mit Banking-App scannen",
+        qrCenterX,
+        qrTop + qrSize + qrTextMargin, // Position directly underneath QR code with minimal spacing
+        { align: "center", maxWidth: qrSize },
+      );
+      doc.setTextColor(0);
+      doc.setFontSize(10);
+    } catch {
+      // Ignore image errors
+    }
+  }
+
+  y = bankBlockY + bankBlockHeight + 6;
   checkPageBreak(40);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
