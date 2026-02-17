@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { RouterInputs, RouterOutputs } from "@/trpc/react";
 import { api } from "@/trpc/react";
 import type { User } from "~/generated/prisma/client";
@@ -20,11 +20,7 @@ import {
   Link2Off,
 } from "lucide-react";
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
-import {
-  ScrollableModal,
-  ScrollableModalCard,
-  ScrollableModalBody,
-} from "@/app/_components/ui/scrollable-modal";
+import { isParticipantUnder18 } from "@/lib/participant-utils";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -72,9 +68,9 @@ export default function CourseRegistrationForm({
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
-  const [missingFields, setMissingFields] = useState<
-    Record<number, string[]>
-  >({});
+  const [missingFields, setMissingFields] = useState<Record<number, string[]>>(
+    {},
+  );
   const [showParticipantLibrary, setShowParticipantLibrary] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
@@ -159,7 +155,7 @@ export default function CourseRegistrationForm({
       registrationData.participants.forEach((p, index) => {
         const fieldErrors: string[] = [];
         const missingFieldKeys: string[] = [];
-        
+
         // Check required fields
         if (!p.firstName?.trim()) {
           fieldErrors.push("Vorname");
@@ -180,9 +176,10 @@ export default function CourseRegistrationForm({
           oneYearAgo.setFullYear(today.getFullYear() - 1);
           const maxAge = new Date(today);
           maxAge.setFullYear(today.getFullYear() - 120); // Reasonable maximum age
-          
+
           if (birthDate >= today) {
-            errors[index] = "Geburtsdatum darf nicht heute oder in der Zukunft liegen";
+            errors[index] =
+              "Geburtsdatum darf nicht heute oder in der Zukunft liegen";
             missingFieldKeys.push("birthDate");
           } else if (birthDate > oneYearAgo) {
             errors[index] = "Teilnehmer muss mindestens 1 Jahr alt sein";
@@ -200,21 +197,26 @@ export default function CourseRegistrationForm({
           fieldErrors.push("Preisoption");
           missingFieldKeys.push("priceOptionId");
         }
-        
+
         // Check required custom fields
         if (course.customFields) {
           for (const field of course.customFields) {
             if (field.isRequired) {
-              const customFields = p.customFields as Record<string, any> | undefined;
+              const customFields = p.customFields as
+                | Record<string, any>
+                | undefined;
               const fieldValue = customFields?.[field.fieldName];
-              if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+              if (
+                !fieldValue ||
+                (typeof fieldValue === "string" && !fieldValue.trim())
+              ) {
                 fieldErrors.push(field.fieldName);
                 missingFieldKeys.push(`customField:${field.fieldName}`);
               }
             }
           }
         }
-        
+
         if (fieldErrors.length > 0) {
           errors[index] = `Fehlende Pflichtfelder: ${fieldErrors.join(", ")}`;
         }
@@ -233,6 +235,53 @@ export default function CourseRegistrationForm({
       });
     }
   }, [currentStep, registrationData.participants, course.customFields]);
+
+  // Validate sibling discount eligibility - compute error message with useMemo
+  const siblingDiscountError = useMemo(() => {
+    if (
+      !registrationData.siblingDiscountApplied ||
+      !course.allowSiblingDiscount ||
+      registrationData.participants.length === 0
+    ) {
+      return "";
+    }
+
+    const siblingGroups = new Map<
+      string,
+      typeof registrationData.participants
+    >();
+    for (const participant of registrationData.participants) {
+      if (participant.siblingGroupId) {
+        if (!siblingGroups.has(participant.siblingGroupId)) {
+          siblingGroups.set(participant.siblingGroupId, []);
+        }
+        siblingGroups.get(participant.siblingGroupId)?.push(participant);
+      }
+    }
+
+    let hasEligibleParticipants = false;
+    for (const [, groupParticipants] of siblingGroups) {
+      if (groupParticipants.length > 1) {
+        const eligibleParticipants = groupParticipants.filter(
+          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+        );
+        if (eligibleParticipants.length > 1) {
+          hasEligibleParticipants = true;
+          break;
+        }
+      }
+    }
+
+    if (!hasEligibleParticipants && siblingGroups.size > 0) {
+      return "Für den Geschwisterkindrabatt müssen mindestens zwei Minderjährige (unter 18 Jahren) in einer Geschwistergruppe vorhanden sein.";
+    }
+
+    return "";
+  }, [
+    registrationData.siblingDiscountApplied,
+    registrationData.participants,
+    course.allowSiblingDiscount,
+  ]);
 
   const addParticipant = () => {
     if (!course.priceOptions || course.priceOptions.length === 0) {
@@ -403,14 +452,21 @@ export default function CourseRegistrationForm({
       let discount = 0;
       for (const [, groupParticipants] of siblingGroups) {
         if (groupParticipants.length > 1) {
-          for (let i = 1; i < groupParticipants.length; i++) {
-            const participant = groupParticipants[i];
-            if (participant) {
-              const priceOption = course.priceOptions.find(
-                (p) => p.id === participant.priceOptionId,
-              );
-              if (priceOption) {
-                discount += priceOption.price * 0.2;
+          // Only apply discount to participants under 18
+          const eligibleParticipants = groupParticipants.filter(
+            (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+          );
+          if (eligibleParticipants.length > 1) {
+            // Apply discount to all eligible participants except the first one
+            for (let i = 1; i < eligibleParticipants.length; i++) {
+              const participant = eligibleParticipants[i];
+              if (participant) {
+                const priceOption = course.priceOptions.find(
+                  (p) => p.id === participant.priceOptionId,
+                );
+                if (priceOption) {
+                  discount += priceOption.price * 0.2;
+                }
               }
             }
           }
@@ -453,14 +509,21 @@ export default function CourseRegistrationForm({
       let discount = 0;
       for (const [, groupParticipants] of siblingGroups) {
         if (groupParticipants.length > 1) {
-          for (let i = 1; i < groupParticipants.length; i++) {
-            const participant = groupParticipants[i];
-            if (participant) {
-              const priceOption = course.priceOptions.find(
-                (p) => p.id === participant.priceOptionId,
-              );
-              if (priceOption) {
-                discount += priceOption.price * 0.2;
+          // Only apply discount to participants under 18
+          const eligibleParticipants = groupParticipants.filter(
+            (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+          );
+          if (eligibleParticipants.length > 1) {
+            // Apply discount to all eligible participants except the first one
+            for (let i = 1; i < eligibleParticipants.length; i++) {
+              const participant = eligibleParticipants[i];
+              if (participant) {
+                const priceOption = course.priceOptions.find(
+                  (p) => p.id === participant.priceOptionId,
+                );
+                if (priceOption) {
+                  discount += priceOption.price * 0.2;
+                }
               }
             }
           }
@@ -584,7 +647,13 @@ export default function CourseRegistrationForm({
         // All participants must have required fields filled
         return registrationData.participants.every((p) => {
           // Check basic required fields
-          if (!p.firstName?.trim() || !p.lastName?.trim() || !p.birthDate || !p.city?.trim() || !p.priceOptionId) {
+          if (
+            !p.firstName?.trim() ||
+            !p.lastName?.trim() ||
+            !p.birthDate ||
+            !p.city?.trim() ||
+            !p.priceOptionId
+          ) {
             return false;
           }
           // Check birthDate is valid
@@ -595,17 +664,26 @@ export default function CourseRegistrationForm({
           oneYearAgo.setFullYear(today.getFullYear() - 1);
           const maxAge = new Date(today);
           maxAge.setFullYear(today.getFullYear() - 120);
-          
-          if (birthDate >= today || birthDate > oneYearAgo || birthDate < maxAge) {
+
+          if (
+            birthDate >= today ||
+            birthDate > oneYearAgo ||
+            birthDate < maxAge
+          ) {
             return false;
           }
           // Check required custom fields
           if (course.customFields) {
             for (const field of course.customFields) {
               if (field.isRequired) {
-                const customFields = p.customFields as Record<string, any> | undefined;
+                const customFields = p.customFields as
+                  | Record<string, any>
+                  | undefined;
                 const fieldValue = customFields?.[field.fieldName];
-                if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                if (
+                  !fieldValue ||
+                  (typeof fieldValue === "string" && !fieldValue.trim())
+                ) {
                   return false;
                 }
               }
@@ -1123,7 +1201,7 @@ export default function CourseRegistrationForm({
 
               {/* Sticky Buttons - sticky on mobile, also sticky on larger screens when participants exist */}
               <div
-                className={`dark:bg-dark-surface sticky z-[9] -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] ${
+                className={`dark:bg-dark-surface sticky z-9 -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] ${
                   registrationData.participants.length > 0
                     ? "sm:-mx-6 sm:w-[calc(100%+3rem)] sm:bg-white sm:px-6 sm:pt-4 sm:pb-4 sm:shadow-[0_4px_6px_rgba(0,0,0,0.1)] md:mb-6 sm:dark:bg-gray-900 sm:dark:shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
                     : "sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:dark:bg-transparent sm:dark:shadow-none"
@@ -1147,14 +1225,14 @@ export default function CourseRegistrationForm({
                         <>
                           {/* Backdrop - only on mobile */}
                           <div
-                            className="fixed inset-0 z-[100] bg-black/20 sm:hidden"
+                            className="fixed inset-0 z-100 bg-black/20 sm:hidden"
                             onClick={() => setShowParticipantLibrary(false)}
                           />
                           {/* Popup */}
-                          <div 
+                          <div
                             ref={popupRef}
-                            className="fixed left-1/2 z-[101] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 transform rounded-lg border-2 border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:z-[102] sm:mt-1 sm:translate-x-0 sm:max-w-md"
-                            style={{ 
+                            className="fixed left-1/2 z-101 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 transform rounded-lg border-2 border-gray-200 bg-white shadow-xl sm:absolute sm:top-full sm:right-0 sm:left-auto sm:z-[102] sm:mt-1 sm:max-w-md sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800"
+                            style={{
                               top: `calc(${headerHeight}px + 80px)`,
                             }}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -1166,7 +1244,9 @@ export default function CourseRegistrationForm({
                                   Gespeicherte Teilnehmer
                                 </h4>
                                 <button
-                                  onClick={() => setShowParticipantLibrary(false)}
+                                  onClick={() =>
+                                    setShowParticipantLibrary(false)
+                                  }
                                   className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                   aria-label="Schließen"
                                 >
@@ -1178,30 +1258,32 @@ export default function CourseRegistrationForm({
                               savedParticipantsQuery.data.length > 0 ? (
                                 <>
                                   <div className="grid grid-cols-1 gap-2">
-                                    {savedParticipantsQuery.data.map((saved) => (
-                                      <button
-                                        key={saved.id}
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          loadSavedParticipant(saved);
-                                        }}
-                                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                                      >
-                                        <div>
-                                          <div className="font-medium text-gray-900 dark:text-gray-100">
-                                            {saved.firstName} {saved.lastName}
+                                    {savedParticipantsQuery.data.map(
+                                      (saved) => (
+                                        <button
+                                          key={saved.id}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            loadSavedParticipant(saved);
+                                          }}
+                                          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                        >
+                                          <div>
+                                            <div className="font-medium text-gray-900 dark:text-gray-100">
+                                              {saved.firstName} {saved.lastName}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {new Date(
+                                                saved.birthDate,
+                                              ).toLocaleDateString("de-DE")}
+                                              {saved.city && ` • ${saved.city}`}
+                                            </div>
                                           </div>
-                                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            {new Date(saved.birthDate).toLocaleDateString(
-                                              "de-DE",
-                                            )}
-                                            {saved.city && ` • ${saved.city}`}
-                                          </div>
-                                        </div>
-                                        <Plus className="h-4 w-4 text-gray-400" />
-                                      </button>
-                                    ))}
+                                          <Plus className="h-4 w-4 text-gray-400" />
+                                        </button>
+                                      ),
+                                    )}
                                   </div>
                                   <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
                                     Gespeicherte Teilnehmer können Sie in den{" "}
@@ -1246,7 +1328,6 @@ export default function CourseRegistrationForm({
                   </button>
                 </div>
               </div>
-
 
               {/* Scrollable Participants Section */}
               <div className="flex-1">
@@ -1405,9 +1486,10 @@ export default function CourseRegistrationForm({
                                   );
                                   const newErrors = { ...validationErrors };
                                   const newMissing = { ...missingFields };
-                                  
+
                                   if (!e.target.value) {
-                                    newErrors[index] = "Geburtsdatum ist erforderlich";
+                                    newErrors[index] =
+                                      "Geburtsdatum ist erforderlich";
                                     newMissing[index] = [
                                       ...(newMissing[index] || []).filter(
                                         (f) => f !== "birthDate",
@@ -1419,10 +1501,14 @@ export default function CourseRegistrationForm({
                                     const today = new Date();
                                     today.setHours(0, 0, 0, 0);
                                     const oneYearAgo = new Date(today);
-                                    oneYearAgo.setFullYear(today.getFullYear() - 1);
+                                    oneYearAgo.setFullYear(
+                                      today.getFullYear() - 1,
+                                    );
                                     const maxAge = new Date(today);
-                                    maxAge.setFullYear(today.getFullYear() - 120);
-                                    
+                                    maxAge.setFullYear(
+                                      today.getFullYear() - 120,
+                                    );
+
                                     if (birthDate >= today) {
                                       newErrors[index] =
                                         "Geburtsdatum darf nicht heute oder in der Zukunft liegen";
@@ -1442,7 +1528,8 @@ export default function CourseRegistrationForm({
                                         "birthDate",
                                       ];
                                     } else if (birthDate < maxAge) {
-                                      newErrors[index] = "Geburtsdatum ist nicht gültig";
+                                      newErrors[index] =
+                                        "Geburtsdatum ist nicht gültig";
                                       newMissing[index] = [
                                         ...(newMissing[index] || []).filter(
                                           (f) => f !== "birthDate",
@@ -1451,10 +1538,13 @@ export default function CourseRegistrationForm({
                                       ];
                                     } else {
                                       // Valid date
-                                      const updatedMissing = newMissing[index]?.filter(
-                                        (f) => f !== "birthDate",
-                                      );
-                                      if (updatedMissing && updatedMissing.length > 0) {
+                                      const updatedMissing = newMissing[
+                                        index
+                                      ]?.filter((f) => f !== "birthDate");
+                                      if (
+                                        updatedMissing &&
+                                        updatedMissing.length > 0
+                                      ) {
                                         newMissing[index] = updatedMissing;
                                       } else {
                                         delete newMissing[index];
@@ -1478,15 +1568,23 @@ export default function CourseRegistrationForm({
                                 className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
                                   missingFields[index]?.includes("birthDate") ||
                                   (validationErrors[index] &&
-                                    (validationErrors[index].includes("Geburtsdatum") ||
-                                      validationErrors[index].includes("Jahr alt")))
+                                    (validationErrors[index].includes(
+                                      "Geburtsdatum",
+                                    ) ||
+                                      validationErrors[index].includes(
+                                        "Jahr alt",
+                                      )))
                                     ? "border-red-500 dark:border-red-500"
                                     : "border-gray-300"
                                 }`}
                               />
                               {validationErrors[index] &&
-                                (validationErrors[index].includes("Geburtsdatum") ||
-                                  validationErrors[index].includes("Jahr alt")) && (
+                                (validationErrors[index].includes(
+                                  "Geburtsdatum",
+                                ) ||
+                                  validationErrors[index].includes(
+                                    "Jahr alt",
+                                  )) && (
                                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                                     {validationErrors[index]}
                                   </p>
@@ -1555,8 +1653,10 @@ export default function CourseRegistrationForm({
                                     e.target.value,
                                   )
                                 }
-                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 h-[42px] sm:h-auto ${
-                                  missingFields[index]?.includes("priceOptionId")
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text h-[42px] w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none sm:h-auto sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                  missingFields[index]?.includes(
+                                    "priceOptionId",
+                                  )
                                     ? "border-red-500 dark:border-red-500"
                                     : "border-gray-300"
                                 }`}
@@ -1831,7 +1931,7 @@ export default function CourseRegistrationForm({
                       />
                       <div className="flex-1">
                         <div className="font-semibold text-gray-900 dark:text-gray-100">
-                          Geschwisterrabatt beantragen
+                          Geschwisterkindrabatt beantragen
                         </div>
                         <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                           Sie erhalten 20% Rabatt für jedes Geschwisterkind ab
@@ -1845,6 +1945,11 @@ export default function CourseRegistrationForm({
                               €
                             </div>
                           )}
+                        {siblingDiscountError && (
+                          <div className="mt-2 text-sm text-red-600 dark:text-red-400">
+                            {siblingDiscountError}
+                          </div>
+                        )}
                       </div>
                     </label>
                   </div>
@@ -1983,7 +2088,7 @@ export default function CourseRegistrationForm({
                   </div>
                   <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
                     <span className="text-sm text-green-700 dark:text-green-300">
-                      Geschwisterrabatt (20%)
+                      Geschwisterkindrabatt (20%)
                     </span>
                     <span className="text-sm font-semibold text-green-700 dark:text-green-300">
                       -{calculateDiscountAmount().toFixed(2)} €

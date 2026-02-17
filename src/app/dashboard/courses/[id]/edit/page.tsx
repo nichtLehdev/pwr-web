@@ -1361,7 +1361,7 @@ export default function EditCoursePage() {
                     htmlFor="allowSiblingDiscount"
                     className="dark:text-dark-text text-sm font-medium text-gray-700"
                   >
-                    Geschwisterrabatt erlauben (20% für Geschwister ab dem
+                    Geschwisterkindrabatt erlauben (20% für Geschwister ab dem
                     zweiten Kind)
                   </label>
                 </div>

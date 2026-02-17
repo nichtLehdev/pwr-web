@@ -22,6 +22,7 @@ import {
   sendSiblingDiscountRejectedEmail,
   isEmailConfigured,
 } from "@/server/email";
+import { isParticipantUnder18 } from "@/lib/participant-utils";
 
 export const registrationsRouter = createTRPCRouter({
   create: publicProcedure
@@ -624,14 +625,21 @@ export const registrationsRouter = createTRPCRouter({
 
         for (const [, groupParticipants] of siblingGroups) {
           if (groupParticipants.length > 1) {
-            for (let i = 1; i < groupParticipants.length; i++) {
-              const participant = groupParticipants[i];
-              if (participant) {
-                const priceOption = course.priceOptions.find(
-                  (p) => p.id === participant.priceOptionId,
-                );
-                if (priceOption) {
-                  siblingDiscountAmount += priceOption.price * 0.2;
+            // Only apply discount to participants under 18
+            const eligibleParticipants = groupParticipants.filter(p => 
+              p.birthDate && isParticipantUnder18(p.birthDate)
+            );
+            if (eligibleParticipants.length > 1) {
+              // Apply discount to all eligible participants except the first one
+              for (let i = 1; i < eligibleParticipants.length; i++) {
+                const participant = eligibleParticipants[i];
+                if (participant) {
+                  const priceOption = course.priceOptions.find(
+                    (p) => p.id === participant.priceOptionId,
+                  );
+                  if (priceOption) {
+                    siblingDiscountAmount += priceOption.price * 0.2;
+                  }
                 }
               }
             }

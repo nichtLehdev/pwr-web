@@ -1066,7 +1066,7 @@ export default function NewCoursePage() {
                       className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                     />
                     <span className="dark:text-dark-text text-sm text-gray-700">
-                      Geschwisterrabatt erlauben (20% für Geschwister ab dem
+                      Geschwisterkindrabatt erlauben (20% für Geschwister ab dem
                       zweiten Kind)
                     </span>
                   </label>
