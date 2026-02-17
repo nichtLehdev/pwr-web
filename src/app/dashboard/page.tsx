@@ -114,7 +114,7 @@ export default function DashboardPage() {
             {/* Content Management */}
             <section className="mb-8">
               <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                   <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                     Inhalte
                   </h2>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
             {canManagePermissions && (
               <section className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                     <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                       Organisation
                     </h2>
@@ -201,7 +201,7 @@ export default function DashboardPage() {
             {canManagePermissions && (
               <section className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                     <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                       Personen & Gremien
                     </h2>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
             {canManagePermissions && (
               <section className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                     <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                       Medien & Ressourcen
                     </h2>
@@ -309,7 +309,7 @@ export default function DashboardPage() {
             {(canManagePermissions || canViewStats) && (
               <section className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                     <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                       System & Verwaltung
                     </h2>
@@ -352,7 +352,7 @@ export default function DashboardPage() {
             {/* Quick Links */}
             <section>
               <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                   <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                     Schnellzugriff
                   </h2>
@@ -421,7 +421,7 @@ function DashboardCard({
       className={`group relative flex h-full flex-col rounded-lg border p-4 transition-all ${
         comingSoon
           ? "dark:border-dark-border cursor-not-allowed border-gray-200 bg-gray-50 opacity-60 dark:bg-gray-800/30"
-          : "dark:border-dark-border dark:bg-dark-background-secondary border-gray-200 bg-white hover:border-primary hover:shadow-md dark:hover:border-primary"
+          : "dark:border-dark-border dark:bg-dark-background-secondary hover:border-primary dark:hover:border-primary border-gray-200 bg-white hover:shadow-md"
       }`}
     >
       {comingSoon && (
@@ -441,11 +441,9 @@ function DashboardCard({
       <h3 className="text-dark dark:text-dark-text mb-1 font-semibold">
         {title}
       </h3>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        {description}
-      </p>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{description}</p>
       {!comingSoon && (
-        <div className="mt-3 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="text-primary mt-3 flex items-center text-sm font-medium opacity-0 transition-opacity group-hover:opacity-100">
           Öffnen
           <ArrowRight className="ml-1 h-4 w-4" />
         </div>
@@ -476,9 +474,9 @@ function QuickLink({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition-all hover:border-primary hover:text-primary dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-primary dark:hover:text-primary"
+      className="group hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition-all dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
     >
-      <span className="text-gray-400 transition-colors group-hover:text-primary dark:text-gray-500 dark:group-hover:text-primary">
+      <span className="group-hover:text-primary dark:group-hover:text-primary text-gray-400 transition-colors dark:text-gray-500">
         {icon}
       </span>
       {title}

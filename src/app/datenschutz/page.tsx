@@ -408,8 +408,8 @@ export default function DatenschutzPage() {
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
-                      Bei der Anmeldung zu einem Kurs oder Lehrgang werden folgende
-                      Daten des Anmelders erfasst:
+                      Bei der Anmeldung zu einem Kurs oder Lehrgang werden
+                      folgende Daten des Anmelders erfasst:
                     </p>
                     <ul className="ml-6 list-disc space-y-2">
                       <li>Vorname und Nachname</li>
@@ -420,8 +420,8 @@ export default function DatenschutzPage() {
                       <li>Stadt (optional)</li>
                     </ul>
                     <p className="leading-relaxed">
-                      Falls eine separate Rechnungsadresse angegeben wird, werden
-                      zusätzlich folgende Daten gespeichert:
+                      Falls eine separate Rechnungsadresse angegeben wird,
+                      werden zusätzlich folgende Daten gespeichert:
                     </p>
                     <ul className="ml-6 list-disc space-y-2">
                       <li>Firmenname (optional)</li>
@@ -447,22 +447,25 @@ export default function DatenschutzPage() {
                       <li>Stadt</li>
                       <li>Instrument (optional)</li>
                       <li>Ausgewählte Preisoption</li>
-                      <li>Zusätzliche, kurs-spezifische Felder (falls vorhanden)</li>
+                      <li>
+                        Zusätzliche, kurs-spezifische Felder (falls vorhanden)
+                      </li>
                     </ul>
                     <p className="leading-relaxed">
                       Diese Daten werden zur Durchführung der Kursanmeldung, zur
-                      Kommunikation bezüglich des Kurses, zur Rechnungsstellung und
-                      zur Verwaltung der Teilnehmer benötigt. Die Verarbeitung
-                      erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO
-                      (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f DSGVO
-                      (berechtigtes Interesse an der ordnungsgemäßen
+                      Kommunikation bezüglich des Kurses, zur Rechnungsstellung
+                      und zur Verwaltung der Teilnehmer benötigt. Die
+                      Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                      b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f
+                      DSGVO (berechtigtes Interesse an der ordnungsgemäßen
                       Verwaltung).
                     </p>
                     <p className="leading-relaxed">
                       <strong>Besonderer Hinweis zu Minderjährigen:</strong> Bei
-                      der Anmeldung von Minderjährigen werden deren Daten ebenfalls
-                      erfasst. Die Einwilligung zur Datenverarbeitung erfolgt durch
-                      den Erziehungsberechtigten, der die Anmeldung vornimmt.
+                      der Anmeldung von Minderjährigen werden deren Daten
+                      ebenfalls erfasst. Die Einwilligung zur Datenverarbeitung
+                      erfolgt durch den Erziehungsberechtigten, der die
+                      Anmeldung vornimmt.
                     </p>
                   </div>
                 </div>
@@ -474,8 +477,8 @@ export default function DatenschutzPage() {
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
                       Bei der Anwendung eines Geschwisterkindrabatts werden
-                      Teilnehmer in Geschwistergruppen zusammengefasst. Hierfür wird
-                      eine Gruppierungs-ID gespeichert, die es ermöglicht,
+                      Teilnehmer in Geschwistergruppen zusammengefasst. Hierfür
+                      wird eine Gruppierungs-ID gespeichert, die es ermöglicht,
                       Geschwister zu identifizieren und den Rabatt korrekt zu
                       berechnen. Diese Daten werden nur für die Zwecke der
                       Rabattberechnung verwendet.
@@ -500,11 +503,12 @@ export default function DatenschutzPage() {
                       <li>Rechnungsdatum (falls Rechnung erstellt wurde)</li>
                     </ul>
                     <p className="leading-relaxed">
-                      Diese Daten werden zur Erfüllung vertraglicher Verpflichtungen
-                      und zur Erfüllung gesetzlicher Aufbewahrungspflichten
-                      benötigt. Die Verarbeitung erfolgt auf Grundlage von Art. 6
-                      Abs. 1 lit. b DSGVO (Vertragserfüllung) und Art. 6 Abs. 1 lit.
-                      c DSGVO (gesetzliche Verpflichtung).
+                      Diese Daten werden zur Erfüllung vertraglicher
+                      Verpflichtungen und zur Erfüllung gesetzlicher
+                      Aufbewahrungspflichten benötigt. Die Verarbeitung erfolgt
+                      auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO
+                      (Vertragserfüllung) und Art. 6 Abs. 1 lit. c DSGVO
+                      (gesetzliche Verpflichtung).
                     </p>
                   </div>
                 </div>
@@ -515,12 +519,13 @@ export default function DatenschutzPage() {
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
-                      Anmelde- und Teilnehmerdaten werden gespeichert, solange dies
-                      zur Erfüllung der vertraglichen Verpflichtungen und zur
-                      Erfüllung gesetzlicher Aufbewahrungspflichten (insbesondere
-                      steuer- und handelsrechtlicher Art) erforderlich ist. In der
-                      Regel beträgt die Aufbewahrungsfrist für Rechnungen 10 Jahre
-                      gemäß § 147 AO (Abgabenordnung).
+                      Anmelde- und Teilnehmerdaten werden gespeichert, solange
+                      dies zur Erfüllung der vertraglichen Verpflichtungen und
+                      zur Erfüllung gesetzlicher Aufbewahrungspflichten
+                      (insbesondere steuer- und handelsrechtlicher Art)
+                      erforderlich ist. In der Regel beträgt die
+                      Aufbewahrungsfrist für Rechnungen 10 Jahre gemäß § 147 AO
+                      (Abgabenordnung).
                     </p>
                   </div>
                 </div>
@@ -541,9 +546,9 @@ export default function DatenschutzPage() {
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <p className="leading-relaxed">
-                  Registrierte Benutzer haben die Möglichkeit, Teilnehmerdaten zu
-                  speichern, um diese bei zukünftigen Anmeldungen wiederzuverwenden.
-                  Hierbei werden folgende Daten gespeichert:
+                  Registrierte Benutzer haben die Möglichkeit, Teilnehmerdaten
+                  zu speichern, um diese bei zukünftigen Anmeldungen
+                  wiederzuverwenden. Hierbei werden folgende Daten gespeichert:
                 </p>
                 <ul className="ml-6 list-disc space-y-2">
                   <li>Vorname und Nachname</li>
@@ -553,11 +558,12 @@ export default function DatenschutzPage() {
                   <li>Zusätzliche, kurs-spezifische Felder (optional)</li>
                 </ul>
                 <p className="leading-relaxed">
-                  Diese Daten werden ausschließlich für den angemeldeten Benutzer
-                  gespeichert und können von diesem jederzeit gelöscht werden. Die
-                  Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. a DSGVO
-                  mit Ihrer Einwilligung. Sie können Ihre gespeicherten Teilnehmer
-                  jederzeit in den Einstellungen verwalten und löschen.
+                  Diese Daten werden ausschließlich für den angemeldeten
+                  Benutzer gespeichert und können von diesem jederzeit gelöscht
+                  werden. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs.
+                  1 lit. a DSGVO mit Ihrer Einwilligung. Sie können Ihre
+                  gespeicherten Teilnehmer jederzeit in den Einstellungen
+                  verwalten und löschen.
                 </p>
               </div>
             </div>
@@ -632,25 +638,27 @@ export default function DatenschutzPage() {
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <p className="leading-relaxed">
-                  Über unser Feedback-Formular können Sie Fehler melden, Features
-                  vorschlagen oder allgemeines Feedback geben. Hierbei werden
-                  folgende Daten erfasst:
+                  Über unser Feedback-Formular können Sie Fehler melden,
+                  Features vorschlagen oder allgemeines Feedback geben. Hierbei
+                  werden folgende Daten erfasst:
                 </p>
                 <ul className="ml-6 list-disc space-y-2">
                   <li>E-Mail-Adresse (optional, für Rückfragen)</li>
-                  <li>Art des Feedbacks (Fehler, Feature-Vorschlag, Allgemeines)</li>
+                  <li>
+                    Art des Feedbacks (Fehler, Feature-Vorschlag, Allgemeines)
+                  </li>
                   <li>Betreff</li>
                   <li>Feedback-Text</li>
                   <li>URL der betroffenen Seite (optional)</li>
                   <li>Geräteinformationen (optional)</li>
                 </ul>
                 <p className="leading-relaxed">
-                  Diese Daten werden ausschließlich zur Bearbeitung Ihres Feedbacks
-                  und zur Verbesserung unserer Website verwendet. Die Verarbeitung
-                  erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes
-                  Interesse an der Verbesserung unserer Dienste). Die Daten werden
-                  gelöscht, sobald sie für die Bearbeitung nicht mehr benötigt
-                  werden.
+                  Diese Daten werden ausschließlich zur Bearbeitung Ihres
+                  Feedbacks und zur Verbesserung unserer Website verwendet. Die
+                  Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f
+                  DSGVO (berechtigtes Interesse an der Verbesserung unserer
+                  Dienste). Die Daten werden gelöscht, sobald sie für die
+                  Bearbeitung nicht mehr benötigt werden.
                 </p>
               </div>
             </div>
@@ -685,11 +693,11 @@ export default function DatenschutzPage() {
                       <li>Ihre Einwilligungseinstellung</li>
                     </ul>
                     <p className="leading-relaxed">
-                      <strong>Wichtig:</strong> Es werden keine personenbezogenen
-                      Daten gespeichert, es sei denn, Sie haben ausdrücklich
-                      zugestimmt, dass Seitenaufrufe Ihrem Benutzerkonto zugeordnet
-                      werden dürfen. In diesem Fall wird zusätzlich Ihre
-                      Benutzer-ID gespeichert.
+                      <strong>Wichtig:</strong> Es werden keine
+                      personenbezogenen Daten gespeichert, es sei denn, Sie
+                      haben ausdrücklich zugestimmt, dass Seitenaufrufe Ihrem
+                      Benutzerkonto zugeordnet werden dürfen. In diesem Fall
+                      wird zusätzlich Ihre Benutzer-ID gespeichert.
                     </p>
                   </div>
                 </div>
@@ -721,10 +729,10 @@ export default function DatenschutzPage() {
                       </li>
                     </ul>
                     <p className="leading-relaxed">
-                      Ihre Einwilligung wird in einem Cookie gespeichert und kann
-                      jederzeit in den Einstellungen geändert werden. Die
-                      Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. a
-                      DSGVO mit Ihrer Einwilligung.
+                      Ihre Einwilligung wird in einem Cookie gespeichert und
+                      kann jederzeit in den Einstellungen geändert werden. Die
+                      Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                      a DSGVO mit Ihrer Einwilligung.
                     </p>
                   </div>
                 </div>
@@ -735,10 +743,11 @@ export default function DatenschutzPage() {
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
-                      Die Nutzungsstatistiken dienen ausschließlich der Verbesserung
-                      unserer Website, der Analyse des Nutzerverhaltens und der
-                      Optimierung der Benutzerfreundlichkeit. Die Daten werden nicht
-                      an Dritte weitergegeben und nicht für Werbezwecke verwendet.
+                      Die Nutzungsstatistiken dienen ausschließlich der
+                      Verbesserung unserer Website, der Analyse des
+                      Nutzerverhaltens und der Optimierung der
+                      Benutzerfreundlichkeit. Die Daten werden nicht an Dritte
+                      weitergegeben und nicht für Werbezwecke verwendet.
                     </p>
                   </div>
                 </div>
@@ -826,8 +835,9 @@ export default function DatenschutzPage() {
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
                 <p className="leading-relaxed">
                   Bei der Anmeldung auf unserer Website werden Session-Daten
-                  gespeichert, die für die Aufrechterhaltung Ihrer Anmeldesitzung
-                  erforderlich sind. Hierbei werden folgende Daten erfasst:
+                  gespeichert, die für die Aufrechterhaltung Ihrer
+                  Anmeldesitzung erforderlich sind. Hierbei werden folgende
+                  Daten erfasst:
                 </p>
                 <ul className="ml-6 list-disc space-y-2">
                   <li>Session-Token (zur Identifikation Ihrer Sitzung)</li>
@@ -837,11 +847,11 @@ export default function DatenschutzPage() {
                 </ul>
                 <p className="leading-relaxed">
                   Diese Daten werden zur Sicherstellung der Funktionalität der
-                  Website, zur Sicherheit und zur Betrugsprävention benötigt. Die
-                  Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO
-                  (berechtigtes Interesse an der Sicherheit und Funktionalität der
-                  Website). Session-Daten werden automatisch gelöscht, sobald Sie sich
-                  abmelden oder die Session abläuft.
+                  Website, zur Sicherheit und zur Betrugsprävention benötigt.
+                  Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                  f DSGVO (berechtigtes Interesse an der Sicherheit und
+                  Funktionalität der Website). Session-Daten werden automatisch
+                  gelöscht, sobald Sie sich abmelden oder die Session abläuft.
                 </p>
               </div>
             </div>

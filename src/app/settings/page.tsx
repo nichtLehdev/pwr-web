@@ -282,14 +282,18 @@ export default function SettingsPage() {
   const tabs = [
     { id: "profile" as SettingsTab, label: "Profil", icon: User },
     { id: "account" as SettingsTab, label: "Konto", icon: Key },
-    { id: "preferences" as SettingsTab, label: "Einstellungen", icon: Settings },
+    {
+      id: "preferences" as SettingsTab,
+      label: "Einstellungen",
+      icon: Settings,
+    },
     { id: "data" as SettingsTab, label: "Daten", icon: Download },
     { id: "danger" as SettingsTab, label: "Gefahrenzone", icon: AlertTriangle },
   ];
 
   return (
     <div className="bg-background-secondary dark:bg-dark-background-secondary min-h-[calc(100vh-4rem)]">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="container mx-auto max-w-7xl overflow-x-hidden px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
@@ -334,9 +338,9 @@ export default function SettingsPage() {
               <form onSubmit={handleSubmit}>
                 {/* Profile Tab */}
                 {activeTab === "profile" && (
-                  <div className="p-4 sm:p-6 space-y-6">
+                  <div className="space-y-6 p-4 sm:p-6">
                     <div>
-                      <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
+                      <h2 className="text-dark dark:text-dark-text mb-1 text-xl font-semibold">
                         Profil
                       </h2>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -380,7 +384,7 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Personal Data */}
-                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                           <Label htmlFor="firstName">Vorname</Label>
                           <Input
@@ -418,7 +422,9 @@ export default function SettingsPage() {
                               handleChange(e);
                               if (!e.target.value) {
                                 setBirthdateError("");
-                              } else if (new Date(e.target.value) >= new Date()) {
+                              } else if (
+                                new Date(e.target.value) >= new Date()
+                              ) {
                                 setBirthdateError(
                                   "Geburtsdatum muss in der Vergangenheit liegen",
                                 );
@@ -473,7 +479,7 @@ export default function SettingsPage() {
                           />
                         </div>
 
-                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                           <div>
                             <Label htmlFor="zipCode">PLZ</Label>
                             <Input
@@ -521,11 +527,11 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Save Button */}
-                      <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700">
                         <button
                           type="submit"
                           disabled={isLoading || updateProfile.isPending}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark disabled:opacity-50"
+                          className="bg-primary hover:bg-primary-dark inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50 sm:w-auto"
                         >
                           <Save className="h-4 w-4" />
                           {isLoading || updateProfile.isPending
@@ -539,9 +545,9 @@ export default function SettingsPage() {
 
                 {/* Account Tab */}
                 {activeTab === "account" && (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-6 p-6">
                     <div>
-                      <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
+                      <h2 className="text-dark dark:text-dark-text mb-1 text-xl font-semibold">
                         Konto
                       </h2>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -740,7 +746,9 @@ export default function SettingsPage() {
                                       "Fehler beim Ändern des Passworts",
                                   );
                                 } else {
-                                  toast.success("Passwort erfolgreich geändert");
+                                  toast.success(
+                                    "Passwort erfolgreich geändert",
+                                  );
                                   setPasswordData({
                                     currentPassword: "",
                                     newPassword: "",
@@ -758,7 +766,7 @@ export default function SettingsPage() {
                               }
                             }}
                             disabled={isChangingPassword}
-                            className="rounded-lg bg-primary px-4 py-2 font-semibold text-white transition-colors hover:bg-primary-dark disabled:opacity-50"
+                            className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 font-semibold text-white transition-colors disabled:opacity-50"
                           >
                             {isChangingPassword
                               ? "Wird geändert..."
@@ -812,9 +820,9 @@ export default function SettingsPage() {
 
                 {/* Preferences Tab */}
                 {activeTab === "preferences" && (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-6 p-6">
                     <div>
-                      <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
+                      <h2 className="text-dark dark:text-dark-text mb-1 text-xl font-semibold">
                         Einstellungen
                       </h2>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -945,11 +953,11 @@ export default function SettingsPage() {
                       <TrackingConsentSection />
 
                       {/* Save Button */}
-                      <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700">
                         <button
                           type="submit"
                           disabled={isLoading || updateProfile.isPending}
-                          className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 font-semibold text-white shadow-lg transition-colors hover:bg-primary-dark disabled:opacity-50"
+                          className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-6 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
                         >
                           <Save className="h-4 w-4" />
                           {isLoading || updateProfile.isPending
@@ -963,9 +971,9 @@ export default function SettingsPage() {
 
                 {/* Data Tab */}
                 {activeTab === "data" && (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-6 p-6">
                     <div>
-                      <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
+                      <h2 className="text-dark dark:text-dark-text mb-1 text-xl font-semibold">
                         Meine Daten
                       </h2>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -978,12 +986,12 @@ export default function SettingsPage() {
                       {/* Data Export */}
                       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                         <div className="flex items-start gap-3">
-                          <Download className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+                          <Download className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
                           <div className="flex-1">
-                            <h3 className="text-dark dark:text-dark-text font-semibold mb-1">
+                            <h3 className="text-dark dark:text-dark-text mb-1 font-semibold">
                               Daten exportieren
                             </h3>
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                            <p className="mb-3 text-sm text-gray-700 dark:text-gray-300">
                               Laden Sie alle Ihre gespeicherten Daten herunter
                               (DSGVO Art. 20 - Recht auf Datenübertragbarkeit).
                               Die Daten werden im JSON-Format bereitgestellt.
@@ -1008,7 +1016,9 @@ export default function SettingsPage() {
                                   a.click();
                                   window.URL.revokeObjectURL(url);
                                   document.body.removeChild(a);
-                                  toast.success("Daten erfolgreich exportiert!");
+                                  toast.success(
+                                    "Daten erfolgreich exportiert!",
+                                  );
                                 } catch (error) {
                                   toast.error(
                                     "Fehler beim Exportieren der Daten. Bitte versuchen Sie es erneut.",
@@ -1022,7 +1032,9 @@ export default function SettingsPage() {
                               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                             >
                               <Download className="h-4 w-4" />
-                              {isExportingData ? "Exportiere..." : "Daten exportieren"}
+                              {isExportingData
+                                ? "Exportiere..."
+                                : "Daten exportieren"}
                             </button>
                           </div>
                         </div>
@@ -1030,14 +1042,14 @@ export default function SettingsPage() {
 
                       {/* Saved Participants */}
                       <div>
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="mb-4 flex items-center justify-between">
                           <div>
                             <h3 className="text-dark dark:text-dark-text font-semibold">
                               Gespeicherte Teilnehmer
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Teilnehmer, die Sie bei Kursanmeldungen gespeichert
-                              haben
+                              Teilnehmer, die Sie bei Kursanmeldungen
+                              gespeichert haben
                             </p>
                           </div>
                         </div>
@@ -1045,7 +1057,8 @@ export default function SettingsPage() {
                           <p className="text-sm text-gray-500 dark:text-gray-400">
                             Lädt...
                           </p>
-                        ) : savedParticipants && savedParticipants.length > 0 ? (
+                        ) : savedParticipants &&
+                          savedParticipants.length > 0 ? (
                           <div className="space-y-2">
                             {savedParticipants.map((participant) => (
                               <div
@@ -1061,7 +1074,8 @@ export default function SettingsPage() {
                                     {new Date(
                                       participant.birthDate,
                                     ).toLocaleDateString("de-DE")}
-                                    {participant.city && ` • ${participant.city}`}
+                                    {participant.city &&
+                                      ` • ${participant.city}`}
                                     {participant.instrument &&
                                       ` • ${participant.instrument}`}
                                   </div>
@@ -1101,9 +1115,9 @@ export default function SettingsPage() {
 
                 {/* Danger Zone Tab */}
                 {activeTab === "danger" && (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-6 p-6">
                     <div>
-                      <h2 className="text-dark dark:text-dark-text text-xl font-semibold mb-1">
+                      <h2 className="text-dark dark:text-dark-text mb-1 text-xl font-semibold">
                         Gefahrenzone
                       </h2>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -1113,12 +1127,12 @@ export default function SettingsPage() {
 
                     <div className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900 dark:bg-red-950/30">
                       <div className="flex items-start gap-3">
-                        <AlertTriangle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400 mt-0.5" />
+                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">
+                          <h3 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
                             Konto löschen
                           </h3>
-                          <p className="text-sm text-red-700 dark:text-red-400 mb-4">
+                          <p className="mb-4 text-sm text-red-700 dark:text-red-400">
                             Wenn Sie Ihr Konto löschen, werden alle Ihre Daten
                             unwiderruflich gelöscht, sofern keine gesetzlichen
                             Aufbewahrungspflichten bestehen. Falls Sie aktive
@@ -1153,14 +1167,14 @@ export default function SettingsPage() {
                 </h3>
                 <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                   Diese Aktion kann nicht rückgängig gemacht werden. Alle Ihre
-                  Daten werden unwiderruflich gelöscht, sofern keine gesetzlichen
-                  Aufbewahrungspflichten bestehen.
+                  Daten werden unwiderruflich gelöscht, sofern keine
+                  gesetzlichen Aufbewahrungspflichten bestehen.
                 </p>
                 <p className="mt-4 text-sm font-semibold text-gray-700 dark:text-gray-300">
                   Hinweis: Falls Sie aktive Mitgliedschaften haben oder Inhalte
-                  erstellt haben, müssen diese zuerst entfernt oder neu zugewiesen
-                  werden. Bitte kontaktieren Sie den Support, falls Sie Hilfe
-                  benötigen.
+                  erstellt haben, müssen diese zuerst entfernt oder neu
+                  zugewiesen werden. Bitte kontaktieren Sie den Support, falls
+                  Sie Hilfe benötigen.
                 </p>
                 <div className="mt-4">
                   <Label htmlFor="delete-email-confirm">
@@ -1243,8 +1257,8 @@ function TrackingConsentSection() {
     <div>
       <Label>Nutzungsstatistik</Label>
       <p className="mt-1 mb-3 text-xs text-gray-500 dark:text-gray-400">
-        Wir erfassen anonym die Nutzung unserer Webseite (Seitenaufrufe), um
-        sie zu verbessern. Es werden keine personenbezogenen Daten gespeichert,
+        Wir erfassen anonym die Nutzung unserer Webseite (Seitenaufrufe), um sie
+        zu verbessern. Es werden keine personenbezogenen Daten gespeichert,
         sofern Sie es nicht erlauben.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">

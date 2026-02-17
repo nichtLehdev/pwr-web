@@ -852,9 +852,8 @@ export const usersRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const targetUserId = input.userId ?? ctx.session.user.id;
       const isAdmin = await (async () => {
-        const { userHasPermission } = await import(
-          "@/server/api/helpers/permissions"
-        );
+        const { userHasPermission } =
+          await import("@/server/api/helpers/permissions");
         const { PERMISSIONS } = await import("@/lib/permissions");
         return await userHasPermission(
           ctx.session.user.id,
@@ -897,10 +896,7 @@ export const usersRouter = createTRPCRouter({
       // Get course registrations
       const registrations = await ctx.db.courseRegistration.findMany({
         where: {
-          OR: [
-            { registrantId: targetUserId },
-            { registrantEmail: user.email },
-          ],
+          OR: [{ registrantId: targetUserId }, { registrantEmail: user.email }],
         },
         include: {
           course: {
@@ -923,10 +919,11 @@ export const usersRouter = createTRPCRouter({
       });
 
       // Get newsletter subscription status
-      const newsletterSubscriber =
-        await ctx.db.newsletterSubscriber.findUnique({
+      const newsletterSubscriber = await ctx.db.newsletterSubscriber.findUnique(
+        {
           where: { email: user.email },
-        });
+        },
+      );
 
       // Get sessions (only if admin or user themselves)
       const sessions = await ctx.db.session.findMany({
@@ -947,9 +944,9 @@ export const usersRouter = createTRPCRouter({
         where: { userId: targetUserId },
         select: {
           id: true,
-        path: true,
-        section: true,
-        createdAt: true,
+          path: true,
+          section: true,
+          createdAt: true,
         },
         orderBy: { createdAt: "desc" },
         take: 1000, // Limit to last 1000 views
@@ -1001,11 +998,12 @@ export const usersRouter = createTRPCRouter({
           posaunenratMember: user.posaunenratMember ? true : false,
           vorstandMember: user.vorstandMember ? true : false,
           foerdervereinMember: user.foerdervereinMember ? true : false,
-          posaunenwarteResponsibilities:
-            user.posaunenwarteResponsibilities.map((pw) => ({
+          posaunenwarteResponsibilities: user.posaunenwarteResponsibilities.map(
+            (pw) => ({
               bezirkId: pw.bezirkId,
               bezirkName: pw.bezirk?.name,
-            })),
+            }),
+          ),
         },
         courseRegistrations: registrations.map((reg) => ({
           id: reg.id,

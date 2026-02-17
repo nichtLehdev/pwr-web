@@ -7,7 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 /**
  * Export user data for GDPR compliance (Art. 20 DSGVO)
  * GET /api/users/[userId]/export
- * 
+ *
  * Users can export their own data, admins can export any user's data
  */
 export async function GET(
