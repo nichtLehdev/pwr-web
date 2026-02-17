@@ -20,6 +20,11 @@ import {
   Link2Off,
 } from "lucide-react";
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+} from "@/app/_components/ui/scrollable-modal";
 
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type RegistrationData = Omit<
@@ -63,6 +68,7 @@ export default function CourseRegistrationForm({
   const groupIdCounterRef = useRef(0);
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(140);
+  const popupRef = useRef<HTMLDivElement>(null);
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
@@ -109,13 +115,39 @@ export default function CourseRegistrationForm({
     return () => window.removeEventListener("resize", updateHeaderHeight);
   }, [currentStep]);
 
+  // Remove inline top style on desktop to let CSS top-full work
+  useEffect(() => {
+    if (popupRef.current && showParticipantLibrary) {
+      const handleResize = () => {
+        if (popupRef.current) {
+          if (window.innerWidth >= 640) {
+            // Desktop - remove inline style to use CSS top-full
+            popupRef.current.style.top = "";
+          } else {
+            // Mobile - use inline style for positioning
+            popupRef.current.style.top = `calc(${headerHeight}px + 80px)`;
+          }
+        }
+      };
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, [showParticipantLibrary, headerHeight]);
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (showParticipantLibrary) {
+          setShowParticipantLibrary(false);
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose]);
+  }, [onClose, showParticipantLibrary]);
 
   useEffect(() => {
     if (currentStep === 2) {
@@ -989,22 +1021,112 @@ export default function CourseRegistrationForm({
                 </div>
               </div>
 
-              {/* Sticky Buttons on mobile only - positioned below orange header */}
+              {/* Sticky Buttons - sticky on mobile, also sticky on larger screens when participants exist */}
               <div
-                className="dark:bg-dark-surface sticky z-20 -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] sm:dark:bg-transparent sm:dark:shadow-none"
+                className={`dark:bg-dark-surface sticky z-[9] -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] ${
+                  registrationData.participants.length > 0
+                    ? "sm:-mx-6 sm:w-[calc(100%+3rem)] sm:bg-white sm:px-6 sm:pt-4 sm:pb-4 sm:shadow-[0_4px_6px_rgba(0,0,0,0.1)] md:mb-6 sm:dark:bg-gray-900 sm:dark:shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
+                    : "sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:dark:bg-transparent sm:dark:shadow-none"
+                }`}
                 style={{ top: `${headerHeight}px` }}
               >
-                <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+                <div className="relative flex flex-wrap justify-center gap-2 sm:flex-nowrap sm:justify-center">
                   {currentUser && (
-                    <button
-                      onClick={() =>
-                        setShowParticipantLibrary(!showParticipantLibrary)
-                      }
-                      className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:gap-2 sm:px-4 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    >
-                      <BookOpen className="h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">Aus Bibliothek</span>
-                    </button>
+                    <div className="relative">
+                      <button
+                        onClick={() =>
+                          setShowParticipantLibrary(!showParticipantLibrary)
+                        }
+                        className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:gap-2 sm:px-4 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                      >
+                        <BookOpen className="h-4 w-4 shrink-0" />
+                        <span className="hidden sm:inline">Aus Bibliothek</span>
+                      </button>
+                      {/* Participant Library Popup */}
+                      {showParticipantLibrary && (
+                        <>
+                          {/* Backdrop - only on mobile */}
+                          <div
+                            className="fixed inset-0 z-[100] bg-black/20 sm:hidden"
+                            onClick={() => setShowParticipantLibrary(false)}
+                          />
+                          {/* Popup */}
+                          <div 
+                            ref={popupRef}
+                            className="fixed left-1/2 z-[101] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 transform rounded-lg border-2 border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-800 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:z-[102] sm:mt-1 sm:translate-x-0 sm:max-w-md"
+                            style={{ 
+                              top: `calc(${headerHeight}px + 80px)`,
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="max-h-[60vh] overflow-y-auto p-4">
+                              <div className="mb-3 flex items-center justify-between">
+                                <h4 className="text-dark dark:text-dark-text font-semibold">
+                                  Gespeicherte Teilnehmer
+                                </h4>
+                                <button
+                                  onClick={() => setShowParticipantLibrary(false)}
+                                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                  aria-label="Schließen"
+                                >
+                                  <X className="h-5 w-5" />
+                                </button>
+                              </div>
+
+                              {savedParticipantsQuery.data &&
+                              savedParticipantsQuery.data.length > 0 ? (
+                                <>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {savedParticipantsQuery.data.map((saved) => (
+                                      <button
+                                        key={saved.id}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          loadSavedParticipant(saved);
+                                        }}
+                                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                      >
+                                        <div>
+                                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                                            {saved.firstName} {saved.lastName}
+                                          </div>
+                                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                                            {new Date(saved.birthDate).toLocaleDateString(
+                                              "de-DE",
+                                            )}
+                                            {saved.city && ` • ${saved.city}`}
+                                          </div>
+                                        </div>
+                                        <Plus className="h-4 w-4 text-gray-400" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                  <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                                    Gespeicherte Teilnehmer können Sie in den{" "}
+                                    <a
+                                      href="/settings"
+                                      className="text-primary hover:underline"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      Einstellungen
+                                    </a>{" "}
+                                    verwalten und entfernen.
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                  Noch keine Teilnehmer gespeichert. Sie können
+                                  Teilnehmer nach dem Hinzufügen speichern.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                   {currentUser && (
                     <button
@@ -1025,67 +1147,6 @@ export default function CourseRegistrationForm({
                 </div>
               </div>
 
-              {/* Participant Library - Not sticky */}
-              {showParticipantLibrary && currentUser && (
-                <div className="mb-4 rounded-lg border-2 border-blue-200 bg-blue-50 p-3 sm:mb-6 sm:p-4 dark:border-blue-800 dark:bg-blue-900/20">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">
-                      Gespeicherte Teilnehmer
-                    </h4>
-                    <button
-                      onClick={() => setShowParticipantLibrary(false)}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                  {savedParticipantsQuery.data &&
-                  savedParticipantsQuery.data.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {savedParticipantsQuery.data.map((saved) => (
-                        <button
-                          key={saved.id}
-                          onClick={() => loadSavedParticipant(saved)}
-                          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                        >
-                          <div>
-                            <div className="font-medium text-gray-900 dark:text-gray-100">
-                              {saved.firstName} {saved.lastName}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {new Date(saved.birthDate).toLocaleDateString(
-                                "de-DE",
-                              )}
-                              {saved.city && ` • ${saved.city}`}
-                            </div>
-                          </div>
-                          <Plus className="h-4 w-4 text-gray-400" />
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Noch keine Teilnehmer gespeichert. Sie können Teilnehmer
-                      nach dem Hinzufügen speichern.
-                    </p>
-                  )}
-                  {savedParticipantsQuery.data &&
-                  savedParticipantsQuery.data.length > 0 ? (
-                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                      Gespeicherte Teilnehmer können Sie in den{" "}
-                      <a
-                        href="/settings"
-                        className="text-primary hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Einstellungen
-                      </a>{" "}
-                      verwalten und entfernen.
-                    </p>
-                  ) : null}
-                </div>
-              )}
 
               {/* Scrollable Participants Section */}
               <div className="flex-1">
