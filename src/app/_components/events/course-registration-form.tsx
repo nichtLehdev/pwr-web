@@ -1533,7 +1533,11 @@ export default function CourseRegistrationForm({
                                   )
                                 }
                                 maxLength={100}
-                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
+                                  isInGroup
+                                    ? "bg-green-50 dark:bg-green-900/20"
+                                    : "bg-white dark:bg-gray-700"
+                                }`}
                                 placeholder="Trompete"
                               />
                             </div>
@@ -1551,7 +1555,7 @@ export default function CourseRegistrationForm({
                                     e.target.value,
                                   )
                                 }
-                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 h-[42px] sm:h-auto ${
                                   missingFields[index]?.includes("priceOptionId")
                                     ? "border-red-500 dark:border-red-500"
                                     : "border-gray-300"
