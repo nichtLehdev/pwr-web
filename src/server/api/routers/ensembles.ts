@@ -9,6 +9,7 @@ import {
 } from "../trpc";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const ensemblesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -283,7 +284,7 @@ export const ensemblesRouter = createTRPCRouter({
       });
     }),
 
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.ENSEMBLES_DELETE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.ensemble.delete({
@@ -320,7 +321,7 @@ export const ensemblesRouter = createTRPCRouter({
       return ensembles;
     }),
 
-  exportEnsembles: adminProcedure.query(async ({ ctx }) => {
+  exportEnsembles: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
     const ensembles = await ctx.db.ensemble.findMany({
       include: {
         image: true,
@@ -358,7 +359,7 @@ export const ensemblesRouter = createTRPCRouter({
     };
   }),
 
-  importEnsembles: adminProcedure
+  importEnsembles: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         ensembles: z.array(

@@ -718,11 +718,12 @@ function UsersTab() {
     });
   };
 
-  // Check if Admin role is assigned (either in selectedRoleIds or in userPermissions)
+  // Check if Administrator role is assigned (either in selectedRoleIds or in userPermissions)
   const hasAdminRole =
     roles?.some(
       (role) =>
-        role.name.toLowerCase() === "admin" &&
+        (role.name.toLowerCase() === "administrator" ||
+          role.name.toLowerCase() === "admin") &&
         (selectedRoleIds.includes(role.id) ||
           userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
     ) ?? false;
@@ -794,7 +795,9 @@ function UsersTab() {
                                 } else {
                                   // When non-Admin role is selected, remove Admin if it exists
                                   const adminRole = roles?.find(
-                                    (r) => r.name.toLowerCase() === "admin",
+                                    (r) =>
+                                      r.name.toLowerCase() === "administrator" ||
+                                      r.name.toLowerCase() === "admin",
                                   );
                                   const newRoleIds = adminRole
                                     ? selectedRoleIds.filter(

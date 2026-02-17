@@ -16,6 +16,7 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -1219,7 +1220,7 @@ export const coursesRouter = createTRPCRouter({
       return { success: true, updatedCount: canUpdateIds.length };
     }),
 
-  exportCourses: adminProcedure.query(async ({ ctx }) => {
+  exportCourses: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
     const courses = await ctx.db.course.findMany({
       include: {
         location: true,
@@ -1255,7 +1256,7 @@ export const coursesRouter = createTRPCRouter({
     };
   }),
 
-  importCourses: adminProcedure
+  importCourses: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         courses: z.array(

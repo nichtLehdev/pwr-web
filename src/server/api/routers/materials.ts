@@ -16,6 +16,7 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const materialsRouter = createTRPCRouter({
   getDownloads: publicProcedure
@@ -380,7 +381,7 @@ export const materialsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  exportDownloads: adminProcedure.query(async ({ ctx }) => {
+  exportDownloads: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
     const downloads = await ctx.db.download.findMany({
       include: {
         uploadedBy: {
@@ -405,7 +406,7 @@ export const materialsRouter = createTRPCRouter({
     };
   }),
 
-  importDownloads: adminProcedure
+  importDownloads: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         downloads: z.array(
@@ -447,7 +448,7 @@ export const materialsRouter = createTRPCRouter({
       };
     }),
 
-  exportBlaeserhefte: adminProcedure.query(async ({ ctx }) => {
+  exportBlaeserhefte: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
     const blaeserhefte = await ctx.db.blaeserheft.findMany({
       include: {
         image: true,
@@ -467,7 +468,7 @@ export const materialsRouter = createTRPCRouter({
     };
   }),
 
-  importBlaeserhefte: adminProcedure
+  importBlaeserhefte: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         blaeserhefte: z.array(
