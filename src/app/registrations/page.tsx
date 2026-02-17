@@ -403,7 +403,7 @@ export default function MyRegistrationsPage() {
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-green-600 dark:text-green-400">
-                                  Geschwisterrabatt (20%):
+                                  Geschwisterkindrabatt (20%):
                                 </span>
                                 <span className="font-semibold text-green-600 dark:text-green-400">
                                   -
@@ -430,9 +430,9 @@ export default function MyRegistrationsPage() {
                           SiblingDiscountStatus.REJECTED && (
                           <div className="mt-4 rounded-lg border-2 border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
                             <p className="mb-3 text-sm font-medium text-red-800 dark:text-red-300">
-                              Dein Antrag auf Geschwisterrabatt wurde abgelehnt.
-                              Du kannst die Anmeldung zum vollen Preis
-                              bestätigen oder stornieren.
+                              Dein Antrag auf Geschwisterkindrabatt wurde
+                              abgelehnt. Du kannst die Anmeldung zum vollen
+                              Preis bestätigen oder stornieren.
                             </p>
                             <div className="flex flex-wrap gap-2">
                               <button

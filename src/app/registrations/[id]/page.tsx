@@ -541,7 +541,7 @@ export default function ViewRegistrationPage() {
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
                   <span className="text-green-600 dark:text-green-400">
-                    Geschwisterrabatt (20%)
+                    Geschwisterkindrabatt (20%)
                   </span>
                   <span className="font-semibold text-green-600 dark:text-green-400">
                     -{registration.siblingDiscountAmount.toFixed(2)} €

@@ -64,14 +64,14 @@ export function SiblingDiscountRejected({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Geschwisterrabatt abgelehnt</Text>
+            <Text style={heading}>Geschwisterkindrabatt abgelehnt</Text>
 
             <Text style={paragraph}>
               Hallo {registrantFirstName} {registrantLastName},
             </Text>
 
             <Text style={paragraph}>
-              leider können wir deinen Antrag auf Geschwisterrabatt für die
+              leider können wir deinen Antrag auf Geschwisterkindrabatt für die
               folgende Anmeldung nicht genehmigen:
             </Text>
 

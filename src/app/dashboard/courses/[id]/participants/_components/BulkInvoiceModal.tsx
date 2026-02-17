@@ -98,7 +98,7 @@ export function BulkInvoiceModal({
   const handleGenerate = async () => {
     if (hasPendingDiscounts) {
       toast.error(
-        "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen.",
+        "Rechnungen können nicht generiert werden, solange noch Geschwisterkindrabatte zur Prüfung ausstehen.",
       );
       return;
     }
@@ -181,9 +181,9 @@ export function BulkInvoiceModal({
                   Rechnungen können nicht generiert werden
                 </p>
                 <p className="mt-1 text-xs text-yellow-700">
-                  Es gibt noch Anmeldungen mit ausstehenden Geschwisterrabatten.
-                  Bitte prüfen und genehmigen oder ablehnen Sie alle Rabatte,
-                  bevor Sie Rechnungen generieren.
+                  Es gibt noch Anmeldungen mit ausstehenden
+                  Geschwisterkindrabatten. Bitte prüfen und genehmigen oder
+                  ablehnen Sie alle Rabatte, bevor Sie Rechnungen generieren.
                 </p>
               </div>
             </div>
@@ -408,7 +408,7 @@ export function BulkInvoiceModal({
               className="flex flex-1 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               title={
                 hasPendingDiscounts
-                  ? "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen."
+                  ? "Rechnungen können nicht generiert werden, solange noch Geschwisterkindrabatte zur Prüfung ausstehen."
                   : undefined
               }
             >

@@ -139,7 +139,7 @@ export async function sendSiblingDiscountApprovedEmail(
 
   return sendEmail({
     to: email,
-    subject: `Geschwisterrabatt genehmigt: ${courseTitle} - Posaunenwerk Rheinland`,
+    subject: `Geschwisterkindrabatt genehmigt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
   });
 }
@@ -205,7 +205,7 @@ export async function sendSiblingDiscountRejectedEmail(
 
   return sendEmail({
     to: email,
-    subject: `Geschwisterrabatt abgelehnt: ${courseTitle} - Posaunenwerk Rheinland`,
+    subject: `Geschwisterkindrabatt abgelehnt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
   });
 }

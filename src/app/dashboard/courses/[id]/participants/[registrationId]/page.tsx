@@ -19,6 +19,7 @@ import {
   MailIcon,
   PhoneIcon,
 } from "lucide-react";
+import { isParticipantUnder18 } from "@/lib/participant-utils";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -112,7 +113,7 @@ export default function RegistrationDetailPage() {
   const approveDiscountMutation =
     api.registrations.approveSiblingDiscount.useMutation({
       onSuccess: () => {
-        toast.success("Geschwisterrabatt genehmigt");
+        toast.success("Geschwisterkindrabatt genehmigt");
         void utils.registrations.getById.invalidate({ id: registrationId });
         void utils.courses.getRegistrations.invalidate({ courseId });
       },
@@ -124,7 +125,7 @@ export default function RegistrationDetailPage() {
   const rejectDiscountMutation =
     api.registrations.rejectSiblingDiscount.useMutation({
       onSuccess: () => {
-        toast.success("Geschwisterrabatt abgelehnt");
+        toast.success("Geschwisterkindrabatt abgelehnt");
         void utils.registrations.getById.invalidate({ id: registrationId });
         void utils.courses.getRegistrations.invalidate({ courseId });
       },
@@ -367,7 +368,7 @@ export default function RegistrationDetailPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterrabatt (20%):
+                        Geschwisterkindrabatt (20%):
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         -{registration.siblingDiscountAmount.toFixed(2)} €
@@ -461,6 +462,15 @@ export default function RegistrationDetailPage() {
                   getParticipantDisplayName(p.firstName, p.lastName, p.id),
                 );
 
+              // Check if this group is eligible for discount
+              const eligibleParticipants = siblingGroup.filter(
+                (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+              );
+              const isEligibleForDiscount = eligibleParticipants.length > 1;
+              const isParticipantEligible =
+                participant.birthDate &&
+                isParticipantUnder18(participant.birthDate);
+
               return (
                 <div
                   key={participant.id}
@@ -478,6 +488,19 @@ export default function RegistrationDetailPage() {
                           Geschwistergruppe
                         </span>
                       )}
+                      {isInGroup && course.allowSiblingDiscount && (
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${
+                            isEligibleForDiscount
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          }`}
+                        >
+                          {isEligibleForDiscount
+                            ? "Rabatt berechtigt"
+                            : "Rabatt nicht berechtigt"}
+                        </span>
+                      )}
                     </div>
                     <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
                       {getParticipantDisplayName(
@@ -488,8 +511,23 @@ export default function RegistrationDetailPage() {
                     </span>
                   </div>
                   {isInGroup && groupMembers.length > 0 && (
-                    <div className="mb-3 text-xs text-green-700 dark:text-green-400">
-                      Geschwister mit: {groupMembers.join(", ")}
+                    <div className="mb-3 space-y-1">
+                      <div className="text-xs text-green-700 dark:text-green-400">
+                        Geschwister mit: {groupMembers.join(", ")}
+                      </div>
+                      {course.allowSiblingDiscount && (
+                        <div
+                          className={`text-xs ${
+                            isEligibleForDiscount
+                              ? "text-green-700 dark:text-green-400"
+                              : "text-yellow-700 dark:text-yellow-400"
+                          }`}
+                        >
+                          {isEligibleForDiscount
+                            ? `✓ Gruppe berechtigt für Geschwisterkindrabatt (${eligibleParticipants.length} Minderjährige)`
+                            : "⚠ Gruppe nicht berechtigt für Geschwisterkindrabatt (mindestens 2 Minderjährige erforderlich)"}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div className="grid gap-4 text-sm md:grid-cols-2">

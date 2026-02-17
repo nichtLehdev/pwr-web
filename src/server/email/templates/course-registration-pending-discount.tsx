@@ -94,7 +94,7 @@ export function CourseRegistrationPendingDiscount({
                 {formatPrice(originalTotalPrice)}
               </Text>
               <Text style={priceDetailDiscount}>
-                <strong>Geschwisterrabatt (20%):</strong> -
+                <strong>Geschwisterkindrabatt (20%):</strong> -
                 {formatPrice(discountAmount)}
               </Text>
               <Hr style={priceHr} />
@@ -107,7 +107,7 @@ export function CourseRegistrationPendingDiscount({
             <Section style={pendingWarning}>
               <Text style={pendingWarningTitle}>⏳ Rabatt prüfen</Text>
               <Text style={pendingWarningText}>
-                Dein Antrag auf Geschwisterrabatt wird derzeit geprüft. Du
+                Dein Antrag auf Geschwisterkindrabatt wird derzeit geprüft. Du
                 erhältst eine separate E-Mail, sobald der Rabatt genehmigt oder
                 abgelehnt wurde. Deine Anmeldung ist bereits reserviert, auch
                 während der Prüfung.

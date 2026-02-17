@@ -509,7 +509,7 @@ export default function CourseParticipantsPage() {
                         className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
                         title={
                           hasPendingDiscounts
-                            ? "Rechnungen können nicht generiert werden, solange noch Geschwisterrabatte zur Prüfung ausstehen."
+                            ? "Rechnungen können nicht generiert werden, solange noch Geschwisterkindrabatte zur Prüfung ausstehen."
                             : undefined
                         }
                       >
@@ -521,7 +521,7 @@ export default function CourseParticipantsPage() {
                       </button>
                       {hasPendingDiscounts && (
                         <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
-                          ⚠️ Es gibt noch ausstehende Geschwisterrabatte
+                          ⚠️ Es gibt noch ausstehende Geschwisterkindrabatte
                         </div>
                       )}
                     </>
