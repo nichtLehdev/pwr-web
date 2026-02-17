@@ -838,4 +838,354 @@ export const usersRouter = createTRPCRouter({
 
       return users;
     }),
+
+  /**
+   * Export all user data for GDPR compliance (Art. 20 DSGVO)
+   * Users can export their own data, admins can export any user's data
+   */
+  exportData: protectedProcedure
+    .input(
+      z.object({
+        userId: z.string().optional(), // If not provided, exports current user's data
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const targetUserId = input.userId ?? ctx.session.user.id;
+      const isAdmin = await (async () => {
+        const { userHasPermission } = await import(
+          "@/server/api/helpers/permissions"
+        );
+        const { PERMISSIONS } = await import("@/lib/permissions");
+        return await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.USERS_MANAGE,
+        );
+      })();
+
+      // Users can only export their own data unless they're admin
+      if (!isAdmin && targetUserId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can only export your own data",
+        });
+      }
+
+      const user = await ctx.db.user.findUnique({
+        where: { id: targetUserId },
+        include: {
+          profileImage: true,
+          bezirk: true,
+          teamMember: true,
+          posaunenratMember: true,
+          vorstandMember: true,
+          foerdervereinMember: true,
+          posaunenwarteResponsibilities: {
+            include: {
+              bezirk: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // Get course registrations
+      const registrations = await ctx.db.courseRegistration.findMany({
+        where: {
+          OR: [
+            { registrantId: targetUserId },
+            { registrantEmail: user.email },
+          ],
+        },
+        include: {
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          participants: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Get saved participants
+      const savedParticipants = await ctx.db.savedParticipant.findMany({
+        where: { userId: targetUserId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Get newsletter subscription status
+      const newsletterSubscriber =
+        await ctx.db.newsletterSubscriber.findUnique({
+          where: { email: user.email },
+        });
+
+      // Get sessions (only if admin or user themselves)
+      const sessions = await ctx.db.session.findMany({
+        where: { userId: targetUserId },
+        select: {
+          id: true,
+          createdAt: true,
+          expiresAt: true,
+          ipAddress: true,
+          userAgent: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 100, // Limit to last 100 sessions
+      });
+
+      // Get page view stats (if user consented)
+      const pageViews = await ctx.db.pageView.findMany({
+        where: { userId: targetUserId },
+        select: {
+          id: true,
+        path: true,
+        section: true,
+        createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 1000, // Limit to last 1000 views
+      });
+
+      // Get created content counts (without full data for privacy)
+      const [createdEventsCount, createdCoursesCount, createdPostsCount] =
+        await Promise.all([
+          ctx.db.event.count({ where: { createdById: targetUserId } }),
+          ctx.db.course.count({ where: { createdById: targetUserId } }),
+          ctx.db.post.count({ where: { createdById: targetUserId } }),
+        ]);
+
+      return {
+        exportedAt: new Date().toISOString(),
+        user: {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          street: user.street,
+          zipCode: user.zipCode,
+          city: user.city,
+          birthDate: user.birthDate,
+          bio: user.bio,
+          preferences: user.preferences,
+          districtRoleName: user.districtRoleName,
+          bezirk: user.bezirk
+            ? {
+                id: user.bezirk.id,
+                name: user.bezirk.name,
+              }
+            : null,
+          profileImage: user.profileImage
+            ? {
+                id: user.profileImage.id,
+                url: user.profileImage.url,
+                filename: user.profileImage.filename,
+              }
+            : null,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        memberships: {
+          teamMember: user.teamMember ? true : false,
+          posaunenratMember: user.posaunenratMember ? true : false,
+          vorstandMember: user.vorstandMember ? true : false,
+          foerdervereinMember: user.foerdervereinMember ? true : false,
+          posaunenwarteResponsibilities:
+            user.posaunenwarteResponsibilities.map((pw) => ({
+              bezirkId: pw.bezirkId,
+              bezirkName: pw.bezirk?.name,
+            })),
+        },
+        courseRegistrations: registrations.map((reg) => ({
+          id: reg.id,
+          course: {
+            id: reg.course.id,
+            title: reg.course.title,
+            startDate: reg.course.startDate,
+            endDate: reg.course.endDate,
+          },
+          registrantFirstName: reg.registrantFirstName,
+          registrantLastName: reg.registrantLastName,
+          registrantEmail: reg.registrantEmail,
+          registrantPhone: reg.registrantPhone,
+          registrantStreet: reg.registrantStreet,
+          registrantZipCode: reg.registrantZipCode,
+          registrantCity: reg.registrantCity,
+          useSeparateBilling: reg.useSeparateBilling,
+          billingCompany: reg.billingCompany,
+          billingFirstName: reg.billingFirstName,
+          billingLastName: reg.billingLastName,
+          billingStreet: reg.billingStreet,
+          billingZipCode: reg.billingZipCode,
+          billingCity: reg.billingCity,
+          billingEmail: reg.billingEmail,
+          totalPrice: reg.totalPrice,
+          paymentStatus: reg.paymentStatus,
+          registrationStatus: reg.registrationStatus,
+          siblingDiscountApplied: reg.siblingDiscountApplied,
+          invoiceGenerated: reg.invoiceGenerated,
+          invoiceId: reg.invoiceId,
+          invoiceDate: reg.invoiceDate,
+          participants: reg.participants.map((p) => ({
+            firstName: p.firstName,
+            lastName: p.lastName,
+            birthDate: p.birthDate,
+            city: p.city,
+            instrument: p.instrument,
+            customFields: p.customFields,
+          })),
+          createdAt: reg.createdAt,
+          updatedAt: reg.updatedAt,
+        })),
+        savedParticipants: savedParticipants.map((sp) => ({
+          id: sp.id,
+          firstName: sp.firstName,
+          lastName: sp.lastName,
+          birthDate: sp.birthDate,
+          city: sp.city,
+          instrument: sp.instrument,
+          customFields: sp.customFields,
+          createdAt: sp.createdAt,
+          updatedAt: sp.updatedAt,
+        })),
+        newsletterSubscription: newsletterSubscriber
+          ? {
+              email: newsletterSubscriber.email,
+              name: newsletterSubscriber.name,
+              isActive: newsletterSubscriber.isActive,
+              subscribedAt: newsletterSubscriber.subscribedAt,
+              unsubscribedAt: newsletterSubscriber.unsubscribedAt,
+            }
+          : null,
+        sessions: sessions,
+        pageViews: pageViews,
+        contentCounts: {
+          createdEvents: createdEventsCount,
+          createdCourses: createdCoursesCount,
+          createdPosts: createdPostsCount,
+        },
+      };
+    }),
+
+  /**
+   * Delete own account (Art. 17 DSGVO - Right to erasure)
+   * Users can delete their own account, but must handle dependencies first
+   */
+  deleteMyAccount: protectedProcedure
+    .input(
+      z.object({
+        confirmEmail: z.string().email(), // User must confirm with their email
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+        include: {
+          createdEvents: { take: 1 },
+          createdCourses: { take: 1 },
+          createdPosts: { take: 1 },
+          teamMember: true,
+          vorstandMember: true,
+          posaunenratMember: true,
+          foerdervereinMember: true,
+          courseRegistrations: {
+            where: {
+              // Only count registrations that might have legal retention requirements
+              invoiceGenerated: true,
+            },
+            take: 1,
+          },
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+
+      // Verify email matches
+      if (user.email !== input.confirmEmail) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Email confirmation does not match",
+        });
+      }
+
+      // Check for blocking dependencies
+      const blockingIssues: string[] = [];
+
+      if (user.teamMember) {
+        blockingIssues.push("active team membership");
+      }
+      if (user.vorstandMember) {
+        blockingIssues.push("active Vorstand membership");
+      }
+      if (user.posaunenratMember) {
+        blockingIssues.push("active Posaunenrat membership");
+      }
+      if (user.foerdervereinMember) {
+        blockingIssues.push("active Förderverein membership");
+      }
+      if (user.createdEvents.length > 0) {
+        blockingIssues.push("created events (must be reassigned or deleted)");
+      }
+      if (user.createdCourses.length > 0) {
+        blockingIssues.push("created courses (must be reassigned or deleted)");
+      }
+      if (user.createdPosts.length > 0) {
+        blockingIssues.push("created posts (must be reassigned or deleted)");
+      }
+      if (user.courseRegistrations.length > 0) {
+        blockingIssues.push(
+          "course registrations with invoices (legal retention requirement - contact admin for anonymization)",
+        );
+      }
+
+      if (blockingIssues.length > 0) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Cannot delete account due to: ${blockingIssues.join(", ")}. Please contact support for assistance.`,
+        });
+      }
+
+      // Delete saved participants first (cascade should handle this, but explicit is better)
+      await ctx.db.savedParticipant.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Delete sessions
+      await ctx.db.session.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Delete page views
+      await ctx.db.pageView.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Delete accounts (auth system)
+      await ctx.db.account.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Finally delete the user
+      await ctx.db.user.delete({
+        where: { id: user.id },
+      });
+
+      return { success: true };
+    }),
 });
