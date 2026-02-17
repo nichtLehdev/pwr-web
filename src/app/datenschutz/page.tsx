@@ -330,9 +330,25 @@ export default function DatenschutzPage() {
                       erhoben:
                     </p>
                     <ul className="ml-6 list-disc space-y-2">
-                      <li>Name</li>
                       <li>E-Mail-Adresse</li>
                       <li>Passwort (verschlüsselt gespeichert)</li>
+                      <li>Vorname</li>
+                      <li>Nachname</li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      Optional können Sie zusätzlich folgende Daten angeben:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Benutzername</li>
+                      <li>Anzeigename</li>
+                      <li>Telefonnummer</li>
+                      <li>Straße und Hausnummer</li>
+                      <li>Postleitzahl</li>
+                      <li>Stadt</li>
+                      <li>Geburtsdatum</li>
+                      <li>Profilbild</li>
+                      <li>Biografie</li>
+                      <li>Einstellungen und Präferenzen</li>
                     </ul>
                     <p className="leading-relaxed">
                       Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1
@@ -376,19 +392,198 @@ export default function DatenschutzPage() {
         </div>
       </section>
 
+      {/* Kursanmeldungen */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
+                6. Kursanmeldungen und Teilnehmerdaten
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    6.1 Anmeldedaten
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Bei der Anmeldung zu einem Kurs oder Lehrgang werden
+                      folgende Daten des Anmelders erfasst:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Vorname und Nachname</li>
+                      <li>E-Mail-Adresse</li>
+                      <li>Telefonnummer (optional)</li>
+                      <li>Straße und Hausnummer (optional)</li>
+                      <li>Postleitzahl (optional)</li>
+                      <li>Stadt (optional)</li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      Falls eine separate Rechnungsadresse angegeben wird,
+                      werden zusätzlich folgende Daten gespeichert:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Firmenname (optional)</li>
+                      <li>Vorname und Nachname des Rechnungsempfängers</li>
+                      <li>Rechnungsadresse (Straße, PLZ, Stadt)</li>
+                      <li>E-Mail-Adresse für Rechnungen (optional)</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    6.2 Teilnehmerdaten
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Für jeden angemeldeten Teilnehmer werden folgende Daten
+                      erfasst:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Vorname und Nachname</li>
+                      <li>Geburtsdatum</li>
+                      <li>Stadt</li>
+                      <li>Instrument (optional)</li>
+                      <li>Ausgewählte Preisoption</li>
+                      <li>
+                        Zusätzliche, kurs-spezifische Felder (falls vorhanden)
+                      </li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      Diese Daten werden zur Durchführung der Kursanmeldung, zur
+                      Kommunikation bezüglich des Kurses, zur Rechnungsstellung
+                      und zur Verwaltung der Teilnehmer benötigt. Die
+                      Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                      b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f
+                      DSGVO (berechtigtes Interesse an der ordnungsgemäßen
+                      Verwaltung).
+                    </p>
+                    <p className="leading-relaxed">
+                      <strong>Besonderer Hinweis zu Minderjährigen:</strong> Bei
+                      der Anmeldung von Minderjährigen werden deren Daten
+                      ebenfalls erfasst. Die Einwilligung zur Datenverarbeitung
+                      erfolgt durch den Erziehungsberechtigten, der die
+                      Anmeldung vornimmt.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    6.3 Geschwisterkindrabatt
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Bei der Anwendung eines Geschwisterkindrabatts werden
+                      Teilnehmer in Geschwistergruppen zusammengefasst. Hierfür
+                      wird eine Gruppierungs-ID gespeichert, die es ermöglicht,
+                      Geschwister zu identifizieren und den Rabatt korrekt zu
+                      berechnen. Diese Daten werden nur für die Zwecke der
+                      Rabattberechnung verwendet.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    6.4 Zahlungs- und Rechnungsdaten
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Zur Abwicklung der Zahlung und Rechnungsstellung werden
+                      folgende Daten gespeichert:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Gesamtpreis der Anmeldung</li>
+                      <li>Zahlungsstatus</li>
+                      <li>Anmeldestatus</li>
+                      <li>Rechnungsnummer (falls Rechnung erstellt wurde)</li>
+                      <li>Rechnungsdatum (falls Rechnung erstellt wurde)</li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      Diese Daten werden zur Erfüllung vertraglicher
+                      Verpflichtungen und zur Erfüllung gesetzlicher
+                      Aufbewahrungspflichten benötigt. Die Verarbeitung erfolgt
+                      auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO
+                      (Vertragserfüllung) und Art. 6 Abs. 1 lit. c DSGVO
+                      (gesetzliche Verpflichtung).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    6.5 Speicherdauer
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Anmelde- und Teilnehmerdaten werden gespeichert, solange
+                      dies zur Erfüllung der vertraglichen Verpflichtungen und
+                      zur Erfüllung gesetzlicher Aufbewahrungspflichten
+                      (insbesondere steuer- und handelsrechtlicher Art)
+                      erforderlich ist. In der Regel beträgt die
+                      Aufbewahrungsfrist für Rechnungen 10 Jahre gemäß § 147 AO
+                      (Abgabenordnung).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gespeicherte Teilnehmer */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
+                7. Gespeicherte Teilnehmer
+              </h2>
+
+              <div className="space-y-4 text-gray-700 dark:text-gray-300">
+                <p className="leading-relaxed">
+                  Registrierte Benutzer haben die Möglichkeit, Teilnehmerdaten
+                  zu speichern, um diese bei zukünftigen Anmeldungen
+                  wiederzuverwenden. Hierbei werden folgende Daten gespeichert:
+                </p>
+                <ul className="ml-6 list-disc space-y-2">
+                  <li>Vorname und Nachname</li>
+                  <li>Geburtsdatum</li>
+                  <li>Stadt</li>
+                  <li>Instrument (optional)</li>
+                  <li>Zusätzliche, kurs-spezifische Felder (optional)</li>
+                </ul>
+                <p className="leading-relaxed">
+                  Diese Daten werden ausschließlich für den angemeldeten
+                  Benutzer gespeichert und können von diesem jederzeit gelöscht
+                  werden. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs.
+                  1 lit. a DSGVO mit Ihrer Einwilligung. Sie können Ihre
+                  gespeicherten Teilnehmer jederzeit in den Einstellungen
+                  verwalten und löschen.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Newsletter */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                6. Newsletter
+                8. Newsletter
               </h2>
 
               <div className="space-y-6">
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
-                    6.1 Newsletter-Daten
+                    8.1 Newsletter-Daten
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
@@ -413,7 +608,7 @@ export default function DatenschutzPage() {
 
                 <div className="dark:border-dark-border border-t border-gray-200 pt-6">
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
-                    6.2 Double-Opt-In-Verfahren
+                    8.2 Double-Opt-In-Verfahren
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
@@ -432,13 +627,143 @@ export default function DatenschutzPage() {
         </div>
       </section>
 
+      {/* Feedback */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
+                9. Feedback-Formular
+              </h2>
+
+              <div className="space-y-4 text-gray-700 dark:text-gray-300">
+                <p className="leading-relaxed">
+                  Über unser Feedback-Formular können Sie Fehler melden,
+                  Features vorschlagen oder allgemeines Feedback geben. Hierbei
+                  werden folgende Daten erfasst:
+                </p>
+                <ul className="ml-6 list-disc space-y-2">
+                  <li>E-Mail-Adresse (optional, für Rückfragen)</li>
+                  <li>
+                    Art des Feedbacks (Fehler, Feature-Vorschlag, Allgemeines)
+                  </li>
+                  <li>Betreff</li>
+                  <li>Feedback-Text</li>
+                  <li>URL der betroffenen Seite (optional)</li>
+                  <li>Geräteinformationen (optional)</li>
+                </ul>
+                <p className="leading-relaxed">
+                  Diese Daten werden ausschließlich zur Bearbeitung Ihres
+                  Feedbacks und zur Verbesserung unserer Website verwendet. Die
+                  Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f
+                  DSGVO (berechtigtes Interesse an der Verbesserung unserer
+                  Dienste). Die Daten werden gelöscht, sobald sie für die
+                  Bearbeitung nicht mehr benötigt werden.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Nutzungsstatistik */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
+                10. Nutzungsstatistik (Page View Tracking)
+              </h2>
+
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    10.1 Erfassung von Seitenaufrufen
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Um unsere Website zu verbessern, erfassen wir anonym die
+                      Nutzung unserer Webseite (Seitenaufrufe). Hierbei werden
+                      folgende Daten gespeichert:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>Aufgerufene Seite (URL)</li>
+                      <li>Bereich der Seite (z.B. Hero-Bereich, Footer)</li>
+                      <li>Zeitpunkt des Aufrufs</li>
+                      <li>Ihre Einwilligungseinstellung</li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      <strong>Wichtig:</strong> Es werden keine
+                      personenbezogenen Daten gespeichert, es sei denn, Sie
+                      haben ausdrücklich zugestimmt, dass Seitenaufrufe Ihrem
+                      Benutzerkonto zugeordnet werden dürfen. In diesem Fall
+                      wird zusätzlich Ihre Benutzer-ID gespeichert.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    10.2 Einwilligung
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Beim ersten Besuch unserer Website werden Sie über die
+                      Erfassung von Nutzungsstatistiken informiert und können
+                      zwischen folgenden Optionen wählen:
+                    </p>
+                    <ul className="ml-6 list-disc space-y-2">
+                      <li>
+                        <strong>Ablehnen:</strong> Es werden keine
+                        Nutzungsstatistiken erfasst.
+                      </li>
+                      <li>
+                        <strong>Nur anonym:</strong> Es werden anonyme
+                        Seitenaufrufe erfasst, ohne Zuordnung zu Ihrem
+                        Benutzerkonto.
+                      </li>
+                      <li>
+                        <strong>Anonym + Zuordnung zu meinem Konto:</strong> Es
+                        werden Seitenaufrufe erfasst und Ihrem Benutzerkonto
+                        zugeordnet (nur wenn Sie eingeloggt sind).
+                      </li>
+                    </ul>
+                    <p className="leading-relaxed">
+                      Ihre Einwilligung wird in einem Cookie gespeichert und
+                      kann jederzeit in den Einstellungen geändert werden. Die
+                      Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                      a DSGVO mit Ihrer Einwilligung.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    10.3 Zweck der Verarbeitung
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Die Nutzungsstatistiken dienen ausschließlich der
+                      Verbesserung unserer Website, der Analyse des
+                      Nutzerverhaltens und der Optimierung der
+                      Benutzerfreundlichkeit. Die Daten werden nicht an Dritte
+                      weitergegeben und nicht für Werbezwecke verwendet.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Cookies */}
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                7. Cookies
+                11. Cookies
               </h2>
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
@@ -486,6 +811,10 @@ export default function DatenschutzPage() {
                       <strong>Authentifizierung:</strong> Sichere Anmeldung und
                       Session-Management
                     </li>
+                    <li>
+                      <strong>Tracking-Einwilligung:</strong> Speicherung Ihrer
+                      Einwilligung zur Erfassung von Nutzungsstatistiken
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -494,13 +823,49 @@ export default function DatenschutzPage() {
         </div>
       </section>
 
-      {/* SSL/TLS-Verschlüsselung */}
+      {/* Session-Daten */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                8. SSL- bzw. TLS-Verschlüsselung
+                12. Session-Daten
+              </h2>
+
+              <div className="space-y-4 text-gray-700 dark:text-gray-300">
+                <p className="leading-relaxed">
+                  Bei der Anmeldung auf unserer Website werden Session-Daten
+                  gespeichert, die für die Aufrechterhaltung Ihrer
+                  Anmeldesitzung erforderlich sind. Hierbei werden folgende
+                  Daten erfasst:
+                </p>
+                <ul className="ml-6 list-disc space-y-2">
+                  <li>Session-Token (zur Identifikation Ihrer Sitzung)</li>
+                  <li>IP-Adresse (zur Sicherheit und Betrugsprävention)</li>
+                  <li>User-Agent (Browser- und Geräteinformationen)</li>
+                  <li>Ablaufdatum der Session</li>
+                </ul>
+                <p className="leading-relaxed">
+                  Diese Daten werden zur Sicherstellung der Funktionalität der
+                  Website, zur Sicherheit und zur Betrugsprävention benötigt.
+                  Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit.
+                  f DSGVO (berechtigtes Interesse an der Sicherheit und
+                  Funktionalität der Website). Session-Daten werden automatisch
+                  gelöscht, sobald Sie sich abmelden oder die Session abläuft.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SSL/TLS-Verschlüsselung */}
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <div className="mx-auto max-w-4xl">
+            <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
+              <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
+                13. SSL- bzw. TLS-Verschlüsselung
               </h2>
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
@@ -525,12 +890,12 @@ export default function DatenschutzPage() {
       </section>
 
       {/* Ihre Rechte */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                9. Ihre Rechte als betroffene Person
+                14. Ihre Rechte als betroffene Person
               </h2>
 
               <div className="space-y-6">
@@ -618,7 +983,7 @@ export default function DatenschutzPage() {
                   </div>
                 </div>
 
-                <div className="dark:border-dark-border mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
+                <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/30 dark:bg-blue-900/10">
                   <p className="text-sm text-gray-700 dark:text-gray-300">
                     <strong className="text-dark dark:text-dark-text">
                       Kontakt für Betroffenenrechte:
@@ -640,12 +1005,12 @@ export default function DatenschutzPage() {
       </section>
 
       {/* Datenspeicherung */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                10. Speicherdauer
+                15. Speicherdauer
               </h2>
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
@@ -668,18 +1033,18 @@ export default function DatenschutzPage() {
       </section>
 
       {/* Social Media */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                11. Social Media
+                16. Social Media
               </h2>
 
               <div className="space-y-6">
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
-                    11.1 Social-Media-Plugins
+                    16.1 Social-Media-Plugins
                   </h3>
                   <p className="text-gray-700 dark:text-gray-300">
                     Auf unserer Website verwenden wir ausschließlich direkte
@@ -693,7 +1058,7 @@ export default function DatenschutzPage() {
 
                 <div className="dark:border-dark-border border-t border-gray-200 pt-6">
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
-                    11.2 Unsere Social-Media-Präsenzen
+                    16.2 Unsere Social-Media-Präsenzen
                   </h3>
                   <div className="space-y-3 text-gray-700 dark:text-gray-300">
                     <p className="leading-relaxed">
@@ -727,12 +1092,12 @@ export default function DatenschutzPage() {
       </section>
 
       {/* Änderungen */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <div className="mx-auto max-w-4xl">
             <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg bg-white p-6 shadow-lg md:p-8 dark:border dark:shadow-none">
               <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl">
-                12. Änderungen dieser Datenschutzerklärung
+                17. Änderungen dieser Datenschutzerklärung
               </h2>
 
               <div className="space-y-4 text-gray-700 dark:text-gray-300">
@@ -817,7 +1182,7 @@ export default function DatenschutzPage() {
         <div className="container">
           <div className="mx-auto max-w-4xl text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Stand dieser Datenschutzerklärung: November 2025
+              Stand dieser Datenschutzerklärung: Februar 2026
             </p>
           </div>
         </div>
