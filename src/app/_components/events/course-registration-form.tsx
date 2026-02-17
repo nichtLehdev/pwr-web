@@ -72,6 +72,9 @@ export default function CourseRegistrationForm({
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
+  const [missingFields, setMissingFields] = useState<
+    Record<number, string[]>
+  >({});
   const [showParticipantLibrary, setShowParticipantLibrary] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
@@ -152,22 +155,84 @@ export default function CourseRegistrationForm({
   useEffect(() => {
     if (currentStep === 2) {
       const errors: Record<number, string> = {};
+      const missing: Record<number, string[]> = {};
       registrationData.participants.forEach((p, index) => {
+        const fieldErrors: string[] = [];
+        const missingFieldKeys: string[] = [];
+        
+        // Check required fields
+        if (!p.firstName?.trim()) {
+          fieldErrors.push("Vorname");
+          missingFieldKeys.push("firstName");
+        }
+        if (!p.lastName?.trim()) {
+          fieldErrors.push("Nachname");
+          missingFieldKeys.push("lastName");
+        }
         if (!p.birthDate) {
-          errors[index] = "Geburtsdatum ist erforderlich";
-        } else if (new Date(p.birthDate) >= new Date()) {
-          errors[index] = "Geburtsdatum muss in der Vergangenheit liegen";
+          fieldErrors.push("Geburtsdatum");
+          missingFieldKeys.push("birthDate");
+        } else {
+          const birthDate = new Date(p.birthDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+          const oneYearAgo = new Date(today);
+          oneYearAgo.setFullYear(today.getFullYear() - 1);
+          const maxAge = new Date(today);
+          maxAge.setFullYear(today.getFullYear() - 120); // Reasonable maximum age
+          
+          if (birthDate >= today) {
+            errors[index] = "Geburtsdatum darf nicht heute oder in der Zukunft liegen";
+            missingFieldKeys.push("birthDate");
+          } else if (birthDate > oneYearAgo) {
+            errors[index] = "Teilnehmer muss mindestens 1 Jahr alt sein";
+            missingFieldKeys.push("birthDate");
+          } else if (birthDate < maxAge) {
+            errors[index] = "Geburtsdatum ist nicht gültig";
+            missingFieldKeys.push("birthDate");
+          }
+        }
+        if (!p.city?.trim()) {
+          fieldErrors.push("Stadt");
+          missingFieldKeys.push("city");
+        }
+        if (!p.priceOptionId) {
+          fieldErrors.push("Preisoption");
+          missingFieldKeys.push("priceOptionId");
+        }
+        
+        // Check required custom fields
+        if (course.customFields) {
+          for (const field of course.customFields) {
+            if (field.isRequired) {
+              const customFields = p.customFields as Record<string, any> | undefined;
+              const fieldValue = customFields?.[field.fieldName];
+              if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                fieldErrors.push(field.fieldName);
+                missingFieldKeys.push(`customField:${field.fieldName}`);
+              }
+            }
+          }
+        }
+        
+        if (fieldErrors.length > 0) {
+          errors[index] = `Fehlende Pflichtfelder: ${fieldErrors.join(", ")}`;
+        }
+        if (missingFieldKeys.length > 0) {
+          missing[index] = missingFieldKeys;
         }
       });
       requestAnimationFrame(() => {
         setValidationErrors(errors);
+        setMissingFields(missing);
       });
     } else {
       requestAnimationFrame(() => {
         setValidationErrors({});
+        setMissingFields({});
       });
     }
-  }, [currentStep, registrationData.participants]);
+  }, [currentStep, registrationData.participants, course.customFields]);
 
   const addParticipant = () => {
     if (!course.priceOptions || course.priceOptions.length === 0) {
@@ -512,7 +577,42 @@ export default function CourseRegistrationForm({
           !!(registrantStreet && registrantZipCode && registrantCity)
         );
       case 2:
-        return true;
+        // Must have at least one participant
+        if (registrationData.participants.length === 0) {
+          return false;
+        }
+        // All participants must have required fields filled
+        return registrationData.participants.every((p) => {
+          // Check basic required fields
+          if (!p.firstName?.trim() || !p.lastName?.trim() || !p.birthDate || !p.city?.trim() || !p.priceOptionId) {
+            return false;
+          }
+          // Check birthDate is valid
+          const birthDate = new Date(p.birthDate);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const oneYearAgo = new Date(today);
+          oneYearAgo.setFullYear(today.getFullYear() - 1);
+          const maxAge = new Date(today);
+          maxAge.setFullYear(today.getFullYear() - 120);
+          
+          if (birthDate >= today || birthDate > oneYearAgo || birthDate < maxAge) {
+            return false;
+          }
+          // Check required custom fields
+          if (course.customFields) {
+            for (const field of course.customFields) {
+              if (field.isRequired) {
+                const customFields = p.customFields as Record<string, any> | undefined;
+                const fieldValue = customFields?.[field.fieldName];
+                if (!fieldValue || (typeof fieldValue === "string" && !fieldValue.trim())) {
+                  return false;
+                }
+              }
+            }
+          }
+          return true;
+        });
       case 3:
         return termsAccepted;
       default:
@@ -1205,6 +1305,13 @@ export default function CourseRegistrationForm({
                                 </span>
                               )}
                             </div>
+                            {validationErrors[index] && (
+                              <div className="w-full sm:w-auto">
+                                <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                                  {validationErrors[index]}
+                                </p>
+                              </div>
+                            )}
                             <div className="flex gap-2 self-start sm:self-auto">
                               {currentUser && (
                                 <button
@@ -1242,7 +1349,11 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                  missingFields[index]?.includes("firstName")
+                                    ? "border-red-500 dark:border-red-500"
+                                    : "border-gray-300"
+                                }`}
                               />
                             </div>
 
@@ -1262,7 +1373,11 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                  missingFields[index]?.includes("lastName")
+                                    ? "border-red-500 dark:border-red-500"
+                                    : "border-gray-300"
+                                }`}
                               />
                             </div>
 
@@ -1289,32 +1404,93 @@ export default function CourseRegistrationForm({
                                     newDate,
                                   );
                                   const newErrors = { ...validationErrors };
+                                  const newMissing = { ...missingFields };
+                                  
                                   if (!e.target.value) {
-                                    newErrors[index] =
-                                      "Geburtsdatum ist erforderlich";
-                                  } else if (
-                                    new Date(e.target.value) >= new Date()
-                                  ) {
-                                    newErrors[index] =
-                                      "Geburtsdatum muss in der Vergangenheit liegen";
+                                    newErrors[index] = "Geburtsdatum ist erforderlich";
+                                    newMissing[index] = [
+                                      ...(newMissing[index] || []).filter(
+                                        (f) => f !== "birthDate",
+                                      ),
+                                      "birthDate",
+                                    ];
                                   } else {
-                                    delete newErrors[index];
+                                    const birthDate = new Date(e.target.value);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const oneYearAgo = new Date(today);
+                                    oneYearAgo.setFullYear(today.getFullYear() - 1);
+                                    const maxAge = new Date(today);
+                                    maxAge.setFullYear(today.getFullYear() - 120);
+                                    
+                                    if (birthDate >= today) {
+                                      newErrors[index] =
+                                        "Geburtsdatum darf nicht heute oder in der Zukunft liegen";
+                                      newMissing[index] = [
+                                        ...(newMissing[index] || []).filter(
+                                          (f) => f !== "birthDate",
+                                        ),
+                                        "birthDate",
+                                      ];
+                                    } else if (birthDate > oneYearAgo) {
+                                      newErrors[index] =
+                                        "Teilnehmer muss mindestens 1 Jahr alt sein";
+                                      newMissing[index] = [
+                                        ...(newMissing[index] || []).filter(
+                                          (f) => f !== "birthDate",
+                                        ),
+                                        "birthDate",
+                                      ];
+                                    } else if (birthDate < maxAge) {
+                                      newErrors[index] = "Geburtsdatum ist nicht gültig";
+                                      newMissing[index] = [
+                                        ...(newMissing[index] || []).filter(
+                                          (f) => f !== "birthDate",
+                                        ),
+                                        "birthDate",
+                                      ];
+                                    } else {
+                                      // Valid date
+                                      const updatedMissing = newMissing[index]?.filter(
+                                        (f) => f !== "birthDate",
+                                      );
+                                      if (updatedMissing && updatedMissing.length > 0) {
+                                        newMissing[index] = updatedMissing;
+                                      } else {
+                                        delete newMissing[index];
+                                      }
+                                      delete newErrors[index];
+                                    }
                                   }
                                   setValidationErrors(newErrors);
+                                  setMissingFields(newMissing);
                                 }}
-                                max={new Date().toISOString().split("T")[0]}
+                                max={
+                                  new Date(
+                                    new Date().setFullYear(
+                                      new Date().getFullYear() - 1,
+                                    ),
+                                  )
+                                    .toISOString()
+                                    .split("T")[0]
+                                }
                                 required
                                 className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
-                                  validationErrors[index]
+                                  missingFields[index]?.includes("birthDate") ||
+                                  (validationErrors[index] &&
+                                    (validationErrors[index].includes("Geburtsdatum") ||
+                                      validationErrors[index].includes("Jahr alt")))
                                     ? "border-red-500 dark:border-red-500"
                                     : "border-gray-300"
                                 }`}
                               />
-                              {validationErrors[index] && (
-                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                                  {validationErrors[index]}
-                                </p>
-                              )}
+                              {validationErrors[index] &&
+                                (validationErrors[index].includes("Geburtsdatum") ||
+                                  validationErrors[index].includes("Jahr alt")) && (
+                                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {validationErrors[index]}
+                                  </p>
+                                )}
                             </div>
 
                             <div>
@@ -1333,7 +1509,11 @@ export default function CourseRegistrationForm({
                                 }
                                 maxLength={100}
                                 required
-                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                  missingFields[index]?.includes("city")
+                                    ? "border-red-500 dark:border-red-500"
+                                    : "border-gray-300"
+                                }`}
                                 placeholder="Düsseldorf"
                               />
                             </div>
@@ -1371,7 +1551,11 @@ export default function CourseRegistrationForm({
                                     e.target.value,
                                   )
                                 }
-                                className="focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700"
+                                className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                                  missingFields[index]?.includes("priceOptionId")
+                                    ? "border-red-500 dark:border-red-500"
+                                    : "border-gray-300"
+                                }`}
                               >
                                 {course.priceOptions.map((option) => (
                                   <option key={option.id} value={option.id}>
@@ -1425,7 +1609,14 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="text-sm sm:text-base"
+                                      className={`text-sm sm:text-base ${
+                                        field.isRequired &&
+                                        missingFields[index]?.includes(
+                                          `customField:${field.fieldName}`,
+                                        )
+                                          ? "border-red-500 dark:border-red-500"
+                                          : ""
+                                      }`}
                                     >
                                       <option value="">Bitte wählen</option>
                                       {typeof field.options === "string" &&
@@ -1466,7 +1657,14 @@ export default function CourseRegistrationForm({
                                         )
                                       }
                                       rows={3}
-                                      className="text-sm sm:text-base"
+                                      className={`text-sm sm:text-base ${
+                                        field.isRequired &&
+                                        missingFields[index]?.includes(
+                                          `customField:${field.fieldName}`,
+                                        )
+                                          ? "border-red-500 dark:border-red-500"
+                                          : ""
+                                      }`}
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }
@@ -1506,7 +1704,14 @@ export default function CourseRegistrationForm({
                                           },
                                         )
                                       }
-                                      className="text-sm sm:text-base"
+                                      className={`text-sm sm:text-base ${
+                                        field.isRequired &&
+                                        missingFields[index]?.includes(
+                                          `customField:${field.fieldName}`,
+                                        )
+                                          ? "border-red-500 dark:border-red-500"
+                                          : ""
+                                      }`}
                                       placeholder={
                                         field.helpText ? field.helpText : ""
                                       }
