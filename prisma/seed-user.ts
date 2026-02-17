@@ -20,15 +20,13 @@ async function main() {
   console.log("🌱 Starting user seed...");
 
   try {
-    // 1. Ensure permissions exist first
-    console.log("🔐 Ensuring permissions exist...");
-    await ensurePermissionsExist();
+    // Permissions are now hardcoded in the codebase, no need to seed them
 
-    // 2. Create or update the admin user
+    // Create or update the admin user
     console.log(`👤 Creating/updating user: ${ADMIN_USERNAME}...`);
     const user = await createOrUpdateUser();
 
-    // 3. Grant all permissions to the user
+    // Grant all permissions to the user
     console.log("🔑 Granting all permissions to user...");
     await grantAllPermissions(user.id);
 
@@ -40,28 +38,6 @@ async function main() {
     console.error("❌ Seed failed:", error);
     throw error;
   }
-}
-
-async function ensurePermissionsExist() {
-  for (const perm of PERMISSION_DEFINITIONS) {
-    await db.permission.upsert({
-      where: { key: perm.key },
-      update: {
-        name: perm.name,
-        description: perm.description,
-        category: perm.category,
-        isSystem: true,
-      },
-      create: {
-        key: perm.key,
-        name: perm.name,
-        description: perm.description,
-        category: perm.category,
-        isSystem: true,
-      },
-    });
-  }
-  console.log(`  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`);
 }
 
 async function createOrUpdateUser() {
@@ -103,11 +79,11 @@ async function createOrUpdateUser() {
 }
 
 async function grantAllPermissions(userId: string) {
-  // Get all permissions from database
-  const allPermissions = await db.permission.findMany();
+  // Get all permission keys from hardcoded definitions
+  const allPermissionKeys = PERMISSION_DEFINITIONS.map((p) => p.key);
 
-  if (allPermissions.length === 0) {
-    console.warn("  ⚠️  No permissions found in database!");
+  if (allPermissionKeys.length === 0) {
+    console.warn("  ⚠️  No permissions found!");
     return;
   }
 
@@ -117,9 +93,9 @@ async function grantAllPermissions(userId: string) {
   });
 
   // Grant all permissions
-  const permissionGrants = allPermissions.map((permission) => ({
+  const permissionGrants = allPermissionKeys.map((permissionKey) => ({
     userId,
-    permissionId: permission.id,
+    permissionKey,
     granted: true,
   }));
 
