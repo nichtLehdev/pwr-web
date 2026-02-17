@@ -461,13 +461,15 @@ export default function RegistrationDetailPage() {
                 .map((p) =>
                   getParticipantDisplayName(p.firstName, p.lastName, p.id),
                 );
-              
+
               // Check if this group is eligible for discount
-              const eligibleParticipants = siblingGroup.filter(p => 
-                p.birthDate && isParticipantUnder18(p.birthDate)
+              const eligibleParticipants = siblingGroup.filter(
+                (p) => p.birthDate && isParticipantUnder18(p.birthDate),
               );
               const isEligibleForDiscount = eligibleParticipants.length > 1;
-              const isParticipantEligible = participant.birthDate && isParticipantUnder18(participant.birthDate);
+              const isParticipantEligible =
+                participant.birthDate &&
+                isParticipantUnder18(participant.birthDate);
 
               return (
                 <div
@@ -514,11 +516,13 @@ export default function RegistrationDetailPage() {
                         Geschwister mit: {groupMembers.join(", ")}
                       </div>
                       {course.allowSiblingDiscount && (
-                        <div className={`text-xs ${
-                          isEligibleForDiscount
-                            ? "text-green-700 dark:text-green-400"
-                            : "text-yellow-700 dark:text-yellow-400"
-                        }`}>
+                        <div
+                          className={`text-xs ${
+                            isEligibleForDiscount
+                              ? "text-green-700 dark:text-green-400"
+                              : "text-yellow-700 dark:text-yellow-400"
+                          }`}
+                        >
                           {isEligibleForDiscount
                             ? `✓ Gruppe berechtigt für Geschwisterkindrabatt (${eligibleParticipants.length} Minderjährige)`
                             : "⚠ Gruppe nicht berechtigt für Geschwisterkindrabatt (mindestens 2 Minderjährige erforderlich)"}

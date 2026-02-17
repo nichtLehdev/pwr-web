@@ -6,7 +6,11 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { X, AlertTriangle } from "lucide-react";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
-import type { RegistrationData, Step, CourseRegistrationFormProps } from "./course-registration-form/types";
+import type {
+  RegistrationData,
+  Step,
+  CourseRegistrationFormProps,
+} from "./course-registration-form/types";
 import { Step1RegistrantInfo } from "./course-registration-form/step-1-registrant-info";
 import { Step2Participants } from "./course-registration-form/step-2-participants";
 import { Step3Summary } from "./course-registration-form/step-3-summary";
@@ -86,7 +90,6 @@ export default function CourseRegistrationForm({
     window.addEventListener("resize", updateHeaderHeight);
     return () => window.removeEventListener("resize", updateHeaderHeight);
   }, [currentStep]);
-
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -238,9 +241,14 @@ export default function CourseRegistrationForm({
     course.allowSiblingDiscount,
   ]);
 
-
   const validateStep = (step: Step): boolean => {
-    return validateStepUtil(step, registrationData, course, validationErrors, termsAccepted);
+    return validateStepUtil(
+      step,
+      registrationData,
+      course,
+      validationErrors,
+      termsAccepted,
+    );
   };
 
   const canProceed = validateStep(currentStep);
@@ -321,7 +329,6 @@ export default function CourseRegistrationForm({
       },
     );
   };
-
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">

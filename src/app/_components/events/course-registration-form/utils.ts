@@ -5,20 +5,14 @@ export function calculateTotalPrice(
   registrationData: RegistrationData,
   course: CourseWithRelations,
 ): number {
-  const basePrice = registrationData.participants.reduce(
-    (sum, participant) => {
-      const priceOption = course.priceOptions.find(
-        (p) => p.id === participant.priceOptionId,
-      );
-      return sum + (priceOption?.price || 0);
-    },
-    0,
-  );
+  const basePrice = registrationData.participants.reduce((sum, participant) => {
+    const priceOption = course.priceOptions.find(
+      (p) => p.id === participant.priceOptionId,
+    );
+    return sum + (priceOption?.price || 0);
+  }, 0);
 
-  if (
-    registrationData.siblingDiscountApplied &&
-    course.allowSiblingDiscount
-  ) {
+  if (registrationData.siblingDiscountApplied && course.allowSiblingDiscount) {
     const siblingGroups = new Map<
       string,
       typeof registrationData.participants
@@ -78,10 +72,7 @@ export function calculateDiscountAmount(
   registrationData: RegistrationData,
   course: CourseWithRelations,
 ): number {
-  if (
-    registrationData.siblingDiscountApplied &&
-    course.allowSiblingDiscount
-  ) {
+  if (registrationData.siblingDiscountApplied && course.allowSiblingDiscount) {
     const siblingGroups = new Map<
       string,
       typeof registrationData.participants
@@ -170,11 +161,8 @@ export function validateStep(
       );
 
       if (registrationData.useSeparateBilling) {
-        const { billingStreet, billingZipCode, billingCity } =
-          registrationData;
-        return (
-          basicValid && !!(billingStreet && billingZipCode && billingCity)
-        );
+        const { billingStreet, billingZipCode, billingCity } = registrationData;
+        return basicValid && !!(billingStreet && billingZipCode && billingCity);
       }
 
       return (

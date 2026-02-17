@@ -272,10 +272,10 @@ export async function createInvoicePdf(
     siblingGroups.forEach((groupParticipants, groupId) => {
       if (groupId && groupParticipants.length > 1) {
         // Only apply discount to participants under 18
-        const eligibleParticipants = groupParticipants.filter(p => 
-          p.birthDate && isParticipantUnder18(p.birthDate)
+        const eligibleParticipants = groupParticipants.filter(
+          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
         );
-        
+
         if (eligibleParticipants.length > 1) {
           const sortedGroup = [...eligibleParticipants].sort((a, b) => {
             const nameA = `${a.firstName} ${a.lastName}`;

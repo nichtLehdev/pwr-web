@@ -193,12 +193,22 @@ export function Step3Summary({
           />
           <span className="text-sm text-gray-700 dark:text-gray-300">
             Ich akzeptiere die{" "}
-            <Link href="/impressum" className="text-primary font-semibold hover:underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">
+            <Link
+              href="/impressum"
+              className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Allgemeinen Geschäftsbedingungen
               <ExternalLink className="h-3 w-3" />
             </Link>{" "}
             und die{" "}
-            <Link href="/datenschutz" className="text-primary font-semibold hover:underline inline-flex items-center gap-1" target="_blank" rel="noopener noreferrer">
+            <Link
+              href="/datenschutz"
+              className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Datenschutzerklärung
               <ExternalLink className="h-3 w-3" />
             </Link>

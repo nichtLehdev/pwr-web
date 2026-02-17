@@ -8,7 +8,9 @@ interface ParticipantLibraryPopupProps {
   isOpen: boolean;
   onClose: () => void;
   savedParticipants: RouterOutputs["savedParticipants"]["getAll"] | undefined;
-  onLoadParticipant: (saved: RouterOutputs["savedParticipants"]["getAll"][0]) => void;
+  onLoadParticipant: (
+    saved: RouterOutputs["savedParticipants"]["getAll"][0],
+  ) => void;
   headerHeight: number;
 }
 

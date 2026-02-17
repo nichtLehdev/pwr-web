@@ -181,9 +181,9 @@ export function BulkInvoiceModal({
                   Rechnungen können nicht generiert werden
                 </p>
                 <p className="mt-1 text-xs text-yellow-700">
-                  Es gibt noch Anmeldungen mit ausstehenden Geschwisterkindrabatten.
-                  Bitte prüfen und genehmigen oder ablehnen Sie alle Rabatte,
-                  bevor Sie Rechnungen generieren.
+                  Es gibt noch Anmeldungen mit ausstehenden
+                  Geschwisterkindrabatten. Bitte prüfen und genehmigen oder
+                  ablehnen Sie alle Rabatte, bevor Sie Rechnungen generieren.
                 </p>
               </div>
             </div>

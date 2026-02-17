@@ -22,9 +22,13 @@ interface Step2ParticipantsProps {
   registrationData: RegistrationData;
   setRegistrationData: React.Dispatch<React.SetStateAction<RegistrationData>>;
   validationErrors: Record<number, string>;
-  setValidationErrors: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+  setValidationErrors: React.Dispatch<
+    React.SetStateAction<Record<number, string>>
+  >;
   missingFields: Record<number, string[]>;
-  setMissingFields: React.Dispatch<React.SetStateAction<Record<number, string[]>>>;
+  setMissingFields: React.Dispatch<
+    React.SetStateAction<Record<number, string[]>>
+  >;
   currentUser?: User | null;
   savedParticipantsQuery: {
     data: RouterOutputs["savedParticipants"]["getAll"] | undefined;
@@ -252,7 +256,9 @@ export function Step2Participants({
           {currentUser && (
             <div className="relative">
               <button
-                onClick={() => setShowParticipantLibrary(!showParticipantLibrary)}
+                onClick={() =>
+                  setShowParticipantLibrary(!showParticipantLibrary)
+                }
                 className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:gap-2 sm:px-4 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 <BookOpen className="h-4 w-4 shrink-0" />
@@ -468,7 +474,8 @@ export function Step2Participants({
                                 "birthDate",
                               ];
                             } else if (birthDate < maxAge) {
-                              newErrors[index] = "Geburtsdatum ist nicht gültig";
+                              newErrors[index] =
+                                "Geburtsdatum ist nicht gültig";
                               newMissing[index] = [
                                 ...(newMissing[index] || []).filter(
                                   (f) => f !== "birthDate",
@@ -579,7 +586,11 @@ export function Step2Participants({
                         }`}
                       >
                         {course.priceOptions.map(
-                          (option: { id: string; label: string; price: number }) => (
+                          (option: {
+                            id: string;
+                            label: string;
+                            price: number;
+                          }) => (
                             <option key={option.id} value={option.id}>
                               {option.label} - {option.price.toFixed(2)} €
                             </option>
@@ -733,44 +744,41 @@ export function Step2Participants({
                           {registrationData.participants
                             .map((p, idx) => ({ p, idx }))
                             .filter(({ idx: idx2 }) => idx2 !== index)
-                            .map(
-                              ({
-                                p: otherParticipant,
-                                idx: otherIndex,
-                              }) => {
-                                const isLinked =
-                                  participant.siblingGroupId &&
-                                  participant.siblingGroupId ===
-                                    otherParticipant.siblingGroupId;
-                                return (
-                                  <button
-                                    key={otherIndex}
-                                    type="button"
-                                    onClick={() => linkSiblings(index, otherIndex)}
-                                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors sm:gap-2 sm:px-3 sm:text-sm ${
-                                      isLinked
-                                        ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                                    }`}
-                                  >
-                                    {isLinked ? (
-                                      <Link2Off className="h-4 w-4" />
-                                    ) : (
-                                      <LinkIcon className="h-4 w-4" />
+                            .map(({ p: otherParticipant, idx: otherIndex }) => {
+                              const isLinked =
+                                participant.siblingGroupId &&
+                                participant.siblingGroupId ===
+                                  otherParticipant.siblingGroupId;
+                              return (
+                                <button
+                                  key={otherIndex}
+                                  type="button"
+                                  onClick={() =>
+                                    linkSiblings(index, otherIndex)
+                                  }
+                                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors sm:gap-2 sm:px-3 sm:text-sm ${
+                                    isLinked
+                                      ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
+                                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                  }`}
+                                >
+                                  {isLinked ? (
+                                    <Link2Off className="h-4 w-4" />
+                                  ) : (
+                                    <LinkIcon className="h-4 w-4" />
+                                  )}
+                                  <span>
+                                    {getParticipantDisplayName(
+                                      otherParticipant.firstName,
+                                      otherParticipant.lastName,
+                                      registrationData.participants,
+                                      otherIndex,
                                     )}
-                                    <span>
-                                      {getParticipantDisplayName(
-                                        otherParticipant.firstName,
-                                        otherParticipant.lastName,
-                                        registrationData.participants,
-                                        otherIndex,
-                                      )}
-                                      {isLinked && " ✓"}
-                                    </span>
-                                  </button>
-                                );
-                              },
-                            )}
+                                    {isLinked && " ✓"}
+                                  </span>
+                                </button>
+                              );
+                            })}
                         </div>
                         {participant.siblingGroupId && (
                           <p className="text-xs text-green-700 dark:text-green-400">
@@ -780,7 +788,8 @@ export function Step2Participants({
                               .filter(
                                 ({ p: p2, idx: idx2 }) =>
                                   p2.siblingGroupId ===
-                                    participant.siblingGroupId && idx2 !== index,
+                                    participant.siblingGroupId &&
+                                  idx2 !== index,
                               )
                               .map(({ p, idx }) =>
                                 getParticipantDisplayName(
