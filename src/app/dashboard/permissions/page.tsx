@@ -768,7 +768,9 @@ function UsersTab() {
                 {roles && roles.length > 0 ? (
                   <div className="space-y-2">
                     {roles.map((role) => {
-                      const isAdminRole = role.name.toLowerCase() === "admin";
+                      const isAdminRole =
+                        role.name.toLowerCase() === "administrator" ||
+                        role.name.toLowerCase() === "admin";
                       const isDisabled = hasAdminRole && !isAdminRole;
 
                       return (
