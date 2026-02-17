@@ -62,7 +62,7 @@ export function SiblingDiscountApproved({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Geschwisterrabatt genehmigt</Text>
+            <Text style={heading}>Geschwisterkindrabatt genehmigt</Text>
 
             <Text style={paragraph}>
               Hallo {registrantFirstName} {registrantLastName},
@@ -70,7 +70,7 @@ export function SiblingDiscountApproved({
 
             <Text style={paragraph}>
               wir freuen uns, dir mitteilen zu können, dass dein Antrag auf
-              Geschwisterrabatt für die folgende Anmeldung genehmigt wurde:
+              Geschwisterkindrabatt für die folgende Anmeldung genehmigt wurde:
             </Text>
 
             <Section style={courseInfo}>
@@ -94,7 +94,7 @@ export function SiblingDiscountApproved({
                 {formatPrice(originalTotalPrice)}
               </Text>
               <Text style={priceDetailDiscount}>
-                <strong>Geschwisterrabatt (20%):</strong> -
+                <strong>Geschwisterkindrabatt (20%):</strong> -
                 {formatPrice(discountAmount)}
               </Text>
               <Hr style={priceHr} />

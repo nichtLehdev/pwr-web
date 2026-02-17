@@ -1,12 +1,14 @@
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
 import QRCode from "qrcode";
+import { isParticipantUnder18 } from "@/lib/participant-utils";
 
 export interface InvoiceParticipant {
   firstName: string;
   lastName: string;
   priceOption: string | null;
   siblingGroupId?: string | null;
+  birthDate?: Date | string | null;
 }
 
 export interface InvoicePriceOption {
@@ -333,24 +335,32 @@ export async function createInvoicePdf(
 
     siblingGroups.forEach((groupParticipants, groupId) => {
       if (groupId && groupParticipants.length > 1) {
-        const sortedGroup = [...groupParticipants].sort((a, b) => {
-          const nameA = `${a.firstName} ${a.lastName}`;
-          const nameB = `${b.firstName} ${b.lastName}`;
-          return nameA.localeCompare(nameB);
-        });
+        // Only apply discount to participants under 18
+        const eligibleParticipants = groupParticipants.filter(
+          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+        );
 
-        for (let i = 1; i < sortedGroup.length; i++) {
-          const participant = sortedGroup[i];
-          if (!participant) continue;
+        if (eligibleParticipants.length > 1) {
+          const sortedGroup = [...eligibleParticipants].sort((a, b) => {
+            const nameA = `${a.firstName} ${a.lastName}`;
+            const nameB = `${b.firstName} ${b.lastName}`;
+            return nameA.localeCompare(nameB);
+          });
 
-          const priceOption = course.priceOptions?.find(
-            (p) => p.label === participant.priceOption,
-          );
-          const price = priceOption?.price ?? 0;
-          const discount = price * 0.2;
+          // Apply discount to all eligible participants except the first one
+          for (let i = 1; i < sortedGroup.length; i++) {
+            const participant = sortedGroup[i];
+            if (!participant) continue;
 
-          const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
-          participantDiscounts.set(participantKey, discount);
+            const priceOption = course.priceOptions?.find(
+              (p) => p.label === participant.priceOption,
+            );
+            const price = priceOption?.price ?? 0;
+            const discount = price * 0.2;
+
+            const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
+            participantDiscounts.set(participantKey, discount);
+          }
         }
       }
     });
@@ -375,7 +385,7 @@ export async function createInvoicePdf(
     if (participantDiscount > 0) {
       doc.setFontSize(9);
       doc.setTextColor(0, 150, 0); // Green color for discount
-      doc.text("Geschwisterrabatt (20%):", margin + 2, y);
+      doc.text("Geschwisterkindrabatt (20%):", margin + 2, y);
       doc.text(
         `-${participantDiscount.toFixed(2)} €`,
         pageWidth - margin - 20,

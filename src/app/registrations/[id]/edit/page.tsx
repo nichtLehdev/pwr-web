@@ -1149,7 +1149,7 @@ export default function EditRegistrationPage() {
                     />
                     <div className="flex-1">
                       <div className="font-semibold text-gray-900 dark:text-gray-100">
-                        Geschwisterrabatt beantragen
+                        Geschwisterkindrabatt beantragen
                       </div>
                       <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                         Sie erhalten 20% Rabatt für jedes Geschwisterkind ab dem
@@ -1194,7 +1194,7 @@ export default function EditRegistrationPage() {
                     </div>
                     <div className="flex items-center justify-between gap-4 text-sm">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterrabatt (20%):
+                        Geschwisterkindrabatt (20%):
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         -{calculateDiscountAmount().toFixed(2)} €
