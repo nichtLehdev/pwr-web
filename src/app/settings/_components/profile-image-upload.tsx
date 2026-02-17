@@ -108,7 +108,7 @@ export default function ProfileImageUpload({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-6">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
         {/* Image Preview */}
         <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
           {preview ? (
@@ -132,7 +132,7 @@ export default function ProfileImageUpload({
         </div>
 
         {/* Upload Controls */}
-        <div className="flex-1">
+        <div className="w-full flex-1 sm:w-auto">
           <input
             ref={fileInputRef}
             type="file"
@@ -143,12 +143,12 @@ export default function ProfileImageUpload({
           />
 
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
                 onClick={handleClick}
                 disabled={uploading}
-                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:outline-none disabled:opacity-50"
+                className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-background inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-2 focus:outline-none disabled:opacity-50 sm:w-auto"
               >
                 <ImageIcon className="h-5 w-5" />
                 {preview ? "Bild ändern" : "Bild hochladen"}
@@ -159,7 +159,7 @@ export default function ProfileImageUpload({
                   type="button"
                   onClick={handleRemove}
                   disabled={uploading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 sm:w-auto dark:border-red-900 dark:bg-red-950/30 dark:text-red-500 dark:hover:bg-red-900/50"
                 >
                   <Trash2 className="h-5 w-5" />
                   Entfernen
