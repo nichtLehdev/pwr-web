@@ -19,13 +19,13 @@ export async function GET(
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    // Check if user has admin permissions
+    // Check if user has export permissions
     const { userHasPermission } =
       await import("@/server/api/helpers/permissions");
     const { PERMISSIONS } = await import("@/lib/permissions");
     const canExport = await userHasPermission(
       session.user.id,
-      PERMISSIONS.USERS_MANAGE,
+      PERMISSIONS.DATA_EXPORT,
     );
     if (!canExport) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

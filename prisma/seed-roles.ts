@@ -16,18 +16,16 @@ async function main() {
   console.log("🌱 Starting role seed...");
 
   try {
-    // 1. Ensure permissions exist first
-    console.log("🔐 Ensuring permissions exist...");
-    await ensurePermissionsExist();
+    // Permissions are now hardcoded in the codebase, no need to seed them
 
-    // 2. Create base roles with category-specific permissions
+    // Create base roles with category-specific permissions
     console.log("👥 Creating base roles...");
     const courseManagerRole = await createCourseManagerRole();
     const eventManagerRole = await createEventManagerRole();
     const postManagerRole = await createPostManagerRole();
     const organizationManagerRole = await createOrganizationManagerRole();
 
-    // 3. Create a comprehensive admin role that inherits from multiple base roles
+    // Create a comprehensive admin role that inherits from multiple base roles
     console.log("👑 Creating admin role...");
     const adminRole = await createAdminRole();
 
@@ -44,44 +42,16 @@ async function main() {
   }
 }
 
-async function ensurePermissionsExist() {
-  for (const perm of PERMISSION_DEFINITIONS) {
-    await db.permission.upsert({
-      where: { key: perm.key },
-      update: {
-        name: perm.name,
-        description: perm.description,
-        category: perm.category,
-        isSystem: true,
-      },
-      create: {
-        key: perm.key,
-        name: perm.name,
-        description: perm.description,
-        category: perm.category,
-        isSystem: true,
-      },
-    });
-  }
-  console.log(`  ✓ Ensured ${PERMISSION_DEFINITIONS.length} permissions exist`);
-}
-
 async function createCourseManagerRole() {
-  // Get all course-related permissions
-  const coursePermissions = await db.permission.findMany({
-    where: {
-      key: {
-        in: [
-          PERMISSIONS.COURSES_CREATE,
-          PERMISSIONS.COURSES_EDIT,
-          PERMISSIONS.COURSES_DELETE,
-          PERMISSIONS.COURSES_APPROVE,
-          PERMISSIONS.COURSES_VIEW,
-          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        ],
-      },
-    },
-  });
+  // Course-related permission keys (hardcoded)
+  const coursePermissionKeys = [
+    PERMISSIONS.COURSES_CREATE,
+    PERMISSIONS.COURSES_EDIT,
+    PERMISSIONS.COURSES_DELETE,
+    PERMISSIONS.COURSES_APPROVE,
+    PERMISSIONS.COURSES_VIEW,
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+  ];
 
   const role = await db.role.upsert({
     where: { name: "Course Manager" },
@@ -100,11 +70,11 @@ async function createCourseManagerRole() {
     where: { roleId: role.id },
   });
 
-  if (coursePermissions.length > 0) {
+  if (coursePermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: coursePermissions.map((perm) => ({
+      data: coursePermissionKeys.map((permissionKey) => ({
         roleId: role.id,
-        permissionId: perm.id,
+        permissionKey,
       })),
       skipDuplicates: true,
     });
@@ -115,20 +85,14 @@ async function createCourseManagerRole() {
 }
 
 async function createEventManagerRole() {
-  // Get all event-related permissions
-  const eventPermissions = await db.permission.findMany({
-    where: {
-      key: {
-        in: [
-          PERMISSIONS.EVENTS_CREATE,
-          PERMISSIONS.EVENTS_EDIT,
-          PERMISSIONS.EVENTS_DELETE,
-          PERMISSIONS.EVENTS_APPROVE,
-          PERMISSIONS.EVENTS_VIEW,
-        ],
-      },
-    },
-  });
+  // Event-related permission keys (hardcoded)
+  const eventPermissionKeys = [
+    PERMISSIONS.EVENTS_CREATE,
+    PERMISSIONS.EVENTS_EDIT,
+    PERMISSIONS.EVENTS_DELETE,
+    PERMISSIONS.EVENTS_APPROVE,
+    PERMISSIONS.EVENTS_VIEW,
+  ];
 
   const role = await db.role.upsert({
     where: { name: "Event Manager" },
@@ -147,11 +111,11 @@ async function createEventManagerRole() {
     where: { roleId: role.id },
   });
 
-  if (eventPermissions.length > 0) {
+  if (eventPermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: eventPermissions.map((perm) => ({
+      data: eventPermissionKeys.map((permissionKey) => ({
         roleId: role.id,
-        permissionId: perm.id,
+        permissionKey,
       })),
       skipDuplicates: true,
     });
@@ -162,20 +126,14 @@ async function createEventManagerRole() {
 }
 
 async function createPostManagerRole() {
-  // Get all post-related permissions
-  const postPermissions = await db.permission.findMany({
-    where: {
-      key: {
-        in: [
-          PERMISSIONS.POSTS_CREATE,
-          PERMISSIONS.POSTS_EDIT,
-          PERMISSIONS.POSTS_DELETE,
-          PERMISSIONS.POSTS_APPROVE,
-          PERMISSIONS.POSTS_VIEW,
-        ],
-      },
-    },
-  });
+  // Post-related permission keys (hardcoded)
+  const postPermissionKeys = [
+    PERMISSIONS.POSTS_CREATE,
+    PERMISSIONS.POSTS_EDIT,
+    PERMISSIONS.POSTS_DELETE,
+    PERMISSIONS.POSTS_APPROVE,
+    PERMISSIONS.POSTS_VIEW,
+  ];
 
   const role = await db.role.upsert({
     where: { name: "Post Manager" },
@@ -194,11 +152,11 @@ async function createPostManagerRole() {
     where: { roleId: role.id },
   });
 
-  if (postPermissions.length > 0) {
+  if (postPermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: postPermissions.map((perm) => ({
+      data: postPermissionKeys.map((permissionKey) => ({
         roleId: role.id,
-        permissionId: perm.id,
+        permissionKey,
       })),
       skipDuplicates: true,
     });
@@ -209,24 +167,18 @@ async function createPostManagerRole() {
 }
 
 async function createOrganizationManagerRole() {
-  // Get all organization-related permissions
-  const orgPermissions = await db.permission.findMany({
-    where: {
-      key: {
-        in: [
-          PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
-          PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
-          PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
-          PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
-          PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
-          PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
-          PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
-          PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
-          PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
-        ],
-      },
-    },
-  });
+  // Organization-related permission keys (hardcoded)
+  const orgPermissionKeys = [
+    PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
+    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+    PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
+    PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
+    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
+    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
+  ];
 
   const role = await db.role.upsert({
     where: { name: "Organization Manager" },
@@ -245,11 +197,11 @@ async function createOrganizationManagerRole() {
     where: { roleId: role.id },
   });
 
-  if (orgPermissions.length > 0) {
+  if (orgPermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: orgPermissions.map((perm) => ({
+      data: orgPermissionKeys.map((permissionKey) => ({
         roleId: role.id,
-        permissionId: perm.id,
+        permissionKey,
       })),
       skipDuplicates: true,
     });
@@ -260,8 +212,8 @@ async function createOrganizationManagerRole() {
 }
 
 async function createAdminRole() {
-  // Get all permissions
-  const allPermissions = await db.permission.findMany();
+  // All permission keys (hardcoded)
+  const allPermissionKeys = PERMISSION_DEFINITIONS.map((p) => p.key);
 
   // Create admin role that inherits from the first parent role
   // (In a real scenario, you might want to create a composite role differently)
@@ -286,11 +238,11 @@ async function createAdminRole() {
     where: { roleId: role.id },
   });
 
-  if (allPermissions.length > 0) {
+  if (allPermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: allPermissions.map((perm) => ({
+      data: allPermissionKeys.map((permissionKey) => ({
         roleId: role.id,
-        permissionId: perm.id,
+        permissionKey,
       })),
       skipDuplicates: true,
     });

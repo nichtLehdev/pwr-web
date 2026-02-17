@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure, adminProcedure } from "../trpc";
+import { permissionProcedure } from "../middleware/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export const bezirkeRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -192,7 +194,7 @@ export const bezirkeRouter = createTRPCRouter({
       return bezirk;
     }),
 
-  create: adminProcedure
+  create: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE)
     .input(
       z.object({
         number: z.number().min(1).max(13),
@@ -209,7 +211,7 @@ export const bezirkeRouter = createTRPCRouter({
       return bezirk;
     }),
 
-  update: adminProcedure
+  update: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE)
     .input(
       z.object({
         id: z.string(),
@@ -228,7 +230,7 @@ export const bezirkeRouter = createTRPCRouter({
       });
     }),
 
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.bezirk.delete({

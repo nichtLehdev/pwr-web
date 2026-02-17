@@ -38,12 +38,14 @@ export const PERMISSIONS = {
 
   // Media
   MEDIA_UPLOAD: "media.upload",
+  MEDIA_EDIT: "media.edit",
   MEDIA_DELETE: "media.delete",
   MEDIA_APPROVE: "media.approve",
   MEDIA_VIEW: "media.view",
 
   // Downloads
   DOWNLOADS_UPLOAD: "downloads.upload",
+  DOWNLOADS_EDIT: "downloads.edit",
   DOWNLOADS_DELETE: "downloads.delete",
   DOWNLOADS_APPROVE: "downloads.approve",
   DOWNLOADS_VIEW: "downloads.view",
@@ -68,6 +70,36 @@ export const PERMISSIONS = {
 
   // Statistics
   STATS_VIEW: "stats.view",
+
+  // Data Export/Import
+  DATA_EXPORT: "data.export",
+  DATA_IMPORT: "data.import",
+
+  // Invoices/Billing
+  INVOICES_GENERATE: "invoices.generate",
+  INVOICES_VIEW: "invoices.view",
+  INVOICES_MANAGE: "invoices.manage",
+
+  // System Administration
+  SYSTEM_MANAGE: "system.manage",
+  SYSTEM_VIEW_LOGS: "system.view_logs",
+  SYSTEM_BACKUP: "system.backup",
+
+  // Email Management
+  EMAIL_MANAGE_TEMPLATES: "email.manage_templates",
+  EMAIL_MANAGE_SETTINGS: "email.manage_settings",
+
+  // Ensembles & Auswahlchoere
+  ENSEMBLES_DELETE: "ensembles.delete",
+  AUSWAHLCHOERE_DELETE: "auswahlchoere.delete",
+
+  // Advanced User Management
+  USERS_MANAGE_2FA: "users.manage_2fa",
+  USERS_IMPERSONATE: "users.impersonate",
+
+  // Content Moderation
+  CONTENT_BULK_MODERATE: "content.bulk_moderate",
+  CONTENT_ARCHIVE: "content.archive",
 
   // Permissions Management (meta-permission)
   PERMISSIONS_MANAGE: "permissions.manage",
@@ -215,6 +247,12 @@ export const PERMISSION_DEFINITIONS: Array<{
     category: "media",
   },
   {
+    key: PERMISSIONS.MEDIA_EDIT,
+    name: "Medien bearbeiten",
+    description: "Berechtigung zum Bearbeiten von Medien",
+    category: "media",
+  },
+  {
     key: PERMISSIONS.MEDIA_DELETE,
     name: "Medien löschen",
     description: "Berechtigung zum Löschen von Medien",
@@ -238,6 +276,12 @@ export const PERMISSION_DEFINITIONS: Array<{
     key: PERMISSIONS.DOWNLOADS_UPLOAD,
     name: "Downloads hochladen",
     description: "Berechtigung zum Hochladen von Downloads",
+    category: "downloads",
+  },
+  {
+    key: PERMISSIONS.DOWNLOADS_EDIT,
+    name: "Downloads bearbeiten",
+    description: "Berechtigung zum Bearbeiten von Downloads",
     category: "downloads",
   },
   {
@@ -343,6 +387,118 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Statistiken ansehen",
     description: "Berechtigung zum Ansehen von Statistiken",
     category: "stats",
+  },
+
+  // Data Export/Import
+  {
+    key: PERMISSIONS.DATA_EXPORT,
+    name: "Daten exportieren",
+    description: "Berechtigung zum Exportieren von Daten",
+    category: "data",
+  },
+  {
+    key: PERMISSIONS.DATA_IMPORT,
+    name: "Daten importieren",
+    description: "Berechtigung zum Importieren von Daten",
+    category: "data",
+  },
+
+  // Invoices/Billing
+  {
+    key: PERMISSIONS.INVOICES_GENERATE,
+    name: "Rechnungen erstellen",
+    description: "Berechtigung zum Erstellen von Rechnungen",
+    category: "invoices",
+  },
+  {
+    key: PERMISSIONS.INVOICES_VIEW,
+    name: "Rechnungen ansehen",
+    description: "Berechtigung zum Ansehen von Rechnungen",
+    category: "invoices",
+  },
+  {
+    key: PERMISSIONS.INVOICES_MANAGE,
+    name: "Rechnungen verwalten",
+    description: "Berechtigung zum Verwalten von Rechnungen und Zahlungsstatus",
+    category: "invoices",
+  },
+
+  // System Administration
+  {
+    key: PERMISSIONS.SYSTEM_MANAGE,
+    name: "System verwalten",
+    description: "Berechtigung zum Verwalten von Systemeinstellungen",
+    category: "system",
+  },
+  {
+    key: PERMISSIONS.SYSTEM_VIEW_LOGS,
+    name: "System-Logs ansehen",
+    description: "Berechtigung zum Ansehen von System-Logs und Audit-Trails",
+    category: "system",
+  },
+  {
+    key: PERMISSIONS.SYSTEM_BACKUP,
+    name: "Backups verwalten",
+    description: "Berechtigung zum Erstellen und Wiederherstellen von Backups",
+    category: "system",
+  },
+
+  // Email Management
+  {
+    key: PERMISSIONS.EMAIL_MANAGE_TEMPLATES,
+    name: "E-Mail-Vorlagen verwalten",
+    description: "Berechtigung zum Verwalten von E-Mail-Vorlagen",
+    category: "email",
+  },
+  {
+    key: PERMISSIONS.EMAIL_MANAGE_SETTINGS,
+    name: "E-Mail-Einstellungen verwalten",
+    description: "Berechtigung zum Verwalten von E-Mail-Konfigurationen",
+    category: "email",
+  },
+
+  // Ensembles & Auswahlchoere
+  {
+    key: PERMISSIONS.ENSEMBLES_DELETE,
+    name: "Ensembles löschen",
+    description: "Berechtigung zum Löschen von Ensembles",
+    category: "ensembles",
+  },
+  {
+    key: PERMISSIONS.AUSWAHLCHOERE_DELETE,
+    name: "Auswahlchöre löschen",
+    description: "Berechtigung zum Löschen von Auswahlchören",
+    category: "auswahlchoere",
+  },
+
+  // Advanced User Management
+  {
+    key: PERMISSIONS.USERS_MANAGE_2FA,
+    name: "2FA für Benutzer verwalten",
+    description:
+      "Berechtigung zum Verwalten der Zwei-Faktor-Authentifizierung für andere Benutzer",
+    category: "users",
+  },
+  {
+    key: PERMISSIONS.USERS_IMPERSONATE,
+    name: "Benutzer imitieren",
+    description: "Berechtigung zum Imitieren von Benutzern (für Support)",
+    category: "users",
+  },
+
+  // Content Moderation
+  {
+    key: PERMISSIONS.CONTENT_BULK_MODERATE,
+    name: "Inhalte massenweise moderieren",
+    description:
+      "Berechtigung zum Massen-Genehmigen oder -Ablehnen von Inhalten",
+    category: "content",
+  },
+  {
+    key: PERMISSIONS.CONTENT_ARCHIVE,
+    name: "Inhalte archivieren",
+    description: "Berechtigung zum Archivieren von alten Inhalten",
+    category: "content",
   },
 
   // Permissions Management

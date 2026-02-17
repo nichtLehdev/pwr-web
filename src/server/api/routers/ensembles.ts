@@ -9,6 +9,7 @@ import {
 } from "../trpc";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 
 export const ensemblesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -283,7 +284,7 @@ export const ensemblesRouter = createTRPCRouter({
       });
     }),
 
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.ENSEMBLES_DELETE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.ensemble.delete({
@@ -320,45 +321,47 @@ export const ensemblesRouter = createTRPCRouter({
       return ensembles;
     }),
 
-  exportEnsembles: adminProcedure.query(async ({ ctx }) => {
-    const ensembles = await ctx.db.ensemble.findMany({
-      include: {
-        image: true,
-        location: true,
-        bezirk: true,
-        conductor: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
+  exportEnsembles: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const ensembles = await ctx.db.ensemble.findMany({
+        include: {
+          image: true,
+          location: true,
+          bezirk: true,
+          conductor: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
+          },
+          representative: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+            },
           },
         },
-        representative: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: { name: "asc" },
-    });
+        orderBy: { name: "asc" },
+      });
 
-    return {
-      ensembles: ensembles.map((ensemble) => ({
-        ...ensemble,
-        imageUrl: ensemble.image?.url,
-        locationName: ensemble.location?.name,
-        bezirkName: ensemble.bezirk?.name,
-        conductorEmail: ensemble.conductor?.email,
-        representativeEmail: ensemble.representative?.email,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: ensembles.length,
-    };
-  }),
+      return {
+        ensembles: ensembles.map((ensemble) => ({
+          ...ensemble,
+          imageUrl: ensemble.image?.url,
+          locationName: ensemble.location?.name,
+          bezirkName: ensemble.bezirk?.name,
+          conductorEmail: ensemble.conductor?.email,
+          representativeEmail: ensemble.representative?.email,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: ensembles.length,
+      };
+    },
+  ),
 
-  importEnsembles: adminProcedure
+  importEnsembles: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(
       z.object({
         ensembles: z.array(
