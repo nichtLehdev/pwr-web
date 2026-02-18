@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, EditIcon, MapPinIcon, UserIcon } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -94,81 +95,54 @@ export default function DashboardPosaunenwarteDetailPage() {
     false;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/posaunenwarte"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Posaunenwarte
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {user.displayName || "Details"}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            {user.profileImage?.url ? (
-              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
-                <Image
-                  src={user.profileImage.url}
-                  alt={user.displayName || ""}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                <UserIcon className="h-10 w-10" />
-              </div>
-            )}
-            <div>
-              <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-                {user.displayName || "Unbekannt"}
-              </h1>
-              {(isLPW || isRPW) && (
-                <span
-                  className={`mt-2 inline-flex rounded-full px-3 py-1 text-sm font-medium ${
-                    isLPW
-                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                      : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                  }`}
-                >
-                  {isLPW ? ROLE_LABELS["LPW"] : ROLE_LABELS["RPW"]}
-                </span>
-              )}
-            </div>
+    <DashboardPage
+      title={user.displayName || "Unbekannt"}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Posaunenwarte", href: "/dashboard/posaunenwarte" },
+        { label: user.displayName || "Details" },
+      ]}
+      actions={
+        <Link
+          href={`/dashboard/posaunenwarte/${id}/edit`}
+          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        >
+          <EditIcon className="h-4 w-4" />
+          Bezirke bearbeiten
+        </Link>
+      }
+      maxWidth="7xl"
+    >
+      {/* Avatar and Role Badge */}
+      <div className="mb-6 flex items-center gap-4">
+        {user.profileImage?.url ? (
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+            <Image
+              src={user.profileImage.url}
+              alt={user.displayName || ""}
+              fill
+              className="object-cover"
+            />
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/dashboard/posaunenwarte/${id}/edit`}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-            >
-              <EditIcon className="h-4 w-4" />
-              Bezirke bearbeiten
-            </Link>
+        ) : (
+          <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+            <UserIcon className="h-10 w-10" />
           </div>
-        </div>
+        )}
+        {(isLPW || isRPW) && (
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
+              isLPW
+                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+            }`}
+          >
+            {isLPW ? ROLE_LABELS["LPW"] : ROLE_LABELS["RPW"]}
+          </span>
+        )}
+      </div>
 
-        {/* User Info Card */}
+      {/* User Info Card */}
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
             Kontaktinformationen
@@ -343,7 +317,6 @@ export default function DashboardPosaunenwarteDetailPage() {
             Benutzerprofil öffnen
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

@@ -22,6 +22,7 @@ import {
   AlertTriangleIcon,
   ImageIcon,
 } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
@@ -758,52 +759,18 @@ export default function EditCoursePage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/courses"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Kurse
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/courses/${courseId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {course.title}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Kurs bearbeiten
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Bearbeite die Kursinformationen
-          </p>
-        </div>
-
+    <>
+      <DashboardPage
+        title="Kurs bearbeiten"
+        description="Bearbeite die Kursinformationen"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Kurse", href: "/dashboard/courses" },
+          { label: course.title, href: `/dashboard/courses/${courseId}` },
+          { label: "Bearbeiten" },
+        ]}
+        maxWidth="7xl"
+      >
         {/* Error */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
@@ -1928,7 +1895,7 @@ export default function EditCoursePage() {
             setShowMediaPicker(false);
           }}
         />
-      </div>
-    </main>
+      </DashboardPage>
+    </>
   );
 }

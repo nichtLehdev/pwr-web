@@ -10,6 +10,7 @@ import Image from "next/image";
 import { PosaunenwartRoleType } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, UserIcon } from "lucide-react";
 import { AlertTriangleIcon, TrashIcon } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { InfoIcon, PlusIcon } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -170,44 +171,18 @@ export default function DashboardPosaunenwarteEditPage() {
     bezirke?.filter((b) => !assignedBezirkIds.has(b.id)) || [];
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/posaunenwarte"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Posaunenwarte
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/posaunenwarte/${id}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {user.displayName || "Details"}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
+    <DashboardPage
+      title="Posaunenwart bearbeiten"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Posaunenwarte", href: "/dashboard/posaunenwarte" },
+        { label: user.displayName || "Details", href: `/dashboard/posaunenwarte/${id}` },
+        { label: "Bearbeiten" },
+      ]}
+      maxWidth="7xl"
+    >
+      {/* Avatar */}
+      <div className="mb-6 flex items-center gap-4">
           {user.profileImage?.url ? (
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
               <Image
@@ -394,7 +369,6 @@ export default function DashboardPosaunenwarteEditPage() {
             Zur Übersicht
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

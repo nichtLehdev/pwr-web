@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { MusicIcon, PencilIcon, ArrowLeftIcon, UserIcon } from "lucide-react";
 
 export default function BezirkDetailPage() {
@@ -86,63 +87,36 @@ export default function BezirkDetailPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/bezirke"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Bezirke
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {bezirk.shortName}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            <span
-              className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white"
-              style={{
-                backgroundColor: `var(--color-district-${bezirk.number})`,
-              }}
-            >
-              {bezirk.number}
-            </span>
-            <div>
-              <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-                {bezirk.name}
-              </h1>
-              <p className="dark:text-dark-muted mt-1 text-gray-600">
-                {bezirk.shortName}
-              </p>
-            </div>
-          </div>
-          <Link
-            href={`/dashboard/bezirke/${bezirkId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-          >
-            <PencilIcon className="h-4 w-4" />
-            Bearbeiten
-          </Link>
-        </div>
+    <DashboardPage
+      title={bezirk.name ?? ""}
+      description={bezirk.shortName ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Bezirke", href: "/dashboard/bezirke" },
+        { label: bezirk.shortName ?? "" },
+      ]}
+      actions={
+        <Link
+          href={`/dashboard/bezirke/${bezirkId}/edit`}
+          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        >
+          <PencilIcon className="h-4 w-4" />
+          Bearbeiten
+        </Link>
+      }
+      maxWidth="7xl"
+    >
+      {/* District Badge */}
+      <div className="mb-6 flex items-center gap-4">
+        <span
+          className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white"
+          style={{
+            backgroundColor: `var(--color-district-${bezirk.number})`,
+          }}
+        >
+          {bezirk.number}
+        </span>
+      </div>
 
         {/* Statistics */}
         {stats && (
@@ -373,7 +347,6 @@ export default function BezirkDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

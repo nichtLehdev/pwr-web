@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { Music, Edit, UserIcon, ArrowLeftIcon } from "lucide-react";
 
 export default function AuswahlchorDetailPage() {
@@ -83,90 +84,63 @@ export default function AuswahlchorDetailPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/auswahlchoere"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Auswahlchöre
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {auswahlchor.name}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            {auswahlchor.image?.url ? (
-              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
-                <Image
-                  src={auswahlchor.image.url}
-                  alt={auswahlchor.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div
-                className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white`}
-                style={{
-                  backgroundColor: auswahlchor.colorHex || "#faa619",
-                }}
-              >
-                <Music className="h-10 w-10" />
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-                  {auswahlchor.name}
-                </h1>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    auswahlchor.showApplication
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                  }`}
-                >
-                  {auswahlchor.showApplication
-                    ? "Bewerbung aktiv"
-                    : "Bewerbung inaktiv"}
-                </span>
-              </div>
-              <p className="dark:text-primary text-primary mt-1 text-lg font-semibold">
-                {auswahlchor.subtitle}
-              </p>
-              <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
-                Slug: {auswahlchor.slug}
-              </p>
-            </div>
+    <DashboardPage
+      title={auswahlchor.name}
+      description={auswahlchor.subtitle ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Auswahlchöre", href: "/dashboard/auswahlchoere" },
+        { label: auswahlchor.name },
+      ]}
+      actions={
+        <Link
+          href={`/dashboard/auswahlchoere/${auswahlchorId}/edit`}
+          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        >
+          <Edit className="h-4 w-4" />
+          Bearbeiten
+        </Link>
+      }
+      maxWidth="7xl"
+    >
+      {/* Auswahlchor Image and Status Badge */}
+      <div className="mb-6 flex items-center gap-4">
+        {auswahlchor.image?.url ? (
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+            <Image
+              src={auswahlchor.image.url}
+              alt={auswahlchor.name}
+              fill
+              className="object-cover"
+            />
           </div>
-          <Link
-            href={`/dashboard/auswahlchoere/${auswahlchorId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        ) : (
+          <div
+            className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-lg text-white`}
+            style={{
+              backgroundColor: auswahlchor.colorHex || "#faa619",
+            }}
           >
-            <Edit className="h-4 w-4" />
-            Bearbeiten
-          </Link>
+            <Music className="h-10 w-10" />
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              auswahlchor.showApplication
+                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            }`}
+          >
+            {auswahlchor.showApplication
+              ? "Bewerbung aktiv"
+              : "Bewerbung inaktiv"}
+          </span>
+          <p className="dark:text-dark-muted text-sm text-gray-500">
+            Slug: {auswahlchor.slug}
+          </p>
         </div>
+      </div>
 
         {/* Description */}
         {auswahlchor.description && (
@@ -371,7 +345,6 @@ export default function AuswahlchorDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
@@ -340,34 +341,15 @@ export default function DashboardMediaPage() {
     : null;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Media</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              Medien verwalten
-            </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
-              Lade Bilder und andere Medien hoch
-            </p>
-          </div>
+    <>
+      <DashboardPage
+        title="Medien verwalten"
+        description="Lade Bilder und andere Medien hoch"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Media" },
+        ]}
+        actions={
           <button
             onClick={() => setShowUploadModal(true)}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
@@ -375,8 +357,8 @@ export default function DashboardMediaPage() {
             <PlusIcon className="h-5 w-5" />
             Neues Medium
           </button>
-        </div>
-
+        }
+      >
         {/* Statistics */}
         {statistics && (
           <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -609,7 +591,7 @@ export default function DashboardMediaPage() {
             </div>
           </div>
         )}
-      </div>
+      </DashboardPage>
 
       {/* Upload Modal */}
       {showUploadModal && (
@@ -1008,6 +990,6 @@ export default function DashboardMediaPage() {
           </ScrollableModalCard>
         </ScrollableModal>
       )}
-    </main>
+    </>
   );
 }

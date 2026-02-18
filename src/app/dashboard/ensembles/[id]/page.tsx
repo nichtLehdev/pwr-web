@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { EditIcon, MusicIcon } from "lucide-react";
 import { UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
@@ -86,87 +87,62 @@ export default function EnsembleDetailPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/ensembles"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Ensembles
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {ensemble.name}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-center gap-4">
-            {ensemble.image?.url ? (
-              <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
-                <Image
-                  src={ensemble.image.url}
-                  alt={ensemble.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-                <MusicIcon className="h-10 w-10" />
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-                  {ensemble.name}
-                </h1>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    ensemble.isActive
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                  }`}
-                >
-                  {ensemble.isActive ? "Aktiv" : "Inaktiv"}
-                </span>
-              </div>
-              {ensemble.bezirk && (
-                <span
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-                  style={{
-                    backgroundColor: `var(--color-district-${ensemble.bezirk.number})`,
-                  }}
-                >
-                  {ensemble.bezirk.name}
-                </span>
-              )}
-            </div>
+    <DashboardPage
+      title={ensemble.name}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Ensembles", href: "/dashboard/ensembles" },
+        { label: ensemble.name },
+      ]}
+      actions={
+        <Link
+          href={`/dashboard/ensembles/${ensembleId}/edit`}
+          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        >
+          <EditIcon className="h-4 w-4" />
+          Bearbeiten
+        </Link>
+      }
+      maxWidth="7xl"
+    >
+      {/* Ensemble Image and Status Badges */}
+      <div className="mb-6 flex items-center gap-4">
+        {ensemble.image?.url ? (
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+            <Image
+              src={ensemble.image.url}
+              alt={ensemble.name}
+              fill
+              className="object-cover"
+            />
           </div>
-          <Link
-            href={`/dashboard/ensembles/${ensembleId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        ) : (
+          <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+            <MusicIcon className="h-10 w-10" />
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+              ensemble.isActive
+                ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+            }`}
           >
-            <EditIcon className="h-4 w-4" />
-            Bearbeiten
-          </Link>
+            {ensemble.isActive ? "Aktiv" : "Inaktiv"}
+          </span>
+          {ensemble.bezirk && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+              style={{
+                backgroundColor: `var(--color-district-${ensemble.bezirk.number})`,
+              }}
+            >
+              {ensemble.bezirk.name}
+            </span>
+          )}
         </div>
+      </div>
 
         {/* Description */}
         {ensemble.description && (
@@ -512,7 +488,6 @@ export default function EnsembleDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

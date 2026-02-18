@@ -5,6 +5,7 @@ import { redirect, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, Trash2 } from "lucide-react";
 import {
   ScrollableModal,
@@ -98,89 +99,63 @@ export default function UserDetailPage() {
     );
   }
 
-  return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/users"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Benutzer
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {user.displayName ??
-                (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-                  user.email)}
-            </li>
-          </ol>
-        </nav>
+  const userName =
+    user.displayName ??
+    (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Unbenannt");
 
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
-            {/* Avatar */}
-            <div className="dark:bg-dark-border h-16 w-16 overflow-hidden rounded-full bg-gray-200">
-              {user.profileImage?.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={user.profileImage.url}
-                  alt={user.displayName ?? ""}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="dark:text-dark-muted flex h-full w-full items-center justify-center text-2xl font-bold text-gray-500">
-                  {(user.displayName ?? user.email)?.[0]?.toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div>
-              <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900">
-                {user.displayName ??
-                  (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-                    "Unbenannt")}
-              </h1>
-              <p className="dark:text-dark-muted text-gray-600">{user.email}</p>
-              {user.districtRoleName && (
-                <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                  {user.districtRoleName}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href={`/dashboard/users/${userId}/edit`}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+  return (
+    <DashboardPage
+      title={userName}
+      description={user.email ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Benutzer", href: "/dashboard/users" },
+        { label: userName },
+      ]}
+      actions={
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/dashboard/users/${userId}/edit`}
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            <Edit className="h-4 w-4" />
+            Bearbeiten
+          </Link>
+          {session?.user.id !== userId && (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
             >
-              <Edit className="h-4 w-4" />
-              Bearbeiten
-            </Link>
-            {session?.user.id !== userId && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-                Löschen
-              </button>
-            )}
-          </div>
+              <Trash2 className="h-4 w-4" />
+              Löschen
+            </button>
+          )}
         </div>
+      }
+      maxWidth="7xl"
+    >
+      {/* Avatar and Role Badge */}
+      <div className="mb-6 flex items-start gap-4">
+        <div className="dark:bg-dark-border h-16 w-16 overflow-hidden rounded-full bg-gray-200">
+          {user.profileImage?.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.profileImage.url}
+              alt={user.displayName ?? ""}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="dark:text-dark-muted flex h-full w-full items-center justify-center text-2xl font-bold text-gray-500">
+              {(user.displayName ?? user.email)?.[0]?.toUpperCase()}
+            </div>
+          )}
+        </div>
+        {user.districtRoleName && (
+          <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            {user.districtRoleName}
+          </span>
+        )}
+      </div>
 
         {/* User Info Sections */}
         <div className="space-y-6">
@@ -453,7 +428,6 @@ export default function UserDetailPage() {
             </ScrollableModalCard>
           </ScrollableModal>
         )}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

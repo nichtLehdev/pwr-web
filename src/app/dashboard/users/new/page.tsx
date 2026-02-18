@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { Info } from "lucide-react";
@@ -297,44 +298,16 @@ export default function NewUserPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/users"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Benutzer
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Neuer Benutzer
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neuen Benutzer erstellen
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Erstelle ein neues Benutzerkonto mit den gewünschten Berechtigungen
-          </p>
-        </div>
+    <DashboardPage
+      title="Neuer Benutzer"
+      description="Erstelle ein neues Benutzerkonto mit den gewünschten Berechtigungen"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Benutzer", href: "/dashboard/users" },
+        { label: "Neuer Benutzer" },
+      ]}
+      maxWidth="7xl"
+    >
 
         {/* Info Box */}
         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
@@ -597,7 +570,6 @@ export default function NewUserPage() {
             </Button>
           </div>
         </form>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

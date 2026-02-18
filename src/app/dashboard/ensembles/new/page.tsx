@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
@@ -310,42 +311,16 @@ export default function NewEnsemblePage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/ensembles"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Ensembles
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Neu</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neues Ensemble
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Erstelle ein neues Ensemble oder Posaunenchor
-          </p>
-        </div>
+    <DashboardPage
+      title="Neues Ensemble"
+      description="Erstelle ein neues Ensemble oder Posaunenchor"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Ensembles", href: "/dashboard/ensembles" },
+        { label: "Neu" },
+      ]}
+      maxWidth="7xl"
+    >
 
         {/* Error */}
         {error && (
@@ -1129,7 +1104,6 @@ export default function NewEnsemblePage() {
           onClose={() => setShowMediaPicker(false)}
           onSelect={handleMediaSelect}
         />
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
 
@@ -82,55 +83,25 @@ export default function LocationDetailPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/locations"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Standorte
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              {location.name || "Unbenannter Standort"}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              {location.name || "Unbenannter Standort"}
-            </h1>
-            {location.additionalInfo && (
-              <p className="dark:text-dark-muted mt-2 text-gray-600">
-                {location.additionalInfo}
-              </p>
-            )}
-          </div>
-          <Link
-            href={`/dashboard/locations/${locationId}/edit`}
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-          >
-            <Edit className="h-4 w-4" />
-            Bearbeiten
-          </Link>
-        </div>
+    <DashboardPage
+      title={location.name || "Unbenannter Standort"}
+      description={location.additionalInfo ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Standorte", href: "/dashboard/locations" },
+        { label: location.name || "Unbenannter Standort" },
+      ]}
+      actions={
+        <Link
+          href={`/dashboard/locations/${locationId}/edit`}
+          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+        >
+          <Edit className="h-4 w-4" />
+          Bearbeiten
+        </Link>
+      }
+      maxWidth="7xl"
+    >
 
         {/* Address */}
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -388,7 +359,6 @@ export default function LocationDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

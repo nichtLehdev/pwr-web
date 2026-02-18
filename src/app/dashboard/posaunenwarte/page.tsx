@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, EditIcon, EyeIcon } from "lucide-react";
 import { UserIcon, UsersIcon } from "lucide-react";
 
@@ -64,47 +65,24 @@ export default function DashboardPosaunenwartenPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Posaunenwarte</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              Posaunenwarte
-            </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
-              Verwalte die Landesposaunenwarte (LPW) und Regionalposaunenwarte
-              (RPW)
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard/users?role=LPW,RPW"
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-              Benutzer verwalten
-            </Link>
-          </div>
-        </div>
-
-        {/* Info Box */}
+    <DashboardPage
+      title="Posaunenwarte"
+      description="Verwalte die Landesposaunenwarte (LPW) und Regionalposaunenwarte (RPW)"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Posaunenwarte" },
+      ]}
+      actions={
+        <Link
+          href="/dashboard/users?role=LPW,RPW"
+          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Benutzer verwalten
+        </Link>
+      }
+    >
+      {/* Info Box */}
         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
           <div className="flex gap-3">
             <ArrowLeftIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
@@ -272,7 +250,6 @@ export default function DashboardPosaunenwartenPage() {
             </div>
           </div>
         )}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

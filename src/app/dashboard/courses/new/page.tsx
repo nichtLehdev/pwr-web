@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { CourseType, CustomFieldType } from "~/generated/prisma/enums";
@@ -506,54 +507,26 @@ export default function NewCoursePage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/courses"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Kurse
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Neuer Kurs</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neuen Kurs erstellen
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Erstelle einen neuen Kurs oder eine Freizeit
-          </p>
+    <DashboardPage
+      title="Neuer Kurs"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Kurse", href: "/dashboard/courses" },
+        { label: "Neuer Kurs" },
+      ]}
+      maxWidth="7xl"
+    >
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
+      )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <Card>
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Basic Information */}
+        <Card>
             <CardHeader>
               <CardTitle>Grundinformationen</CardTitle>
             </CardHeader>
@@ -1551,21 +1524,20 @@ export default function NewCoursePage() {
                   : "Kurs einreichen"}
             </Button>
           </div>
-        </form>
+      </form>
 
-        {/* Media Picker Modal */}
-        <MediaPickerModal
-          isOpen={showMediaPicker}
-          onClose={() => setShowMediaPicker(false)}
-          onSelect={(url, _alt, mediaId) => {
-            if (mediaId) {
-              setImageId(mediaId);
-            }
-            setImageUrl(url);
-            setShowMediaPicker(false);
-          }}
-        />
-      </div>
-    </main>
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={(url, _alt, mediaId) => {
+          if (mediaId) {
+            setImageId(mediaId);
+          }
+          setImageUrl(url);
+          setShowMediaPicker(false);
+        }}
+      />
+    </DashboardPage>
   );
 }

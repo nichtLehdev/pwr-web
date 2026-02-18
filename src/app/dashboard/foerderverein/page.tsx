@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { EditIcon, PlusIcon, UsersIcon } from "lucide-react";
 import { TrashIcon, UserIcon } from "lucide-react";
 import { CheckIcon } from "lucide-react";
@@ -100,44 +101,24 @@ export default function DashboardFoerdervereinPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Förderverein</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              Förderverein
-            </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
-              Verwalte die Mitglieder des Fördervereins
-            </p>
-          </div>
-          <Link
-            href="/dashboard/foerderverein/new"
+    <DashboardPage
+      title="Förderverein"
+      description="Verwalte die Mitglieder des Fördervereins"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Förderverein" },
+      ]}
+      actions={
+        <Link
+          href="/dashboard/foerderverein/new"
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
           >
             <PlusIcon className="h-5 w-5" />
             Neues Mitglied
           </Link>
-        </div>
-
-        {/* Members List */}
+      }
+    >
+      {/* Members List */}
         {!members || members.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
             <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
@@ -290,7 +271,6 @@ export default function DashboardFoerdervereinPage() {
             </div>
           </div>
         )}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

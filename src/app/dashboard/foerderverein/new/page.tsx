@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { FoerdervereinRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { XIcon } from "lucide-react";
@@ -157,42 +158,16 @@ export default function NewFoerdervereinPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/foerderverein"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Förderverein
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Neu</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neues Fördervereinsmitglied
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Füge ein neues Mitglied zum Förderverein hinzu
-          </p>
-        </div>
+    <DashboardPage
+      title="Neues Fördervereinsmitglied"
+      description="Füge ein neues Mitglied zum Förderverein hinzu"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Förderverein", href: "/dashboard/foerderverein" },
+        { label: "Neu" },
+      ]}
+      maxWidth="7xl"
+    >
 
         {/* Error Message */}
         {error && (
@@ -457,7 +432,6 @@ export default function NewFoerdervereinPage() {
             </button>
           </div>
         </form>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

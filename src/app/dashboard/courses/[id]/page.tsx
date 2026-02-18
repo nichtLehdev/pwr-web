@@ -15,6 +15,7 @@ import {
   PaymentStatus,
 } from "~/generated/prisma/enums";
 import { ArrowRightIcon, Edit, Trash2, UserIcon } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -265,101 +266,67 @@ export default function CourseDetailPage() {
   const confirmedCount = course._count?.participants ?? 0;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/courses"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Kurse
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text max-w-[200px] truncate text-gray-900">
-              {course.title}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusColors[course.status]}`}
-              >
-                {statusLabels[course.status]}
-              </span>
-              {course.registrationOpen &&
-              course.registrationOpensAt &&
-              new Date(course.registrationOpensAt) > new Date() ? (
-                <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                  Öffnet{" "}
-                  {new Date(course.registrationOpensAt).toLocaleDateString(
-                    "de-DE",
-                    {
-                      day: "2-digit",
-                      month: "short",
-                    },
-                  )}
-                </span>
-              ) : course.registrationOpen ? (
-                <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                  Anmeldung offen
-                </span>
-              ) : null}
-              {course.maxParticipants &&
-                confirmedCount >= course.maxParticipants && (
-                  <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                    Ausgebucht
-                  </span>
-                )}
-            </div>
-            <h1 className="dark:text-dark-text text-2xl font-bold wrap-break-word text-gray-900 sm:text-3xl">
-              {course.title}
-            </h1>
-            {course.motto && (
-              <p className="dark:text-dark-muted mt-1 text-lg text-gray-600">
-                {course.motto}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2">
-            {canEdit && (
-              <Link
-                href={`/dashboard/courses/${courseId}/edit`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <Edit className="h-4 w-4" />
-                Bearbeiten
-              </Link>
-            )}
-            {canDelete && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4" />
-                Löschen
-              </button>
-            )}
-          </div>
+    <DashboardPage
+      title={course.title}
+      description={course.motto ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Kurse", href: "/dashboard/courses" },
+        { label: course.title },
+      ]}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {canEdit && (
+            <Link
+              href={`/dashboard/courses/${courseId}/edit`}
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <Edit className="h-4 w-4" />
+              Bearbeiten
+            </Link>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+              Löschen
+            </button>
+          )}
         </div>
+      }
+      maxWidth="7xl"
+    >
+      {/* Status Badges */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusColors[course.status]}`}
+        >
+          {statusLabels[course.status]}
+        </span>
+        {course.registrationOpen &&
+        course.registrationOpensAt &&
+        new Date(course.registrationOpensAt) > new Date() ? (
+          <span className="inline-flex rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+            Öffnet{" "}
+            {new Date(course.registrationOpensAt).toLocaleDateString("de-DE", {
+              day: "2-digit",
+              month: "short",
+            })}
+          </span>
+        ) : course.registrationOpen ? (
+          <span className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+            Anmeldung offen
+          </span>
+        ) : null}
+        {course.maxParticipants &&
+          confirmedCount >= course.maxParticipants && (
+            <span className="inline-flex rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+              Ausgebucht
+            </span>
+          )}
+      </div>
 
         {/* Tabs */}
         {canViewParticipants && (
@@ -1073,7 +1040,6 @@ export default function CourseDetailPage() {
             </ScrollableModalCard>
           </ScrollableModal>
         )}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

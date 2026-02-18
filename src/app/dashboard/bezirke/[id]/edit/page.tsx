@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { SaveIcon, Search, X, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function EditBezirkPage() {
@@ -188,53 +189,18 @@ export default function EditBezirkPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/bezirke"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Bezirke
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/bezirke/${bezirkId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {bezirk.shortName}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Bezirk bearbeiten
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Bearbeite die Informationen des Bezirks
-          </p>
-        </div>
-
-        {/* Error */}
+    <DashboardPage
+      title="Bezirk bearbeiten"
+      description="Bearbeite die Informationen des Bezirks"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Bezirke", href: "/dashboard/bezirke" },
+        { label: bezirk.shortName, href: `/dashboard/bezirke/${bezirkId}` },
+        { label: "Bearbeiten" },
+      ]}
+      maxWidth="7xl"
+    >
+      {/* Error */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
@@ -374,8 +340,7 @@ export default function EditBezirkPage() {
             </Link>
           </div>
         </form>
-      </div>
-    </main>
+    </DashboardPage>
   );
 }
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
@@ -262,44 +263,17 @@ export default function NewPostPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/posts"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
-              >
-                Beiträge
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Neuer Beitrag</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neuen Beitrag erstellen
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Erstelle einen neuen Beitrag für die Webseite
-          </p>
-        </div>
-
-        {/* Error Message */}
+    <DashboardPage
+      title="Neuer Beitrag"
+      description="Erstelle einen neuen Beitrag für die Webseite"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Beiträge", href: "/dashboard/posts" },
+        { label: "Neuer Beitrag" },
+      ]}
+      maxWidth="7xl"
+    >
+      {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
@@ -789,7 +763,6 @@ export default function NewPostPage() {
             onClose={() => setShowImagePositionEditor(false)}
           />
         )}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }

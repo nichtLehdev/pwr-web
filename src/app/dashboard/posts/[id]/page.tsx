@@ -18,6 +18,7 @@ import {
   TrashIcon,
   DownloadIcon,
 } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -227,81 +228,53 @@ export default function PostDetailPage() {
   };
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/posts"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Beiträge
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text max-w-[200px] truncate text-gray-900">
-              {post.title}
-            </li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="dark:text-dark-text text-2xl font-bold wrap-break-word text-gray-900 sm:text-3xl">
-                {post.title}
-              </h1>
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
-              >
-                {statusLabels[post.status]}
-              </span>
-              {post.pinned && (
-                <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                  <PinIcon className="h-3 w-3" />
-                  Gepinnt
-                </span>
-              )}
-            </div>
-            {post.excerpt && (
-              <p className="dark:text-dark-muted mt-2 text-lg text-gray-600">
-                {post.excerpt}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {canEdit && (
-              <Link
-                href={`/dashboard/posts/${postId}/edit`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <Edit className="h-4 w-4" />
-                Bearbeiten
-              </Link>
-            )}
-            {canDelete && (
-              <button
-                onClick={() => setShowDeleteModal(true)}
-                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-              >
-                <Trash2 className="h-4 w-4" />
-                Löschen
-              </button>
-            )}
-          </div>
+    <>
+      <DashboardPage
+      title={post.title}
+      description={post.excerpt ?? undefined}
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Beiträge", href: "/dashboard/posts" },
+        { label: post.title },
+      ]}
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {canEdit && (
+            <Link
+              href={`/dashboard/posts/${postId}/edit`}
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <Edit className="h-4 w-4" />
+              Bearbeiten
+            </Link>
+          )}
+          {canDelete && (
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+              Löschen
+            </button>
+          )}
         </div>
+      }
+      maxWidth="7xl"
+    >
+      {/* Status Badges */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
+        >
+          {statusLabels[post.status]}
+        </span>
+        {post.pinned && (
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+            <PinIcon className="h-3 w-3" />
+            Gepinnt
+          </span>
+        )}
+      </div>
 
         {/* Review Section (for reviewers with pending posts) */}
         {canReview && (
@@ -759,7 +732,7 @@ export default function PostDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-      </div>
+      </DashboardPage>
 
       {/* Reject Modal */}
       {showRejectModal && (
@@ -839,6 +812,6 @@ export default function PostDetailPage() {
           </ScrollableModalCard>
         </ScrollableModal>
       )}
-    </main>
+    </>
   );
 }

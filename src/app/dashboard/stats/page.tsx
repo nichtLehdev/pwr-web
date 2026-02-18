@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
+import { DashboardPage } from "@/app/_components/dashboard";
 import {
   BarChart3,
   ArrowLeft,
@@ -84,23 +85,15 @@ export default function StatsPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6 flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="dark:text-dark-muted dark:hover:text-dark-text text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900">
-            Statistik
-          </h1>
-        </div>
-        <p className="dark:text-dark-muted mb-8 text-sm text-gray-600">
-          Seitenaufrufe (anonym bzw. mit Konto, je nach Einwilligung) sowie
-          Übersicht über Inhalte und Nutzung.
-        </p>
+    <DashboardPage
+      title="Statistik"
+      description="Seitenaufrufe (anonym bzw. mit Konto, je nach Einwilligung) sowie Übersicht über Inhalte und Nutzung."
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Statistik" },
+      ]}
+      maxWidth="7xl"
+    >
 
         {statsLoading || siteStatsLoading ? (
           <div className="flex justify-center py-12">
@@ -533,8 +526,7 @@ export default function StatsPage() {
               )}
           </div>
         ) : null}
-      </div>
-    </main>
+    </DashboardPage>
   );
 }
 
