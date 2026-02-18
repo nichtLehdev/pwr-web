@@ -7,7 +7,7 @@ import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { ArrowLeftIcon, EditIcon, EyeIcon } from "lucide-react";
+import { EditIcon, EyeIcon, PlusIcon } from "lucide-react";
 import { UserIcon, UsersIcon } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -73,31 +73,17 @@ export default function DashboardPosaunenwartenPage() {
         { label: "Posaunenwarte" },
       ]}
       actions={
-        <Link
-          href="/dashboard/users?role=LPW,RPW"
-          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <ArrowLeftIcon className="h-4 w-4" />
-          Benutzer verwalten
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/dashboard/posaunenwarte/new"
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium text-white transition-colors"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Neuer Posaunenwart
+          </Link>
+        </div>
       }
     >
-      {/* Info Box */}
-        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <div className="flex gap-3">
-            <ArrowLeftIcon className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-            <div className="text-sm text-blue-800 dark:text-blue-300">
-              <p className="font-medium">Hinweis zur Verwaltung</p>
-              <p className="mt-1">
-                Posaunenwarte sind Benutzer mit der Rolle LPW oder RPW. Um einen
-                neuen Posaunenwart hinzuzufügen, bearbeite einen Benutzer und
-                weise ihm die entsprechende Rolle zu. Hier kannst du die
-                Bezirkszuordnungen verwalten.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Posaunenwarte List */}
         {!posaunenwarte || posaunenwarte.length === 0 ? (
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
@@ -105,16 +91,16 @@ export default function DashboardPosaunenwartenPage() {
               <UsersIcon className="h-12 w-12" />
             </div>
             <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-              Keine Posaunenwarte gefunden
+              Keine Posaunenwarte
             </h3>
             <p className="dark:text-dark-muted mb-6 text-gray-600">
-              Es gibt noch keine Benutzer mit der Rolle LPW oder RPW.
+              Es wurden noch keine Posaunenwarte angelegt.
             </p>
             <Link
-              href="/dashboard/users"
+              href="/dashboard/posaunenwarte/new"
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
             >
-              Benutzer verwalten
+              Ersten Posaunenwart anlegen
             </Link>
           </div>
         ) : (
@@ -234,13 +220,15 @@ export default function DashboardPosaunenwartenPage() {
                           >
                             <EditIcon className="h-4 w-4" />
                           </Link>
-                          <Link
-                            href={`/dashboard/users/${person.id}`}
-                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                            title="Benutzerprofil"
-                          >
-                            <UserIcon className="h-4 w-4" />
-                          </Link>
+                          {person.userId && (
+                            <Link
+                              href={`/dashboard/users/${person.userId}`}
+                              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                              title="Benutzerprofil"
+                            >
+                              <UserIcon className="h-4 w-4" />
+                            </Link>
+                          )}
                         </div>
                       </td>
                     </tr>

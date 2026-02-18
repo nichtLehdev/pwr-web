@@ -827,72 +827,118 @@ export const organizationRouter = createTRPCRouter({
     }),
 
   /**
-   * Get all Posaunenwarte with their Bezirke
-   * Returns LPW and RPW only (NOT Obleute!)
+   * Get all Posaunenwarte with their Bezirke (from Posaunenwart model)
    */
   getPosaunenwarte: publicProcedure.query(async ({ ctx }) => {
-    // Get all users with posaunenwarte responsibilities
-    const allUsers = await ctx.db.user.findMany({
+    const list = await ctx.db.posaunenwart.findMany({
       include: {
-        profileImage: true,
-        posaunenwarteResponsibilities: {
-          include: {
-            bezirk: true,
-          },
-          orderBy: {
-            bezirk: { number: "asc" },
+        user: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+            phone: true,
+            districtRoleName: true,
+            bio: true,
+            profileImage: true,
           },
         },
+        image: true,
+        responsibilities: {
+          include: { bezirk: true },
+          orderBy: { bezirk: { number: "asc" } },
+        },
       },
+      orderBy: [{ roleType: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
-    // Filter users who have LPW or RPW responsibilities
-    const posaunenwarte = allUsers.filter((user) => {
-      return user.posaunenwarteResponsibilities.some(
-        (r) => r.roleType === "LPW" || r.roleType === "RPW",
-      );
+    return list.map((p) => {
+      const name =
+        p.user?.displayName ?? p.name ?? null;
+      const email = p.user?.email ?? p.email ?? "";
+      return {
+        id: p.id,
+        name,
+        email,
+        role: p.roleType,
+        phone: p.user?.phone ?? p.phone ?? null,
+        districtRoleName: p.user?.districtRoleName ?? null,
+        bio: p.user?.bio ?? null,
+        profileImage: p.image ?? p.user?.profileImage ?? null,
+        userId: p.userId,
+        bezirke: p.responsibilities.map((r) => ({
+          id: r.bezirk.id,
+          number: r.bezirk.number,
+          name: r.bezirk.name,
+          shortName: r.bezirk.shortName,
+          notes: r.notes,
+          priority: r.priority,
+        })),
+      };
     });
-
-    return posaunenwarte
-      .map((person) => {
-        const isLPW = person.posaunenwarteResponsibilities.some(
-          (r) => r.roleType === "LPW",
-        );
-        const isRPW = person.posaunenwarteResponsibilities.some(
-          (r) => r.roleType === "RPW",
-        );
-        const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
-
-        return {
-          id: person.id,
-          name: person.displayName,
-          email: person.email,
-          role,
-          phone: person.phone,
-          districtRoleName: person.districtRoleName,
-          bio: person.bio,
-          profileImage: person.profileImage,
-          bezirke: person.posaunenwarteResponsibilities.map((r) => ({
-            id: r.bezirk.id,
-            number: r.bezirk.number,
-            name: r.bezirk.name,
-            shortName: r.bezirk.shortName,
-            roleType: r.roleType,
-            notes: r.notes,
-            priority: r.priority,
-          })),
-        };
-      })
-      .sort((a, b) => {
-        // Sort by role (LPW first), then by name
-        if (a.role !== b.role) {
-          if (a.role === "LPW") return -1;
-          if (b.role === "LPW") return 1;
-          return 0;
-        }
-        return (a.name || "").localeCompare(b.name || "");
-      });
   }),
+
+  /**
+   * Get one Posaunenwart by id (for dashboard detail/edit)
+   */
+  getPosaunenwart: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const pw = await ctx.db.posaunenwart.findUnique({
+        where: { id: input.id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              displayName: true,
+              email: true,
+              phone: true,
+              districtRoleName: true,
+              bio: true,
+              profileImage: true,
+            },
+          },
+          image: true,
+          responsibilities: {
+            include: { bezirk: true },
+            orderBy: { bezirk: { number: "asc" } },
+          },
+        },
+      });
+      if (!pw) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Posaunenwart nicht gefunden",
+        });
+      }
+      const name = pw.user?.displayName ?? pw.name ?? null;
+      const email = pw.user?.email ?? pw.email ?? "";
+      return {
+        id: pw.id,
+        name,
+        email,
+        role: pw.roleType,
+        phone: pw.user?.phone ?? pw.phone ?? null,
+        districtRoleName: pw.user?.districtRoleName ?? null,
+        bio: pw.user?.bio ?? null,
+        profileImage: pw.image ?? pw.user?.profileImage ?? null,
+        userId: pw.userId,
+        sortOrder: pw.sortOrder,
+        imageId: pw.imageId,
+        imageUrl: pw.image?.url ?? null,
+        storedName: pw.name,
+        storedEmail: pw.email,
+        storedPhone: pw.phone,
+        bezirke: pw.responsibilities.map((r) => ({
+          id: r.bezirk.id,
+          number: r.bezirk.number,
+          name: r.bezirk.name,
+          shortName: r.bezirk.shortName,
+          notes: r.notes,
+          priority: r.priority,
+        })),
+      };
+    }),
 
   /**
    * Get Posaunenwarte by specific role (LPW or RPW)
@@ -904,61 +950,53 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const allUsers = await ctx.db.user.findMany({
+      const list = await ctx.db.posaunenwart.findMany({
+        where: { roleType: input.role },
         include: {
-          profileImage: true,
-          posaunenwarteResponsibilities: {
-            include: {
-              bezirk: true,
-            },
-            orderBy: {
-              bezirk: { number: "asc" },
+          user: {
+            select: {
+              displayName: true,
+              email: true,
+              phone: true,
+              districtRoleName: true,
+              bio: true,
+              profileImage: true,
             },
           },
+          image: true,
+          responsibilities: {
+            include: { bezirk: true },
+            orderBy: { bezirk: { number: "asc" } },
+          },
         },
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       });
 
-      const posaunenwarte = allUsers.filter((user) => {
-        return user.posaunenwarteResponsibilities.some(
-          (r) => r.roleType === input.role,
-        );
+      return list.map((p) => {
+        const name = p.user?.displayName ?? p.name ?? null;
+        const email = p.user?.email ?? p.email ?? "";
+        return {
+          id: p.id,
+          name,
+          email,
+          role: p.roleType,
+          phone: p.user?.phone ?? p.phone ?? null,
+          districtRoleName: p.user?.districtRoleName ?? null,
+          bio: p.user?.bio ?? null,
+          profileImage: p.image ?? p.user?.profileImage ?? null,
+          bezirke: p.responsibilities.map((r) => ({
+            id: r.bezirk.id,
+            number: r.bezirk.number,
+            name: r.bezirk.name,
+            shortName: r.bezirk.shortName,
+            notes: r.notes,
+          })),
+        };
       });
-
-      return posaunenwarte
-        .map((person) => {
-          const isLPW = person.posaunenwarteResponsibilities.some(
-            (r) => r.roleType === "LPW",
-          );
-          const isRPW = person.posaunenwarteResponsibilities.some(
-            (r) => r.roleType === "RPW",
-          );
-          const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
-
-          return {
-            id: person.id,
-            name: person.displayName,
-            email: person.email,
-            role,
-            phone: person.phone,
-            districtRoleName: person.districtRoleName,
-            bio: person.bio,
-            profileImage: person.profileImage,
-            bezirke: person.posaunenwarteResponsibilities.map((r) => ({
-              id: r.bezirk.id,
-              number: r.bezirk.number,
-              name: r.bezirk.name,
-              shortName: r.bezirk.shortName,
-              roleType: r.roleType,
-              notes: r.notes,
-            })),
-          };
-        })
-        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     }),
 
   /**
    * Get Posaunenwarte for a specific Bezirk
-   * Returns LPW (who covers all) and any RPW assigned to this Bezirk
    */
   getPosaunenwarteForBezirk: publicProcedure
     .input(
@@ -988,49 +1026,43 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
-        {
+      const responsibilities =
+        await ctx.db.posaunenwartResponsibility.findMany({
           where: { bezirkId: bezirk.id },
           include: {
-            user: {
+            posaunenwart: {
               include: {
-                profileImage: true,
+                user: { include: { profileImage: true } },
+                image: true,
               },
             },
           },
           orderBy: { priority: "asc" },
-        },
-      );
+        });
 
       const posaunenwarte = responsibilities.map((r) => {
-        const isLPW = r.roleType === "LPW";
-        const isRPW = r.roleType === "RPW";
-        const role = isLPW ? "LPW" : isRPW ? "RPW" : null;
-
+        const p = r.posaunenwart;
+        const name = p.user?.displayName ?? p.name ?? null;
+        const email = p.user?.email ?? p.email ?? "";
         return {
-          id: r.user.id,
-          name: r.user.displayName,
-          email: r.user.email,
-          role,
-          phone: r.user.phone,
-          districtRoleName: r.user.districtRoleName,
-          bio: r.user.bio,
-          profileImage: r.user.profileImage,
-          roleType: r.roleType,
+          id: p.id,
+          name,
+          email,
+          role: p.roleType,
+          phone: p.user?.phone ?? p.phone ?? null,
+          districtRoleName: p.user?.districtRoleName ?? null,
+          bio: p.user?.bio ?? null,
+          profileImage: p.image ?? p.user?.profileImage ?? null,
           notes: r.notes,
           priority: r.priority,
         };
       });
 
-      return {
-        bezirk,
-        posaunenwarte,
-      };
+      return { bezirk, posaunenwarte };
     }),
 
   /**
    * Get complete contact info for a Bezirk
-   * Includes: Posaunenwarte (LPW + RPW) AND the Bezirksobmann/obfrau
    */
   getBezirkContacts: publicProcedure
     .input(
@@ -1050,20 +1082,19 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      const posaunenwarteResponsibilities =
+      const responsibilities =
         await ctx.db.posaunenwartResponsibility.findMany({
           where: { bezirkId: bezirk.id },
           include: {
-            user: {
-              select: {
-                id: true,
-                displayName: true,
-                email: true,
-                districtRoleName: true,
-                profileImage: {
+            posaunenwart: {
+              include: {
+                user: {
                   select: {
-                    url: true,
-                    alt: true,
+                    id: true,
+                    displayName: true,
+                    email: true,
+                    districtRoleName: true,
+                    profileImage: { select: { url: true, alt: true } },
                   },
                 },
               },
@@ -1072,13 +1103,23 @@ export const organizationRouter = createTRPCRouter({
           orderBy: { priority: "asc" },
         });
 
-      const lpw = posaunenwarteResponsibilities
-        .filter((r) => r.roleType === "LPW")
-        .map((r) => r.user)[0];
+      const toContact = (r: (typeof responsibilities)[0]) => {
+        const p = r.posaunenwart;
+        return {
+          id: p.user?.id ?? p.id,
+          displayName: p.user?.displayName ?? p.name ?? null,
+          email: p.user?.email ?? p.email ?? null,
+          districtRoleName: p.user?.districtRoleName ?? null,
+          profileImage: p.user?.profileImage
+            ? { url: p.user.profileImage.url, alt: p.user.profileImage.alt }
+            : null,
+        };
+      };
 
-      const rpw = posaunenwarteResponsibilities
-        .filter((r) => r.roleType === "RPW")
-        .map((r) => r.user)[0];
+      const lpwResp = responsibilities.find((r) => r.posaunenwart.roleType === "LPW");
+      const rpwResp = responsibilities.find((r) => r.posaunenwart.roleType === "RPW");
+      const lpw = lpwResp ? toContact(lpwResp) : undefined;
+      const rpw = rpwResp ? toContact(rpwResp) : undefined;
 
       const obmann = await ctx.db.user.findFirst({
         where: {
@@ -1090,12 +1131,7 @@ export const organizationRouter = createTRPCRouter({
           displayName: true,
           email: true,
           districtRoleName: true,
-          profileImage: {
-            select: {
-              url: true,
-              alt: true,
-            },
-          },
+          profileImage: { select: { url: true, alt: true } },
         },
       });
 
@@ -1113,106 +1149,143 @@ export const organizationRouter = createTRPCRouter({
 
   /**
    * Get Posaunenwarte organizational hierarchy
-   * LPW -> RPWs with their Bezirke
    */
   getPosaunenwarteHierarchy: publicProcedure.query(async ({ ctx }) => {
-    const allUsers = await ctx.db.user.findMany({
+    const list = await ctx.db.posaunenwart.findMany({
       include: {
-        profileImage: true,
-        posaunenwarteResponsibilities: {
-          include: {
-            bezirk: true,
-          },
-          orderBy: {
-            bezirk: { number: "asc" },
+        user: {
+          select: {
+            displayName: true,
+            email: true,
+            phone: true,
+            districtRoleName: true,
+            bio: true,
+            profileImage: true,
           },
         },
+        image: true,
+        responsibilities: { include: { bezirk: true }, orderBy: { bezirk: { number: "asc" } } },
       },
+      orderBy: [{ roleType: "asc" }, { sortOrder: "asc" }],
     });
 
-    const posaunenwarte = allUsers.filter((user) => {
-      return user.posaunenwarteResponsibilities.some(
-        (r) => r.roleType === "LPW" || r.roleType === "RPW",
-      );
+    const toItem = (p: (typeof list)[0]) => ({
+      id: p.id,
+      name: p.user?.displayName ?? p.name ?? null,
+      email: p.user?.email ?? p.email ?? null,
+      phone: p.user?.phone ?? p.phone ?? null,
+      districtRoleName: p.user?.districtRoleName ?? null,
+      bio: p.user?.bio ?? null,
+      profileImage: p.image ?? p.user?.profileImage ?? null,
+      bezirke: p.responsibilities.map((r) => r.bezirk),
     });
 
-    const lpw = posaunenwarte
-      .filter((p) =>
-        p.posaunenwarteResponsibilities.some((r) => r.roleType === "LPW"),
-      )
-      .map((p) => ({
-        id: p.id,
-        name: p.displayName,
-        email: p.email,
-        phone: p.phone,
-        districtRoleName: p.districtRoleName,
-        bio: p.bio,
-        profileImage: p.profileImage,
-        bezirke: p.posaunenwarteResponsibilities.map((r) => r.bezirk),
-      }))
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const lpw = list.filter((p) => p.roleType === "LPW").map(toItem).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const rpw = list.filter((p) => p.roleType === "RPW").map(toItem).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
-    const rpw = posaunenwarte
-      .filter((p) =>
-        p.posaunenwarteResponsibilities.some((r) => r.roleType === "RPW"),
-      )
-      .map((p) => ({
-        id: p.id,
-        name: p.displayName,
-        email: p.email,
-        phone: p.phone,
-        districtRoleName: p.districtRoleName,
-        bio: p.bio,
-        profileImage: p.profileImage,
-        bezirke: p.posaunenwarteResponsibilities.map((r) => r.bezirk),
-      }))
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-
-    return {
-      lpw,
-      rpw,
-    };
+    return { lpw, rpw };
   }),
 
   /**
    * Get Posaunenwarte coverage statistics
    */
   getPosaunenwarteStatistics: publicProcedure.query(async ({ ctx }) => {
-    const [allUsers, totalBezirke, responsibilities] = await Promise.all([
-      ctx.db.user.findMany({
-        include: {
-          posaunenwarteResponsibilities: true,
-        },
-      }),
+    const [posaunenwarte, totalBezirke, responsibilities] = await Promise.all([
+      ctx.db.posaunenwart.findMany({ select: { id: true, roleType: true } }),
       ctx.db.bezirk.count(),
       ctx.db.posaunenwartResponsibility.findMany({
-        include: {
-          bezirk: true,
-          user: true,
-        },
+        select: { bezirkId: true },
       }),
     ]);
 
-    const lpwCount = allUsers.filter((u) =>
-      u.posaunenwarteResponsibilities.some((r) => r.roleType === "LPW"),
-    ).length;
-    const rpwCount = allUsers.filter((u) =>
-      u.posaunenwarteResponsibilities.some((r) => r.roleType === "RPW"),
-    ).length;
-
-    const bezirkeWithPosaunenwarte = new Set(
-      responsibilities.map((r) => r.bezirkId),
-    );
+    const lpwCount = posaunenwarte.filter((p) => p.roleType === "LPW").length;
+    const rpwCount = posaunenwarte.filter((p) => p.roleType === "RPW").length;
+    const bezirkeWithPosaunenwarte = new Set(responsibilities.map((r) => r.bezirkId));
 
     return {
       lpwCount,
       rpwCount,
       totalBezirke,
       bezirkeWithPosaunenwarte: bezirkeWithPosaunenwarte.size,
-      coveragePercentage: (bezirkeWithPosaunenwarte.size / totalBezirke) * 100,
+      coveragePercentage: totalBezirke > 0 ? (bezirkeWithPosaunenwarte.size / totalBezirke) * 100 : 0,
       totalResponsibilities: responsibilities.length,
     };
   }),
+
+  createPosaunenwart: adminProcedure
+    .input(
+      z.object({
+        userId: z.string().optional(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        roleType: z.nativeEnum(PosaunenwartRoleType),
+        sortOrder: z.number().default(0),
+        imageId: z.string().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (input.userId) {
+        const existing = await ctx.db.posaunenwart.findUnique({
+          where: { userId: input.userId },
+        });
+        if (existing) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Dieser Benutzer ist bereits als Posaunenwart angelegt.",
+          });
+        }
+      }
+      return await ctx.db.posaunenwart.create({
+        data: {
+          userId: input.userId,
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          roleType: input.roleType,
+          sortOrder: input.sortOrder,
+          imageId: input.imageId,
+        },
+        include: {
+          user: true,
+          image: true,
+          responsibilities: { include: { bezirk: true } },
+        },
+      });
+    }),
+
+  updatePosaunenwart: adminProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        userId: z.string().optional().nullable(),
+        name: z.string().optional(),
+        email: z.string().email().optional().nullable(),
+        phone: z.string().optional().nullable(),
+        roleType: z.nativeEnum(PosaunenwartRoleType).optional(),
+        sortOrder: z.number().optional(),
+        imageId: z.string().optional().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      return await ctx.db.posaunenwart.update({
+        where: { id },
+        data,
+        include: {
+          user: true,
+          image: true,
+          responsibilities: { include: { bezirk: true } },
+        },
+      });
+    }),
+
+  deletePosaunenwart: adminProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.posaunenwart.delete({ where: { id: input.id } });
+      return { success: true };
+    }),
 
   /**
    * Add a Bezirk to a Posaunenwart's responsibilities
@@ -1220,64 +1293,46 @@ export const organizationRouter = createTRPCRouter({
   addPosaunenwartResponsibility: adminProcedure
     .input(
       z.object({
-        userId: z.string(),
+        posaunenwartId: z.string(),
         bezirkId: z.string(),
-        roleType: z.nativeEnum(PosaunenwartRoleType),
         notes: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: input.userId },
-        include: {
-          posaunenwarteResponsibilities: true,
-        },
+      const pw = await ctx.db.posaunenwart.findUnique({
+        where: { id: input.posaunenwartId },
       });
-
-      if (!user) {
+      if (!pw) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      const hasLPWOrRPW = user.posaunenwarteResponsibilities.some(
-        (r) => r.roleType === "LPW" || r.roleType === "RPW",
-      );
-
-      if (!hasLPWOrRPW) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "User must have LPW or RPW responsibilities",
+          message: "Posaunenwart nicht gefunden",
         });
       }
 
       const existing = await ctx.db.posaunenwartResponsibility.findUnique({
         where: {
-          userId_bezirkId: {
-            userId: input.userId,
+          posaunenwartId_bezirkId: {
+            posaunenwartId: input.posaunenwartId,
             bezirkId: input.bezirkId,
           },
         },
       });
-
       if (existing) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Responsibility already exists",
+          message: "Verantwortung existiert bereits",
         });
       }
 
       return await ctx.db.posaunenwartResponsibility.create({
         data: {
-          userId: input.userId,
+          posaunenwartId: input.posaunenwartId,
           bezirkId: input.bezirkId,
-          roleType: input.roleType,
           notes: input.notes,
-          priority: input.roleType === "LPW" ? 1 : 2,
+          priority: pw.roleType === "LPW" ? 1 : 2,
         },
         include: {
-          user: true,
+          posaunenwart: true,
           bezirk: true,
         },
       });
@@ -1289,20 +1344,19 @@ export const organizationRouter = createTRPCRouter({
   removePosaunenwartResponsibility: adminProcedure
     .input(
       z.object({
-        userId: z.string(),
+        posaunenwartId: z.string(),
         bezirkId: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       await ctx.db.posaunenwartResponsibility.delete({
         where: {
-          userId_bezirkId: {
-            userId: input.userId,
+          posaunenwartId_bezirkId: {
+            posaunenwartId: input.posaunenwartId,
             bezirkId: input.bezirkId,
           },
         },
       });
-
       return { success: true };
     }),
 
@@ -1312,26 +1366,21 @@ export const organizationRouter = createTRPCRouter({
   updatePosaunenwartResponsibility: adminProcedure
     .input(
       z.object({
-        userId: z.string(),
+        posaunenwartId: z.string(),
         bezirkId: z.string(),
-        roleType: z.nativeEnum(PosaunenwartRoleType).optional(),
         notes: z.string().optional(),
         priority: z.number().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { userId, bezirkId, ...updateData } = input;
-
+      const { posaunenwartId, bezirkId, ...data } = input;
       return await ctx.db.posaunenwartResponsibility.update({
         where: {
-          userId_bezirkId: {
-            userId,
-            bezirkId,
-          },
+          posaunenwartId_bezirkId: { posaunenwartId, bezirkId },
         },
-        data: updateData,
+        data,
         include: {
-          user: true,
+          posaunenwart: true,
           bezirk: true,
         },
       });
@@ -1343,54 +1392,42 @@ export const organizationRouter = createTRPCRouter({
   setRpwBezirke: adminProcedure
     .input(
       z.object({
-        userId: z.string(),
+        posaunenwartId: z.string(),
         bezirkIds: z.array(z.string()),
         notes: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: input.userId },
-        include: {
-          posaunenwarteResponsibilities: true,
-        },
+      const pw = await ctx.db.posaunenwart.findUnique({
+        where: { id: input.posaunenwartId },
       });
-
-      if (!user) {
+      if (!pw) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "User not found",
+          message: "Posaunenwart nicht gefunden",
         });
       }
-
-      const hasRPW = user.posaunenwarteResponsibilities.some(
-        (r) => r.roleType === "RPW",
-      );
-
-      if (!hasRPW) {
+      if (pw.roleType !== "RPW") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "User must have RPW responsibilities",
+          message: "Nur bei Regionalposaunenwarten (RPW) können Bezirke gesetzt werden.",
         });
       }
 
       await ctx.db.posaunenwartResponsibility.deleteMany({
-        where: { userId: input.userId },
+        where: { posaunenwartId: input.posaunenwartId },
       });
 
       const created = await Promise.all(
         input.bezirkIds.map((bezirkId) =>
           ctx.db.posaunenwartResponsibility.create({
             data: {
-              userId: input.userId,
+              posaunenwartId: input.posaunenwartId,
               bezirkId,
-              roleType: "RPW",
               notes: input.notes,
               priority: 2,
             },
-            include: {
-              bezirk: true,
-            },
+            include: { bezirk: true },
           }),
         ),
       );

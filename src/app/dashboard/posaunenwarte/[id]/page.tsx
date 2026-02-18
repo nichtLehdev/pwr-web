@@ -1,13 +1,14 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { ArrowLeftIcon, EditIcon, MapPinIcon, UserIcon } from "lucide-react";
+import { ArrowLeftIcon, EditIcon, MapPinIcon, Trash2, UserIcon } from "lucide-react";
 
 const ROLE_LABELS: Record<string, string> = {
   LPW: "Landesposaunenwart",
@@ -19,7 +20,9 @@ export default function DashboardPosaunenwarteDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -31,10 +34,28 @@ export default function DashboardPosaunenwarteDetailPage() {
     { enabled: !!session?.user },
   );
 
-  const { data: user, isLoading: userLoading } = api.users.getById.useQuery(
-    { id },
-    { enabled: !!id },
-  );
+  const { data: member, isLoading: memberLoading } =
+    api.organization.getPosaunenwart.useQuery(
+      { id },
+      { enabled: !!id },
+    );
+
+  const deleteMutation = api.organization.deletePosaunenwart.useMutation({
+    onSuccess: () => {
+      toast.success("Posaunenwart erfolgreich gelöscht");
+      router.push("/dashboard/posaunenwarte");
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Löschen: " + error.message);
+      setIsDeleting(false);
+    },
+  });
+
+  const handleDelete = async () => {
+    if (!confirm("Möchtest du diesen Posaunenwart wirklich löschen?")) return;
+    setIsDeleting(true);
+    deleteMutation.mutate({ id });
+  };
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -55,7 +76,7 @@ export default function DashboardPosaunenwarteDetailPage() {
     }
   }, [profile, profileLoading, canManageOrganization, router]);
 
-  if (isPending || profileLoading || userLoading) {
+  if (isPending || profileLoading || memberLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -67,7 +88,7 @@ export default function DashboardPosaunenwarteDetailPage() {
     return null;
   }
 
-  if (!user) {
+  if (!member) {
     return (
       <main className="dark:bg-dark-background min-h-screen bg-gray-50">
         <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -87,39 +108,50 @@ export default function DashboardPosaunenwarteDetailPage() {
     );
   }
 
-  const isLPW =
-    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "LPW") ??
-    false;
-  const isRPW =
-    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "RPW") ??
-    false;
+  const isLPW = member.role === "LPW";
+  const isRPW = member.role === "RPW";
+  const displayName = member.name || "Unbekannt";
 
   return (
     <DashboardPage
-      title={user.displayName || "Unbekannt"}
+      title={displayName}
       breadcrumbs={[
         { label: "Dashboard", href: "/dashboard" },
         { label: "Posaunenwarte", href: "/dashboard/posaunenwarte" },
-        { label: user.displayName || "Details" },
+        { label: displayName },
       ]}
       actions={
-        <Link
-          href={`/dashboard/posaunenwarte/${id}/edit`}
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-        >
-          <EditIcon className="h-4 w-4" />
-          Bezirke bearbeiten
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/dashboard/posaunenwarte/${id}/edit`}
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          >
+            <EditIcon className="h-4 w-4" />
+            Bezirke bearbeiten
+          </Link>
+          <button
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="inline-flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+          >
+            {isDeleting ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+            Löschen
+          </button>
+        </div>
       }
       maxWidth="7xl"
     >
       {/* Avatar and Role Badge */}
       <div className="mb-6 flex items-center gap-4">
-        {user.profileImage?.url ? (
+        {member.profileImage?.url ? (
           <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
             <Image
-              src={user.profileImage.url}
-              alt={user.displayName || ""}
+              src={member.profileImage.url}
+              alt={displayName}
               fill
               className="object-cover"
             />
@@ -142,7 +174,7 @@ export default function DashboardPosaunenwarteDetailPage() {
         )}
       </div>
 
-      {/* User Info Card */}
+      {/* Contact Info Card */}
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
             Kontaktinformationen
@@ -153,12 +185,12 @@ export default function DashboardPosaunenwarteDetailPage() {
                 E-Mail
               </dt>
               <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {user.email ? (
+                {member.email ? (
                   <a
-                    href={`mailto:${user.email}`}
+                    href={`mailto:${member.email}`}
                     className="text-primary hover:underline"
                   >
-                    {user.email}
+                    {member.email}
                   </a>
                 ) : (
                   "—"
@@ -170,35 +202,35 @@ export default function DashboardPosaunenwarteDetailPage() {
                 Telefon
               </dt>
               <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {user.phone ? (
+                {member.phone ? (
                   <a
-                    href={`tel:${user.phone}`}
+                    href={`tel:${member.phone}`}
                     className="text-primary hover:underline"
                   >
-                    {user.phone}
+                    {member.phone}
                   </a>
                 ) : (
                   "—"
                 )}
               </dd>
             </div>
-            {user.districtRoleName && (
+            {member.districtRoleName && (
               <div className="sm:col-span-2">
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                   Angezeigte Rolle
                 </dt>
                 <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {user.districtRoleName}
+                  {member.districtRoleName}
                 </dd>
               </div>
             )}
-            {user.bio && (
+            {member.bio && (
               <div className="sm:col-span-2">
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                   Beschreibung
                 </dt>
                 <dd className="dark:text-dark-text mt-1 whitespace-pre-wrap text-gray-900">
-                  {user.bio}
+                  {member.bio}
                 </dd>
               </div>
             )}
@@ -212,16 +244,13 @@ export default function DashboardPosaunenwarteDetailPage() {
               Zuständige Bezirke
             </h2>
             <span className="dark:bg-dark-background-secondary dark:text-dark-muted rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
-              {user.posaunenwarteResponsibilities?.length || 0} Bezirk
-              {(user.posaunenwarteResponsibilities?.length || 0) !== 1
-                ? "e"
-                : ""}
+              {member.bezirke?.length || 0} Bezirk
+              {(member.bezirke?.length || 0) !== 1 ? "e" : ""}
             </span>
           </div>
 
           {isLPW &&
-            (!user.posaunenwarteResponsibilities ||
-              user.posaunenwarteResponsibilities.length === 0) && (
+            (!member.bezirke || member.bezirke.length === 0) && (
               <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-100 bg-gray-50 p-4">
                 <div className="flex gap-3">
                   <MapPinIcon className="text-primary h-5 w-5 shrink-0" />
@@ -237,48 +266,37 @@ export default function DashboardPosaunenwarteDetailPage() {
               </div>
             )}
 
-          {user.posaunenwarteResponsibilities &&
-            user.posaunenwarteResponsibilities.length > 0 && (
+          {member.bezirke && member.bezirke.length > 0 && (
               <div className="space-y-3">
-                {user.posaunenwarteResponsibilities.map((resp) => (
+                {member.bezirke.map((bezirk) => (
                   <div
-                    key={resp.bezirk.id}
+                    key={bezirk.id}
                     className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
                   >
                     <div className="flex items-center gap-3">
                       <div className="dark:bg-dark-background-secondary flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
                         <span className="dark:text-dark-text font-semibold text-gray-700">
-                          {resp.bezirk.number}
+                          {bezirk.number}
                         </span>
                       </div>
                       <div>
                         <p className="dark:text-dark-text font-medium text-gray-900">
-                          Bezirk {resp.bezirk.number}
+                          Bezirk {bezirk.number}
                         </p>
-                        {resp.bezirk.name && (
+                        {bezirk.name && (
                           <p className="dark:text-dark-muted text-sm text-gray-500">
-                            {resp.bezirk.name}
+                            {bezirk.name}
                           </p>
                         )}
                       </div>
                     </div>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        resp.roleType === "LPW"
-                          ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                      }`}
-                    >
-                      {resp.roleType}
-                    </span>
                   </div>
                 ))}
               </div>
             )}
 
           {isRPW &&
-            (!user.posaunenwarteResponsibilities ||
-              user.posaunenwarteResponsibilities.length === 0) && (
+            (!member.bezirke || member.bezirke.length === 0) && (
               <div className="py-8 text-center">
                 <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
                   <MapPinIcon className="h-12 w-12" />
@@ -309,13 +327,15 @@ export default function DashboardPosaunenwarteDetailPage() {
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zur Übersicht
           </Link>
-          <Link
-            href={`/dashboard/users/${id}`}
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <UserIcon className="h-4 w-4" />
-            Benutzerprofil öffnen
-          </Link>
+          {member.userId && (
+            <Link
+              href={`/dashboard/users/${member.userId}`}
+              className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <UserIcon className="h-4 w-4" />
+              Benutzerprofil öffnen
+            </Link>
+          )}
         </div>
     </DashboardPage>
   );

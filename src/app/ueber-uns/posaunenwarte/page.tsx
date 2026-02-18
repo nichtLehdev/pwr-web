@@ -72,7 +72,7 @@ export default async function PosaunenwartePage() {
             .filter((pw) => pw.role === "LPW")
             .map((pw) => (
               <div
-                key={pw.name}
+                key={pw.id}
                 className="dark:bg-dark-surface dark:shadow-dark-border mx-auto max-w-5xl overflow-hidden rounded-lg bg-white shadow-xl"
               >
                 <div className="flex flex-col lg:flex-row">
@@ -151,7 +151,7 @@ export default async function PosaunenwartePage() {
               .filter((pw) => pw.role === "RPW")
               .map((pw) => (
                 <article
-                  key={pw.name}
+                  key={pw.id}
                   className="dark:bg-dark-surface dark:shadow-dark-border overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
                 >
                   {/* Bild */}
