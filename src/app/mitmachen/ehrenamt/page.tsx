@@ -1,4 +1,4 @@
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import {
   BookOpenIcon,
   ComputerIcon,
@@ -87,45 +87,30 @@ export default function EhrenamtPage() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Ehrenamtlich engagieren" color="district-5" />
-
-      {/* Hero Section */}
-      <section className="bg-district-5 py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/mitmachen"
-              className="transition-colors hover:text-white"
-            >
-              Mitmachen
-            </Link>
-            <span>/</span>
-            <span>Ehrenamtlich engagieren</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Ehrenamtlich engagieren
-            </h1>
-            <p className="mb-6 text-lg leading-relaxed md:text-xl">
-              Das Posaunenwerk Rheinland lebt vom Engagement vieler Menschen,
-              die ihre Zeit, ihre Talente und ihre Leidenschaft einbringen. Ohne
-              ehrenamtliche Helferinnen und Helfer wäre unsere Arbeit nicht
-              möglich.
-            </p>
-            <p className="text-lg leading-relaxed opacity-95">
-              Ob musikalisch, organisatorisch oder kreativ – es gibt viele
-              Möglichkeiten, sich einzubringen. Finde die Aufgabe, die zu dir
-              passt!
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Ehrenamtlich engagieren"
+      color="district-5"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Mitmachen", href: "/mitmachen" },
+        { label: "Ehrenamtlich engagieren" },
+      ]}
+      description={
+        <>
+          <p>
+            Das Posaunenwerk Rheinland lebt vom Engagement vieler Menschen,
+            die ihre Zeit, ihre Talente und ihre Leidenschaft einbringen. Ohne
+            ehrenamtliche Helferinnen und Helfer wäre unsere Arbeit nicht
+            möglich.
+          </p>
+          <p>
+            Ob musikalisch, organisatorisch oder kreativ – es gibt viele
+            Möglichkeiten, sich einzubringen. Finde die Aufgabe, die zu dir
+            passt!
+          </p>
+        </>
+      }
+    >
       {/* Möglichkeiten */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -333,6 +318,6 @@ export default function EhrenamtPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

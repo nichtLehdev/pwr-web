@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import ParticipationCard from "../_components/general/participation-card";
 import {
   ArrowRightIcon,
@@ -62,41 +62,30 @@ export default function UeberUnsPage() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Über uns" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Förderverein</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Über das Posaunenwerk Rheinland
-            </h1>
-            <p className="mb-6 text-lg leading-relaxed opacity-95 md:text-xl">
-              Das Evangelische Posaunenwerk in der Evangelischen Kirche im
-              Rheinland ist die Dachorganisation für knapp 200 Posaunenchöre mit
-              etwa 2.000 Mitgliedern. Diese Chöre verteilen sich über das große
-              Gebiet der rheinischen Landeskirche, von Emmerich im Norden bis
-              nach Saarbrücken im Süden, von Aachen im Westen bis
-              Altenkirchen/Westerwald im Osten.
-            </p>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Posaunenchöre – das sind gemischte Blechbläserensembles, die zur
-              Ehre Gottes und zur Freude der Mitmenschen Musik machen. Sie haben
-              eine lange Geschichte und gehören zum immateriellen Kulturerbe in
-              Deutschland.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Über uns"
+      heroTitle="Über das Posaunenwerk Rheinland"
+      color="primary"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Über uns" }]}
+      description={
+        <>
+          <p className="mb-6">
+            Das Evangelische Posaunenwerk in der Evangelischen Kirche im
+            Rheinland ist die Dachorganisation für knapp 200 Posaunenchöre mit
+            etwa 2.000 Mitgliedern. Diese Chöre verteilen sich über das große
+            Gebiet der rheinischen Landeskirche, von Emmerich im Norden bis
+            nach Saarbrücken im Süden, von Aachen im Westen bis
+            Altenkirchen/Westerwald im Osten.
+          </p>
+          <p>
+            Posaunenchöre – das sind gemischte Blechbläserensembles, die zur
+            Ehre Gottes und zur Freude der Mitmenschen Musik machen. Sie haben
+            eine lange Geschichte und gehören zum immateriellen Kulturerbe in
+            Deutschland.
+          </p>
+        </>
+      }
+    >
       {/* Sections Grid */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -497,6 +486,6 @@ export default function UeberUnsPage() {
           </Link>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

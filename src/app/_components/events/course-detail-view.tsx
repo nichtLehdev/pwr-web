@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
-import PageHeader from "../general/page-header";
+import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
 import CourseRegistrationForm from "./course-registration-form";
 import { getDistrictColor } from "@/lib/district-color";
@@ -206,71 +206,55 @@ export default function CourseDetailView({
   };
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title={course.title} color={district} />
-      {/* Header */}
+    <PublicPage
+      title={course.title}
+      color={district}
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Termine", href: "/termine" },
+        { label: "Lehrgang" },
+      ]}
+      description={
+        course.motto ? (
+          <p className="italic opacity-90">{course.motto}</p>
+        ) : undefined
+      }
+    >
+      {/* Course Info bar */}
       <section
-        className="py-8 text-white md:py-12 lg:py-16"
+        className="py-6 text-white md:py-8"
         style={{ backgroundColor: districtColor }}
       >
         <div className="container mx-auto px-4">
-          {/* Breadcrumb */}
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/termine"
-              className="transition-colors hover:text-white"
-            >
-              Termine
-            </Link>
-            <span>/</span>
-            <span>Lehrgang</span>
-          </nav>
-
-          {/* Course Info */}
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-1 flex-wrap items-center gap-3">
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                {course.courseType}
+              </span>
+              {course.bezirk && (
                 <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  {course.courseType}
+                  {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
                 </span>
-                {course.bezirk && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
-                  </span>
-                )}
-                {!isSameDay && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
-                  </span>
-                )}
-                {isPast && (
-                  <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
-                    Vergangen
-                  </span>
-                )}
-                {spots.isFull && !course.allowWaitingList && (
-                  <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold">
-                    Ausgebucht
-                  </span>
-                )}
-                {spots.isFull && course.allowWaitingList && (
-                  <span className="rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold">
-                    Nur Warteliste
-                  </span>
-                )}
-              </div>
-
-              <h1 className="mb-2 text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl">
-                {course.title}
-              </h1>
-              {course.motto && (
-                <p className="text-lg italic opacity-90 md:text-xl">
-                  {course.motto}
-                </p>
+              )}
+              {!isSameDay && (
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                  {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
+                </span>
+              )}
+              {isPast && (
+                <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
+                  Vergangen
+                </span>
+              )}
+              {spots.isFull && !course.allowWaitingList && (
+                <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold">
+                  Ausgebucht
+                </span>
+              )}
+              {spots.isFull && course.allowWaitingList && (
+                <span className="rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold">
+                  Nur Warteliste
+                </span>
               )}
             </div>
 
@@ -784,6 +768,6 @@ export default function CourseDetailView({
           currentUser={userProfile || null}
         />
       )}
-    </div>
+    </PublicPage>
   );
 }

@@ -1,4 +1,4 @@
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
@@ -9,41 +9,24 @@ export default async function AuswahlchoerePage() {
   const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;
 
   return (
-    <div>
-      <PageHeader title="Auswahlchöre" color="district-3" />
-
-      {/* Hero Section */}
-      <section className="bg-district-3 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Auswahlchöre</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Unsere Auswahlchöre
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Die Auswahlchöre des Posaunenwerks Rheinland repräsentieren die
-              musikalische Spitze unserer Arbeit. Sie setzen sich aus besonders
-              engagierten und talentierten Bläserinnen und Bläsern zusammen und
-              präsentieren die Vielfalt der Posaunenchormusik auf höchstem
-              Niveau.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Auswahlchöre"
+      heroTitle="Unsere Auswahlchöre"
+      color="district-3"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Auswahlchöre" },
+      ]}
+      description={
+        <p>
+          Die Auswahlchöre des Posaunenwerks Rheinland repräsentieren die
+          musikalische Spitze unserer Arbeit. Sie setzen sich aus besonders
+          engagierten und talentierten Bläserinnen und Bläsern zusammen und
+          präsentieren die Vielfalt der Posaunenchormusik auf höchstem Niveau.
+        </p>
+      }
+    >
       {/* Ensembles */}
       {ensembles.map((ensemble, index) => (
         <section
@@ -172,6 +155,6 @@ export default async function AuswahlchoerePage() {
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20"></section>
 
       <section className="bg-primary py-12 text-white md:py-16 lg:py-20"></section>
-    </div>
+    </PublicPage>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import { api, type RouterOutputs } from "@/trpc/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -329,42 +329,26 @@ export default function BezirkePage() {
   const bezirke = api.bezirke.getAll.useQuery();
 
   return (
-    <div>
-      <PageHeader title="Bezirke" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Bezirke</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Bezirke im Posaunenwerk Rheinland
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Das Posaunenwerk der Evangelischen Kirche im Rheinland hat ein
-              sehr großes Gebiet. Dem Posaunenwerk gehören Posaunenchöre in
-              Nordrhein-Westfalen, Rheinland-Pfalz und dem Saarland an. Dieses
-              große Gebiet ist in 13 Bezirke aufgeteilt. Auf der Ebene der
-              Bezirke gibt es häufig besondere Veranstaltungen, Schulungen,
-              Bezirkschöre und Bläsertreffen.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Bezirke"
+      heroTitle="Bezirke im Posaunenwerk Rheinland"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Bezirke" },
+      ]}
+      description={
+        <p>
+          Das Posaunenwerk der Evangelischen Kirche im Rheinland hat ein
+          sehr großes Gebiet. Dem Posaunenwerk gehören Posaunenchöre in
+          Nordrhein-Westfalen, Rheinland-Pfalz und dem Saarland an. Dieses
+          große Gebiet ist in 13 Bezirke aufgeteilt. Auf der Ebene der
+          Bezirke gibt es häufig besondere Veranstaltungen, Schulungen,
+          Bezirkschöre und Bläsertreffen.
+        </p>
+      }
+    >
       {!bezirke.data ? (
         <div className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
           <div className="container">
@@ -573,6 +557,6 @@ export default function BezirkePage() {
           </section>
         </>
       )}
-    </div>
+    </PublicPage>
   );
 }

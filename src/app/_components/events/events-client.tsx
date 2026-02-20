@@ -13,7 +13,7 @@ import type {
 import type { Bezirk } from "~/generated/prisma/client";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import PageHeader from "../general/page-header";
+import PublicPage from "../general/public-page";
 import { useBanner } from "../ui/banner-context";
 import EventCard from "./event-card";
 import CourseCard from "./course-card";
@@ -330,28 +330,19 @@ export default function EventsClient({
   ];
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title="Termine" color="primary" />
-
-      {/* Header */}
-      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
-        <div className="container mx-auto px-4">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Termine</span>
-          </nav>
-          <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
-            Termine
-          </h1>
-          <p className="max-w-2xl text-sm md:text-lg lg:text-xl">
-            Alle Konzerte, Gottesdienste und Lehrgänge
-          </p>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Termine"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Termine" },
+      ]}
+      description={
+        <p>
+          Alle Konzerte, Gottesdienste und Lehrgänge
+        </p>
+      }
+    >
       {/* Filter & View Toggle */}
       <section
         className="dark:border-dark-border dark:bg-dark-surface sticky z-20 border-b border-gray-200 bg-white shadow-sm"
@@ -759,6 +750,6 @@ export default function EventsClient({
         onClose={() => setIcalModalOpen(false)}
         feedType="ical"
       />
-    </div>
+    </PublicPage>
   );
 }

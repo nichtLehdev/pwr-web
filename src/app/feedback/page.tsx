@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useToast } from "../_components/ui/toast";
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import { X } from "lucide-react";
 import {
   ScrollableModal,
@@ -125,29 +125,21 @@ export default function FeedbackPage() {
   };
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title="Feedback" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
-        <div className="container mx-auto px-4">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Feedback</span>
-          </nav>
-          <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
-            Feedback
-          </h1>
-          <p className="max-w-2xl text-sm md:text-lg lg:text-xl">
-            Wir freuen uns über dein Feedback! Deine Nachricht wird als Issue
-            anonym oder mit deiner E-Mail-Adresse in unserem Repository
-            erstellt.
-          </p>
-        </div>
-      </section>
+    <PublicPage
+      title="Feedback"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Feedback" },
+      ]}
+      description={
+        <p>
+          Wir freuen uns über dein Feedback! Deine Nachricht wird als Issue
+          anonym oder mit deiner E-Mail-Adresse in unserem Repository
+          erstellt.
+        </p>
+      }
+    >
 
       {/* Issues Section */}
       <section className="py-8 md:py-16">
@@ -313,6 +305,6 @@ export default function FeedbackPage() {
           </ScrollableModalCard>
         </ScrollableModal>
       )}
-    </div>
+    </PublicPage>
   );
 }

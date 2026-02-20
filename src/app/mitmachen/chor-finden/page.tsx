@@ -4,7 +4,7 @@ import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import { getDistrictColor } from "@/lib/district-color";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 import {
@@ -182,39 +182,22 @@ function ChorFindenContent() {
   }
 
   return (
-    <div>
-      <PageHeader title="Finde deinen Posaunenchor" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/mitmachen"
-              className="transition-colors hover:text-white"
-            >
-              Mitmachen
-            </Link>
-            <span>/</span>
-            <span>Chor Finden</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Finde deinen Posaunenchor
-            </h1>
-            <p className="mb-8 text-lg leading-relaxed md:text-xl">
-              Im Rheinland gibt es über 200 Posaunenchöre mit mehr als 2.000
-              aktiven Bläserinnen und Bläsern. Finde einen Chor in deiner Nähe
-              und werde Teil unserer musikalischen Gemeinschaft!
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Finde deinen Posaunenchor"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Mitmachen", href: "/mitmachen" },
+        { label: "Chor Finden" },
+      ]}
+      description={
+        <p>
+          Im Rheinland gibt es über 200 Posaunenchöre mit mehr als 2.000
+          aktiven Bläserinnen und Bläsern. Finde einen Chor in deiner Nähe
+          und werde Teil unserer musikalischen Gemeinschaft!
+        </p>
+      }
+    >
       {/* Kontakt-Info */}
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
         <div className="container">
@@ -748,7 +731,7 @@ function ChorFindenContent() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }
 

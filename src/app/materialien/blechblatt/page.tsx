@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { api } from "@/trpc/react";
-import PageHeader from "../../_components/general/page-header";
+import PublicPage from "../../_components/general/public-page";
 import LoadingSpinner from "../../_components/general/loading-spinner";
 import { ArrowLeftIcon, CheckIcon, DownloadIcon, FileIcon } from "lucide-react";
 import { ArrowRightIcon } from "lucide-react";
@@ -38,40 +38,23 @@ export default function BlechblattPage() {
   };
 
   return (
-    <div>
-      <PageHeader title="Rheinisches Blechblatt" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/materialien"
-              className="transition-colors hover:text-white"
-            >
-              Materialien
-            </Link>
-            <span>/</span>
-            <span>Rheinisches Blechblatt</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Rheinisches Blechblatt
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Das Rheinische Blechblatt ist unser Magazin für die
-              Posaunenchorarbeit. Es erscheint vierteljährlich und enthält
-              Berichte, Termine, Neuigkeiten und Impulse aus dem gesamten
-              Posaunenwerk Rheinland.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Rheinisches Blechblatt"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Materialien", href: "/materialien" },
+        { label: "Rheinisches Blechblatt" },
+      ]}
+      description={
+        <p>
+          Das Rheinische Blechblatt ist unser Magazin für die
+          Posaunenchorarbeit. Es erscheint vierteljährlich und enthält
+          Berichte, Termine, Neuigkeiten und Impulse aus dem gesamten
+          Posaunenwerk Rheinland.
+        </p>
+      }
+    >
       {/* Main Content */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -294,6 +277,6 @@ export default function BlechblattPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { capitalizeFirstLetter, getFileIcon } from "@/lib/utils";
 import { api } from "@/trpc/react";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import ParticipationCard from "../_components/general/participation-card";
 import { DownloadCategory } from "~/generated/prisma/enums";
 import LoadingSpinner from "../_components/general/loading-spinner";
@@ -45,32 +45,22 @@ export default function MaterialienPage() {
   });
 
   return (
-    <div>
-      <PageHeader title="Materialien" color="district-4" />
-
-      {/* Hero Section */}
-      <section className="bg-district-4 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Materialien</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Materialien & Downloads
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Hier finden Sie alle wichtigen Materialien für die
-              Posaunenchorarbeit: vom Rheinischen Blechblatt über Noten und
-              Übungen bis hin zu Formularen und Vorlagen.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Materialien"
+      heroTitle="Materialien & Downloads"
+      color="district-4"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Materialien" },
+      ]}
+      description={
+        <p>
+          Hier finden Sie alle wichtigen Materialien für die
+          Posaunenchorarbeit: vom Rheinischen Blechblatt über Noten und
+          Übungen bis hin zu Formularen und Vorlagen.
+        </p>
+      }
+    >
       {/* Unterseiten-Navigation */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -346,6 +336,6 @@ export default function MaterialienPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

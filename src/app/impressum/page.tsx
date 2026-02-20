@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
 export const metadata = {
@@ -10,30 +10,19 @@ export const metadata = {
 
 export default function ImpressumPage() {
   return (
-    <div>
-      <PageHeader title="Impressum" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Impressum</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Impressum
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Angaben gemäß § 5 TMG und weitere rechtliche Informationen
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Impressum"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Impressum" },
+      ]}
+      description={
+        <p>
+          Angaben gemäß § 5 TMG und weitere rechtliche Informationen
+        </p>
+      }
+    >
       {/* Angaben gemäß § 5 TMG */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -1321,6 +1310,6 @@ export default function ImpressumPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

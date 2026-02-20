@@ -4,7 +4,7 @@ import Link from "next/link";
 import { api } from "@/trpc/server";
 import { getDistrictColor } from "@/lib/district-color";
 import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
 import {
   ClockIcon,
@@ -86,31 +86,21 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title={ensemble.name} color={district} />
-      {/* Header */}
+    <PublicPage
+      title={ensemble.name}
+      color={district}
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Chor finden", href: "/mitmachen/chor-finden" },
+        { label: "Ensemble" },
+      ]}
+    >
+      {/* Ensemble Info */}
       <section
         className="py-8 text-white md:py-12 lg:py-16"
         style={{ backgroundColor: districtColor }}
       >
         <div className="container mx-auto px-4">
-          {/* Breadcrumb */}
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/mitmachen/chor-finden"
-              className="transition-colors hover:text-white"
-            >
-              Chor finden
-            </Link>
-            <span>/</span>
-            <span>Ensemble</span>
-          </nav>
-
-          {/* Ensemble Info */}
           <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex-1">
               <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -128,10 +118,6 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                   </span>
                 )}
               </div>
-
-              <h1 className="mb-2 text-2xl font-bold md:text-4xl lg:text-5xl">
-                {ensemble.name}
-              </h1>
             </div>
 
             {/* Ensemble Image */}
@@ -568,6 +554,6 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

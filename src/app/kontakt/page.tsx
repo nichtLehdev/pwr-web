@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
 import { api } from "@/trpc/server";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import {
   Building2,
   MapPin,
@@ -28,31 +28,20 @@ export default async function KontaktPage() {
   });
 
   return (
-    <div>
-      <PageHeader title="Kontakt" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Kontakt</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Kontakt
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Haben Sie Fragen zur Posaunenchorarbeit oder möchten Sie mit uns
-              in Kontakt treten? Wir freuen uns auf Ihre Nachricht!
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Kontakt"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Kontakt" },
+      ]}
+      description={
+        <p>
+          Haben Sie Fragen zur Posaunenchorarbeit oder möchten Sie mit uns
+          in Kontakt treten? Wir freuen uns auf Ihre Nachricht!
+        </p>
+      }
+    >
       {/* Kontaktmöglichkeiten */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -664,6 +653,6 @@ export default async function KontaktPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }
