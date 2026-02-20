@@ -6,7 +6,6 @@ import {
   protectedProcedure,
   publicProcedure,
   reviewerProcedure,
-  adminProcedure,
 } from "../trpc";
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";

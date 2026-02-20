@@ -10,19 +10,14 @@ import ProfileImageUpload from "./_components/profile-image-upload";
 import { useToast } from "@/app/_components/ui/toast";
 import { useTheme } from "@/app/_components/general/theme-provider";
 import {
-  ImageIcon,
   User,
   Key,
-  MapPin,
   Settings,
   Calendar,
   AlertTriangle,
-  Users,
   Trash2,
   ArrowRight,
-  BarChart3,
   Download,
-  LogOut,
   Save,
   Moon,
   Sun,

@@ -4,7 +4,6 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { useToast } from "@/app/_components/ui/toast";
 import {

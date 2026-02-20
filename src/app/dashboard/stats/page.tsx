@@ -8,7 +8,6 @@ import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
   BarChart3,
-  ArrowLeft,
   FileText,
   Layout,
   Calendar,

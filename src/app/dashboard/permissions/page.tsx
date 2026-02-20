@@ -4,12 +4,10 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
   Shield,
   Users,
-  Key,
   Plus,
   Edit,
   Trash2,

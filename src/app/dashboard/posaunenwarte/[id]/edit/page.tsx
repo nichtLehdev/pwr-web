@@ -15,11 +15,6 @@ import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { PosaunenwartRoleType } from "~/generated/prisma/enums";
 
-const ROLE_LABELS: Record<string, string> = {
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-};
-
 const ROLE_OPTIONS: { value: PosaunenwartRoleType; label: string }[] = [
   { value: PosaunenwartRoleType.LPW, label: "Landesposaunenwart (LPW)" },
   { value: PosaunenwartRoleType.RPW, label: "Regionalposaunenwart (RPW)" },
@@ -259,7 +254,6 @@ export default function DashboardPosaunenwarteEditPage() {
   }
 
   const isLPW = member.role === "LPW";
-  const isRPW = member.role === "RPW";
   const displayName = member.name || "Unbekannt";
 
   const assignedBezirkIds = new Set(member.bezirke?.map((b) => b.id) || []);

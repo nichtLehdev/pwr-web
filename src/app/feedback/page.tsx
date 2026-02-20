@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "../_components/ui/toast";
-import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { X } from "lucide-react";
 import {

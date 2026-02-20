@@ -4,9 +4,7 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { ArrowLeft, Download, Upload } from "lucide-react";
 import ExportImportSection from "@/app/_components/dashboard/export-import-section";
 
 export default function ExportImportPage() {
