@@ -173,154 +173,154 @@ export default function TeamDetailPage() {
         )}
       </div>
 
-        {/* Details */}
-        <div className="space-y-6">
-          {/* Contact Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Kontaktinformationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  E-Mail
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {displayEmail !== "-" ? (
-                    <a
-                      href={`mailto:${displayEmail}`}
-                      className="text-primary hover:underline"
-                    >
-                      {displayEmail}
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Verknüpfter Benutzer
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  <Link
-                    href={`/dashboard/users/${member.userId}`}
+      {/* Details */}
+      <div className="space-y-6">
+        {/* Contact Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Kontaktinformationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                E-Mail
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {displayEmail !== "-" ? (
+                  <a
+                    href={`mailto:${displayEmail}`}
                     className="text-primary hover:underline"
                   >
-                    Benutzer anzeigen
-                  </Link>
-                </dd>
-              </div>
-            </dl>
-          </section>
+                    {displayEmail}
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Verknüpfter Benutzer
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                <Link
+                  href={`/dashboard/users/${member.userId}`}
+                  className="text-primary hover:underline"
+                >
+                  Benutzer anzeigen
+                </Link>
+              </dd>
+            </div>
+          </dl>
+        </section>
 
-          {/* Responsibilities */}
-          {member.responsibilities && member.responsibilities.length > 0 && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Aufgaben & Verantwortlichkeiten
-              </h2>
-              <ul className="dark:text-dark-muted list-disc space-y-1 pl-5 text-gray-600">
-                {member.responsibilities.map((responsibility, index) => (
-                  <li key={index}>{responsibility}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* Description / Bio */}
-          {displayBio && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Beschreibung
-              </h2>
-              <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
-                {displayBio}
-              </p>
-            </section>
-          )}
-
-          {/* Socials */}
-          {member.socials && member.socials.length > 0 && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Social Media
-              </h2>
-              <ul className="space-y-3">
-                {member.socials.map((social, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                      <SocialIcon
-                        type={social.type}
-                        className="h-4 w-4 text-gray-600 dark:text-gray-400"
-                      />
-                    </div>
-                    <a
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      {social.label || social.url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* Meta Info */}
+        {/* Responsibilities */}
+        {member.responsibilities && member.responsibilities.length > 0 && (
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Weitere Informationen
+              Aufgaben & Verantwortlichkeiten
             </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Reihenfolge
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.sortOrder}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-            </dl>
+            <ul className="dark:text-dark-muted list-disc space-y-1 pl-5 text-gray-600">
+              {member.responsibilities.map((responsibility, index) => (
+                <li key={index}>{responsibility}</li>
+              ))}
+            </ul>
           </section>
-        </div>
+        )}
 
-        {/* Back Link */}
-        <div className="mt-8">
-          <Link
-            href="/dashboard/team"
-            className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </div>
+        {/* Description / Bio */}
+        {displayBio && (
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Beschreibung
+            </h2>
+            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+              {displayBio}
+            </p>
+          </section>
+        )}
+
+        {/* Socials */}
+        {member.socials && member.socials.length > 0 && (
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Social Media
+            </h2>
+            <ul className="space-y-3">
+              {member.socials.map((social, index) => (
+                <li key={index} className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <SocialIcon
+                      type={social.type}
+                      className="h-4 w-4 text-gray-600 dark:text-gray-400"
+                    />
+                  </div>
+                  <a
+                    href={social.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {social.label || social.url}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Meta Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Weitere Informationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Reihenfolge
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.sortOrder}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Erstellt am
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.createdAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Zuletzt aktualisiert
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      {/* Back Link */}
+      <div className="mt-8">
+        <Link
+          href="/dashboard/team"
+          className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

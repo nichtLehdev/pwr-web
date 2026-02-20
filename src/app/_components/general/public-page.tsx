@@ -83,11 +83,12 @@ export default function PublicPage({
       <PageHeader title={title} color={color} />
 
       {/* Hero Section */}
-      <section
-        className={`${bgClass} py-12 text-white md:py-16 lg:py-20`}
-      >
+      <section className={`${bgClass} py-12 text-white md:py-16 lg:py-20`}>
         <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90" aria-label="Breadcrumb">
+          <nav
+            className="mb-4 flex items-center gap-2 text-sm opacity-90"
+            aria-label="Breadcrumb"
+          >
             {breadcrumbs.map((item, index) => (
               <span key={index} className="flex items-center gap-2">
                 {index > 0 && <span>/</span>}

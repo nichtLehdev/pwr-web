@@ -120,152 +120,151 @@ export default function NewLocationPage() {
       ]}
       maxWidth="7xl"
     >
+      {/* Error */}
+      {error && (
+        <Alert variant="error" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Error */}
-        {error && (
-          <Alert variant="error" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Grundinformationen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Name */}
-                  <div>
-                    <Label>Name</Label>
-                    <Input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      maxLength={200}
-                      placeholder="z.B. Gemeindehaus Köln-Deutz"
-                    />
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      Optional: Name des Standorts
-                    </p>
-                  </div>
-
-                  {/* City */}
-                  <div>
-                    <Label required>Stadt</Label>
-                    <Input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      required
-                      maxLength={100}
-                      placeholder="z.B. Köln"
-                    />
-                  </div>
-
-                  {/* Street */}
-                  <div>
-                    <Label>Straße</Label>
-                    <Input
-                      type="text"
-                      value={street}
-                      onChange={(e) => setStreet(e.target.value)}
-                      maxLength={200}
-                      placeholder="z.B. Musterstraße 123"
-                    />
-                  </div>
-
-                  {/* Zip Code */}
-                  <div>
-                    <Label>Postleitzahl</Label>
-                    <Input
-                      type="text"
-                      value={zipCode}
-                      onChange={(e) => setZipCode(e.target.value)}
-                      maxLength={20}
-                      placeholder="z.B. 50679"
-                    />
-                  </div>
-
-                  {/* Additional Info */}
-                  <div>
-                    <Label>Zusätzliche Informationen</Label>
-                    <Textarea
-                      value={additionalInfo}
-                      onChange={(e) => setAdditionalInfo(e.target.value)}
-                      rows={3}
-                      maxLength={500}
-                      placeholder="z.B. Eingang über den Hinterhof"
-                    />
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      Optional: Weitere Hinweise zum Standort
-                    </p>
-                  </div>
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Name */}
+                <div>
+                  <Label>Name</Label>
+                  <Input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={200}
+                    placeholder="z.B. Gemeindehaus Köln-Deutz"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Name des Standorts
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Coordinates */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Koordinaten (für Kartenanzeige)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Latitude */}
-                  <div>
-                    <Label>Breitengrad (Latitude)</Label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={latitude}
-                      onChange={(e) => setLatitude(e.target.value)}
-                      placeholder="z.B. 50.9375"
-                    />
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      Optional: Für die Anzeige auf einer Karte
-                    </p>
-                  </div>
-
-                  {/* Longitude */}
-                  <div>
-                    <Label>Längengrad (Longitude)</Label>
-                    <Input
-                      type="number"
-                      step="any"
-                      value={longitude}
-                      onChange={(e) => setLongitude(e.target.value)}
-                      placeholder="z.B. 6.9603"
-                    />
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      Optional: Für die Anzeige auf einer Karte
-                    </p>
-                  </div>
+                {/* City */}
+                <div>
+                  <Label required>Stadt</Label>
+                  <Input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    required
+                    maxLength={100}
+                    placeholder="z.B. Köln"
+                  />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting || createMutation.isPending}
-                isLoading={isSubmitting || createMutation.isPending}
-              >
-                Standort erstellen
-              </Button>
-              <Link
-                href="/dashboard/locations"
-                className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </Link>
-            </div>
+                {/* Street */}
+                <div>
+                  <Label>Straße</Label>
+                  <Input
+                    type="text"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    maxLength={200}
+                    placeholder="z.B. Musterstraße 123"
+                  />
+                </div>
+
+                {/* Zip Code */}
+                <div>
+                  <Label>Postleitzahl</Label>
+                  <Input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    maxLength={20}
+                    placeholder="z.B. 50679"
+                  />
+                </div>
+
+                {/* Additional Info */}
+                <div>
+                  <Label>Zusätzliche Informationen</Label>
+                  <Textarea
+                    value={additionalInfo}
+                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="z.B. Eingang über den Hinterhof"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Weitere Hinweise zum Standort
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Coordinates */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Koordinaten (für Kartenanzeige)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Latitude */}
+                <div>
+                  <Label>Breitengrad (Latitude)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    placeholder="z.B. 50.9375"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Für die Anzeige auf einer Karte
+                  </p>
+                </div>
+
+                {/* Longitude */}
+                <div>
+                  <Label>Längengrad (Longitude)</Label>
+                  <Input
+                    type="number"
+                    step="any"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    placeholder="z.B. 6.9603"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Für die Anzeige auf einer Karte
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="submit"
+              disabled={isSubmitting || createMutation.isPending}
+              isLoading={isSubmitting || createMutation.isPending}
+            >
+              Standort erstellen
+            </Button>
+            <Link
+              href="/dashboard/locations"
+              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Abbrechen
+            </Link>
           </div>
-        </form>
+        </div>
+      </form>
     </DashboardPage>
   );
 }

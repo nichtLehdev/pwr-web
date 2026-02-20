@@ -333,15 +333,8 @@ export default function EventsClient({
     <PublicPage
       title="Termine"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Termine" },
-      ]}
-      description={
-        <p>
-          Alle Konzerte, Gottesdienste und Lehrgänge
-        </p>
-      }
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Termine" }]}
+      description={<p>Alle Konzerte, Gottesdienste und Lehrgänge</p>}
     >
       {/* Filter & View Toggle */}
       <section

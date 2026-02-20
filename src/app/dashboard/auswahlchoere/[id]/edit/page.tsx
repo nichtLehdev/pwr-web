@@ -221,7 +221,10 @@ export default function EditAuswahlchorPage() {
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Auswahlchöre", href: "/dashboard/auswahlchoere" },
-          { label: auswahlchor.name, href: `/dashboard/auswahlchoere/${auswahlchorId}` },
+          {
+            label: auswahlchor.name,
+            href: `/dashboard/auswahlchoere/${auswahlchorId}`,
+          },
           { label: "Bearbeiten" },
         ]}
         maxWidth="7xl"
@@ -580,7 +583,6 @@ export default function EditAuswahlchorPage() {
             </div>
           </div>
         </form>
-
       </DashboardPage>
       {/* Media Picker Modal */}
       <MediaPickerModal

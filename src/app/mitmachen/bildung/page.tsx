@@ -73,10 +73,9 @@ export default function BildungPage() {
         <p>
           Das Posaunenwerk bietet ein umfangreiches Aus- und
           Weiterbildungsprogramm an. Verschiedene Workshops und ein- oder
-          mehrtägige Lehrgänge richten sich an die Bläserinnen und Bläser
-          und Chorleiter der Chöre im Rheinland. Ebenso gibt es spezielle
-          Lehrgänge für junge Bläser und junggebliebene Anfänger jeden
-          Alters.
+          mehrtägige Lehrgänge richten sich an die Bläserinnen und Bläser und
+          Chorleiter der Chöre im Rheinland. Ebenso gibt es spezielle Lehrgänge
+          für junge Bläser und junggebliebene Anfänger jeden Alters.
         </p>
       }
     >

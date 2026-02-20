@@ -19,11 +19,10 @@ export default async function LiteraturPage() {
       ]}
       description={
         <p>
-          Entdecken Sie unsere Reihe &quot;Musik aus ...&quot; mit
-          hochwertiger Bläserliteratur aus verschiedenen Ländern und
-          Regionen. Jede Ausgabe bietet eine Mischung aus klassischen
-          Meisterwerken, Choralbearbeitungen und zeitgenössischen
-          Auftragskompositionen.
+          Entdecken Sie unsere Reihe &quot;Musik aus ...&quot; mit hochwertiger
+          Bläserliteratur aus verschiedenen Ländern und Regionen. Jede Ausgabe
+          bietet eine Mischung aus klassischen Meisterwerken,
+          Choralbearbeitungen und zeitgenössischen Auftragskompositionen.
         </p>
       }
     >

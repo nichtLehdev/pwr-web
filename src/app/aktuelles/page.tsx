@@ -163,10 +163,7 @@ export default function AktuellesPage() {
       <PublicPage
         title="Aktuelles"
         color="primary"
-        breadcrumbs={[
-          { label: "Start", href: "/" },
-          { label: "Aktuelles" },
-        ]}
+        breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
       >
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-600 dark:text-gray-400">Lade Beiträge...</p>
@@ -179,15 +176,8 @@ export default function AktuellesPage() {
     <PublicPage
       title="Aktuelles"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Aktuelles" },
-      ]}
-      description={
-        <p>
-          News, Berichte und Ankündigungen aus dem Posaunenwerk
-        </p>
-      }
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
+      description={<p>News, Berichte und Ankündigungen aus dem Posaunenwerk</p>}
     >
       {/* Filter Bar */}
       <section

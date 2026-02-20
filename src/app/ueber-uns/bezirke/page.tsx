@@ -340,12 +340,12 @@ export default function BezirkePage() {
       ]}
       description={
         <p>
-          Das Posaunenwerk der Evangelischen Kirche im Rheinland hat ein
-          sehr großes Gebiet. Dem Posaunenwerk gehören Posaunenchöre in
-          Nordrhein-Westfalen, Rheinland-Pfalz und dem Saarland an. Dieses
-          große Gebiet ist in 13 Bezirke aufgeteilt. Auf der Ebene der
-          Bezirke gibt es häufig besondere Veranstaltungen, Schulungen,
-          Bezirkschöre und Bläsertreffen.
+          Das Posaunenwerk der Evangelischen Kirche im Rheinland hat ein sehr
+          großes Gebiet. Dem Posaunenwerk gehören Posaunenchöre in
+          Nordrhein-Westfalen, Rheinland-Pfalz und dem Saarland an. Dieses große
+          Gebiet ist in 13 Bezirke aufgeteilt. Auf der Ebene der Bezirke gibt es
+          häufig besondere Veranstaltungen, Schulungen, Bezirkschöre und
+          Bläsertreffen.
         </p>
       }
     >

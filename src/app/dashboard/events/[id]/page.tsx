@@ -229,45 +229,45 @@ export default function EventDetailPage() {
   return (
     <>
       <DashboardPage
-      title={event.title}
-      description={event.motto ?? undefined}
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Termine", href: "/dashboard/events" },
-        { label: event.title },
-      ]}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          {canEdit && (
-            <Link
-              href={`/dashboard/events/${eventId}/edit`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <Edit className="h-4 w-4" />
-              Bearbeiten
-            </Link>
-          )}
-          {canDelete && (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              <Trash2 className="h-4 w-4" />
-              Löschen
-            </button>
-          )}
+        title={event.title}
+        description={event.motto ?? undefined}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Termine", href: "/dashboard/events" },
+          { label: event.title },
+        ]}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {canEdit && (
+              <Link
+                href={`/dashboard/events/${eventId}/edit`}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Edit className="h-4 w-4" />
+                Bearbeiten
+              </Link>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-4 w-4" />
+                Löschen
+              </button>
+            )}
+          </div>
+        }
+        maxWidth="7xl"
+      >
+        {/* Status Badge */}
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[event.status]}`}
+          >
+            {statusLabels[event.status]}
+          </span>
         </div>
-      }
-      maxWidth="7xl"
-    >
-      {/* Status Badge */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[event.status]}`}
-        >
-          {statusLabels[event.status]}
-        </span>
-      </div>
 
         {/* Cancelled Banner */}
         {event.cancelled && (
@@ -683,7 +683,7 @@ export default function EventDetailPage() {
             Zurück zur Übersicht
           </Link>
         </div>
-    </DashboardPage>
+      </DashboardPage>
 
       {/* Reject Modal */}
       {showRejectModal && (

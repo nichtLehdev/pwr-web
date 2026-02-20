@@ -136,16 +136,15 @@ export default function NewBlaeserheftPage() {
   return (
     <>
       <DashboardPage
-      title="Neues Bläserheft"
-      description="Erstelle ein neues Bläserheft"
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Bläserhefte", href: "/dashboard/blaeserhefte" },
-        { label: "Neu" },
-      ]}
-      maxWidth="7xl"
-    >
-
+        title="Neues Bläserheft"
+        description="Erstelle ein neues Bläserheft"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Bläserhefte", href: "/dashboard/blaeserhefte" },
+          { label: "Neu" },
+        ]}
+        maxWidth="7xl"
+      >
         {/* Error */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">

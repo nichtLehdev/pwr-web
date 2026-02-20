@@ -201,145 +201,145 @@ export default function EditBezirkPage() {
       maxWidth="7xl"
     >
       {/* Error */}
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+        </div>
+      )}
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          {/* Number */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Bezirksnummer *
+            </label>
+            <input
+              type="number"
+              value={number}
+              onChange={(e) => setNumber(parseInt(e.target.value) || 1)}
+              required
+              min={1}
+              max={13}
+              className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              Bezirksnummer zwischen 1 und 13
+            </p>
           </div>
-        )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            {/* Number */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Bezirksnummer *
-              </label>
-              <input
-                type="number"
-                value={number}
-                onChange={(e) => setNumber(parseInt(e.target.value) || 1)}
-                required
-                min={1}
-                max={13}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Bezirksnummer zwischen 1 und 13
-              </p>
-            </div>
+          {/* Name */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Vollständiger Name *
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              maxLength={100}
+              className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-            {/* Name */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Vollständiger Name *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={100}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+          {/* Short Name */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Kurzname *
+            </label>
+            <input
+              type="text"
+              value={shortName}
+              onChange={(e) => setShortName(e.target.value)}
+              required
+              maxLength={50}
+              className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-            {/* Short Name */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Kurzname *
-              </label>
-              <input
-                type="text"
-                value={shortName}
-                onChange={(e) => setShortName(e.target.value)}
-                required
-                maxLength={50}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Preview */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Vorschau
-              </label>
-              <div className="flex items-center gap-3">
-                <span
-                  className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white"
-                  style={{
-                    backgroundColor: `var(--color-district-${number})`,
-                  }}
-                >
-                  {number}
-                </span>
-                <div>
-                  <p className="dark:text-dark-text font-medium text-gray-900">
-                    {name || "Bezirksname"}
-                  </p>
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
-                    {shortName || "Kurzname"}
-                  </p>
-                </div>
+          {/* Preview */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Vorschau
+            </label>
+            <div className="flex items-center gap-3">
+              <span
+                className="flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white"
+                style={{
+                  backgroundColor: `var(--color-district-${number})`,
+                }}
+              >
+                {number}
+              </span>
+              <div>
+                <p className="dark:text-dark-text font-medium text-gray-900">
+                  {name || "Bezirksname"}
+                </p>
+                <p className="dark:text-dark-muted text-sm text-gray-500">
+                  {shortName || "Kurzname"}
+                </p>
               </div>
             </div>
-
-            {/* Obleute Selection */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Obleute
-              </label>
-              <UserAssignmentSelect
-                users={users}
-                assignments={obleuteAssignments}
-                onAssignmentsChange={setObleuteAssignments}
-                placeholder="Obleute auswählen..."
-                defaultRoleName="Obleute"
-              />
-            </div>
-
-            {/* Stell. Obleute Selection */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Stell. Obleute
-              </label>
-              <UserAssignmentSelect
-                users={users}
-                assignments={stellObleuteAssignments}
-                onAssignmentsChange={setStellObleuteAssignments}
-                placeholder="Stell. Obleute auswählen..."
-                defaultRoleName="Stell. Obleute"
-              />
-            </div>
           </div>
 
-          {/* Actions */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Speichern...
-                </>
-              ) : (
-                <>
-                  <SaveIcon className="h-4 w-4" />
-                  Speichern
-                </>
-              )}
-            </button>
-            <Link
-              href={`/dashboard/bezirke/${bezirkId}`}
-              className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Abbrechen
-            </Link>
+          {/* Obleute Selection */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Obleute
+            </label>
+            <UserAssignmentSelect
+              users={users}
+              assignments={obleuteAssignments}
+              onAssignmentsChange={setObleuteAssignments}
+              placeholder="Obleute auswählen..."
+              defaultRoleName="Obleute"
+            />
           </div>
-        </form>
+
+          {/* Stell. Obleute Selection */}
+          <div>
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Stell. Obleute
+            </label>
+            <UserAssignmentSelect
+              users={users}
+              assignments={stellObleuteAssignments}
+              onAssignmentsChange={setStellObleuteAssignments}
+              placeholder="Stell. Obleute auswählen..."
+              defaultRoleName="Stell. Obleute"
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Speichern...
+              </>
+            ) : (
+              <>
+                <SaveIcon className="h-4 w-4" />
+                Speichern
+              </>
+            )}
+          </button>
+          <Link
+            href={`/dashboard/bezirke/${bezirkId}`}
+            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Abbrechen
+          </Link>
+        </div>
+      </form>
     </DashboardPage>
   );
 }

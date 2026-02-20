@@ -13,14 +13,9 @@ export default function ImpressumPage() {
     <PublicPage
       title="Impressum"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Impressum" },
-      ]}
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Impressum" }]}
       description={
-        <p>
-          Angaben gemäß § 5 TMG und weitere rechtliche Informationen
-        </p>
+        <p>Angaben gemäß § 5 TMG und weitere rechtliche Informationen</p>
       }
     >
       {/* Angaben gemäß § 5 TMG */}

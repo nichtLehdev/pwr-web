@@ -172,7 +172,10 @@ export default function EditHistoryEventPage() {
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Historie", href: "/dashboard/history-timeline" },
-          { label: historyEvent.title, href: `/dashboard/history-timeline/${eventId}` },
+          {
+            label: historyEvent.title,
+            href: `/dashboard/history-timeline/${eventId}`,
+          },
           { label: "Bearbeiten" },
         ]}
         maxWidth="7xl"
@@ -373,7 +376,6 @@ export default function EditHistoryEventPage() {
             </div>
           </div>
         </form>
-
       </DashboardPage>
       {/* Media Picker Modal */}
       <MediaPickerModal

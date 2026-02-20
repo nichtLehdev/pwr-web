@@ -128,19 +128,14 @@ export default function FeedbackPage() {
     <PublicPage
       title="Feedback"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Feedback" },
-      ]}
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Feedback" }]}
       description={
         <p>
           Wir freuen uns über dein Feedback! Deine Nachricht wird als Issue
-          anonym oder mit deiner E-Mail-Adresse in unserem Repository
-          erstellt.
+          anonym oder mit deiner E-Mail-Adresse in unserem Repository erstellt.
         </p>
       }
     >
-
       {/* Issues Section */}
       <section className="py-8 md:py-16">
         <div className="container mx-auto max-w-3xl px-4">

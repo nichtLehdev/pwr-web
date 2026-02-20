@@ -73,8 +73,8 @@ export default function UeberUnsPage() {
             Das Evangelische Posaunenwerk in der Evangelischen Kirche im
             Rheinland ist die Dachorganisation für knapp 200 Posaunenchöre mit
             etwa 2.000 Mitgliedern. Diese Chöre verteilen sich über das große
-            Gebiet der rheinischen Landeskirche, von Emmerich im Norden bis
-            nach Saarbrücken im Süden, von Aachen im Westen bis
+            Gebiet der rheinischen Landeskirche, von Emmerich im Norden bis nach
+            Saarbrücken im Süden, von Aachen im Westen bis
             Altenkirchen/Westerwald im Osten.
           </p>
           <p>

@@ -156,140 +156,134 @@ export default function HistoryEventDetailPage() {
         )}
       </div>
 
-        {/* Description */}
-        {historyEvent.description && (
-          <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
-              Beschreibung
-            </h2>
-            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
-              {historyEvent.description}
+      {/* Description */}
+      {historyEvent.description && (
+        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+            Beschreibung
+          </h2>
+          <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+            {historyEvent.description}
+          </p>
+        </div>
+      )}
+
+      {/* Image */}
+      {historyEvent.image?.url && (
+        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
+            Bild
+          </h2>
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+            <Image
+              src={historyEvent.image.url}
+              alt={historyEvent.imageAlt || historyEvent.title}
+              fill
+              className="object-cover"
+            />
+          </div>
+          {historyEvent.imageAlt && (
+            <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
+              {historyEvent.imageAlt}
             </p>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* Image */}
-        {historyEvent.image?.url && (
-          <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
-              Bild
-            </h2>
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-              <Image
-                src={historyEvent.image.url}
-                alt={historyEvent.imageAlt || historyEvent.title}
-                fill
-                className="object-cover"
-              />
+      {/* Details Grid */}
+      <div className="mb-6 grid gap-6 sm:grid-cols-2">
+        {/* Basic Info */}
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Informationen
+          </h2>
+          <dl className="space-y-3">
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Jahr
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {historyEvent.year}
+              </dd>
             </div>
-            {historyEvent.imageAlt && (
-              <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
-                {historyEvent.imageAlt}
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Details Grid */}
-        <div className="mb-6 grid gap-6 sm:grid-cols-2">
-          {/* Basic Info */}
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Informationen
-            </h2>
-            <dl className="space-y-3">
-              <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Jahr
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {historyEvent.year}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Kategorie
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {historyEvent.category
-                    ? categoryLabels[historyEvent.category] ||
-                      historyEvent.category
-                    : "Keine Kategorie"}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Sortierreihenfolge
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {historyEvent.sortOrder}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Metadata */}
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Details
-            </h2>
-            <dl className="space-y-3">
-              <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.createdAt).toLocaleDateString(
-                    "de-DE",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {new Date(historyEvent.updatedAt).toLocaleDateString(
-                    "de-DE",
-                    {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    },
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Kategorie
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {historyEvent.category
+                  ? categoryLabels[historyEvent.category] ||
+                    historyEvent.category
+                  : "Keine Kategorie"}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Sortierreihenfolge
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {historyEvent.sortOrder}
+              </dd>
+            </div>
+          </dl>
         </div>
 
-        {/* Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/dashboard/history-timeline"
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+        {/* Metadata */}
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Details
+          </h2>
+          <dl className="space-y-3">
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Erstellt am
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {new Date(historyEvent.createdAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Zuletzt aktualisiert
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {new Date(historyEvent.updatedAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href="/dashboard/history-timeline"
+          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Zurück zur Übersicht
-          </Link>
-        </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

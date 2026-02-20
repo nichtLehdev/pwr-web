@@ -70,67 +70,67 @@ export default function DashboardNewsletterPage() {
       ]}
     >
       {/* Statistics */}
-        {statistics && (
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <p className="dark:text-dark-muted text-sm text-gray-600">
-                Gesamt Abonnenten
-              </p>
-              <p className="dark:text-dark-text mt-2 text-3xl font-bold text-gray-900">
-                {statistics.total}
-              </p>
-            </div>
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <p className="dark:text-dark-muted text-sm text-gray-600">
-                Aktive Abonnenten
-              </p>
-              <p className="dark:text-dark-text mt-2 text-3xl font-bold text-green-600">
-                {statistics.active}
-              </p>
-            </div>
-            <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
-              <p className="dark:text-dark-muted text-sm text-gray-600">
-                Inaktive Abonnenten
-              </p>
-              <p className="dark:text-dark-text mt-2 text-3xl font-bold text-gray-600">
-                {statistics.inactive}
-              </p>
-            </div>
+      {statistics && (
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
+            <p className="dark:text-dark-muted text-sm text-gray-600">
+              Gesamt Abonnenten
+            </p>
+            <p className="dark:text-dark-text mt-2 text-3xl font-bold text-gray-900">
+              {statistics.total}
+            </p>
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <Link
-            href="/dashboard/newsletter/compose"
-            className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
-          >
-            <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
-              <Mail className="h-6 w-6" />
-            </div>
-            <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-              Newsletter erstellen
-            </h3>
+          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
             <p className="dark:text-dark-muted text-sm text-gray-600">
-              Erstelle einen neuen Newsletter und sende ihn an alle Abonnenten
+              Aktive Abonnenten
             </p>
-          </Link>
-
-          <Link
-            href="/dashboard/newsletter/subscribers"
-            className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
-          >
-            <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
-              <Users className="h-6 w-6" />
-            </div>
-            <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-              Abonnenten verwalten
-            </h3>
+            <p className="dark:text-dark-text mt-2 text-3xl font-bold text-green-600">
+              {statistics.active}
+            </p>
+          </div>
+          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow dark:border-gray-700">
             <p className="dark:text-dark-muted text-sm text-gray-600">
-              Verwalte Newsletter-Abonnenten, suche und filtere nach Status
+              Inaktive Abonnenten
             </p>
-          </Link>
+            <p className="dark:text-dark-text mt-2 text-3xl font-bold text-gray-600">
+              {statistics.inactive}
+            </p>
+          </div>
         </div>
+      )}
+
+      {/* Actions */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <Link
+          href="/dashboard/newsletter/compose"
+          className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
+        >
+          <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
+            <Mail className="h-6 w-6" />
+          </div>
+          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
+            Newsletter erstellen
+          </h3>
+          <p className="dark:text-dark-muted text-sm text-gray-600">
+            Erstelle einen neuen Newsletter und sende ihn an alle Abonnenten
+          </p>
+        </Link>
+
+        <Link
+          href="/dashboard/newsletter/subscribers"
+          className="dark:bg-dark-surface group hover:border-primary rounded-lg border border-gray-200 bg-white p-6 shadow transition-all hover:shadow-lg dark:border-gray-700"
+        >
+          <div className="text-primary bg-primary/10 group-hover:bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-lg transition-colors group-hover:text-white">
+            <Users className="h-6 w-6" />
+          </div>
+          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
+            Abonnenten verwalten
+          </h3>
+          <p className="dark:text-dark-muted text-sm text-gray-600">
+            Verwalte Newsletter-Abonnenten, suche und filtere nach Status
+          </p>
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

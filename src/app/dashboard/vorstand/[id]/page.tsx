@@ -169,125 +169,125 @@ export default function VorstandDetailPage() {
         </span>
       </div>
 
-        {/* Details */}
-        <div className="space-y-6">
-          {/* Contact Info */}
+      {/* Details */}
+      <div className="space-y-6">
+        {/* Contact Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Kontaktinformationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                E-Mail
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {displayEmail !== "-" ? (
+                  <a
+                    href={`mailto:${displayEmail}`}
+                    className="text-primary hover:underline"
+                  >
+                    {displayEmail}
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Telefon
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.phone || "-"}
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        {/* Description / Bio */}
+        {displayBio && (
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Kontaktinformationen
+              Beschreibung
             </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  E-Mail
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {displayEmail !== "-" ? (
-                    <a
-                      href={`mailto:${displayEmail}`}
-                      className="text-primary hover:underline"
-                    >
-                      {displayEmail}
-                    </a>
-                  ) : (
-                    "-"
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Telefon
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.phone || "-"}
-                </dd>
-              </div>
-            </dl>
+            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+              {displayBio}
+            </p>
           </section>
+        )}
 
-          {/* Description / Bio */}
-          {displayBio && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Beschreibung
-              </h2>
-              <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
-                {displayBio}
-              </p>
-            </section>
-          )}
+        {/* Meta Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Weitere Informationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Verknüpfter Benutzer
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.userId ? (
+                  <Link
+                    href={`/dashboard/users/${member.userId}`}
+                    className="text-primary hover:underline"
+                  >
+                    Benutzer anzeigen
+                  </Link>
+                ) : (
+                  <span className="dark:text-dark-muted text-gray-500">
+                    Nicht verknüpft
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Reihenfolge
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.sortOrder}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Erstellt am
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.createdAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Zuletzt aktualisiert
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
 
-          {/* Meta Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Weitere Informationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Verknüpfter Benutzer
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.userId ? (
-                    <Link
-                      href={`/dashboard/users/${member.userId}`}
-                      className="text-primary hover:underline"
-                    >
-                      Benutzer anzeigen
-                    </Link>
-                  ) : (
-                    <span className="dark:text-dark-muted text-gray-500">
-                      Nicht verknüpft
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Reihenfolge
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.sortOrder}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </section>
-        </div>
-
-        {/* Back Link */}
-        <div className="mt-8">
-          <Link
-            href="/dashboard/vorstand"
-            className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </div>
+      {/* Back Link */}
+      <div className="mt-8">
+        <Link
+          href="/dashboard/vorstand"
+          className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

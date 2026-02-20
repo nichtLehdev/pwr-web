@@ -65,10 +65,7 @@ export default function DashboardPosaunenwarteEditPage() {
   );
 
   const { data: member, isLoading: memberLoading } =
-    api.organization.getPosaunenwart.useQuery(
-      { id },
-      { enabled: !!id },
-    );
+    api.organization.getPosaunenwart.useQuery({ id }, { enabled: !!id });
 
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
@@ -123,8 +120,13 @@ export default function DashboardPosaunenwarteEditPage() {
       setName(member.storedName ?? member.name ?? "");
       setEmail(member.storedEmail ?? member.email ?? "");
       setPhone(member.storedPhone ?? member.phone ?? "");
-      setRoleType((member.role as PosaunenwartRoleType) ?? PosaunenwartRoleType.RPW);
-      const so = "sortOrder" in member ? (member as { sortOrder?: number }).sortOrder : undefined;
+      setRoleType(
+        (member.role as PosaunenwartRoleType) ?? PosaunenwartRoleType.RPW,
+      );
+      const so =
+        "sortOrder" in member
+          ? (member as { sortOrder?: number }).sortOrder
+          : undefined;
       setSortOrder(so ?? 0);
       setUserId(member.userId ?? null);
       setUserSearch(member.name ?? member.email ?? "");
@@ -260,9 +262,7 @@ export default function DashboardPosaunenwarteEditPage() {
   const isRPW = member.role === "RPW";
   const displayName = member.name || "Unbekannt";
 
-  const assignedBezirkIds = new Set(
-    member.bezirke?.map((b) => b.id) || [],
-  );
+  const assignedBezirkIds = new Set(member.bezirke?.map((b) => b.id) || []);
   const assignedBezirke =
     bezirke?.filter((b) => assignedBezirkIds.has(b.id)) || [];
   const availableBezirke =
@@ -377,8 +377,8 @@ export default function DashboardPosaunenwarteEditPage() {
             Benutzerverknüpfung
           </h2>
           <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-            Optional: Verknüpfe mit einem Benutzerkonto. Kontaktdaten werden dann
-            vom Benutzer übernommen.
+            Optional: Verknüpfe mit einem Benutzerkonto. Kontaktdaten werden
+            dann vom Benutzer übernommen.
           </p>
           <div className="relative">
             <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -518,7 +518,7 @@ export default function DashboardPosaunenwarteEditPage() {
       </form>
 
       {/* Bezirke section */}
-      <div className="mt-10 border-t border-gray-200 pt-10 dark:border-dark-border">
+      <div className="dark:border-dark-border mt-10 border-t border-gray-200 pt-10">
         <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
           Zuständige Bezirke
         </h2>

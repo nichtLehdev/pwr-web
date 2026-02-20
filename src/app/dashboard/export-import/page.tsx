@@ -65,11 +65,11 @@ export default function ExportImportPage() {
       ]}
     >
       {/* Content */}
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="p-6">
-            <ExportImportSection />
-          </div>
+      <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="p-6">
+          <ExportImportSection />
         </div>
+      </div>
     </DashboardPage>
   );
 }

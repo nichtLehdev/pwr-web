@@ -186,145 +186,145 @@ export default function FoerdervereinDetailPage() {
         </div>
       </div>
 
-        {/* Details */}
-        <div className="space-y-6">
-          {/* Contact Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Kontaktinformationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
+      {/* Details */}
+      <div className="space-y-6">
+        {/* Contact Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Kontaktinformationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                E-Mail
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {displayEmail !== "-" ? (
+                  <a
+                    href={`mailto:${displayEmail}`}
+                    className="text-primary hover:underline"
+                  >
+                    {displayEmail}
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </dd>
+            </div>
+            {member.phone && (
               <div>
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  E-Mail
+                  Telefon
                 </dt>
                 <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {displayEmail !== "-" ? (
-                    <a
-                      href={`mailto:${displayEmail}`}
-                      className="text-primary hover:underline"
-                    >
-                      {displayEmail}
-                    </a>
-                  ) : (
-                    "-"
-                  )}
+                  <a
+                    href={`tel:${member.phone}`}
+                    className="text-primary hover:underline"
+                  >
+                    {member.phone}
+                  </a>
                 </dd>
               </div>
-              {member.phone && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                    Telefon
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    <a
-                      href={`tel:${member.phone}`}
-                      className="text-primary hover:underline"
-                    >
-                      {member.phone}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {member.memberSince && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                    Mitglied seit
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(member.memberSince).toLocaleDateString("de-DE", {
-                      year: "numeric",
-                      month: "long",
-                    })}
-                  </dd>
-                </div>
-              )}
+            )}
+            {member.memberSince && (
               <div>
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Verknüpfung
+                  Mitglied seit
                 </dt>
                 <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.user ? (
-                    <Link
-                      href={`/dashboard/users/${member.user.id}`}
-                      className="text-primary hover:underline"
-                    >
-                      Benutzer anzeigen
-                    </Link>
-                  ) : (
-                    <span className="dark:text-dark-muted text-gray-500">
-                      Manueller Eintrag (kein Benutzerkonto)
-                    </span>
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          {/* Description / Bio */}
-          {displayBio && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Beschreibung
-              </h2>
-              <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
-                {displayBio}
-              </p>
-            </section>
-          )}
-
-          {/* Meta Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Weitere Informationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Reihenfolge
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {member.sortOrder}
-                </dd>
-              </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
+                  {new Date(member.memberSince).toLocaleDateString("de-DE", {
                     year: "numeric",
+                    month: "long",
                   })}
                 </dd>
               </div>
-              <div>
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(member.updatedAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </section>
-        </div>
+            )}
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Verknüpfung
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.user ? (
+                  <Link
+                    href={`/dashboard/users/${member.user.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    Benutzer anzeigen
+                  </Link>
+                ) : (
+                  <span className="dark:text-dark-muted text-gray-500">
+                    Manueller Eintrag (kein Benutzerkonto)
+                  </span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </section>
 
-        {/* Back Link */}
-        <div className="mt-8">
-          <Link
-            href="/dashboard/foerderverein"
-            className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </div>
+        {/* Description / Bio */}
+        {displayBio && (
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Beschreibung
+            </h2>
+            <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-600">
+              {displayBio}
+            </p>
+          </section>
+        )}
+
+        {/* Meta Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Weitere Informationen
+          </h2>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Reihenfolge
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {member.sortOrder}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Erstellt am
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.createdAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                Zuletzt aktualisiert
+              </dt>
+              <dd className="dark:text-dark-text mt-1 text-gray-900">
+                {new Date(member.updatedAt).toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      {/* Back Link */}
+      <div className="mt-8">
+        <Link
+          href="/dashboard/foerderverein"
+          className="hover:text-primary dark:text-dark-muted dark:hover:text-primary inline-flex items-center gap-2 text-gray-600"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

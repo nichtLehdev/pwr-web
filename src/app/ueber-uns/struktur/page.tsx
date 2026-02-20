@@ -26,9 +26,9 @@ export default async function StrukturGeschichtePage() {
       ]}
       description={
         <p>
-          Erfahren Sie mehr über die organisatorische Struktur des
-          Posaunenwerks Rheinland und entdecken Sie die bewegte Geschichte
-          unserer Blechbläserarbeit von den Anfängen bis heute.
+          Erfahren Sie mehr über die organisatorische Struktur des Posaunenwerks
+          Rheinland und entdecken Sie die bewegte Geschichte unserer
+          Blechbläserarbeit von den Anfängen bis heute.
         </p>
       }
     >

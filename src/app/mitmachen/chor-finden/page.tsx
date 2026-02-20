@@ -192,9 +192,9 @@ function ChorFindenContent() {
       ]}
       description={
         <p>
-          Im Rheinland gibt es über 200 Posaunenchöre mit mehr als 2.000
-          aktiven Bläserinnen und Bläsern. Finde einen Chor in deiner Nähe
-          und werde Teil unserer musikalischen Gemeinschaft!
+          Im Rheinland gibt es über 200 Posaunenchöre mit mehr als 2.000 aktiven
+          Bläserinnen und Bläsern. Finde einen Chor in deiner Nähe und werde
+          Teil unserer musikalischen Gemeinschaft!
         </p>
       }
     >

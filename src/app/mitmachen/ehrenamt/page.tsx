@@ -98,8 +98,8 @@ export default function EhrenamtPage() {
       description={
         <>
           <p>
-            Das Posaunenwerk Rheinland lebt vom Engagement vieler Menschen,
-            die ihre Zeit, ihre Talente und ihre Leidenschaft einbringen. Ohne
+            Das Posaunenwerk Rheinland lebt vom Engagement vieler Menschen, die
+            ihre Zeit, ihre Talente und ihre Leidenschaft einbringen. Ohne
             ehrenamtliche Helferinnen und Helfer wäre unsere Arbeit nicht
             möglich.
           </p>

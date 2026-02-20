@@ -849,12 +849,15 @@ export const organizationRouter = createTRPCRouter({
           orderBy: { bezirk: { number: "asc" } },
         },
       },
-      orderBy: [{ roleType: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+      orderBy: [
+        { roleType: "asc" },
+        { sortOrder: "asc" },
+        { createdAt: "asc" },
+      ],
     });
 
     return list.map((p) => {
-      const name =
-        p.user?.displayName ?? p.name ?? null;
+      const name = p.user?.displayName ?? p.name ?? null;
       const email = p.user?.email ?? p.email ?? "";
       return {
         id: p.id,
@@ -1026,8 +1029,8 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      const responsibilities =
-        await ctx.db.posaunenwartResponsibility.findMany({
+      const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
+        {
           where: { bezirkId: bezirk.id },
           include: {
             posaunenwart: {
@@ -1038,7 +1041,8 @@ export const organizationRouter = createTRPCRouter({
             },
           },
           orderBy: { priority: "asc" },
-        });
+        },
+      );
 
       const posaunenwarte = responsibilities.map((r) => {
         const p = r.posaunenwart;
@@ -1082,8 +1086,8 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      const responsibilities =
-        await ctx.db.posaunenwartResponsibility.findMany({
+      const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
+        {
           where: { bezirkId: bezirk.id },
           include: {
             posaunenwart: {
@@ -1101,7 +1105,8 @@ export const organizationRouter = createTRPCRouter({
             },
           },
           orderBy: { priority: "asc" },
-        });
+        },
+      );
 
       const toContact = (r: (typeof responsibilities)[0]) => {
         const p = r.posaunenwart;
@@ -1116,8 +1121,12 @@ export const organizationRouter = createTRPCRouter({
         };
       };
 
-      const lpwResp = responsibilities.find((r) => r.posaunenwart.roleType === "LPW");
-      const rpwResp = responsibilities.find((r) => r.posaunenwart.roleType === "RPW");
+      const lpwResp = responsibilities.find(
+        (r) => r.posaunenwart.roleType === "LPW",
+      );
+      const rpwResp = responsibilities.find(
+        (r) => r.posaunenwart.roleType === "RPW",
+      );
       const lpw = lpwResp ? toContact(lpwResp) : undefined;
       const rpw = rpwResp ? toContact(rpwResp) : undefined;
 
@@ -1164,7 +1173,10 @@ export const organizationRouter = createTRPCRouter({
           },
         },
         image: true,
-        responsibilities: { include: { bezirk: true }, orderBy: { bezirk: { number: "asc" } } },
+        responsibilities: {
+          include: { bezirk: true },
+          orderBy: { bezirk: { number: "asc" } },
+        },
       },
       orderBy: [{ roleType: "asc" }, { sortOrder: "asc" }],
     });
@@ -1180,8 +1192,14 @@ export const organizationRouter = createTRPCRouter({
       bezirke: p.responsibilities.map((r) => r.bezirk),
     });
 
-    const lpw = list.filter((p) => p.roleType === "LPW").map(toItem).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    const rpw = list.filter((p) => p.roleType === "RPW").map(toItem).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const lpw = list
+      .filter((p) => p.roleType === "LPW")
+      .map(toItem)
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const rpw = list
+      .filter((p) => p.roleType === "RPW")
+      .map(toItem)
+      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     return { lpw, rpw };
   }),
@@ -1200,14 +1218,19 @@ export const organizationRouter = createTRPCRouter({
 
     const lpwCount = posaunenwarte.filter((p) => p.roleType === "LPW").length;
     const rpwCount = posaunenwarte.filter((p) => p.roleType === "RPW").length;
-    const bezirkeWithPosaunenwarte = new Set(responsibilities.map((r) => r.bezirkId));
+    const bezirkeWithPosaunenwarte = new Set(
+      responsibilities.map((r) => r.bezirkId),
+    );
 
     return {
       lpwCount,
       rpwCount,
       totalBezirke,
       bezirkeWithPosaunenwarte: bezirkeWithPosaunenwarte.size,
-      coveragePercentage: totalBezirke > 0 ? (bezirkeWithPosaunenwarte.size / totalBezirke) * 100 : 0,
+      coveragePercentage:
+        totalBezirke > 0
+          ? (bezirkeWithPosaunenwarte.size / totalBezirke) * 100
+          : 0,
       totalResponsibilities: responsibilities.length,
     };
   }),
@@ -1410,7 +1433,8 @@ export const organizationRouter = createTRPCRouter({
       if (pw.roleType !== "RPW") {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Nur bei Regionalposaunenwarten (RPW) können Bezirke gesetzt werden.",
+          message:
+            "Nur bei Regionalposaunenwarten (RPW) können Bezirke gesetzt werden.",
         });
       }
 

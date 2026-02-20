@@ -19,8 +19,8 @@ export default function DatenschutzPage() {
       ]}
       description={
         <p>
-          Informationen zum Datenschutz und zur Verarbeitung
-          personenbezogener Daten gemäß Art. 13 DSGVO
+          Informationen zum Datenschutz und zur Verarbeitung personenbezogener
+          Daten gemäß Art. 13 DSGVO
         </p>
       }
     >

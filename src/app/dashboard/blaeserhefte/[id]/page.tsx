@@ -140,195 +140,191 @@ export default function DashboardBlaeserheftDetailPage() {
         </span>
       </div>
 
-        {/* Description */}
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      {/* Description */}
+      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          Beschreibung
+        </h2>
+        <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-700">
+          {heft.description}
+        </p>
+      </div>
+
+      {/* Prices and Availability */}
+      <div className="mb-6 grid gap-6 md:grid-cols-2">
+        {/* Prices */}
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Beschreibung
+            Preise
           </h2>
-          <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-700">
-            {heft.description}
-          </p>
-        </div>
-
-        {/* Prices and Availability */}
-        <div className="mb-6 grid gap-6 md:grid-cols-2">
-          {/* Prices */}
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Preise
-            </h2>
-            <dl className="space-y-3">
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">
-                  Bläserheft
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {heft.priceBlaeserheft ? `${heft.priceBlaeserheft} €` : "—"}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {heft.priceBeiheft ? `${heft.priceBeiheft} €` : "—"}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">
-                  Trompetenstimmen
-                </dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {heft.priceTrompeten ? `${heft.priceTrompeten} €` : "—"}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">CD</dt>
-                <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {heft.priceCd ? `${heft.priceCd} €` : "—"}
-                </dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Availability */}
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Verfügbarkeit
-            </h2>
-            <dl className="space-y-3">
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">
-                  Bläserheft
-                </dt>
-                <dd>
-                  {heft.availableBlaeserheft ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon className="h-3 w-3" />
-                      Verfügbar
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon className="h-3 w-3" />
-                      Vergriffen
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
-                <dd>
-                  {heft.availableBeiheft ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon className="h-3 w-3" />
-                      Verfügbar
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon className="h-3 w-3" fill="currentColor" />
-                      Vergriffen
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">
-                  Trompetenstimmen
-                </dt>
-                <dd>
-                  {heft.availableTrompeten ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon className="h-3 w-3" />
-                      Verfügbar
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon className="h-3 w-3" />
-                      Vergriffen
-                    </span>
-                  )}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="dark:text-dark-muted text-gray-600">CD</dt>
-                <dd>
-                  {heft.availableCd ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                      <CheckIcon className="h-3 w-3" />
-                      Verfügbar
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
-                      <XIcon className="h-3 w-3" />
-                      Vergriffen
-                    </span>
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        {/* Chapters and Highlights */}
-        <div className="mb-6 grid gap-6 md:grid-cols-2">
-          {/* Chapters */}
-          {chapters.length > 0 && (
-            <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Kapitel
-              </h2>
-              <ul className="dark:text-dark-muted space-y-2 text-gray-700">
-                {chapters.map((chapter, index) => (
-                  <li key={index} className="flex items-start gap-2">
-                    <span className="dark:bg-dark-background-secondary shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium">
-                      {index + 1}
-                    </span>
-                    <span>{String(chapter)}</span>
-                  </li>
-                ))}
-              </ul>
+          <dl className="space-y-3">
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">Bläserheft</dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {heft.priceBlaeserheft ? `${heft.priceBlaeserheft} €` : "—"}
+              </dd>
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {heft.priceBeiheft ? `${heft.priceBeiheft} €` : "—"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">
+                Trompetenstimmen
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {heft.priceTrompeten ? `${heft.priceTrompeten} €` : "—"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">CD</dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {heft.priceCd ? `${heft.priceCd} €` : "—"}
+              </dd>
+            </div>
+          </dl>
+        </div>
 
-          {/* Highlights */}
-          {highlights.length > 0 && (
-            <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Highlights
-              </h2>
-              <ul className="dark:text-dark-muted space-y-2 text-gray-700">
-                {highlights.map((highlight, index) => (
-                  <li key={index} className="flex items-start gap-2">
+        {/* Availability */}
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Verfügbarkeit
+          </h2>
+          <dl className="space-y-3">
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">Bläserheft</dt>
+              <dd>
+                {heft.availableBlaeserheft ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
                     <CheckIcon className="h-3 w-3" />
-                    <span>{String(highlight)}</span>
-                  </li>
-                ))}
-              </ul>
+                    Verfügbar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    <XIcon className="h-3 w-3" />
+                    Vergriffen
+                  </span>
+                )}
+              </dd>
             </div>
-          )}
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">Beiheft</dt>
+              <dd>
+                {heft.availableBeiheft ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <CheckIcon className="h-3 w-3" />
+                    Verfügbar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    <XIcon className="h-3 w-3" fill="currentColor" />
+                    Vergriffen
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">
+                Trompetenstimmen
+              </dt>
+              <dd>
+                {heft.availableTrompeten ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <CheckIcon className="h-3 w-3" />
+                    Verfügbar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    <XIcon className="h-3 w-3" />
+                    Vergriffen
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt className="dark:text-dark-muted text-gray-600">CD</dt>
+              <dd>
+                {heft.availableCd ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                    <CheckIcon className="h-3 w-3" />
+                    Verfügbar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                    <XIcon className="h-3 w-3" />
+                    Vergriffen
+                  </span>
+                )}
+              </dd>
+            </div>
+          </dl>
         </div>
+      </div>
 
-        {/* Audio Sample */}
-        {heft.audioSample && (
-          <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      {/* Chapters and Highlights */}
+      <div className="mb-6 grid gap-6 md:grid-cols-2">
+        {/* Chapters */}
+        {chapters.length > 0 && (
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Hörprobe
+              Kapitel
             </h2>
-            <audio controls className="w-full">
-              <source src={heft.audioSample} type="audio/mpeg" />
-              Dein Browser unterstützt das Audio-Element nicht.
-            </audio>
+            <ul className="dark:text-dark-muted space-y-2 text-gray-700">
+              {chapters.map((chapter, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="dark:bg-dark-background-secondary shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium">
+                    {index + 1}
+                  </span>
+                  <span>{String(chapter)}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/dashboard/blaeserhefte"
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
+        {/* Highlights */}
+        {highlights.length > 0 && (
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Highlights
+            </h2>
+            <ul className="dark:text-dark-muted space-y-2 text-gray-700">
+              {highlights.map((highlight, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <CheckIcon className="h-3 w-3" />
+                  <span>{String(highlight)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Audio Sample */}
+      {heft.audioSample && (
+        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Hörprobe
+          </h2>
+          <audio controls className="w-full">
+            <source src={heft.audioSample} type="audio/mpeg" />
+            Dein Browser unterstützt das Audio-Element nicht.
+          </audio>
         </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/dashboard/blaeserhefte"
+          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

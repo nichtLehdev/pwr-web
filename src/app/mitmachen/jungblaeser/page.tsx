@@ -88,14 +88,14 @@ export default function JungblaserPage() {
         <>
           <p>
             Kinder und Jugendliche für die Musik zu begeistern ist uns ein
-            besonderes Anliegen. In unseren Posaunenchören finden junge
-            Menschen einen Ort, an dem sie gemeinsam musizieren, lernen und
-            wachsen können.
+            besonderes Anliegen. In unseren Posaunenchören finden junge Menschen
+            einen Ort, an dem sie gemeinsam musizieren, lernen und wachsen
+            können.
           </p>
           <p>
-            Von den ersten Tönen auf dem Instrument bis zum gemeinsamen
-            Auftritt – wir begleiten junge Bläserinnen und Bläser auf ihrem
-            musikalischen Weg.
+            Von den ersten Tönen auf dem Instrument bis zum gemeinsamen Auftritt
+            – wir begleiten junge Bläserinnen und Bläser auf ihrem musikalischen
+            Weg.
           </p>
         </>
       }

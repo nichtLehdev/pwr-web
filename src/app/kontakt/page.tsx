@@ -31,14 +31,11 @@ export default async function KontaktPage() {
     <PublicPage
       title="Kontakt"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Kontakt" },
-      ]}
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Kontakt" }]}
       description={
         <p>
-          Haben Sie Fragen zur Posaunenchorarbeit oder möchten Sie mit uns
-          in Kontakt treten? Wir freuen uns auf Ihre Nachricht!
+          Haben Sie Fragen zur Posaunenchorarbeit oder möchten Sie mit uns in
+          Kontakt treten? Wir freuen uns auf Ihre Nachricht!
         </p>
       }
     >

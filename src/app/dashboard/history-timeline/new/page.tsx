@@ -128,221 +128,221 @@ export default function NewHistoryEventPage() {
       ]}
       maxWidth="7xl"
     >
-        {/* Error */}
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-          </div>
-        )}
+      {/* Error */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+        </div>
+      )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Grundinformationen
-              </h2>
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              Grundinformationen
+            </h2>
 
-              {/* Year */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Jahr *
-                </label>
-                <input
-                  type="number"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  required
-                  min="1900"
-                  max="2100"
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. 1995"
-                />
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                  maxLength={255}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Gründung des Posaunenwerks"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung *
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  rows={6}
-                  maxLength={5000}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beschreibe das Ereignis..."
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Kategorie
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Keine Kategorie</option>
-                  <option value="FOUNDING">Gründung</option>
-                  <option value="MILESTONE">Meilenstein</option>
-                  <option value="EXPANSION">Erweiterung</option>
-                  <option value="MODERNIZATION">Modernisierung</option>
-                  <option value="PARTNERSHIP">Partnerschaft</option>
-                </select>
-              </div>
-
-              {/* Sort Order */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Sortierreihenfolge
-                </label>
-                <input
-                  type="number"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  min="0"
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Niedrigere Zahlen erscheinen zuerst bei gleichem Jahr
-                </p>
-              </div>
+            {/* Year */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Jahr *
+              </label>
+              <input
+                type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                required
+                min="1900"
+                max="2100"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                placeholder="z.B. 1995"
+              />
             </div>
 
-            {/* Image */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            {/* Title */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Titel *
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                maxLength={255}
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                placeholder="z.B. Gründung des Posaunenwerks"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Beschreibung *
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={6}
+                maxLength={5000}
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                placeholder="Beschreibe das Ereignis..."
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Kategorie
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Keine Kategorie</option>
+                <option value="FOUNDING">Gründung</option>
+                <option value="MILESTONE">Meilenstein</option>
+                <option value="EXPANSION">Erweiterung</option>
+                <option value="MODERNIZATION">Modernisierung</option>
+                <option value="PARTNERSHIP">Partnerschaft</option>
+              </select>
+            </div>
+
+            {/* Sort Order */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Sortierreihenfolge
+              </label>
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value)}
+                min="0"
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                Niedrigere Zahlen erscheinen zuerst bei gleichem Jahr
+              </p>
+            </div>
+          </div>
+
+          {/* Image */}
+          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              Bild
+            </h2>
+
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Bild
-              </h2>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bild
-                </label>
-                {imageUrl ? (
-                  <div className="flex items-start gap-4">
-                    <div className="relative h-24 w-24 overflow-hidden rounded-lg">
-                      <Image
-                        src={imageUrl}
-                        alt={imageAlt || title || "Ereignis Bild"}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-1 flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowMediaPicker(true)}
-                        className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Ändern
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageUrl("");
-                          setImageId(null);
-                          setImageAlt("");
-                        }}
-                        className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
+              </label>
+              {imageUrl ? (
+                <div className="flex items-start gap-4">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-lg">
+                    <Image
+                      src={imageUrl}
+                      alt={imageAlt || title || "Ereignis Bild"}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaPicker(true)}
-                    className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
-                  >
-                    <div className="text-center">
-                      <svg
-                        className="mx-auto h-8 w-8"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span className="mt-1 block text-sm">Bild auswählen</span>
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              {/* Image Alt */}
-              {imageUrl && (
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Alt-Text für Bild
-                  </label>
-                  <input
-                    type="text"
-                    value={imageAlt}
-                    onChange={(e) => setImageAlt(e.target.value)}
-                    maxLength={255}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="Beschreibung des Bildes für Barrierefreiheit"
-                  />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaPicker(true)}
+                      className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Ändern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageUrl("");
+                        setImageId(null);
+                        setImageAlt("");
+                      }}
+                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowMediaPicker(true)}
+                  className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
+                >
+                  <div className="text-center">
+                    <svg
+                      className="mx-auto h-8 w-8"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="mt-1 block text-sm">Bild auswählen</span>
+                  </div>
+                </button>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="submit"
-                disabled={isSubmitting || createMutation.isPending}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
-              >
-                {isSubmitting || createMutation.isPending
-                  ? "Wird erstellt..."
-                  : "Ereignis erstellen"}
-              </button>
-              <Link
-                href="/dashboard/history-timeline"
-                className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </Link>
-            </div>
+            {/* Image Alt */}
+            {imageUrl && (
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Alt-Text für Bild
+                </label>
+                <input
+                  type="text"
+                  value={imageAlt}
+                  onChange={(e) => setImageAlt(e.target.value)}
+                  maxLength={255}
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  placeholder="Beschreibung des Bildes für Barrierefreiheit"
+                />
+              </div>
+            )}
           </div>
-        </form>
 
-        {/* Media Picker Modal */}
-        <MediaPickerModal
-          isOpen={showMediaPicker}
-          onClose={() => setShowMediaPicker(false)}
-          onSelect={handleMediaSelect}
-        />
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting || createMutation.isPending}
+              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+            >
+              {isSubmitting || createMutation.isPending
+                ? "Wird erstellt..."
+                : "Ereignis erstellen"}
+            </button>
+            <Link
+              href="/dashboard/history-timeline"
+              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Abbrechen
+            </Link>
+          </div>
+        </div>
+      </form>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={handleMediaSelect}
+      />
     </DashboardPage>
   );
 }

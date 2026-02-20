@@ -102,263 +102,256 @@ export default function LocationDetailPage() {
       }
       maxWidth="7xl"
     >
+      {/* Address */}
+      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          Adresse
+        </h2>
+        <dl className="space-y-3">
+          {location.street && (
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Straße
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {location.street}
+              </dd>
+            </div>
+          )}
+          {(location.zipCode || location.city) && (
+            <div>
+              <dt className="dark:text-dark-muted text-sm text-gray-500">
+                Ort
+              </dt>
+              <dd className="dark:text-dark-text font-medium text-gray-900">
+                {location.zipCode && `${location.zipCode} `}
+                {location.city}
+              </dd>
+            </div>
+          )}
+          {!location.street && !location.zipCode && !location.city && (
+            <p className="dark:text-dark-muted text-gray-500 italic">
+              Keine Adresse angegeben
+            </p>
+          )}
+        </dl>
+      </div>
 
-        {/* Address */}
+      {/* Coordinates */}
+      {(location.latitude || location.longitude) && (
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Adresse
+            Koordinaten
           </h2>
-          <dl className="space-y-3">
-            {location.street && (
+          <dl className="grid gap-4 sm:grid-cols-2">
+            {location.latitude && (
               <div>
                 <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Straße
+                  Breitengrad
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {location.street}
+                  {location.latitude}
                 </dd>
               </div>
             )}
-            {(location.zipCode || location.city) && (
+            {location.longitude && (
               <div>
                 <dt className="dark:text-dark-muted text-sm text-gray-500">
-                  Ort
+                  Längengrad
                 </dt>
                 <dd className="dark:text-dark-text font-medium text-gray-900">
-                  {location.zipCode && `${location.zipCode} `}
-                  {location.city}
+                  {location.longitude}
                 </dd>
               </div>
-            )}
-            {!location.street && !location.zipCode && !location.city && (
-              <p className="dark:text-dark-muted text-gray-500 italic">
-                Keine Adresse angegeben
-              </p>
             )}
           </dl>
         </div>
+      )}
 
-        {/* Coordinates */}
-        {(location.latitude || location.longitude) && (
-          <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Koordinaten
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              {location.latitude && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm text-gray-500">
-                    Breitengrad
-                  </dt>
-                  <dd className="dark:text-dark-text font-medium text-gray-900">
-                    {location.latitude}
-                  </dd>
-                </div>
-              )}
-              {location.longitude && (
-                <div>
-                  <dt className="dark:text-dark-muted text-sm text-gray-500">
-                    Längengrad
-                  </dt>
-                  <dd className="dark:text-dark-text font-medium text-gray-900">
-                    {location.longitude}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </div>
-        )}
-
-        {/* Usage */}
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Verwendung
-          </h2>
-          <div className="space-y-4">
-            {location.events && location.events.length > 0 && (
-              <div>
-                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
-                  Kommende Termine ({location.events.length})
-                </h3>
-                <div className="space-y-2">
-                  {location.events.slice(0, 5).map((event) => (
-                    <div
-                      key={event.id}
-                      className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
-                    >
-                      {event.coverImage?.url ? (
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
-                          <Image
-                            src={event.coverImage.url}
-                            alt={event.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="text-primary shrink-0 text-center">
-                          <div className="text-sm font-medium">
-                            {new Date(event.eventDate).toLocaleDateString(
-                              "de-DE",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                              },
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="dark:text-dark-text truncate font-medium text-gray-900">
-                          {event.title}
-                        </p>
-                        <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+      {/* Usage */}
+      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          Verwendung
+        </h2>
+        <div className="space-y-4">
+          {location.events && location.events.length > 0 && (
+            <div>
+              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                Kommende Termine ({location.events.length})
+              </h3>
+              <div className="space-y-2">
+                {location.events.slice(0, 5).map((event) => (
+                  <div
+                    key={event.id}
+                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                  >
+                    {event.coverImage?.url ? (
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                        <Image
+                          src={event.coverImage.url}
+                          alt={event.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-primary shrink-0 text-center">
+                        <div className="text-sm font-medium">
                           {new Date(event.eventDate).toLocaleDateString(
                             "de-DE",
                             {
                               day: "2-digit",
-                              month: "long",
-                              year: "numeric",
+                              month: "short",
                             },
                           )}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {location.courses && location.courses.length > 0 && (
-              <div>
-                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
-                  Kurse ({location.courses.length})
-                </h3>
-                <div className="space-y-2">
-                  {location.courses.slice(0, 5).map((course) => (
-                    <div
-                      key={course.id}
-                      className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="dark:text-dark-text truncate font-medium text-gray-900">
-                          {course.title}
-                        </p>
-                        <p className="dark:text-dark-muted truncate text-sm text-gray-500">
-                          {new Date(course.startDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                            },
-                          )}{" "}
-                          -{" "}
-                          {new Date(course.endDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                            },
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {location.ensembles && location.ensembles.length > 0 && (
-              <div>
-                <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
-                  Ensembles ({location.ensembles.length})
-                </h3>
-                <div className="space-y-2">
-                  {location.ensembles.slice(0, 5).map((ensemble) => (
-                    <div
-                      key={ensemble.id}
-                      className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
-                    >
-                      {ensemble.image?.url ? (
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
-                          <Image
-                            src={ensemble.image.url}
-                            alt={ensemble.name}
-                            fill
-                            className="object-cover"
-                          />
                         </div>
-                      ) : (
-                        <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
-                          <UserIcon className="h-6 w-6" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="dark:text-dark-text truncate font-medium text-gray-900">
-                          {ensemble.name}
-                        </p>
                       </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                        {event.title}
+                      </p>
+                      <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+                        {new Date(event.eventDate).toLocaleDateString("de-DE", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
+          )}
 
-            {(!location.events || location.events.length === 0) &&
-              (!location.courses || location.courses.length === 0) &&
-              (!location.ensembles || location.ensembles.length === 0) && (
-                <p className="dark:text-dark-muted text-gray-500 italic">
-                  Dieser Standort wird derzeit nicht verwendet
-                </p>
-              )}
+          {location.courses && location.courses.length > 0 && (
+            <div>
+              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                Kurse ({location.courses.length})
+              </h3>
+              <div className="space-y-2">
+                {location.courses.slice(0, 5).map((course) => (
+                  <div
+                    key={course.id}
+                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                        {course.title}
+                      </p>
+                      <p className="dark:text-dark-muted truncate text-sm text-gray-500">
+                        {new Date(course.startDate).toLocaleDateString(
+                          "de-DE",
+                          {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          },
+                        )}{" "}
+                        -{" "}
+                        {new Date(course.endDate).toLocaleDateString("de-DE", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {location.ensembles && location.ensembles.length > 0 && (
+            <div>
+              <h3 className="dark:text-dark-text mb-2 text-sm font-medium text-gray-700">
+                Ensembles ({location.ensembles.length})
+              </h3>
+              <div className="space-y-2">
+                {location.ensembles.slice(0, 5).map((ensemble) => (
+                  <div
+                    key={ensemble.id}
+                    className="dark:border-dark-border flex items-center gap-3 rounded-lg border border-gray-100 p-3"
+                  >
+                    {ensemble.image?.url ? (
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded">
+                        <Image
+                          src={ensemble.image.url}
+                          alt={ensemble.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-12 w-12 shrink-0 items-center justify-center rounded bg-gray-100 text-gray-500">
+                        <UserIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="dark:text-dark-text truncate font-medium text-gray-900">
+                        {ensemble.name}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {(!location.events || location.events.length === 0) &&
+            (!location.courses || location.courses.length === 0) &&
+            (!location.ensembles || location.ensembles.length === 0) && (
+              <p className="dark:text-dark-muted text-gray-500 italic">
+                Dieser Standort wird derzeit nicht verwendet
+              </p>
+            )}
+        </div>
+      </div>
+
+      {/* Metadata */}
+      <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          Details
+        </h2>
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="dark:text-dark-muted text-sm text-gray-500">
+              Erstellt am
+            </dt>
+            <dd className="dark:text-dark-text font-medium text-gray-900">
+              {new Date(location.createdAt).toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </dd>
           </div>
-        </div>
+          <div>
+            <dt className="dark:text-dark-muted text-sm text-gray-500">
+              Zuletzt aktualisiert
+            </dt>
+            <dd className="dark:text-dark-text font-medium text-gray-900">
+              {new Date(location.updatedAt).toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </dd>
+          </div>
+        </dl>
+      </div>
 
-        {/* Metadata */}
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Details
-          </h2>
-          <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Erstellt am
-              </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {new Date(location.createdAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </dd>
-            </div>
-            <div>
-              <dt className="dark:text-dark-muted text-sm text-gray-500">
-                Zuletzt aktualisiert
-              </dt>
-              <dd className="dark:text-dark-text font-medium text-gray-900">
-                {new Date(location.updatedAt).toLocaleDateString("de-DE", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </dd>
-            </div>
-          </dl>
-        </div>
-
-        {/* Actions */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/dashboard/locations"
-            className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
-          </Link>
-        </div>
+      {/* Actions */}
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href="/dashboard/locations"
+          className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Zurück zur Übersicht
+        </Link>
+      </div>
     </DashboardPage>
   );
 }

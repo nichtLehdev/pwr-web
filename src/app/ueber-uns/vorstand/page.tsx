@@ -30,16 +30,16 @@ export default async function VorstandPage() {
       description={
         <>
           <p className="mb-6">
-            Der Vorstand führt im Auftrag des Landesposaunenrates die
-            laufenden Geschäfte des Posaunenwerkes. Dazu führt er die
-            Beschlüsse der Vertreterversammlung und des Landesposaunenrates
-            aus und erstattet ihm Bericht.
+            Der Vorstand führt im Auftrag des Landesposaunenrates die laufenden
+            Geschäfte des Posaunenwerkes. Dazu führt er die Beschlüsse der
+            Vertreterversammlung und des Landesposaunenrates aus und erstattet
+            ihm Bericht.
           </p>
           <p>
-            Er kann unaufschiebbare Entscheidungen treffen, wenn dies
-            notwendig ist. Der Landesobmann vertritt das Posaunenwerk nach
-            außen und innen. Genau wie die Mitglieder der Vertreterversammlung
-            und des Landesposaunenrates arbeitet der Vorstand ehrenamtlich.
+            Er kann unaufschiebbare Entscheidungen treffen, wenn dies notwendig
+            ist. Der Landesobmann vertritt das Posaunenwerk nach außen und
+            innen. Genau wie die Mitglieder der Vertreterversammlung und des
+            Landesposaunenrates arbeitet der Vorstand ehrenamtlich.
           </p>
         </>
       }

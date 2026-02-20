@@ -76,15 +76,12 @@ export default function MitmachenPage() {
     <PublicPage
       title="Mitmachen im Posaunenwerk"
       color="primary"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Mitmachen" },
-      ]}
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Mitmachen" }]}
       description={
         <p>
-          Ob als Bläserin oder Bläser, ehrenamtlich Engagierte oder
-          Fördernde – es gibt viele Wege, Teil des Posaunenwerks Rheinland
-          zu werden. Entdecke die Möglichkeiten, die zu dir passen!
+          Ob als Bläserin oder Bläser, ehrenamtlich Engagierte oder Fördernde –
+          es gibt viele Wege, Teil des Posaunenwerks Rheinland zu werden.
+          Entdecke die Möglichkeiten, die zu dir passen!
         </p>
       }
     >

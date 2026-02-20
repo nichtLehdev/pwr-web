@@ -49,9 +49,9 @@ export default function BlechblattPage() {
       description={
         <p>
           Das Rheinische Blechblatt ist unser Magazin für die
-          Posaunenchorarbeit. Es erscheint vierteljährlich und enthält
-          Berichte, Termine, Neuigkeiten und Impulse aus dem gesamten
-          Posaunenwerk Rheinland.
+          Posaunenchorarbeit. Es erscheint vierteljährlich und enthält Berichte,
+          Termine, Neuigkeiten und Impulse aus dem gesamten Posaunenwerk
+          Rheinland.
         </p>
       }
     >

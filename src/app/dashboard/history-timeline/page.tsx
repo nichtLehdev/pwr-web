@@ -140,175 +140,223 @@ export default function DashboardHistoryTimelinePage() {
       }
     >
       {/* Filters */}
-        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <svg
-                  className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Ereignis suchen..."
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            {/* Category Filter */}
-            <div className="sm:w-64">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="flex-1">
+            <div className="relative">
+              <svg
+                className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <option value="">Alle Kategorien</option>
-                <option value="FOUNDING">Gründung</option>
-                <option value="MILESTONE">Meilenstein</option>
-                <option value="EXPANSION">Erweiterung</option>
-                <option value="MODERNIZATION">Modernisierung</option>
-                <option value="PARTNERSHIP">Partnerschaft</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* History Events List */}
-        {filteredEvents.length === 0 ? (
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Ereignis suchen..."
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-            <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-              Keine Ereignisse gefunden
-            </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
-              {search || categoryFilter
-                ? "Keine Ereignisse entsprechen deinen Filterkriterien."
-                : "Erstelle das erste Ereignis, um es hier anzuzeigen."}
-            </p>
-            {!search && !categoryFilter && (
-              <Link
-                href="/dashboard/history-timeline/new"
-                className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          </div>
+          {/* Category Filter */}
+          <div className="sm:w-64">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Alle Kategorien</option>
+              <option value="FOUNDING">Gründung</option>
+              <option value="MILESTONE">Meilenstein</option>
+              <option value="EXPANSION">Erweiterung</option>
+              <option value="MODERNIZATION">Modernisierung</option>
+              <option value="PARTNERSHIP">Partnerschaft</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* History Events List */}
+      {filteredEvents.length === 0 ? (
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
+            Keine Ereignisse gefunden
+          </h3>
+          <p className="dark:text-dark-muted mb-6 text-gray-600">
+            {search || categoryFilter
+              ? "Keine Ereignisse entsprechen deinen Filterkriterien."
+              : "Erstelle das erste Ereignis, um es hier anzuzeigen."}
+          </p>
+          {!search && !categoryFilter && (
+            <Link
+              href="/dashboard/history-timeline/new"
+              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Ereignis erstellen
-              </Link>
-            )}
-          </div>
-        ) : (
-          <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Jahr
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Ereignis
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Kategorie
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Bild
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Aktionen
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredEvents.map((event) => (
-                    <tr
-                      key={event.id}
-                      className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="dark:text-dark-text font-semibold text-gray-900">
-                          {event.year}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Ereignis erstellen
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Jahr
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Ereignis
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Kategorie
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Bild
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Aktionen
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredEvents.map((event) => (
+                  <tr
+                    key={event.id}
+                    className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="dark:text-dark-text font-semibold text-gray-900">
+                        {event.year}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div>
+                        <Link
+                          href={`/dashboard/history-timeline/${event.id}`}
+                          className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                        >
+                          {event.title}
+                        </Link>
+                        <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
+                          {event.description}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {event.category ? (
+                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                          {categoryLabels[event.category] || event.category}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <Link
-                            href={`/dashboard/history-timeline/${event.id}`}
-                            className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
-                          >
-                            {event.title}
-                          </Link>
-                          <p className="dark:text-dark-muted mt-1 line-clamp-2 text-sm text-gray-500">
-                            {event.description}
-                          </p>
+                      ) : (
+                        <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+                          Keine Kategorie
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {event.image?.url ? (
+                        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded">
+                          <Image
+                            src={event.image.url}
+                            alt={event.imageAlt || event.title}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {event.category ? (
-                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                            {categoryLabels[event.category] || event.category}
-                          </span>
-                        ) : (
-                          <span className="dark:text-dark-muted text-sm text-gray-400 italic">
-                            Keine Kategorie
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {event.image?.url ? (
-                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded">
-                            <Image
-                              src={event.image.url}
-                              alt={event.imageAlt || event.title}
-                              fill
-                              className="object-cover"
+                      ) : (
+                        <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+                          Kein Bild
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/dashboard/history-timeline/${event.id}`}
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                          title="Details anzeigen"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                             />
-                          </div>
-                        ) : (
-                          <span className="dark:text-dark-muted text-sm text-gray-400 italic">
-                            Kein Bild
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/dashboard/history-timeline/${event.id}`}
-                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                            title="Details anzeigen"
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </Link>
+                        <Link
+                          href={`/dashboard/history-timeline/${event.id}/edit`}
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                          title="Bearbeiten"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(event.id, event.title)}
+                          disabled={deletingId === event.id}
+                          className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                          title="Löschen"
+                        >
+                          {deletingId === event.id ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                          ) : (
                             <svg
                               className="h-4 w-4"
                               fill="none"
@@ -319,75 +367,27 @@ export default function DashboardHistoryTimelinePage() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                               />
                             </svg>
-                          </Link>
-                          <Link
-                            href={`/dashboard/history-timeline/${event.id}/edit`}
-                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                            title="Bearbeiten"
-                          >
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(event.id, event.title)}
-                            disabled={deletingId === event.id}
-                            className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                            title="Löschen"
-                          >
-                            {deletingId === event.id ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-                            ) : (
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Results count */}
-            <div className="dark:border-dark-border flex flex-col items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 sm:flex-row">
-              <div className="dark:text-dark-muted text-sm text-gray-500">
-                {filteredEvents.length} Ereignis
-                {filteredEvents.length !== 1 && "se"} gefunden
-              </div>
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Results count */}
+          <div className="dark:border-dark-border flex flex-col items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 sm:flex-row">
+            <div className="dark:text-dark-muted text-sm text-gray-500">
+              {filteredEvents.length} Ereignis
+              {filteredEvents.length !== 1 && "se"} gefunden
             </div>
           </div>
-        )}
+        </div>
+      )}
     </DashboardPage>
   );
 }

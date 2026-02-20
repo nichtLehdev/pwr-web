@@ -101,38 +101,37 @@ export default function PermissionsPage() {
         { label: "Berechtigungen" },
       ]}
     >
+      {/* Tabs */}
+      <div className="dark:border-dark-border mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("roles")}
+            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "roles"
+                ? "border-primary text-primary"
+                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+            }`}
+          >
+            <Shield className="mr-2 inline h-4 w-4" />
+            Rollen
+          </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "users"
+                ? "border-primary text-primary"
+                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+            }`}
+          >
+            <Users className="mr-2 inline h-4 w-4" />
+            Benutzerzuweisungen
+          </button>
+        </nav>
+      </div>
 
-        {/* Tabs */}
-        <div className="dark:border-dark-border mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("roles")}
-              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === "roles"
-                  ? "border-primary text-primary"
-                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-              }`}
-            >
-              <Shield className="mr-2 inline h-4 w-4" />
-              Rollen
-            </button>
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === "users"
-                  ? "border-primary text-primary"
-                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-              }`}
-            >
-              <Users className="mr-2 inline h-4 w-4" />
-              Benutzerzuweisungen
-            </button>
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "roles" && <RolesTab />}
-        {activeTab === "users" && <UsersTab />}
+      {/* Tab Content */}
+      {activeTab === "roles" && <RolesTab />}
+      {activeTab === "users" && <UsersTab />}
     </DashboardPage>
   );
 }

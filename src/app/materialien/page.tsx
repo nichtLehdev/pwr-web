@@ -49,15 +49,12 @@ export default function MaterialienPage() {
       title="Materialien"
       heroTitle="Materialien & Downloads"
       color="district-4"
-      breadcrumbs={[
-        { label: "Start", href: "/" },
-        { label: "Materialien" },
-      ]}
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Materialien" }]}
       description={
         <p>
-          Hier finden Sie alle wichtigen Materialien für die
-          Posaunenchorarbeit: vom Rheinischen Blechblatt über Noten und
-          Übungen bis hin zu Formularen und Vorlagen.
+          Hier finden Sie alle wichtigen Materialien für die Posaunenchorarbeit:
+          vom Rheinischen Blechblatt über Noten und Übungen bis hin zu
+          Formularen und Vorlagen.
         </p>
       }
     >

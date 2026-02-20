@@ -1202,7 +1202,6 @@ export default function EditEnsemblePage() {
             </Link>
           </div>
         </form>
-
       </DashboardPage>
       {/* Media Picker Modal */}
       <MediaPickerModal

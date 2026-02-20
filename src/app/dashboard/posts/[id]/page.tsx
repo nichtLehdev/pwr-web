@@ -230,51 +230,51 @@ export default function PostDetailPage() {
   return (
     <>
       <DashboardPage
-      title={post.title}
-      description={post.excerpt ?? undefined}
-      breadcrumbs={[
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Beiträge", href: "/dashboard/posts" },
-        { label: post.title },
-      ]}
-      actions={
-        <div className="flex flex-wrap gap-2">
-          {canEdit && (
-            <Link
-              href={`/dashboard/posts/${postId}/edit`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <Edit className="h-4 w-4" />
-              Bearbeiten
-            </Link>
-          )}
-          {canDelete && (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              <Trash2 className="h-4 w-4" />
-              Löschen
-            </button>
+        title={post.title}
+        description={post.excerpt ?? undefined}
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Beiträge", href: "/dashboard/posts" },
+          { label: post.title },
+        ]}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {canEdit && (
+              <Link
+                href={`/dashboard/posts/${postId}/edit`}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Edit className="h-4 w-4" />
+                Bearbeiten
+              </Link>
+            )}
+            {canDelete && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="dark:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <Trash2 className="h-4 w-4" />
+                Löschen
+              </button>
+            )}
+          </div>
+        }
+        maxWidth="7xl"
+      >
+        {/* Status Badges */}
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
+          >
+            {statusLabels[post.status]}
+          </span>
+          {post.pinned && (
+            <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              <PinIcon className="h-3 w-3" />
+              Gepinnt
+            </span>
           )}
         </div>
-      }
-      maxWidth="7xl"
-    >
-      {/* Status Badges */}
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
-        >
-          {statusLabels[post.status]}
-        </span>
-        {post.pinned && (
-          <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-            <PinIcon className="h-3 w-3" />
-            Gepinnt
-          </span>
-        )}
-      </div>
 
         {/* Review Section (for reviewers with pending posts) */}
         {canReview && (

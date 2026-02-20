@@ -47,17 +47,17 @@ export default async function PosaunenratPage() {
         <div className="space-y-4">
           <p>
             Geleitet wird das Posaunenwerk vom Posaunenrat. Dazu trifft er
-            Entscheidungen über die Grundsätze und Ziele der
-            Geschäftsführung des Posaunenwerkes. Er berät den Vorstand in
-            seiner Arbeit und kontrolliert die Ausführung der Beschlüsse.
-            Der Posaunenrat entscheidet auch über die Anstellung von
-            Landesposaunenwarten oder deren Entlassung.
+            Entscheidungen über die Grundsätze und Ziele der Geschäftsführung
+            des Posaunenwerkes. Er berät den Vorstand in seiner Arbeit und
+            kontrolliert die Ausführung der Beschlüsse. Der Posaunenrat
+            entscheidet auch über die Anstellung von Landesposaunenwarten oder
+            deren Entlassung.
           </p>
           <p>
-            Eine weitere wichtige Aufgabe ist die jährliche Verabschiedung
-            des Haushaltsplanes und die Kontrolle über die sachgemäße
-            Verwaltung der Finanzen. Zu Beginn der Wahlperiode wählt der
-            Posaunenrat aus seiner Mitte den Vorstand für sechs Jahre.
+            Eine weitere wichtige Aufgabe ist die jährliche Verabschiedung des
+            Haushaltsplanes und die Kontrolle über die sachgemäße Verwaltung der
+            Finanzen. Zu Beginn der Wahlperiode wählt der Posaunenrat aus seiner
+            Mitte den Vorstand für sechs Jahre.
           </p>
           <p className="font-semibold">
             Der Landesposaunenrat kommt mindestens einmal jährlich zusammen.

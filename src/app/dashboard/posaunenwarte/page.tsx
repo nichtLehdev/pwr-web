@@ -84,160 +84,160 @@ export default function DashboardPosaunenwartenPage() {
         </div>
       }
     >
-        {/* Posaunenwarte List */}
-        {!posaunenwarte || posaunenwarte.length === 0 ? (
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-              <UsersIcon className="h-12 w-12" />
-            </div>
-            <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-              Keine Posaunenwarte
-            </h3>
-            <p className="dark:text-dark-muted mb-6 text-gray-600">
-              Es wurden noch keine Posaunenwarte angelegt.
-            </p>
-            <Link
-              href="/dashboard/posaunenwarte/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-            >
-              Ersten Posaunenwart anlegen
-            </Link>
+      {/* Posaunenwarte List */}
+      {!posaunenwarte || posaunenwarte.length === 0 ? (
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+          <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
+            <UsersIcon className="h-12 w-12" />
           </div>
-        ) : (
-          <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Posaunenwart
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Rolle
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Zuständige Bezirke
-                    </th>
-                    <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                      Aktionen
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {posaunenwarte.map((person) => (
-                    <tr
-                      key={person.id}
-                      className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          {person.profileImage?.url ? (
-                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
-                              <Image
-                                src={person.profileImage.url}
-                                alt={person.name || ""}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-                              <UserIcon className="h-5 w-5" />
-                            </div>
-                          )}
-                          <div>
-                            <Link
-                              href={`/dashboard/posaunenwarte/${person.id}`}
-                              className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
-                            >
-                              {person.name || "Unbekannt"}
-                            </Link>
-                            <p className="dark:text-dark-muted text-sm text-gray-500">
-                              {person.email}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            person.role === "LPW"
-                              ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                              : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                          }`}
-                        >
-                          {person.role
-                            ? ROLE_LABELS[person.role] || person.role
-                            : "Unbekannt"}
-                        </span>
-                        {person.districtRoleName && (
-                          <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                            {person.districtRoleName}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {person.bezirke && person.bezirke.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {person.bezirke.map(
-                              (bezirk: {
-                                id: string;
-                                number: number;
-                                name: string | null;
-                              }) => (
-                                <span
-                                  key={bezirk.id}
-                                  className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
-                                >
-                                  Bezirk {bezirk.number}
-                                </span>
-                              ),
-                            )}
+          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
+            Keine Posaunenwarte
+          </h3>
+          <p className="dark:text-dark-muted mb-6 text-gray-600">
+            Es wurden noch keine Posaunenwarte angelegt.
+          </p>
+          <Link
+            href="/dashboard/posaunenwarte/new"
+            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+          >
+            Ersten Posaunenwart anlegen
+          </Link>
+        </div>
+      ) : (
+        <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Posaunenwart
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Rolle
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Zuständige Bezirke
+                  </th>
+                  <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                    Aktionen
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {posaunenwarte.map((person) => (
+                  <tr
+                    key={person.id}
+                    className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        {person.profileImage?.url ? (
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                            <Image
+                              src={person.profileImage.url}
+                              alt={person.name || ""}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                         ) : (
-                          <span className="dark:text-dark-muted text-sm text-gray-500">
-                            {person.role === "LPW"
-                              ? "Alle Bezirke"
-                              : person.role === "RPW"
-                                ? `${person.bezirke?.length || 0} Bezirk(e)`
-                                : "Keine Zuordnung"}
-                          </span>
+                          <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                            <UserIcon className="h-5 w-5" />
+                          </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
+                        <div>
                           <Link
                             href={`/dashboard/posaunenwarte/${person.id}`}
-                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                            title="Details anzeigen"
+                            className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
                           >
-                            <EyeIcon className="h-4 w-4" />
+                            {person.name || "Unbekannt"}
                           </Link>
-                          <Link
-                            href={`/dashboard/posaunenwarte/${person.id}/edit`}
-                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                            title="Bezirke bearbeiten"
-                          >
-                            <EditIcon className="h-4 w-4" />
-                          </Link>
-                          {person.userId && (
-                            <Link
-                              href={`/dashboard/users/${person.userId}`}
-                              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                              title="Benutzerprofil"
-                            >
-                              <UserIcon className="h-4 w-4" />
-                            </Link>
+                          <p className="dark:text-dark-muted text-sm text-gray-500">
+                            {person.email}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          person.role === "LPW"
+                            ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                            : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                        }`}
+                      >
+                        {person.role
+                          ? ROLE_LABELS[person.role] || person.role
+                          : "Unbekannt"}
+                      </span>
+                      {person.districtRoleName && (
+                        <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                          {person.districtRoleName}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {person.bezirke && person.bezirke.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {person.bezirke.map(
+                            (bezirk: {
+                              id: string;
+                              number: number;
+                              name: string | null;
+                            }) => (
+                              <span
+                                key={bezirk.id}
+                                className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-700"
+                              >
+                                Bezirk {bezirk.number}
+                              </span>
+                            ),
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      ) : (
+                        <span className="dark:text-dark-muted text-sm text-gray-500">
+                          {person.role === "LPW"
+                            ? "Alle Bezirke"
+                            : person.role === "RPW"
+                              ? `${person.bezirke?.length || 0} Bezirk(e)`
+                              : "Keine Zuordnung"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/dashboard/posaunenwarte/${person.id}`}
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                          title="Details anzeigen"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/dashboard/posaunenwarte/${person.id}/edit`}
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                          title="Bezirke bearbeiten"
+                        >
+                          <EditIcon className="h-4 w-4" />
+                        </Link>
+                        {person.userId && (
+                          <Link
+                            href={`/dashboard/users/${person.userId}`}
+                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                            title="Benutzerprofil"
+                          >
+                            <UserIcon className="h-4 w-4" />
+                          </Link>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
+      )}
     </DashboardPage>
   );
 }

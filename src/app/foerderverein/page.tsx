@@ -47,8 +47,8 @@ export default async function FoerdervereinPage() {
       ]}
       description={
         <p>
-          Bläser für Bläser – Unterstützen Sie die Arbeit des Posaunenwerks
-          und werden Sie Teil unserer Gemeinschaft!
+          Bläser für Bläser – Unterstützen Sie die Arbeit des Posaunenwerks und
+          werden Sie Teil unserer Gemeinschaft!
         </p>
       }
     >
