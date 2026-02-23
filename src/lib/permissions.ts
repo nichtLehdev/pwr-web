@@ -23,6 +23,7 @@ export const PERMISSIONS = {
   COURSES_APPROVE: "courses.approve",
   COURSES_VIEW: "courses.view",
   COURSES_MANAGE_REGISTRATIONS: "courses.manage_registrations",
+  REGISTRATIONS_MARK_PAID: "registrations.mark_paid",
 
   // Posts
   POSTS_CREATE: "posts.create",
@@ -184,6 +185,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     key: PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
     name: "Kursanmeldungen verwalten",
     description: "Berechtigung zum Verwalten von Kursanmeldungen",
+    category: "courses",
+  },
+  {
+    key: PERMISSIONS.REGISTRATIONS_MARK_PAID,
+    name: "Anmeldungen als bezahlt markieren",
+    description:
+      "Berechtigung, den Zahlungsstatus von Kursanmeldungen auf „bezahlt“ zu setzen",
     category: "courses",
   },
 

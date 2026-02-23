@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -18,8 +19,16 @@ import {
   WalletIcon,
   MailIcon,
   PhoneIcon,
+  PencilIcon,
+  CircleXIcon,
 } from "lucide-react";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -88,10 +97,17 @@ function getCustomFieldValue(
 
 export default function RegistrationDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const courseId = params.id as string;
   const registrationId = params.registrationId as string;
   const { data: session, isPending: sessionLoading } = useSession();
   const toast = useToast();
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const [editingPaymentStatus, setEditingPaymentStatus] = useState(false);
+  const [paymentStatusDraft, setPaymentStatusDraft] = useState<
+    (typeof PaymentStatus)[keyof typeof PaymentStatus] | null
+  >(null);
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
@@ -108,7 +124,27 @@ export default function RegistrationDetailPage() {
       { enabled: !!registrationId && !!session?.user },
     );
 
+  const { data: management } = api.registrations.canManageRegistration.useQuery(
+    { id: registrationId },
+    { enabled: !!session?.user && !!registrationId },
+  );
+
   const utils = api.useUtils();
+
+  const cancelMutation = api.registrations.cancel.useMutation({
+    onSuccess: () => {
+      setCancelModalOpen(false);
+      setCancelError("");
+      toast.success("Anmeldung erfolgreich storniert");
+      void utils.registrations.getById.invalidate({ id: registrationId });
+      void utils.courses.getRegistrations.invalidate({ courseId });
+      router.push(`/dashboard/courses/${courseId}/participants`);
+    },
+    onError: (err) => {
+      setCancelError(err.message || "Ein Fehler ist aufgetreten.");
+      toast.error(err.message || "Ein Fehler ist aufgetreten.");
+    },
+  });
 
   const approveDiscountMutation =
     api.registrations.approveSiblingDiscount.useMutation({
@@ -134,6 +170,22 @@ export default function RegistrationDetailPage() {
       },
     });
 
+  const updatePaymentStatusMutation =
+    api.registrations.updatePaymentStatus.useMutation({
+      onSuccess: () => {
+        setEditingPaymentStatus(false);
+        setPaymentStatusDraft(null);
+        toast.success("Zahlungsstatus aktualisiert");
+        void utils.registrations.getById.invalidate({ id: registrationId });
+        void utils.courses.getRegistrations.invalidate({ courseId });
+      },
+      onError: (error) => {
+        toast.error(
+          error.message || "Fehler beim Aktualisieren des Zahlungsstatus",
+        );
+      },
+    });
+
   const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
     undefined,
     { enabled: !!session?.user?.id },
@@ -143,6 +195,13 @@ export default function RegistrationDetailPage() {
     Array.isArray(userPermissions) &&
     userPermissions.some(
       (perm: string) => perm === "courses.approve" || perm === "courses.manage",
+    );
+
+  const canMarkPaid =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) =>
+        perm === "invoices.manage" || perm === "registrations.mark_paid",
     );
 
   const canApproveDiscount =
@@ -206,6 +265,9 @@ export default function RegistrationDetailPage() {
     );
   }
 
+  const canEdit = management?.canEdit ?? false;
+  const canCancel = management?.canCancel ?? false;
+
   return (
     <main className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -267,7 +329,7 @@ export default function RegistrationDetailPage() {
               {course.title}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
             >
@@ -278,6 +340,35 @@ export default function RegistrationDetailPage() {
             >
               {paymentStatusLabels[registration.paymentStatus]}
             </span>
+            {(canEdit || canCancel) && (
+              <>
+                <Link
+                  href={`/dashboard/courses/${courseId}/participants`}
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                >
+                  Zurück zur Liste
+                </Link>
+                {canEdit && (
+                  <Link
+                    href={`/registrations/${registrationId}/edit?returnTo=${encodeURIComponent(`/dashboard/courses/${courseId}/participants/${registrationId}`)}`}
+                    className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                    Bearbeiten
+                  </Link>
+                )}
+                {canCancel && (
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+                  >
+                    <CircleXIcon className="h-4 w-4" />
+                    Stornieren
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
 
@@ -368,7 +459,7 @@ export default function RegistrationDetailPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt (20%):
+                        Geschwisterkindrabatt (20% pro weiteres Kind):
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         -{registration.siblingDiscountAmount.toFixed(2)} €
@@ -436,6 +527,114 @@ export default function RegistrationDetailPage() {
                   </span>
                 </div>
               )}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Zahlungsstatus:
+                </span>
+                {canMarkPaid && editingPaymentStatus ? (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={paymentStatusDraft ?? registration.paymentStatus}
+                      onChange={(e) =>
+                        setPaymentStatusDraft(
+                          e.target
+                            .value as (typeof PaymentStatus)[keyof typeof PaymentStatus],
+                        )
+                      }
+                      className="dark:bg-dark-background-secondary dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium focus:ring-1 focus:outline-none"
+                    >
+                      <option value={PaymentStatus.PENDING}>
+                        {paymentStatusLabels[PaymentStatus.PENDING]}
+                      </option>
+                      <option value={PaymentStatus.PAID}>
+                        {paymentStatusLabels[PaymentStatus.PAID]}
+                      </option>
+                      <option value={PaymentStatus.REFUNDED}>
+                        {paymentStatusLabels[PaymentStatus.REFUNDED]}
+                      </option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updatePaymentStatusMutation.mutate({
+                          id: registrationId,
+                          paymentStatus:
+                            paymentStatusDraft ?? registration.paymentStatus,
+                        })
+                      }
+                      disabled={updatePaymentStatusMutation.isPending}
+                      className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                    >
+                      {updatePaymentStatusMutation.isPending
+                        ? "Speichert…"
+                        : "Speichern"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPaymentStatus(false);
+                        setPaymentStatusDraft(null);
+                      }}
+                      disabled={updatePaymentStatusMutation.isPending}
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Abbrechen
+                    </button>
+                  </div>
+                ) : canMarkPaid ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
+                    >
+                      {paymentStatusLabels[registration.paymentStatus]}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setEditingPaymentStatus(true)}
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      aria-label="Zahlungsstatus bearbeiten"
+                    >
+                      <PencilIcon className="h-3.5 w-3.5" />
+                      Bearbeiten
+                    </button>
+                  </div>
+                ) : (
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
+                  >
+                    {paymentStatusLabels[registration.paymentStatus]}
+                  </span>
+                )}
+              </div>
+              {registration.invoiceGenerated && registration.invoiceId && (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Rechnungsnummer:
+                  </span>
+                  <span className="text-dark dark:text-dark-text font-mono text-sm">
+                    {registration.invoiceId}
+                  </span>
+                </div>
+              )}
+              {registration.invoiceGenerated &&
+                registration.invoiceDate &&
+                registration.invoiceId && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-2 dark:border-gray-700">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Rechnungsdatum:
+                    </span>
+                    <span className="text-dark dark:text-dark-text text-sm">
+                      {new Date(registration.invoiceDate).toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        },
+                      )}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -580,6 +779,57 @@ export default function RegistrationDetailPage() {
             })}
           </div>
         </div>
+
+        {/* Cancel confirmation modal */}
+        {cancelModalOpen && (
+          <ScrollableModal>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                  Anmeldung stornieren?
+                </h3>
+                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                  Diese Anmeldung wird storniert. Der/die Anmelder:in erhält
+                  eine Bestätigung per E-Mail. Diese Aktion kann nicht
+                  rückgängig gemacht werden.
+                </p>
+                {cancelError && (
+                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                    <p className="text-sm text-red-800 dark:text-red-300">
+                      {cancelError}
+                    </p>
+                  </div>
+                )}
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCancelModalOpen(false);
+                      setCancelError("");
+                    }}
+                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      cancelMutation.mutate({ id: registrationId })
+                    }
+                    disabled={cancelMutation.isPending}
+                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {cancelMutation.isPending
+                      ? "Wird storniert..."
+                      : "Stornieren"}
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
+        )}
       </div>
     </main>
   );

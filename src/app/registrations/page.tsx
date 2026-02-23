@@ -403,7 +403,7 @@ export default function MyRegistrationsPage() {
                               </div>
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-green-600 dark:text-green-400">
-                                  Geschwisterkindrabatt (20%):
+                                  Geschwisterkindrabatt (20% pro weiteres Kind):
                                 </span>
                                 <span className="font-semibold text-green-600 dark:text-green-400">
                                   -
@@ -423,6 +423,14 @@ export default function MyRegistrationsPage() {
                               {registration.totalPrice.toFixed(2)} €
                             </span>
                           </div>
+                          {registration.invoiceId && (
+                            <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                              Rechnungsnr.:{" "}
+                              <span className="font-mono">
+                                {registration.invoiceId}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Discount Rejected Actions */}

@@ -8,6 +8,7 @@ import {
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { useToast } from "@/app/_components/ui/toast";
+import { api } from "@/trpc/react";
 import { SiblingDiscountStatus } from "~/generated/prisma/enums";
 import {
   X,
@@ -30,6 +31,7 @@ type SignatureMode = "none" | "upload" | "draw";
 interface BulkInvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  courseId: string;
   course: InvoiceCourse;
   registrations: InvoiceRegistration[];
 }
@@ -37,10 +39,23 @@ interface BulkInvoiceModalProps {
 export function BulkInvoiceModal({
   isOpen,
   onClose,
+  courseId,
   course,
   registrations,
 }: BulkInvoiceModalProps) {
   const toast = useToast();
+  const utils = api.useUtils();
+  const markInvoicesGeneratedMutation =
+    api.registrations.markRegistrationsInvoiceGenerated.useMutation({
+      onSuccess: () => {
+        void utils.courses.getRegistrations.invalidate({ courseId });
+      },
+      onError: (err) => {
+        toast.error(
+          err.message || "Rechnungsnummern konnten nicht gespeichert werden.",
+        );
+      },
+    });
   const [paymentDueDate, setPaymentDueDate] = useState<string>(() => {
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 21);
@@ -120,6 +135,10 @@ export function BulkInvoiceModal({
           setProgress({ current, total });
         },
       );
+      markInvoicesGeneratedMutation.mutate({
+        courseId,
+        registrationIds: registrations.map((r) => r.id),
+      });
       setIsComplete(true);
 
       removeSignature();

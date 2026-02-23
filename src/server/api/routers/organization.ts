@@ -449,24 +449,36 @@ export const organizationRouter = createTRPCRouter({
             profileImage: true,
             bio: true,
             phone: true,
+            preferences: true,
           },
         },
       },
       orderBy: { sortOrder: "asc" },
     });
 
-    return members.map((member) => ({
-      ...member,
-      user: {
-        ...member.user,
-        displayName:
-          member.user?.displayName ||
-          `${member.user?.firstName || ""} ${member.user?.lastName || ""}`.trim(),
-        firstName: undefined,
-        lastName: undefined,
-      },
-      image: member.image ? member.image : member.user?.profileImage || null,
-    }));
+    const { maskUserContact } = await import("@/lib/mask-user-contact");
+
+    return members.map((member) => {
+      const masked = member.user
+        ? maskUserContact(member.user)
+        : { phone: null };
+      return {
+        ...member,
+        user: member.user
+          ? {
+              ...member.user,
+              phone: masked.phone ?? undefined,
+              displayName:
+                member.user.displayName ||
+                `${member.user.firstName || ""} ${member.user.lastName || ""}`.trim(),
+              firstName: undefined,
+              lastName: undefined,
+              preferences: undefined,
+            }
+          : null,
+        image: member.image ? member.image : member.user?.profileImage || null,
+      };
+    });
   }),
 
   getVorstandMember: publicProcedure
@@ -593,13 +605,24 @@ export const organizationRouter = createTRPCRouter({
             profileImage: true,
             bio: true,
             city: true,
+            preferences: true,
           },
         },
       },
       orderBy: { sortOrder: "asc" },
     });
 
-    return members;
+    const { maskUserContact } = await import("@/lib/mask-user-contact");
+    return members.map((member) => ({
+      ...member,
+      user: member.user
+        ? {
+            ...member.user,
+            city: maskUserContact(member.user).city ?? undefined,
+            preferences: undefined,
+          }
+        : null,
+    }));
   }),
 
   getFoerdervereinBoard: publicProcedure.query(async ({ ctx }) => {
@@ -625,13 +648,24 @@ export const organizationRouter = createTRPCRouter({
             profileImage: true,
             bio: true,
             city: true,
+            preferences: true,
           },
         },
       },
       orderBy: { sortOrder: "asc" },
     });
 
-    return members;
+    const { maskUserContact } = await import("@/lib/mask-user-contact");
+    return members.map((member) => ({
+      ...member,
+      user: member.user
+        ? {
+            ...member.user,
+            city: maskUserContact(member.user).city ?? undefined,
+            preferences: undefined,
+          }
+        : null,
+    }));
   }),
 
   getFoerdervereinByRole: publicProcedure
@@ -838,6 +872,7 @@ export const organizationRouter = createTRPCRouter({
             displayName: true,
             email: true,
             phone: true,
+            preferences: true,
             districtRoleName: true,
             bio: true,
             profileImage: true,
@@ -856,15 +891,18 @@ export const organizationRouter = createTRPCRouter({
       ],
     });
 
+    const { maskUserContact } = await import("@/lib/mask-user-contact");
+
     return list.map((p) => {
       const name = p.user?.displayName ?? p.name ?? null;
       const email = p.user?.email ?? p.email ?? "";
+      const masked = p.user ? maskUserContact(p.user) : { phone: null };
       return {
         id: p.id,
         name,
         email,
         role: p.roleType,
-        phone: p.user?.phone ?? p.phone ?? null,
+        phone: masked.phone ?? p.phone ?? null,
         districtRoleName: p.user?.districtRoleName ?? null,
         bio: p.user?.bio ?? null,
         profileImage: p.image ?? p.user?.profileImage ?? null,
@@ -896,6 +934,7 @@ export const organizationRouter = createTRPCRouter({
               displayName: true,
               email: true,
               phone: true,
+              preferences: true,
               districtRoleName: true,
               bio: true,
               profileImage: true,
@@ -914,6 +953,8 @@ export const organizationRouter = createTRPCRouter({
           message: "Posaunenwart nicht gefunden",
         });
       }
+      const { maskUserContact } = await import("@/lib/mask-user-contact");
+      const masked = pw.user ? maskUserContact(pw.user) : { phone: null };
       const name = pw.user?.displayName ?? pw.name ?? null;
       const email = pw.user?.email ?? pw.email ?? "";
       return {
@@ -921,7 +962,7 @@ export const organizationRouter = createTRPCRouter({
         name,
         email,
         role: pw.roleType,
-        phone: pw.user?.phone ?? pw.phone ?? null,
+        phone: masked.phone ?? pw.phone ?? null,
         districtRoleName: pw.user?.districtRoleName ?? null,
         bio: pw.user?.bio ?? null,
         profileImage: pw.image ?? pw.user?.profileImage ?? null,

@@ -152,7 +152,7 @@ export function Step3Summary({
           </div>
           <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
             <span className="text-sm text-green-700 dark:text-green-300">
-              Geschwisterkindrabatt (20%)
+              Geschwisterkindrabatt (20% pro weiteres Kind)
             </span>
             <span className="text-sm font-semibold text-green-700 dark:text-green-300">
               -{calculateDiscountAmount(registrationData, course).toFixed(2)} €

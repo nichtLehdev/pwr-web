@@ -541,7 +541,7 @@ export default function ViewRegistrationPage() {
                 </div>
                 <div className="flex items-center justify-between border-t border-gray-200 pt-3 dark:border-gray-700">
                   <span className="text-green-600 dark:text-green-400">
-                    Geschwisterkindrabatt (20%)
+                    Geschwisterkindrabatt (20% pro weiteres Kind)
                   </span>
                   <span className="font-semibold text-green-600 dark:text-green-400">
                     -{registration.siblingDiscountAmount.toFixed(2)} €
@@ -586,6 +586,35 @@ export default function ViewRegistrationPage() {
                 <span className="text-primary text-3xl font-bold">
                   {registration.totalPrice.toFixed(2)} €
                 </span>
+              </div>
+            )}
+            {registration.invoiceGenerated && registration.invoiceId && (
+              <div className="mt-4 border-t border-gray-200 pt-3 dark:border-gray-700">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Rechnungsnummer
+                  </span>
+                  <span className="text-dark dark:text-dark-text font-mono font-medium">
+                    {registration.invoiceId}
+                  </span>
+                </div>
+                {registration.invoiceDate && (
+                  <div className="mt-1 flex items-center justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Rechnungsdatum
+                    </span>
+                    <span className="text-dark dark:text-dark-text">
+                      {new Date(registration.invoiceDate).toLocaleDateString(
+                        "de-DE",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        },
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
