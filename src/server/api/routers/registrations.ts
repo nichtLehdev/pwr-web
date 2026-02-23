@@ -1021,10 +1021,7 @@ export const registrationsRouter = createTRPCRouter({
         ctx.session.user.id,
         PERMISSIONS.INVOICES_MANAGE,
       );
-      if (
-        !hasInvoicesManage &&
-        input.paymentStatus !== PaymentStatus.PAID
-      ) {
+      if (!hasInvoicesManage && input.paymentStatus !== PaymentStatus.PAID) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message:

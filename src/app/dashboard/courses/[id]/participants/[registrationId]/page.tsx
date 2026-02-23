@@ -202,7 +202,9 @@ export default function RegistrationDetailPage() {
     userPermissions.some((perm: string) => perm === "invoices.manage");
   const canMarkPaidOnly =
     Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "registrations.mark_paid") &&
+    userPermissions.some(
+      (perm: string) => perm === "registrations.mark_paid",
+    ) &&
     !canManagePaymentStatus;
   const canMarkPaid = canManagePaymentStatus || canMarkPaidOnly;
 
