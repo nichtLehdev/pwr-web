@@ -1125,7 +1125,10 @@ export const registrationsRouter = createTRPCRouter({
           ),
         );
       }
-      return { updated: toUpdate.length, skipped: registrations.length - toUpdate.length };
+      return {
+        updated: toUpdate.length,
+        skipped: registrations.length - toUpdate.length,
+      };
     }),
 
   cancel: publicProcedure
