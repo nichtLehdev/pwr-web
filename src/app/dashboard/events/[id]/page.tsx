@@ -372,7 +372,7 @@ export default function EventDetailPage() {
                     href={ed.download.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                    className="text-primary hover:text-primary-dark flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-dark-border dark:hover:bg-dark-background-secondary"
                   >
                     <svg
                       className="h-5 w-5"
@@ -387,7 +387,7 @@ export default function EventDetailPage() {
                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <span className="font-medium">{ed.download.title}</span>
+                    <span className="font-medium text-inherit">{ed.download.title}</span>
                     {ed.download.description && (
                       <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
                         {ed.download.description}
@@ -448,7 +448,7 @@ export default function EventDetailPage() {
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Beschreibung
               </h2>
-              <p className="dark:text-dark-muted whitespace-pre-wrap text-gray-700">
+              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                 {event.description}
               </p>
             </section>
@@ -460,16 +460,18 @@ export default function EventDetailPage() {
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Veranstaltungsort
               </h2>
-              <address className="dark:text-dark-muted text-gray-700 not-italic">
+              <address className="text-gray-700 not-italic dark:text-gray-300">
                 {event.location.name && (
                   <span className="dark:text-dark-text block font-medium text-gray-900">
                     {event.location.name}
                   </span>
                 )}
                 {event.location.street && (
-                  <span className="block">{event.location.street}</span>
+                  <span className="block text-gray-700 dark:text-gray-300">
+                    {event.location.street}
+                  </span>
                 )}
-                <span className="block">
+                <span className="block text-gray-700 dark:text-gray-300">
                   {event.location.zipCode && `${event.location.zipCode} `}
                   {event.location.city}
                 </span>
@@ -527,7 +529,7 @@ export default function EventDetailPage() {
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Teilnahme
               </h2>
-              <p className="dark:text-dark-muted text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 {event.participationInfo ||
                   "Offen für externe Teilnehmer / Mitwirkende"}
               </p>
