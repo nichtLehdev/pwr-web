@@ -609,6 +609,7 @@ export const usersRouter = createTRPCRouter({
           .max(50)
           .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
           .optional(),
+        preferences: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

@@ -13,7 +13,10 @@ import {
 } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { permissionProcedure } from "../middleware/permissions";
+import {
+  permissionProcedure,
+  permissionProcedureAny,
+} from "../middleware/permissions";
 import {
   sendCourseRegistrationConfirmedEmail,
   sendCourseRegistrationWaitlistEmail,
@@ -408,6 +411,59 @@ export const registrationsRouter = createTRPCRouter({
       return registration;
     }),
 
+  canManageRegistration: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.id },
+        include: {
+          course: {
+            select: {
+              createdById: true,
+              startDate: true,
+              registrationDeadline: true,
+              instructors: { select: { id: true } },
+            },
+          },
+        },
+      });
+      if (!registration) {
+        return {
+          canView: false,
+          canEdit: false,
+          canCancel: false,
+          isStaff: false,
+        };
+      }
+      const isOwner = registration.registrantEmail === ctx.session.user.email;
+      const isInstructor = registration.course.instructors.some(
+        (i) => i.id === ctx.session.user.id,
+      );
+      const isCreator = registration.course.createdById === ctx.session.user.id;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      const isStaff = isInstructor || isCreator || canManageRegistrations;
+
+      const canView = isOwner || isStaff;
+      const now = new Date();
+      const courseStart = new Date(registration.course.startDate);
+      const deadline = registration.course.registrationDeadline
+        ? new Date(registration.course.registrationDeadline)
+        : null;
+      const isCancelled =
+        registration.registrationStatus === RegistrationStatus.CANCELLED;
+      const ownerCanEditByTime =
+        courseStart > now && (!deadline || deadline > now) && !isCancelled;
+      const canEdit =
+        canView &&
+        (isCancelled ? false : isStaff ? true : isOwner && ownerCanEditByTime);
+      const canCancel = (isOwner || isStaff) && !isCancelled;
+
+      return { canView, canEdit, canCancel, isStaff };
+    }),
+
   getMyActiveRegistrationForCourse: protectedProcedure
     .input(z.object({ courseId: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -539,6 +595,8 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               priceOptions: true,
+              createdBy: { select: { id: true } },
+              instructors: { select: { id: true } },
               _count: {
                 select: {
                   registrations: {
@@ -560,20 +618,22 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (registration.registrantEmail !== ctx.session.user.email) {
+      const isOwner = registration.registrantEmail === ctx.session.user.email;
+      const isInstructor = registration.course.instructors.some(
+        (i) => i.id === ctx.session.user.id,
+      );
+      const isCreator =
+        registration.course.createdBy?.id === ctx.session.user.id;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      const isStaff = isInstructor || isCreator || canManageRegistrations;
+
+      if (!isOwner && !isStaff) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Cannot edit registration of another user",
-        });
-      }
-
-      if (
-        registration.course.registrationDeadline &&
-        new Date() > registration.course.registrationDeadline
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Registration edit deadline has passed",
         });
       }
 
@@ -582,6 +642,22 @@ export const registrationsRouter = createTRPCRouter({
           code: "BAD_REQUEST",
           message: "Cannot edit a cancelled registration",
         });
+      }
+
+      if (!isStaff) {
+        const now = new Date();
+        const courseStart = new Date(registration.course.startDate);
+        const deadline = registration.course.registrationDeadline
+          ? new Date(registration.course.registrationDeadline)
+          : null;
+        const ownerCanEditByTime =
+          courseStart > now && (!deadline || deadline > now);
+        if (!ownerCanEditByTime) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Registration edit deadline has passed",
+          });
+        }
       }
 
       const course = registration.course;
@@ -742,24 +818,30 @@ export const registrationsRouter = createTRPCRouter({
         const {
           id: participantId,
           siblingGroupId,
+          priceOptionId: _priceOptionId,
           ...participantData
         } = participant;
+
+        const prismaData = {
+          firstName: participantData.firstName,
+          lastName: participantData.lastName,
+          birthDate: participantData.birthDate,
+          city: participantData.city,
+          instrument: participantData.instrument ?? null,
+          priceOption: participantData.priceOption ?? null,
+          customFields: participantData.customFields ?? {},
+          siblingGroupId: siblingGroupId ?? null,
+        };
 
         if (participantId) {
           await ctx.db.participant.update({
             where: { id: participantId },
-            data: {
-              ...participantData,
-              customFields: participantData.customFields ?? {},
-              siblingGroupId: siblingGroupId ?? null,
-            },
+            data: prismaData,
           });
         } else {
           await ctx.db.participant.create({
             data: {
-              ...participantData,
-              customFields: participantData.customFields ?? {},
-              siblingGroupId: siblingGroupId ?? null,
+              ...prismaData,
               registrationId: id,
             },
           });
@@ -811,12 +893,7 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               instructors: { select: { id: true } },
-            },
-            select: {
-              title: true,
-              startDate: true,
-              endDate: true,
-              createdById: true,
+              createdBy: { select: { id: true } },
             },
           },
         },
@@ -832,7 +909,8 @@ export const registrationsRouter = createTRPCRouter({
       const isInstructor = registration.course.instructors.some(
         (i) => i.id === ctx.session.user.id,
       );
-      const isCreator = registration.course.createdById === ctx.session.user.id;
+      const isCreator =
+        registration.course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
@@ -890,7 +968,10 @@ export const registrationsRouter = createTRPCRouter({
       return updatedRegistration;
     }),
 
-  updatePaymentStatus: permissionProcedure(PERMISSIONS.INVOICES_MANAGE)
+  updatePaymentStatus: permissionProcedureAny([
+    PERMISSIONS.INVOICES_MANAGE,
+    PERMISSIONS.REGISTRATIONS_MARK_PAID,
+  ])
     .input(
       z.object({
         id: z.string(),
@@ -905,6 +986,7 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               instructors: { select: { id: true } },
+              createdBy: { select: { id: true } },
             },
           },
         },
@@ -920,7 +1002,8 @@ export const registrationsRouter = createTRPCRouter({
       const isInstructor = registration.course.instructors.some(
         (i) => i.id === ctx.session.user.id,
       );
-      const isCreator = registration.course.createdById === ctx.session.user.id;
+      const isCreator =
+        registration.course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
@@ -934,16 +1017,118 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      const hasInvoicesManage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.INVOICES_MANAGE,
+      );
+      if (!hasInvoicesManage && input.paymentStatus !== PaymentStatus.PAID) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Mit Ihrer Berechtigung können Sie nur „Bezahlt“ setzen. Andere Zahlungsstatus erfordern die Rechnungspflege-Berechtigung.",
+        });
+      }
+
+      const invoiceData =
+        input.invoiceGenerated !== undefined
+          ? input.invoiceGenerated
+            ? {
+                invoiceGenerated: true,
+                ...(registration.invoiceGenerated && registration.invoiceId
+                  ? {}
+                  : {
+                      invoiceDate: new Date(),
+                      invoiceId: `RE-${input.id.slice(0, 8).toUpperCase()}`,
+                    }),
+              }
+            : {
+                invoiceGenerated: false,
+                invoiceDate: null,
+                invoiceId: null,
+              }
+          : {};
+
       return await ctx.db.courseRegistration.update({
         where: { id: input.id },
         data: {
           paymentStatus: input.paymentStatus,
-          ...(input.invoiceGenerated !== undefined && {
-            invoiceGenerated: input.invoiceGenerated,
-            invoiceDate: input.invoiceGenerated ? new Date() : null,
-          }),
+          ...invoiceData,
         },
       });
+    }),
+
+  markRegistrationsInvoiceGenerated: permissionProcedure(
+    PERMISSIONS.INVOICES_MANAGE,
+  )
+    .input(
+      z.object({
+        courseId: z.string(),
+        registrationIds: z.array(z.string()).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const course = await ctx.db.course.findUnique({
+        where: { id: input.courseId },
+        include: {
+          instructors: { select: { id: true } },
+          createdBy: { select: { id: true } },
+        },
+      });
+      if (!course) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Course not found",
+        });
+      }
+      const isInstructor = course.instructors.some(
+        (i) => i.id === ctx.session.user.id,
+      );
+      const isCreator = course.createdBy?.id === ctx.session.user.id;
+      const canManageRegistrations = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+      );
+      if (!isInstructor && !isCreator && !canManageRegistrations) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Insufficient permissions for this course",
+        });
+      }
+      const registrations = await ctx.db.courseRegistration.findMany({
+        where: {
+          id: { in: input.registrationIds },
+          courseId: input.courseId,
+        },
+        select: { id: true, invoiceGenerated: true, invoiceId: true },
+      });
+      if (registrations.length !== input.registrationIds.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Some registration IDs do not belong to this course",
+        });
+      }
+      const now = new Date();
+      const toUpdate = registrations.filter(
+        (r) => !r.invoiceGenerated || !r.invoiceId,
+      );
+      if (toUpdate.length > 0) {
+        await ctx.db.$transaction(
+          toUpdate.map((r) =>
+            ctx.db.courseRegistration.update({
+              where: { id: r.id },
+              data: {
+                invoiceGenerated: true,
+                invoiceDate: now,
+                invoiceId: `RE-${r.id.slice(0, 8).toUpperCase()}`,
+              },
+            }),
+          ),
+        );
+      }
+      return {
+        updated: toUpdate.length,
+        skipped: registrations.length - toUpdate.length,
+      };
     }),
 
   cancel: publicProcedure
@@ -957,6 +1142,7 @@ export const registrationsRouter = createTRPCRouter({
       let registration;
 
       if (ctx.session) {
+        const session = ctx.session;
         registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
           include: {
@@ -966,6 +1152,8 @@ export const registrationsRouter = createTRPCRouter({
                 title: true,
                 startDate: true,
                 endDate: true,
+                createdById: true,
+                instructors: { select: { id: true } },
               },
             },
           },
@@ -976,14 +1164,18 @@ export const registrationsRouter = createTRPCRouter({
             message: "Registration not found",
           });
         }
+        const isOwner = registration.registrantEmail === session.user.email;
+        const isInstructor = registration.course.instructors.some(
+          (i) => i.id === session.user.id,
+        );
+        const isCreator = registration.course.createdById === session.user.id;
         const canManageRegistrations = await userHasPermission(
-          ctx.session.user.id,
+          session.user.id,
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         );
-        if (
-          registration.registrantEmail !== ctx.session.user.email &&
-          !canManageRegistrations
-        ) {
+        const canCancelAsStaff =
+          isInstructor || isCreator || canManageRegistrations;
+        if (!isOwner && !canCancelAsStaff) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Cannot cancel registration of another user",

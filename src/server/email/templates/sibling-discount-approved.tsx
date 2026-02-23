@@ -94,8 +94,8 @@ export function SiblingDiscountApproved({
                 {formatPrice(originalTotalPrice)}
               </Text>
               <Text style={priceDetailDiscount}>
-                <strong>Geschwisterkindrabatt (20%):</strong> -
-                {formatPrice(discountAmount)}
+                <strong>Geschwisterkindrabatt (20% pro weiteres Kind):</strong>{" "}
+                -{formatPrice(discountAmount)}
               </Text>
               <Hr style={priceHr} />
               <Text style={priceTotal}>

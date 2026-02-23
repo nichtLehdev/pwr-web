@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure, adminProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { maskUserContact } from "@/lib/mask-user-contact";
 
 export const bezirkeRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -24,6 +25,7 @@ export const bezirkeRouter = createTRPCRouter({
             street: true,
             zipCode: true,
             city: true,
+            preferences: true,
           },
         },
         _count: {
@@ -49,16 +51,29 @@ export const bezirkeRouter = createTRPCRouter({
 
     return bezirke.map((bezirk) => ({
       ...bezirk,
-      users: bezirk.users.map((user) => ({
-        ...user,
-        displayName: user.displayName || `${user.firstName} ${user.lastName}`,
-        firstName: undefined,
-        lastName: undefined,
-        address:
-          user.street || user.zipCode || user.city
-            ? `${user.street}, ${user.zipCode} ${user.city}`
-            : undefined,
-      })),
+      users: bezirk.users.map((user) => {
+        const masked = maskUserContact(user);
+        return {
+          ...user,
+          displayName: user.displayName || `${user.firstName} ${user.lastName}`,
+          firstName: undefined,
+          lastName: undefined,
+          preferences: undefined,
+          phone: masked.phone ?? undefined,
+          street: masked.street ?? undefined,
+          zipCode: masked.zipCode ?? undefined,
+          city: masked.city ?? undefined,
+          address:
+            masked.street || masked.zipCode || masked.city
+              ? [
+                  masked.street,
+                  [masked.zipCode, masked.city].filter(Boolean).join(" "),
+                ]
+                  .filter(Boolean)
+                  .join(", ") || undefined
+              : undefined,
+        };
+      }),
     }));
   }),
 
@@ -84,6 +99,8 @@ export const bezirkeRouter = createTRPCRouter({
               street: true,
               zipCode: true,
               city: true,
+              phone: true,
+              preferences: true,
             },
           },
           ensembles: {
@@ -153,7 +170,20 @@ export const bezirkeRouter = createTRPCRouter({
         });
       }
 
-      return bezirk;
+      return {
+        ...bezirk,
+        users: bezirk.users.map((user) => {
+          const masked = maskUserContact(user);
+          return {
+            ...user,
+            phone: masked.phone ?? undefined,
+            street: masked.street ?? undefined,
+            zipCode: masked.zipCode ?? undefined,
+            city: masked.city ?? undefined,
+            preferences: undefined,
+          };
+        }),
+      };
     }),
 
   getByNumber: publicProcedure

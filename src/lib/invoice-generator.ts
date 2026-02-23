@@ -385,7 +385,7 @@ export async function createInvoicePdf(
     if (participantDiscount > 0) {
       doc.setFontSize(9);
       doc.setTextColor(0, 150, 0); // Green color for discount
-      doc.text("Geschwisterkindrabatt (20%):", margin + 2, y);
+      doc.text("Geschwisterkindrabatt (20% pro weiteres Kind):", margin + 2, y);
       doc.text(
         `-${participantDiscount.toFixed(2)} €`,
         pageWidth - margin - 20,
