@@ -44,7 +44,7 @@ model User {
   bezirk                        Bezirk?                      @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
   uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
   uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
-  posaunenwarteResponsibilities PosaunenwartResponsibility[]
+  posaunenwart                  Posaunenwart?                 @relation("PosaunenwartUser")
   createdEvents                 Event[]                      @relation("EventCreator")
   createdCourses                Course[]                     @relation("CourseCreator")
   createdPosts                  Post[]                       @relation("PostCreator")
@@ -805,7 +805,7 @@ model Bezirk {
   courses                       Course[] // Courses in this district
   posts                         Post[] // Posts for this district
   ensembles                     Ensemble[]
-  posaunenwarteResponsibilities PosaunenwartResponsibility[]
+  posaunenwartResponsibilities  PosaunenwartResponsibility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -813,34 +813,51 @@ model Bezirk {
   @@index([number])
 }
 
-model PosaunenwartResponsibility {
+model Posaunenwart {
   id String @id @default(uuid())
 
-  // The Posaunenwart (User with role LPW or RPW)
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Optional link to User (like VorstandMember)
+  userId  String?   @unique
+  user    User?     @relation("PosaunenwartUser", fields: [userId], references: [id], onDelete: SetNull)
 
-  // The Bezirk they're responsible for
-  bezirkId String
-  bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
+  // Fallback fields when no user linked
+  name    String?
+  email   String?
+  phone   String?
 
-  // Type of responsibility
-  roleType PosaunenwartRoleType
+  roleType  PosaunenwartRoleType
+  sortOrder Int                   @default(0)
 
-  // Optional notes (e.g., "Hauptverantwortlich", "Stellvertretung")
-  notes String?
+  imageId String? @unique
+  image   Media?  @relation("PosaunenwartImage", fields: [imageId], references: [id], onDelete: SetNull)
 
-  // Priority/order (lower number = higher priority)
-  priority Int @default(0)
+  responsibilities PosaunenwartResponsibility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // A user can only have one type of responsibility per Bezirk
-  @@unique([userId, bezirkId])
-  @@index([userId])
-  @@index([bezirkId])
   @@index([roleType])
+  @@index([sortOrder])
+}
+
+model PosaunenwartResponsibility {
+  id String @id @default(uuid())
+
+  posaunenwartId String
+  posaunenwart   Posaunenwart @relation(fields: [posaunenwartId], references: [id], onDelete: Cascade)
+
+  bezirkId String
+  bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
+
+  notes    String?
+  priority Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([posaunenwartId, bezirkId])
+  @@index([posaunenwartId])
+  @@index([bezirkId])
 }
 
 model TeamMember {
@@ -1074,7 +1091,8 @@ model Media {
   vorstandMemberImages    VorstandMember[]       @relation("VorstandMemberImage")
   posaunenratMemberImages PosaunenratMember[]    @relation("PosaunenratMemberImage")
   foerdervereinMemberImgs FoerdervereinMember[]  @relation("FoerdervereinMemberImage")
-  historyEventImages      HistoryEvent[]         @relation("HistoryEventImage")
+  posaunenwartImages     Posaunenwart[]         @relation("PosaunenwartImage")
+  historyEventImages     HistoryEvent[]         @relation("HistoryEventImage")
   blaeserheftImages       Blaeserheft[]          @relation("BlaeserheftImage")
   courseImages            Course[]               @relation("CourseImage")
   homepageCarouselItems   HomepageCarouselItem[] @relation("HomepageCarouselMedia")

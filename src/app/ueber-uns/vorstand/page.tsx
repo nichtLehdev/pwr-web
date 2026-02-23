@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/trpc/server";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import {
   ArrowRightIcon,
   BookOpenIcon,
@@ -18,46 +18,32 @@ export default async function VorstandPage() {
   const vorstandMembers = await api.organization.getVorstand();
 
   return (
-    <div>
-      <PageHeader title="Vorstand" color="district-1" />
-
-      {/* Hero Section */}
-      <section className="bg-district-1 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Vorstand</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Der Vorstand des Posaunenwerks
-            </h1>
-            <p className="mb-6 text-lg leading-relaxed opacity-95 md:text-xl">
-              Der Vorstand führt im Auftrag des Landesposaunenrates die
-              laufenden Geschäfte des Posaunenwerkes. Dazu führt er die
-              Beschlüsse der Vertreterversammlung und des Landesposaunenrates
-              aus und erstattet ihm Bericht.
-            </p>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Er kann unaufschiebbare Entscheidungen treffen, wenn dies
-              notwendig ist. Der Landesobmann vertritt das Posaunenwerk nach
-              außen und innen. Genau wie die Mitglieder der Vertreterversammlung
-              und des Landesposaunenrates arbeitet der Vorstand ehrenamtlich.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Vorstand"
+      heroTitle="Der Vorstand des Posaunenwerks"
+      color="district-1"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Vorstand" },
+      ]}
+      description={
+        <>
+          <p className="mb-6">
+            Der Vorstand führt im Auftrag des Landesposaunenrates die laufenden
+            Geschäfte des Posaunenwerkes. Dazu führt er die Beschlüsse der
+            Vertreterversammlung und des Landesposaunenrates aus und erstattet
+            ihm Bericht.
+          </p>
+          <p>
+            Er kann unaufschiebbare Entscheidungen treffen, wenn dies notwendig
+            ist. Der Landesobmann vertritt das Posaunenwerk nach außen und
+            innen. Genau wie die Mitglieder der Vertreterversammlung und des
+            Landesposaunenrates arbeitet der Vorstand ehrenamtlich.
+          </p>
+        </>
+      }
+    >
       {/* Vorstandsmitglieder */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -409,6 +395,6 @@ export default async function VorstandPage() {
           </Link>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

@@ -467,9 +467,6 @@ export default function RegistrationDetailPage() {
                 (p) => p.birthDate && isParticipantUnder18(p.birthDate),
               );
               const isEligibleForDiscount = eligibleParticipants.length > 1;
-              const isParticipantEligible =
-                participant.birthDate &&
-                isParticipantUnder18(participant.birthDate);
 
               return (
                 <div

@@ -6,7 +6,6 @@ import {
   publicProcedure,
   lpwProcedure,
   reviewerProcedure,
-  adminProcedure,
 } from "../trpc";
 import {
   CourseType,

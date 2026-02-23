@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
-import PageHeader from "../general/page-header";
+import PublicPage from "../general/public-page";
 import Image from "next/image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import type { RouterOutputs } from "@/trpc/react";
@@ -134,70 +134,54 @@ END:VCALENDAR`;
         | undefined);
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title={event.title} color={district} />
-      {/* Header */}
+    <PublicPage
+      title={event.title}
+      color={district}
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Termine", href: "/termine" },
+        { label: "Event" },
+      ]}
+      description={
+        event.motto ? (
+          <p className={event.cancelled ? "line-through opacity-75" : ""}>
+            {event.motto}
+          </p>
+        ) : undefined
+      }
+    >
+      {/* Event Info bar */}
       <section
-        className="py-8 text-white md:py-12 lg:py-16"
+        className="py-6 text-white md:py-8"
         style={{ backgroundColor: districtColor }}
       >
         <div className="container mx-auto px-4">
-          {/* Breadcrumb */}
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/termine"
-              className="transition-colors hover:text-white"
-            >
-              Termine
-            </Link>
-            <span>/</span>
-            <span>Event</span>
-          </nav>
-
-          {/* Event Info */}
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                {event.cancelled && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg">
-                    <AlertTriangle className="h-4 w-4" />
-                    ABGESAGT
-                  </span>
-                )}
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  {event.category}
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              {event.cancelled && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg">
+                  <AlertTriangle className="h-4 w-4" />
+                  ABGESAGT
                 </span>
-                {event.bezirk && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {`Bezirk ${event.bezirk.number} (${event.bezirk.name})`}
-                  </span>
-                )}
-                {event.openToParticipants && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
-                    <Users className="h-4 w-4" />
-                    Mitspielen möglich!
-                  </span>
-                )}
-                {isPast && (
-                  <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
-                    Vergangen
-                  </span>
-                )}
-              </div>
-
-              <h1
-                className={`mb-2 text-2xl font-bold wrap-break-word md:text-4xl lg:text-5xl ${event.cancelled ? "line-through opacity-75" : ""}`}
-              >
-                {event.title}
-              </h1>
-              {event.motto && (
-                <p className="text-lg italic opacity-90 md:text-xl">
-                  {event.motto}
-                </p>
+              )}
+              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                {event.category}
+              </span>
+              {event.bezirk && (
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                  {`Bezirk ${event.bezirk.number} (${event.bezirk.name})`}
+                </span>
+              )}
+              {event.openToParticipants && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
+                  <Users className="h-4 w-4" />
+                  Mitspielen möglich!
+                </span>
+              )}
+              {isPast && (
+                <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
+                  Vergangen
+                </span>
               )}
             </div>
 
@@ -626,6 +610,6 @@ END:VCALENDAR`;
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

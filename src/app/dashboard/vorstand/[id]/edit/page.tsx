@@ -9,6 +9,7 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { User, XIcon } from "lucide-react";
 
 // Dashboard access is now controlled by permissions
@@ -197,53 +198,21 @@ export default function EditVorstandPage() {
     );
   }
 
+  const memberName = member.name || member.user?.displayName || "Mitglied";
+
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/vorstand"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Vorstand
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/vorstand/${memberId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {member.name || member.user?.displayName || "Mitglied"}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Vorstandsmitglied bearbeiten
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Bearbeite die Daten des Vorstandsmitglieds
-          </p>
-        </div>
-
+    <>
+      <DashboardPage
+        title="Vorstandsmitglied bearbeiten"
+        description="Bearbeite die Daten des Vorstandsmitglieds"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Vorstand", href: "/dashboard/vorstand" },
+          { label: memberName, href: `/dashboard/vorstand/${memberId}` },
+          { label: "Bearbeiten" },
+        ]}
+        maxWidth="7xl"
+      >
         {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
@@ -538,7 +507,7 @@ export default function EditVorstandPage() {
             setIsMediaPickerOpen(false);
           }}
         />
-      </div>
-    </main>
+      </DashboardPage>
+    </>
   );
 }

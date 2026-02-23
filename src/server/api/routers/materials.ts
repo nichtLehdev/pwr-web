@@ -6,7 +6,6 @@ import {
   publicProcedure,
   reviewerProcedure,
   contentCreatorProcedure,
-  adminProcedure,
 } from "../trpc";
 import {
   DownloadCategory,

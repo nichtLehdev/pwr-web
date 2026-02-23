@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import { api } from "@/trpc/server";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
@@ -8,41 +8,24 @@ export default async function LiteraturPage() {
   const blaesherhefte = await api.materials.getBlaserhefte();
 
   return (
-    <div>
-      <PageHeader title="Literatur & CDs" color="district-2" />
-
-      {/* Hero Section */}
-      <section className="bg-district-2 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/materialien"
-              className="transition-colors hover:text-white"
-            >
-              Materialien
-            </Link>
-            <span>/</span>
-            <span>Literatur & CDs</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Bläserliteratur und CDs
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Entdecken Sie unsere Reihe &quot;Musik aus ...&quot; mit
-              hochwertiger Bläserliteratur aus verschiedenen Ländern und
-              Regionen. Jede Ausgabe bietet eine Mischung aus klassischen
-              Meisterwerken, Choralbearbeitungen und zeitgenössischen
-              Auftragskompositionen.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Literatur & CDs"
+      heroTitle="Bläserliteratur und CDs"
+      color="district-2"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Materialien", href: "/materialien" },
+        { label: "Literatur & CDs" },
+      ]}
+      description={
+        <p>
+          Entdecken Sie unsere Reihe &quot;Musik aus ...&quot; mit hochwertiger
+          Bläserliteratur aus verschiedenen Ländern und Regionen. Jede Ausgabe
+          bietet eine Mischung aus klassischen Meisterwerken,
+          Choralbearbeitungen und zeitgenössischen Auftragskompositionen.
+        </p>
+      }
+    >
       {/* Einleitung */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16">
         <div className="container">
@@ -279,6 +262,6 @@ export default async function LiteraturPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

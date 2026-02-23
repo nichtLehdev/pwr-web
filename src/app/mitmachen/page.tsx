@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import SectionHeader from "../_components/section-header";
 import ParticipationCard from "../_components/general/participation-card";
 import {
@@ -73,32 +73,18 @@ export default function MitmachenPage() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Mitmachen im Posaunenwerk" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary dark:bg-primary-dark py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Mitmachen</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Mitmachen im Posaunenwerk
-            </h1>
-            <p className="mb-8 text-lg leading-relaxed md:text-xl">
-              Ob als Bläserin oder Bläser, ehrenamtlich Engagierte oder
-              Fördernde – es gibt viele Wege, Teil des Posaunenwerks Rheinland
-              zu werden. Entdecke die Möglichkeiten, die zu dir passen!
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Mitmachen im Posaunenwerk"
+      color="primary"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Mitmachen" }]}
+      description={
+        <p>
+          Ob als Bläserin oder Bläser, ehrenamtlich Engagierte oder Fördernde –
+          es gibt viele Wege, Teil des Posaunenwerks Rheinland zu werden.
+          Entdecke die Möglichkeiten, die zu dir passen!
+        </p>
+      }
+    >
       {/* Einstiegsmöglichkeiten */}
       <section className="bg-background dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -569,6 +555,6 @@ export default function MitmachenPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

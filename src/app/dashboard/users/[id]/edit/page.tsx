@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
+import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { User } from "lucide-react";
 
@@ -263,55 +264,23 @@ export default function EditUserPage() {
     );
   }
 
+  const userName =
+    user.displayName ??
+    (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email);
+
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/users"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Benutzer
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/users/${userId}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {user.displayName ??
-                  (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-                    user.email)}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Benutzer bearbeiten
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Bearbeite die Benutzerdaten und Berechtigungen
-          </p>
-        </div>
-
+    <>
+      <DashboardPage
+        title="Benutzer bearbeiten"
+        description="Bearbeite die Benutzerdaten und Berechtigungen"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Benutzer", href: "/dashboard/users" },
+          { label: userName, href: `/dashboard/users/${userId}` },
+          { label: "Bearbeiten" },
+        ]}
+        maxWidth="7xl"
+      >
         {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
@@ -601,7 +570,7 @@ export default function EditUserPage() {
             setIsMediaPickerOpen(false);
           }}
         />
-      </div>
-    </main>
+      </DashboardPage>
+    </>
   );
 }

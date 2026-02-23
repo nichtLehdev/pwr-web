@@ -7,15 +7,18 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
-import { PosaunenwartRoleType } from "~/generated/prisma/enums";
 import { ArrowLeftIcon, UserIcon } from "lucide-react";
 import { AlertTriangleIcon, TrashIcon } from "lucide-react";
-import { InfoIcon, PlusIcon } from "lucide-react";
+import { DashboardPage } from "@/app/_components/dashboard";
+import { InfoIcon, PlusIcon, XIcon } from "lucide-react";
+import { getErrorMessage } from "@/lib/utils";
+import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { PosaunenwartRoleType } from "~/generated/prisma/enums";
 
-const ROLE_LABELS: Record<string, string> = {
-  LPW: "Landesposaunenwart",
-  RPW: "Regionalposaunenwart",
-};
+const ROLE_OPTIONS: { value: PosaunenwartRoleType; label: string }[] = [
+  { value: PosaunenwartRoleType.LPW, label: "Landesposaunenwart (LPW)" },
+  { value: PosaunenwartRoleType.RPW, label: "Regionalposaunenwart (RPW)" },
+];
 
 export default function DashboardPosaunenwarteEditPage() {
   const router = useRouter();
@@ -27,6 +30,22 @@ export default function DashboardPosaunenwarteEditPage() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [roleType, setRoleType] = useState<PosaunenwartRoleType>(
+    PosaunenwartRoleType.RPW,
+  );
+  const [sortOrder, setSortOrder] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userSearch, setUserSearch] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [imageId, setImageId] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   const utils = api.useUtils();
 
@@ -40,18 +59,35 @@ export default function DashboardPosaunenwarteEditPage() {
     { enabled: !!session?.user },
   );
 
-  const { data: user, isLoading: userLoading } = api.users.getById.useQuery(
-    { id },
-    { enabled: !!id },
+  const { data: member, isLoading: memberLoading } =
+    api.organization.getPosaunenwart.useQuery({ id }, { enabled: !!id });
+
+  const { data: users } = api.users.list.useQuery(
+    { page: 1, limit: 100 },
+    { enabled: !!session?.user },
   );
 
   const { data: bezirke, isLoading: bezirkeLoading } =
     api.bezirke.getAll.useQuery();
 
+  const updateMutation = api.organization.updatePosaunenwart.useMutation({
+    onSuccess: async () => {
+      toast.success("Posaunenwart erfolgreich aktualisiert");
+      await utils.organization.getPosaunenwart.invalidate({ id });
+      await utils.organization.getPosaunenwarte.invalidate();
+      setIsSubmitting(false);
+    },
+    onError: (err) => {
+      setFormError(getErrorMessage(err));
+      toast.error("Fehler: " + err.message);
+      setIsSubmitting(false);
+    },
+  });
+
   const addResponsibility =
     api.organization.addPosaunenwartResponsibility.useMutation({
       onSuccess: () => {
-        void utils.users.getById.invalidate({ id });
+        void utils.organization.getPosaunenwart.invalidate({ id });
         void utils.organization.getPosaunenwarte.invalidate();
         toast.success("Verantwortung erfolgreich hinzugefügt");
       },
@@ -64,7 +100,7 @@ export default function DashboardPosaunenwarteEditPage() {
   const removeResponsibility =
     api.organization.removePosaunenwartResponsibility.useMutation({
       onSuccess: () => {
-        void utils.users.getById.invalidate({ id });
+        void utils.organization.getPosaunenwart.invalidate({ id });
         void utils.organization.getPosaunenwarte.invalidate();
         toast.success("Verantwortung erfolgreich entfernt");
       },
@@ -73,6 +109,98 @@ export default function DashboardPosaunenwarteEditPage() {
         toast.error("Fehler: " + err.message);
       },
     });
+
+  useEffect(() => {
+    if (member) {
+      setName(member.storedName ?? member.name ?? "");
+      setEmail(member.storedEmail ?? member.email ?? "");
+      setPhone(member.storedPhone ?? member.phone ?? "");
+      setRoleType(
+        (member.role as PosaunenwartRoleType) ?? PosaunenwartRoleType.RPW,
+      );
+      const so =
+        "sortOrder" in member
+          ? (member as { sortOrder?: number }).sortOrder
+          : undefined;
+      setSortOrder(so ?? 0);
+      setUserId(member.userId ?? null);
+      setUserSearch(member.name ?? member.email ?? "");
+      setImageId(member.imageId ?? null);
+      setImageUrl(member.imageUrl ?? null);
+    }
+  }, [member]);
+
+  const filteredUsers = users?.users.filter((user) => {
+    if (!userSearch.trim()) return true;
+    const searchLower = userSearch.toLowerCase();
+    return (
+      user.displayName?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const handleUserSelect = (user: {
+    id: string;
+    displayName: string | null;
+    email: string;
+  }) => {
+    setUserId(user.id);
+    setUserSearch(user.displayName || user.email);
+    setShowUserDropdown(false);
+  };
+
+  const handleClearUser = () => {
+    setUserId(null);
+    setUserSearch("");
+  };
+
+  const handleSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    setIsSubmitting(true);
+    if (!userId && !name.trim()) {
+      setFormError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
+      setIsSubmitting(false);
+      return;
+    }
+    updateMutation.mutate({
+      id,
+      userId: userId || undefined,
+      name: name.trim() || undefined,
+      email: email.trim() || undefined,
+      phone: phone.trim() || undefined,
+      roleType,
+      sortOrder,
+      imageId: imageId,
+    });
+  };
+
+  const handleAddBezirk = async (bezirkId: string) => {
+    if (!member) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await addResponsibility.mutateAsync({
+        posaunenwartId: id,
+        bezirkId,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveBezirk = async (bezirkId: string) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await removeResponsibility.mutateAsync({
+        posaunenwartId: id,
+        bezirkId,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -93,35 +221,7 @@ export default function DashboardPosaunenwarteEditPage() {
     }
   }, [profile, profileLoading, canManageOrganization, router]);
 
-  const handleAddBezirk = async (bezirkId: string) => {
-    if (!user) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await addResponsibility.mutateAsync({
-        userId: id,
-        bezirkId,
-        roleType: isLPW ? PosaunenwartRoleType.LPW : PosaunenwartRoleType.RPW,
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleRemoveBezirk = async (bezirkId: string) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await removeResponsibility.mutateAsync({
-        userId: id,
-        bezirkId,
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (isPending || profileLoading || userLoading || bezirkeLoading) {
+  if (isPending || profileLoading || memberLoading || bezirkeLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -133,7 +233,7 @@ export default function DashboardPosaunenwarteEditPage() {
     return null;
   }
 
-  if (!user) {
+  if (!member) {
     return (
       <main className="dark:bg-dark-background min-h-screen bg-gray-50">
         <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -153,97 +253,270 @@ export default function DashboardPosaunenwarteEditPage() {
     );
   }
 
-  // Check if user has posaunenwart responsibilities
-  const isLPW =
-    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "LPW") ??
-    false;
-  const isRPW =
-    user.posaunenwarteResponsibilities?.some((r) => r.roleType === "RPW") ??
-    false;
+  const isLPW = member.role === "LPW";
+  const displayName = member.name || "Unbekannt";
 
-  const assignedBezirkIds = new Set(
-    user.posaunenwarteResponsibilities?.map((r) => r.bezirk.id) || [],
-  );
+  const assignedBezirkIds = new Set(member.bezirke?.map((b) => b.id) || []);
   const assignedBezirke =
     bezirke?.filter((b) => assignedBezirkIds.has(b.id)) || [];
   const availableBezirke =
     bezirke?.filter((b) => !assignedBezirkIds.has(b.id)) || [];
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/posaunenwarte"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Posaunenwarte
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href={`/dashboard/posaunenwarte/${id}`}
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                {user.displayName || "Details"}
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Bearbeiten</li>
-          </ol>
-        </nav>
+    <DashboardPage
+      title="Posaunenwart bearbeiten"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Posaunenwarte", href: "/dashboard/posaunenwarte" },
+        { label: displayName, href: `/dashboard/posaunenwarte/${id}` },
+        { label: "Bearbeiten" },
+      ]}
+      maxWidth="7xl"
+    >
+      {formError && (
+        <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          {formError}
+        </div>
+      )}
 
-        {/* Header */}
-        <div className="mb-8 flex items-center gap-4">
-          {user.profileImage?.url ? (
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full">
-              <Image
-                src={user.profileImage.url}
-                alt={user.displayName || ""}
-                fill
-                className="object-cover"
+      {/* Form: Posaunenwart-Daten */}
+      <form onSubmit={handleSubmitForm} className="space-y-8">
+        {/* Image */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Bild
+          </h2>
+          <div className="flex items-center gap-6">
+            {imageUrl ? (
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full">
+                <Image
+                  src={imageUrl}
+                  alt={displayName}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <UserIcon className="h-12 w-12" />
+              </div>
+            )}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setIsMediaPickerOpen(true)}
+                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              >
+                {imageUrl ? "Bild ändern" : "Bild auswählen"}
+              </button>
+              {imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageId(null);
+                    setImageUrl(null);
+                  }}
+                  className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                >
+                  Bild entfernen
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Role & Sort */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Rolle
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Art
+              </label>
+              <select
+                value={roleType}
+                onChange={(e) =>
+                  setRoleType(e.target.value as PosaunenwartRoleType)
+                }
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+              >
+                {ROLE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Reihenfolge
+              </label>
+              <input
+                type="number"
+                value={sortOrder}
+                onChange={(e) =>
+                  setSortOrder(parseInt(e.target.value, 10) || 0)
+                }
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
               />
             </div>
-          ) : (
-            <div className="dark:bg-dark-background-secondary dark:text-dark-muted flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500">
-              <UserIcon className="h-8 w-8" />
-            </div>
-          )}
-          <div>
-            <h1 className="dark:text-dark-text text-2xl font-bold text-gray-900">
-              Bezirke bearbeiten
-            </h1>
-            <p className="dark:text-dark-muted text-gray-600">
-              {user.displayName}{" "}
-              {(isLPW || isRPW) && (
-                <span
-                  className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                    isLPW
-                      ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                      : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                  }`}
-                >
-                  {isLPW ? ROLE_LABELS["LPW"] : ROLE_LABELS["RPW"]}
-                </span>
-              )}
-            </p>
           </div>
-        </div>
+        </section>
 
-        {/* Error message */}
+        {/* User link */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Benutzerverknüpfung
+          </h2>
+          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+            Optional: Verknüpfe mit einem Benutzerkonto. Kontaktdaten werden
+            dann vom Benutzer übernommen.
+          </p>
+          <div className="relative">
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Benutzer suchen
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => {
+                  setUserSearch(e.target.value);
+                  setShowUserDropdown(true);
+                  if (!e.target.value) setUserId(null);
+                }}
+                onFocus={() => setShowUserDropdown(true)}
+                placeholder="Name oder E-Mail eingeben..."
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 focus:ring-1 focus:outline-none"
+              />
+              {userId && (
+                <button
+                  type="button"
+                  onClick={handleClearUser}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {showUserDropdown && (
+              <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+                {filteredUsers && filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => handleUserSelect(user)}
+                      className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <span className="dark:text-dark-text font-medium text-gray-900">
+                        {user.displayName || user.email}
+                      </span>
+                      {user.displayName && (
+                        <span className="text-gray-500 dark:text-gray-400">
+                          {" "}
+                          – {user.email}
+                        </span>
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                    {userSearch
+                      ? "Keine Benutzer gefunden"
+                      : "Tippe, um Benutzer zu suchen"}
+                  </div>
+                )}
+              </div>
+            )}
+            {userId && (
+              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                ✓ Benutzer verknüpft
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Contact (when no user) */}
+        {!userId && (
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+              Kontaktdaten
+            </h2>
+            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
+              Diese Felder werden nur verwendet, wenn kein Benutzer verknüpft
+              ist.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Vollständiger Name"
+                  maxLength={100}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  E-Mail
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Telefon
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+49 123 456789"
+                  maxLength={50}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitting || updateMutation.isPending}
+            className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
+          >
+            {isSubmitting || updateMutation.isPending
+              ? "Wird gespeichert..."
+              : "Änderungen speichern"}
+          </button>
+          <Link
+            href={`/dashboard/posaunenwarte/${id}`}
+            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Abbrechen
+          </Link>
+        </div>
+      </form>
+
+      {/* Bezirke section */}
+      <div className="dark:border-dark-border mt-10 border-t border-gray-200 pt-10">
+        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+          Zuständige Bezirke
+        </h2>
+
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
             <div className="flex gap-3">
@@ -253,7 +526,6 @@ export default function DashboardPosaunenwarteEditPage() {
           </div>
         )}
 
-        {/* Info for LPW */}
         {isLPW && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <div className="flex gap-3">
@@ -270,12 +542,11 @@ export default function DashboardPosaunenwarteEditPage() {
           </div>
         )}
 
-        {/* Assigned Bezirke */}
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            <h3 className="dark:text-dark-text text-base font-semibold text-gray-900">
               Zugewiesene Bezirke
-            </h2>
+            </h3>
             <span className="dark:bg-dark-background-secondary dark:text-dark-muted rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
               {assignedBezirke.length} Bezirk
               {assignedBezirke.length !== 1 ? "e" : ""}
@@ -328,12 +599,11 @@ export default function DashboardPosaunenwarteEditPage() {
           )}
         </div>
 
-        {/* Available Bezirke */}
         <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+            <h3 className="dark:text-dark-text text-base font-semibold text-gray-900">
               Verfügbare Bezirke
-            </h2>
+            </h3>
             <span className="dark:bg-dark-background-secondary dark:text-dark-muted rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600">
               {availableBezirke.length} verfügbar
             </span>
@@ -377,24 +647,32 @@ export default function DashboardPosaunenwarteEditPage() {
           )}
         </div>
 
-        {/* Actions */}
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             href={`/dashboard/posaunenwarte/${id}`}
             className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
           >
             <ArrowLeftIcon className="h-4 w-4" />
-            Fertig
+            Zur Detailansicht
           </Link>
           <Link
             href="/dashboard/posaunenwarte"
             className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
           >
-            <ArrowLeftIcon className="h-4 w-4" />
             Zur Übersicht
           </Link>
         </div>
       </div>
-    </main>
+
+      <MediaPickerModal
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={(url, _alt, mediaId) => {
+          if (mediaId) setImageId(mediaId);
+          setImageUrl(url);
+          setIsMediaPickerOpen(false);
+        }}
+      />
+    </DashboardPage>
   );
 }
