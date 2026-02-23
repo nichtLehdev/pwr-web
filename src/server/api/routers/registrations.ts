@@ -1140,8 +1140,7 @@ export const registrationsRouter = createTRPCRouter({
         const isInstructor = registration.course.instructors.some(
           (i) => i.id === session.user.id,
         );
-        const isCreator =
-          registration.course.createdById === session.user.id;
+        const isCreator = registration.course.createdById === session.user.id;
         const canManageRegistrations = await userHasPermission(
           session.user.id,
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
