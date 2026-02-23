@@ -93,7 +93,7 @@ export default async function PosaunenratPage() {
                     <PeopleCard
                       key={index}
                       image={member.image ?? undefined}
-                      name={member.name || member.user?.displayName}
+                      name={(member.name || member.user?.displayName) ?? ""}
                       subtitle={member.position}
                     />
                   ))}

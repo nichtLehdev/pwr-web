@@ -372,7 +372,7 @@ export default function EventDetailPage() {
                     href={ed.download.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-dark-border dark:hover:bg-dark-background-secondary"
+                    className="text-primary hover:text-primary-dark dark:border-dark-border dark:hover:bg-dark-background-secondary flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
                   >
                     <svg
                       className="h-5 w-5"
@@ -387,7 +387,9 @@ export default function EventDetailPage() {
                         d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                       />
                     </svg>
-                    <span className="font-medium text-inherit">{ed.download.title}</span>
+                    <span className="font-medium text-inherit">
+                      {ed.download.title}
+                    </span>
                     {ed.download.description && (
                       <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
                         {ed.download.description}

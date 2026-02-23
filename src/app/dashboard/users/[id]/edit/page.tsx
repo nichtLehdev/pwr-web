@@ -34,14 +34,10 @@ export default function EditUserPage() {
     { enabled: !!userId && !!session?.user },
   );
 
-  const { data: bezirke } = api.bezirke.getAll.useQuery();
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
-  const [districtRoleName, setDistrictRoleName] = useState("");
-  const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
@@ -50,6 +46,8 @@ export default function EditUserPage() {
   const [profileImageId, setProfileImageId] = useState<string | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [showAddressPublicly, setShowAddressPublicly] = useState(true);
+  const [showPhonePublicly, setShowPhonePublicly] = useState(true);
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,8 +62,6 @@ export default function EditUserPage() {
       );
       setEmail(user.email ?? "");
       setUsername(user.username ?? "");
-      setDistrictRoleName(user.districtRoleName ?? "");
-      setBezirkId(user.bezirkId ?? null);
       setBio(user.bio ?? "");
       setPhone(user.phone ?? "");
       setStreet(user.street ?? "");
@@ -73,6 +69,17 @@ export default function EditUserPage() {
       setCity(user.city ?? "");
       setProfileImageId(user.profileImageId ?? null);
       setProfileImageUrl(user.profileImage?.url ?? null);
+      try {
+        const prefs =
+          typeof user.preferences === "string"
+            ? JSON.parse(user.preferences ?? "{}")
+            : (user.preferences ?? {});
+        setShowAddressPublicly(prefs.showAddressPublicly !== false);
+        setShowPhonePublicly(prefs.showPhonePublicly !== false);
+      } catch {
+        setShowAddressPublicly(true);
+        setShowPhonePublicly(true);
+      }
     }
   }, [user]);
 
@@ -185,6 +192,7 @@ export default function EditUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setError("");
     setIsSubmitting(true);
 
@@ -222,19 +230,38 @@ export default function EditUserPage() {
       }
     }
 
+    const existingPrefs =
+      typeof user.preferences === "string"
+        ? (() => {
+            try {
+              return JSON.parse(user.preferences ?? "{}") as Record<
+                string,
+                unknown
+              >;
+            } catch {
+              return {};
+            }
+          })()
+        : ((user.preferences as Record<string, unknown> | null) ?? {});
+
     updateUserMutation.mutate({
       id: userId,
       displayName: name.trim() || undefined,
       email: email.trim(),
       username: username.trim() || undefined,
-      districtRoleName: districtRoleName.trim() || undefined,
-      bezirkId: bezirkId || null,
+      districtRoleName: user.districtRoleName ?? undefined,
+      bezirkId: user.bezirkId ?? null,
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       profileImageId,
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
       city: city.trim() || undefined,
+      preferences: JSON.stringify({
+        ...existingPrefs,
+        showAddressPublicly,
+        showPhonePublicly,
+      }),
     });
   };
 
@@ -490,50 +517,45 @@ export default function EditUserPage() {
                   />
                 </div>
               </div>
-            </div>
-          </section>
 
-          {/* District & Role */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Bezirk & Rolle
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirk
-                </label>
-                <select
-                  value={bezirkId ?? ""}
-                  onChange={(e) => setBezirkId(e.target.value || null)}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                >
-                  <option value="">Kein Bezirk</option>
-                  {bezirke?.map((bezirk) => (
-                    <option key={bezirk.id} value={bezirk.id}>
-                      Bezirk {bezirk.number} – {bezirk.shortName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirksrolle (z.B. Bezirksobmann, Bezirksobfrau)
-                </label>
-                <input
-                  type="text"
-                  value={districtRoleName}
-                  onChange={(e) => setDistrictRoleName(e.target.value)}
-                  placeholder="z.B. Bezirksobmann, Bezirksobfrau"
-                  maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Diese Rolle wird angezeigt, wenn der Benutzer einem Bezirk
-                  zugeordnet ist. Berechtigungen werden über das
-                  Berechtigungssystem verwaltet.
+              <div className="dark:border-dark-border mt-4 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-gray-800/30">
+                <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                  Öffentliche Sichtbarkeit
                 </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Ob Adresse und Telefon auf öffentlichen Seiten (z. B.
+                  Vorstand, Bezirke) angezeigt werden.
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="edit-showAddressPublicly"
+                    type="checkbox"
+                    checked={showAddressPublicly}
+                    onChange={(e) => setShowAddressPublicly(e.target.checked)}
+                    className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                  />
+                  <label
+                    htmlFor="edit-showAddressPublicly"
+                    className="dark:text-dark-text cursor-pointer text-sm text-gray-700"
+                  >
+                    Adresse anzeigen
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="edit-showPhonePublicly"
+                    type="checkbox"
+                    checked={showPhonePublicly}
+                    onChange={(e) => setShowPhonePublicly(e.target.checked)}
+                    className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                  />
+                  <label
+                    htmlFor="edit-showPhonePublicly"
+                    className="dark:text-dark-text cursor-pointer text-sm text-gray-700"
+                  >
+                    Telefonnummer anzeigen
+                  </label>
+                </div>
               </div>
             </div>
           </section>

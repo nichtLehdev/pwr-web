@@ -282,7 +282,9 @@ export default function CourseParticipantsPage() {
             p.city?.toLowerCase().includes(query) ||
             p.instrument?.toLowerCase().includes(query),
         );
-        return registrantMatch || participantMatch;
+        const invoiceMatch =
+          registration.invoiceId?.toLowerCase().includes(query) ?? false;
+        return registrantMatch || participantMatch || invoiceMatch;
       }
       return true;
     }) ?? [];
@@ -644,7 +646,7 @@ export default function CourseParticipantsPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Suche nach Name, E-Mail, Ort, Instrument..."
+                  placeholder="Suche nach Name, E-Mail, Ort, Instrument, Rechnungsnummer…"
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-sm text-gray-900 focus:ring-1 focus:outline-none"
                 />
               </div>
@@ -832,6 +834,11 @@ export default function CourseParticipantsPage() {
                             {registration.registrantPhone}
                           </a>
                         )}
+                        {registration.invoiceId && (
+                          <span className="font-mono">
+                            Rechnungsnr.: {registration.invoiceId}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -945,7 +952,15 @@ export default function CourseParticipantsPage() {
                         },
                       )}
                     </span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {registration.invoiceId && (
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Rechnungsnr.:{" "}
+                          <span className="font-mono">
+                            {registration.invoiceId}
+                          </span>
+                        </span>
+                      )}
                       <span className="dark:text-dark-text font-semibold text-gray-900">
                         Gesamt: {registration.totalPrice.toFixed(2)} €
                       </span>
@@ -986,6 +1001,7 @@ export default function CourseParticipantsPage() {
       <BulkInvoiceModal
         isOpen={showBulkInvoiceModal}
         onClose={() => setShowBulkInvoiceModal(false)}
+        courseId={courseId}
         course={course}
         registrations={filteredRegistrations}
       />

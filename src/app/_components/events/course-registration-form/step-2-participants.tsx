@@ -833,8 +833,9 @@ export function Step2Participants({
                   Geschwisterkindrabatt beantragen
                 </div>
                 <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  Sie erhalten 20% Rabatt für jedes Geschwisterkind ab dem
-                  zweiten Kind. Der Rabatt muss noch bestätigt werden.
+                  Sie erhalten 20% Rabatt auf die Teilnahmegebühr jedes weiteren
+                  Geschwisterkindes ab dem zweiten Kind. Der Rabatt muss noch
+                  bestätigt werden.
                 </p>
                 {registrationData.siblingDiscountApplied &&
                   calculateDiscountAmount(registrationData, course) > 0 && (

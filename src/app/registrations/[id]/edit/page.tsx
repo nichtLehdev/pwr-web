@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -14,6 +14,7 @@ import {
   TrashIcon,
   Link as LinkIcon,
   Link2Off,
+  Info,
 } from "lucide-react";
 import {
   ScrollableModal,
@@ -21,6 +22,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { isParticipantUnder18 } from "@/lib/participant-utils";
 
 interface Participant {
   id: string;
@@ -36,13 +38,24 @@ interface Participant {
   isDeleted?: boolean;
 }
 
+/** Only allow redirecting to dashboard paths to avoid open redirects */
+function getReturnToPath(searchParams: URLSearchParams): string | null {
+  const returnTo = searchParams.get("returnTo");
+  if (!returnTo || typeof returnTo !== "string") return null;
+  const path = returnTo.startsWith("/") ? returnTo : `/${returnTo}`;
+  if (!path.startsWith("/dashboard")) return null;
+  return path;
+}
+
 export default function EditRegistrationPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { data: session, isPending: sessionLoading } = useSession();
   const registrationId = params.id as string;
   const utils = api.useUtils();
+  const returnTo = getReturnToPath(searchParams);
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState("");
@@ -75,6 +88,12 @@ export default function EditRegistrationPage() {
       { enabled: !!registrationId },
     );
 
+  const { data: management, isLoading: managementLoading } =
+    api.registrations.canManageRegistration.useQuery(
+      { id: registrationId },
+      { enabled: !!session?.user && !!registrationId },
+    );
+
   const { data: availability, isLoading: availabilityLoading } =
     api.courses.getAvailableSlots.useQuery(
       { id: registration?.course?.id ?? "" },
@@ -90,7 +109,7 @@ export default function EditRegistrationPage() {
       void utils.registrations.getById.invalidate({ id: registrationId });
 
       setTimeout(() => {
-        router.push("/registrations");
+        router.push(returnTo ?? "/registrations");
       }, 1500);
     },
     onError: (err) => {
@@ -106,7 +125,7 @@ export default function EditRegistrationPage() {
       setCancelError("");
       toast.success("Anmeldung erfolgreich storniert");
       void utils.registrations.getMyRegistrations.invalidate();
-      router.push("/registrations");
+      router.push(returnTo ?? "/registrations");
     },
     onError: (err) => {
       setCancelError(err.message || "Ein Fehler ist aufgetreten.");
@@ -185,6 +204,10 @@ export default function EditRegistrationPage() {
   };
 
   const isOwner = registration?.registrantEmail === session?.user?.email;
+  const isStaff = management?.isStaff ?? false;
+  const canView = management?.canView ?? isOwner;
+  const canEdit = management?.canEdit ?? (isOwner && canEditRegistration());
+  const canCancel = management?.canCancel ?? isOwner;
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("de-DE", {
@@ -320,14 +343,20 @@ export default function EditRegistrationPage() {
     let discount = 0;
     for (const [, groupParticipants] of siblingGroups) {
       if (groupParticipants.length > 1) {
-        for (let i = 1; i < groupParticipants.length; i++) {
-          const participant = groupParticipants[i];
-          if (participant) {
-            const priceOption = registration.course.priceOptions.find(
-              (p) => p.id === participant.priceOptionId,
-            );
-            if (priceOption) {
-              discount += priceOption.price * 0.2;
+        // Only apply discount when 2+ minors are in the same sibling group
+        const eligibleParticipants = groupParticipants.filter(
+          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+        );
+        if (eligibleParticipants.length > 1) {
+          for (let i = 1; i < eligibleParticipants.length; i++) {
+            const participant = eligibleParticipants[i];
+            if (participant) {
+              const priceOption = registration.course.priceOptions.find(
+                (p) => p.id === participant.priceOptionId,
+              );
+              if (priceOption) {
+                discount += priceOption.price * 0.2;
+              }
             }
           }
         }
@@ -335,6 +364,29 @@ export default function EditRegistrationPage() {
     }
     return discount;
   };
+
+  /** True when at least one sibling group has 2+ minors (under 18). Required for sibling discount. */
+  const hasEligibleSiblingGroupForDiscount = (() => {
+    if (!registration?.course?.allowSiblingDiscount) return false;
+    const siblingGroups = new Map<string, typeof activeParticipants>();
+    for (const participant of activeParticipants) {
+      if (participant.siblingGroupId) {
+        if (!siblingGroups.has(participant.siblingGroupId)) {
+          siblingGroups.set(participant.siblingGroupId, []);
+        }
+        siblingGroups.get(participant.siblingGroupId)?.push(participant);
+      }
+    }
+    for (const [, groupParticipants] of siblingGroups) {
+      if (groupParticipants.length > 1) {
+        const minors = groupParticipants.filter(
+          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
+        );
+        if (minors.length > 1) return true;
+      }
+    }
+    return false;
+  })();
 
   const calculateTotalPrice = () => {
     const original = calculateOriginalPrice();
@@ -484,7 +536,14 @@ export default function EditRegistrationPage() {
     });
   };
 
-  if (sessionLoading || registrationLoading || availabilityLoading) {
+  const waitingForManagement =
+    !!session?.user && !!registrationId && managementLoading;
+  if (
+    sessionLoading ||
+    registrationLoading ||
+    waitingForManagement ||
+    availabilityLoading
+  ) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <div className="text-dark dark:text-dark-text">Lädt...</div>
@@ -500,7 +559,7 @@ export default function EditRegistrationPage() {
             Anmeldung nicht gefunden
           </h1>
           <Link
-            href="/registrations"
+            href={returnTo ?? "/registrations"}
             className="text-primary hover:text-primary-dark"
           >
             Zurück zur Übersicht
@@ -510,7 +569,7 @@ export default function EditRegistrationPage() {
     );
   }
 
-  if (!isOwner) {
+  if (!canView) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <div className="text-center">
@@ -518,10 +577,11 @@ export default function EditRegistrationPage() {
             Keine Berechtigung
           </h1>
           <p className="mb-4 text-gray-600 dark:text-gray-400">
-            Du kannst nur deine eigenen Anmeldungen bearbeiten.
+            Du kannst nur deine eigenen Anmeldungen oder Anmeldungen zu Kursen
+            bearbeiten, für die du Admin, Kursleitung oder Ersteller:in bist.
           </p>
           <Link
-            href="/registrations"
+            href={returnTo ?? "/registrations"}
             className="text-primary hover:text-primary-dark"
           >
             Zurück zur Übersicht
@@ -531,7 +591,7 @@ export default function EditRegistrationPage() {
     );
   }
 
-  if (!canEditRegistration()) {
+  if (!canEdit) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <div className="text-center">
@@ -543,7 +603,7 @@ export default function EditRegistrationPage() {
             abgelaufen ist oder der Kurs bereits begonnen hat.
           </p>
           <Link
-            href="/registrations"
+            href={returnTo ?? "/registrations"}
             className="text-primary hover:text-primary-dark"
           >
             Zurück zur Übersicht
@@ -558,12 +618,20 @@ export default function EditRegistrationPage() {
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
+          {isStaff && (
+            <div className="mb-6 flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/25">
+              <Info className="h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Du bearbeitest diese Anmeldung als Kursleitung / Admin.
+              </p>
+            </div>
+          )}
           <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
-              href="/registrations"
+              href={returnTo ?? "/registrations"}
               className="hover:text-primary transition-colors"
             >
-              Meine Anmeldungen
+              {returnTo ? "Teilnehmer" : "Meine Anmeldungen"}
             </Link>
             <span>/</span>
             <span className="text-dark dark:text-dark-text">Bearbeiten</span>
@@ -852,9 +920,9 @@ export default function EditRegistrationPage() {
             )}
           </div>
 
-          {/* Participants Section */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="flex items-center justify-between border-b border-gray-200 p-6 dark:border-gray-700">
+          {/* Participants Section: scroll container so sticky header works */}
+          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 max-h-[min(70vh,42rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+            <div className="dark:bg-dark-surface sticky top-0 z-10 flex shrink-0 items-center justify-between rounded-t-lg border-b border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700">
               <div>
                 <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                   Teilnehmer ({activeParticipants.length})
@@ -1133,36 +1201,51 @@ export default function EditRegistrationPage() {
               ))}
             </div>
 
-            {/* Sibling Discount Option */}
+            {/* Sibling Discount Option: only if at least one group has 2+ minors */}
             {registration.course.allowSiblingDiscount &&
               activeParticipants.length > 1 &&
               hasSiblingGroups && (
-                <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={siblingDiscountApplied}
-                      onChange={(e) =>
-                        setSiblingDiscountApplied(e.target.checked)
-                      }
-                      className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 dark:text-gray-100">
-                        Geschwisterkindrabatt beantragen
-                      </div>
-                      <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                        Sie erhalten 20% Rabatt für jedes Geschwisterkind ab dem
-                        zweiten Kind. Der Rabatt muss noch bestätigt werden.
-                      </p>
-                      {siblingDiscountApplied &&
-                        calculateDiscountAmount() > 0 && (
-                          <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
-                            Ersparnis: {calculateDiscountAmount().toFixed(2)} €
+                <div className="mt-6 space-y-3">
+                  {hasEligibleSiblingGroupForDiscount ? (
+                    <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={siblingDiscountApplied}
+                          onChange={(e) =>
+                            setSiblingDiscountApplied(e.target.checked)
+                          }
+                          className="mt-1 h-5 w-5 rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">
+                            Geschwisterkindrabatt beantragen
                           </div>
-                        )}
+                          <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                            Sie erhalten 20% Rabatt auf die Teilnahmegebühr
+                            jedes weiteren Geschwisterkindes ab dem zweiten Kind
+                            (nur Minderjährige unter 18). Der Rabatt muss noch
+                            bestätigt werden.
+                          </p>
+                          {siblingDiscountApplied &&
+                            calculateDiscountAmount() > 0 && (
+                              <div className="mt-2 text-sm font-semibold text-green-700 dark:text-green-400">
+                                Ersparnis:{" "}
+                                {calculateDiscountAmount().toFixed(2)} €
+                              </div>
+                            )}
+                        </div>
+                      </label>
                     </div>
-                  </label>
+                  ) : (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        Für den Geschwisterkindrabatt müssen mindestens zwei
+                        Minderjährige (unter 18 Jahren) in einer
+                        Geschwistergruppe vorhanden sein.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
           </div>
@@ -1194,7 +1277,7 @@ export default function EditRegistrationPage() {
                     </div>
                     <div className="flex items-center justify-between gap-4 text-sm">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt (20%):
+                        Geschwisterkindrabatt (20% pro weiteres Kind):
                       </span>
                       <span className="font-semibold text-green-600 dark:text-green-400">
                         -{calculateDiscountAmount().toFixed(2)} €
@@ -1220,24 +1303,28 @@ export default function EditRegistrationPage() {
 
           {/* Actions */}
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-            <button
-              type="button"
-              onClick={() => setCancelModalOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              <CircleXIcon className="h-5 w-5" />
-              Anmeldung stornieren
-            </button>
+            {canCancel ? (
+              <button
+                type="button"
+                onClick={() => setCancelModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                <CircleXIcon className="h-5 w-5" />
+                Anmeldung stornieren
+              </button>
+            ) : (
+              <div />
+            )}
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
-                href="/registrations"
+                href={returnTo ?? "/registrations"}
                 className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 Abbrechen
               </Link>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={!canEdit || isSubmitting}
                 className="bg-primary hover:bg-primary-dark rounded-lg px-6 py-3 font-semibold text-white transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? "Speichert..." : "Änderungen speichern"}

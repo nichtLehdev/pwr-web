@@ -36,11 +36,17 @@ import {
 interface UserPreferences {
   termineDefaultView: "list" | "calendar";
   theme?: "light" | "dark" | "system";
+  /** Show address (street, zip, city) on public pages (e.g. Bezirke). Default true */
+  showAddressPublicly?: boolean;
+  /** Show phone number on public pages (e.g. Vorstand, Bezirke). Default true */
+  showPhonePublicly?: boolean;
 }
 
 const defaultPreferences: UserPreferences = {
   termineDefaultView: "list",
   theme: "system",
+  showAddressPublicly: true,
+  showPhonePublicly: true,
 };
 
 type SettingsTab = "profile" | "account" | "preferences" | "data" | "danger";
@@ -499,6 +505,59 @@ export default function SettingsPage() {
                               onChange={handleChange}
                               className="mt-1 w-full"
                             />
+                          </div>
+                        </div>
+
+                        {/* Privacy: what to show on public pages */}
+                        <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/30">
+                          <p className="text-dark dark:text-dark-text text-sm font-medium">
+                            Öffentliche Sichtbarkeit
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Lege fest, ob deine Kontaktdaten auf öffentlichen
+                            Seiten (z. B. Vorstand, Bezirke) angezeigt werden.
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <input
+                              id="showAddressPublicly"
+                              type="checkbox"
+                              checked={
+                                preferences.showAddressPublicly !== false
+                              }
+                              onChange={(e) =>
+                                setPreferences((prev) => ({
+                                  ...prev,
+                                  showAddressPublicly: e.target.checked,
+                                }))
+                              }
+                              className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                            />
+                            <Label
+                              htmlFor="showAddressPublicly"
+                              className="cursor-pointer text-sm font-normal"
+                            >
+                              Adresse anzeigen
+                            </Label>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <input
+                              id="showPhonePublicly"
+                              type="checkbox"
+                              checked={preferences.showPhonePublicly !== false}
+                              onChange={(e) =>
+                                setPreferences((prev) => ({
+                                  ...prev,
+                                  showPhonePublicly: e.target.checked,
+                                }))
+                              }
+                              className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                            />
+                            <Label
+                              htmlFor="showPhonePublicly"
+                              className="cursor-pointer text-sm font-normal"
+                            >
+                              Telefonnummer anzeigen
+                            </Label>
                           </div>
                         </div>
                       </div>
