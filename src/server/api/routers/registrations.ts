@@ -1017,6 +1017,21 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      const hasInvoicesManage = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.INVOICES_MANAGE,
+      );
+      if (
+        !hasInvoicesManage &&
+        input.paymentStatus !== PaymentStatus.PAID
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Mit Ihrer Berechtigung können Sie nur „Bezahlt“ setzen. Andere Zahlungsstatus erfordern die Rechnungspflege-Berechtigung.",
+        });
+      }
+
       const invoiceData =
         input.invoiceGenerated !== undefined
           ? input.invoiceGenerated

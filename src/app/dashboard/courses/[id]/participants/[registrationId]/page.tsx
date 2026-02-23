@@ -197,12 +197,14 @@ export default function RegistrationDetailPage() {
       (perm: string) => perm === "courses.approve" || perm === "courses.manage",
     );
 
-  const canMarkPaid =
+  const canManagePaymentStatus =
     Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) =>
-        perm === "invoices.manage" || perm === "registrations.mark_paid",
-    );
+    userPermissions.some((perm: string) => perm === "invoices.manage");
+  const canMarkPaidOnly =
+    Array.isArray(userPermissions) &&
+    userPermissions.some((perm: string) => perm === "registrations.mark_paid") &&
+    !canManagePaymentStatus;
+  const canMarkPaid = canManagePaymentStatus || canMarkPaidOnly;
 
   const canApproveDiscount =
     profile &&
@@ -531,7 +533,7 @@ export default function RegistrationDetailPage() {
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Zahlungsstatus:
                 </span>
-                {canMarkPaid && editingPaymentStatus ? (
+                {canManagePaymentStatus && editingPaymentStatus ? (
                   <div className="flex items-center gap-2">
                     <select
                       value={paymentStatusDraft ?? registration.paymentStatus}
@@ -581,7 +583,7 @@ export default function RegistrationDetailPage() {
                       Abbrechen
                     </button>
                   </div>
-                ) : canMarkPaid ? (
+                ) : canManagePaymentStatus ? (
                   <div className="flex items-center gap-2">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
@@ -596,6 +598,30 @@ export default function RegistrationDetailPage() {
                     >
                       <PencilIcon className="h-3.5 w-3.5" />
                       Bearbeiten
+                    </button>
+                  </div>
+                ) : canMarkPaidOnly &&
+                  registration.paymentStatus === PaymentStatus.PENDING ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
+                    >
+                      {paymentStatusLabels[registration.paymentStatus]}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updatePaymentStatusMutation.mutate({
+                          id: registrationId,
+                          paymentStatus: PaymentStatus.PAID,
+                        })
+                      }
+                      disabled={updatePaymentStatusMutation.isPending}
+                      className="bg-primary hover:bg-primary-dark inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                    >
+                      {updatePaymentStatusMutation.isPending
+                        ? "Speichert…"
+                        : "Als bezahlt markieren"}
                     </button>
                   </div>
                 ) : (
