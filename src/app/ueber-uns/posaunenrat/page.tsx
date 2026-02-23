@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { api } from "@/trpc/server";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import PeopleCard from "@/app/_components/general/people-card";
 import { BuildingIcon, CheckIcon } from "lucide-react";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
@@ -35,53 +35,36 @@ export default async function PosaunenratPage() {
   );
 
   return (
-    <div>
-      <PageHeader title="Landesposaunenrat" color="district-2" />
-
-      {/* Hero Section */}
-      <section className="bg-district-2 py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Posaunenrat</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Landesposaunenrat
-            </h1>
-            <div className="space-y-4 text-lg leading-relaxed opacity-95">
-              <p>
-                Geleitet wird das Posaunenwerk vom Posaunenrat. Dazu trifft er
-                Entscheidungen über die Grundsätze und Ziele der
-                Geschäftsführung des Posaunenwerkes. Er berät den Vorstand in
-                seiner Arbeit und kontrolliert die Ausführung der Beschlüsse.
-                Der Posaunenrat entscheidet auch über die Anstellung von
-                Landesposaunenwarten oder deren Entlassung.
-              </p>
-              <p>
-                Eine weitere wichtige Aufgabe ist die jährliche Verabschiedung
-                des Haushaltsplanes und die Kontrolle über die sachgemäße
-                Verwaltung der Finanzen. Zu Beginn der Wahlperiode wählt der
-                Posaunenrat aus seiner Mitte den Vorstand für sechs Jahre.
-              </p>
-              <p className="font-semibold">
-                Der Landesposaunenrat kommt mindestens einmal jährlich zusammen.
-              </p>
-            </div>
-          </div>
+    <PublicPage
+      title="Landesposaunenrat"
+      color="district-2"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Posaunenrat" },
+      ]}
+      description={
+        <div className="space-y-4">
+          <p>
+            Geleitet wird das Posaunenwerk vom Posaunenrat. Dazu trifft er
+            Entscheidungen über die Grundsätze und Ziele der Geschäftsführung
+            des Posaunenwerkes. Er berät den Vorstand in seiner Arbeit und
+            kontrolliert die Ausführung der Beschlüsse. Der Posaunenrat
+            entscheidet auch über die Anstellung von Landesposaunenwarten oder
+            deren Entlassung.
+          </p>
+          <p>
+            Eine weitere wichtige Aufgabe ist die jährliche Verabschiedung des
+            Haushaltsplanes und die Kontrolle über die sachgemäße Verwaltung der
+            Finanzen. Zu Beginn der Wahlperiode wählt der Posaunenrat aus seiner
+            Mitte den Vorstand für sechs Jahre.
+          </p>
+          <p className="font-semibold">
+            Der Landesposaunenrat kommt mindestens einmal jährlich zusammen.
+          </p>
         </div>
-      </section>
-
+      }
+    >
       {/* Zusammensetzung */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -293,6 +276,6 @@ export default async function PosaunenratPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

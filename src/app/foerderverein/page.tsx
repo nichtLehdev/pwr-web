@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import { api } from "@/trpc/server";
 import PeopleCard from "../_components/general/people-card";
 import { capitalizeFirstLetter } from "@/lib/utils";
@@ -37,41 +37,21 @@ export default async function FoerdervereinPage() {
   );
 
   return (
-    <div>
-      <PageHeader
-        title="Förderverein Rheinisches Posaunenwerk"
-        color="foerderverein"
-      />
-
-      {/* Hero Section */}
-      <section className="bg-foerderverein dark:bg-foerderverein-dark py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Förderverein</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Förderverein Rheinisches Posaunenwerk
-            </h1>
-            <p className="mb-8 text-lg leading-relaxed md:text-xl">
-              Bläser für Bläser – Unterstützen Sie die Arbeit des Posaunenwerks
-              und werden Sie Teil unserer Gemeinschaft!
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Förderverein Rheinisches Posaunenwerk"
+      color="foerderverein"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Förderverein" },
+      ]}
+      description={
+        <p>
+          Bläser für Bläser – Unterstützen Sie die Arbeit des Posaunenwerks und
+          werden Sie Teil unserer Gemeinschaft!
+        </p>
+      }
+    >
       {/* Sonderaktionen 2025 */}
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -436,6 +416,6 @@ export default async function FoerdervereinPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

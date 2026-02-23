@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import { ArrowRightIcon } from "lucide-react";
 
 export const metadata = {
@@ -10,31 +10,20 @@ export const metadata = {
 
 export default function DatenschutzPage() {
   return (
-    <div>
-      <PageHeader title="Datenschutzerklärung" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Datenschutzerklärung</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Datenschutzerklärung
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Informationen zum Datenschutz und zur Verarbeitung
-              personenbezogener Daten gemäß Art. 13 DSGVO
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Datenschutzerklärung"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Datenschutzerklärung" },
+      ]}
+      description={
+        <p>
+          Informationen zum Datenschutz und zur Verarbeitung personenbezogener
+          Daten gemäß Art. 13 DSGVO
+        </p>
+      }
+    >
       {/* Einleitung */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -1187,6 +1176,6 @@ export default function DatenschutzPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

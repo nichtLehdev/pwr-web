@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { api } from "@/trpc/react";
 import {
   type Bezirk,
   type Post,
   PostCategory,
 } from "~/generated/prisma/client";
-import PageHeader from "../_components/general/page-header";
+import PublicPage from "../_components/general/public-page";
 import PostCard from "../_components/posts/post-card";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
 import { CircleXIcon } from "lucide-react";
@@ -160,38 +159,25 @@ export default function AktuellesPage() {
 
   if (isLoading) {
     return (
-      <div className="bg-background dark:bg-dark-background min-h-screen">
-        <PageHeader title="Aktuelles" color="primary" />
+      <PublicPage
+        title="Aktuelles"
+        color="primary"
+        breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
+      >
         <div className="flex items-center justify-center py-12">
           <p className="text-gray-600 dark:text-gray-400">Lade Beiträge...</p>
         </div>
-      </div>
+      </PublicPage>
     );
   }
 
   return (
-    <div className="bg-background dark:bg-dark-background min-h-screen">
-      <PageHeader title="Aktuelles" color="primary" />
-
-      {/* Header */}
-      <section className="bg-primary dark:bg-primary-dark py-6 text-white md:py-12 lg:py-16">
-        <div className="container mx-auto px-4">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <span>Aktuelles</span>
-          </nav>
-          <h1 className="mb-2 text-2xl font-bold md:mb-4 md:text-4xl lg:text-5xl">
-            Aktuelles
-          </h1>
-          <p className="max-w-2xl text-sm md:text-lg lg:text-xl">
-            News, Berichte und Ankündigungen aus dem Posaunenwerk
-          </p>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Aktuelles"
+      color="primary"
+      breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
+      description={<p>News, Berichte und Ankündigungen aus dem Posaunenwerk</p>}
+    >
       {/* Filter Bar */}
       <section
         className="dark:bg-dark-surface dark:border-dark-border sticky z-20 border-b bg-white shadow-sm"
@@ -404,6 +390,6 @@ export default function AktuellesPage() {
         onClose={() => setRssModalOpen(false)}
         feedType="rss"
       />
-    </div>
+    </PublicPage>
   );
 }

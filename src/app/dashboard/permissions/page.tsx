@@ -4,11 +4,10 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import Link from "next/link";
+import { DashboardPage } from "@/app/_components/dashboard";
 import {
   Shield,
   Users,
-  Key,
   Plus,
   Edit,
   Trash2,
@@ -92,69 +91,46 @@ export default function PermissionsPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">
-              Berechtigungen
-            </li>
-          </ol>
+    <DashboardPage
+      title="Berechtigungsverwaltung"
+      description="Verwalte benutzerdefinierte Rollen und Berechtigungen"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Berechtigungen" },
+      ]}
+    >
+      {/* Tabs */}
+      <div className="dark:border-dark-border mb-6 border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("roles")}
+            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "roles"
+                ? "border-primary text-primary"
+                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+            }`}
+          >
+            <Shield className="mr-2 inline h-4 w-4" />
+            Rollen
+          </button>
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              activeTab === "users"
+                ? "border-primary text-primary"
+                : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+            }`}
+          >
+            <Users className="mr-2 inline h-4 w-4" />
+            Benutzerzuweisungen
+          </button>
         </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Berechtigungsverwaltung
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Verwalte benutzerdefinierte Rollen und Berechtigungen
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="dark:border-dark-border mb-6 border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("roles")}
-              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === "roles"
-                  ? "border-primary text-primary"
-                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-              }`}
-            >
-              <Shield className="mr-2 inline h-4 w-4" />
-              Rollen
-            </button>
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap transition-colors ${
-                activeTab === "users"
-                  ? "border-primary text-primary"
-                  : "dark:text-dark-muted dark:hover:text-dark-text border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
-              }`}
-            >
-              <Users className="mr-2 inline h-4 w-4" />
-              Benutzerzuweisungen
-            </button>
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "roles" && <RolesTab />}
-        {activeTab === "users" && <UsersTab />}
       </div>
-    </main>
+
+      {/* Tab Content */}
+      {activeTab === "roles" && <RolesTab />}
+      {activeTab === "users" && <UsersTab />}
+    </DashboardPage>
   );
 }
 

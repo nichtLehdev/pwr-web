@@ -46,9 +46,11 @@ export async function GET(
         posaunenratMember: true,
         vorstandMember: true,
         foerdervereinMember: true,
-        posaunenwarteResponsibilities: {
+        posaunenwart: {
           include: {
-            bezirk: true,
+            responsibilities: {
+              include: { bezirk: true },
+            },
           },
         },
       },
@@ -161,12 +163,16 @@ export async function GET(
         posaunenratMember: user.posaunenratMember ? true : false,
         vorstandMember: user.vorstandMember ? true : false,
         foerdervereinMember: user.foerdervereinMember ? true : false,
-        posaunenwarteResponsibilities: user.posaunenwarteResponsibilities.map(
-          (pw) => ({
-            bezirkId: pw.bezirkId,
-            bezirkName: pw.bezirk?.name,
-          }),
-        ),
+        posaunenwart: user.posaunenwart
+          ? {
+              id: user.posaunenwart.id,
+              roleType: user.posaunenwart.roleType,
+              bezirke: user.posaunenwart.responsibilities.map((r) => ({
+                bezirkId: r.bezirkId,
+                bezirkName: r.bezirk?.name,
+              })),
+            }
+          : null,
       },
       courseRegistrations: registrations.map((reg) => ({
         id: reg.id,

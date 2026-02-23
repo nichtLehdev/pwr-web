@@ -1,4 +1,4 @@
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import {
   BookOpenIcon,
   BrainIcon,
@@ -75,45 +75,31 @@ export default function JungblaserPage() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Jungbläserarbeit" color="district-9" />
-
-      {/* Hero Section */}
-      <section className="bg-district-9 py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/mitmachen"
-              className="transition-colors hover:text-white"
-            >
-              Mitmachen
-            </Link>
-            <span>/</span>
-            <span>Jungbläserarbeit</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Jungbläserarbeit – Musik von Anfang an
-            </h1>
-            <p className="mb-6 text-lg leading-relaxed md:text-xl">
-              Kinder und Jugendliche für die Musik zu begeistern ist uns ein
-              besonderes Anliegen. In unseren Posaunenchören finden junge
-              Menschen einen Ort, an dem sie gemeinsam musizieren, lernen und
-              wachsen können.
-            </p>
-            <p className="text-lg leading-relaxed opacity-95">
-              Von den ersten Tönen auf dem Instrument bis zum gemeinsamen
-              Auftritt – wir begleiten junge Bläserinnen und Bläser auf ihrem
-              musikalischen Weg.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Jungbläserarbeit"
+      color="district-9"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Mitmachen", href: "/mitmachen" },
+        { label: "Jungbläserarbeit" },
+      ]}
+      heroTitle="Jungbläserarbeit – Musik von Anfang an"
+      description={
+        <>
+          <p>
+            Kinder und Jugendliche für die Musik zu begeistern ist uns ein
+            besonderes Anliegen. In unseren Posaunenchören finden junge Menschen
+            einen Ort, an dem sie gemeinsam musizieren, lernen und wachsen
+            können.
+          </p>
+          <p>
+            Von den ersten Tönen auf dem Instrument bis zum gemeinsamen Auftritt
+            – wir begleiten junge Bläserinnen und Bläser auf ihrem musikalischen
+            Weg.
+          </p>
+        </>
+      }
+    >
       {/* Was ist Jungbläserarbeit */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -332,6 +318,6 @@ export default function JungblaserPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

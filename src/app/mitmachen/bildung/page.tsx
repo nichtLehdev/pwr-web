@@ -1,4 +1,4 @@
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import {
   BookOpenIcon,
   CalendarIcon,
@@ -61,42 +61,24 @@ export default function BildungPage() {
   ];
 
   return (
-    <div>
-      <PageHeader title="Aus- und Weiterbildung" color="district-2" />
-
-      {/* Hero Section */}
-      <section className="bg-district-2 py-16 text-white md:py-24">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/mitmachen"
-              className="transition-colors hover:text-white"
-            >
-              Mitmachen
-            </Link>
-            <span>/</span>
-            <span>Aus- und Weiterbildung</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Aus- und Weiterbildung
-            </h1>
-            <p className="text-lg leading-relaxed md:text-xl">
-              Das Posaunenwerk bietet ein umfangreiches Aus- und
-              Weiterbildungsprogramm an. Verschiedene Workshops und ein- oder
-              mehrtägige Lehrgänge richten sich an die Bläserinnen und Bläser
-              und Chorleiter der Chöre im Rheinland. Ebenso gibt es spezielle
-              Lehrgänge für junge Bläser und junggebliebene Anfänger jeden
-              Alters.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Aus- und Weiterbildung"
+      color="district-2"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Mitmachen", href: "/mitmachen" },
+        { label: "Aus- und Weiterbildung" },
+      ]}
+      description={
+        <p>
+          Das Posaunenwerk bietet ein umfangreiches Aus- und
+          Weiterbildungsprogramm an. Verschiedene Workshops und ein- oder
+          mehrtägige Lehrgänge richten sich an die Bläserinnen und Bläser und
+          Chorleiter der Chöre im Rheinland. Ebenso gibt es spezielle Lehrgänge
+          für junge Bläser und junggebliebene Anfänger jeden Alters.
+        </p>
+      }
+    >
       {/* Hinweis: Offen für alle */}
       <section className="bg-primary/10 dark:bg-dark-background-secondary py-8">
         <div className="container">
@@ -357,6 +339,6 @@ export default function BildungPage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }

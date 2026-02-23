@@ -4,7 +4,7 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
-import Link from "next/link";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { Plus, Edit, Trash2, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -225,35 +225,15 @@ export default function DashboardHomepagePage() {
     : null;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="dark:text-dark-muted dark:hover:text-primary hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Homepage</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-              Homepage Carousel verwalten
-            </h1>
-            <p className="dark:text-dark-muted mt-2 text-gray-600">
-              Verwalte die Bilder und Texte im Hero-Bereich der Homepage (max. 5
-              Elemente)
-            </p>
-          </div>
+    <>
+      <DashboardPage
+        title="Homepage Carousel verwalten"
+        description="Verwalte die Bilder und Texte im Hero-Bereich der Homepage (max. 5 Elemente)"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Homepage" },
+        ]}
+        actions={
           <button
             onClick={() => {
               if (items && items.length >= 5) {
@@ -272,8 +252,8 @@ export default function DashboardHomepagePage() {
             <Plus className="h-4 w-4" />
             Neues Element
           </button>
-        </div>
-
+        }
+      >
         {/* Items List */}
         {items && items.length > 0 ? (
           <div className="space-y-4">
@@ -684,7 +664,7 @@ export default function DashboardHomepagePage() {
             setShowMediaPicker(false);
           }}
         />
-      </div>
-    </main>
+      </DashboardPage>
+    </>
   );
 }

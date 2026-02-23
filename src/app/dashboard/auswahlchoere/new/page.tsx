@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { ImageIcon, X } from "lucide-react";
@@ -168,392 +169,362 @@ export default function NewAuswahlchorPage() {
   }
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
-            <li>
-              <Link
-                href="/dashboard"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Dashboard
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li>
-              <Link
-                href="/dashboard/auswahlchoere"
-                className="hover:text-primary dark:text-dark-muted dark:hover:text-primary text-gray-500"
-              >
-                Auswahlchöre
-              </Link>
-            </li>
-            <li className="dark:text-dark-muted text-gray-400">/</li>
-            <li className="dark:text-dark-text text-gray-900">Neu</li>
-          </ol>
-        </nav>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="dark:text-dark-text text-3xl font-bold text-gray-900">
-            Neuer Auswahlchor
-          </h1>
-          <p className="dark:text-dark-muted mt-2 text-gray-600">
-            Erstelle einen neuen Auswahlchor
-          </p>
+    <DashboardPage
+      title="Neuer Auswahlchor"
+      description="Erstelle einen neuen Auswahlchor"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Auswahlchöre", href: "/dashboard/auswahlchoere" },
+        { label: "Neu" },
+      ]}
+      maxWidth="7xl"
+    >
+      {/* Error */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+          <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
         </div>
+      )}
 
-        {/* Error */}
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Grundinformationen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Name */}
-                  <div>
-                    <Label required>Name</Label>
-                    <Input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      maxLength={255}
-                      placeholder="z.B. Con Spirito"
-                    />
-                  </div>
-
-                  {/* Slug */}
-                  <div>
-                    <Label required>Slug</Label>
-                    <Input
-                      type="text"
-                      value={slug}
-                      onChange={(e) =>
-                        setSlug(
-                          e.target.value.toLowerCase().replace(/\s+/g, "-"),
-                        )
-                      }
-                      required
-                      maxLength={15}
-                      placeholder="z.B. conspirito"
-                    />
-                    <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                      URL-freundlicher Name (max. 15 Zeichen, nur
-                      Kleinbuchstaben und Bindestriche)
-                    </p>
-                  </div>
-
-                  {/* Subtitle */}
-                  <div>
-                    <Label required>Untertitel</Label>
-                    <Input
-                      type="text"
-                      value={subtitle}
-                      onChange={(e) => setSubtitle(e.target.value)}
-                      required
-                      maxLength={200}
-                      placeholder="z.B. Das Spitzenensemble"
-                    />
-                  </div>
-
-                  {/* Founded */}
-                  <div>
-                    <Label required>Gegründet</Label>
-                    <Input
-                      type="text"
-                      value={founded}
-                      onChange={(e) => setFounded(e.target.value)}
-                      required
-                      maxLength={100}
-                      placeholder="z.B. 1995"
-                    />
-                  </div>
-
-                  {/* Members */}
-                  <div>
-                    <Label required>Mitglieder</Label>
-                    <Input
-                      type="text"
-                      value={members}
-                      onChange={(e) => setMembers(e.target.value)}
-                      required
-                      maxLength={200}
-                      placeholder="z.B. ca. 25 Bläser"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <Label required>Beschreibung</Label>
-                    <Textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      required
-                      rows={6}
-                      maxLength={5000}
-                      placeholder="Beschreibe den Auswahlchor..."
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Image */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Bild</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {imageUrl ? (
-                  <div className="flex items-start gap-4">
-                    <div className="relative h-24 w-24 overflow-hidden rounded-lg">
-                      <Image
-                        src={imageUrl}
-                        alt="Auswahlchor Bild"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowMediaPicker(true)}
-                        className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Ändern
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageUrl("");
-                          setImageId(null);
-                        }}
-                        className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaPicker(true)}
-                    className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
-                  >
-                    <div className="text-center">
-                      <ImageIcon className="mx-auto h-8 w-8" />
-                      <span className="mt-1 block text-sm">Bild auswählen</span>
-                    </div>
-                  </button>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Styling */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Styling
-              </h2>
-
-              {/* Color */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Tailwind-Farbe
-                </label>
-                <input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  maxLength={50}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. bg-primary"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Tailwind CSS-Klasse für die Farbe
-                </p>
-              </div>
-
-              {/* Color Hex */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Hex-Farbe
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Grundinformationen</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Name */}
+                <div>
+                  <Label required>Name</Label>
+                  <Input
                     type="text"
-                    value={colorHex}
-                    onChange={(e) => setColorHex(e.target.value)}
-                    maxLength={7}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="#faa619"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    maxLength={255}
+                    placeholder="z.B. Con Spirito"
                   />
-                  {colorHex && (
-                    <div
-                      className="h-10 w-10 rounded border border-gray-300"
-                      style={{ backgroundColor: colorHex }}
-                    />
-                  )}
                 </div>
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Hexadezimaler Farbcode (z.B. #faa619)
-                </p>
+
+                {/* Slug */}
+                <div>
+                  <Label required>Slug</Label>
+                  <Input
+                    type="text"
+                    value={slug}
+                    onChange={(e) =>
+                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                    }
+                    required
+                    maxLength={15}
+                    placeholder="z.B. conspirito"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
+                    und Bindestriche)
+                  </p>
+                </div>
+
+                {/* Subtitle */}
+                <div>
+                  <Label required>Untertitel</Label>
+                  <Input
+                    type="text"
+                    value={subtitle}
+                    onChange={(e) => setSubtitle(e.target.value)}
+                    required
+                    maxLength={200}
+                    placeholder="z.B. Das Spitzenensemble"
+                  />
+                </div>
+
+                {/* Founded */}
+                <div>
+                  <Label required>Gegründet</Label>
+                  <Input
+                    type="text"
+                    value={founded}
+                    onChange={(e) => setFounded(e.target.value)}
+                    required
+                    maxLength={100}
+                    placeholder="z.B. 1995"
+                  />
+                </div>
+
+                {/* Members */}
+                <div>
+                  <Label required>Mitglieder</Label>
+                  <Input
+                    type="text"
+                    value={members}
+                    onChange={(e) => setMembers(e.target.value)}
+                    required
+                    maxLength={200}
+                    placeholder="z.B. ca. 25 Bläser"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <Label required>Beschreibung</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                    rows={6}
+                    maxLength={5000}
+                    placeholder="Beschreibe den Auswahlchor..."
+                  />
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Image */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Bild</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {imageUrl ? (
+                <div className="flex items-start gap-4">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-lg">
+                    <Image
+                      src={imageUrl}
+                      alt="Auswahlchor Bild"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaPicker(true)}
+                      className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      Ändern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImageUrl("");
+                        setImageId(null);
+                      }}
+                      className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                    >
+                      Entfernen
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowMediaPicker(true)}
+                  className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
+                >
+                  <div className="text-center">
+                    <ImageIcon className="mx-auto h-8 w-8" />
+                    <span className="mt-1 block text-sm">Bild auswählen</span>
+                  </div>
+                </button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Styling */}
+          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              Styling
+            </h2>
+
+            {/* Color */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Tailwind-Farbe
+              </label>
+              <input
+                type="text"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                maxLength={50}
+                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                placeholder="z.B. bg-primary"
+              />
+              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                Tailwind CSS-Klasse für die Farbe
+              </p>
             </div>
 
-            {/* People */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Personen
-              </h2>
-
-              {/* Conductor */}
-              <div className="relative" data-dropdown>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Chorleitung
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={conductorSearch}
-                    onChange={(e) => {
-                      setConductorSearch(e.target.value);
-                      setShowConductorDropdown(true);
-                      if (!e.target.value) setConductorId(null);
-                    }}
-                    onFocus={() => setShowConductorDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+            {/* Color Hex */}
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Hex-Farbe
+              </label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={colorHex}
+                  onChange={(e) => setColorHex(e.target.value)}
+                  maxLength={7}
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  placeholder="#faa619"
+                />
+                {colorHex && (
+                  <div
+                    className="h-10 w-10 rounded border border-gray-300"
+                    style={{ backgroundColor: colorHex }}
                   />
+                )}
+              </div>
+              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                Hexadezimaler Farbcode (z.B. #faa619)
+              </p>
+            </div>
+          </div>
+
+          {/* People */}
+          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              Personen
+            </h2>
+
+            {/* Conductor */}
+            <div className="relative" data-dropdown>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Chorleitung
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={conductorSearch}
+                  onChange={(e) => {
+                    setConductorSearch(e.target.value);
+                    setShowConductorDropdown(true);
+                    if (!e.target.value) setConductorId(null);
+                  }}
+                  onFocus={() => setShowConductorDropdown(true)}
+                  placeholder="Name oder E-Mail eingeben..."
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                />
+                {conductorId && (
+                  <button
+                    type="button"
+                    onClick={handleClearConductor}
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Conductor Dropdown */}
+              {showConductorDropdown && (
+                <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div
+                    className="overflow-y-auto"
+                    style={{ maxHeight: "240px" }}
+                  >
+                    {filteredConductorUsers &&
+                    filteredConductorUsers.length > 0 ? (
+                      filteredConductorUsers.map((user) => (
+                        <button
+                          key={user.id}
+                          type="button"
+                          onClick={() => handleConductorSelect(user)}
+                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <span className="dark:text-dark-text font-medium text-gray-900">
+                            {user.displayName || user.email}
+                          </span>
+                          {user.displayName && (
+                            <span className="text-gray-500 dark:text-gray-400">
+                              {" "}
+                              – {user.email}
+                            </span>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {conductorSearch
+                          ? "Keine Benutzer gefunden"
+                          : "Tippe, um Benutzer zu suchen"}
+                      </div>
+                    )}
+                  </div>
                   {conductorId && (
                     <button
                       type="button"
                       onClick={handleClearConductor}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                     >
-                      <X className="h-4 w-4" />
+                      Verknüpfung entfernen
                     </button>
                   )}
                 </div>
+              )}
 
-                {/* Conductor Dropdown */}
-                {showConductorDropdown && (
-                  <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                    <div
-                      className="overflow-y-auto"
-                      style={{ maxHeight: "240px" }}
-                    >
-                      {filteredConductorUsers &&
-                      filteredConductorUsers.length > 0 ? (
-                        filteredConductorUsers.map((user) => (
-                          <button
-                            key={user.id}
-                            type="button"
-                            onClick={() => handleConductorSelect(user)}
-                            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <span className="dark:text-dark-text font-medium text-gray-900">
-                              {user.displayName || user.email}
-                            </span>
-                            {user.displayName && (
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {" "}
-                                – {user.email}
-                              </span>
-                            )}
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                          {conductorSearch
-                            ? "Keine Benutzer gefunden"
-                            : "Tippe, um Benutzer zu suchen"}
-                        </div>
-                      )}
-                    </div>
-                    {conductorId && (
-                      <button
-                        type="button"
-                        onClick={handleClearConductor}
-                        className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                      >
-                        Verknüpfung entfernen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Selected conductor indicator */}
-                {conductorId && (
-                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                    ✓ Chorleitung verknüpft
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Settings */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Einstellungen
-              </h2>
-
-              {/* Show Application */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="showApplication"
-                  checked={showApplication}
-                  onChange={(e) => setShowApplication(e.target.checked)}
-                  className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="showApplication"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
-                  Bewerbung anzeigen
-                </label>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting || createMutation.isPending}
-                isLoading={isSubmitting || createMutation.isPending}
-              >
-                Auswahlchor erstellen
-              </Button>
-              <Link
-                href="/dashboard/auswahlchoere"
-                className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                Abbrechen
-              </Link>
+              {/* Selected conductor indicator */}
+              {conductorId && (
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                  ✓ Chorleitung verknüpft
+                </p>
+              )}
             </div>
           </div>
-        </form>
 
-        {/* Media Picker Modal */}
-        <MediaPickerModal
-          isOpen={showMediaPicker}
-          onClose={() => setShowMediaPicker(false)}
-          onSelect={handleMediaSelect}
-        />
-      </div>
-    </main>
+          {/* Settings */}
+          <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+              Einstellungen
+            </h2>
+
+            {/* Show Application */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="showApplication"
+                checked={showApplication}
+                onChange={(e) => setShowApplication(e.target.checked)}
+                className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="showApplication"
+                className="dark:text-dark-text text-sm font-medium text-gray-700"
+              >
+                Bewerbung anzeigen
+              </label>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="submit"
+              disabled={isSubmitting || createMutation.isPending}
+              isLoading={isSubmitting || createMutation.isPending}
+            >
+              Auswahlchor erstellen
+            </Button>
+            <Link
+              href="/dashboard/auswahlchoere"
+              className="dark:border-dark-border dark:text-dark-text inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Abbrechen
+            </Link>
+          </div>
+        </div>
+      </form>
+
+      {/* Media Picker Modal */}
+      <MediaPickerModal
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={handleMediaSelect}
+      />
+    </DashboardPage>
   );
 }

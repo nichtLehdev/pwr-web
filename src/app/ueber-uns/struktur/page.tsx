@@ -1,5 +1,5 @@
 import Link from "next/link";
-import PageHeader from "@/app/_components/general/page-header";
+import PublicPage from "@/app/_components/general/public-page";
 import HistoryTimeline from "@/app/_components/history-timeline";
 import { api } from "@/trpc/server";
 import {
@@ -16,39 +16,22 @@ export default async function StrukturGeschichtePage() {
   const historyTimeline = await api.organization.getHistory({});
 
   return (
-    <div>
-      <PageHeader title="Struktur & Geschichte" color="primary" />
-
-      {/* Hero Section */}
-      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
-        <div className="container">
-          <nav className="mb-4 flex items-center gap-2 text-sm opacity-90">
-            <Link href="/" className="transition-colors hover:text-white">
-              Start
-            </Link>
-            <span>/</span>
-            <Link
-              href="/ueber-uns"
-              className="transition-colors hover:text-white"
-            >
-              Über Uns
-            </Link>
-            <span>/</span>
-            <span>Struktur & Geschichte</span>
-          </nav>
-          <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              Struktur & Geschichte
-            </h1>
-            <p className="text-lg leading-relaxed opacity-95 md:text-xl">
-              Erfahren Sie mehr über die organisatorische Struktur des
-              Posaunenwerks Rheinland und entdecken Sie die bewegte Geschichte
-              unserer Blechbläserarbeit von den Anfängen bis heute.
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <PublicPage
+      title="Struktur & Geschichte"
+      color="primary"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Über Uns", href: "/ueber-uns" },
+        { label: "Struktur & Geschichte" },
+      ]}
+      description={
+        <p>
+          Erfahren Sie mehr über die organisatorische Struktur des Posaunenwerks
+          Rheinland und entdecken Sie die bewegte Geschichte unserer
+          Blechbläserarbeit von den Anfängen bis heute.
+        </p>
+      }
+    >
       {/* Organisatorische Struktur */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -283,6 +266,6 @@ export default async function StrukturGeschichtePage() {
           </div>
         </div>
       </section>
-    </div>
+    </PublicPage>
   );
 }
