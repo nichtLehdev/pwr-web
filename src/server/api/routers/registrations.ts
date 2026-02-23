@@ -1114,6 +1114,7 @@ export const registrationsRouter = createTRPCRouter({
       let registration;
 
       if (ctx.session) {
+        const session = ctx.session;
         registration = await ctx.db.courseRegistration.findUnique({
           where: { id: input.id },
           include: {
@@ -1135,14 +1136,14 @@ export const registrationsRouter = createTRPCRouter({
             message: "Registration not found",
           });
         }
-        const isOwner = registration.registrantEmail === ctx.session.user.email;
+        const isOwner = registration.registrantEmail === session.user.email;
         const isInstructor = registration.course.instructors.some(
-          (i) => i.id === ctx.session.user.id,
+          (i) => i.id === session.user.id,
         );
         const isCreator =
-          registration.course.createdById === ctx.session.user.id;
+          registration.course.createdById === session.user.id;
         const canManageRegistrations = await userHasPermission(
-          ctx.session.user.id,
+          session.user.id,
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         );
         const canCancelAsStaff =
