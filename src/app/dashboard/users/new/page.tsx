@@ -14,7 +14,6 @@ import {
   Input,
   Label,
   Textarea,
-  Select,
   Card,
   CardHeader,
   CardTitle,
@@ -32,8 +31,6 @@ export default function NewUserPage() {
       enabled: !!session?.user,
     });
 
-  const { data: bezirke } = api.bezirke.getAll.useQuery();
-
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -41,8 +38,6 @@ export default function NewUserPage() {
   const [username, setUsername] = useState("");
   const [debouncedUsername, setDebouncedUsername] = useState("");
   const [usernameManuallyEdited, setUsernameManuallyEdited] = useState(false);
-  const [districtRoleName, setDistrictRoleName] = useState("");
-  const [bezirkId, setBezirkId] = useState<string | null>(null);
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [street, setStreet] = useState("");
@@ -275,8 +270,6 @@ export default function NewUserPage() {
       lastName: lastName.trim(),
       email: email.trim(),
       username: username.trim() || undefined,
-      districtRoleName: districtRoleName.trim() || undefined,
-      bezirkId: bezirkId || null,
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       street: street.trim() || undefined,
@@ -504,47 +497,6 @@ export default function NewUserPage() {
                     maxLength={100}
                   />
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* District & Role */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Bezirk & Rolle</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label>Bezirk</Label>
-                <Select
-                  value={bezirkId ?? ""}
-                  onChange={(e) => setBezirkId(e.target.value || null)}
-                >
-                  <option value="">Kein Bezirk</option>
-                  {bezirke?.map((bezirk) => (
-                    <option key={bezirk.id} value={bezirk.id}>
-                      Bezirk {bezirk.number} – {bezirk.shortName}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <Label>Bezirksrolle (z.B. Bezirksobmann, Bezirksobfrau)</Label>
-                <Input
-                  type="text"
-                  value={districtRoleName}
-                  onChange={(e) => setDistrictRoleName(e.target.value)}
-                  placeholder="z.B. Bezirksobmann, Bezirksobfrau"
-                  maxLength={100}
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Diese Rolle wird angezeigt, wenn der Benutzer einem Bezirk
-                  zugeordnet ist. Berechtigungen werden über das
-                  Berechtigungssystem verwaltet.
-                </p>
               </div>
             </div>
           </CardContent>
