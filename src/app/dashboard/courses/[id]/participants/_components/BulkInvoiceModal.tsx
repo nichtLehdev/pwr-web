@@ -50,11 +50,6 @@ export function BulkInvoiceModal({
       onSuccess: () => {
         void utils.courses.getRegistrations.invalidate({ courseId });
       },
-      onError: (err) => {
-        toast.error(
-          err.message || "Rechnungsnummern konnten nicht gespeichert werden.",
-        );
-      },
     });
   const [paymentDueDate, setPaymentDueDate] = useState<string>(() => {
     const defaultDate = new Date();
@@ -135,14 +130,12 @@ export function BulkInvoiceModal({
           setProgress({ current, total });
         },
       );
-      markInvoicesGeneratedMutation.mutate({
+      await markInvoicesGeneratedMutation.mutateAsync({
         courseId,
         registrationIds: registrations.map((r) => r.id),
       });
       setIsComplete(true);
-
       removeSignature();
-
       setTimeout(() => {
         onClose();
         setIsComplete(false);
@@ -151,7 +144,9 @@ export function BulkInvoiceModal({
     } catch (error) {
       console.error("Error generating invoices:", error);
       toast.error(
-        "Fehler beim Generieren der Rechnungen. Bitte versuchen Sie es erneut.",
+        error instanceof Error && error.message
+          ? error.message
+          : "Fehler beim Generieren der Rechnungen. Bitte versuchen Sie es erneut.",
       );
     } finally {
       setIsGenerating(false);
