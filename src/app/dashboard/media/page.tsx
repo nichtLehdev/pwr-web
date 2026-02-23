@@ -9,8 +9,9 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import { ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
-import { EditIcon, XIcon } from "lucide-react";
+import { CropIcon, EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
+import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
 import { Button, Input, Label } from "@/app/_components/ui";
 import {
   ScrollableModal,
@@ -78,6 +79,7 @@ export default function DashboardMediaPage() {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState<string | null>(null);
+  const [showRecropModal, setShowRecropModal] = useState<string | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -184,6 +186,17 @@ export default function DashboardMediaPage() {
     },
   });
 
+  const replaceFileMutation = api.media.replaceFile.useMutation({
+    onSuccess: () => {
+      void utils.media.getAll.invalidate();
+      setShowRecropModal(null);
+      toast.success("Bild wurde zugeschnitten und ersetzt");
+    },
+    onError: (error) => {
+      toast.error(error.message ?? "Ersetzen fehlgeschlagen");
+    },
+  });
+
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
       hasRedirected.current = true;
@@ -241,6 +254,55 @@ export default function DashboardMediaPage() {
       tags: editTags || undefined,
       isPublic: editIsPublic,
     });
+  };
+
+  const recropItem = showRecropModal
+    ? data?.media.find((m) => m.id === showRecropModal)
+    : null;
+
+  const handleCropComplete = async (
+    blob: Blob,
+    suggestedFilename: string,
+    width: number,
+    height: number,
+  ) => {
+    if (!showRecropModal) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", blob, suggestedFilename);
+      formData.append("folder", "media");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string }).error ?? "Upload fehlgeschlagen",
+        );
+      }
+      const uploadData = (await res.json()) as {
+        url: string;
+        path: string;
+        filename: string;
+        size: number;
+        mimeType: string;
+        extension: string;
+      };
+      replaceFileMutation.mutate({
+        id: showRecropModal,
+        url: uploadData.url,
+        path: uploadData.path,
+        filename: uploadData.filename,
+        size: uploadData.size,
+        mimeType: uploadData.mimeType,
+        extension: uploadData.extension,
+        width,
+        height,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler beim Hochladen");
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -480,6 +542,13 @@ export default function DashboardMediaPage() {
                       alt={media.name}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"
+                      style={
+                        media.focalPointX != null && media.focalPointY != null
+                          ? {
+                              objectPosition: `${media.focalPointX}% ${media.focalPointY}%`,
+                            }
+                          : undefined
+                      }
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                   ) : (
@@ -513,6 +582,20 @@ export default function DashboardMediaPage() {
 
                 {/* Actions Overlay: always visible on touch/mobile, hover on desktop */}
                 <div className="absolute right-2 bottom-14 flex gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                  {/* Re-crop (real crop) for images */}
+                  {media.mimeType.startsWith("image/") && isReviewer && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowRecropModal(media.id);
+                      }}
+                      variant="secondary"
+                      size="icon"
+                      title="Bild zuschneiden"
+                    >
+                      <CropIcon className="h-4 w-4" />
+                    </Button>
+                  )}
                   {/* Edit button for reviewers */}
                   {isReviewer && (
                     <Button
@@ -717,6 +800,14 @@ export default function DashboardMediaPage() {
                 width={1200}
                 height={800}
                 className="max-h-[80vh] w-auto rounded-lg object-contain"
+                style={
+                  previewItem.focalPointX != null &&
+                  previewItem.focalPointY != null
+                    ? {
+                        objectPosition: `${previewItem.focalPointX}% ${previewItem.focalPointY}%`,
+                      }
+                    : undefined
+                }
               />
             ) : previewItem.mimeType.startsWith("video/") ? (
               <video
@@ -837,13 +928,36 @@ export default function DashboardMediaPage() {
                 );
                 if (editItem?.mimeType.startsWith("image/")) {
                   return (
-                    <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-lg">
-                      <Image
-                        src={editItem.url}
-                        alt={editItem.name}
-                        fill
-                        className="object-cover"
-                      />
+                    <div className="flex flex-col gap-2">
+                      <div className="relative mx-auto h-32 w-32 overflow-hidden rounded-lg">
+                        <Image
+                          src={editItem.url}
+                          alt={editItem.name}
+                          fill
+                          className="object-cover"
+                          style={
+                            editItem.focalPointX != null &&
+                            editItem.focalPointY != null
+                              ? {
+                                  objectPosition: `${editItem.focalPointX}% ${editItem.focalPointY}%`,
+                                }
+                              : undefined
+                          }
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowEditModal(null);
+                          setShowRecropModal(editItem.id);
+                        }}
+                        className="w-fit"
+                      >
+                        <CropIcon className="mr-1.5 h-4 w-4" />
+                        Bild zuschneiden
+                      </Button>
                     </div>
                   );
                 }
@@ -988,6 +1102,15 @@ export default function DashboardMediaPage() {
             </ScrollableModalFooter>
           </ScrollableModalCard>
         </ScrollableModal>
+      )}
+
+      {/* Re-crop (real crop) modal */}
+      {showRecropModal && recropItem?.mimeType.startsWith("image/") && (
+        <ImageCropEditor
+          imageUrl={recropItem.url}
+          onCropComplete={handleCropComplete}
+          onClose={() => setShowRecropModal(null)}
+        />
       )}
     </>
   );

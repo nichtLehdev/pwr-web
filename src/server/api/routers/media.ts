@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { join } from "path";
+import { unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
 import {
   createTRPCRouter,
@@ -180,6 +182,8 @@ export const mediaRouter = createTRPCRouter({
         folder: z.string().optional(),
         tags: z.string().optional(),
         isPublic: z.boolean().default(true),
+        focalPointX: z.number().min(0).max(100).optional().nullable(),
+        focalPointY: z.number().min(0).max(100).optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -213,6 +217,8 @@ export const mediaRouter = createTRPCRouter({
         folder: z.string().optional(),
         tags: z.string().optional(),
         isPublic: z.boolean().optional(),
+        focalPointX: z.number().min(0).max(100).optional().nullable(),
+        focalPointY: z.number().min(0).max(100).optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -252,6 +258,79 @@ export const mediaRouter = createTRPCRouter({
       return await ctx.db.media.update({
         where: { id },
         data: updateData,
+      });
+    }),
+
+  replaceFile: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        url: z.string().max(500),
+        path: z.string().max(500),
+        filename: z.string().max(255),
+        size: z.number().min(0).max(100000000),
+        mimeType: z.string().max(100),
+        extension: z.string().max(10),
+        width: z.number().min(0).max(50000).optional(),
+        height: z.number().min(0).max(50000).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const media = await ctx.db.media.findUnique({
+        where: { id: input.id },
+        select: { path: true, filename: true, uploadedById: true },
+      });
+
+      if (!media) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Media not found",
+        });
+      }
+
+      const canEditMedia =
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_EDIT,
+        )) ||
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_APPROVE,
+        ));
+      const canEdit =
+        media.uploadedById === ctx.session.user.id || canEditMedia;
+
+      if (!canEdit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Insufficient permissions",
+        });
+      }
+
+      if (media.path.startsWith("/api/uploads/")) {
+        const relativePath = media.path.replace("/api/uploads/", "");
+        const fullPath = join(process.cwd(), "public", "uploads", relativePath);
+        try {
+          await unlink(fullPath);
+        } catch (err) {
+          console.warn("Could not delete old media file:", fullPath, err);
+        }
+      }
+
+      return await ctx.db.media.update({
+        where: { id: input.id },
+        data: {
+          url: input.url,
+          path: input.path,
+          filename: input.filename,
+          size: input.size,
+          mimeType: input.mimeType,
+          extension: input.extension,
+          width: input.width ?? null,
+          height: input.height ?? null,
+          focalPointX: null,
+          focalPointY: null,
+        },
       });
     }),
 

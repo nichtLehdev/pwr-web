@@ -795,11 +795,11 @@ export default function EditPostPage() {
       <MediaPickerModal
         isOpen={isMediaPickerOpen}
         onClose={() => setIsMediaPickerOpen(false)}
-        onSelect={(url, _alt, mediaId) => {
+        onSelect={(url, _alt, mediaId, focalPointX, focalPointY) => {
           setCoverImageUrl(url);
           setCoverImageId(mediaId || null);
-          setCoverImagePositionX(null);
-          setCoverImagePositionY(null);
+          setCoverImagePositionX(focalPointX ?? null);
+          setCoverImagePositionY(focalPointY ?? null);
           setIsMediaPickerOpen(false);
         }}
       />

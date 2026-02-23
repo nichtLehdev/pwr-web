@@ -4,6 +4,7 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { api } from "@/trpc/react";
 import { ArrowUpIcon, CheckIcon, X } from "lucide-react";
+import { CropIcon } from "lucide-react";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -11,11 +12,19 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
+import { useToast } from "@/app/_components/ui/toast";
 
 interface MediaPickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (url: string, alt: string, mediaId?: string) => void;
+  onSelect: (
+    url: string,
+    alt: string,
+    mediaId?: string,
+    focalPointX?: number | null,
+    focalPointY?: number | null,
+  ) => void;
 }
 
 export default function MediaPickerModal({
@@ -23,6 +32,7 @@ export default function MediaPickerModal({
   onClose,
   onSelect,
 }: MediaPickerModalProps) {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<"library" | "upload">("library");
   const [search, setSearch] = useState("");
   const [selectedMedia, setSelectedMedia] = useState<{
@@ -30,7 +40,10 @@ export default function MediaPickerModal({
     url: string;
     alt: string | null;
     name: string;
+    focalPointX?: number | null;
+    focalPointY?: number | null;
   } | null>(null);
+  const [showRecrop, setShowRecrop] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -80,6 +93,8 @@ export default function MediaPickerModal({
         url: newMedia.url,
         alt: newMedia.alt,
         name: newMedia.name,
+        focalPointX: newMedia.focalPointX ?? undefined,
+        focalPointY: newMedia.focalPointY ?? undefined,
       });
       setActiveTab("library");
       setIsUploading(false);
@@ -94,6 +109,23 @@ export default function MediaPickerModal({
     onError: (err) => {
       setUploadError(err.message || "Fehler beim Speichern des Bildes");
       setIsUploading(false);
+    },
+  });
+
+  const replaceFileMutation = api.media.replaceFile.useMutation({
+    onSuccess: (updated) => {
+      setShowRecrop(false);
+      if (selectedMedia?.id === updated.id) {
+        setSelectedMedia({
+          id: updated.id,
+          url: updated.url,
+          alt: updated.alt,
+          name: updated.name,
+          focalPointX: undefined,
+          focalPointY: undefined,
+        });
+      }
+      void refetch();
     },
   });
 
@@ -246,8 +278,55 @@ export default function MediaPickerModal({
         selectedMedia.url,
         selectedMedia.alt || selectedMedia.name,
         selectedMedia.id,
+        selectedMedia.focalPointX ?? undefined,
+        selectedMedia.focalPointY ?? undefined,
       );
       onClose();
+    }
+  };
+
+  const handleCropComplete = async (
+    blob: Blob,
+    suggestedFilename: string,
+    width: number,
+    height: number,
+  ) => {
+    if (!selectedMedia) return;
+    try {
+      const formData = new FormData();
+      formData.append("file", blob, suggestedFilename);
+      formData.append("folder", "media");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(
+          (err as { error?: string }).error ?? "Upload fehlgeschlagen",
+        );
+      }
+      const uploadData = (await res.json()) as {
+        url: string;
+        path: string;
+        filename: string;
+        size: number;
+        mimeType: string;
+        extension: string;
+      };
+      replaceFileMutation.mutate({
+        id: selectedMedia.id,
+        url: uploadData.url,
+        path: uploadData.path,
+        filename: uploadData.filename,
+        size: uploadData.size,
+        mimeType: uploadData.mimeType,
+        extension: uploadData.extension,
+        width,
+        height,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Fehler beim Hochladen");
     }
   };
 
@@ -338,6 +417,8 @@ export default function MediaPickerModal({
                           url: media.url,
                           alt: media.alt,
                           name: media.name,
+                          focalPointX: media.focalPointX ?? undefined,
+                          focalPointY: media.focalPointY ?? undefined,
                         })
                       }
                       className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${
@@ -351,6 +432,13 @@ export default function MediaPickerModal({
                         alt={media.alt || media.name}
                         fill
                         className="object-cover"
+                        style={
+                          media.focalPointX != null && media.focalPointY != null
+                            ? {
+                                objectPosition: `${media.focalPointX}% ${media.focalPointY}%`,
+                              }
+                            : undefined
+                        }
                         sizes="(max-width: 768px) 25vw, 150px"
                       />
                       <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
@@ -529,10 +617,22 @@ export default function MediaPickerModal({
           )}
         </ScrollableModalBody>
 
-        <ScrollableModalFooter className="flex items-center justify-between">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+        <ScrollableModalFooter className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {activeTab === "library" && selectedMedia && (
-              <span>Ausgewählt: {selectedMedia.name}</span>
+              <>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Ausgewählt: {selectedMedia.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowRecrop(true)}
+                  className="text-primary hover:text-primary/80 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+                >
+                  <CropIcon className="h-4 w-4" />
+                  Bild zuschneiden
+                </button>
+              </>
             )}
           </div>
           <div className="flex gap-3">
@@ -556,6 +656,15 @@ export default function MediaPickerModal({
           </div>
         </ScrollableModalFooter>
       </ScrollableModalCard>
+
+      {/* Re-crop (real crop) for selected image */}
+      {showRecrop && selectedMedia && (
+        <ImageCropEditor
+          imageUrl={selectedMedia.url}
+          onCropComplete={handleCropComplete}
+          onClose={() => setShowRecrop(false)}
+        />
+      )}
     </ScrollableModal>
   );
 }
