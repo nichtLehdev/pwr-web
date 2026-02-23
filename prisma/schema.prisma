@@ -1066,6 +1066,10 @@ model Media {
   width  Int?
   height Int?
 
+  // Focal point for object-position when displayed as cover (0-100%)
+  focalPointX Float?
+  focalPointY Float?
+
   // Metadata
   alt       String? // Alt text for images
   caption   String? // Caption/description
