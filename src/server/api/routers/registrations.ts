@@ -645,10 +645,14 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       if (!isStaff) {
-        if (
-          registration.course.registrationDeadline &&
-          new Date() > registration.course.registrationDeadline
-        ) {
+        const now = new Date();
+        const courseStart = new Date(registration.course.startDate);
+        const deadline = registration.course.registrationDeadline
+          ? new Date(registration.course.registrationDeadline)
+          : null;
+        const ownerCanEditByTime =
+          courseStart > now && (!deadline || deadline > now);
+        if (!ownerCanEditByTime) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Registration edit deadline has passed",
