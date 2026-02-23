@@ -30,6 +30,20 @@ export async function GET() {
     );
   }
 
-  const issues = await res.json();
-  return NextResponse.json(issues);
+  const data = await res.json();
+
+  const excludedStatusLabels = ["done", "wontfix"];
+  const filtered = data.filter(
+    (item: { pull_request?: unknown; labels?: { name: string }[] }) => {
+      // Only show issues, not pull requests
+      if (item.pull_request) return false;
+      const hasExcludedStatus = (item.labels ?? []).some(
+        (l: { name: string }) =>
+          excludedStatusLabels.includes(l.name.toLowerCase()),
+      );
+      return !hasExcludedStatus;
+    },
+  );
+
+  return NextResponse.json(filtered);
 }
