@@ -1034,8 +1034,12 @@ export const registrationsRouter = createTRPCRouter({
           ? input.invoiceGenerated
             ? {
                 invoiceGenerated: true,
-                invoiceDate: new Date(),
-                invoiceId: `RE-${input.id.slice(0, 8).toUpperCase()}`,
+                ...(registration.invoiceGenerated && registration.invoiceId
+                  ? {}
+                  : {
+                      invoiceDate: new Date(),
+                      invoiceId: `RE-${input.id.slice(0, 8).toUpperCase()}`,
+                    }),
               }
             : {
                 invoiceGenerated: false,
@@ -1095,7 +1099,7 @@ export const registrationsRouter = createTRPCRouter({
           id: { in: input.registrationIds },
           courseId: input.courseId,
         },
-        select: { id: true },
+        select: { id: true, invoiceGenerated: true, invoiceId: true },
       });
       if (registrations.length !== input.registrationIds.length) {
         throw new TRPCError({
@@ -1104,19 +1108,24 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
       const now = new Date();
-      await ctx.db.$transaction(
-        registrations.map((r) =>
-          ctx.db.courseRegistration.update({
-            where: { id: r.id },
-            data: {
-              invoiceGenerated: true,
-              invoiceDate: now,
-              invoiceId: `RE-${r.id.slice(0, 8).toUpperCase()}`,
-            },
-          }),
-        ),
+      const toUpdate = registrations.filter(
+        (r) => !r.invoiceGenerated || !r.invoiceId,
       );
-      return { updated: registrations.length };
+      if (toUpdate.length > 0) {
+        await ctx.db.$transaction(
+          toUpdate.map((r) =>
+            ctx.db.courseRegistration.update({
+              where: { id: r.id },
+              data: {
+                invoiceGenerated: true,
+                invoiceDate: now,
+                invoiceId: `RE-${r.id.slice(0, 8).toUpperCase()}`,
+              },
+            }),
+          ),
+        );
+      }
+      return { updated: toUpdate.length, skipped: registrations.length - toUpdate.length };
     }),
 
   cancel: publicProcedure
