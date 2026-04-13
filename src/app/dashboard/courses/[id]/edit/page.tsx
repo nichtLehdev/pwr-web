@@ -729,6 +729,7 @@ export default function EditCoursePage() {
       imageId: imageId || null,
       priceOptions: preparedPriceOptions,
       customFields: preparedCustomFields,
+      status,
     });
   };
 
@@ -1847,14 +1848,45 @@ export default function EditCoursePage() {
                   </label>
                 ))}
               </div>
+            ) : course?.status === ContentStatus.DRAFT ||
+              course?.status === ContentStatus.REJECTED ? (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Lege fest, ob der Kurs nur gespeichert oder zur redaktionellen
+                  Prüfung eingereicht werden soll.
+                </p>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="radio"
+                    name="status-author"
+                    checked={status === ContentStatus.DRAFT}
+                    onChange={() => setStatus(ContentStatus.DRAFT)}
+                    className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                  />
+                  <span className="dark:text-dark-text text-sm text-gray-700">
+                    {statusLabels[ContentStatus.DRAFT]} (nur für dich sichtbar)
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="radio"
+                    name="status-author"
+                    checked={status === ContentStatus.PENDING}
+                    onChange={() => setStatus(ContentStatus.PENDING)}
+                    className="text-primary focus:ring-primary h-4 w-4 border-gray-300"
+                  />
+                  <span className="dark:text-dark-text text-sm text-gray-700">
+                    {statusLabels[ContentStatus.PENDING]}
+                  </span>
+                </label>
+              </div>
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Aktueller Status:{" "}
                 <span className="font-medium">
                   {statusLabels[course?.status ?? ContentStatus.DRAFT]}
                 </span>
-                {(course?.status === ContentStatus.APPROVED ||
-                  course?.status === ContentStatus.REJECTED) && (
+                {course?.status === ContentStatus.APPROVED && (
                   <span className="ml-1">→ wird zu &quot;Ausstehend&quot;</span>
                 )}
               </p>

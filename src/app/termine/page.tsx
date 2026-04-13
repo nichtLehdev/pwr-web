@@ -1,23 +1,19 @@
 import { Suspense } from "react";
-import { api } from "@/trpc/server";
 import EventsClient from "../_components/events/events-client";
+import { getTerminePageData } from "@/lib/termine-page-data";
 
-export default async function TerminePage() {
-  const now = new Date();
+async function TermineBody() {
+  const data = await getTerminePageData();
+  return (
+    <EventsClient
+      initialCourses={data.initialCourses}
+      initialEvents={data.initialEvents}
+      bezirke={data.bezirke}
+    />
+  );
+}
 
-  const [eventsData, coursesData, bezirkeData] = await Promise.all([
-    api.events.getAll({
-      page: 1,
-      limit: 100,
-      startDate: new Date(now.getFullYear() - 1, 0, 1),
-    }),
-    api.courses.getAll({
-      page: 1,
-      limit: 100,
-    }),
-    api.bezirke.getAll(),
-  ]);
-
+export default function TerminePage() {
   return (
     <Suspense
       fallback={
@@ -35,11 +31,7 @@ export default async function TerminePage() {
         </div>
       }
     >
-      <EventsClient
-        initialCourses={coursesData.courses}
-        initialEvents={eventsData.events}
-        bezirke={bezirkeData}
-      />
+      <TermineBody />
     </Suspense>
   );
 }

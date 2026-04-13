@@ -19,6 +19,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import HeroCarousel from "./_components/homepage/hero-carousel";
+import UpcomingCoursesCarousel from "./_components/homepage/upcoming-courses-carousel";
 
 export default function Home() {
   const startDate = useMemo(() => new Date(), []);
@@ -36,6 +37,13 @@ export default function Home() {
     api.posts.getAll.useQuery({
       page: 1,
       limit: 3,
+    });
+
+  const { data: upcomingCourses, isLoading: isLoadingCourses } =
+    api.courses.getAll.useQuery({
+      page: 1,
+      limit: 100,
+      upcoming: true,
     });
 
   const defaultTitle = "Posaunenwerk Rheinland";
@@ -86,7 +94,7 @@ export default function Home() {
         </section>
       )}
       {/* Termine Section */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
             title="Kommende Termine"
@@ -118,6 +126,25 @@ export default function Home() {
             <p className="text-gray-600 dark:text-gray-400">
               Aktuell keine Termine verfügbar.
             </p>
+          )}
+        </div>
+      </section>
+
+      {/* Kommende Lehrgänge Section */}
+      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+        <div className="container">
+          <SectionHeader
+            title="Kommende Lehrgänge"
+            linkText="Alle Lehrgänge"
+            linkHref="/termine?type=courses&view=list"
+          />
+
+          {isLoadingCourses ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner text="Lade Lehrgänge..." />
+            </div>
+          ) : (
+            <UpcomingCoursesCarousel courses={upcomingCourses?.courses ?? []} />
           )}
         </div>
       </section>
