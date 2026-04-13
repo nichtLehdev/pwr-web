@@ -55,16 +55,12 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
       );
 
       for (const priceOption of priceOptionsWithoutLimits) {
-        const usedSlots = course.registrations.reduce(
-          (sum, registration) => {
-            const participantsForThisOption =
-              registration.participants.filter(
-                (p) => p.priceOption === priceOption.label,
-              ).length;
-            return sum + participantsForThisOption;
-          },
-          0,
-        );
+        const usedSlots = course.registrations.reduce((sum, registration) => {
+          const participantsForThisOption = registration.participants.filter(
+            (p) => p.priceOption === priceOption.label,
+          ).length;
+          return sum + participantsForThisOption;
+        }, 0);
 
         capacityByPriceOption[priceOption.label] = Math.max(
           0,

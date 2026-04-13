@@ -144,9 +144,7 @@ export default function Home() {
               <LoadingSpinner text="Lade Lehrgänge..." />
             </div>
           ) : (
-            <UpcomingCoursesCarousel
-              courses={upcomingCourses?.courses ?? []}
-            />
+            <UpcomingCoursesCarousel courses={upcomingCourses?.courses ?? []} />
           )}
         </div>
       </section>

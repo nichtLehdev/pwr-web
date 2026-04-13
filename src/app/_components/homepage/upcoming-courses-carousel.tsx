@@ -128,7 +128,7 @@ function SmallOpenRegistrationCard({
     <Link
       href={`/termine/course/${course.id}`}
       className={cn(
-        "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border border-gray-200 border-l-4 shadow-sm transition-all hover:shadow-md",
+        "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md",
         className,
       )}
       style={{ borderLeftColor: districtColor }}
@@ -145,7 +145,7 @@ function SmallOpenRegistrationCard({
               : "Bezirksübergreifend"}
           </span>
         </div>
-        <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-3 text-base font-semibold leading-snug sm:text-lg">
+        <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-3 text-base leading-snug font-semibold sm:text-lg">
           {course.title}
         </h4>
         <div className="mb-1.5 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -239,7 +239,9 @@ export default function UpcomingCoursesCarousel({
   const [leftProgress, setLeftProgress] = useState(0);
   const [rightProgress, setRightProgress] = useState(0);
   const leftResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rightResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rightResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const [leftEnterForward, setLeftEnterForward] = useState(true);
   const [rightEnterForward, setRightEnterForward] = useState(true);
   const [leftNavGeneration, setLeftNavGeneration] = useState(0);
@@ -318,7 +320,8 @@ export default function UpcomingCoursesCarousel({
   useEffect(() => {
     return () => {
       if (leftResumeTimerRef.current) clearTimeout(leftResumeTimerRef.current);
-      if (rightResumeTimerRef.current) clearTimeout(rightResumeTimerRef.current);
+      if (rightResumeTimerRef.current)
+        clearTimeout(rightResumeTimerRef.current);
     };
   }, []);
 
@@ -436,33 +439,33 @@ export default function UpcomingCoursesCarousel({
     "h-[520px] min-h-[520px] lg:h-[480px] lg:min-h-[480px]";
 
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 lg:gap-6 lg:items-stretch">
+    <div className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 lg:items-stretch lg:gap-6">
       {/* Horizontal carousel: registration closed */}
       <div className="flex min-h-0 min-w-0 flex-col lg:col-span-2 lg:h-full">
         {leftCourse ? (
           <>
             <div className="w-full min-w-0">
-                <div
-                  key={leftCourse.id}
+              <div
+                key={leftCourse.id}
+                className={cn(
+                  "w-full",
+                  mainBannerMinClass,
+                  leftNavGeneration > 0 &&
+                    (leftEnterForward
+                      ? "animate-homepage-course-fwd"
+                      : "animate-homepage-course-bwd"),
+                  "motion-reduce:animate-none",
+                )}
+              >
+                <Link
+                  href={`/termine/course/${leftCourse.id}`}
                   className={cn(
-                    "w-full",
+                    "group bg-background dark:bg-dark-surface dark:border-dark-border flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md lg:flex-row lg:items-stretch",
                     mainBannerMinClass,
-                    leftNavGeneration > 0 &&
-                      (leftEnterForward
-                        ? "animate-homepage-course-fwd"
-                        : "animate-homepage-course-bwd"),
-                    "motion-reduce:animate-none",
                   )}
+                  style={{ borderLeftColor: leftDistrictColor }}
                 >
-                  <Link
-                    href={`/termine/course/${leftCourse.id}`}
-                    className={cn(
-                      "group bg-background dark:bg-dark-surface dark:border-dark-border flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-gray-200 border-l-4 shadow-sm transition-all hover:shadow-md lg:flex-row lg:items-stretch",
-                      mainBannerMinClass,
-                    )}
-                    style={{ borderLeftColor: leftDistrictColor }}
-                  >
-                    <div className="relative h-[220px] w-full shrink-0 sm:h-[240px] lg:h-full lg:min-h-[480px] lg:w-[42%] lg:max-w-md">
+                  <div className="relative h-[220px] w-full shrink-0 sm:h-[240px] lg:h-full lg:min-h-[480px] lg:w-[42%] lg:max-w-md">
                     {leftCourse.image?.url ? (
                       <>
                         <Image
@@ -493,9 +496,9 @@ export default function UpcomingCoursesCarousel({
                         />
                       </div>
                     )}
-                    </div>
+                  </div>
 
-                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-6">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-6">
                     <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
                       <p className="text-primary text-sm font-semibold">
                         Anmeldung geschlossen
@@ -514,7 +517,7 @@ export default function UpcomingCoursesCarousel({
                     </h3>
 
                     {leftDescriptionExcerpt ? (
-                      <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-5 text-sm leading-relaxed">
+                      <p className="mb-4 line-clamp-5 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                         {leftDescriptionExcerpt}
                       </p>
                     ) : null}
@@ -537,7 +540,7 @@ export default function UpcomingCoursesCarousel({
                       (i) => i.profileImage?.url,
                     ) ? (
                       <div className="mb-6 flex flex-wrap items-center gap-2">
-                        <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                           Leitung
                         </span>
                         <div className="flex -space-x-2">
@@ -561,9 +564,9 @@ export default function UpcomingCoursesCarousel({
                       Details ansehen
                       <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </p>
-                    </div>
-                  </Link>
-                </div>
+                  </div>
+                </Link>
+              </div>
             </div>
 
             {closedRegistrationCourses.length > 1 ? (
@@ -626,7 +629,7 @@ export default function UpcomingCoursesCarousel({
       </div>
 
       {/* Vertical carousel: 2 stacked small cards; dots sit to the right of the cards */}
-      <div className="flex min-h-0 w-full flex-col lg:h-full lg:min-h-0 max-lg:border-t max-lg:border-gray-200 max-lg:pt-6 max-lg:dark:border-dark-border">
+      <div className="max-lg:dark:border-dark-border flex min-h-0 w-full flex-col max-lg:border-t max-lg:border-gray-200 max-lg:pt-6 lg:h-full lg:min-h-0">
         {openRegistrationCourses.length > 0 ? (
           <div className="flex w-full flex-1 flex-col lg:min-h-0">
             <div
@@ -654,10 +657,7 @@ export default function UpcomingCoursesCarousel({
                   />
                 ))}
                 {openPageCourses.length === 1 ? (
-                  <div
-                    className="min-h-0 flex-1 basis-0"
-                    aria-hidden
-                  />
+                  <div className="min-h-0 flex-1 basis-0" aria-hidden />
                 ) : null}
               </div>
 

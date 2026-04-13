@@ -111,33 +111,31 @@ export default function EventsClient({
   const viewParam = params.get("view");
 
   const [userHasChangedView, setUserHasChangedView] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>(() =>
-    viewParam === "list" || viewParam === "calendar" ? viewParam : "list",
-  );
+  /** Used when `view` is absent from the URL after the user changed view without a param. */
+  const [viewWhenNoUrl, setViewWhenNoUrl] = useState<ViewMode>("list");
 
-  useEffect(() => {
+  const effectiveViewMode = useMemo((): ViewMode => {
     if (viewParam === "list" || viewParam === "calendar") {
-      setViewMode(viewParam);
+      return viewParam;
     }
-  }, [viewParam]);
-
-  useEffect(() => {
-    if (viewParam === "list" || viewParam === "calendar") return;
-    if (userHasChangedView) return;
-    if (!profile) return;
-    setViewMode(userDefaultView);
-  }, [viewParam, profile, userDefaultView, userHasChangedView]);
+    if (userHasChangedView) {
+      return viewWhenNoUrl;
+    }
+    if (profile) {
+      return userDefaultView;
+    }
+    return "list";
+  }, [viewParam, userHasChangedView, viewWhenNoUrl, profile, userDefaultView]);
 
   const handleSetViewMode = (mode: ViewMode) => {
     setUserHasChangedView(true);
-    setViewMode(mode);
+    setViewWhenNoUrl(mode);
     const next = new URLSearchParams(params.toString());
     next.set("view", mode);
     const qs = next.toString();
     const href = `/termine?${qs}`;
     const currentQs = params.toString();
-    const current =
-      currentQs === "" ? "/termine" : `/termine?${currentQs}`;
+    const current = currentQs === "" ? "/termine" : `/termine?${currentQs}`;
     if (href !== current) {
       router.replace(href, { scroll: false });
     }
@@ -373,7 +371,7 @@ export default function EventsClient({
                 <button
                   onClick={() => handleSetViewMode("list")}
                   className={`cursor-pointer rounded-lg p-2 transition-colors ${
-                    viewMode === "list"
+                    effectiveViewMode === "list"
                       ? "bg-primary text-white"
                       : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                   }`}
@@ -384,7 +382,7 @@ export default function EventsClient({
                 <button
                   onClick={() => handleSetViewMode("calendar")}
                   className={`cursor-pointer rounded-lg p-2 transition-colors ${
-                    viewMode === "calendar"
+                    effectiveViewMode === "calendar"
                       ? "bg-primary text-white"
                       : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                   }`}
@@ -574,7 +572,7 @@ export default function EventsClient({
         {/* Content */}
         <section className="py-6 md:py-12">
           <div className="container mx-auto px-4">
-            {viewMode === "list" ? (
+            {effectiveViewMode === "list" ? (
               /* List View - Grouped by month */
               <div className="space-y-4 md:space-y-6">
                 {/* Upcoming Events */}
