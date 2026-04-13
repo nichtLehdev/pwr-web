@@ -1,5 +1,13 @@
 "use client";
 
+import {
+  Dumbbell,
+  Music,
+  PartyPopper,
+  Star,
+  Trophy,
+  type LucideIcon,
+} from "lucide-react";
 import type { ScoreResult } from "../_lib/scoring";
 
 export interface ResultViewProps {
@@ -8,28 +16,33 @@ export interface ResultViewProps {
   onNext: () => void;
 }
 
-function cheerLine(percent: number): { line: string; emoji: string } {
-  if (percent >= 92) return { line: "Hammer — fast perfekt!", emoji: "🏆" };
-  if (percent >= 80) return { line: "Richtig gut im Takt!", emoji: "🌟" };
-  if (percent >= 65) return { line: "Weiter so, das klappt!", emoji: "👏" };
-  if (percent >= 45) return { line: "Üben lohnt sich!", emoji: "💪" };
-  return { line: "Nächstes Mal wird’s noch besser!", emoji: "🎵" };
+function cheerLine(percent: number): { line: string; icon: LucideIcon } {
+  if (percent >= 92)
+    return { line: "Hammer — fast perfekt!", icon: Trophy };
+  if (percent >= 80)
+    return { line: "Richtig gut im Takt!", icon: Star };
+  if (percent >= 65)
+    return { line: "Weiter so, das klappt!", icon: PartyPopper };
+  if (percent >= 45) return { line: "Üben lohnt sich!", icon: Dumbbell };
+  return { line: "Nächstes Mal wird’s noch besser!", icon: Music };
 }
 
 export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
   const cheer = cheerLine(result.percent);
+  const CheerIcon = cheer.icon;
 
   return (
-    <div className="dark:border-dark-border/80 space-y-5 rounded-3xl border-2 border-amber-200/80 bg-gradient-to-b from-white to-amber-50/50 p-4 shadow-lg shadow-amber-200/30 dark:from-dark-surface dark:to-amber-950/20 dark:shadow-amber-950/20 md:space-y-6 md:p-8">
+    <div className="space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6 dark:border-dark-border/80">
       <div className="text-center">
-        <p className="text-5xl md:text-6xl" aria-hidden>
-          {cheer.emoji}
-        </p>
+        <CheerIcon
+          className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-20 md:w-20 md:stroke-[1.3]"
+          aria-hidden
+        />
         <p className="text-dark dark:text-dark-text mt-3 text-lg font-black md:text-xl">
           {cheer.line}
         </p>
         <p
-          className="text-primary dark:text-primary-light mt-2 text-5xl font-black tabular-nums drop-shadow-sm md:text-6xl"
+          className="text-primary dark:text-primary-light mt-2 text-5xl font-black tabular-nums md:text-6xl"
           aria-label={`Trefferquote ${result.percent} Prozent`}
         >
           {result.percent}%
@@ -52,7 +65,7 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
         )}
       </div>
 
-      <details className="group rounded-2xl border border-gray-200/80 bg-white/70 dark:border-dark-border dark:bg-dark-background/50">
+      <details className="group rounded-sm border border-gray-200/80 bg-white/50 dark:border-dark-border dark:bg-dark-background/40">
         <summary className="cursor-pointer list-none px-4 py-3 text-center text-sm font-bold text-dark marker:hidden dark:text-dark-text [&::-webkit-details-marker]:hidden">
           <span className="group-open:hidden">Alle Schläge anzeigen</span>
           <span className="hidden group-open:inline">Details ausblenden</span>
@@ -110,14 +123,14 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
         <button
           type="button"
           onClick={onRetry}
-          className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-2xl border-2 bg-white px-4 py-4 text-base font-bold transition dark:bg-dark-surface"
+          className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-sm border bg-white px-4 py-4 text-base font-bold transition dark:bg-dark-surface"
         >
           Von vorn
         </button>
         <button
           type="button"
           onClick={onNext}
-          className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-2xl px-4 py-4 text-base font-black text-white shadow-lg shadow-amber-600/25 transition active:scale-[0.99]"
+          className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-sm px-4 py-4 text-base font-black text-white transition active:scale-[0.99]"
         >
           Nächster Rhythmus
         </button>

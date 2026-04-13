@@ -1,6 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dices,
+  Music,
+  Rocket,
+  Sparkles,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Difficulty } from "../_lib/types";
 import {
@@ -45,25 +53,25 @@ const DIFFICULTY_CARDS: {
   id: Difficulty;
   title: string;
   hint: string;
-  emoji: string;
+  icon: LucideIcon;
 }[] = [
   {
     id: "beginner",
     title: "Leicht",
     hint: "Viertel im 4/4 — super zum Reinkommen",
-    emoji: "🌟",
+    icon: Sparkles,
   },
   {
     id: "intermediate",
     title: "Mittel",
     hint: "Achtel & mehrere Taktarten",
-    emoji: "🎯",
+    icon: Target,
   },
   {
     id: "advanced",
     title: "Schwer",
     hint: "Sechzehntel, Synkopen, Triolen …",
-    emoji: "🚀",
+    icon: Rocket,
   },
 ];
 
@@ -358,42 +366,46 @@ export function RhythmGame() {
   const stepLabels = ["Setup", "Anhören", "Mitspielen", "Ergebnis"];
 
   return (
-    <div
-      className={cn(
-        "mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6",
-        "rounded-3xl bg-gradient-to-b from-amber-50/90 via-white to-sky-100/80 p-3 shadow-inner dark:from-amber-950/25 dark:via-dark-background dark:to-sky-950/20 md:p-5",
-      )}
-    >
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
       <div
-        className="flex flex-wrap items-center justify-center gap-2"
-        role="list"
-        aria-label="Spielschritte"
+        className={cn(
+          "border-dark-border/40 border-b pb-3 dark:border-dark-border/60 md:pb-4",
+          /* Desktop: Linie über die volle Viewport-Breite (Full-Bleed) */
+          "md:relative md:ml-[calc(50%-50vw)] md:w-screen md:max-w-[100vw]",
+        )}
       >
-        {stepLabels.map((label, i) => (
-          <div
-            key={label}
-            role="listitem"
-            className={cn(
-              "rounded-full px-3 py-1.5 text-xs font-bold tracking-wide transition-colors md:px-4 md:text-sm",
-              i === step
-                ? "bg-primary text-white shadow-md shadow-amber-500/30"
-                : i < step
-                  ? "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
-                  : "bg-white/60 text-dark/50 dark:bg-dark-surface/60 dark:text-dark-text-muted",
-            )}
-          >
-            {label}
-          </div>
-        ))}
+        <div
+          className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-1.5 md:gap-2"
+          role="list"
+          aria-label="Spielschritte"
+        >
+          {stepLabels.map((label, i) => (
+            <div
+              key={label}
+              role="listitem"
+              className={cn(
+                "rounded-sm px-2.5 py-1 text-[10px] font-bold tracking-wide transition-colors md:px-3 md:text-xs",
+                i === step
+                  ? "bg-primary text-white"
+                  : i < step
+                    ? "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
+                    : "text-dark/55 dark:text-dark-text-muted bg-transparent",
+              )}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {phase === "idle" && (
-        <div className="dark:border-dark-border/80 space-y-5 rounded-3xl border-2 border-amber-200/80 bg-white/90 p-4 shadow-lg shadow-amber-200/40 backdrop-blur-sm dark:border-cyan-500/20 dark:bg-dark-surface/95 dark:shadow-cyan-950/30 md:space-y-6 md:p-8">
+        <div className="space-y-5 md:space-y-6">
           <div className="text-center">
-            <p className="text-4xl md:text-5xl" aria-hidden>
-              🎵
-            </p>
-            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-2xl md:text-3xl">
+            <Music
+              className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
+              aria-hidden
+            />
+            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-xl md:mt-3 md:text-3xl">
               Rhythmus mitspielen
             </h2>
             <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-md text-sm md:text-base">
@@ -406,30 +418,34 @@ export function RhythmGame() {
             <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
               Wie schwer darf es sein?
             </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {DIFFICULTY_CARDS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setDifficulty(c.id)}
-                  className={cn(
-                    "flex flex-col items-center gap-1 rounded-2xl border-2 p-4 text-center transition-all active:scale-[0.98]",
-                    difficulty === c.id
-                      ? "border-primary bg-gradient-to-b from-amber-50 to-orange-50 shadow-md dark:from-amber-950/40 dark:to-orange-950/30"
-                      : "border-gray-200 bg-white/80 hover:border-amber-300 dark:border-dark-border dark:bg-dark-background/50 dark:hover:border-cyan-600/50",
-                  )}
-                >
-                  <span className="text-3xl" aria-hidden>
-                    {c.emoji}
-                  </span>
-                  <span className="text-dark dark:text-dark-text font-bold">
-                    {c.title}
-                  </span>
-                  <span className="text-dark dark:text-dark-text-muted text-xs leading-snug">
-                    {c.hint}
-                  </span>
-                </button>
-              ))}
+            <div className="grid gap-2 sm:grid-cols-3 md:gap-3">
+              {DIFFICULTY_CARDS.map((c) => {
+                const Icon = c.icon;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setDifficulty(c.id)}
+                    className={cn(
+                      "flex flex-col items-center gap-1 rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:gap-1.5 md:p-4",
+                      difficulty === c.id
+                        ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
+                        : "border-dark-border/50 hover:border-primary/40 bg-transparent dark:border-dark-border dark:hover:border-primary/35",
+                    )}
+                  >
+                    <Icon
+                      className="text-primary h-8 w-8 shrink-0 stroke-[1.6] md:h-10 md:w-10 md:stroke-[1.5]"
+                      aria-hidden
+                    />
+                    <span className="text-dark dark:text-dark-text font-bold">
+                      {c.title}
+                    </span>
+                    <span className="text-dark dark:text-dark-text-muted text-xs leading-snug">
+                      {c.hint}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -440,13 +456,13 @@ export function RhythmGame() {
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-2xl border-2 text-xl font-bold"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-sm border text-xl font-bold"
                 onClick={() => setBpm((b) => Math.max(40, b - 4))}
                 aria-label="Tempo verlangsamen"
               >
                 −
               </button>
-              <div className="bg-primary/10 dark:bg-primary/15 flex min-w-[5.5rem] flex-col items-center rounded-2xl px-4 py-2">
+              <div className="bg-primary/10 dark:bg-primary/15 flex min-w-[5.5rem] flex-col items-center rounded-sm px-4 py-2">
                 <span className="text-dark dark:text-dark-text text-3xl font-black tabular-nums">
                   {bpm}
                 </span>
@@ -456,7 +472,7 @@ export function RhythmGame() {
               </div>
               <button
                 type="button"
-                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-2xl border-2 text-xl font-bold"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-sm border text-xl font-bold"
                 onClick={() => setBpm((b) => Math.min(200, b + 4))}
                 aria-label="Tempo erhöhen"
               >
@@ -464,17 +480,21 @@ export function RhythmGame() {
               </button>
               <button
                 type="button"
-                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background rounded-2xl border-2 px-4 py-2 text-sm font-bold"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background inline-flex items-center justify-center gap-2 rounded-sm border px-4 py-2 text-sm font-bold"
                 onClick={() => setBpm(randomBpm())}
               >
-                Überraschung 🎲
+                <Dices
+                  className="text-primary h-4 w-4 shrink-0 stroke-[1.75]"
+                  aria-hidden
+                />
+                Überraschung
               </button>
             </div>
           </div>
 
           <button
             type="button"
-            className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-2xl px-4 py-4 text-lg font-black text-white shadow-lg shadow-amber-600/25 transition hover:shadow-xl active:scale-[0.99] md:text-xl"
+            className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-sm px-4 py-4 text-lg font-black text-white transition active:scale-[0.99] md:text-xl"
             onClick={handleIdleStart}
           >
             Los geht&apos;s!
@@ -521,9 +541,9 @@ export function RhythmGame() {
               {phase === "countdown" && (
                 <div
                   className={cn(
-                    "pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl",
+                    "pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-sm",
                     countInBeats > 1 && countLabel < countInBeats - 1
-                      ? "bg-gradient-to-br from-fuchsia-600/25 via-amber-400/20 to-sky-500/25 backdrop-blur-[2px] dark:from-fuchsia-900/35 dark:via-amber-900/25 dark:to-sky-900/30"
+                      ? "bg-background/75 backdrop-blur-[1px] dark:bg-dark-background/80"
                       : "bg-transparent",
                   )}
                   aria-live="polite"
@@ -531,7 +551,7 @@ export function RhythmGame() {
                 >
                   <p
                     key={countLabel}
-                    className="rhythm-count-pop text-primary drop-shadow-[0_4px_12px_rgba(250,166,25,0.5)] text-6xl font-black tabular-nums md:text-8xl"
+                    className="rhythm-count-pop text-primary text-6xl font-black tabular-nums md:text-8xl"
                   >
                     {countLabel + 1}
                   </p>
@@ -546,14 +566,14 @@ export function RhythmGame() {
               <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-stretch">
                 <button
                   type="button"
-                  className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-2xl border-2 px-4 py-4 text-base font-bold transition-colors"
+                  className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-sm border px-4 py-4 text-base font-bold transition-colors"
                   onClick={() => void playPreview()}
                 >
                   Nochmal anhören
                 </button>
                 <button
                   type="button"
-                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-2xl px-4 py-4 text-base font-black text-white shadow-lg shadow-amber-600/30 transition hover:shadow-xl active:scale-[0.99]"
+                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-sm px-4 py-4 text-base font-black text-white transition active:scale-[0.99]"
                   onClick={() => void beginCountdown()}
                 >
                   Jetzt mitspielen!

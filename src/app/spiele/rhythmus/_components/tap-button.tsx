@@ -62,7 +62,7 @@ export function TapButton({
       <button
         type="button"
         disabled={disabled}
-        className="focus-visible:ring-primary flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-3xl border-4 border-amber-300/50 bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-300 text-xl font-black text-white shadow-[0_8px_0_rgb(180,83,9),0_12px_24px_rgba(250,166,25,0.35)] transition-all select-none hover:brightness-105 active:translate-y-1 active:shadow-[0_4px_0_rgb(180,83,9)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-75 disabled:saturate-50 disabled:shadow-none disabled:active:translate-y-0 sm:min-h-[8rem] sm:text-2xl dark:border-amber-500/35 dark:from-orange-500 dark:via-amber-500 dark:to-yellow-400 dark:shadow-[0_8px_0_rgb(120,53,15),0_12px_24px_rgba(0,0,0,0.35)]"
+        className="focus-visible:ring-primary bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-sm border border-amber-900/15 text-xl font-black text-white shadow-sm transition select-none hover:brightness-[1.03] active:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-75 sm:min-h-[8rem] sm:text-2xl dark:border-amber-100/20"
         aria-label={`${label}. Desktop: Leertaste oder Eingabetaste.`}
         aria-keyshortcuts="Space Enter"
         onTouchStart={(e) => {
@@ -79,11 +79,11 @@ export function TapButton({
       </button>
       <p className="text-dark dark:text-dark-text-muted hidden shrink-0 text-center text-sm md:block">
         Desktop:{" "}
-        <kbd className="dark:bg-dark-surface rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
+        <kbd className="dark:bg-dark-surface rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
           Leertaste
         </kbd>{" "}
         oder{" "}
-        <kbd className="dark:bg-dark-surface rounded border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
+        <kbd className="dark:bg-dark-surface rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
           Enter
         </kbd>
       </p>

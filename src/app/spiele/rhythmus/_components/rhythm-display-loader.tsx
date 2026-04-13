@@ -9,7 +9,7 @@ const RhythmDisplay = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[208px] items-center justify-center rounded-xl border border-gray-200 bg-gray-50 shadow-sm dark:border-dark-border dark:bg-dark-surface dark:shadow-none md:min-h-[256px]">
+      <div className="flex min-h-[232px] items-center justify-center rounded-sm border border-gray-200 bg-gray-50 dark:border-dark-border dark:bg-dark-surface md:min-h-[280px]">
         <p className="text-dark dark:text-dark-text-secondary text-sm">
           Notenzeile wird geladen…
         </p>

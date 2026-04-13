@@ -4,8 +4,15 @@ import type {
   RhythmEvent,
   TimeSignature,
 } from "./types";
+import {
+  getNotationTickInfo,
+  logRhythmDesiredForDebug,
+  rhythmIsWellFormed,
+} from "./rhythm-validation";
 
 const MAX_TRIES = 100;
+/** Neu generieren, bis Notation + Millisekunden zur Taktart passen. */
+const MAX_RHYTHM_GENERATION_ATTEMPTS = 80;
 
 function quarterMs(bpm: number): number {
   return 60000 / bpm;
@@ -115,13 +122,36 @@ function partitionBar(
   return null;
 }
 
+/**
+ * Wenn `partitionBar` ausreißt: deterministisch mit korrekter Summe in Sechzehntel-Einheiten.
+ * Niemals `vex: "w"` für Takte ≠ 4/4 — ganznote ist in VexFlow 16 Einheiten und zerstört
+ * Takt/Formatter bei z. B. 3/4 (12 Einheiten) → fehlende/clipped Noten und Pausen.
+ */
+function fallbackBarChunks(barUnits: number): Chunk[] {
+  const out: Chunk[] = [];
+  let remaining = barUnits;
+  const sizes = [16, 8, 6, 4, 2, 1] as const;
+  for (const size of sizes) {
+    while (remaining >= size) {
+      const vex = unitsToVexDuration(size);
+      if (!vex) break;
+      out.push({ kind: "simple", units: size, vex });
+      remaining -= size;
+    }
+  }
+  if (remaining !== 0) {
+    throw new Error(`fallbackBarChunks: cannot fill bar (${barUnits}), left ${remaining}`);
+  }
+  return out;
+}
+
 function generateBarChunks(difficulty: Difficulty, ts: TimeSignature): Chunk[] {
   const barUnits = barLengthInUnits(ts);
   for (let t = 0; t < MAX_TRIES; t++) {
     const result = partitionBar(barUnits, difficulty, barUnits);
     if (result) return result;
   }
-  return [{ kind: "simple", units: barUnits, vex: "w" }];
+  return fallbackBarChunks(barUnits);
 }
 
 function restProbability(units: number): number {
@@ -189,7 +219,23 @@ function pickTimeSignature(difficulty: Difficulty): TimeSignature {
   ]);
 }
 
-export function generateRhythm(
+/** Letzter Ausweg: 4/4, vier Viertel — immer gültig in VexFlow und bei der Klingdauer. */
+function emergencyRhythm(bpm: number): GeneratedRhythm {
+  const quarterMs = 60000 / bpm;
+  return {
+    timeSignature: { numerator: 4, denominator: 4 },
+    bars: 1,
+    barStartEventIndices: [],
+    events: Array.from({ length: 4 }, () => ({
+      noteValue: "q",
+      durationMs: quarterMs,
+      isRest: false,
+      key: "c/4",
+    })),
+  };
+}
+
+function tryGenerateRhythmOnce(
   difficulty: Difficulty,
   bpm: number,
 ): GeneratedRhythm {
@@ -220,6 +266,41 @@ export function generateRhythm(
     bars,
     barStartEventIndices,
   };
+}
+
+export function generateRhythm(
+  difficulty: Difficulty,
+  bpm: number,
+): GeneratedRhythm {
+  for (let a = 0; a < MAX_RHYTHM_GENERATION_ATTEMPTS; a++) {
+    const rhythm = tryGenerateRhythmOnce(difficulty, bpm);
+    if (rhythmIsWellFormed(rhythm, bpm)) {
+      logRhythmDesiredForDebug(rhythm, bpm, {
+        outcome: "accepted",
+        attempt: a + 1,
+        difficulty,
+      });
+      return rhythm;
+    }
+    const tickInfo = getNotationTickInfo(rhythm);
+    const rejectReason: "ticks" | "duration" | "build" = !tickInfo
+      ? "build"
+      : !tickInfo.ok
+        ? "ticks"
+        : "duration";
+    logRhythmDesiredForDebug(rhythm, bpm, {
+      outcome: "rejected",
+      attempt: a + 1,
+      difficulty,
+      rejectReason,
+    });
+  }
+  const fallback = emergencyRhythm(bpm);
+  logRhythmDesiredForDebug(fallback, bpm, {
+    outcome: "emergency",
+    difficulty,
+  });
+  return fallback;
 }
 
 /**

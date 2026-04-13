@@ -71,12 +71,11 @@ export function RhythmDisplay({
 
     await ensureVexFlowFonts();
 
-    const containerW = Math.max(280, el.clientWidth - 8);
+    const containerW = Math.max(280, el.clientWidth);
     /** Schmalere Notenlinie + kleinere Abstände, damit lange Level auf dem Handy passen. */
     const compact = containerW < 640;
-    /** Etwas höher: Achtel-/Sechzehntel-Pausen ragen unter die Notenlinien; sonst wirken sie abgeschnitten. */
-    const height = compact ? (containerW < 400 ? 196 : 208) : 256;
-    el.innerHTML = "";
+    /** Genug Höhe: Pausen-Fähnchen/-Hälse ragen oft unter die Linie; zu wenig → „fehlende“ Pausen. */
+    const height = compact ? (containerW < 400 ? 220 : 232) : 280;
 
     const prevMetrics = compact
       ? {
@@ -90,67 +89,78 @@ export function RhythmDisplay({
 
     if (compact) {
       MetricsDefaults.fontScale = 0.88;
-      MetricsDefaults.Stave.padding = 7;
-      MetricsDefaults.Stave.endPaddingMax = 5;
-      MetricsDefaults.Stave.endPaddingMin = 3;
+      MetricsDefaults.Stave.padding = 6;
+      MetricsDefaults.Stave.endPaddingMax = 4;
+      MetricsDefaults.Stave.endPaddingMin = 2;
       MetricsDefaults.NoteHead.minPadding = 1;
     }
 
     try {
     const marginX = compact ? 6 : 12;
+    const staveY = compact ? 30 : 36;
+    const tsStr = timeSigString(timeSignature);
+    const beamGroups = Beam.getDefaultBeamGroups(tsStr);
 
-    const stemmables: StemmableNote[] = [];
-    const tuplets: Tuplet[] = [];
-
-    let i = 0;
-    while (i < events.length) {
-      const ev = events[i]!;
-      if (ev.tupletGroupId !== undefined) {
-        const group: StaveNote[] = [];
-        const gid = ev.tupletGroupId;
-        while (i < events.length && events[i]?.tupletGroupId === gid) {
-          const e = events[i]!;
-          const sn = staveNoteFromRhythmEvent(e);
+    /** Neu bauen pro Layout-Versuch, damit Balken/Tuplet-Zustand nicht zwischen Durchläufen klebt. */
+    const buildStemmables = (): {
+      stemmables: StemmableNote[];
+      tuplets: Tuplet[];
+    } => {
+      const stemmables: StemmableNote[] = [];
+      const tuplets: Tuplet[] = [];
+      let idx = 0;
+      while (idx < events.length) {
+        const ev = events[idx]!;
+        if (ev.tupletGroupId !== undefined) {
+          const group: StaveNote[] = [];
+          const gid = ev.tupletGroupId;
+          while (idx < events.length && events[idx]?.tupletGroupId === gid) {
+            const e = events[idx]!;
+            const sn = staveNoteFromRhythmEvent(e);
+            styleNote(sn, dark);
+            group.push(sn);
+            stemmables.push(sn);
+            idx++;
+          }
+          tuplets.push(
+            new Tuplet(group, {
+              notesOccupied: ev.tupletNotesOccupied ?? 2,
+              numNotes: ev.tupletNumNotes ?? 3,
+            }),
+          );
+        } else {
+          const sn = staveNoteFromRhythmEvent(ev);
           styleNote(sn, dark);
-          group.push(sn);
           stemmables.push(sn);
-          i++;
+          idx++;
         }
-        const tuplet = new Tuplet(group, {
-          notesOccupied: ev.tupletNotesOccupied ?? 2,
-          numNotes: ev.tupletNumNotes ?? 3,
-        });
-        tuplets.push(tuplet);
-      } else {
-        const e = ev;
-        const sn = staveNoteFromRhythmEvent(e);
-        styleNote(sn, dark);
-        stemmables.push(sn);
-        i++;
       }
-    }
+      return { stemmables, tuplets };
+    };
 
-    /**
-     * Horizontal: genug Platz für alle Tickables (3/4 mit 2×4 + 2×8 = oft 4 Symbole —
-     * sonst wirkt der Takt „2 Viertel + eine Achtelpause“ obwohl noch eine Achtel fehlt / clippt).
-     */
+    const built = buildStemmables();
+    /** Feste Notenlinien-Breite = verfügbare Breite — kein Verbreitern, kein horizontales Scrollen. */
     const baseInner = containerW - marginX * 2;
-    const extraForNotes =
-      Math.max(0, stemmables.length - 3) * (compact ? 56 : 64);
-    const minInnerForTickables =
-      stemmables.length * (compact ? 50 : 56) + (compact ? 140 : 165);
-    const staveWidth = Math.max(baseInner + extraForNotes, minInnerForTickables);
-    const svgWidth = staveWidth + marginX * 2;
+    const staveWidth = Math.max(120, baseInner);
 
+    const formatterOpts = {
+      maxIterations: compact ? 22 : 28,
+      softmaxFactor: compact ? 7 : 11,
+    };
+
+    const stemmables = built.stemmables;
+    const tuplets = built.tuplets;
+
+    el.innerHTML = "";
+
+    const svgWidth = staveWidth + marginX * 2;
     const renderer = new Renderer(el, RendererBackends.SVG);
     renderer.resize(svgWidth, height);
     const ctx = renderer.getContext();
 
-    const staveY = compact ? 30 : 36;
-
     const stave = new Stave(marginX, staveY, staveWidth)
       .addClef("treble")
-      .addTimeSignature(timeSigString(timeSignature));
+      .addTimeSignature(tsStr);
 
     if (dark) {
       stave.setStyle({ fillStyle: "#e4e6eb", strokeStyle: "#e4e6eb" });
@@ -161,20 +171,14 @@ export function RhythmDisplay({
       beatValue: timeSignature.denominator,
     });
     voice.setMode(VoiceMode.SOFT);
-    if (compact) {
-      voice.setSoftmaxFactor(5);
-    }
+    voice.setSoftmaxFactor(formatterOpts.softmaxFactor);
     voice.addTickables(stemmables);
 
-    /** Wie VexFlow `FormatAndGetBeams`: Balken vor `format`/`draw`, sonst bleiben Fähnchen sichtbar. */
-    const beams = Beam.applyAndGetBeams(voice, Stem.UP);
+    const beams = Beam.applyAndGetBeams(voice, Stem.UP, beamGroups);
 
     stave.setContext(ctx);
-    new Formatter(
-      compact ? { softmaxFactor: 5, maxIterations: 8 } : undefined,
-    )
+    new Formatter(formatterOpts)
       .joinVoices([voice])
-      /* alignRests: false (Default): true würde Pausen an Nachbarnoten ziehen — falsch für Rhythmus-Leseübung. */
       .formatToStave([voice], stave, { context: ctx, stave });
 
     stave.draw();
@@ -196,22 +200,24 @@ export function RhythmDisplay({
 
     /** Taktstriche zwischen mehreren Takten (eine lange Voice = sonst kein Strich). */
     const stroke = dark ? "#c9ccd4" : "#1a1a1a";
-    for (const splitIdx of barStartEventIndices) {
-      if (splitIdx <= 0 || splitIdx >= stemmables.length) continue;
-      const left = stemmables[splitIdx - 1] as StaveNote;
-      const right = stemmables[splitIdx] as StaveNote;
-      const x =
-        (left.getNoteHeadEndX() + right.getNoteHeadBeginX()) / 2;
-      const yTop = stave.getYForLine(0) - 2;
-      const yBottom = stave.getYForLine(4) + 2;
-      ctx.save();
-      ctx.setStrokeStyle(stroke);
-      ctx.setLineWidth(1.25);
-      ctx.beginPath();
-      ctx.moveTo(x, yTop);
-      ctx.lineTo(x, yBottom);
-      ctx.stroke();
-      ctx.restore();
+    if (stave && ctx) {
+      for (const splitIdx of barStartEventIndices) {
+        if (splitIdx <= 0 || splitIdx >= stemmables.length) continue;
+        const left = stemmables[splitIdx - 1] as StaveNote;
+        const right = stemmables[splitIdx] as StaveNote;
+        const x =
+          (left.getNoteHeadEndX() + right.getNoteHeadBeginX()) / 2;
+        const yTop = stave.getYForLine(0) - 2;
+        const yBottom = stave.getYForLine(4) + 2;
+        ctx.save();
+        ctx.setStrokeStyle(stroke);
+        ctx.setLineWidth(1.25);
+        ctx.beginPath();
+        ctx.moveTo(x, yTop);
+        ctx.lineTo(x, yBottom);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
     } finally {
       if (prevMetrics) {
@@ -239,9 +245,14 @@ export function RhythmDisplay({
 
   return (
     <div
-      ref={containerRef}
-      className="w-full min-h-[196px] overflow-x-auto overflow-y-visible rounded-2xl border-2 border-amber-100 bg-white p-2 shadow-inner shadow-amber-100/50 dark:border-cyan-900/30 dark:bg-dark-surface dark:shadow-none sm:min-h-[208px] md:min-h-[256px] md:rounded-3xl md:p-3"
+      className="border-dark-border/40 dark:border-dark-border w-full overflow-y-visible rounded-sm border bg-white p-2 pb-4 md:p-3 dark:bg-dark-surface"
       aria-hidden
-    />
+    >
+      {/* Feste SVG-Breite = Container; kein horizontales Scrollen (VexFlow packt in die Notenlinien). */}
+      <div
+        ref={containerRef}
+        className="min-h-[220px] w-full max-w-full overflow-x-hidden sm:min-h-[232px] md:min-h-[280px]"
+      />
+    </div>
   );
 }
