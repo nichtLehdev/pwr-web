@@ -1,8 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { TrackingConsentLink } from "@/app/_components/stats/tracking-consent-link";
 
 export default function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  if (pathname === "/spiele/rhythmus") {
+    return null;
+  }
 
   const footerLinks = {
     about: [
