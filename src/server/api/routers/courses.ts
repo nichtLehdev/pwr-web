@@ -13,8 +13,10 @@ import {
   CustomFieldType,
   RegistrationStatus,
 } from "~/generated/prisma/client";
+import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 import { permissionProcedure } from "../middleware/permissions";
 
 export const coursesRouter = createTRPCRouter({
@@ -74,8 +76,8 @@ export const coursesRouter = createTRPCRouter({
                 registrationStatus: RegistrationStatus.CONFIRMED,
               },
               include: {
-                _count: {
-                  select: { participants: true },
+                participants: {
+                  select: { priceOption: true },
                 },
               },
             },
@@ -89,9 +91,10 @@ export const coursesRouter = createTRPCRouter({
 
       const courses = coursesRaw.map((course) => {
         const participantCount = course.registrations.reduce(
-          (sum, reg) => sum + reg._count.participants,
+          (sum, reg) => sum + reg.participants.length,
           0,
         );
+        const summary = getCourseCapacitySummary(course);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { registrations, ...courseWithoutRegistrations } = course;
         return {
@@ -99,6 +102,8 @@ export const coursesRouter = createTRPCRouter({
           _count: {
             participants: participantCount,
           },
+          availableSlots: summary.availableSlots,
+          registrationTotalCapacity: summary.totalCapacity,
         };
       });
 
@@ -612,6 +617,7 @@ export const coursesRouter = createTRPCRouter({
               }),
             )
             .optional(),
+          status: z.nativeEnum(ContentStatus).optional(),
         })
         .refine(
           (data) =>
@@ -643,12 +649,18 @@ export const coursesRouter = createTRPCRouter({
         ),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, priceOptions, customFields, instructorIds, ...updateData } =
-        input;
+      const {
+        id,
+        priceOptions,
+        customFields,
+        instructorIds,
+        status,
+        ...updateData
+      } = input;
 
       const course = await ctx.db.course.findUnique({
         where: { id },
-        select: { createdById: true },
+        select: { createdById: true, status: true },
       });
 
       if (!course) {
@@ -670,6 +682,56 @@ export const coursesRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message: "Insufficient permissions",
         });
+      }
+
+      const canApproveContent = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_APPROVE,
+      );
+
+      const data: Prisma.CourseUpdateInput = { ...updateData };
+
+      if (status !== undefined) {
+        if (!canApproveContent) {
+          const unchanged = status === course.status;
+          const submitForReview =
+            status === ContentStatus.PENDING &&
+            (course.status === ContentStatus.DRAFT ||
+              course.status === ContentStatus.REJECTED);
+          const backToDraftAfterRejection =
+            status === ContentStatus.DRAFT &&
+            course.status === ContentStatus.REJECTED;
+          if (!unchanged && !submitForReview && !backToDraftAfterRejection) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message:
+                "Nur Redakteure können den Status frei ändern. Als Autor kannst du zwischen Entwurf und „Zur Prüfung“ wechseln oder nach Ablehnung wieder einen Entwurf anlegen.",
+            });
+          }
+        }
+
+        data.status = status;
+
+        if (status === ContentStatus.APPROVED) {
+          const courseWithImage = await ctx.db.course.findUnique({
+            where: { id },
+            include: {
+              image: { select: { id: true, status: true } },
+            },
+          });
+          if (courseWithImage?.imageId && courseWithImage.image) {
+            if (courseWithImage.image.status !== ContentStatus.APPROVED) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "Das Bild muss zuerst freigegeben werden, bevor der Kurs veröffentlicht werden kann.",
+              });
+            }
+          }
+          data.publishedAt = new Date();
+        } else {
+          data.publishedAt = null;
+        }
       }
 
       const canManageDiscounts = await userHasPermission(
@@ -730,7 +792,7 @@ export const coursesRouter = createTRPCRouter({
 
       return await ctx.db.course.update({
         where: { id },
-        data: updateData,
+        data,
         include: {
           image: true,
           location: true,
@@ -876,87 +938,11 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      const confirmedParticipants = course.registrations.reduce(
-        (sum, registration) => sum + registration.participants.length,
-        0,
-      );
-
-      const priceOptionsWithLimits = course.priceOptions.filter(
-        (po) => po.maxParticipants !== null,
-      );
-
-      let totalCapacity: number;
-      const capacityByPriceOption: Record<string, number> = {};
-
-      if (priceOptionsWithLimits.length > 0) {
-        totalCapacity = priceOptionsWithLimits.reduce(
-          (sum, po) => sum + (po.maxParticipants || 0),
-          0,
-        );
-
-        for (const priceOption of priceOptionsWithLimits) {
-          const usedSlots = course.registrations.reduce((sum, registration) => {
-            const participantsForThisOption = registration.participants.filter(
-              (p) => p.priceOption === priceOption.label,
-            ).length;
-            return sum + participantsForThisOption;
-          }, 0);
-
-          capacityByPriceOption[priceOption.label] =
-            (priceOption.maxParticipants || 0) - usedSlots;
-        }
-
-        const priceOptionsWithoutLimits = course.priceOptions.filter(
-          (po) => po.maxParticipants === null,
-        );
-
-        if (priceOptionsWithoutLimits.length > 0) {
-          const remainingCourseCapacity = Math.max(
-            0,
-            (course.maxParticipants ?? 0) - totalCapacity,
-          );
-
-          for (const priceOption of priceOptionsWithoutLimits) {
-            const usedSlots = course.registrations.reduce(
-              (sum, registration) => {
-                const participantsForThisOption =
-                  registration.participants.filter(
-                    (p) => p.priceOption === priceOption.label,
-                  ).length;
-                return sum + participantsForThisOption;
-              },
-              0,
-            );
-
-            capacityByPriceOption[priceOption.label] = Math.max(
-              0,
-              remainingCourseCapacity - usedSlots,
-            );
-          }
-        }
-
-        totalCapacity = Math.min(totalCapacity, course.maxParticipants ?? 0);
-      } else {
-        totalCapacity = course.maxParticipants ?? 0;
-      }
-
-      const availableSlots = Math.max(0, totalCapacity - confirmedParticipants);
-      const isFull = availableSlots === 0;
-      const hasWaitingList = course.registrations.some(
-        (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
-      );
+      const summary = getCourseCapacitySummary(course);
 
       return {
-        totalCapacity,
-        confirmedParticipants,
-        availableSlots,
-        isFull,
-        hasWaitingList,
+        ...summary,
         allowWaitingList: course.allowWaitingList ?? false,
-        capacityByPriceOption:
-          Object.keys(capacityByPriceOption).length > 0
-            ? capacityByPriceOption
-            : null,
       };
     }),
 
