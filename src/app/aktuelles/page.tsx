@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { api } from "@/trpc/react";
-import {
-  type Bezirk,
-  type Post,
-  PostCategory,
-} from "~/generated/prisma/client";
+import { api, type RouterOutputs } from "@/trpc/react";
 import PublicPage from "../_components/general/public-page";
 import PostCard from "../_components/posts/post-card";
 import { FilterIcon, PinIcon, XCircleIcon, Rss } from "lucide-react";
@@ -14,12 +9,8 @@ import { CircleXIcon } from "lucide-react";
 import FeedConfigModal from "../_components/feeds/feed-config-modal";
 import { useBanner } from "../_components/ui/banner-context";
 
-type FilterCategory = PostCategory | "all";
-
-type PostWithRelations = Post & {
-  bezirk: Bezirk | null;
-  coverImage: { url: string } | null;
-};
+type PostWithRelations = RouterOutputs["posts"]["getAll"]["posts"][number];
+type FilterCategory = PostWithRelations["category"] | "all";
 
 export default function AktuellesPage() {
   const { bannerHeight } = useBanner();
