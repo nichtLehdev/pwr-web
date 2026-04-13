@@ -17,16 +17,9 @@ import {
   permissionProcedure,
   permissionProcedureAny,
 } from "../middleware/permissions";
-import {
-  sendCourseRegistrationConfirmedEmail,
-  sendCourseRegistrationWaitlistEmail,
-  sendCourseRegistrationPendingDiscountEmail,
-  sendCourseRegistrationCancelledEmail,
-  sendSiblingDiscountApprovedEmail,
-  sendSiblingDiscountRejectedEmail,
-  isEmailConfigured,
-} from "@/server/email";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+
+const getEmailService = async () => import("@/server/email");
 
 export const registrationsRouter = createTRPCRouter({
   create: publicProcedure
@@ -311,14 +304,15 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (isEmailConfigured()) {
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured()) {
         try {
           if (
             siblingDiscountStatus === SiblingDiscountStatus.PENDING &&
             originalTotalPrice &&
             siblingDiscountAmount
           ) {
-            await sendCourseRegistrationPendingDiscountEmail(
+            await emailService.sendCourseRegistrationPendingDiscountEmail(
               registration.registrantEmail,
               registration.registrantFirstName,
               registration.registrantLastName,
@@ -332,7 +326,7 @@ export const registrationsRouter = createTRPCRouter({
               registration.id,
             );
           } else if (registrationStatus === RegistrationStatus.CONFIRMED) {
-            await sendCourseRegistrationConfirmedEmail(
+            await emailService.sendCourseRegistrationConfirmedEmail(
               registration.registrantEmail,
               registration.registrantFirstName,
               registration.registrantLastName,
@@ -344,7 +338,7 @@ export const registrationsRouter = createTRPCRouter({
               registration.id,
             );
           } else if (registrationStatus === RegistrationStatus.WAITLIST) {
-            await sendCourseRegistrationWaitlistEmail(
+            await emailService.sendCourseRegistrationWaitlistEmail(
               registration.registrantEmail,
               registration.registrantFirstName,
               registration.registrantLastName,
@@ -946,9 +940,10 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (isEmailConfigured() && wasWaitlist && isNowConfirmed) {
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured() && wasWaitlist && isNowConfirmed) {
         try {
-          await sendCourseRegistrationConfirmedEmail(
+          await emailService.sendCourseRegistrationConfirmedEmail(
             updatedRegistration.registrantEmail,
             updatedRegistration.registrantFirstName,
             updatedRegistration.registrantLastName,
@@ -1230,9 +1225,10 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (isEmailConfigured() && !wasAlreadyCancelled) {
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured() && !wasAlreadyCancelled) {
         try {
-          await sendCourseRegistrationCancelledEmail(
+          await emailService.sendCourseRegistrationCancelledEmail(
             updated.registrantEmail,
             updated.registrantFirstName,
             updated.registrantLastName,
@@ -1392,13 +1388,14 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
+      const emailService = await getEmailService();
       if (
-        isEmailConfigured() &&
+        emailService.isEmailConfigured() &&
         updated.originalTotalPrice &&
         updated.siblingDiscountAmount
       ) {
         try {
-          await sendSiblingDiscountApprovedEmail(
+          await emailService.sendSiblingDiscountApprovedEmail(
             updated.registrantEmail,
             updated.registrantFirstName,
             updated.registrantLastName,
@@ -1469,9 +1466,10 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (isEmailConfigured()) {
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured()) {
         try {
-          await sendSiblingDiscountRejectedEmail(
+          await emailService.sendSiblingDiscountRejectedEmail(
             updated.registrantEmail,
             updated.registrantFirstName,
             updated.registrantLastName,
@@ -1548,9 +1546,10 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      if (isEmailConfigured()) {
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured()) {
         try {
-          await sendCourseRegistrationConfirmedEmail(
+          await emailService.sendCourseRegistrationConfirmedEmail(
             updated.registrantEmail,
             updated.registrantFirstName,
             updated.registrantLastName,

@@ -44,9 +44,18 @@ export async function readMediaFile(media: Media): Promise<Buffer | null> {
 
     if (media.path.startsWith("/api/uploads/")) {
       const relativePath = media.path.replace("/api/uploads/", "");
-      filePath = join(process.cwd(), "public", "uploads", relativePath);
+      filePath = join(
+        /* turbopackIgnore: true */ process.cwd(),
+        "public",
+        "uploads",
+        relativePath,
+      );
     } else if (media.path.startsWith("/")) {
-      filePath = join(process.cwd(), "public", media.path);
+      filePath = join(
+        /* turbopackIgnore: true */ process.cwd(),
+        "public",
+        media.path,
+      );
     } else {
       filePath = media.path;
     }
