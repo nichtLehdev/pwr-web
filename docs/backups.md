@@ -149,6 +149,71 @@ docker compose exec db-backup /scripts/restore-db.sh /backups/restore.sql.gz
   - `gunzip` (comes with Git for Windows or WSL)
   - 7-Zip (download from [7-zip.org](https://www.7-zip.org/))
 
+### Full Restore (Database + Uploaded Files)
+
+`pg_dump` backups contain database records only. Uploaded files (images, profile pictures, downloads) are stored separately in the Docker volume `posaunenwerk_uploads_data` (mounted to `public/uploads` in the app container).
+
+For a complete disaster recovery, back up and restore both:
+- SQL backup (`posaunenwerk_backup_YYYYMMDD_HHMMSS.sql.gz`)
+- Upload volume archive (for example `uploads-volume-YYYYMMDD.tar.gz`)
+
+#### Backup Uploads Volume
+
+**Linux/macOS:**
+```bash
+# Create timestamped archive of uploads volume
+docker run --rm \
+  -v posaunenwerk_uploads_data:/data \
+  -v $(pwd):/backup \
+  alpine tar czf /backup/uploads-volume-$(date +%Y%m%d_%H%M%S).tar.gz -C /data .
+```
+
+**Windows (PowerShell):**
+```powershell
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+docker run --rm `
+  -v posaunenwerk_uploads_data:/data `
+  -v ${PWD}:/backup `
+  alpine tar czf /backup/uploads-volume-$ts.tar.gz -C /data .
+```
+
+#### Restore Uploads Volume
+
+⚠️ This replaces all current files in `posaunenwerk_uploads_data`.
+
+**Linux/macOS:**
+```bash
+# Optional: stop app during restore to avoid writing while files are replaced
+docker compose stop app
+
+# Restore archive into uploads volume
+docker run --rm \
+  -v posaunenwerk_uploads_data:/data \
+  -v $(pwd):/backup \
+  alpine sh -c "rm -rf /data/* && tar xzf /backup/uploads-volume-YYYYMMDD_HHMMSS.tar.gz -C /data"
+
+docker compose start app
+```
+
+**Windows (PowerShell):**
+```powershell
+# Optional: stop app during restore to avoid writing while files are replaced
+docker compose stop app
+
+docker run --rm `
+  -v posaunenwerk_uploads_data:/data `
+  -v ${PWD}:/backup `
+  alpine sh -c "rm -rf /data/* && tar xzf /backup/uploads-volume-YYYYMMDD_HHMMSS.tar.gz -C /data"
+
+docker compose start app
+```
+
+#### Recommended Recovery Order
+
+1. Restore database backup.
+2. Restore uploads volume archive.
+3. Start services and verify media loads correctly in the app.
+
 ## Backup Storage
 
 ### Location
