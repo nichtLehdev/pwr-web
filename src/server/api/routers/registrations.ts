@@ -818,7 +818,6 @@ export const registrationsRouter = createTRPCRouter({
         const {
           id: participantId,
           siblingGroupId,
-          priceOptionId: _priceOptionId,
           ...participantData
         } = participant;
 

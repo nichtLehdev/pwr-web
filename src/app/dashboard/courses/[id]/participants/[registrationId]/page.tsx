@@ -206,7 +206,6 @@ export default function RegistrationDetailPage() {
       (perm: string) => perm === "registrations.mark_paid",
     ) &&
     !canManagePaymentStatus;
-  const canMarkPaid = canManagePaymentStatus || canMarkPaidOnly;
 
   const canApproveDiscount =
     profile &&
