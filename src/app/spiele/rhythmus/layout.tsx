@@ -9,13 +9,7 @@ export const metadata: Metadata = {
 
 export default function RhythmusLayout({ children }: { children: ReactNode }) {
   return (
-    <div
-      className="bg-background dark:bg-dark-background flex min-h-0 flex-col overflow-hidden"
-      style={{
-        minHeight: "calc(100svh - var(--main-padding-top, 5.5rem))",
-        height: "calc(100svh - var(--main-padding-top, 5.5rem))",
-      }}
-    >
+    <div className="bg-background dark:bg-dark-background flex min-h-0 flex-1 flex-col overflow-y-auto">
       {children}
     </div>
   );
