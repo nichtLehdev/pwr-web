@@ -58,11 +58,11 @@ export function TapButton({
   }, [disabled, fire]);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-2">
+    <div className="flex w-full flex-col gap-2">
       <button
         type="button"
         disabled={disabled}
-        className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark focus-visible:ring-primary active:bg-primary-dark flex min-h-[7rem] w-full flex-1 touch-manipulation items-center justify-center rounded-xl border-2 border-amber-700/30 text-xl font-bold text-white shadow-md transition-all select-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:text-2xl dark:border-amber-500/20 dark:shadow-dark-border"
+        className="focus-visible:ring-primary flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-3xl border-4 border-amber-300/50 bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-300 text-xl font-black text-white shadow-[0_8px_0_rgb(180,83,9),0_12px_24px_rgba(250,166,25,0.35)] transition-all select-none hover:brightness-105 active:translate-y-1 active:shadow-[0_4px_0_rgb(180,83,9)] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-75 disabled:saturate-50 disabled:shadow-none disabled:active:translate-y-0 sm:min-h-[8rem] sm:text-2xl dark:border-amber-500/35 dark:from-orange-500 dark:via-amber-500 dark:to-yellow-400 dark:shadow-[0_8px_0_rgb(120,53,15),0_12px_24px_rgba(0,0,0,0.35)]"
         aria-label={`${label}. Desktop: Leertaste oder Eingabetaste.`}
         aria-keyshortcuts="Space Enter"
         onTouchStart={(e) => {

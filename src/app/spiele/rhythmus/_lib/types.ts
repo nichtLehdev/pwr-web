@@ -24,4 +24,6 @@ export interface GeneratedRhythm {
   events: RhythmEvent[];
   timeSignature: TimeSignature;
   bars: number;
+  /** Index in `events` (und in der gezeichneten Notenfolge) wo ein neuer Takt beginnt (ab 2. Takt). */
+  barStartEventIndices: number[];
 }

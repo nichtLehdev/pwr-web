@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import type { Difficulty } from "../_lib/types";
 import {
   countInBeatsForRhythm,
@@ -16,6 +17,7 @@ import {
 import { scoreTaps, type ScoreResult } from "../_lib/scoring";
 import { useMetronomeEngine } from "./use-metronome-engine";
 import { RhythmDisplayLoader } from "./rhythm-display-loader";
+import { TapDockPortal } from "./tap-dock-portal";
 import { TapButton } from "./tap-button";
 import { ResultView } from "./result-view";
 
@@ -24,6 +26,46 @@ type GamePhase = "idle" | "preview" | "countdown" | "playing" | "result";
 function randomBpm(): number {
   return 60 + Math.floor(Math.random() * 73);
 }
+
+function gameStepIndex(phase: GamePhase): number {
+  switch (phase) {
+    case "idle":
+      return 0;
+    case "preview":
+      return 1;
+    case "countdown":
+    case "playing":
+      return 2;
+    case "result":
+      return 3;
+  }
+}
+
+const DIFFICULTY_CARDS: {
+  id: Difficulty;
+  title: string;
+  hint: string;
+  emoji: string;
+}[] = [
+  {
+    id: "beginner",
+    title: "Leicht",
+    hint: "Viertel im 4/4 — super zum Reinkommen",
+    emoji: "🌟",
+  },
+  {
+    id: "intermediate",
+    title: "Mittel",
+    hint: "Achtel & mehrere Taktarten",
+    emoji: "🎯",
+  },
+  {
+    id: "advanced",
+    title: "Schwer",
+    hint: "Sechzehntel, Synkopen, Triolen …",
+    emoji: "🚀",
+  },
+];
 
 export function RhythmGame() {
   const engine = useMetronomeEngine();
@@ -50,7 +92,6 @@ export function RhythmGame() {
   const playingStartMsRef = useRef(0);
   const rhythmRef = useRef<GeneratedRhythm | null>(null);
   const bpmRef = useRef(bpm);
-
   useEffect(() => {
     bpmRef.current = bpm;
   }, [bpm]);
@@ -76,14 +117,21 @@ export function RhythmGame() {
     return () => clearTimers();
   }, [clearTimers]);
 
+  /** Nur in „playing“: kein Seiten-Scroll (Tippen); andere Phasen dürfen scrollen. */
   useEffect(() => {
-    if (phase === "playing" || tapAllowed) {
+    const root = document.documentElement;
+    if (phase === "playing") {
+      root.classList.add("modal-open");
       document.body.classList.add("modal-open");
     } else {
+      root.classList.remove("modal-open");
       document.body.classList.remove("modal-open");
     }
-    return () => document.body.classList.remove("modal-open");
-  }, [phase, tapAllowed]);
+    return () => {
+      root.classList.remove("modal-open");
+      document.body.classList.remove("modal-open");
+    };
+  }, [phase]);
 
   const startNewRhythm = useCallback(() => {
     const r = generateRhythm(difficulty, bpmRef.current);
@@ -306,69 +354,130 @@ export function RhythmGame() {
     startNewRhythm();
   }, [clearTimers, startNewRhythm]);
 
+  const step = gameStepIndex(phase);
+  const stepLabels = ["Setup", "Anhören", "Mitspielen", "Ergebnis"];
+
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-3 md:gap-8">
-      {phase === "idle" && (
-        <div className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border space-y-4 rounded-xl border border-gray-200 border-t-4 border-t-district-6 bg-white p-3 shadow-md md:space-y-6 md:p-6">
-          <h2 className="text-dark dark:text-dark-text text-lg font-semibold md:text-xl">
-            Einstellungen
-          </h2>
-          <div className="space-y-2">
-            <label
-              className="text-dark dark:text-dark-text-secondary text-sm font-medium"
-              htmlFor="difficulty"
-            >
-              Schwierigkeit
-            </label>
-            <select
-              id="difficulty"
-              className="border-dark-border text-dark focus:ring-primary w-full rounded-lg border bg-white px-3 py-2 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
-              value={difficulty}
-              onChange={(e) =>
-                setDifficulty(e.target.value as Difficulty)
-              }
-            >
-              <option value="beginner">Einsteiger (4/4)</option>
-              <option value="intermediate">
-                Mittel (Achtel, punktiert — 4/4 und 3/4)
-              </option>
-              <option value="advanced">
-                Fortgeschritten (16tel, Synkopen, Triolen — 4/4, 3/4, 6/8)
-              </option>
-            </select>
+    <div
+      className={cn(
+        "mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6",
+        "rounded-3xl bg-gradient-to-b from-amber-50/90 via-white to-sky-100/80 p-3 shadow-inner dark:from-amber-950/25 dark:via-dark-background dark:to-sky-950/20 md:p-5",
+      )}
+    >
+      <div
+        className="flex flex-wrap items-center justify-center gap-2"
+        role="list"
+        aria-label="Spielschritte"
+      >
+        {stepLabels.map((label, i) => (
+          <div
+            key={label}
+            role="listitem"
+            className={cn(
+              "rounded-full px-3 py-1.5 text-xs font-bold tracking-wide transition-colors md:px-4 md:text-sm",
+              i === step
+                ? "bg-primary text-white shadow-md shadow-amber-500/30"
+                : i < step
+                  ? "bg-emerald-500/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200"
+                  : "bg-white/60 text-dark/50 dark:bg-dark-surface/60 dark:text-dark-text-muted",
+            )}
+          >
+            {label}
           </div>
-          <div className="space-y-2">
-            <label
-              className="text-dark dark:text-dark-text-secondary text-sm font-medium"
-              htmlFor="bpm"
-            >
-              Tempo (BPM)
-            </label>
-            <div className="flex flex-wrap gap-2">
-              <input
-                id="bpm"
-                type="number"
-                min={40}
-                max={200}
-                className="border-dark-border text-dark focus:ring-primary min-w-[120px] flex-1 rounded-lg border px-3 py-2 dark:border-dark-border dark:bg-dark-surface dark:text-dark-text"
-                value={bpm}
-                onChange={(e) => setBpm(Number(e.target.value))}
-              />
+        ))}
+      </div>
+
+      {phase === "idle" && (
+        <div className="dark:border-dark-border/80 space-y-5 rounded-3xl border-2 border-amber-200/80 bg-white/90 p-4 shadow-lg shadow-amber-200/40 backdrop-blur-sm dark:border-cyan-500/20 dark:bg-dark-surface/95 dark:shadow-cyan-950/30 md:space-y-6 md:p-8">
+          <div className="text-center">
+            <p className="text-4xl md:text-5xl" aria-hidden>
+              🎵
+            </p>
+            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-2xl md:text-3xl">
+              Rhythmus mitspielen
+            </h2>
+            <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-md text-sm md:text-base">
+              Höre den Rhythmus, tippe mit dem Metronom mit — am Ende siehst du,
+              wie gut du im Takt warst.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+              Wie schwer darf es sein?
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {DIFFICULTY_CARDS.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setDifficulty(c.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-1 rounded-2xl border-2 p-4 text-center transition-all active:scale-[0.98]",
+                    difficulty === c.id
+                      ? "border-primary bg-gradient-to-b from-amber-50 to-orange-50 shadow-md dark:from-amber-950/40 dark:to-orange-950/30"
+                      : "border-gray-200 bg-white/80 hover:border-amber-300 dark:border-dark-border dark:bg-dark-background/50 dark:hover:border-cyan-600/50",
+                  )}
+                >
+                  <span className="text-3xl" aria-hidden>
+                    {c.emoji}
+                  </span>
+                  <span className="text-dark dark:text-dark-text font-bold">
+                    {c.title}
+                  </span>
+                  <span className="text-dark dark:text-dark-text-muted text-xs leading-snug">
+                    {c.hint}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+              Wie schnell? (Tempo)
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
-                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background rounded-lg border px-4 py-2 text-sm"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-2xl border-2 text-xl font-bold"
+                onClick={() => setBpm((b) => Math.max(40, b - 4))}
+                aria-label="Tempo verlangsamen"
+              >
+                −
+              </button>
+              <div className="bg-primary/10 dark:bg-primary/15 flex min-w-[5.5rem] flex-col items-center rounded-2xl px-4 py-2">
+                <span className="text-dark dark:text-dark-text text-3xl font-black tabular-nums">
+                  {bpm}
+                </span>
+                <span className="text-dark dark:text-dark-text-muted text-xs font-semibold uppercase">
+                  BPM
+                </span>
+              </div>
+              <button
+                type="button"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background h-12 min-w-[3rem] rounded-2xl border-2 text-xl font-bold"
+                onClick={() => setBpm((b) => Math.min(200, b + 4))}
+                aria-label="Tempo erhöhen"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:hover:bg-dark-background rounded-2xl border-2 px-4 py-2 text-sm font-bold"
                 onClick={() => setBpm(randomBpm())}
               >
-                Zufall
+                Überraschung 🎲
               </button>
             </div>
           </div>
+
           <button
             type="button"
-            className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-lg px-4 py-3 font-medium text-white"
+            className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-2xl px-4 py-4 text-lg font-black text-white shadow-lg shadow-amber-600/25 transition hover:shadow-xl active:scale-[0.99] md:text-xl"
             onClick={handleIdleStart}
           >
-            Start
+            Los geht&apos;s!
           </button>
         </div>
       )}
@@ -377,84 +486,117 @@ export function RhythmGame() {
         phase === "countdown" ||
         phase === "playing") &&
         rhythm && (
-          <div className="relative flex min-h-0 flex-1 flex-col gap-3 md:gap-4">
+          <div
+            className={cn(
+              "relative flex flex-col gap-4 md:gap-5",
+              /* Platz für fixierte Tipp-Leiste (Mobile), sonst kein sichtbarer Button im Scrollbereich */
+              "max-md:pb-[calc(9.75rem+env(safe-area-inset-bottom,0px))]",
+            )}
+          >
+            <div className="text-center">
+              {phase === "preview" && (
+                <p className="text-dark dark:text-dark-text font-bold md:text-lg">
+                  Zuerst anhören — oder gleich mitspielen
+                </p>
+              )}
+              {phase === "countdown" && (
+                <p className="text-dark dark:text-dark-text font-bold md:text-lg">
+                  Einzählen … dann mitklatschen!
+                </p>
+              )}
+              {phase === "playing" && (
+                <p className="text-dark dark:text-dark-text font-bold md:text-lg">
+                  Jetzt im Takt bleiben!
+                </p>
+              )}
+            </div>
+
             <div className="relative shrink-0">
               <RhythmDisplayLoader
                 events={rhythm.events}
                 timeSignature={rhythm.timeSignature}
                 bars={rhythm.bars}
+                barStartEventIndices={rhythm.barStartEventIndices}
               />
               {phase === "countdown" && (
                 <div
-                  className={`pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl ${
+                  className={cn(
+                    "pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl",
                     countInBeats > 1 && countLabel < countInBeats - 1
-                      ? "bg-black/35 backdrop-blur-[1px] dark:bg-black/45"
-                      : "bg-black/0"
-                  }`}
+                      ? "bg-gradient-to-br from-fuchsia-600/25 via-amber-400/20 to-sky-500/25 backdrop-blur-[2px] dark:from-fuchsia-900/35 dark:via-amber-900/25 dark:to-sky-900/30"
+                      : "bg-transparent",
+                  )}
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  <p className="text-primary text-5xl font-bold tabular-nums drop-shadow-lg md:text-6xl">
+                  <p
+                    key={countLabel}
+                    className="rhythm-count-pop text-primary drop-shadow-[0_4px_12px_rgba(250,166,25,0.5)] text-6xl font-black tabular-nums md:text-8xl"
+                  >
                     {countLabel + 1}
                   </p>
+                  <span className="text-dark dark:text-dark-text mt-2 text-sm font-bold opacity-90">
+                    mitzählen
+                  </span>
                 </div>
               )}
             </div>
 
             {phase === "preview" && (
-              <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+              <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-stretch">
                 <button
                   type="button"
-                  className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-lg border px-4 py-3 transition-colors"
+                  className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-2xl border-2 px-4 py-4 text-base font-bold transition-colors"
                   onClick={() => void playPreview()}
                 >
-                  Vorschau abspielen
+                  Nochmal anhören
                 </button>
                 <button
                   type="button"
-                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-lg px-4 py-3 font-medium text-white transition-colors"
+                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex-1 rounded-2xl px-4 py-4 text-base font-black text-white shadow-lg shadow-amber-600/30 transition hover:shadow-xl active:scale-[0.99]"
                   onClick={() => void beginCountdown()}
                 >
-                  Weiter
+                  Jetzt mitspielen!
                 </button>
               </div>
             )}
 
-            <div className="flex min-h-0 flex-1 flex-col">
+            <TapDockPortal>
               <TapButton
-              disabled={
-                phase === "preview" ||
-                (phase === "countdown" && !tapAllowed)
-              }
-              label={
-                phase === "playing" || (phase === "countdown" && tapAllowed)
-                  ? "Tippen"
-                  : phase === "countdown"
-                    ? "Gleich los"
-                    : "Tippfläche"
-              }
-              onTap={(t) => {
-                const wall = engine.adjustTapTimeForOutputLatency(t);
-                tapsRef.current.push(wall);
-                const r = rhythmRef.current;
-                if (r) {
-                  engine.playTapPitchForOffset(
-                    r.events,
-                    wall - playingStartMsRef.current,
-                  );
+                disabled={
+                  phase === "preview" ||
+                  (phase === "countdown" && !tapAllowed)
                 }
-              }}
-            />
-            </div>
+                label={
+                  phase === "playing" || (phase === "countdown" && tapAllowed)
+                    ? "Tipp-tipp!"
+                    : phase === "countdown"
+                      ? "Gleich …"
+                      : "Hier tippen"
+                }
+                onTap={(t) => {
+                  const wall = engine.adjustTapTimeForOutputLatency(t);
+                  tapsRef.current.push(wall);
+                  const r = rhythmRef.current;
+                  if (r) {
+                    engine.playTapPitchForOffset(
+                      r.events,
+                      wall - playingStartMsRef.current,
+                    );
+                  }
+                }}
+              />
+            </TapDockPortal>
           </div>
         )}
 
       {phase === "result" && score && rhythm && (
-        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:gap-6">
+        <div className="flex flex-col gap-4 md:gap-6">
           <RhythmDisplayLoader
             events={rhythm.events}
             timeSignature={rhythm.timeSignature}
             bars={rhythm.bars}
+            barStartEventIndices={rhythm.barStartEventIndices}
           />
           <ResultView
             result={score}

@@ -198,8 +198,12 @@ export function generateRhythm(
 
   let allEvents: RhythmEvent[] = [];
   let tupletCounter = 1;
+  const barStartEventIndices: number[] = [];
 
   for (let b = 0; b < bars; b++) {
+    if (b > 0) {
+      barStartEventIndices.push(allEvents.length);
+    }
     const chunks = generateBarChunks(difficulty, timeSignature);
     const { events, nextTupletGroupId } = chunksToEvents(
       chunks,
@@ -214,6 +218,7 @@ export function generateRhythm(
     events: allEvents,
     timeSignature,
     bars,
+    barStartEventIndices,
   };
 }
 
