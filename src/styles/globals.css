@@ -78,3 +78,64 @@ body {
 .dark .tiptap p.is-editor-empty:first-child::before {
   color: #6b7280;
 }
+
+/* Homepage upcoming courses carousels — direction matches navigation (incl. wrap) */
+@keyframes homepage-course-enter-fwd {
+  from {
+    opacity: 0;
+    transform: translate3d(12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes homepage-course-enter-bwd {
+  from {
+    opacity: 0;
+    transform: translate3d(-12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes homepage-open-enter-fwd {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes homepage-open-enter-bwd {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-homepage-course-fwd {
+  animation: homepage-course-enter-fwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-homepage-course-bwd {
+  animation: homepage-course-enter-bwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-homepage-open-fwd {
+  animation: homepage-open-enter-fwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-homepage-open-bwd {
+  animation: homepage-open-enter-bwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
