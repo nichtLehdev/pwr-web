@@ -34,7 +34,7 @@ function getBezirkInfo(id: number) {
   return info[id] || "";
 }
 
-export function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
+function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
   const [hoveredBezirk, setHoveredBezirk] = useState<number | null>(null);
 
   const handleBezirkClick = (id: number) => {
