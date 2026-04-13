@@ -1,15 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useMemo } from "react";
 import SectionHeader from "./_components/section-header";
 import EventCard from "./_components/events/event-card";
 import PostCard from "./_components/posts/post-card";
 import { api } from "@/trpc/react";
 import LoadingSpinner from "./_components/general/loading-spinner";
-import MediaCredit from "./_components/general/media-credit";
-import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import {
   Search,
   GraduationCap,
@@ -20,11 +17,9 @@ import {
   Music,
   FileText,
   UserCheck,
-  CalendarDays,
-  MapPin,
-  ChevronRight,
 } from "lucide-react";
 import HeroCarousel from "./_components/homepage/hero-carousel";
+import UpcomingCoursesCarousel from "./_components/homepage/upcoming-courses-carousel";
 
 export default function Home() {
   const startDate = useMemo(() => new Date(), []);
@@ -47,43 +42,9 @@ export default function Home() {
   const { data: upcomingCourses, isLoading: isLoadingCourses } =
     api.courses.getAll.useQuery({
       page: 1,
-      limit: 8,
+      limit: 100,
       upcoming: true,
     });
-
-  const nextCourse = upcomingCourses?.courses?.[0];
-
-  const nextCourseDescriptionExcerpt = nextCourse?.description
-    ? extractPlainTextFromMarkdown(nextCourse.description, 5, 320)
-    : "";
-
-  const coursesOpenForRegistration =
-    upcomingCourses?.courses
-      ?.filter((course) => {
-        if (!course.registrationOpen) {
-          return false;
-        }
-
-        const now = new Date();
-        const opensAt = course.registrationOpensAt
-          ? new Date(course.registrationOpensAt)
-          : null;
-        const deadline = course.registrationDeadline
-          ? new Date(course.registrationDeadline)
-          : null;
-
-        if (opensAt && opensAt > now) {
-          return false;
-        }
-
-        if (deadline && deadline < now) {
-          return false;
-        }
-
-        return true;
-      })
-      .filter((course) => course.id !== nextCourse?.id)
-      .slice(0, 2) ?? [];
 
   const defaultTitle = "Posaunenwerk Rheinland";
   const defaultSubtitle = "Gemeinsam Musik machen, Glauben leben";
@@ -175,171 +136,17 @@ export default function Home() {
           <SectionHeader
             title="Kommende Lehrgänge"
             linkText="Alle Lehrgänge"
-            linkHref="/termine?type=courses"
+            linkHref="/termine?type=courses&view=list"
           />
 
           {isLoadingCourses ? (
             <div className="flex items-center justify-center py-12">
               <LoadingSpinner text="Lade Lehrgänge..." />
             </div>
-          ) : nextCourse ? (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <Link
-                href={`/termine/course/${nextCourse.id}`}
-                className="group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex flex-col overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md lg:col-span-2 lg:flex-row lg:items-stretch"
-              >
-                <div className="relative aspect-[16/10] w-full shrink-0 lg:aspect-auto lg:w-[42%] lg:max-w-md lg:min-h-[280px]">
-                  {nextCourse.image?.url ? (
-                    <>
-                      <Image
-                        src={nextCourse.image.url}
-                        alt={nextCourse.image.alt || nextCourse.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 100vw, 40vw"
-                      />
-                      {(nextCourse.image.copyright ||
-                        nextCourse.image.creator) && (
-                        <div className="absolute right-2 bottom-2 flex justify-end">
-                          <MediaCredit
-                            copyright={nextCourse.image.copyright}
-                            creator={nextCourse.image.creator}
-                            showCreatorIcon
-                            variant="light"
-                            className="text-right text-white/90 drop-shadow-sm"
-                          />
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="from-primary/20 to-primary/5 flex h-full min-h-[200px] w-full items-center justify-center bg-linear-to-br lg:min-h-full">
-                      <GraduationCap
-                        className="text-primary h-20 w-20 opacity-40"
-                        aria-hidden
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="text-primary mb-2 text-sm font-semibold">
-                    Nächster Lehrgang
-                  </p>
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
-                    {nextCourse.title}
-                  </h3>
-
-                  {nextCourseDescriptionExcerpt ? (
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-5 text-sm leading-relaxed">
-                      {nextCourseDescriptionExcerpt}
-                    </p>
-                  ) : null}
-
-                  <div className="mb-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <CalendarDays className="h-4 w-4 shrink-0" />
-                    <span>
-                      {new Date(nextCourse.startDate).toLocaleDateString(
-                        "de-DE",
-                        {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        },
-                      )}
-                    </span>
-                  </div>
-                  <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <MapPin className="h-4 w-4 shrink-0" />
-                    <span>{nextCourse.location?.city || "Ort folgt"}</span>
-                  </div>
-
-                  {nextCourse.instructors?.some((i) => i.profileImage?.url) ? (
-                    <div className="mb-6 flex flex-wrap items-center gap-2">
-                      <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">
-                        Leitung
-                      </span>
-                      <div className="flex -space-x-2">
-                        {nextCourse.instructors
-                          .filter((i) => i.profileImage?.url)
-                          .slice(0, 4)
-                          .map((instructor) => (
-                            <Image
-                              key={instructor.id}
-                              src={instructor.profileImage!.url}
-                              alt={instructor.displayName ?? ""}
-                              width={40}
-                              height={40}
-                              className="border-background dark:border-dark-surface ring-background dark:ring-dark-surface h-10 w-10 rounded-full border-2 object-cover ring-2"
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  ) : null}
-                  <p className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
-                    Details ansehen
-                    <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </p>
-                </div>
-              </Link>
-
-              <div className="flex flex-col gap-6">
-                {coursesOpenForRegistration.length > 0 ? (
-                  coursesOpenForRegistration.map((course) => (
-                    <Link
-                      key={course.id}
-                      href={`/termine/course/${course.id}`}
-                      className="group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex min-h-[140px] overflow-hidden rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md"
-                    >
-                      {course.image?.url ? (
-                        <div className="relative w-28 shrink-0 sm:w-32">
-                          <Image
-                            src={course.image.url}
-                            alt={course.image.alt || course.title}
-                            fill
-                            className="object-cover"
-                            sizes="128px"
-                          />
-                        </div>
-                      ) : null}
-                      <div className="flex min-w-0 flex-1 flex-col p-5">
-                        <p className="text-primary mb-2 text-xs font-semibold">
-                          Anmeldung offen
-                        </p>
-                        <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-semibold">
-                          {course.title}
-                        </h4>
-                        <div className="mb-1 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                          <CalendarDays className="h-4 w-4 shrink-0" />
-                          <span>
-                            {new Date(course.startDate).toLocaleDateString(
-                              "de-DE",
-                              {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              },
-                            )}
-                          </span>
-                        </div>
-                        <p className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
-                          Anmelden
-                          <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                        </p>
-                      </div>
-                    </Link>
-                  ))
-                ) : (
-                  <div className="bg-background dark:bg-dark-surface dark:border-dark-border rounded-xl border border-gray-200 p-5 text-sm text-gray-600 dark:text-gray-300">
-                    Aktuell sind keine weiteren Lehrgänge mit offener Anmeldung
-                    verfügbar.
-                  </div>
-                )}
-              </div>
-            </div>
           ) : (
-            <p className="text-gray-600 dark:text-gray-400">
-              Aktuell keine Lehrgänge verfügbar.
-            </p>
+            <UpcomingCoursesCarousel
+              courses={upcomingCourses?.courses ?? []}
+            />
           )}
         </div>
       </section>
