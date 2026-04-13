@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type {
   EventWithRelations,
   CourseWithRelations,
@@ -106,19 +106,41 @@ export default function EventsClient({
     return () => clearTimeout(timer);
   }, []);
 
+  const router = useRouter();
   const params = useSearchParams();
+  const viewParam = params.get("view");
 
   const [userHasChangedView, setUserHasChangedView] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    viewParam === "list" || viewParam === "calendar" ? viewParam : "list",
+  );
 
-  const prevUserDefaultView = useMemo(() => userDefaultView, [userDefaultView]);
-  if (!userHasChangedView && viewMode !== prevUserDefaultView && profile) {
-    setViewMode(prevUserDefaultView);
-  }
+  useEffect(() => {
+    if (viewParam === "list" || viewParam === "calendar") {
+      setViewMode(viewParam);
+    }
+  }, [viewParam]);
+
+  useEffect(() => {
+    if (viewParam === "list" || viewParam === "calendar") return;
+    if (userHasChangedView) return;
+    if (!profile) return;
+    setViewMode(userDefaultView);
+  }, [viewParam, profile, userDefaultView, userHasChangedView]);
 
   const handleSetViewMode = (mode: ViewMode) => {
     setUserHasChangedView(true);
     setViewMode(mode);
+    const next = new URLSearchParams(params.toString());
+    next.set("view", mode);
+    const qs = next.toString();
+    const href = `/termine?${qs}`;
+    const currentQs = params.toString();
+    const current =
+      currentQs === "" ? "/termine" : `/termine?${currentQs}`;
+    if (href !== current) {
+      router.replace(href, { scroll: false });
+    }
   };
 
   const [filterType, setFilterType] = useState<FilterType>(
