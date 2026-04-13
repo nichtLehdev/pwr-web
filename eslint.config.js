@@ -1,6 +1,7 @@
 import { defineConfig } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import nextPlugin from "@next/eslint-plugin-next";
+import reactHooks from "eslint-plugin-react-hooks";
+import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
   {
@@ -12,8 +13,18 @@ const eslintConfig = defineConfig([
       "node_modules/**",
     ],
   },
-  ...nextVitals,
-  ...nextTs,
+  ...tseslint.configs.recommended,
+  reactHooks.configs.flat["recommended-latest"],
+  {
+    files: ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
 ]);
 
 export default eslintConfig;

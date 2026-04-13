@@ -222,6 +222,7 @@ export default function ImageCropEditor({
                 aspect={aspect}
                 className="max-h-[70vh]"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element -- react-image-crop requires a native img element reference */}
                 <img
                   ref={imgRef}
                   src={imageUrl}
@@ -249,6 +250,7 @@ export default function ImageCropEditor({
                   </p>
                   <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gray-100 ring-1 ring-gray-200">
                     {previews.avatar ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
                         src={previews.avatar}
                         alt="Profilbild-Vorschau"
@@ -267,6 +269,7 @@ export default function ImageCropEditor({
                   </p>
                   <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-[4.5rem] w-40 items-center justify-center overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
                     {previews.cover ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
                         src={previews.cover}
                         alt="Cover-Vorschau"
@@ -285,6 +288,7 @@ export default function ImageCropEditor({
                   </p>
                   <div className="dark:bg-dark-background-secondary dark:ring-dark-border flex h-20 w-28 items-center justify-center overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
                     {previews.card ? (
+                      /* eslint-disable-next-line @next/next/no-img-element -- preview uses in-memory object/data URLs */
                       <img
                         src={previews.card}
                         alt="Karten-Vorschau"
