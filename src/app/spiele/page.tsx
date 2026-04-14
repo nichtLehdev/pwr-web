@@ -43,6 +43,13 @@ export default function SpielePage() {
                 href="/spiele/griffe"
                 color="district-6"
               />
+              <ParticipationCard
+                title="Notenwaage"
+                description="Notenwerte auf der rechten Seite ergänzen, bis die Waage mit links genau ausgeglichen ist"
+                icon="music"
+                href="/spiele/notenwaage"
+                color="district-6"
+              />
             </div>
           </div>
         </div>
