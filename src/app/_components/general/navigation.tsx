@@ -117,7 +117,10 @@ export default function Navigation() {
     {
       href: "/spiele",
       label: "Spiele",
-      dropdown: [{ href: "/spiele/rhythmus", label: "Rhythmus-Training" }],
+      dropdown: [
+        { href: "/spiele/rhythmus", label: "Rhythmus-Training" },
+        { href: "/spiele/noten-lesen", label: "Noten lesen" },
+      ],
     },
     {
       href: "/ueber-uns",
