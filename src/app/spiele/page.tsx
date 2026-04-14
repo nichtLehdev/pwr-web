@@ -36,6 +36,13 @@ export default function SpielePage() {
                 href="/spiele/noten-lesen"
                 color="district-6"
               />
+              <ParticipationCard
+                title="Griffe"
+                description="Noten lesen und die passenden Ventile oder Zugpositionen wählen — mit Sofort-Feedback"
+                icon="music"
+                href="/spiele/griffe"
+                color="district-6"
+              />
             </div>
           </div>
         </div>

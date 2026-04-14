@@ -120,6 +120,7 @@ export default function Navigation() {
       dropdown: [
         { href: "/spiele/rhythmus", label: "Rhythmus-Training" },
         { href: "/spiele/noten-lesen", label: "Noten lesen" },
+        { href: "/spiele/griffe", label: "Griffe" },
       ],
     },
     {
