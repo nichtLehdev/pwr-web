@@ -40,6 +40,41 @@ function styleNoteAndAccidentals(sn: StaveNote, dark: boolean): void {
   }
 }
 
+const KEY_SIGNATURE_DEFAULT_ALTERS: Record<
+  string,
+  Partial<Record<"A" | "H" | "C" | "D" | "E" | "F" | "G", -1 | 0 | 1>>
+> =
+  {
+    C: {},
+    G: { F: 1 },
+    D: { F: 1, C: 1 },
+    F: { H: -1 },
+    Bb: { H: -1, E: -1 },
+    Eb: { H: -1, E: -1, A: -1 },
+    Ab: { H: -1, E: -1, A: -1, D: -1 },
+  };
+
+function accidentalForPitchInLayout(
+  pitch: WrittenPitch,
+  layout: StaffAccidentalLayout,
+): "#" | "b" | "n" | null {
+  if (layout.kind !== "keySignature") {
+    if (pitch.alter === 1) return "#";
+    if (pitch.alter === -1) return "b";
+    return null;
+  }
+
+  const table = KEY_SIGNATURE_DEFAULT_ALTERS[layout.keySpec] ?? {};
+  const letter = pitch.letter as "A" | "H" | "C" | "D" | "E" | "F" | "G";
+  const defaultAlter = table[letter] ?? 0;
+
+  if (pitch.alter === defaultAlter) return null;
+  if (pitch.alter === 0 && defaultAlter !== 0) return "n";
+  if (pitch.alter === 1) return "#";
+  if (pitch.alter === -1) return "b";
+  return null;
+}
+
 export type StaffFlash = "none" | "correct" | "wrong";
 
 export type StaffDisplayProps = {
@@ -124,8 +159,8 @@ export function StaffDisplay({
       /* Immer Kopfposition ohne eingebettetes #/b und Vorzeichen direkt am
        * Notenkopf setzen. So ist das Vorzeichen am Zielton immer eindeutig
        * sichtbar (auch bei Tonartdarstellung am System). */
-      const { vexKey, accidental } =
-        writtenPitchToVexNoteKeyAndAccidental(pitch);
+      const { vexKey } = writtenPitchToVexNoteKeyAndAccidental(pitch);
+      const accidental = accidentalForPitchInLayout(pitch, staffAccidentalLayout);
       const note = new StaveNote({
         keys: [vexKey],
         duration: "w",

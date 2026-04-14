@@ -51,9 +51,9 @@ const TRUMPET_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 62 — Stimm D4 — Konzert: C4
   62: entry([["1", "3"]]),
   // 63 — Stimm Es4 — Konzert: Des4
-  63: entry([["1", "2"], ["3"]]),
+  63: entry([["2", "3"]]),
   // 64 — Stimm E4 — Konzert: D4
-  64: entry([["1", "2"]]),
+  64: entry([["1", "2"], ["3"]]),
   // 65 — Stimm F4 — Konzert: Es4
   65: entry([["1"]]),
   // 66 - Stimm Fis4 - Konzert: E4
