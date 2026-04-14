@@ -33,8 +33,12 @@ const hornBeginnerHi: WrittenPitch = { letter: "G", octave: 5, alter: 0 };
 const hornIntermediateLo: WrittenPitch = { letter: "F", octave: 3, alter: 0 };
 const hornIntermediateHi: WrittenPitch = { letter: "A", octave: 5, alter: 0 };
 
-/** Fortgeschritten: großer geschriebener Blech-Tonumfang (chromatisch). */
-const TRUMPET_ADV_LO_MIDI = 54; // Fis3
+/**
+ * Fortgeschritten: chromatisch geschrieben bis tief **Ges2** (MIDI 42).
+ * Bei Griffen/„Trompete in C“ (Konzert = Stimmton − 2) ist das der Bereich
+ * bis **Konzert-E2** als tiefster üblicher Ton.
+ */
+const TRUMPET_ADV_LO_MIDI = 42; // Geschriebenes Ges2 → Konzert E2 bei −2
 const TRUMPET_ADV_HI_MIDI = 86; // D6
 
 /** Horn in F: chromatisch geschrieben, etwas mehr Tiefe als Trompete, hoher Kantilene-Bereich. */

@@ -18,10 +18,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { StaffAccidentalLayout } from "../_lib/staff-accidental-layout";
 import type { ClefKind, WrittenPitch } from "../_lib/types";
 import { answerLabelForPitch } from "../_lib/pitch";
-import {
-  writtenPitchToVexKeyEmbedded,
-  writtenPitchToVexNoteKeyAndAccidental,
-} from "../_lib/vex-pitch-key";
+import { writtenPitchToVexNoteKeyAndAccidental } from "../_lib/vex-pitch-key";
 
 let fontsReady: Promise<void> | null = null;
 
@@ -124,25 +121,18 @@ export function StaffDisplay({
         stave.setStyle({ fillStyle: "#e4e6eb", strokeStyle: "#e4e6eb" });
       }
 
-      let note: StaveNote;
-      if (staffAccidentalLayout.kind === "keySignature") {
-        const keyEmbedded = writtenPitchToVexKeyEmbedded(pitch);
-        note = new StaveNote({
-          keys: [keyEmbedded],
-          duration: "w",
-          clef: clefId,
-        });
-      } else {
-        const { vexKey, accidental } =
-          writtenPitchToVexNoteKeyAndAccidental(pitch);
-        note = new StaveNote({
-          keys: [vexKey],
-          duration: "w",
-          clef: clefId,
-        });
-        if (accidental) {
-          note.addModifier(new Accidental(accidental), 0);
-        }
+      /* Immer Kopfposition ohne eingebettetes #/b und Vorzeichen direkt am
+       * Notenkopf setzen. So ist das Vorzeichen am Zielton immer eindeutig
+       * sichtbar (auch bei Tonartdarstellung am System). */
+      const { vexKey, accidental } =
+        writtenPitchToVexNoteKeyAndAccidental(pitch);
+      const note = new StaveNote({
+        keys: [vexKey],
+        duration: "w",
+        clef: clefId,
+      });
+      if (accidental) {
+        note.addModifier(new Accidental(accidental), 0);
       }
 
       const voice = new Voice({ numBeats: 4, beatValue: 4 });
@@ -156,15 +146,6 @@ export function StaffDisplay({
         softmaxFactor: compact ? 8 : 12,
       };
       const formatter = new Formatter(formatterOpts).joinVoices([voice]);
-
-      /* Vorzeichen aus Tonart vor dem Layout — sonst hängen neue Modifier
-       * ohne Formatierung und VexFlow wirft „UnformattedNote“. */
-      if (staffAccidentalLayout.kind === "keySignature") {
-        Accidental.applyAccidentals(
-          [voice],
-          staffAccidentalLayout.keySpec,
-        );
-      }
 
       formatter.formatToStave([voice], stave, { context: ctx, stave });
 
