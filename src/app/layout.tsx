@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../styles/globals.css";
-import Navigation from "./_components/general/navigation";
-import Footer from "./_components/general/footer";
+import { AppChrome } from "./_components/general/app-chrome";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "./_components/general/theme-provider";
 import { ThemeSync } from "./_components/general/theme-sync";
 import { ToastProvider, Toaster } from "./_components/ui/toast";
-import { BetaBanner } from "./_components/ui/banner";
 import { BannerProvider } from "./_components/ui/banner-context";
-import { MainContent } from "./_components/ui/main-content";
 import { PageViewTracker } from "./_components/stats/page-view-tracker";
 import { TrackingConsentProvider } from "./_components/stats/tracking-consent-context";
 import { TrackingConsentBanner } from "./_components/stats/tracking-consent-banner";
@@ -78,10 +75,7 @@ export default function RootLayout({
                 <TrackingConsentBanner />
                 <PageViewTracker />
                 <BannerProvider>
-                  <BetaBanner />
-                  <Navigation />
-                  <MainContent>{children}</MainContent>
-                  <Footer />
+                  <AppChrome>{children}</AppChrome>
                 </BannerProvider>
               </TrackingConsentProvider>
               <Toaster />

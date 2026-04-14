@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { usePathname } from "next/navigation";
 import { useTrackingConsent } from "./tracking-consent-context";
 import { BarChart3 } from "lucide-react";
+import { isStandaloneGamePath } from "@/lib/standalone-game-route";
 
 export function TrackingConsentBanner() {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const ctx = useTrackingConsent();
 
@@ -13,6 +16,10 @@ export function TrackingConsentBanner() {
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
+
+  if (isStandaloneGamePath(pathname)) {
+    return null;
+  }
 
   if (!ctx) return null;
   const { setConsent, hasChosen } = ctx;

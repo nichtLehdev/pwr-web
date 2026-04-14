@@ -9,11 +9,15 @@ interface MainContentProps {
 export function MainContent({ children }: MainContentProps) {
   const { bannerHeight } = useBanner();
 
+  const paddingTop = `calc(${bannerHeight}px + var(--nav-height))`;
+
   return (
     <main
       className="transition-[padding-top] duration-200"
       style={{
-        paddingTop: `calc(${bannerHeight}px + var(--nav-height))`,
+        paddingTop,
+        // Für Vollbild-Layouts (z. B. Rhythmus-Spiel): nutzbare Höhe unter Nav/Banner
+        ["--main-padding-top" as string]: paddingTop,
       }}
     >
       <style jsx>{`
