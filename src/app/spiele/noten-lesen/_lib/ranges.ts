@@ -24,8 +24,16 @@ function midiToWrittenPitchSharpEnharmonic(midi: number): WrittenPitch | null {
 const trumpetBeginnerLo: WrittenPitch = { letter: "E", octave: 4, alter: 0 };
 const trumpetBeginnerHi: WrittenPitch = { letter: "G", octave: 5, alter: 0 };
 
-const trumpetIntermediateLo: WrittenPitch = { letter: "C", octave: 4, alter: 0 };
-const trumpetIntermediateHi: WrittenPitch = { letter: "C", octave: 6, alter: 0 };
+const trumpetIntermediateLo: WrittenPitch = {
+  letter: "C",
+  octave: 4,
+  alter: 0,
+};
+const trumpetIntermediateHi: WrittenPitch = {
+  letter: "C",
+  octave: 6,
+  alter: 0,
+};
 
 /** Horn in F (geschrieben): tieferer Einstieg als Trompete, größerer Mittel-/Tieflage-Anteil. */
 const hornBeginnerLo: WrittenPitch = { letter: "G", octave: 3, alter: 0 };
@@ -55,13 +63,29 @@ const bassIntermediateHi: WrittenPitch = { letter: "F", octave: 4, alter: 0 };
 /** C-Schlüssel üben: diatonisch, nur Naturtöne (alter 0). */
 const altoLearnBeginnerLo: WrittenPitch = { letter: "C", octave: 4, alter: 0 };
 const altoLearnBeginnerHi: WrittenPitch = { letter: "G", octave: 4, alter: 0 };
-const altoLearnIntermediateLo: WrittenPitch = { letter: "A", octave: 3, alter: 0 };
-const altoLearnIntermediateHi: WrittenPitch = { letter: "C", octave: 5, alter: 0 };
+const altoLearnIntermediateLo: WrittenPitch = {
+  letter: "A",
+  octave: 3,
+  alter: 0,
+};
+const altoLearnIntermediateHi: WrittenPitch = {
+  letter: "C",
+  octave: 5,
+  alter: 0,
+};
 
 const tenorLearnBeginnerLo: WrittenPitch = { letter: "C", octave: 4, alter: 0 };
 const tenorLearnBeginnerHi: WrittenPitch = { letter: "G", octave: 4, alter: 0 };
-const tenorLearnIntermediateLo: WrittenPitch = { letter: "F", octave: 3, alter: 0 };
-const tenorLearnIntermediateHi: WrittenPitch = { letter: "A", octave: 4, alter: 0 };
+const tenorLearnIntermediateLo: WrittenPitch = {
+  letter: "F",
+  octave: 3,
+  alter: 0,
+};
+const tenorLearnIntermediateHi: WrittenPitch = {
+  letter: "A",
+  octave: 4,
+  alter: 0,
+};
 
 const BASS_ADV_LO_MIDI = 34; // H1 / tiefer noch möglich — praktischer Tuba-Umfang
 const BASS_ADV_HI_MIDI = 77; // F5
@@ -147,7 +171,10 @@ export function midiToWrittenPitch(midi: number): WrittenPitch {
   }
 }
 
-export function chromaticBetween(loMidi: number, hiMidi: number): WrittenPitch[] {
+export function chromaticBetween(
+  loMidi: number,
+  hiMidi: number,
+): WrittenPitch[] {
   const byKey = new Map<string, WrittenPitch>();
   const add = (p: WrittenPitch) => {
     byKey.set(pitchKey(p), p);
@@ -178,7 +205,8 @@ export function pitchPool(
   }
   if (difficulty === "intermediate") {
     if (isLow) return walkDiatonicRange(bassIntermediateLo, bassIntermediateHi);
-    if (isHorn) return walkDiatonicRange(hornIntermediateLo, hornIntermediateHi);
+    if (isHorn)
+      return walkDiatonicRange(hornIntermediateLo, hornIntermediateHi);
     return walkDiatonicRange(trumpetIntermediateLo, trumpetIntermediateHi);
   }
 
@@ -192,7 +220,10 @@ export function pitchPool(
     return walkDiatonicRange(tenorLearnBeginnerLo, tenorLearnBeginnerHi);
   }
   if (difficulty === "tenor_intermediate") {
-    return walkDiatonicRange(tenorLearnIntermediateLo, tenorLearnIntermediateHi);
+    return walkDiatonicRange(
+      tenorLearnIntermediateLo,
+      tenorLearnIntermediateHi,
+    );
   }
 
   if (difficulty === "expert" || difficulty === "hardcore") {

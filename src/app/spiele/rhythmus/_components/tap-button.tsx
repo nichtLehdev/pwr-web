@@ -42,9 +42,7 @@ export function TapButton({
 
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null;
-      if (
-        el?.closest("input, textarea, select, [contenteditable=true]")
-      ) {
+      if (el?.closest("input, textarea, select, [contenteditable=true]")) {
         return;
       }
       if (e.key !== " " && e.key !== "Enter") return;
@@ -54,7 +52,8 @@ export function TapButton({
     };
 
     window.addEventListener("keydown", onKey, { capture: true });
-    return () => window.removeEventListener("keydown", onKey, { capture: true });
+    return () =>
+      window.removeEventListener("keydown", onKey, { capture: true });
   }, [disabled, fire]);
 
   return (
@@ -62,7 +61,7 @@ export function TapButton({
       <button
         type="button"
         disabled={disabled}
-        className="focus-visible:ring-primary bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-sm border border-amber-900/15 text-xl font-black text-white shadow-sm transition select-none hover:brightness-[1.03] active:brightness-95 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-75 sm:min-h-[8rem] sm:text-2xl dark:border-amber-100/20"
+        className="focus-visible:ring-primary bg-primary hover:bg-primary-light dark:hover:bg-primary-dark flex min-h-[7.5rem] w-full touch-manipulation items-center justify-center rounded-sm border border-amber-900/15 text-xl font-black text-white shadow-sm transition select-none hover:brightness-[1.03] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:brightness-95 disabled:cursor-not-allowed disabled:opacity-75 sm:min-h-[8rem] sm:text-2xl dark:border-amber-100/20"
         aria-label={`${label}. Desktop: Leertaste oder Eingabetaste.`}
         aria-keyshortcuts="Space Enter"
         onTouchStart={(e) => {
@@ -79,11 +78,11 @@ export function TapButton({
       </button>
       <p className="text-dark dark:text-dark-text-muted hidden shrink-0 text-center text-sm md:block">
         Desktop:{" "}
-        <kbd className="dark:bg-dark-surface rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
+        <kbd className="dark:bg-dark-surface dark:border-dark-border rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
           Leertaste
         </kbd>{" "}
         oder{" "}
-        <kbd className="dark:bg-dark-surface rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs dark:border-dark-border">
+        <kbd className="dark:bg-dark-surface dark:border-dark-border rounded-sm border border-gray-300 bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
           Enter
         </kbd>
       </p>

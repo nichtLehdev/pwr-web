@@ -43,16 +43,15 @@ function styleNoteAndAccidentals(sn: StaveNote, dark: boolean): void {
 const KEY_SIGNATURE_DEFAULT_ALTERS: Record<
   string,
   Partial<Record<"A" | "H" | "C" | "D" | "E" | "F" | "G", -1 | 0 | 1>>
-> =
-  {
-    C: {},
-    G: { F: 1 },
-    D: { F: 1, C: 1 },
-    F: { H: -1 },
-    Bb: { H: -1, E: -1 },
-    Eb: { H: -1, E: -1, A: -1 },
-    Ab: { H: -1, E: -1, A: -1, D: -1 },
-  };
+> = {
+  C: {},
+  G: { F: 1 },
+  D: { F: 1, C: 1 },
+  F: { H: -1 },
+  Bb: { H: -1, E: -1 },
+  Eb: { H: -1, E: -1, A: -1 },
+  Ab: { H: -1, E: -1, A: -1, D: -1 },
+};
 
 function accidentalForPitchInLayout(
   pitch: WrittenPitch,
@@ -160,7 +159,10 @@ export function StaffDisplay({
        * Notenkopf setzen. So ist das Vorzeichen am Zielton immer eindeutig
        * sichtbar (auch bei Tonartdarstellung am System). */
       const { vexKey } = writtenPitchToVexNoteKeyAndAccidental(pitch);
-      const accidental = accidentalForPitchInLayout(pitch, staffAccidentalLayout);
+      const accidental = accidentalForPitchInLayout(
+        pitch,
+        staffAccidentalLayout,
+      );
       const note = new StaveNote({
         keys: [vexKey],
         duration: "w",
@@ -227,7 +229,7 @@ export function StaffDisplay({
         flash === "wrong" &&
           "border-rose-500/75 bg-rose-500/12 dark:bg-rose-500/10",
         flash === "none" &&
-          "border-dark-border/50 bg-white/40 dark:border-dark-border dark:bg-dark-surface/50",
+          "border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 bg-white/40",
         className,
       )}
     >

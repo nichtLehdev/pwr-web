@@ -21,10 +21,7 @@ export function GameExitLink({
         top: "max(0.75rem, env(safe-area-inset-top, 0px))",
       }}
     >
-      <ChevronLeft
-        className="h-4 w-4 shrink-0 stroke-[2.25]"
-        aria-hidden
-      />
+      <ChevronLeft className="h-4 w-4 shrink-0 stroke-[2.25]" aria-hidden />
       {label}
     </Link>
   );

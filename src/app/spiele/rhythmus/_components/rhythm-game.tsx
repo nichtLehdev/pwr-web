@@ -214,10 +214,7 @@ export function RhythmGame() {
       const now = performance.now();
       for (let i = 0; i < countIn; i++) {
         const fireAt =
-          wallAnchor +
-          msToFirstClick +
-          i * beatMs +
-          heardLatencyMs;
+          wallAnchor + msToFirstClick + i * beatMs + heardLatencyMs;
         const delay = Math.max(0, fireAt - now);
         const tid = window.setTimeout(() => {
           if (!countInLabelsActiveRef.current) return;
@@ -260,8 +257,7 @@ export function RhythmGame() {
         const playDelayMs = delayToFirst + (countIn - 1) * beatMs;
 
         const tapTid = window.setTimeout(() => {
-          playingStartMsRef.current =
-            performance.now() + countIn * beatMs;
+          playingStartMsRef.current = performance.now() + countIn * beatMs;
         }, tapDelayMs);
         timersRef.current.push(tapTid);
 
@@ -290,7 +286,9 @@ export function RhythmGame() {
       }
 
       if (ctx2.currentTime < tapEnabledCtx - 0.0005) {
-        losWaitRafRef.current = requestAnimationFrame(startPlayingSyncedToAudio);
+        losWaitRafRef.current = requestAnimationFrame(
+          startPlayingSyncedToAudio,
+        );
         return;
       }
 
@@ -298,12 +296,13 @@ export function RhythmGame() {
         tapGateOpenedRef.current = true;
         const nowGate = performance.now();
         const ctxGate = ctx2.currentTime;
-        playingStartMsRef.current =
-          nowGate - (ctxGate - rhythmStartCtx) * 1000;
+        playingStartMsRef.current = nowGate - (ctxGate - rhythmStartCtx) * 1000;
       }
 
       if (ctx2.currentTime < lastCountInClickCtx - 0.0005) {
-        losWaitRafRef.current = requestAnimationFrame(startPlayingSyncedToAudio);
+        losWaitRafRef.current = requestAnimationFrame(
+          startPlayingSyncedToAudio,
+        );
         return;
       }
 
@@ -369,7 +368,7 @@ export function RhythmGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
       <div
         className={cn(
-          "border-dark-border/40 border-b pb-3 dark:border-dark-border/60 md:pb-4",
+          "border-dark-border/40 dark:border-dark-border/60 border-b pb-3 md:pb-4",
           /* Desktop: Linie über die volle Viewport-Breite (Full-Bleed) */
           "md:relative md:ml-[calc(50%-50vw)] md:w-screen md:max-w-[100vw]",
         )}
@@ -405,7 +404,7 @@ export function RhythmGame() {
               className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
               aria-hidden
             />
-            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-xl md:mt-3 md:text-3xl">
+            <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-black tracking-tight md:mt-3 md:text-3xl">
               Rhythmus mitspielen
             </h2>
             <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-md text-sm md:text-base">
@@ -430,7 +429,7 @@ export function RhythmGame() {
                       "flex flex-col items-center gap-1 rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:gap-1.5 md:p-4",
                       difficulty === c.id
                         ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                        : "border-dark-border/50 hover:border-primary/40 bg-transparent dark:border-dark-border dark:hover:border-primary/35",
+                        : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35 bg-transparent",
                     )}
                   >
                     <Icon
@@ -502,9 +501,7 @@ export function RhythmGame() {
         </div>
       )}
 
-      {(phase === "preview" ||
-        phase === "countdown" ||
-        phase === "playing") &&
+      {(phase === "preview" || phase === "countdown" || phase === "playing") &&
         rhythm && (
           <div
             className={cn(
@@ -543,7 +540,7 @@ export function RhythmGame() {
                   className={cn(
                     "pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-sm",
                     countInBeats > 1 && countLabel < countInBeats - 1
-                      ? "bg-background/75 backdrop-blur-[1px] dark:bg-dark-background/80"
+                      ? "bg-background/75 dark:bg-dark-background/80 backdrop-blur-[1px]"
                       : "bg-transparent",
                   )}
                   aria-live="polite"
@@ -584,8 +581,7 @@ export function RhythmGame() {
             <TapDockPortal>
               <TapButton
                 disabled={
-                  phase === "preview" ||
-                  (phase === "countdown" && !tapAllowed)
+                  phase === "preview" || (phase === "countdown" && !tapAllowed)
                 }
                 label={
                   phase === "playing" || (phase === "countdown" && tapAllowed)

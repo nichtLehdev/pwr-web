@@ -77,11 +77,7 @@ function allowedUnits(difficulty: Difficulty, barUnits: number): number[] {
 }
 
 function randomTripletPattern(): [boolean, boolean, boolean] {
-  return [
-    Math.random() > 0.15,
-    Math.random() > 0.25,
-    Math.random() > 0.15,
-  ];
+  return [Math.random() > 0.15, Math.random() > 0.25, Math.random() > 0.15];
 }
 
 function partitionBar(
@@ -140,7 +136,9 @@ function fallbackBarChunks(barUnits: number): Chunk[] {
     }
   }
   if (remaining !== 0) {
-    throw new Error(`fallbackBarChunks: cannot fill bar (${barUnits}), left ${remaining}`);
+    throw new Error(
+      `fallbackBarChunks: cannot fill bar (${barUnits}), left ${remaining}`,
+    );
   }
   return out;
 }

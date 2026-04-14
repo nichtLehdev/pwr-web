@@ -1,6 +1,11 @@
 "use client";
 
-import { PartyPopper, RotateCcw, SlidersHorizontal, Trophy } from "lucide-react";
+import {
+  PartyPopper,
+  RotateCcw,
+  SlidersHorizontal,
+  Trophy,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type GriffeMissedRow = {
@@ -41,7 +46,7 @@ export function GriffeResultView({
     .slice(0, 8);
 
   return (
-    <div className="space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6 dark:border-dark-border/80">
+    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
       <div className="text-center">
         {percent >= 75 ? (
           <Trophy
@@ -67,7 +72,7 @@ export function GriffeResultView({
       </div>
 
       {topMissed.length > 0 && (
-        <div className="border-dark-border/50 dark:border-dark-border rounded-sm border bg-white/50 p-4 dark:bg-dark-surface/40">
+        <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border bg-white/50 p-4">
           <p className="text-dark dark:text-dark-text mb-2 text-sm font-black">
             Am häufigsten daneben
           </p>
@@ -75,10 +80,10 @@ export function GriffeResultView({
             {topMissed.map((row) => (
               <li
                 key={row.label}
-                className="flex justify-between gap-3 border-b border-dark-border/30 pb-1 last:border-0 dark:border-dark-border/40"
+                className="border-dark-border/30 dark:border-dark-border/40 flex justify-between gap-3 border-b pb-1 last:border-0"
               >
                 <span className="font-semibold">{row.label}</span>
-                <span className="tabular-nums font-bold">{row.count}×</span>
+                <span className="font-bold tabular-nums">{row.count}×</span>
               </li>
             ))}
           </ul>
@@ -101,7 +106,10 @@ export function GriffeResultView({
             "border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center justify-center gap-2 rounded-sm border px-4 py-3.5 text-base font-bold transition-colors",
           )}
         >
-          <SlidersHorizontal className="h-5 w-5 shrink-0 stroke-[2]" aria-hidden />
+          <SlidersHorizontal
+            className="h-5 w-5 shrink-0 stroke-[2]"
+            aria-hidden
+          />
           Setup ändern
         </button>
       </div>

@@ -2,7 +2,13 @@
 
 import { useTheme } from "@/app/_components/general/theme-provider";
 import { cn } from "@/lib/utils";
-import VexFlow, { Renderer, RendererBackends, Stave, StaveNote, TickContext } from "vexflow";
+import VexFlow, {
+  Renderer,
+  RendererBackends,
+  Stave,
+  StaveNote,
+  TickContext,
+} from "vexflow";
 import { useCallback, useEffect, useRef } from "react";
 import type { NoteValueId } from "../_lib/types";
 
@@ -46,9 +52,14 @@ export function NoteGlyph({ id, className }: Props) {
       // Do not draw stave at all; it is only used for note positioning math.
 
       // VexFlow rests sit lower for the same key; give rests a higher anchor.
-      const keyFor = (duration: string) => (duration.includes("r") ? "g/5" : "d/5");
+      const keyFor = (duration: string) =>
+        duration.includes("r") ? "g/5" : "d/5";
       const mk = (duration: string) =>
-        new StaveNote({ keys: [keyFor(duration)], duration, clef: "treble" }).setStyle({
+        new StaveNote({
+          keys: [keyFor(duration)],
+          duration,
+          clef: "treble",
+        }).setStyle({
           fillStyle: color,
           strokeStyle: color,
         });
@@ -119,9 +130,11 @@ export function NoteGlyph({ id, className }: Props) {
         (svg as SVGSVGElement).style.left = "50%";
         (svg as SVGSVGElement).style.overflow = "visible";
         (svg as SVGSVGElement).style.transform = "translate(-50%, -22px)";
-        svg.querySelectorAll(".vf-stave path, .vf-stave line, .vf-stave rect").forEach((n) => {
-          n.remove();
-        });
+        svg
+          .querySelectorAll(".vf-stave path, .vf-stave line, .vf-stave rect")
+          .forEach((n) => {
+            n.remove();
+          });
       }
     } catch {
       // Fail-soft fallback: never leave empty cells.
@@ -134,5 +147,11 @@ export function NoteGlyph({ id, className }: Props) {
     void draw();
   }, [draw]);
 
-  return <div ref={ref} className={cn("relative z-20 overflow-visible", className)} aria-hidden />;
+  return (
+    <div
+      ref={ref}
+      className={cn("relative z-20 overflow-visible", className)}
+      aria-hidden
+    />
+  );
 }

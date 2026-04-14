@@ -3,10 +3,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Music, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StaffDisplay, type StaffFlash } from "../../noten-lesen/_components/staff-display";
+import {
+  StaffDisplay,
+  type StaffFlash,
+} from "../../noten-lesen/_components/staff-display";
 import { ScoreBar } from "../../noten-lesen/_components/score-bar";
 import type { GameModeId } from "../../noten-lesen/_lib/types";
-import { answerLabelForPitch, writtenPitchToMidi } from "../../noten-lesen/_lib/pitch";
+import {
+  answerLabelForPitch,
+  writtenPitchToMidi,
+} from "../../noten-lesen/_lib/pitch";
 import { pitchKey } from "../../noten-lesen/_lib/ranges";
 import type { WrittenPitch } from "../../noten-lesen/_lib/types";
 import {
@@ -33,10 +39,7 @@ import {
 } from "../_lib/types";
 import { FingeringText } from "./fingering-text";
 import { GriffeInstrumentSelector } from "./griffe-instrument-selector";
-import {
-  GriffeResultView,
-  type GriffeRoundResult,
-} from "./griffe-result-view";
+import { GriffeResultView, type GriffeRoundResult } from "./griffe-result-view";
 import { SlideDiagram } from "./slide-diagram";
 import { buildTromboneToken } from "./slide-diagram";
 import { ValveDiagram } from "./valve-diagram";
@@ -162,7 +165,11 @@ export function FingeringGame() {
     if (!pitch) return;
     if (process.env.NODE_ENV === "production") return;
     // Debug: aktuell angezeigte Note als MIDI verfolgen.
-    console.debug("[Griffe] displayed note midi:", writtenPitchToMidi(pitch), pitch);
+    console.debug(
+      "[Griffe] displayed note midi:",
+      writtenPitchToMidi(pitch),
+      pitch,
+    );
   }, [pitch]);
 
   useEffect(() => {
@@ -458,7 +465,14 @@ export function FingeringGame() {
       quart: slideQuart,
     });
     resolveAnswer([[token]], {});
-  }, [answerLocked, inputKind, resolveAnswer, slidePosition, slideQuart, slideRegister]);
+  }, [
+    answerLocked,
+    inputKind,
+    resolveAnswer,
+    slidePosition,
+    slideQuart,
+    slideRegister,
+  ]);
 
   useEffect(() => {
     confirmValvesRef.current = handleConfirmValves;
@@ -514,12 +528,7 @@ export function FingeringGame() {
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [
-    phase,
-    inputKind,
-    answerLocked,
-    toggleValve,
-  ]);
+  }, [phase, inputKind, answerLocked, toggleValve]);
 
   const startGame = useCallback(() => {
     clearTimers();
@@ -556,7 +565,9 @@ export function FingeringGame() {
     return formatVariantDisplay(instrument, [token]);
   })();
 
-  const insShort = GRIFFE_INSTRUMENTS.find((i) => i.id === instrument)?.shortLabel;
+  const insShort = GRIFFE_INSTRUMENTS.find(
+    (i) => i.id === instrument,
+  )?.shortLabel;
 
   if (!hydrated) {
     return (
@@ -570,7 +581,7 @@ export function FingeringGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
       <div
         className={cn(
-          "border-dark-border/40 border-b pb-3 dark:border-dark-border/60 md:pb-4",
+          "border-dark-border/40 dark:border-dark-border/60 border-b pb-3 md:pb-4",
           "md:relative md:ml-[calc(50%-50vw)] md:w-screen md:max-w-[100vw]",
         )}
       >
@@ -603,7 +614,7 @@ export function FingeringGame() {
               className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
               aria-hidden
             />
-            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-xl md:mt-3 md:text-3xl">
+            <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-black tracking-tight md:mt-3 md:text-3xl">
               Griffe
             </h2>
             <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-lg text-sm md:text-base">
@@ -649,12 +660,13 @@ export function FingeringGame() {
               {" · "}
               {GRIFFE_DIFFICULTY_LABELS[difficulty].title}
               {" · "}
-              {mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos"}
+              {mode === "learn"
+                ? "Lernen"
+                : mode === "quiz"
+                  ? "Quiz"
+                  : "Endlos"}
               <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition",
-                  setupOpen && "rotate-180",
-                )}
+                className={cn("h-4 w-4 transition", setupOpen && "rotate-180")}
                 aria-hidden
               />
             </button>
@@ -668,7 +680,7 @@ export function FingeringGame() {
           </div>
 
           {setupOpen && (
-            <div className="border-dark-border/60 bg-white/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border p-4">
+            <div className="border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border bg-white/50 p-4">
               <GriffeInstrumentSelector
                 instrument={instrument}
                 mode={mode}
@@ -712,7 +724,7 @@ export function FingeringGame() {
 
           {learnLine && (
             <p
-              className="text-dark dark:text-dark-text-secondary max-h-[20vh] shrink-0 overflow-y-auto rounded-sm border border-dark-border/40 bg-white/60 px-3 py-2 text-sm leading-snug dark:border-dark-border dark:bg-dark-background/50"
+              className="text-dark dark:text-dark-text-secondary border-dark-border/40 dark:border-dark-border dark:bg-dark-background/50 max-h-[20vh] shrink-0 overflow-y-auto rounded-sm border bg-white/60 px-3 py-2 text-sm leading-snug"
               aria-live="polite"
             >
               {learnLine}
@@ -736,7 +748,7 @@ export function FingeringGame() {
                   type="button"
                   disabled={answerLocked || slidePosition == null}
                   onClick={handleConfirmSlide}
-                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark disabled:opacity-55 w-full rounded-sm py-4 text-lg font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed"
+                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-sm py-4 text-lg font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   Antwort bestätigen
                 </button>
@@ -756,7 +768,7 @@ export function FingeringGame() {
                   type="button"
                   disabled={answerLocked}
                   onClick={handleConfirmValves}
-                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark disabled:opacity-55 w-full rounded-sm py-4 text-lg font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed"
+                  className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark w-full rounded-sm py-4 text-lg font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-55"
                 >
                   Antwort bestätigen
                 </button>

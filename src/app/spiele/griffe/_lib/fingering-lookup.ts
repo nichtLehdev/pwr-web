@@ -31,9 +31,8 @@ function entry(v: string[][], m?: string): FingeringEntry {
  * Sekunde tiefer, gleiche Benennung wie `midiToWrittenPitch(MIDI − 2)`).
  */
 const TRUMPET_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
- 
   // 55 — Stimm Ges3 — Konzert: E3
- 54: entry([["1", "2", "3"]],),
+  54: entry([["1", "2", "3"]]),
   // 57 — Stimm G3 — Konzert: F3
   55: entry([["1", "3"]]),
   // 57 — Stimm As3 — Konzert: Ges3
@@ -95,7 +94,10 @@ const TRUMPET_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 84 — Stimm C6 — Konzert: B5
   84: entry([["0"]]),
   // 85 — Stimm Des6 — Konzert: H5
-  85: entry([["1", "2"], ["1", "2", "3"]]),
+  85: entry([
+    ["1", "2"],
+    ["1", "2", "3"],
+  ]),
   // 86 — Stimm D6 — Konzert: C6
   86: entry([["1"]]),
   // 87 — Stimm Es6 — Konzert: Des6
@@ -176,7 +178,10 @@ const TUBA_BY_MIDI: Partial<Record<number, FingeringEntry>> = {
   // 64 — Konzert: E4
   64: entry([["1", "2"]]),
   // 65 — Konzert: F4
-  65: entry([["2", "3", "4"], ["1", "4"]]),
+  65: entry([
+    ["2", "3", "4"],
+    ["1", "4"],
+  ]),
   // 66 — Konzert: Ges4
   66: entry([["2", "3"]]),
   // 67 — Konzert: G4
@@ -297,9 +302,7 @@ export function getRawFingeringEntry(
 
   if (inst === "trumpet_c" || inst === "trumpet_bb") {
     const lk =
-      inst === "trumpet_c"
-        ? trumpetTableMidiFromConcertDisplayMidi(m)
-        : m;
+      inst === "trumpet_c" ? trumpetTableMidiFromConcertDisplayMidi(m) : m;
     return TRUMPET_BY_MIDI[lk] ?? null;
   }
 

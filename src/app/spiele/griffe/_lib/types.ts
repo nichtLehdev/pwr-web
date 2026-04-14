@@ -2,7 +2,11 @@ import type { GameModeId } from "../../noten-lesen/_lib/types";
 
 export type { GameModeId };
 
-export type GriffeInstrumentId = "trumpet_c" | "trumpet_bb" | "trombone" | "tuba";
+export type GriffeInstrumentId =
+  | "trumpet_c"
+  | "trumpet_bb"
+  | "trombone"
+  | "tuba";
 
 export type GriffeDifficultyId = "beginner" | "intermediate" | "advanced";
 
@@ -37,7 +41,8 @@ export const GRIFFE_INSTRUMENTS: GriffeInstrumentConfig[] = [
     label: "Posaune",
     shortLabel: "Pos.",
     inputKind: "slide",
-    description: "Zugpositionen 1–7 (geschriebener Tenor-/Bassschlüssel wie üblich).",
+    description:
+      "Zugpositionen 1–7 (geschriebener Tenor-/Bassschlüssel wie üblich).",
   },
 ];
 

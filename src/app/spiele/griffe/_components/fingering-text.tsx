@@ -12,7 +12,7 @@ export function FingeringText({ label, className }: FingeringTextProps) {
   return (
     <p
       className={cn(
-        "text-dark dark:text-dark-text text-center text-lg font-black tabular-nums tracking-tight md:text-xl",
+        "text-dark dark:text-dark-text text-center text-lg font-black tracking-tight tabular-nums md:text-xl",
         className,
       )}
       aria-live="polite"

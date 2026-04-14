@@ -84,9 +84,7 @@ export function InstrumentSelector({
             aria-expanded={extraOpen}
             className="text-dark dark:text-dark-text hover:bg-background-secondary/80 dark:hover:bg-dark-background/50 flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-bold transition-colors"
           >
-            <span>
-              Weitere Modi (Altschlüssel, Tenorschlüssel, Hardcore)
-            </span>
+            <span>Weitere Modi (Altschlüssel, Tenorschlüssel, Hardcore)</span>
             <ChevronDown
               className={cn(
                 "h-4 w-4 shrink-0 transition-transform",
@@ -96,7 +94,7 @@ export function InstrumentSelector({
             />
           </button>
           {!extraOpen && isExtraSectionDifficulty(difficulty) && (
-            <p className="text-dark dark:text-dark-text-muted border-dark-border/40 border-t px-3 py-2 text-center text-xs dark:border-dark-border/60">
+            <p className="text-dark dark:text-dark-text-muted border-dark-border/40 dark:border-dark-border/60 border-t px-3 py-2 text-center text-xs">
               Gewählt:{" "}
               <span className="text-dark dark:text-dark-text font-bold">
                 {DIFFICULTY_LABELS[difficulty].title}
@@ -104,7 +102,7 @@ export function InstrumentSelector({
             </p>
           )}
           {extraOpen && (
-            <div className="border-dark-border/40 space-y-2 border-t p-3 dark:border-dark-border/60">
+            <div className="border-dark-border/40 dark:border-dark-border/60 space-y-2 border-t p-3">
               <p className="text-dark dark:text-dark-text-muted text-center text-[11px] leading-snug">
                 Altschlüssel und Tenorschlüssel (Anfänger/Mittel) sowie Hardcore
                 — ohne Instrumentwahl.
@@ -183,10 +181,10 @@ export function InstrumentSelector({
                   "flex flex-col items-center gap-1 rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:p-3.5",
                   instrument === ins.id
                     ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                    : "border-dark-border/50 hover:border-primary/40 bg-transparent dark:border-dark-border dark:hover:border-primary/35",
+                    : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35 bg-transparent",
                 )}
               >
-                <span className="text-dark dark:text-dark-text font-bold leading-tight">
+                <span className="text-dark dark:text-dark-text leading-tight font-bold">
                   {ins.label}
                 </span>
                 <span className="text-dark dark:text-dark-text-muted text-[11px] leading-snug">

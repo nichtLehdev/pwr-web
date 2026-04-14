@@ -35,14 +35,36 @@ export const NOTE_VALUES: Record<NoteValueId, NoteValueDef> = {
   eighth: { id: "eighth", label: "Achtel", units: 12 },
   dottedEighth: { id: "dottedEighth", label: "Punkt. Achtel", units: 18 },
   sixteenth: { id: "sixteenth", label: "Sechzehntel", units: 6 },
-  dottedSixteenth: { id: "dottedSixteenth", label: "Punkt. Sechzehntel", units: 9 },
+  dottedSixteenth: {
+    id: "dottedSixteenth",
+    label: "Punkt. Sechzehntel",
+    units: 9,
+  },
   thirtySecond: { id: "thirtySecond", label: "32tel", units: 3 },
-  restQuarter: { id: "restQuarter", label: "Viertelpause", units: 24, isRest: true },
-  restEighth: { id: "restEighth", label: "Achtelpause", units: 12, isRest: true },
-  restSixteenth: { id: "restSixteenth", label: "Sechzehntelpause", units: 6, isRest: true },
+  restQuarter: {
+    id: "restQuarter",
+    label: "Viertelpause",
+    units: 24,
+    isRest: true,
+  },
+  restEighth: {
+    id: "restEighth",
+    label: "Achtelpause",
+    units: 12,
+    isRest: true,
+  },
+  restSixteenth: {
+    id: "restSixteenth",
+    label: "Sechzehntelpause",
+    units: 6,
+    isRest: true,
+  },
 };
 
-export const DIFFICULTY_LABELS: Record<DifficultyId, { title: string; hint: string }> = {
+export const DIFFICULTY_LABELS: Record<
+  DifficultyId,
+  { title: string; hint: string }
+> = {
   beginner: {
     title: "Anfänger",
     hint: "Ganze, Halbe, Viertel",
@@ -59,7 +81,14 @@ export const DIFFICULTY_LABELS: Record<DifficultyId, { title: string; hint: stri
 
 export const DIFFICULTY_VALUES: Record<DifficultyId, NoteValueId[]> = {
   beginner: ["whole", "half", "quarter"],
-  intermediate: ["whole", "half", "quarter", "eighth", "dottedQuarter", "dottedHalf"],
+  intermediate: [
+    "whole",
+    "half",
+    "quarter",
+    "eighth",
+    "dottedQuarter",
+    "dottedHalf",
+  ],
   advanced: [
     "whole",
     "dottedWhole",

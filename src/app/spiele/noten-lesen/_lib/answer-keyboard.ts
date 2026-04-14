@@ -35,9 +35,7 @@ export function keyboardHintLines(optionCount: number): string[] {
     ];
   }
   if (optionCount === 10) {
-    return [
-      "Tastatur (Desktop): Zifferntasten 1–9 und 0 für die 10. Antwort.",
-    ];
+    return ["Tastatur (Desktop): Zifferntasten 1–9 und 0 für die 10. Antwort."];
   }
   if (optionCount === 11) {
     return [
@@ -54,7 +52,9 @@ export function desktopAnswerShortcutsActive(): boolean {
   return window.matchMedia("(min-width: 768px) and (pointer: fine)").matches;
 }
 
-export function keyboardTargetAllowsShortcuts(target: EventTarget | null): boolean {
+export function keyboardTargetAllowsShortcuts(
+  target: EventTarget | null,
+): boolean {
   if (!(target instanceof HTMLElement)) return true;
   const tag = target.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return false;

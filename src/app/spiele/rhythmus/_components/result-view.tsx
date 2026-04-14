@@ -17,10 +17,8 @@ export interface ResultViewProps {
 }
 
 function cheerLine(percent: number): { line: string; icon: LucideIcon } {
-  if (percent >= 92)
-    return { line: "Hammer — fast perfekt!", icon: Trophy };
-  if (percent >= 80)
-    return { line: "Richtig gut im Takt!", icon: Star };
+  if (percent >= 92) return { line: "Hammer — fast perfekt!", icon: Trophy };
+  if (percent >= 80) return { line: "Richtig gut im Takt!", icon: Star };
   if (percent >= 65)
     return { line: "Weiter so, das klappt!", icon: PartyPopper };
   if (percent >= 45) return { line: "Üben lohnt sich!", icon: Dumbbell };
@@ -32,7 +30,7 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
   const CheerIcon = cheer.icon;
 
   return (
-    <div className="space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6 dark:border-dark-border/80">
+    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
       <div className="text-center">
         <CheerIcon
           className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-20 md:w-20 md:stroke-[1.3]"
@@ -65,19 +63,19 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
         )}
       </div>
 
-      <details className="group rounded-sm border border-gray-200/80 bg-white/50 dark:border-dark-border dark:bg-dark-background/40">
-        <summary className="cursor-pointer list-none px-4 py-3 text-center text-sm font-bold text-dark marker:hidden dark:text-dark-text [&::-webkit-details-marker]:hidden">
+      <details className="group dark:border-dark-border dark:bg-dark-background/40 rounded-sm border border-gray-200/80 bg-white/50">
+        <summary className="text-dark dark:text-dark-text cursor-pointer list-none px-4 py-3 text-center text-sm font-bold marker:hidden [&::-webkit-details-marker]:hidden">
           <span className="group-open:hidden">Alle Schläge anzeigen</span>
           <span className="hidden group-open:inline">Details ausblenden</span>
         </summary>
-        <p className="text-dark dark:text-dark-text-muted border-t border-gray-100 px-4 pb-2 text-xs dark:border-dark-border">
-          „Verpasst“ = kein Tipp für diesen Schlag. „Extra“ = Tipp ohne passenden
-          Schlag.
+        <p className="text-dark dark:text-dark-text-muted dark:border-dark-border border-t border-gray-100 px-4 pb-2 text-xs">
+          „Verpasst“ = kein Tipp für diesen Schlag. „Extra“ = Tipp ohne
+          passenden Schlag.
         </p>
         <div className="overflow-x-auto px-2 pb-3">
           <table className="w-full min-w-[280px] text-left text-sm">
             <thead>
-              <tr className="border-dark-border text-dark dark:text-dark-text-secondary border-b text-xs uppercase dark:border-dark-border">
+              <tr className="border-dark-border text-dark dark:text-dark-text-secondary dark:border-dark-border border-b text-xs uppercase">
                 <th className="py-2 pr-2">Nr.</th>
                 <th className="py-2 pr-2">Soll</th>
                 <th className="py-2 pr-2">Ist</th>
@@ -88,7 +86,7 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
               {result.beats.map((b, i) => (
                 <tr
                   key={i}
-                  className="border-dark-border/50 border-b dark:border-dark-border/50"
+                  className="border-dark-border/50 dark:border-dark-border/50 border-b"
                 >
                   <td className="text-dark dark:text-dark-text py-1.5 pr-2">
                     {i + 1}
@@ -123,7 +121,7 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
         <button
           type="button"
           onClick={onRetry}
-          className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-sm border bg-white px-4 py-4 text-base font-bold transition dark:bg-dark-surface"
+          className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background dark:bg-dark-surface flex-1 rounded-sm border bg-white px-4 py-4 text-base font-bold transition"
         >
           Von vorn
         </button>

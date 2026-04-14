@@ -13,7 +13,7 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
 
   if (standalone) {
     return (
-      <div className="relative flex min-h-dvh min-h-[100svh] flex-col overflow-x-hidden bg-gradient-to-b from-amber-50/95 via-sky-50/35 to-background dark:from-dark-background dark:via-amber-950/25 dark:to-dark-background">
+      <div className="to-background dark:from-dark-background dark:to-dark-background relative flex min-h-[100svh] min-h-dvh flex-col overflow-x-hidden bg-gradient-to-b from-amber-50/95 via-sky-50/35 dark:via-amber-950/25">
         {children}
       </div>
     );

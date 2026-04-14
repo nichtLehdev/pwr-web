@@ -62,11 +62,7 @@ export function fixedLearningClef(d: DifficultyId): "alto" | "tenor" | null {
 }
 
 export function hidesInstrumentForDifficulty(d: DifficultyId): boolean {
-  return (
-    fixedLearningClef(d) != null ||
-    d === "expert" ||
-    d === "hardcore"
-  );
+  return fixedLearningClef(d) != null || d === "expert" || d === "hardcore";
 }
 
 export type GameModeId = "learn" | "quiz" | "endless";
@@ -151,8 +147,7 @@ export const DIFFICULTY_LABELS: Record<
   },
   hardcore: {
     title: "Hardcore",
-    hint:
-      "Violin-, Bass-, Altschlüssel und Tenorschlüssel wechseln; voller Umfang mit Vorzeichen",
+    hint: "Violin-, Bass-, Altschlüssel und Tenorschlüssel wechseln; voller Umfang mit Vorzeichen",
   },
 };
 

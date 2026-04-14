@@ -1,6 +1,11 @@
 "use client";
 
-import { PartyPopper, RotateCcw, SlidersHorizontal, Trophy } from "lucide-react";
+import {
+  PartyPopper,
+  RotateCcw,
+  SlidersHorizontal,
+  Trophy,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type NoteReadingResult = {
@@ -31,7 +36,7 @@ export function NoteReadingResultView({
     result.total > 0 ? Math.round((100 * result.correct) / result.total) : 0;
 
   return (
-    <div className="space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6 dark:border-dark-border/80">
+    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
       <div className="text-center">
         {percent >= 75 ? (
           <Trophy
@@ -51,7 +56,8 @@ export function NoteReadingResultView({
           {result.correct}/{result.total}
         </p>
         <p className="text-dark dark:text-dark-text-secondary mt-2 text-sm font-medium">
-          {percent}% richtig · Beste Serie in der Runde: {result.bestStreakRound}
+          {percent}% richtig · Beste Serie in der Runde:{" "}
+          {result.bestStreakRound}
         </p>
       </div>
 
@@ -71,7 +77,10 @@ export function NoteReadingResultView({
             "border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background inline-flex items-center justify-center gap-2 rounded-sm border px-4 py-3.5 text-base font-bold transition-colors",
           )}
         >
-          <SlidersHorizontal className="h-5 w-5 shrink-0 stroke-[2]" aria-hidden />
+          <SlidersHorizontal
+            className="h-5 w-5 shrink-0 stroke-[2]"
+            aria-hidden
+          />
           Schwierigkeit / Modus
         </button>
       </div>

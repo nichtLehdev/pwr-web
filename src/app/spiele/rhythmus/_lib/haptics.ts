@@ -54,7 +54,10 @@ function iosSwitchPulse(): void {
 }
 
 function tryStandardVibrate(pattern: number | number[]): boolean {
-  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") {
+  if (
+    typeof navigator === "undefined" ||
+    typeof navigator.vibrate !== "function"
+  ) {
     return false;
   }
   try {

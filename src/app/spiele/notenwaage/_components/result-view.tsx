@@ -1,6 +1,11 @@
 "use client";
 
-import { PartyPopper, RotateCcw, SlidersHorizontal, Trophy } from "lucide-react";
+import {
+  PartyPopper,
+  RotateCcw,
+  SlidersHorizontal,
+  Trophy,
+} from "lucide-react";
 
 type Props = {
   score: number;
@@ -11,17 +16,32 @@ type Props = {
   onSetup: () => void;
 };
 
-export function NoteWaageResultView({ score, solved, total, bestStreak, onRetry, onSetup }: Props) {
+export function NoteWaageResultView({
+  score,
+  solved,
+  total,
+  bestStreak,
+  onRetry,
+  onSetup,
+}: Props) {
   const percent = total > 0 ? Math.round((100 * solved) / total) : 0;
   return (
-    <div className="space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6 dark:border-dark-border/80">
+    <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
       <div className="text-center">
         {percent >= 75 ? (
-          <Trophy className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16" aria-hidden />
+          <Trophy
+            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            aria-hidden
+          />
         ) : (
-          <PartyPopper className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16" aria-hidden />
+          <PartyPopper
+            className="text-primary mx-auto h-12 w-12 stroke-[1.35] md:h-16 md:w-16"
+            aria-hidden
+          />
         )}
-        <p className="text-dark dark:text-dark-text mt-3 text-lg font-black md:text-xl">Runde beendet</p>
+        <p className="text-dark dark:text-dark-text mt-3 text-lg font-black md:text-xl">
+          Runde beendet
+        </p>
         <p className="text-primary dark:text-primary-light mt-2 text-4xl font-black tabular-nums md:text-5xl">
           {score}
         </p>

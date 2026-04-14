@@ -4,7 +4,9 @@ import { pitchPool } from "../../noten-lesen/_lib/ranges";
 import type { GriffeDifficultyId, GriffeInstrumentId } from "./types";
 
 /** B‑Trompete nutzt denselben geschriebenen Pool wie Trompete in C. */
-export function griffeToNotenInstrumentId(id: GriffeInstrumentId): InstrumentId {
+export function griffeToNotenInstrumentId(
+  id: GriffeInstrumentId,
+): InstrumentId {
   if (id === "trumpet_bb") return "trumpet_c";
   return id as InstrumentId;
 }

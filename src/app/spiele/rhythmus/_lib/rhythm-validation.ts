@@ -137,8 +137,7 @@ export function logRhythmDesiredForDebug(
     bpm,
   );
   const actualMs = totalDurationMs(rhythm.events);
-  const sixteenthUnits =
-    barUnitsPerBar(rhythm.timeSignature) * rhythm.bars;
+  const sixteenthUnits = barUnitsPerBar(rhythm.timeSignature) * rhythm.bars;
 
   const events = rhythm.events.map((e, index) => ({
     index,
@@ -165,7 +164,11 @@ export function logRhythmDesiredForDebug(
           ok: tick.ok,
         }
       : { error: "could_not_build_voice" },
-    durationMs: { expected: expectedMs, actual: actualMs, delta: actualMs - expectedMs },
+    durationMs: {
+      expected: expectedMs,
+      actual: actualMs,
+      delta: actualMs - expectedMs,
+    },
     events,
   };
 

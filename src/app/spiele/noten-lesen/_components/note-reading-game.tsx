@@ -38,10 +38,7 @@ import { InstrumentSelector } from "./instrument-selector";
 import { StaffDisplay, type StaffFlash } from "./staff-display";
 import { AnswerButtons } from "./answer-buttons";
 import { ScoreBar } from "./score-bar";
-import {
-  NoteReadingResultView,
-  type NoteReadingResult,
-} from "./result-view";
+import { NoteReadingResultView, type NoteReadingResult } from "./result-view";
 
 const NEXT_MS = 800;
 const WRONG_MS = 1400;
@@ -95,7 +92,9 @@ export function NoteReadingGame() {
   const bestStreakRoundRef = useRef(0);
   const streakRef = useRef(0);
 
-  const [roundResult, setRoundResult] = useState<NoteReadingResult | null>(null);
+  const [roundResult, setRoundResult] = useState<NoteReadingResult | null>(
+    null,
+  );
   const [setupOpen, setSetupOpen] = useState(false);
   const [staffAccidentalLayout, setStaffAccidentalLayout] =
     useState<StaffAccidentalLayout>(STAFF_LAYOUT_EXPLICIT);
@@ -114,7 +113,7 @@ export function NoteReadingGame() {
   const clef =
     difficulty === "expert" || difficulty === "hardcore"
       ? playClef
-      : learnClef ?? instrumentClef;
+      : (learnClef ?? instrumentClef);
 
   const clearTimers = useCallback(() => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -161,12 +160,7 @@ export function NoteReadingGame() {
     } else if (difficulty === "expert") {
       clefForNote = Math.random() < 0.5 ? "treble" : "bass";
     } else if (difficulty === "hardcore") {
-      const hardcoreClefs: ClefKind[] = [
-        "treble",
-        "alto",
-        "tenor",
-        "bass",
-      ];
+      const hardcoreClefs: ClefKind[] = ["treble", "alto", "tenor", "bass"];
       clefForNote =
         hardcoreClefs[Math.floor(Math.random() * hardcoreClefs.length)]!;
     }
@@ -174,11 +168,7 @@ export function NoteReadingGame() {
       setPlayClef(clefForNote);
     }
 
-    const p = pickRandomPitch(
-      instrument,
-      difficulty,
-      lastMidiRef.current,
-    );
+    const p = pickRandomPitch(instrument, difficulty, lastMidiRef.current);
     lastMidiRef.current = writtenPitchToMidi(p);
     pitchRef.current = p;
     setPitch(p);
@@ -215,13 +205,10 @@ export function NoteReadingGame() {
     setPhase("result");
   }, [clearTimers]);
 
-  const scheduleAfter = useCallback(
-    (ms: number, fn: () => void) => {
-      const id = window.setTimeout(fn, ms);
-      timersRef.current.push(id);
-    },
-    [],
-  );
+  const scheduleAfter = useCallback((ms: number, fn: () => void) => {
+    const id = window.setTimeout(fn, ms);
+    timersRef.current.push(id);
+  }, []);
 
   const advanceAfterAnswer = useCallback(
     (wasCorrect: boolean) => {
@@ -405,14 +392,13 @@ export function NoteReadingGame() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
       <div
         className={cn(
-          "border-dark-border/40 border-b pb-3 dark:border-dark-border/60 md:pb-4",
+          "border-dark-border/40 dark:border-dark-border/60 border-b pb-3 md:pb-4",
           "md:relative md:ml-[calc(50%-50vw)] md:w-screen md:max-w-[100vw]",
         )}
       >
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-center gap-1.5 md:gap-2">
           {["Setup", "Spielen", "Auswertung"].map((label, i) => {
-            const step =
-              phase === "setup" ? 0 : phase === "play" ? 1 : 2;
+            const step = phase === "setup" ? 0 : phase === "play" ? 1 : 2;
             return (
               <div
                 key={label}
@@ -439,7 +425,7 @@ export function NoteReadingGame() {
               className="text-primary mx-auto h-11 w-11 stroke-[1.45] md:h-16 md:w-16 md:stroke-[1.35]"
               aria-hidden
             />
-            <h2 className="text-dark dark:text-dark-text mt-2 font-black tracking-tight text-xl md:mt-3 md:text-3xl">
+            <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-black tracking-tight md:mt-3 md:text-3xl">
               Noten lesen
             </h2>
             <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-lg text-sm md:text-base">
@@ -478,12 +464,13 @@ export function NoteReadingGame() {
               <Settings2 className="h-4 w-4 shrink-0 stroke-[2]" aria-hidden />
               {setupBarLabel}
               {" · "}
-              {mode === "learn" ? "Lernen" : mode === "quiz" ? "Quiz" : "Endlos"}
+              {mode === "learn"
+                ? "Lernen"
+                : mode === "quiz"
+                  ? "Quiz"
+                  : "Endlos"}
               <ChevronDown
-                className={cn(
-                  "h-4 w-4 transition",
-                  setupOpen && "rotate-180",
-                )}
+                className={cn("h-4 w-4 transition", setupOpen && "rotate-180")}
                 aria-hidden
               />
             </button>
@@ -497,7 +484,7 @@ export function NoteReadingGame() {
           </div>
 
           {setupOpen && (
-            <div className="border-dark-border/60 bg-white/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border p-4">
+            <div className="border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border bg-white/50 p-4">
               <InstrumentSelector
                 instrument={instrument}
                 mode={mode}
@@ -540,7 +527,7 @@ export function NoteReadingGame() {
 
           {learnLine && (
             <p
-              className="text-dark dark:text-dark-text-secondary min-h-[2.75rem] rounded-sm border border-dark-border/40 bg-white/60 px-3 py-2 text-sm leading-snug dark:border-dark-border dark:bg-dark-background/50"
+              className="text-dark dark:text-dark-text-secondary border-dark-border/40 dark:border-dark-border dark:bg-dark-background/50 min-h-[2.75rem] rounded-sm border bg-white/60 px-3 py-2 text-sm leading-snug"
               aria-live="polite"
             >
               {learnLine}

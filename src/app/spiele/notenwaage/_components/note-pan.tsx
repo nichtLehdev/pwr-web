@@ -27,7 +27,7 @@ export function NotePan({
           : "h-6 w-6";
 
   return (
-    <div className="border-dark-border/50 dark:border-dark-border rounded-sm border bg-white/60 p-1 dark:bg-dark-surface/40 md:p-1.5">
+    <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/40 rounded-sm border bg-white/60 p-1 md:p-1.5">
       {headerHint && (
         <p className="text-dark dark:text-dark-text-muted mb-0.5 text-center text-[10px] font-bold md:text-[11px]">
           {headerHint}
@@ -35,7 +35,9 @@ export function NotePan({
       )}
       <div className="flex min-h-[70px] flex-nowrap items-center justify-center gap-0.5 overflow-hidden md:min-h-[76px]">
         {notes.length === 0 && (
-          <span className="text-dark dark:text-dark-text-muted text-xs font-semibold">leer</span>
+          <span className="text-dark dark:text-dark-text-muted text-xs font-semibold">
+            leer
+          </span>
         )}
         {notes.map((id, idx) => (
           <button
@@ -43,9 +45,15 @@ export function NotePan({
             type="button"
             disabled={!editable}
             onClick={() => onRemoveAt?.(idx)}
-            className={cn("rounded-sm p-0.5", editable && "hover:bg-dark-border/20")}
+            className={cn(
+              "rounded-sm p-0.5",
+              editable && "hover:bg-dark-border/20",
+            )}
           >
-            <NoteGlyph id={id} className={cn(mobileGlyphClass, "md:h-8 md:w-8")} />
+            <NoteGlyph
+              id={id}
+              className={cn(mobileGlyphClass, "md:h-8 md:w-8")}
+            />
           </button>
         ))}
       </div>

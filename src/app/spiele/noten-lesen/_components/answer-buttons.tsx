@@ -45,7 +45,7 @@ export function AnswerButtons({
               onClick={() => onPick(label)}
               className={cn(
                 "flex min-h-[3.25rem] w-full items-center gap-3 rounded-sm border px-3 py-3 text-left transition active:scale-[0.99] disabled:opacity-40",
-                "border-dark-border/60 bg-white/90 text-dark shadow-sm",
+                "border-dark-border/60 text-dark bg-white/90 shadow-sm",
                 "dark:border-dark-border dark:bg-dark-surface dark:text-dark-text",
                 "hover:border-primary/45 dark:hover:border-primary/40",
                 !isAdvanced && "md:text-xl",
@@ -70,7 +70,7 @@ export function AnswerButtons({
       {hints.length > 0 && (
         <p
           id={hintId}
-          className="text-dark dark:text-dark-text-muted hidden px-0.5 text-center text-xs font-medium leading-snug md:block"
+          className="text-dark dark:text-dark-text-muted hidden px-0.5 text-center text-xs leading-snug font-medium md:block"
         >
           {hints[0]}
         </p>

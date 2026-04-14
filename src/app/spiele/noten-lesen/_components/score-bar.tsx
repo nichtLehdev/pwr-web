@@ -27,14 +27,13 @@ export function ScoreBar({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-2 rounded-sm border border-dark-border/50 bg-white/60 px-3 py-2 text-sm font-bold dark:border-dark-border dark:bg-dark-surface/60",
+        "border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/60 flex flex-wrap items-center justify-between gap-2 rounded-sm border bg-white/60 px-3 py-2 text-sm font-bold",
         className,
       )}
     >
       <div className="text-dark dark:text-dark-text flex flex-wrap gap-x-4 gap-y-1">
         <span>
-          Streak:{" "}
-          <span className="text-primary tabular-nums">{streak}</span>
+          Streak: <span className="text-primary tabular-nums">{streak}</span>
         </span>
         <span className="text-dark dark:text-dark-text-muted font-semibold">
           Beste: <span className="tabular-nums">{bestStreak}</span>

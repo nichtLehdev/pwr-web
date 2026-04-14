@@ -73,7 +73,11 @@ export function staffHalfLineIndex(p: WrittenPitch, clef: ClefKind): number {
 }
 
 /** Distance between staff positions (same accidental base line/space). */
-export function staffDistance(a: WrittenPitch, b: WrittenPitch, clef: ClefKind): number {
+export function staffDistance(
+  a: WrittenPitch,
+  b: WrittenPitch,
+  clef: ClefKind,
+): number {
   return Math.abs(staffHalfLineIndex(a, clef) - staffHalfLineIndex(b, clef));
 }
 
@@ -110,7 +114,10 @@ export function answerLabelForPitch(p: WrittenPitch): string {
   return base;
 }
 
-export function labelsMatchAnswer(tapped: string, pitch: WrittenPitch): boolean {
+export function labelsMatchAnswer(
+  tapped: string,
+  pitch: WrittenPitch,
+): boolean {
   return (
     normalizeAnswerLabel(tapped) ===
     normalizeAnswerLabel(answerLabelForPitch(pitch))
@@ -169,4 +176,12 @@ export const ADVANCED_ANSWER_BANK: string[] = [
   "B",
 ];
 
-export const NATURAL_ANSWER_BANK: string[] = ["C", "D", "E", "F", "G", "A", "H"];
+export const NATURAL_ANSWER_BANK: string[] = [
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "A",
+  "H",
+];

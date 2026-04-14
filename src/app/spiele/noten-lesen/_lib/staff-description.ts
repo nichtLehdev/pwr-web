@@ -1,7 +1,10 @@
 import type { ClefKind, WrittenPitch } from "./types";
 import { staffHalfLineIndex } from "./pitch";
 
-function lineOrSpaceGerman(slot: number): { kind: "Linie" | "Zwischenraum"; n: number } {
+function lineOrSpaceGerman(slot: number): {
+  kind: "Linie" | "Zwischenraum";
+  n: number;
+} {
   const isLine = slot % 2 === 0;
   if (isLine) {
     const lineNumFromBottom = slot / 2 + 1;

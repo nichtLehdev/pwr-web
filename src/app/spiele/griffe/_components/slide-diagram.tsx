@@ -133,7 +133,11 @@ export function SlideDiagram({
             disabled={disabled || forcedToken != null}
             onClick={() => {
               if (effectivePos == null) return;
-              onChange({ position: effectivePos, register: effectiveReg, quart: !effectiveQuart });
+              onChange({
+                position: effectivePos,
+                register: effectiveReg,
+                quart: !effectiveQuart,
+              });
             }}
             className={cn(
               "rounded-sm border px-3 py-2 text-sm font-bold transition",
@@ -146,7 +150,7 @@ export function SlideDiagram({
           </button>
         </div>
 
-        <div className="border-dark-border/50 dark:border-dark-border rounded-sm border bg-white/60 px-4 py-4 dark:bg-dark-surface/50">
+        <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 rounded-sm border bg-white/60 px-4 py-4">
           <div className="flex items-center justify-between">
             <span className="text-dark dark:text-dark-text-muted text-xs font-bold">
               Zugposition
@@ -165,7 +169,11 @@ export function SlideDiagram({
             disabled={disabled || forcedToken != null}
             onChange={(e) => {
               const next = Number(e.target.value);
-              onChange({ position: next, register: effectiveReg, quart: effectiveQuart });
+              onChange({
+                position: next,
+                register: effectiveReg,
+                quart: effectiveQuart,
+              });
             }}
             className={cn(
               "mt-3 w-full",

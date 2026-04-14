@@ -17,11 +17,7 @@ export type ValveDiagramProps = {
 };
 
 function pressedSet(pressed: string[]): Set<string> {
-  return new Set(
-    pressed
-      .map((x) => x.trim())
-      .filter((x) => x && x !== "0"),
-  );
+  return new Set(pressed.map((x) => x.trim()).filter((x) => x && x !== "0"));
 }
 
 export function ValveDiagram({
@@ -57,10 +53,10 @@ export function ValveDiagram({
               onClick={() => onToggle(n)}
               aria-pressed={isOn}
               className={cn(
-                "flex h-[min(72px,18vw)] w-[min(72px,18vw)] min-h-[60px] min-w-[60px] max-h-[88px] max-w-[88px] shrink-0 items-center justify-center rounded-full border-[3px] text-xl font-black transition-all active:scale-[0.97] md:text-2xl",
+                "flex h-[min(72px,18vw)] max-h-[88px] min-h-[60px] w-[min(72px,18vw)] max-w-[88px] min-w-[60px] shrink-0 items-center justify-center rounded-full border-[3px] text-xl font-black transition-all active:scale-[0.97] md:text-2xl",
                 isOn
                   ? "border-primary bg-primary text-white shadow-md"
-                  : "border-dark-border text-dark hover:border-primary/50 bg-white/80 dark:border-dark-border dark:bg-dark-background dark:text-dark-text dark:hover:border-primary/40",
+                  : "border-dark-border text-dark hover:border-primary/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text dark:hover:border-primary/40 bg-white/80",
                 (disabled || forcedPressed != null) && "opacity-90",
               )}
             >

@@ -35,7 +35,10 @@ export function NoteValueGame() {
   const [firstTryStreak, setFirstTryStreak] = useState(0);
   const [bestFirstTry, setBestFirstTry] = useState(0);
 
-  const leftUnits = useMemo(() => (puzzle ? totalUnits(puzzle.left) : 0), [puzzle]);
+  const leftUnits = useMemo(
+    () => (puzzle ? totalUnits(puzzle.left) : 0),
+    [puzzle],
+  );
   const rightUnits = useMemo(() => totalUnits(right), [right]);
   const diffUnits = rightUnits - leftUnits;
 
@@ -100,7 +103,8 @@ export function NoteValueGame() {
     const requiredRests = puzzle.requiredRests;
     const selectedRests = right.filter((id) => NOTE_VALUES[id].isRest).length;
     const selectedNotes = right.length - selectedRests;
-    const requiredNotes = requiredRests == null ? null : puzzle.rightCount - requiredRests;
+    const requiredNotes =
+      requiredRests == null ? null : puzzle.rightCount - requiredRests;
 
     if (right.length === puzzle.rightCount && rightUnits === leftUnits) {
       if (requiredRests != null && selectedRests !== requiredRests) {
@@ -164,7 +168,10 @@ export function NoteValueGame() {
   }, [nextPuzzle]);
 
   const palette = useMemo(
-    () => [...DIFFICULTY_VALUES[difficulty]].sort((a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units),
+    () =>
+      [...DIFFICULTY_VALUES[difficulty]].sort(
+        (a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units,
+      ),
     [difficulty],
   );
 
@@ -185,29 +192,41 @@ export function NoteValueGame() {
     return (
       <div className="space-y-5 md:space-y-6">
         <div className="text-center">
-          <Music className="text-primary mx-auto h-11 w-11 md:h-16 md:w-16" aria-hidden />
-          <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-black md:text-3xl">Notenwaage</h2>
+          <Music
+            className="text-primary mx-auto h-11 w-11 md:h-16 md:w-16"
+            aria-hidden
+          />
+          <h2 className="text-dark dark:text-dark-text mt-2 text-xl font-black md:text-3xl">
+            Notenwaage
+          </h2>
           <p className="text-dark dark:text-dark-text-secondary mx-auto mt-2 max-w-xl text-sm md:text-base">
-            Fülle die rechte Waagschale mit Notenwerten, bis beide Seiten gleich schwer sind.
+            Fülle die rechte Waagschale mit Notenwerten, bis beide Seiten gleich
+            schwer sind.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-          {(["beginner", "intermediate", "advanced"] as DifficultyId[]).map((id) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setDifficulty(id)}
-              className={cn(
-                "rounded-sm border p-3 text-center transition",
-                difficulty === id
-                  ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                  : "border-dark-border/50 dark:border-dark-border",
-              )}
-            >
-              <p className="text-dark dark:text-dark-text font-bold">{DIFFICULTY_LABELS[id].title}</p>
-              <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">{DIFFICULTY_LABELS[id].hint}</p>
-            </button>
-          ))}
+          {(["beginner", "intermediate", "advanced"] as DifficultyId[]).map(
+            (id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setDifficulty(id)}
+                className={cn(
+                  "rounded-sm border p-3 text-center transition",
+                  difficulty === id
+                    ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
+                    : "border-dark-border/50 dark:border-dark-border",
+                )}
+              >
+                <p className="text-dark dark:text-dark-text font-bold">
+                  {DIFFICULTY_LABELS[id].title}
+                </p>
+                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
+                  {DIFFICULTY_LABELS[id].hint}
+                </p>
+              </button>
+            ),
+          )}
         </div>
         <button
           type="button"
@@ -238,12 +257,14 @@ export function NoteValueGame() {
         </button>
       </div>
       <p className="text-dark dark:text-dark-text-secondary text-center text-xs font-bold md:text-sm">
-        Aufgabe: Rechte Seite mit genau <span className="text-primary">{puzzle.rightCount}</span> Symbolen
+        Aufgabe: Rechte Seite mit genau{" "}
+        <span className="text-primary">{puzzle.rightCount}</span> Symbolen
         ausgleichen
       </p>
       {puzzle.requiredRests != null && (
         <p className="text-primary text-center text-[11px] font-black md:text-xs">
-          Challenge: genau {puzzle.rightCount - puzzle.requiredRests} Note(n) + {puzzle.requiredRests} Pause(n)
+          Challenge: genau {puzzle.rightCount - puzzle.requiredRests} Note(n) +{" "}
+          {puzzle.requiredRests} Pause(n)
         </p>
       )}
 
@@ -271,12 +292,13 @@ export function NoteValueGame() {
           />
         </div>
         {feedback && (
-          <p className="text-dark dark:text-dark-text-secondary shrink-0 rounded-sm border border-dark-border/40 bg-white/60 px-2.5 py-1.5 text-xs dark:bg-dark-background/50 md:px-3 md:py-2 md:text-sm">
+          <p className="text-dark dark:text-dark-text-secondary border-dark-border/40 dark:bg-dark-background/50 shrink-0 rounded-sm border bg-white/60 px-2.5 py-1.5 text-xs md:px-3 md:py-2 md:text-sm">
             {feedback}
           </p>
         )}
         <p className="text-dark dark:text-dark-text-muted hidden text-center text-[11px] font-semibold md:block">
-          Tipp: lang drücken im Palette-Feld entfernt die zuletzt hinzugefügte gleiche Note.
+          Tipp: lang drücken im Palette-Feld entfernt die zuletzt hinzugefügte
+          gleiche Note.
         </p>
       </div>
 

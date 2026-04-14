@@ -41,10 +41,7 @@ function timeSigString(ts: TimeSignature): string {
   return `${ts.numerator}/${ts.denominator}`;
 }
 
-function styleNote(
-  sn: StaveNote,
-  dark: boolean,
-): void {
+function styleNote(sn: StaveNote, dark: boolean): void {
   const stroke = dark ? "#e4e6eb" : "#171717";
   /** Pausen: nur Gesamtstil — setKeyStyle(0) trifft oft nur den Kopf, Achtel-/Sechzehntelpausen haben zusätzlich Stem/Flag-Pfade. */
   if (sn.isRest()) {
@@ -96,129 +93,128 @@ export function RhythmDisplay({
     }
 
     try {
-    const marginX = compact ? 6 : 12;
-    const staveY = compact ? 30 : 36;
-    const tsStr = timeSigString(timeSignature);
-    const beamGroups = Beam.getDefaultBeamGroups(tsStr);
+      const marginX = compact ? 6 : 12;
+      const staveY = compact ? 30 : 36;
+      const tsStr = timeSigString(timeSignature);
+      const beamGroups = Beam.getDefaultBeamGroups(tsStr);
 
-    /** Neu bauen pro Layout-Versuch, damit Balken/Tuplet-Zustand nicht zwischen Durchläufen klebt. */
-    const buildStemmables = (): {
-      stemmables: StemmableNote[];
-      tuplets: Tuplet[];
-    } => {
-      const stemmables: StemmableNote[] = [];
-      const tuplets: Tuplet[] = [];
-      let idx = 0;
-      while (idx < events.length) {
-        const ev = events[idx]!;
-        if (ev.tupletGroupId !== undefined) {
-          const group: StaveNote[] = [];
-          const gid = ev.tupletGroupId;
-          while (idx < events.length && events[idx]?.tupletGroupId === gid) {
-            const e = events[idx]!;
-            const sn = staveNoteFromRhythmEvent(e);
+      /** Neu bauen pro Layout-Versuch, damit Balken/Tuplet-Zustand nicht zwischen Durchläufen klebt. */
+      const buildStemmables = (): {
+        stemmables: StemmableNote[];
+        tuplets: Tuplet[];
+      } => {
+        const stemmables: StemmableNote[] = [];
+        const tuplets: Tuplet[] = [];
+        let idx = 0;
+        while (idx < events.length) {
+          const ev = events[idx]!;
+          if (ev.tupletGroupId !== undefined) {
+            const group: StaveNote[] = [];
+            const gid = ev.tupletGroupId;
+            while (idx < events.length && events[idx]?.tupletGroupId === gid) {
+              const e = events[idx]!;
+              const sn = staveNoteFromRhythmEvent(e);
+              styleNote(sn, dark);
+              group.push(sn);
+              stemmables.push(sn);
+              idx++;
+            }
+            tuplets.push(
+              new Tuplet(group, {
+                notesOccupied: ev.tupletNotesOccupied ?? 2,
+                numNotes: ev.tupletNumNotes ?? 3,
+              }),
+            );
+          } else {
+            const sn = staveNoteFromRhythmEvent(ev);
             styleNote(sn, dark);
-            group.push(sn);
             stemmables.push(sn);
             idx++;
           }
-          tuplets.push(
-            new Tuplet(group, {
-              notesOccupied: ev.tupletNotesOccupied ?? 2,
-              numNotes: ev.tupletNumNotes ?? 3,
-            }),
-          );
-        } else {
-          const sn = staveNoteFromRhythmEvent(ev);
-          styleNote(sn, dark);
-          stemmables.push(sn);
-          idx++;
+        }
+        return { stemmables, tuplets };
+      };
+
+      const built = buildStemmables();
+      /** Feste Notenlinien-Breite = verfügbare Breite — kein Verbreitern, kein horizontales Scrollen. */
+      const baseInner = containerW - marginX * 2;
+      const staveWidth = Math.max(120, baseInner);
+
+      const formatterOpts = {
+        maxIterations: compact ? 22 : 28,
+        softmaxFactor: compact ? 7 : 11,
+      };
+
+      const stemmables = built.stemmables;
+      const tuplets = built.tuplets;
+
+      el.innerHTML = "";
+
+      const svgWidth = staveWidth + marginX * 2;
+      const renderer = new Renderer(el, RendererBackends.SVG);
+      renderer.resize(svgWidth, height);
+      const ctx = renderer.getContext();
+
+      const stave = new Stave(marginX, staveY, staveWidth)
+        .addClef("treble")
+        .addTimeSignature(tsStr);
+
+      if (dark) {
+        stave.setStyle({ fillStyle: "#e4e6eb", strokeStyle: "#e4e6eb" });
+      }
+
+      const voice = new Voice({
+        numBeats: timeSignature.numerator * bars,
+        beatValue: timeSignature.denominator,
+      });
+      voice.setMode(VoiceMode.SOFT);
+      voice.setSoftmaxFactor(formatterOpts.softmaxFactor);
+      voice.addTickables(stemmables);
+
+      const beams = Beam.applyAndGetBeams(voice, Stem.UP, beamGroups);
+
+      stave.setContext(ctx);
+      new Formatter(formatterOpts)
+        .joinVoices([voice])
+        .formatToStave([voice], stave, { context: ctx, stave });
+
+      stave.draw();
+      voice.draw(ctx, stave);
+
+      for (const tuplet of tuplets) {
+        tuplet.setContext(ctx).draw();
+      }
+
+      beams.forEach((b) => {
+        b.setContext(ctx).draw();
+      });
+
+      const svg = el.querySelector("svg");
+      if (svg) {
+        svg.setAttribute("overflow", "visible");
+        (svg as SVGSVGElement).style.overflow = "visible";
+      }
+
+      /** Taktstriche zwischen mehreren Takten (eine lange Voice = sonst kein Strich). */
+      const stroke = dark ? "#c9ccd4" : "#1a1a1a";
+      if (stave && ctx) {
+        for (const splitIdx of barStartEventIndices) {
+          if (splitIdx <= 0 || splitIdx >= stemmables.length) continue;
+          const left = stemmables[splitIdx - 1] as StaveNote;
+          const right = stemmables[splitIdx] as StaveNote;
+          const x = (left.getNoteHeadEndX() + right.getNoteHeadBeginX()) / 2;
+          const yTop = stave.getYForLine(0) - 2;
+          const yBottom = stave.getYForLine(4) + 2;
+          ctx.save();
+          ctx.setStrokeStyle(stroke);
+          ctx.setLineWidth(1.25);
+          ctx.beginPath();
+          ctx.moveTo(x, yTop);
+          ctx.lineTo(x, yBottom);
+          ctx.stroke();
+          ctx.restore();
         }
       }
-      return { stemmables, tuplets };
-    };
-
-    const built = buildStemmables();
-    /** Feste Notenlinien-Breite = verfügbare Breite — kein Verbreitern, kein horizontales Scrollen. */
-    const baseInner = containerW - marginX * 2;
-    const staveWidth = Math.max(120, baseInner);
-
-    const formatterOpts = {
-      maxIterations: compact ? 22 : 28,
-      softmaxFactor: compact ? 7 : 11,
-    };
-
-    const stemmables = built.stemmables;
-    const tuplets = built.tuplets;
-
-    el.innerHTML = "";
-
-    const svgWidth = staveWidth + marginX * 2;
-    const renderer = new Renderer(el, RendererBackends.SVG);
-    renderer.resize(svgWidth, height);
-    const ctx = renderer.getContext();
-
-    const stave = new Stave(marginX, staveY, staveWidth)
-      .addClef("treble")
-      .addTimeSignature(tsStr);
-
-    if (dark) {
-      stave.setStyle({ fillStyle: "#e4e6eb", strokeStyle: "#e4e6eb" });
-    }
-
-    const voice = new Voice({
-      numBeats: timeSignature.numerator * bars,
-      beatValue: timeSignature.denominator,
-    });
-    voice.setMode(VoiceMode.SOFT);
-    voice.setSoftmaxFactor(formatterOpts.softmaxFactor);
-    voice.addTickables(stemmables);
-
-    const beams = Beam.applyAndGetBeams(voice, Stem.UP, beamGroups);
-
-    stave.setContext(ctx);
-    new Formatter(formatterOpts)
-      .joinVoices([voice])
-      .formatToStave([voice], stave, { context: ctx, stave });
-
-    stave.draw();
-    voice.draw(ctx, stave);
-
-    for (const tuplet of tuplets) {
-      tuplet.setContext(ctx).draw();
-    }
-
-    beams.forEach((b) => {
-      b.setContext(ctx).draw();
-    });
-
-    const svg = el.querySelector("svg");
-    if (svg) {
-      svg.setAttribute("overflow", "visible");
-      (svg as SVGSVGElement).style.overflow = "visible";
-    }
-
-    /** Taktstriche zwischen mehreren Takten (eine lange Voice = sonst kein Strich). */
-    const stroke = dark ? "#c9ccd4" : "#1a1a1a";
-    if (stave && ctx) {
-      for (const splitIdx of barStartEventIndices) {
-        if (splitIdx <= 0 || splitIdx >= stemmables.length) continue;
-        const left = stemmables[splitIdx - 1] as StaveNote;
-        const right = stemmables[splitIdx] as StaveNote;
-        const x =
-          (left.getNoteHeadEndX() + right.getNoteHeadBeginX()) / 2;
-        const yTop = stave.getYForLine(0) - 2;
-        const yBottom = stave.getYForLine(4) + 2;
-        ctx.save();
-        ctx.setStrokeStyle(stroke);
-        ctx.setLineWidth(1.25);
-        ctx.beginPath();
-        ctx.moveTo(x, yTop);
-        ctx.lineTo(x, yBottom);
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
     } finally {
       if (prevMetrics) {
         MetricsDefaults.fontScale = prevMetrics.fontScale;
@@ -245,7 +241,7 @@ export function RhythmDisplay({
 
   return (
     <div
-      className="border-dark-border/40 dark:border-dark-border w-full overflow-y-visible rounded-sm border bg-white p-2 pb-4 md:p-3 dark:bg-dark-surface"
+      className="border-dark-border/40 dark:border-dark-border dark:bg-dark-surface w-full overflow-y-visible rounded-sm border bg-white p-2 pb-4 md:p-3"
       aria-hidden
     >
       {/* Feste SVG-Breite = Container; kein horizontales Scrollen (VexFlow packt in die Notenlinien). */}

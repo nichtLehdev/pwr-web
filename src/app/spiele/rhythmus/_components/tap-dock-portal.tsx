@@ -32,11 +32,10 @@ export function TapDockPortal({ children }: TapDockPortalProps) {
       className={cn(
         "flex w-full shrink-0 flex-col",
         isMobile &&
-          "fixed inset-x-0 bottom-0 z-[10050] transform-gpu border-t border-amber-200/70 bg-gradient-to-t from-amber-50/98 via-white/95 to-white/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.08)] dark:border-cyan-900/40 dark:from-dark-background dark:via-dark-background/95 dark:to-dark-background/90 dark:shadow-[0_-8px_32px_rgba(0,0,0,0.35)]",
+          "dark:from-dark-background dark:via-dark-background/95 dark:to-dark-background/90 fixed inset-x-0 bottom-0 z-[10050] transform-gpu border-t border-amber-200/70 bg-gradient-to-t from-amber-50/98 via-white/95 to-white/90 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.08)] dark:border-cyan-900/40 dark:shadow-[0_-8px_32px_rgba(0,0,0,0.35)]",
         !isMobile &&
           "relative z-auto border-transparent bg-transparent px-0 pt-0 shadow-none dark:border-transparent",
-        !isMobile &&
-          "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
+        !isMobile && "pb-[max(0.5rem,env(safe-area-inset-bottom))]",
       )}
     >
       {children}

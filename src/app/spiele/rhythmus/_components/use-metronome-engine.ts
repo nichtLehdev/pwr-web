@@ -43,7 +43,10 @@ function schedulePitchedTone(
   const startAt = Math.max(atCtxTime, ctx.currentTime + 0.005);
   const attack = Math.min(0.012, durationSec * 0.15);
   const release = Math.min(0.12, durationSec * 0.45);
-  const sustainEnd = Math.max(startAt + attack, startAt + durationSec - release);
+  const sustainEnd = Math.max(
+    startAt + attack,
+    startAt + durationSec - release,
+  );
 
   g.gain.setValueAtTime(0, startAt);
   g.gain.linearRampToValueAtTime(peakGain, startAt + attack);
@@ -158,7 +161,11 @@ export function useMetronomeEngine(): MetronomeEngine {
   }, []);
 
   const schedulePreview = useCallback(
-    (events: RhythmEvent[], startCtxTime: number, rhythmStartOffsetMs: number) => {
+    (
+      events: RhythmEvent[],
+      startCtxTime: number,
+      rhythmStartOffsetMs: number,
+    ) => {
       const ctx = ctxRef.current;
       if (!ctx) return;
 

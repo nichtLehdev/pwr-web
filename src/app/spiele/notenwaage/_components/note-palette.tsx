@@ -35,18 +35,23 @@ export function NotePalette({
             onClick={() => onAdd(id)}
             onPointerDown={() => {
               if (disabled) return;
-              pressTimer.current = window.setTimeout(() => onRemoveLastOf(id), 420);
+              pressTimer.current = window.setTimeout(
+                () => onRemoveLastOf(id),
+                420,
+              );
             }}
             onPointerUp={() => {
-              if (pressTimer.current != null) window.clearTimeout(pressTimer.current);
+              if (pressTimer.current != null)
+                window.clearTimeout(pressTimer.current);
               pressTimer.current = null;
             }}
             onPointerLeave={() => {
-              if (pressTimer.current != null) window.clearTimeout(pressTimer.current);
+              if (pressTimer.current != null)
+                window.clearTimeout(pressTimer.current);
               pressTimer.current = null;
             }}
             className={cn(
-              "border-dark-border/60 dark:border-dark-border flex min-h-[56px] flex-col items-center justify-center rounded-sm border bg-white/80 p-1.5 transition active:scale-[0.98] dark:bg-dark-surface/60 md:min-h-[64px] md:p-2",
+              "border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/60 flex min-h-[56px] flex-col items-center justify-center rounded-sm border bg-white/80 p-1.5 transition active:scale-[0.98] md:min-h-[64px] md:p-2",
               !disabled && "hover:border-primary/50",
               disabled && "opacity-60",
             )}
@@ -54,7 +59,7 @@ export function NotePalette({
             <NoteGlyph id={id} className="h-7 w-7 md:h-10 md:w-10" />
             {showDescriptions && (
               <>
-                <span className="text-dark dark:text-dark-text mt-0.5 text-[9px] font-bold leading-tight md:mt-1 md:text-[11px]">
+                <span className="text-dark dark:text-dark-text mt-0.5 text-[9px] leading-tight font-bold md:mt-1 md:text-[11px]">
                   {def.label}
                 </span>
                 <span className="text-dark dark:text-dark-text-muted text-[9px] font-semibold md:text-[10px]">
