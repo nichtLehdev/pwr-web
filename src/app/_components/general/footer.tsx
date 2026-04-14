@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { TrackingConsentLink } from "@/app/_components/stats/tracking-consent-link";
 
