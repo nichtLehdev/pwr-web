@@ -29,6 +29,13 @@ export default function SpielePage() {
                 href="/spiele/rhythmus"
                 color="district-6"
               />
+              <ParticipationCard
+                title="Noten lesen"
+                description="Einzelne Noten im Schlüssel erkennen — Instrument, Modus und Schwierigkeit wählbar"
+                icon="music"
+                href="/spiele/noten-lesen"
+                color="district-6"
+              />
             </div>
           </div>
         </div>
