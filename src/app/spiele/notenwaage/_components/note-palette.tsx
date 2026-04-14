@@ -11,13 +11,20 @@ type Props = {
   onAdd: (id: NoteValueId) => void;
   onRemoveLastOf: (id: NoteValueId) => void;
   disabled?: boolean;
+  showDescriptions?: boolean;
 };
 
-export function NotePalette({ ids, onAdd, onRemoveLastOf, disabled = false }: Props) {
+export function NotePalette({
+  ids,
+  onAdd,
+  onRemoveLastOf,
+  disabled = false,
+  showDescriptions = true,
+}: Props) {
   const pressTimer = useRef<number | null>(null);
 
   return (
-    <div className="grid grid-cols-3 gap-2 md:grid-cols-5">
+    <div className="grid grid-cols-5 gap-1.5 md:grid-cols-5 md:gap-2">
       {ids.map((id) => {
         const def = NOTE_VALUES[id];
         return (
@@ -39,18 +46,22 @@ export function NotePalette({ ids, onAdd, onRemoveLastOf, disabled = false }: Pr
               pressTimer.current = null;
             }}
             className={cn(
-              "border-dark-border/60 dark:border-dark-border flex min-h-[64px] flex-col items-center justify-center rounded-sm border bg-white/80 p-2 transition active:scale-[0.98] dark:bg-dark-surface/60",
+              "border-dark-border/60 dark:border-dark-border flex min-h-[56px] flex-col items-center justify-center rounded-sm border bg-white/80 p-1.5 transition active:scale-[0.98] dark:bg-dark-surface/60 md:min-h-[64px] md:p-2",
               !disabled && "hover:border-primary/50",
               disabled && "opacity-60",
             )}
           >
-            <NoteGlyph id={id} className="h-9 w-9 md:h-10 md:w-10" />
-            <span className="text-dark dark:text-dark-text mt-1 text-[11px] font-bold leading-tight">
-              {def.label}
-            </span>
-            <span className="text-dark dark:text-dark-text-muted text-[10px] font-semibold">
-              {unitsLabel(def.units)} Schlag
-            </span>
+            <NoteGlyph id={id} className="h-7 w-7 md:h-10 md:w-10" />
+            {showDescriptions && (
+              <>
+                <span className="text-dark dark:text-dark-text mt-0.5 text-[9px] font-bold leading-tight md:mt-1 md:text-[11px]">
+                  {def.label}
+                </span>
+                <span className="text-dark dark:text-dark-text-muted text-[9px] font-semibold md:text-[10px]">
+                  {unitsLabel(def.units)} Schläge
+                </span>
+              </>
+            )}
           </button>
         );
       })}

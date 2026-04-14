@@ -13,7 +13,7 @@ export function ScaleSVG({ diffUnits, balancedFlash = false }: Props) {
   return (
     <div
       className={cn(
-        "border-dark-border/50 dark:border-dark-border relative h-full min-h-[220px] w-full overflow-hidden rounded-sm border bg-gradient-to-b from-white/80 to-white/55 dark:from-dark-surface/60 dark:to-dark-surface/35",
+        "border-dark-border/50 dark:border-dark-border relative h-full min-h-[130px] w-full overflow-hidden rounded-sm border bg-gradient-to-b from-white/80 to-white/55 dark:from-dark-surface/60 dark:to-dark-surface/35 md:min-h-[220px]",
         balancedFlash && "ring-2 ring-emerald-500/75",
       )}
     >

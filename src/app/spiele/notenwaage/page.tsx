@@ -3,10 +3,10 @@ import { NoteValueGame } from "./_components/note-value-game";
 
 export default function NotenwaagePage() {
   return (
-    <div className="relative flex w-full flex-1 flex-col px-3 pb-6 pt-1 md:px-5">
+    <div className="relative flex min-h-0 w-full flex-1 flex-col px-3 pb-3 pt-1 md:px-5 md:pb-6">
       <GameExitLink />
       <h1 className="sr-only">Notenwaage-Spiel</h1>
-      <div className="mx-auto w-full max-w-5xl pt-11 md:pt-12">
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 pt-11 md:pt-12">
         <NoteValueGame />
       </div>
     </div>

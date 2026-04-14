@@ -7,6 +7,7 @@ import { createPuzzle, totalUnits, unitsLabel } from "../_lib/puzzle-generator";
 import {
   DIFFICULTY_LABELS,
   DIFFICULTY_VALUES,
+  NOTE_VALUES,
   type DifficultyId,
   type NoteValueId,
   type Puzzle,
@@ -68,7 +69,16 @@ export function NoteValueGame() {
     setFlashBalanced(false);
   }, [difficulty, roundIdx]);
 
-  const addNote = useCallback((id: NoteValueId) => setRight((prev) => [...prev, id]), []);
+  const addNote = useCallback(
+    (id: NoteValueId) => {
+      setRight((prev) => {
+        if (!puzzle) return prev;
+        if (prev.length >= puzzle.rightCount) return prev;
+        return [...prev, id];
+      });
+    },
+    [puzzle],
+  );
 
   const removeLastOf = useCallback((id: NoteValueId) => {
     setRight((prev) => {
@@ -87,7 +97,30 @@ export function NoteValueGame() {
     if (!puzzle) return;
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
-    if (rightUnits === leftUnits) {
+    const requiredRests = puzzle.requiredRests;
+    const selectedRests = right.filter((id) => NOTE_VALUES[id].isRest).length;
+    const selectedNotes = right.length - selectedRests;
+    const requiredNotes = requiredRests == null ? null : puzzle.rightCount - requiredRests;
+
+    if (right.length === puzzle.rightCount && rightUnits === leftUnits) {
+      if (requiredRests != null && selectedRests !== requiredRests) {
+        setFirstTryStreak(0);
+        setFeedback(
+          selectedRests < requiredRests
+            ? `Challenge: noch ${requiredRests - selectedRests} Pause(n) hinzufügen`
+            : `Challenge: ${selectedRests - requiredRests} Pause(n) zu viel`,
+        );
+        return;
+      }
+      if (requiredNotes != null && selectedNotes !== requiredNotes) {
+        setFirstTryStreak(0);
+        setFeedback(
+          selectedNotes < requiredNotes
+            ? `Challenge: noch ${requiredNotes - selectedNotes} Note(n) hinzufügen`
+            : `Challenge: ${selectedNotes - requiredNotes} Note(n) zu viel`,
+        );
+        return;
+      }
       setFlashBalanced(true);
       setTimeout(() => setFlashBalanced(false), 450);
       setSolved((s) => s + 1);
@@ -106,6 +139,15 @@ export function NoteValueGame() {
       setTimeout(nextPuzzle, 700);
       return;
     }
+    if (right.length !== puzzle.rightCount) {
+      setFirstTryStreak(0);
+      setFeedback(
+        right.length < puzzle.rightCount
+          ? `Noch ${puzzle.rightCount - right.length} Note(n) ergänzen`
+          : `Zu viele Noten gewählt`,
+      );
+      return;
+    }
     const diff = rightUnits - leftUnits;
     const abs = Math.abs(diff);
     setFirstTryStreak(0);
@@ -114,14 +156,17 @@ export function NoteValueGame() {
         ? `${unitsLabel(abs)} Schläge zu viel`
         : `${unitsLabel(abs)} Schläge zu wenig`,
     );
-  }, [attempts, leftUnits, nextPuzzle, puzzle, rightUnits]);
+  }, [attempts, leftUnits, nextPuzzle, puzzle, right, rightUnits]);
 
   const skip = useCallback(() => {
     setFirstTryStreak(0);
     nextPuzzle();
   }, [nextPuzzle]);
 
-  const palette = DIFFICULTY_VALUES[difficulty];
+  const palette = useMemo(
+    () => [...DIFFICULTY_VALUES[difficulty]].sort((a, b) => NOTE_VALUES[b].units - NOTE_VALUES[a].units),
+    [difficulty],
+  );
 
   if (phase === "result") {
     return (
@@ -178,62 +223,78 @@ export function NoteValueGame() {
   if (!puzzle) return null;
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-7.5rem)] max-h-[900px] w-full max-w-5xl flex-col gap-3 overflow-hidden">
+    <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-2 overflow-hidden md:h-[calc(100dvh-7.5rem)] md:max-h-[900px] md:gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-dark dark:text-dark-text text-sm font-black">
+        <p className="text-dark dark:text-dark-text text-xs font-black md:text-sm">
           Runde {roundIdx + 1}/{ROUND_LEN} · Streak: {firstTryStreak}
         </p>
         <button
           type="button"
           onClick={() => setPhase("setup")}
-          className="border-dark-border text-dark dark:text-dark-text inline-flex items-center gap-2 rounded-sm border px-2 py-1 text-xs font-bold"
+          className="border-dark-border text-dark dark:text-dark-text inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-bold md:gap-2 md:text-xs"
         >
           <Settings2 className="h-4 w-4" aria-hidden />
           Setup
         </button>
       </div>
+      <p className="text-dark dark:text-dark-text-secondary text-center text-xs font-bold md:text-sm">
+        Aufgabe: Rechte Seite mit genau <span className="text-primary">{puzzle.rightCount}</span> Symbolen
+        ausgleichen
+      </p>
+      {puzzle.requiredRests != null && (
+        <p className="text-primary text-center text-[11px] font-black md:text-xs">
+          Challenge: genau {puzzle.rightCount - puzzle.requiredRests} Note(n) + {puzzle.requiredRests} Pause(n)
+        </p>
+      )}
 
-      <div className="h-[50%] min-h-[220px]">
+      <div className="h-[30%] min-h-[130px] shrink-0 md:h-[40%] md:min-h-[185px]">
         <ScaleSVG diffUnits={diffUnits} balancedFlash={flashBalanced} />
       </div>
 
-      <div className="grid h-[20%] min-h-[100px] grid-cols-2 gap-2">
-        <NotePan notes={puzzle.left} targetUnits={leftUnits} currentUnits={leftUnits} />
+      <div className="grid min-h-[74px] shrink-0 grid-cols-2 gap-1.5 md:min-h-[110px] md:gap-2">
+        <NotePan notes={puzzle.left} />
         <NotePan
           notes={right}
-          targetUnits={leftUnits}
-          currentUnits={rightUnits}
           editable
           onRemoveAt={removeAt}
+          headerHint={`Noch ${Math.max(0, puzzle.rightCount - right.length)} Symbol(e)`}
         />
       </div>
 
-      <div className="h-[30%] min-h-[190px] space-y-2 overflow-hidden">
-        <NotePalette ids={palette} onAdd={addNote} onRemoveLastOf={removeLastOf} />
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden md:gap-2">
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <NotePalette
+            ids={palette}
+            onAdd={addNote}
+            onRemoveLastOf={removeLastOf}
+            showDescriptions={difficulty === "beginner"}
+          />
+        </div>
         {feedback && (
-          <p className="text-dark dark:text-dark-text-secondary rounded-sm border border-dark-border/40 bg-white/60 px-3 py-2 text-sm dark:bg-dark-background/50">
+          <p className="text-dark dark:text-dark-text-secondary shrink-0 rounded-sm border border-dark-border/40 bg-white/60 px-2.5 py-1.5 text-xs dark:bg-dark-background/50 md:px-3 md:py-2 md:text-sm">
             {feedback}
           </p>
         )}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={submit}
-            className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark rounded-sm py-3 text-base font-black text-white"
-          >
-            Fertig
-          </button>
-          <button
-            type="button"
-            onClick={skip}
-            className="border-dark-border text-dark dark:text-dark-text rounded-sm border py-3 text-base font-bold"
-          >
-            Überspringen
-          </button>
-        </div>
-        <p className="text-dark dark:text-dark-text-muted text-center text-[11px] font-semibold">
+        <p className="text-dark dark:text-dark-text-muted hidden text-center text-[11px] font-semibold md:block">
           Tipp: lang drücken im Palette-Feld entfernt die zuletzt hinzugefügte gleiche Note.
         </p>
+      </div>
+
+      <div className="mt-auto grid shrink-0 grid-cols-2 gap-1.5 md:gap-2">
+        <button
+          type="button"
+          onClick={submit}
+          className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark rounded-sm py-2.5 text-sm font-black text-white md:py-3 md:text-base"
+        >
+          Fertig
+        </button>
+        <button
+          type="button"
+          onClick={skip}
+          className="border-dark-border text-dark dark:text-dark-text rounded-sm border py-2.5 text-sm font-bold md:py-3 md:text-base"
+        >
+          Überspringen
+        </button>
       </div>
     </div>
   );

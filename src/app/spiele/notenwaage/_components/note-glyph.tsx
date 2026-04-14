@@ -2,7 +2,7 @@
 
 import { useTheme } from "@/app/_components/general/theme-provider";
 import { cn } from "@/lib/utils";
-import VexFlow, { Dot, Renderer, RendererBackends, Stave, StaveNote, TickContext } from "vexflow";
+import VexFlow, { Renderer, RendererBackends, Stave, StaveNote, TickContext } from "vexflow";
 import { useCallback, useEffect, useRef } from "react";
 import type { NoteValueId } from "../_lib/types";
 
@@ -45,8 +45,8 @@ export function NoteGlyph({ id, className }: Props) {
       ]);
       // Do not draw stave at all; it is only used for note positioning math.
 
-      // Keep noteheads centered in tiny icon viewport.
-      const keyFor = (duration: string) => (duration.includes("r") ? "b/4" : "d/5");
+      // VexFlow rests sit lower for the same key; give rests a higher anchor.
+      const keyFor = (duration: string) => (duration.includes("r") ? "g/5" : "d/5");
       const mk = (duration: string) =>
         new StaveNote({ keys: [keyFor(duration)], duration, clef: "treble" }).setStyle({
           fillStyle: color,
@@ -54,24 +54,38 @@ export function NoteGlyph({ id, className }: Props) {
         });
 
       let note: StaveNote;
-      if (id === "tripletEighth") {
-        // Icon-sized simplification: show one eighth + small "3".
-        note = mk("8");
-      } else if (id === "whole") {
+      let dotY: number | null = null;
+      if (id === "whole") {
         note = mk("w");
+      } else if (id === "dottedWhole") {
+        note = mk("w");
+        dotY = 52;
       } else if (id === "half") {
         note = mk("h");
+      } else if (id === "dottedHalf") {
+        note = mk("h");
+        dotY = 58;
       } else if (id === "quarter") {
         note = mk("q");
       } else if (id === "eighth") {
         note = mk("8");
+      } else if (id === "dottedEighth") {
+        note = mk("8");
+        dotY = 58;
       } else if (id === "dottedQuarter") {
         note = mk("q");
-        Dot.buildAndAttach([note], { all: true });
+        dotY = 58;
       } else if (id === "sixteenth") {
         note = mk("16");
+      } else if (id === "dottedSixteenth") {
+        note = mk("16");
+        dotY = 58;
+      } else if (id === "thirtySecond") {
+        note = mk("32");
       } else if (id === "restQuarter") {
         note = mk("qr");
+      } else if (id === "restSixteenth") {
+        note = mk("16r");
       } else {
         note = mk("8r");
       }
@@ -84,12 +98,13 @@ export function NoteGlyph({ id, className }: Props) {
       note.setX(Math.round(w / 2));
       note.draw();
 
-      if (id === "tripletEighth") {
-        const x = Math.round(w * 0.75);
+      if (dotY != null) {
+        // Robust dot placement for tiny icon rendering.
         ctx.save();
-        ctx.setFont("12px sans-serif");
         ctx.setFillStyle(color);
-        ctx.fillText("3", x, 14);
+        ctx.beginPath();
+        ctx.arc(Math.round(w / 2) + 8, dotY, 2.2, 0, Math.PI * 2, false);
+        ctx.fill();
         ctx.restore();
       }
 
@@ -103,7 +118,7 @@ export function NoteGlyph({ id, className }: Props) {
         (svg as SVGSVGElement).style.position = "relative";
         (svg as SVGSVGElement).style.left = "50%";
         (svg as SVGSVGElement).style.overflow = "visible";
-        (svg as SVGSVGElement).style.transform = "translate(-45%, -22px)";
+        (svg as SVGSVGElement).style.transform = "translate(-50%, -22px)";
         svg.querySelectorAll(".vf-stave path, .vf-stave line, .vf-stave rect").forEach((n) => {
           n.remove();
         });
@@ -119,5 +134,5 @@ export function NoteGlyph({ id, className }: Props) {
     void draw();
   }, [draw]);
 
-  return <div ref={ref} className={cn("relative z-20 h-12 w-12 overflow-visible", className)} aria-hidden />;
+  return <div ref={ref} className={cn("relative z-20 overflow-visible", className)} aria-hidden />;
 }

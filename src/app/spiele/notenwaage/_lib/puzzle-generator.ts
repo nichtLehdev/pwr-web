@@ -1,8 +1,7 @@
 import {
-  DIFFICULTY_SIGS,
   DIFFICULTY_VALUES,
   NOTE_VALUES,
-  TARGET_UNITS,
+  QUARTER_UNITS,
   type DifficultyId,
   type NoteValueId,
   type Puzzle,
@@ -12,62 +11,83 @@ function r<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
-function countWays(values: NoteValueId[], target: number, maxNotes: number): number {
-  const units = values.map((v) => NOTE_VALUES[v].units);
+function countWays(
+  values: NoteValueId[],
+  target: number,
+  exactNotes: number,
+  exactRests?: number,
+): number {
+  const defs = values.map((v) => NOTE_VALUES[v]);
   let ways = 0;
-  const dfs = (sum: number, depth: number) => {
-    if (sum === target) {
+  const dfs = (sum: number, depth: number, rests: number) => {
+    if (sum === target && depth === exactNotes && (exactRests == null || rests === exactRests)) {
       ways += 1;
       return;
     }
-    if (sum > target || depth >= maxNotes || ways > 1) return;
-    for (const u of units) dfs(sum + u, depth + 1);
+    if (sum > target || depth >= exactNotes || ways > 1) return;
+    if (exactRests != null && rests > exactRests) return;
+    for (const def of defs) dfs(sum + def.units, depth + 1, rests + (def.isRest ? 1 : 0));
   };
-  dfs(0, 0);
+  dfs(0, 0, 0);
   return ways;
 }
 
-function generateLeft(values: NoteValueId[], target: number, minN: number, maxN: number): NoteValueId[] {
+function hasAnySolutionWithCount(
+  values: NoteValueId[],
+  target: number,
+  exactNotes: number,
+  exactRests?: number,
+): boolean {
+  return countWays(values, target, exactNotes, exactRests) > 0;
+}
+
+function generateLeft(values: NoteValueId[], minN: number, maxN: number): NoteValueId[] {
   const byId = values;
   for (let guard = 0; guard < 500; guard++) {
     const n = minN + Math.floor(Math.random() * (maxN - minN + 1));
     const out: NoteValueId[] = [];
-    let remaining = target;
     for (let i = 0; i < n; i++) {
-      const possible = byId.filter((id) => NOTE_VALUES[id].units <= remaining);
-      if (possible.length === 0) break;
-      const pick = r(possible);
+      const pick = r(byId);
       out.push(pick);
-      remaining -= NOTE_VALUES[pick].units;
     }
-    if (remaining === 0 && out.length > 0) return out;
+    if (out.length > 0) return out;
   }
-  return ["quarter", "quarter", "quarter", "quarter"];
+  return ["quarter", "quarter"];
 }
 
 export function createPuzzle(difficulty: DifficultyId): Puzzle {
-  const sig = r(DIFFICULTY_SIGS[difficulty]);
-  const targetUnits = TARGET_UNITS[sig];
   const values = DIFFICULTY_VALUES[difficulty];
-  const minN = 1;
-  const maxN = difficulty === "beginner" ? 2 : 3;
+  const leftMin = 1;
+  const leftMax = difficulty === "beginner" ? 2 : 3;
+  const rightMin = difficulty === "beginner" ? 2 : 3;
+  const rightMax = difficulty === "beginner" ? 4 : difficulty === "intermediate" ? 5 : 6;
   const uniqueAttempt = difficulty === "advanced" && Math.random() < 0.2;
 
   for (let guard = 0; guard < 200; guard++) {
-    const left = generateLeft(values, targetUnits, minN, maxN);
+    const left = generateLeft(values, leftMin, leftMax);
+    const targetUnits = left.reduce((s, id) => s + NOTE_VALUES[id].units, 0);
+    const rightCount = rightMin + Math.floor(Math.random() * (rightMax - rightMin + 1));
+    const challengeAttempt = difficulty === "advanced" && Math.random() < 0.4;
+    const requiredRests = challengeAttempt
+      ? 1 + Math.floor(Math.random() * Math.max(1, Math.min(3, rightCount - 1)))
+      : undefined;
+
+    if (!hasAnySolutionWithCount(values, targetUnits, rightCount, requiredRests)) continue;
+
     if (!uniqueAttempt) {
-      return { timeSig: sig, targetUnits, left, uniqueOnly: false };
+      return { targetUnits, left, rightCount, uniqueOnly: false, requiredRests };
     }
-    const ways = countWays(values, left.reduce((s, id) => s + NOTE_VALUES[id].units, 0), 8);
+    const ways = countWays(values, targetUnits, rightCount, requiredRests);
     if (ways <= 1) {
-      return { timeSig: sig, targetUnits, left, uniqueOnly: true };
+      return { targetUnits, left, rightCount, uniqueOnly: true, requiredRests };
     }
   }
 
+  const fallbackLeft = ["quarter", "quarter"] as NoteValueId[];
   return {
-    timeSig: sig,
-    targetUnits,
-    left: generateLeft(values, targetUnits, minN, maxN),
+    targetUnits: fallbackLeft.reduce((s, id) => s + NOTE_VALUES[id].units, 0),
+    left: fallbackLeft,
+    rightCount: 2,
     uniqueOnly: false,
   };
 }
@@ -77,6 +97,6 @@ export function totalUnits(ids: NoteValueId[]): number {
 }
 
 export function unitsLabel(units: number): string {
-  const beats = units / 12;
+  const beats = units / QUARTER_UNITS;
   return Number.isInteger(beats) ? `${beats}` : beats.toFixed(2).replace(/\.?0+$/, "");
 }
