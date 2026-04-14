@@ -39,13 +39,6 @@ export const GRIFFE_INSTRUMENTS: GriffeInstrumentConfig[] = [
     inputKind: "slide",
     description: "Zugpositionen 1–7 (geschriebener Tenor-/Bassschlüssel wie üblich).",
   },
-  {
-    id: "tuba",
-    label: "Tuba",
-    shortLabel: "Tu.",
-    inputKind: "valves4",
-    description: "Vier Ventile — Bassschlüssel.",
-  },
 ];
 
 export const GRIFFE_DIFFICULTY_LABELS: Record<
