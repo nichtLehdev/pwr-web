@@ -36,7 +36,7 @@ export function CourseFormEditMetaBar({
 
   return (
     <div
-      className="dark:border-dark-border mb-8 flex flex-col gap-4 rounded-2xl border border-gray-200/90 bg-linear-to-br from-white via-gray-50/40 to-emerald-50/30 px-4 py-4 dark:from-dark-surface dark:via-dark-background dark:to-primary/15 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+      className="dark:border-dark-border dark:from-dark-surface dark:via-dark-background dark:to-primary/15 mb-8 flex flex-col gap-4 rounded-2xl border border-gray-200/90 bg-linear-to-br from-white via-gray-50/40 to-emerald-50/30 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
       role="region"
       aria-label="Kurskontext"
     >

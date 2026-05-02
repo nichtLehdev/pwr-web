@@ -156,11 +156,12 @@ export function Step3Summary({
           {courseRequiresPaymentMethodChoice(course) ? (
             <div className="space-y-3">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Bitte wählen Sie, wie Sie die Teilnahmegebühr begleichen möchten.
+                Bitte wählen Sie, wie Sie die Teilnahmegebühr begleichen
+                möchten.
               </p>
               <div className="space-y-2">
                 {courseAcceptsCash(course) && (
-                  <label className="dark:border-dark-border flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:bg-dark-background dark:border-gray-600">
+                  <label className="dark:border-dark-border dark:bg-dark-background flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-600">
                     <input
                       type="radio"
                       name="course-payment-method"
@@ -179,7 +180,7 @@ export function Step3Summary({
                   </label>
                 )}
                 {courseAcceptsInvoice(course) && (
-                  <label className="dark:border-dark-border flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:bg-dark-background dark:border-gray-600">
+                  <label className="dark:border-dark-border dark:bg-dark-background flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-600">
                     <input
                       type="radio"
                       name="course-payment-method"

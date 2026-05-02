@@ -267,7 +267,11 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
           value={sortBy}
           onChange={(e) => {
             setSortBy(
-              e.target.value as "publishedAt" | "title" | "createdAt" | "status",
+              e.target.value as
+                | "publishedAt"
+                | "title"
+                | "createdAt"
+                | "status",
             );
             setPage(1);
           }}
@@ -283,7 +287,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
         <button
           type="button"
           onClick={toggleSortOrder}
-          className="text-dark dark:text-dark-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface"
+          className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
           title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
         >
           {sortOrder === "asc" ? (
@@ -299,10 +303,10 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
   return (
     <div className="space-y-3">
       {!selectionMode && (
-        <div className="border-b border-gray-200/80 pb-2 dark:border-dark-border">
+        <div className="dark:border-dark-border border-b border-gray-200/80 pb-2">
           <div className="hidden space-y-2 sm:block">
             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <p className="min-w-0 text-sm tabular-nums text-gray-600 dark:text-gray-400">
+              <p className="min-w-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
                 {isLoading ? (
                   <span className="text-gray-500">Liste wird geladen…</span>
                 ) : data ? (
@@ -328,7 +332,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
-            <p className="text-sm tabular-nums text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 tabular-nums dark:text-gray-400">
               {isLoading ? (
                 <span className="text-gray-500">Liste wird geladen…</span>
               ) : data ? (
@@ -362,13 +366,13 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                 Status, Kategorie, Sortierung
               </span>
               {adjustedFilterCount > 0 ? (
-                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:bg-dark-border dark:text-gray-200">
+                <span className="dark:bg-dark-border rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-200">
                   {adjustedFilterCount}
                 </span>
               ) : null}
             </button>
             {filtersOpen ? (
-              <div className="mt-2 space-y-3 rounded-md border border-gray-200/80 p-3 dark:border-dark-border">
+              <div className="dark:border-dark-border mt-2 space-y-3 rounded-md border border-gray-200/80 p-3">
                 {filterControlsRow}
               </div>
             ) : null}
@@ -377,7 +381,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
       )}
 
       {selectionMode && (
-        <div className="flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2 dark:border-dark-border">
+        <div className="dark:border-dark-border flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2">
           <span className="text-dark dark:text-dark-text text-sm font-medium tabular-nums">
             {selectedIds.size} ausgewählt
           </span>
@@ -386,7 +390,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             <button
               type="button"
               onClick={selectAll}
-              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
               Alle
             </button>
@@ -394,7 +398,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
             <button
               type="button"
               onClick={deselectAll}
-              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
               Keine
             </button>

@@ -20,9 +20,7 @@ export function courseRequiresPaymentMethodChoice(
   course: CoursePaymentFlags,
 ): boolean {
   if (course.isFree) return false;
-  return (
-    courseAcceptsCash(course) && courseAcceptsInvoice(course)
-  );
+  return courseAcceptsCash(course) && courseAcceptsInvoice(course);
 }
 
 /** Anmeldung: Zahlungsart nur nötig wenn Gebühr anfällt. */
@@ -32,13 +30,11 @@ export function registrationNeedsPaymentMethod(
   return !course.isFree;
 }
 
-export const COURSE_PAYMENT_METHOD_LABELS: Record<
-  CoursePaymentMethod,
-  string
-> = {
-  CASH: "Barzahlung vor Ort",
-  INVOICE: "Überweisung (Rechnung)",
-};
+export const COURSE_PAYMENT_METHOD_LABELS: Record<CoursePaymentMethod, string> =
+  {
+    CASH: "Barzahlung vor Ort",
+    INVOICE: "Überweisung (Rechnung)",
+  };
 
 /** Kurztext für Kursinfos (welche Methoden angeboten werden). */
 export function formatAcceptedCoursePaymentMethods(

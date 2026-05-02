@@ -12,7 +12,10 @@ import {
   EventCategory,
   EventEnsembleType,
 } from "~/generated/prisma/enums";
-import { DashboardFormSectionLayout, DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardFormSectionLayout,
+  DashboardPage,
+} from "@/app/_components/dashboard";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -203,7 +206,9 @@ export default function EventDetailPage() {
     ...(event.description
       ? [{ href: "#event-detail-description", label: "Beschreibung" }]
       : []),
-    ...(event.location ? [{ href: "#event-detail-location", label: "Ort" }] : []),
+    ...(event.location
+      ? [{ href: "#event-detail-location", label: "Ort" }]
+      : []),
     ...(event.performingEnsembleType
       ? [{ href: "#event-detail-ensemble", label: "Ensemble" }]
       : []),
@@ -303,7 +308,7 @@ export default function EventDetailPage() {
               <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Termin
               </p>
-              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
                 {formattedDate}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -314,7 +319,7 @@ export default function EventDetailPage() {
               <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Bezirk
               </p>
-              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
                 {districtLabel}
               </p>
             </div>
@@ -322,7 +327,7 @@ export default function EventDetailPage() {
               <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Kategorie
               </p>
-              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
                 {categoryLabels[event.category]}
               </p>
             </div>
@@ -330,7 +335,7 @@ export default function EventDetailPage() {
               <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
                 Ort
               </p>
-              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+              <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
                 {locationLabel}
               </p>
             </div>
@@ -418,335 +423,289 @@ export default function EventDetailPage() {
           railItems={detailShortlinks}
         >
           <div className="space-y-0">
-          {/* Cover Image */}
-          {event.coverImage && (
-            <section className="mb-10 overflow-hidden rounded-xl">
-              <div className="relative aspect-video w-full">
-                <Image
-                  src={event.coverImage.url}
-                  alt={event.coverImage.alt || event.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </section>
-          )}
+            {/* Cover Image */}
+            {event.coverImage && (
+              <section className="mb-10 overflow-hidden rounded-xl">
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={event.coverImage.url}
+                    alt={event.coverImage.alt || event.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </section>
+            )}
 
-          {/* Downloads */}
-          {event.downloads && event.downloads.length > 0 && (
-            <section
-              id="event-detail-downloads"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-            >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Downloads
-              </h2>
-              <div className="space-y-2">
-                {event.downloads.map((ed) => (
-                  <a
-                    key={ed.download.id}
-                    href={ed.download.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:text-primary-dark dark:border-dark-border dark:hover:bg-dark-background-secondary flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+            {/* Downloads */}
+            {event.downloads && event.downloads.length > 0 && (
+              <section
+                id="event-detail-downloads"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Downloads
+                </h2>
+                <div className="space-y-2">
+                  {event.downloads.map((ed) => (
+                    <a
+                      key={ed.download.id}
+                      href={ed.download.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark dark:border-dark-border dark:hover:bg-dark-background-secondary flex items-center gap-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                      />
-                    </svg>
-                    <span className="font-medium text-inherit">
-                      {ed.download.title}
-                    </span>
-                    {ed.download.description && (
-                      <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
-                        {ed.download.description}
+                      <svg
+                        className="h-5 w-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <span className="font-medium text-inherit">
+                        {ed.download.title}
                       </span>
-                    )}
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
+                      {ed.download.description && (
+                        <span className="ml-auto text-sm text-gray-500 dark:text-gray-400">
+                          {ed.download.description}
+                        </span>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
 
-          {/* Basic Info */}
-          <section
-            id="event-detail-info"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Veranstaltungsdetails
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Datum
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {formattedDate}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Uhrzeit
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {formattedTime} Uhr
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Kategorie
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {categoryLabels[event.category]}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Bezirk
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {event.bezirk
-                    ? `Bezirk ${event.bezirk.number} – ${event.bezirk.shortName}`
-                    : event.districtName || "Übergreifend"}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          {/* Description */}
-          {event.description && (
+            {/* Basic Info */}
             <section
-              id="event-detail-description"
+              id="event-detail-info"
               className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
             >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Beschreibung
-              </h2>
-              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                {event.description}
-              </p>
-            </section>
-          )}
-
-          {/* Location */}
-          {event.location && (
-            <section
-              id="event-detail-location"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-            >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Veranstaltungsort
-              </h2>
-              <address className="text-gray-700 not-italic dark:text-gray-300">
-                {event.location.name && (
-                  <span className="dark:text-dark-text block font-medium text-gray-900">
-                    {event.location.name}
-                  </span>
-                )}
-                {event.location.street && (
-                  <span className="block text-gray-700 dark:text-gray-300">
-                    {event.location.street}
-                  </span>
-                )}
-                <span className="block text-gray-700 dark:text-gray-300">
-                  {event.location.zipCode && `${event.location.zipCode} `}
-                  {event.location.city}
-                </span>
-                {event.location.additionalInfo && (
-                  <span className="mt-2 block text-sm text-gray-500 dark:text-gray-400">
-                    {event.location.additionalInfo}
-                  </span>
-                )}
-              </address>
-            </section>
-          )}
-
-          {/* Performing Ensemble */}
-          {event.performingEnsembleType && (
-            <section
-              id="event-detail-ensemble"
-              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-            >
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Auftretendes Ensemble
+                Veranstaltungsdetails
               </h2>
               <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Typ
+                    Datum
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {ensembleTypeLabels[event.performingEnsembleType]}
+                    {formattedDate}
                   </dd>
                 </div>
-                {getEnsembleName() && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Name
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {getEnsembleName()}
-                    </dd>
-                  </div>
-                )}
-                {event.leitung && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Leitung
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {event.leitung}
-                    </dd>
-                  </div>
-                )}
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Uhrzeit
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {formattedTime} Uhr
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Kategorie
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {categoryLabels[event.category]}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Bezirk
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {event.bezirk
+                      ? `Bezirk ${event.bezirk.number} – ${event.bezirk.shortName}`
+                      : event.districtName || "Übergreifend"}
+                  </dd>
+                </div>
               </dl>
             </section>
-          )}
 
-          {/* Participation */}
-          {event.openToParticipants && (
+            {/* Description */}
+            {event.description && (
+              <section
+                id="event-detail-description"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Beschreibung
+                </h2>
+                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                  {event.description}
+                </p>
+              </section>
+            )}
+
+            {/* Location */}
+            {event.location && (
+              <section
+                id="event-detail-location"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Veranstaltungsort
+                </h2>
+                <address className="text-gray-700 not-italic dark:text-gray-300">
+                  {event.location.name && (
+                    <span className="dark:text-dark-text block font-medium text-gray-900">
+                      {event.location.name}
+                    </span>
+                  )}
+                  {event.location.street && (
+                    <span className="block text-gray-700 dark:text-gray-300">
+                      {event.location.street}
+                    </span>
+                  )}
+                  <span className="block text-gray-700 dark:text-gray-300">
+                    {event.location.zipCode && `${event.location.zipCode} `}
+                    {event.location.city}
+                  </span>
+                  {event.location.additionalInfo && (
+                    <span className="mt-2 block text-sm text-gray-500 dark:text-gray-400">
+                      {event.location.additionalInfo}
+                    </span>
+                  )}
+                </address>
+              </section>
+            )}
+
+            {/* Performing Ensemble */}
+            {event.performingEnsembleType && (
+              <section
+                id="event-detail-ensemble"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Auftretendes Ensemble
+                </h2>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Typ
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {ensembleTypeLabels[event.performingEnsembleType]}
+                    </dd>
+                  </div>
+                  {getEnsembleName() && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Name
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {getEnsembleName()}
+                      </dd>
+                    </div>
+                  )}
+                  {event.leitung && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Leitung
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {event.leitung}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            )}
+
+            {/* Participation */}
+            {event.openToParticipants && (
+              <section
+                id="event-detail-participation"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Teilnahme
+                </h2>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {event.participationInfo ||
+                    "Offen für externe Teilnehmer / Mitwirkende"}
+                </p>
+              </section>
+            )}
+
+            {/* Pricing */}
             <section
-              id="event-detail-participation"
+              id="event-detail-pricing"
               className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
             >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Teilnahme
+                Eintritt
               </h2>
-              <p className="text-gray-700 dark:text-gray-300">
-                {event.participationInfo ||
-                  "Offen für externe Teilnehmer / Mitwirkende"}
-              </p>
-            </section>
-          )}
-
-          {/* Pricing */}
-          <section
-            id="event-detail-pricing"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Eintritt
-            </h2>
-            <div className="space-y-3">
-              <p className="dark:text-dark-text text-gray-900">
-                {event.isFree ? "Eintritt frei" : "Mit Eintritt"}
-              </p>
-              {event.priceInfo && (
-                <p className="dark:text-dark-muted text-gray-700">
-                  {event.priceInfo}
+              <div className="space-y-3">
+                <p className="dark:text-dark-text text-gray-900">
+                  {event.isFree ? "Eintritt frei" : "Mit Eintritt"}
                 </p>
-              )}
-              {event.priceOptions && event.priceOptions.length > 0 && (
-                <div className="mt-3">
-                  <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Preiskategorien
-                  </h3>
-                  <ul className="space-y-2">
-                    {event.priceOptions.map((option) => (
-                      <li
-                        key={option.id}
-                        className="dark:bg-dark-background-secondary flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
-                      >
-                        <div>
-                          <span className="dark:text-dark-text font-medium text-gray-900">
-                            {option.label}
-                          </span>
-                          {option.description && (
-                            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                              – {option.description}
+                {event.priceInfo && (
+                  <p className="dark:text-dark-muted text-gray-700">
+                    {event.priceInfo}
+                  </p>
+                )}
+                {event.priceOptions && event.priceOptions.length > 0 && (
+                  <div className="mt-3">
+                    <h3 className="mb-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Preiskategorien
+                    </h3>
+                    <ul className="space-y-2">
+                      {event.priceOptions.map((option) => (
+                        <li
+                          key={option.id}
+                          className="dark:bg-dark-background-secondary flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2"
+                        >
+                          <div>
+                            <span className="dark:text-dark-text font-medium text-gray-900">
+                              {option.label}
                             </span>
-                          )}
-                        </div>
-                        <span className="dark:text-dark-text font-semibold text-gray-900">
-                          {option.price.toFixed(2)} €
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </section>
+                            {option.description && (
+                              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                – {option.description}
+                              </span>
+                            )}
+                          </div>
+                          <span className="dark:text-dark-text font-semibold text-gray-900">
+                            {option.price.toFixed(2)} €
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </section>
 
-          {/* Meta Info */}
-          <section
-            id="event-detail-meta"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Informationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Erstellt von
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {event.createdBy?.displayName || "Unbekannt"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(event.createdAt).toLocaleDateString("de-DE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </dd>
-              </div>
-              {event.reviewer && (
-                <>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Geprüft von
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {event.reviewer.displayName}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Geprüft am
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {event.reviewDate
-                        ? new Date(event.reviewDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )
-                        : "–"}
-                    </dd>
-                  </div>
-                </>
-              )}
-              {event.publishedAt && (
+            {/* Meta Info */}
+            <section
+              id="event-detail-meta"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Informationen
+              </h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Veröffentlicht am
+                    Erstellt von
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(event.publishedAt).toLocaleDateString("de-DE", {
+                    {event.createdBy?.displayName || "Unbekannt"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Erstellt am
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {new Date(event.createdAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -755,23 +714,69 @@ export default function EventDetailPage() {
                     })}
                   </dd>
                 </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(event.updatedAt).toLocaleDateString("de-DE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </section>
+                {event.reviewer && (
+                  <>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Geprüft von
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {event.reviewer.displayName}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Geprüft am
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {event.reviewDate
+                          ? new Date(event.reviewDate).toLocaleDateString(
+                              "de-DE",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
+                          : "–"}
+                      </dd>
+                    </div>
+                  </>
+                )}
+                {event.publishedAt && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Veröffentlicht am
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {new Date(event.publishedAt).toLocaleDateString("de-DE", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Zuletzt aktualisiert
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {new Date(event.updatedAt).toLocaleDateString("de-DE", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </dd>
+                </div>
+              </dl>
+            </section>
           </div>
         </DashboardFormSectionLayout>
 

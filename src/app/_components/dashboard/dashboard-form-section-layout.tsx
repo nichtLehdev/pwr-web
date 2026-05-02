@@ -96,7 +96,7 @@ export function DashboardFormSideRail({
     <nav
       aria-label="Abschnitte"
       className={cn(
-        "dashboard-sticky-shell-top hidden xl:sticky xl:self-start xl:block",
+        "dashboard-sticky-shell-top hidden xl:sticky xl:block xl:self-start",
         className,
       )}
     >

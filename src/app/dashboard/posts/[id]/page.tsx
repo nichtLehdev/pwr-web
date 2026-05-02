@@ -18,7 +18,10 @@ import {
   TrashIcon,
   DownloadIcon,
 } from "lucide-react";
-import { DashboardFormSectionLayout, DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardFormSectionLayout,
+  DashboardPage,
+} from "@/app/_components/dashboard";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -211,7 +214,9 @@ export default function PostDetailPage() {
       ? [{ href: "#post-detail-attached", label: "Anhaenge" }]
       : []),
     { href: "#post-detail-info", label: "Details" },
-    ...(post.coverImage ? [{ href: "#post-detail-cover", label: "Titelbild" }] : []),
+    ...(post.coverImage
+      ? [{ href: "#post-detail-cover", label: "Titelbild" }]
+      : []),
     { href: "#post-detail-content", label: "Inhalt" },
     { href: "#post-detail-meta", label: "Infos" },
   ];
@@ -553,181 +558,135 @@ export default function PostDetailPage() {
           railItems={detailShortlinks}
         >
           <div className="space-y-0">
-          {/* Basic Info */}
-          <section
-            id="post-detail-info"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Beitragsdetails
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Kategorie
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {categoryLabels[post.category]}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Bezirk
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {post.bezirk
-                    ? `Bezirk ${post.bezirk.number} – ${post.bezirk.shortName}`
-                    : "Übergreifend"}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          {/* Cover Image */}
-          {post.coverImage && (
+            {/* Basic Info */}
             <section
-              id="post-detail-cover"
+              id="post-detail-info"
               className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
             >
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Titelbild
-                </h2>
-                {isReviewer && post.coverImage.status && (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[post.coverImage.status]}`}
-                    >
-                      {statusLabels[post.coverImage.status]}
-                    </span>
-                    {post.coverImage.status === ContentStatus.PENDING && (
-                      <button
-                        onClick={() =>
-                          approveMediaMutation.mutate({
-                            id: post.coverImage!.id,
-                            status: ContentStatus.APPROVED,
-                          })
-                        }
-                        disabled={approveMediaMutation.isPending}
-                        className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                      >
-                        <CheckIcon className="h-3 w-3" />
-                        Freigeben
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                <Image
-                  src={post.coverImage.url}
-                  alt={post.coverImage.alt || post.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </section>
-          )}
-
-          {/* Content */}
-          <section
-            id="post-detail-content"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Inhalt
-            </h2>
-            {post.contentHtml ? (
-              <div
-                className="article-content"
-                dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-              />
-            ) : (
-              <pre className="dark:text-dark-muted font-sans whitespace-pre-wrap text-gray-700">
-                {post.content}
-              </pre>
-            )}
-          </section>
-
-          {/* Markdown Source */}
-          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Markdown-Quelltext
-            </h2>
-            <pre className="dark:bg-dark-background-secondary overflow-x-auto rounded-lg bg-gray-50 p-4 font-mono text-sm text-gray-700 dark:text-gray-300">
-              {post.content}
-            </pre>
-          </section>
-
-          {/* Meta Info */}
-          <section
-            id="post-detail-meta"
-            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
-          >
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Informationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Erstellt von
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {post.createdBy?.displayName || "Unbekannt"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(post.createdAt).toLocaleDateString("de-DE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </dd>
-              </div>
-              {post.reviewer && (
-                <>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Geprüft von
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {post.reviewer.displayName}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Geprüft am
-                    </dt>
-                    <dd className="dark:text-dark-text mt-1 text-gray-900">
-                      {post.reviewDate
-                        ? new Date(post.reviewDate).toLocaleDateString(
-                            "de-DE",
-                            {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )
-                        : "–"}
-                    </dd>
-                  </div>
-                </>
-              )}
-              {post.publishedAt && (
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Beitragsdetails
+              </h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Veröffentlicht am
+                    Kategorie
                   </dt>
                   <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(post.publishedAt).toLocaleDateString("de-DE", {
+                    {categoryLabels[post.category]}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Bezirk
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {post.bezirk
+                      ? `Bezirk ${post.bezirk.number} – ${post.bezirk.shortName}`
+                      : "Übergreifend"}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            {/* Cover Image */}
+            {post.coverImage && (
+              <section
+                id="post-detail-cover"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                    Titelbild
+                  </h2>
+                  {isReviewer && post.coverImage.status && (
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[post.coverImage.status]}`}
+                      >
+                        {statusLabels[post.coverImage.status]}
+                      </span>
+                      {post.coverImage.status === ContentStatus.PENDING && (
+                        <button
+                          onClick={() =>
+                            approveMediaMutation.mutate({
+                              id: post.coverImage!.id,
+                              status: ContentStatus.APPROVED,
+                            })
+                          }
+                          disabled={approveMediaMutation.isPending}
+                          className="inline-flex items-center gap-1 rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                        >
+                          <CheckIcon className="h-3 w-3" />
+                          Freigeben
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                  <Image
+                    src={post.coverImage.url}
+                    alt={post.coverImage.alt || post.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* Content */}
+            <section
+              id="post-detail-content"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Inhalt
+              </h2>
+              {post.contentHtml ? (
+                <div
+                  className="article-content"
+                  dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+                />
+              ) : (
+                <pre className="dark:text-dark-muted font-sans whitespace-pre-wrap text-gray-700">
+                  {post.content}
+                </pre>
+              )}
+            </section>
+
+            {/* Markdown Source */}
+            <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Markdown-Quelltext
+              </h2>
+              <pre className="dark:bg-dark-background-secondary overflow-x-auto rounded-lg bg-gray-50 p-4 font-mono text-sm text-gray-700 dark:text-gray-300">
+                {post.content}
+              </pre>
+            </section>
+
+            {/* Meta Info */}
+            <section
+              id="post-detail-meta"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Informationen
+              </h2>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Erstellt von
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {post.createdBy?.displayName || "Unbekannt"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Erstellt am
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {new Date(post.createdAt).toLocaleDateString("de-DE", {
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -736,23 +695,69 @@ export default function PostDetailPage() {
                     })}
                   </dd>
                 </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Zuletzt aktualisiert
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(post.updatedAt).toLocaleDateString("de-DE", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </dd>
-              </div>
-            </dl>
-          </section>
+                {post.reviewer && (
+                  <>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Geprüft von
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {post.reviewer.displayName}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Geprüft am
+                      </dt>
+                      <dd className="dark:text-dark-text mt-1 text-gray-900">
+                        {post.reviewDate
+                          ? new Date(post.reviewDate).toLocaleDateString(
+                              "de-DE",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
+                          : "–"}
+                      </dd>
+                    </div>
+                  </>
+                )}
+                {post.publishedAt && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Veröffentlicht am
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {new Date(post.publishedAt).toLocaleDateString("de-DE", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Zuletzt aktualisiert
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {new Date(post.updatedAt).toLocaleDateString("de-DE", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </dd>
+                </div>
+              </dl>
+            </section>
           </div>
         </DashboardFormSectionLayout>
 

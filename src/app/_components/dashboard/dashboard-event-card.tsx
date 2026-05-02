@@ -84,7 +84,8 @@ export default function DashboardEventCard({
 
   const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
 
-  const metaIconClass = "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
+  const metaIconClass =
+    "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
 
   const dateLabel = `${date.toLocaleDateString("de-DE", {
     day: "2-digit",
@@ -115,7 +116,7 @@ export default function DashboardEventCard({
           ) : null}
         </div>
         <span
-          className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium whitespace-nowrap leading-none text-gray-700 dark:text-gray-300"
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap text-gray-700 dark:text-gray-300"
           title={districtLabel}
         >
           <span
@@ -128,7 +129,7 @@ export default function DashboardEventCard({
       </div>
 
       <h3
-        className={`text-dark dark:text-dark-text mb-2.5 line-clamp-2 text-base font-semibold leading-snug tracking-tight sm:text-[1.0625rem] ${
+        className={`text-dark dark:text-dark-text mb-2.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight sm:text-[1.0625rem] ${
           cancelled ? "text-gray-500 line-through dark:text-gray-400" : ""
         }`}
       >
@@ -166,7 +167,7 @@ export default function DashboardEventCard({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
         <Link
           href={`/dashboard/events/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors"
+          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors"
         >
           <Eye className="h-3.5 w-3.5" />
           Ansehen
@@ -174,7 +175,7 @@ export default function DashboardEventCard({
 
         <Link
           href={`/dashboard/events/${id}/edit`}
-          className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+          className="inline-flex items-center gap-1 text-sm whitespace-nowrap text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
           <Edit className="h-3.5 w-3.5" />
           Bearbeiten
@@ -182,7 +183,7 @@ export default function DashboardEventCard({
 
         <Link
           href={`/termine/event/${id}`}
-          className="ml-auto inline-flex items-center text-gray-500 transition-colors hover:text-primary dark:text-gray-500 dark:hover:text-primary"
+          className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
           target="_blank"
           rel="noopener noreferrer"
           title="Öffentliche Terminseite"

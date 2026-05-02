@@ -226,12 +226,9 @@ export default function CourseParticipantsPage() {
     course.viewerCollaboratorRole === CourseCollaboratorRole.STAFF ||
     course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
   const canViewParticipants =
-    isOwner ||
-    hasViewParticipantsPermission ||
-    hasCourseTeamAccess;
+    isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
 
-  const canCreateInvoices =
-    hasApprovePermission || hasCourseTeamAccess;
+  const canCreateInvoices = hasApprovePermission || hasCourseTeamAccess;
 
   if (!canViewParticipants) {
     return (
