@@ -9,7 +9,10 @@ import { api } from "@/trpc/react";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
-  type CourseFormNavItem,
+  DashboardFormMediaSplit,
+  DashboardFormZoneHeader,
+  DashboardFormBlock,
+  type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
@@ -29,17 +32,7 @@ import {
   registrationOpensMerge,
   registrationOpensSplit,
 } from "@/lib/dashboard-registration-opens-at";
-import {
-  Button,
-  Input,
-  Label,
-  Textarea,
-  Select,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/app/_components/ui";
+import { Button, Select } from "@/app/_components/ui";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -57,7 +50,7 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-const NEW_COURSE_NAV_ITEMS: CourseFormNavItem[] = [
+const NEW_COURSE_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#kurs-form-inhalt", label: "Inhalt" },
   { href: "#kurs-form-termin", label: "Termin & Ort" },
   { href: "#kurs-form-anmeldung", label: "Anmeldung" },
@@ -210,8 +203,8 @@ export default function NewCoursePage() {
     };
   }, [registrationOpensAt, startDate, startTime]);
 
-  const registrationScheduleFieldClass =
-    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+  const registrationFieldInputClass =
+    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
 
   useEffect(() => {
     if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
@@ -620,363 +613,348 @@ export default function NewCoursePage() {
       <form onSubmit={handleSubmit}>
         <DashboardSectionedFormLayout
           navItems={NEW_COURSE_NAV_ITEMS}
-          contentClassName="space-y-8"
+          contentClassName="space-y-14 sm:space-y-16"
         >
-        <div
-          id="kurs-form-inhalt"
-          className="dashboard-form-scroll-anchor space-y-8"
-        >
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Grundinformationen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label required>Titel</Label>
-                <Input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="z.B. Bläserfreizeit 2025"
-                  required
-                  maxLength={200}
-                />
-              </div>
+        <div id="kurs-form-inhalt" className="dashboard-form-scroll-anchor">
+            <DashboardFormZoneHeader
+              step={1}
+              title="Inhalt"
+              description="Das, was Besucher zuerst sehen: Titeltext, Bild und optionale Hinweise zur Teilnahme."
+            />
+            <DashboardFormMediaSplit
+              main={
+                <>
+                  <DashboardFormBlock title="Grundinformationen">
+                    <div className="space-y-4">
+                      <div>
+                        <label
+                          htmlFor="new-course-title"
+                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Titel *
+                        </label>
+                        <input
+                          id="new-course-title"
+                          type="text"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          placeholder="z.B. Bläserlehrgang 2025"
+                          required
+                          maxLength={200}
+                        />
+                      </div>
 
-              <div>
-                <Label>Motto</Label>
-                <Input
-                  type="text"
-                  value={motto}
-                  onChange={(e) => setMotto(e.target.value)}
-                  placeholder="z.B. Gemeinsam musizieren"
-                />
-              </div>
+                      <div>
+                        <label
+                          htmlFor="new-course-motto"
+                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Motto (optional)
+                        </label>
+                        <input
+                          id="new-course-motto"
+                          type="text"
+                          value={motto}
+                          onChange={(e) => setMotto(e.target.value)}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          placeholder="z.B. Gemeinsam musizieren"
+                        />
+                      </div>
 
-              <div>
-                <Label required>Beschreibung</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  placeholder="Beschreibe den Kurs..."
-                  required
-                  maxLength={10000}
-                />
-              </div>
+                      <div>
+                        <label
+                          htmlFor="new-course-description"
+                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Beschreibung *
+                        </label>
+                        <textarea
+                          id="new-course-description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          rows={5}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          placeholder="Beschreibe den Kurs..."
+                          required
+                          maxLength={10000}
+                        />
+                      </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <Label required>Kursart</Label>
-                  <Select
-                    value={courseType}
-                    onChange={(e) =>
-                      setCourseType(e.target.value as CourseType)
-                    }
-                  >
-                    {Object.entries(courseTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label
+                            htmlFor="new-course-type"
+                            className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                          >
+                            Kurstyp *
+                          </label>
+                          <Select
+                            id="new-course-type"
+                            value={courseType}
+                            onChange={(e) =>
+                              setCourseType(e.target.value as CourseType)
+                            }
+                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          >
+                            {Object.entries(courseTypeLabels).map(
+                              ([value, label]) => (
+                                <option key={value} value={value}>
+                                  {label}
+                                </option>
+                              ),
+                            )}
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </DashboardFormBlock>
 
-        {/* Image */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Bild
-          </h2>
-          <div className="space-y-4">
-            {imageUrl ? (
-              <div className="relative">
-                <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
-                  <Image
-                    src={imageUrl}
-                    alt="Kursbild"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaPicker(true)}
-                    className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
-                  >
-                    Bild ändern
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageId(null);
-                      setImageUrl(null);
-                    }}
-                    className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    Bild entfernen
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowMediaPicker(true)}
-                className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
-              >
-                <ImageIcon className="h-12 w-12 text-gray-400" />
-                <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
-                  Bild auswählen
-                </span>
-                <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Aus der Medienbibliothek auswählen oder neues Bild hochladen
-                </span>
-              </button>
-            )}
-          </div>
-        </section>
+                  <DashboardFormBlock title="Weitere Informationen">
+                    <div className="space-y-4">
+                      <div>
+                        <label
+                          htmlFor="new-course-prerequisites"
+                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Voraussetzungen (optional)
+                        </label>
+                        <textarea
+                          id="new-course-prerequisites"
+                          value={prerequisites}
+                          onChange={(e) => setPrerequisites(e.target.value)}
+                          rows={3}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          placeholder="z.B. Grundkenntnisse auf dem Instrument"
+                        />
+                      </div>
 
-        {/* Additional Info */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Zusätzliche Informationen
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Voraussetzungen
-              </label>
-              <textarea
-                value={prerequisites}
-                onChange={(e) => setPrerequisites(e.target.value)}
-                rows={3}
-                placeholder="z.B. Mindestens 2 Jahre Spielerfahrung"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Mitzubringen
-              </label>
-              <textarea
-                value={whatToBring}
-                onChange={(e) => setWhatToBring(e.target.value)}
-                rows={3}
-                placeholder="z.B. Eigenes Instrument, Notenständer"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-            </div>
-          </div>
-        </section>
-
+                      <div>
+                        <label
+                          htmlFor="new-course-what-to-bring"
+                          className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                        >
+                          Mitzubringen (optional)
+                        </label>
+                        <textarea
+                          id="new-course-what-to-bring"
+                          value={whatToBring}
+                          onChange={(e) => setWhatToBring(e.target.value)}
+                          rows={3}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                          placeholder="z.B. Instrument, Notenständer, ..."
+                        />
+                      </div>
+                    </div>
+                  </DashboardFormBlock>
+                </>
+              }
+              aside={
+                <DashboardFormBlock title="Titelbild">
+                  <div className="space-y-4">
+                    {imageUrl ? (
+                      <div className="relative">
+                        <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                          <Image
+                            src={imageUrl}
+                            alt="Kursbild"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowMediaPicker(true)}
+                            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                          >
+                            Bild ändern
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageId(null);
+                              setImageUrl(null);
+                            }}
+                            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                          >
+                            Bild entfernen
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 transition-colors hover:bg-gray-50 sm:p-8"
+                      >
+                        <ImageIcon className="h-10 w-10 text-gray-400 sm:h-12 sm:w-12" />
+                        <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                          Bild auswählen
+                        </span>
+                        <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+                          Mediathek oder neu hochladen
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </DashboardFormBlock>
+              }
+            />
         </div>
 
         <div
           id="kurs-form-termin"
-          className="dashboard-form-scroll-anchor space-y-8"
+          className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
         >
-        {/* Date & Time */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Datum & Zeit
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-4">
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Startdatum *
-              </label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Startzeit *
-              </label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Enddatum *
-              </label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate || undefined}
-                title="Enddatum muss nach oder gleich dem Startdatum sein"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Endzeit *
-              </label>
-              <input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-          <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-            <legend className="dark:text-dark-text mb-3 block px-0.5 text-sm font-semibold text-gray-900">
-              Anmeldefenster (optional)
-            </legend>
-
-            <div className="space-y-5">
-              <label className="flex cursor-pointer items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="newCourseScheduledOpens"
-                  checked={scheduledRegistrationOpens}
-                  onChange={(e) => {
-                    const on = e.target.checked;
-                    setScheduledRegistrationOpens(on);
-                    if (!on) setRegistrationOpensAt("");
-                  }}
-                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
-                />
-                <span className="min-w-0">
-                  <span className="dark:text-dark-text block text-sm font-medium leading-snug text-gray-700">
-                    Anmeldebeginn später planen
-                  </span>
-                  <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                    {scheduledRegistrationOpens
-                      ? "Datum und Uhrzeit vor Kursbeginn; der Kurstext kann schon vorher gelesen werden."
-                      : "Ohne diese Option gilt der gewohnte Anmeldezeitpunkt, sobald du die Anmeldung freischaltest."}
-                  </span>
-                </span>
-              </label>
-
-              {scheduledRegistrationOpens ? (
-                <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-                  <p className="dark:text-dark-text mb-3 text-sm font-medium text-gray-900">
-                    Anmeldung öffnet ab
-                  </p>
-                  <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                    <div>
-                      <label
-                        htmlFor="newCourseRegistrationOpensDate"
-                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                      >
-                        Datum
-                      </label>
-                      <input
-                        id="newCourseRegistrationOpensDate"
-                        type="date"
-                        value={opensScheduleParts.opensDatePart}
-                        max={startDate || undefined}
-                        onChange={(e) =>
-                          setRegistrationOpensAt(
-                            registrationOpensMerge(
-                              e.target.value,
-                              opensScheduleParts.opensTimePart,
-                            ),
-                          )
-                        }
-                        title="Spätestens am Kurstag"
-                        className={registrationScheduleFieldClass}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="newCourseRegistrationOpensTime"
-                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                      >
-                        Uhrzeit
-                      </label>
-                      <input
-                        id="newCourseRegistrationOpensTime"
-                        type="time"
-                        value={opensScheduleParts.opensTimePart}
-                        max={
-                          opensScheduleParts.opensTimeMax ?? undefined
-                        }
-                        title="Am Kurstag höchstens bis Kursbeginn"
-                        onChange={(e) =>
-                          setRegistrationOpensAt(
-                            registrationOpensMerge(
-                              opensScheduleParts.opensDatePart,
-                              e.target.value,
-                            ),
-                          )
-                        }
-                        className={registrationScheduleFieldClass}
-                      />
-                    </div>
-                  </div>
-                  <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                    Anmelden ist erst nach diesem Datum und dieser Uhrzeit
-                    möglich.
-                  </p>
+          <DashboardFormZoneHeader
+            step={2}
+            title="Termin & Ort"
+            description="Zeitfenster, Bezirk und Veranstaltungsort steuern Kalender und Anfahrtshinweise."
+          />
+          <DashboardFormBlock title="Datum & Ort">
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-4">
+                <div>
+                  <label
+                    htmlFor="new-course-start-date"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Startdatum *
+                  </label>
+                  <input
+                    id="new-course-start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
                 </div>
-              ) : null}
-            </div>
-          </fieldset>
+                <div>
+                  <label
+                    htmlFor="new-course-start-time"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Startzeit *
+                  </label>
+                  <input
+                    id="new-course-start-time"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="new-course-end-date"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Enddatum *
+                  </label>
+                  <input
+                    id="new-course-end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || undefined}
+                    title="Enddatum muss nach oder gleich dem Startdatum sein"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="new-course-end-time"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Endzeit *
+                  </label>
+                  <input
+                    id="new-course-end-time"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    required
+                  />
+                </div>
+              </div>
 
-          <div className="mt-4 max-w-xl">
-            <label className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700">
-              Anmeldeschluss (optional)
-            </label>
-            <input
-              type="date"
-              value={registrationDeadline}
-              onChange={(e) => setRegistrationDeadline(e.target.value)}
-              min={
-                scheduledRegistrationOpens && registrationOpensAt.includes("T")
-                  ? opensScheduleParts.opensDatePart || undefined
-                  : undefined
-              }
-              max={startDate || undefined}
-              title="Anmeldeschluss muss vor oder am Startdatum sein"
-              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-            />
-          </div>
-        </section>
+              <div>
+                <label
+                  htmlFor="new-course-bezirk"
+                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Bezirk
+                </label>
+                {!isHigherRole && userBezirkId ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={
+                        bezirke?.find((b) => b.id === userBezirkId)
+                          ? `Bezirk ${bezirke.find((b) => b.id === userBezirkId)?.number} – ${bezirke.find((b) => b.id === userBezirkId)?.name}`
+                          : "Wird geladen..."
+                      }
+                      disabled
+                      className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-900 opacity-60"
+                    />
+                    <Lock className="h-5 w-5 shrink-0 text-gray-400" />
+                  </div>
+                ) : !isHigherRole && !userBezirkId ? (
+                  <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                      <strong>Hinweis:</strong> Du bist keinem Bezirk
+                      zugeordnet. Bitte wende dich an einen Administrator, um
+                      Lehrgänge erstellen zu können.
+                    </p>
+                  </div>
+                ) : (
+                  <Select
+                    id="new-course-bezirk"
+                    value={bezirkId}
+                    onChange={(e) => setBezirkId(e.target.value)}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                  >
+                    <option value="">Übergreifend / Kein Bezirk</option>
+                    {bezirke?.map((bezirk) => (
+                      <option key={bezirk.id} value={bezirk.id}>
+                        Bezirk {bezirk.number} – {bezirk.shortName}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+                {!isHigherRole && userBezirkId ? (
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Du kannst nur Lehrgänge für deinen eigenen Bezirk erstellen.
+                  </p>
+                ) : null}
+              </div>
 
-        {/* Location */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Veranstaltungsort
-          </h2>
-          <div className="space-y-4">
-            <div className="relative" data-dropdown>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Ort suchen
-              </label>
-              <input
-                type="text"
-                value={locationSearch}
-                onChange={(e) => {
-                  setLocationSearch(e.target.value);
-                  setShowLocationDropdown(true);
-                  if (!e.target.value) setLocationId("");
-                }}
-                onFocus={() => setShowLocationDropdown(true)}
-                placeholder="Suche nach einem Ort..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
+              <div className="relative" data-dropdown>
+                <label
+                  htmlFor="new-course-location-search"
+                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                >
+                  Veranstaltungsort (optional)
+                </label>
+                <input
+                  id="new-course-location-search"
+                  type="text"
+                  value={locationSearch}
+                  onChange={(e) => {
+                    setLocationSearch(e.target.value);
+                    setShowLocationDropdown(true);
+                    if (!e.target.value) setLocationId("");
+                  }}
+                  onFocus={() => setShowLocationDropdown(true)}
+                  placeholder="Suche nach Ort…"
+                  autoComplete="off"
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                />
 
               {/* Location Dropdown */}
               {showLocationDropdown && locationsData && (
@@ -1131,163 +1109,240 @@ export default function NewCoursePage() {
                 </div>
               </div>
             )}
-          </div>
-        </section>
-
-        {/* District */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Bezirk
-          </h2>
-          <div className="space-y-4">
-            {!isHigherRole && userBezirkId ? (
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Dein Bezirk
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={
-                      bezirke?.find((b) => b.id === userBezirkId)
-                        ? `Bezirk ${bezirke.find((b) => b.id === userBezirkId)?.number} – ${bezirke.find((b) => b.id === userBezirkId)?.name}`
-                        : "Wird geladen..."
-                    }
-                    disabled
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
-                  />
-                  <Lock className="h-5 w-5 shrink-0 text-gray-400" />
-                </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Du kannst nur Lehrgänge für deinen eigenen Bezirk erstellen.
-                </p>
-              </div>
-            ) : !isHigherRole && !userBezirkId ? (
-              <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                  <strong>Hinweis:</strong> Du bist keinem Bezirk zugeordnet.
-                  Bitte wende dich an einen Administrator, um Lehrgänge
-                  erstellen zu können.
-                </p>
-              </div>
-            ) : (
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bezirk auswählen
-                </label>
-                <Select
-                  value={bezirkId}
-                  onChange={(e) => setBezirkId(e.target.value)}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                >
-                  <option value="">Übergreifend / Kein Bezirk</option>
-                  {bezirke?.map((bezirk) => (
-                    <option key={bezirk.id} value={bezirk.id}>
-                      Bezirk {bezirk.number} – {bezirk.shortName}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-            )}
-          </div>
-        </section>
-
+            </div>
+          </DashboardFormBlock>
         </div>
 
         <div
           id="kurs-form-anmeldung"
-          className="dashboard-form-scroll-anchor space-y-8"
+          className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
         >
-        {/* Capacity & Registration */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Kapazität & Anmeldung
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Maximale Teilnehmerzahl *
-              </label>
-              <input
-                type="number"
-                value={maxParticipants}
-                onChange={(e) =>
-                  setMaxParticipants(parseInt(e.target.value) || 0)
-                }
-                min="1"
-                max="500"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                required
-              />
-            </div>
+          <DashboardFormZoneHeader
+            step={3}
+            title="Anmeldung"
+            description="Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+          />
+          <div className="space-y-10">
+            <DashboardFormBlock title="Anmeldeeinstellungen">
+              <div className="space-y-6">
+                <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <legend className="sr-only">
+                    Anmeldezeitpunkt und -fenster
+                  </legend>
+                  <div className="space-y-5">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="new-course-registration-open"
+                        checked={registrationOpen}
+                        onChange={(e) => setRegistrationOpen(e.target.checked)}
+                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                      />
+                      <label
+                        htmlFor="new-course-registration-open"
+                        className="dark:text-dark-text cursor-pointer text-sm font-medium leading-snug text-gray-700"
+                      >
+                        Anmeldung geöffnet
+                      </label>
+                    </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={registrationOpen}
-                  onChange={(e) => setRegistrationOpen(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                />
-                <span className="dark:text-dark-text text-sm text-gray-700">
-                  Anmeldung geöffnet
-                </span>
-              </label>
+                    <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="new-course-scheduled-opens"
+                          checked={scheduledRegistrationOpens}
+                          onChange={(e) => {
+                            const on = e.target.checked;
+                            setScheduledRegistrationOpens(on);
+                            if (!on) setRegistrationOpensAt("");
+                          }}
+                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                        />
+                        <span className="min-w-0">
+                          <span className="dark:text-dark-text block text-sm font-medium leading-snug text-gray-700">
+                            Anmeldebeginn später planen
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            {scheduledRegistrationOpens
+                              ? "Datum und Uhrzeit vor Kursbeginn wählen; Kursbeschreibung ist schon vorher sichtbar."
+                              : "Ohne Planung gilt der normale Zeitpunkt, sobald die Anmeldung freigeschaltet ist."}
+                          </span>
+                        </span>
+                      </label>
 
-              <label className="flex cursor-pointer items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={allowWaitingList}
-                  onChange={(e) => setAllowWaitingList(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                />
-                <span className="dark:text-dark-text text-sm text-gray-700">
-                  Warteliste erlauben
-                </span>
-              </label>
+                      {scheduledRegistrationOpens ? (
+                        <div className="mt-4 space-y-2">
+                          <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                            Anmeldung öffnet ab
+                          </p>
+                          <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                            <div>
+                              <label
+                                htmlFor="new-course-registration-opens-date"
+                                className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              >
+                                Datum
+                              </label>
+                              <input
+                                type="date"
+                                id="new-course-registration-opens-date"
+                                value={opensScheduleParts.opensDatePart}
+                                max={startDate || undefined}
+                                onChange={(e) =>
+                                  setRegistrationOpensAt(
+                                    registrationOpensMerge(
+                                      e.target.value,
+                                      opensScheduleParts.opensTimePart,
+                                    ),
+                                  )
+                                }
+                                title="Spätestens am Kurstag (vor oder am gleichen Datum wie Beginn)"
+                                className={registrationFieldInputClass}
+                              />
+                            </div>
+                            <div>
+                              <label
+                                htmlFor="new-course-registration-opens-time"
+                                className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              >
+                                Uhrzeit
+                              </label>
+                              <input
+                                type="time"
+                                id="new-course-registration-opens-time"
+                                value={opensScheduleParts.opensTimePart}
+                                max={
+                                  opensScheduleParts.opensTimeMax ?? undefined
+                                }
+                                title="Am Kurstag höchstens bis Kursbeginn"
+                                onChange={(e) =>
+                                  setRegistrationOpensAt(
+                                    registrationOpensMerge(
+                                      opensScheduleParts.opensDatePart,
+                                      e.target.value,
+                                    ),
+                                  )
+                                }
+                                className={registrationFieldInputClass}
+                              />
+                            </div>
+                          </div>
+                          <p className="max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            Die Buttons zum Anmelden erscheinen erst ab diesem
+                            Zeitpunkt; der Kurstext bleibt sichtbar.
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </fieldset>
 
-              {/* Sibling Discount - Only for LPW/Admin */}
-              {isHigherRole && (
-                <label className="flex cursor-pointer items-center gap-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start sm:gap-6">
+                  <div>
+                    <label
+                      htmlFor="new-course-max-participants"
+                      className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                    >
+                      Maximale Teilnehmerzahl *
+                    </label>
+                    <input
+                      type="number"
+                      id="new-course-max-participants"
+                      value={maxParticipants}
+                      onChange={(e) =>
+                        setMaxParticipants(parseInt(e.target.value, 10) || 0)
+                      }
+                      min="1"
+                      max="500"
+                      className={registrationFieldInputClass}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="new-course-registration-deadline"
+                      className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                    >
+                      Anmeldeschluss (optional)
+                    </label>
+                    <input
+                      type="date"
+                      id="new-course-registration-deadline"
+                      value={registrationDeadline}
+                      onChange={(e) =>
+                        setRegistrationDeadline(e.target.value)
+                      }
+                      min={
+                        scheduledRegistrationOpens &&
+                        registrationOpensAt.includes("T")
+                          ? opensScheduleParts.opensDatePart || undefined
+                          : undefined
+                      }
+                      max={startDate || undefined}
+                      title="Anmeldeschluss muss vor oder am Startdatum sein"
+                      className={registrationFieldInputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
                   <input
                     type="checkbox"
-                    checked={allowSiblingDiscount}
-                    onChange={(e) => setAllowSiblingDiscount(e.target.checked)}
+                    id="new-course-waiting-list"
+                    checked={allowWaitingList}
+                    onChange={(e) =>
+                      setAllowWaitingList(e.target.checked)
+                    }
                     className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                   />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Geschwisterkindrabatt erlauben (20% auf die Gebühr jedes
-                    weiteren Geschwisterkindes ab dem zweiten Kind)
-                  </span>
-                </label>
-              )}
-            </div>
-          </div>
-        </section>
+                  <label
+                    htmlFor="new-course-waiting-list"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Warteliste aktivieren
+                  </label>
+                </div>
 
+                {isHigherRole ? (
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="new-course-sibling-discount"
+                      checked={allowSiblingDiscount}
+                      onChange={(e) =>
+                        setAllowSiblingDiscount(e.target.checked)
+                      }
+                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    />
+                    <label
+                      htmlFor="new-course-sibling-discount"
+                      className="dark:text-dark-text text-sm font-medium text-gray-700"
+                    >
+                      Geschwisterkindrabatt erlauben (20% auf die Gebühr jedes
+                      weiteren Geschwisterkindes ab dem zweiten Kind)
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+            </DashboardFormBlock>
 
-        {/* Custom Fields */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Zusätzliche Anmeldefelder
-              </h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Definiere zusätzliche Felder, die bei der Anmeldung abgefragt
-                werden
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={addCustomField}
-              className="text-primary hover:text-primary/80 text-sm font-medium"
+            <DashboardFormBlock
+              title="Zusätzliche Anmeldefelder"
+              description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
             >
-              + Feld hinzufügen
-            </button>
-          </div>
+              <div className="-mt-2 mb-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={addCustomField}
+                  className="text-primary hover:text-primary/80 text-sm font-medium"
+                >
+                  + Feld hinzufügen
+                </button>
+              </div>
 
-          {customFields.length === 0 ? (
+              {customFields.length === 0 ? (
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Keine zusätzlichen Felder definiert.
             </p>
@@ -1437,20 +1492,20 @@ export default function NewCoursePage() {
               ))}
             </div>
           )}
-        </section>
-
+            </DashboardFormBlock>
+          </div>
         </div>
 
         <div
           id="kurs-form-preise"
-          className="dashboard-form-scroll-anchor space-y-8"
+          className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
         >
-
-        {/* Pricing */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Preise
-          </h2>
+          <DashboardFormZoneHeader
+            step={4}
+            title="Preise"
+            description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
+          />
+          <DashboardFormBlock title="Honorar und Zahlungsweisen">
           <div className="space-y-4">
             <label className="flex cursor-pointer items-center gap-3">
               <input
@@ -1619,21 +1674,19 @@ export default function NewCoursePage() {
               </div>
             )}
           </div>
-        </section>
+          </DashboardFormBlock>
         </div>
 
         <div
           id="kurs-form-veroeffentlichung"
-          className="dashboard-form-scroll-anchor space-y-8"
+          className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
         >
-
-
-
-        {/* Publication Status */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Veröffentlichung
-          </h2>
+          <DashboardFormZoneHeader
+            step={5}
+            title="Veröffentlichung"
+            description="Welchen redaktionellen Stand der Eintrag haben soll – wirkt sich auf die öffentliche Sichtbarkeit aus."
+          />
+          <DashboardFormBlock title="Redaktionsstatus">
           <div className="space-y-4">
             {isHigherRole ? (
               <div className="space-y-3">
@@ -1732,11 +1785,11 @@ export default function NewCoursePage() {
               </>
             )}
           </div>
-        </section>
+          </DashboardFormBlock>
         </div>
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
             <Link
               href="/dashboard/courses"
               data-skip-warning
