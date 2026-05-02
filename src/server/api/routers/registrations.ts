@@ -7,10 +7,26 @@ import {
   lpwProcedure,
 } from "../trpc";
 import {
+  CourseCollaboratorRole,
+  CoursePaymentMethod,
   PaymentStatus,
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
+import type { Prisma } from "~/generated/prisma/client";
+
+function collaboratorsForViewer(userId: string) {
+  return {
+    where: { userId },
+    select: { role: true },
+  } as const;
+}
+
+function viewerIsCourseTeamMember(
+  collaborators: { role: CourseCollaboratorRole }[] | undefined,
+) {
+  return (collaborators?.length ?? 0) > 0;
+}
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
@@ -18,6 +34,12 @@ import {
   permissionProcedureAny,
 } from "../middleware/permissions";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { resolveParticipantCustomFieldsForPersist } from "@/lib/course-custom-fields";
+import {
+  courseAcceptsCash,
+  courseAcceptsInvoice,
+  registrationNeedsPaymentMethod,
+} from "@/lib/course-payment-methods";
 
 const getEmailService = async () => import("@/server/email");
 
@@ -46,6 +68,7 @@ export const registrationsRouter = createTRPCRouter({
         billingCity: z.string().max(100).optional(),
         billingEmail: z.email().optional(),
         notes: z.string().max(2000).optional(),
+        paymentMethod: z.nativeEnum(CoursePaymentMethod).optional(),
         siblingDiscountApplied: z.boolean().optional().default(false),
         participants: z.array(
           z.object({
@@ -64,7 +87,11 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { participants, ...registrationData } = input;
+      const {
+        participants: participantsInput,
+        paymentMethod: inputPaymentMethod,
+        ...registrationData
+      } = input;
 
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
@@ -124,6 +151,20 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      const participants = participantsInput.map((p) => {
+        const resolved = resolveParticipantCustomFieldsForPersist(
+          p.customFields as Record<string, unknown> | undefined,
+          course.customFields ?? [],
+        );
+        if (!resolved.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: resolved.message,
+          });
+        }
+        return { ...p, customFields: resolved.customFields };
+      });
+
       let totalPrice = 0;
       const participantsWithPriceOptions = [];
 
@@ -145,37 +186,6 @@ export const registrationsRouter = createTRPCRouter({
           ...participant,
           priceOption: priceOption.label,
         });
-
-        if (participant.customFields && course.customFields) {
-          for (const customField of course.customFields) {
-            const value = participant.customFields[customField.fieldName];
-
-            if (customField.isRequired && !value) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: `Required field missing: ${customField.fieldName}`,
-              });
-            }
-
-            if (
-              value &&
-              customField.fieldType === "SELECT" &&
-              customField.options
-            ) {
-              const validOptions =
-                typeof customField.options === "string"
-                  ? customField.options.split(",").map((o) => o.trim())
-                  : [];
-
-              if (!validOptions.includes(String(value))) {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: `Invalid value for ${customField.fieldName}`,
-                });
-              }
-            }
-          }
-        }
       }
 
       const originalTotalPrice = totalPrice;
@@ -265,9 +275,57 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus = RegistrationStatus.WAITLIST;
       }
 
+      let resolvedPaymentMethod: CoursePaymentMethod | null = null;
+      if (registrationNeedsPaymentMethod(course)) {
+        const acceptsCash = courseAcceptsCash(course);
+        const acceptsInvoice = courseAcceptsInvoice(course);
+        if (!acceptsCash && !acceptsInvoice) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Dieser Kurs hat keine gültigen Zahlungsarten. Bitte den Veranstalter kontaktieren.",
+          });
+        }
+        if (!acceptsCash && acceptsInvoice) {
+          resolvedPaymentMethod = CoursePaymentMethod.INVOICE;
+        } else if (acceptsCash && !acceptsInvoice) {
+          resolvedPaymentMethod = CoursePaymentMethod.CASH;
+        } else {
+          if (!inputPaymentMethod) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Bitte wählen Sie eine Zahlungsweise.",
+            });
+          }
+          if (
+            inputPaymentMethod === CoursePaymentMethod.CASH &&
+            !acceptsCash
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Barzahlung ist für diesen Kurs nicht vorgesehen.",
+            });
+          }
+          if (
+            inputPaymentMethod === CoursePaymentMethod.INVOICE &&
+            !acceptsInvoice
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Zahlung per Rechnung ist für diesen Kurs nicht vorgesehen.",
+            });
+          }
+          resolvedPaymentMethod = inputPaymentMethod;
+        }
+      }
+
       const registration = await ctx.db.courseRegistration.create({
         data: {
           ...registrationData,
+          ...(resolvedPaymentMethod != null
+            ? { paymentMethod: resolvedPaymentMethod }
+            : {}),
           totalPrice, // Use server-calculated price (after discount if applied)
           originalTotalPrice:
             input.siblingDiscountApplied && siblingDiscountAmount > 0
@@ -286,7 +344,8 @@ export const registrationsRouter = createTRPCRouter({
               const { priceOptionId, ...participantData } = participant;
               return {
                 ...participantData,
-                customFields: participantData.customFields || {},
+                customFields: (participantData.customFields ||
+                  {}) as Prisma.InputJsonValue,
                 siblingGroupId: participant.siblingGroupId || null,
               };
             }),
@@ -369,6 +428,7 @@ export const registrationsRouter = createTRPCRouter({
             select: {
               id: true,
               title: true,
+              isFree: true,
               startDate: true,
               endDate: true,
               registrationDeadline: true,
@@ -416,7 +476,7 @@ export const registrationsRouter = createTRPCRouter({
               createdById: true,
               startDate: true,
               registrationDeadline: true,
-              instructors: { select: { id: true } },
+              collaborators: collaboratorsForViewer(ctx.session.user.id),
             },
           },
         },
@@ -430,15 +490,14 @@ export const registrationsRouter = createTRPCRouter({
         };
       }
       const isOwner = registration.registrantEmail === ctx.session.user.email;
-      const isInstructor = registration.course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator = registration.course.createdById === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
-      const isStaff = isInstructor || isCreator || canManageRegistrations;
+      const collaboratorRows = registration.course.collaborators;
+      const teamMember = viewerIsCourseTeamMember(collaboratorRows);
+      const isStaff = teamMember || isCreator || canManageRegistrations;
 
       const canView = isOwner || isStaff;
       const now = new Date();
@@ -580,7 +639,11 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, participants, ...registrationData } = input;
+      const {
+        id,
+        participants: participantsInput,
+        ...registrationData
+      } = input;
 
       const registration = await ctx.db.courseRegistration.findUnique({
         where: { id },
@@ -589,8 +652,9 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               priceOptions: true,
+              customFields: true,
               createdBy: { select: { id: true } },
-              instructors: { select: { id: true } },
+              collaborators: collaboratorsForViewer(ctx.session.user.id),
               _count: {
                 select: {
                   registrations: {
@@ -613,16 +677,16 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       const isOwner = registration.registrantEmail === ctx.session.user.email;
-      const isInstructor = registration.course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator =
         registration.course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
-      const isStaff = isInstructor || isCreator || canManageRegistrations;
+      const teamMember = viewerIsCourseTeamMember(
+        registration.course.collaborators,
+      );
+      const isStaff = teamMember || isCreator || canManageRegistrations;
 
       if (!isOwner && !isStaff) {
         throw new TRPCError({
@@ -655,6 +719,20 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       const course = registration.course;
+
+      const participants = participantsInput.map((p) => {
+        const resolved = resolveParticipantCustomFieldsForPersist(
+          p.customFields as Record<string, unknown> | undefined,
+          course.customFields ?? [],
+        );
+        if (!resolved.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: resolved.message,
+          });
+        }
+        return { ...p, customFields: resolved.customFields };
+      });
 
       let originalTotalPrice = 0;
       const participantsWithPriceOptions = [];
@@ -822,7 +900,8 @@ export const registrationsRouter = createTRPCRouter({
           city: participantData.city,
           instrument: participantData.instrument ?? null,
           priceOption: participantData.priceOption ?? null,
-          customFields: participantData.customFields ?? {},
+          customFields: (participantData.customFields ??
+            {}) as Prisma.InputJsonValue,
           siblingGroupId: siblingGroupId ?? null,
         };
 
@@ -885,8 +964,8 @@ export const registrationsRouter = createTRPCRouter({
           participants: true,
           course: {
             include: {
-              instructors: { select: { id: true } },
               createdBy: { select: { id: true } },
+              collaborators: collaboratorsForViewer(ctx.session.user.id),
             },
           },
         },
@@ -899,9 +978,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const isInstructor = registration.course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator =
         registration.course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
@@ -909,8 +985,11 @@ export const registrationsRouter = createTRPCRouter({
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
       const isAdmin = canManageRegistrations;
+      const teamMember = viewerIsCourseTeamMember(
+        registration.course.collaborators,
+      );
 
-      if (!isInstructor && !isCreator && !isAdmin) {
+      if (!teamMember && !isCreator && !isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions",
@@ -979,8 +1058,8 @@ export const registrationsRouter = createTRPCRouter({
         include: {
           course: {
             include: {
-              instructors: { select: { id: true } },
               createdBy: { select: { id: true } },
+              collaborators: collaboratorsForViewer(ctx.session.user.id),
             },
           },
         },
@@ -993,9 +1072,6 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const isInstructor = registration.course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator =
         registration.course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
@@ -1003,8 +1079,11 @@ export const registrationsRouter = createTRPCRouter({
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
       const isAdmin = canManageRegistrations;
+      const teamMember = viewerIsCourseTeamMember(
+        registration.course.collaborators,
+      );
 
-      if (!isInstructor && !isCreator && !isAdmin) {
+      if (!teamMember && !isCreator && !isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions",
@@ -1064,8 +1143,8 @@ export const registrationsRouter = createTRPCRouter({
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
-          instructors: { select: { id: true } },
           createdBy: { select: { id: true } },
+          collaborators: collaboratorsForViewer(ctx.session.user.id),
         },
       });
       if (!course) {
@@ -1074,15 +1153,13 @@ export const registrationsRouter = createTRPCRouter({
           message: "Course not found",
         });
       }
-      const isInstructor = course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator = course.createdBy?.id === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
-      if (!isInstructor && !isCreator && !canManageRegistrations) {
+      const teamMember = viewerIsCourseTeamMember(course.collaborators);
+      if (!teamMember && !isCreator && !canManageRegistrations) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions for this course",
@@ -1147,7 +1224,7 @@ export const registrationsRouter = createTRPCRouter({
                 startDate: true,
                 endDate: true,
                 createdById: true,
-                instructors: { select: { id: true } },
+                collaborators: collaboratorsForViewer(session.user.id),
               },
             },
           },
@@ -1159,16 +1236,16 @@ export const registrationsRouter = createTRPCRouter({
           });
         }
         const isOwner = registration.registrantEmail === session.user.email;
-        const isInstructor = registration.course.instructors.some(
-          (i) => i.id === session.user.id,
-        );
         const isCreator = registration.course.createdById === session.user.id;
         const canManageRegistrations = await userHasPermission(
           session.user.id,
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         );
+        const teamMember = viewerIsCourseTeamMember(
+          registration.course.collaborators,
+        );
         const canCancelAsStaff =
-          isInstructor || isCreator || canManageRegistrations;
+          teamMember || isCreator || canManageRegistrations;
         if (!isOwner && !canCancelAsStaff) {
           throw new TRPCError({
             code: "FORBIDDEN",
@@ -1262,7 +1339,7 @@ export const registrationsRouter = createTRPCRouter({
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
-          instructors: { select: { id: true } },
+          collaborators: collaboratorsForViewer(ctx.session.user.id),
           priceOptions: { select: { maxParticipants: true } },
         },
       });
@@ -1274,17 +1351,15 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const isInstructor = course.instructors.some(
-        (i) => i.id === ctx.session.user.id,
-      );
       const isCreator = course.createdById === ctx.session.user.id;
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
       const isAdmin = canManageRegistrations;
+      const teamMember = viewerIsCourseTeamMember(course.collaborators);
 
-      if (!isInstructor && !isCreator && !isAdmin) {
+      if (!teamMember && !isCreator && !isAdmin) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions",
