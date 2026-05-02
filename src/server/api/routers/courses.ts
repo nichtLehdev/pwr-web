@@ -310,6 +310,8 @@ export const coursesRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(20),
         status: z.nativeEnum(ContentStatus).optional(),
+        /** Default `active`: laufend + zukünftig; Entwürfe immer sichtbar (Datum oft noch Provisorium). */
+        schedule: z.enum(["active", "all", "past"]).default("active"),
         sortBy: z
           .enum(["startDate", "title", "createdAt", "status"])
           .default("startDate"),
@@ -371,9 +373,26 @@ export const coursesRouter = createTRPCRouter({
             : { OR: sharedAccessOr };
       }
 
+      const scheduleWhere: Prisma.CourseWhereInput =
+        input.schedule === "all"
+          ? {}
+          : input.schedule === "active"
+            ? {
+                OR: [
+                  { endDate: { gte: new Date() } },
+                  { status: ContentStatus.DRAFT },
+                ],
+              }
+            : { endDate: { lt: new Date() } };
+
+      const whereWithSchedule: Prisma.CourseWhereInput =
+        input.schedule === "all"
+          ? (where as Prisma.CourseWhereInput)
+          : { AND: [where as Prisma.CourseWhereInput, scheduleWhere] };
+
       const [coursesRaw, total] = await Promise.all([
         ctx.db.course.findMany({
-          where,
+          where: whereWithSchedule,
           include: {
             image: true,
             location: true,
@@ -401,7 +420,7 @@ export const coursesRouter = createTRPCRouter({
           take: input.limit,
           orderBy: { [input.sortBy]: input.sortOrder },
         }),
-        ctx.db.course.count({ where }),
+        ctx.db.course.count({ where: whereWithSchedule }),
       ]);
 
       const courses = coursesRaw.map((course) => {

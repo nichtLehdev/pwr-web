@@ -68,7 +68,7 @@ export default function DashboardCoursesPage() {
       actions={
         <Link
           href="/dashboard/courses/new"
-          className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+          className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
         >
           <Plus className="h-4 w-4" />
           Neuer Kurs
