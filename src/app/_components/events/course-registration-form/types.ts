@@ -13,6 +13,8 @@ export interface CourseRegistrationFormProps {
   onSuccess: () => void;
   isWaitlist: boolean;
   currentUser?: User | null;
+  /** Full page route vs fixed overlay modal */
+  variant?: "modal" | "page";
 }
 
 export type Step = 1 | 2 | 3;

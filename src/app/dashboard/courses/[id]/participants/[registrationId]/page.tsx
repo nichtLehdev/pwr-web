@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -23,6 +24,7 @@ import {
   CircleXIcon,
 } from "lucide-react";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { COURSE_PAYMENT_METHOD_LABELS } from "@/lib/course-payment-methods";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -530,13 +532,25 @@ export default function RegistrationDetailPage() {
                   </span>
                 </div>
               )}
+              {course?.isFree === false && (
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Zahlungsweise:
+                  </span>
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
+                    {registration.paymentMethod
+                      ? COURSE_PAYMENT_METHOD_LABELS[registration.paymentMethod]
+                      : "–"}
+                  </span>
+                </div>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Zahlungsstatus:
                 </span>
                 {canManagePaymentStatus && editingPaymentStatus ? (
                   <div className="flex items-center gap-2">
-                    <select
+                    <Select
                       value={paymentStatusDraft ?? registration.paymentStatus}
                       onChange={(e) =>
                         setPaymentStatusDraft(
@@ -555,7 +569,7 @@ export default function RegistrationDetailPage() {
                       <option value={PaymentStatus.REFUNDED}>
                         {paymentStatusLabels[PaymentStatus.REFUNDED]}
                       </option>
-                    </select>
+                    </Select>
                     <button
                       type="button"
                       onClick={() =>

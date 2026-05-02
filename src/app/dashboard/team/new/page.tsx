@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -317,7 +318,7 @@ export default function NewTeamPage() {
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Bereich
               </label>
-              <select
+              <Select
                 value={contactType}
                 onChange={(e) =>
                   setContactType(e.target.value as ContactType | "")
@@ -329,7 +330,7 @@ export default function NewTeamPage() {
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>
@@ -403,7 +404,7 @@ export default function NewTeamPage() {
                           className="h-5 w-5 text-gray-600 dark:text-gray-400"
                         />
                       </div>
-                      <select
+                      <Select
                         value={social.type}
                         onChange={(e) =>
                           updateSocialLink(index, "type", e.target.value)
@@ -415,7 +416,7 @@ export default function NewTeamPage() {
                             {option.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
                   </div>
 

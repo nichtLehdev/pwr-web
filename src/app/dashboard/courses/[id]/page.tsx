@@ -9,13 +9,18 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
+  CourseCollaboratorRole,
   CourseType,
   CustomFieldType,
   RegistrationStatus,
   PaymentStatus,
 } from "~/generated/prisma/enums";
 import { ArrowRightIcon, Edit, Trash2, UserIcon } from "lucide-react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardFormMediaSplit,
+  DashboardFormSectionLayout,
+  DashboardPage,
+} from "@/app/_components/dashboard";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -218,14 +223,22 @@ export default function CourseDetailPage() {
 
   const isReviewer = hasApprovePermission;
   const isOwner = course.createdById === session.user.id;
-  const isInstructor = course.instructors?.some(
-    (i) => i.id === session.user.id,
-  );
-  const canEdit = isOwner || hasEditPermission;
+  const hasCourseTeamAccess =
+    course.viewerCollaboratorRole === CourseCollaboratorRole.STAFF ||
+    course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
+  const hasDistrictCourseAccess =
+    !!profile.bezirkId &&
+    !!course.bezirkId &&
+    profile.bezirkId === course.bezirkId;
+  const canEdit =
+    isOwner ||
+    hasEditPermission ||
+    hasDistrictCourseAccess ||
+    course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
   const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
-    isOwner || isInstructor || hasViewParticipantsPermission;
+    isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -264,6 +277,149 @@ export default function CourseDetailPage() {
   };
 
   const confirmedCount = course._count?.participants ?? 0;
+  const districtLabel = course.bezirk
+    ? `${course.bezirk.name}`
+    : "Übergreifend";
+  const registrationLabel =
+    course.registrationOpen &&
+    course.registrationOpensAt &&
+    new Date(course.registrationOpensAt) > new Date()
+      ? `Öffnet ${new Date(course.registrationOpensAt).toLocaleDateString("de-DE", { day: "2-digit", month: "short" })}`
+      : course.registrationOpen
+        ? "Anmeldung offen"
+        : "Anmeldung geschlossen";
+  const detailShortlinks = [
+    { href: "#course-detail-overview", label: "Überblick" },
+    { href: "#course-detail-info", label: "Kursinfos" },
+    ...(course.description
+      ? [{ href: "#course-detail-description", label: "Beschreibung" }]
+      : []),
+    ...((course.collaborators?.length ?? 0) > 0 ||
+    (course.guestTeamMembers?.length ?? 0) > 0
+      ? [{ href: "#course-detail-team", label: "Team" }]
+      : []),
+    ...(course.prerequisites || course.whatToBring
+      ? [{ href: "#course-detail-more", label: "Hinweise" }]
+      : []),
+    ...(course.customFields?.length
+      ? [{ href: "#course-detail-fields", label: "Anmeldefelder" }]
+      : []),
+    { href: "#course-detail-prices", label: "Preise" },
+    { href: "#course-detail-meta", label: "Metadaten" },
+  ];
+  const renderCourseInfoSection = (className: string) => (
+    <section id="course-detail-info" className={className}>
+      <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+        Kursinformationen
+      </h2>
+      <dl className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Kurstyp
+          </dt>
+          <dd className="dark:text-dark-text mt-1 text-gray-900">
+            {courseTypeLabels[course.courseType]}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Beginn
+          </dt>
+          <dd className="dark:text-dark-text mt-1 text-gray-900">
+            {formattedStartDate}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Ende
+          </dt>
+          <dd className="dark:text-dark-text mt-1 text-gray-900">
+            {formattedEndDate}
+          </dd>
+        </div>
+        {course.bezirk && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Bezirk
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {course.bezirk.name}
+            </dd>
+          </div>
+        )}
+        {course.location && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Veranstaltungsort
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {course.location.name && `${course.location.name}, `}
+              {course.location.city}
+              {course.location.street && (
+                <span className="block text-sm text-gray-500">
+                  {course.location.street}, {course.location.zipCode}{" "}
+                  {course.location.city}
+                </span>
+              )}
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            Teilnehmer
+          </dt>
+          <dd className="dark:text-dark-text mt-1 text-gray-900">
+            {confirmedCount}
+            {course.maxParticipants && ` / ${course.maxParticipants}`}
+            {course.allowWaitingList && (
+              <span className="ml-2 text-sm text-gray-500">
+                (Warteliste aktiviert)
+              </span>
+            )}
+          </dd>
+        </div>
+        {course.registrationOpensAt && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Anmeldung öffnet ab
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {new Date(course.registrationOpensAt).toLocaleDateString(
+                "de-DE",
+                {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                },
+              )}{" "}
+              um{" "}
+              {new Date(course.registrationOpensAt).toLocaleTimeString(
+                "de-DE",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                },
+              )}{" "}
+              Uhr
+            </dd>
+          </div>
+        )}
+        {course.registrationDeadline && (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Anmeldeschluss
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {new Date(course.registrationDeadline).toLocaleDateString(
+                "de-DE",
+              )}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  );
 
   return (
     <DashboardPage
@@ -299,7 +455,7 @@ export default function CourseDetailPage() {
       maxWidth="7xl"
     >
       {/* Status Badges */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         <span
           className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${statusColors[course.status]}`}
         >
@@ -326,6 +482,50 @@ export default function CourseDetailPage() {
           </span>
         )}
       </div>
+
+      <section
+        id="course-detail-overview"
+        className="dashboard-form-scroll-anchor mb-8"
+      >
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              Zeitraum
+            </p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {formattedStartDate}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              bis {formattedEndDate}
+            </p>
+          </div>
+          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              Bezirk
+            </p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {districtLabel}
+            </p>
+          </div>
+          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              Anmeldung
+            </p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {registrationLabel}
+            </p>
+          </div>
+          <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+              Teilnehmer
+            </p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {confirmedCount}
+              {course.maxParticipants ? ` / ${course.maxParticipants}` : ""}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Tabs */}
       {canViewParticipants && (
@@ -357,429 +557,367 @@ export default function CourseDetailPage() {
 
       {/* Details Tab */}
       {activeTab === "details" && (
-        <div className="space-y-6">
-          {/* Review Section - Only for pending courses */}
-          {canReview && (
-            <section className="rounded-lg border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/20">
-              <h2 className="mb-4 text-lg font-semibold text-yellow-800 dark:text-yellow-300">
-                Kurs prüfen
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                    Anmerkungen (optional bei Genehmigung, erforderlich bei
-                    Ablehnung)
-                  </label>
-                  <textarea
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                    rows={3}
-                    className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-yellow-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none dark:border-yellow-800"
-                    placeholder="Anmerkungen zur Prüfung..."
-                  />
+        <DashboardFormSectionLayout
+          className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
+          railClassName="dashboard-sticky-shell-top lg:sticky lg:block lg:self-start"
+          railItems={detailShortlinks}
+        >
+          <div className="space-y-0">
+            {/* Review Section - Only for pending courses */}
+            {canReview && (
+              <section className="mb-8 rounded-lg border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                <h2 className="mb-4 text-lg font-semibold text-yellow-800 dark:text-yellow-300">
+                  Kurs prüfen
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                      Anmerkungen (optional bei Genehmigung, erforderlich bei
+                      Ablehnung)
+                    </label>
+                    <textarea
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                      rows={3}
+                      className="focus:border-primary focus:ring-primary dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-yellow-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none dark:border-yellow-800"
+                      placeholder="Anmerkungen zur Prüfung..."
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleApprove}
+                      disabled={approveMutation.isPending}
+                      className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {approveMutation.isPending
+                        ? "Wird genehmigt..."
+                        : "Genehmigen"}
+                    </button>
+                    <button
+                      onClick={() => setShowRejectModal(true)}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                    >
+                      Ablehnen
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleApprove}
-                    disabled={approveMutation.isPending}
-                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {approveMutation.isPending
-                      ? "Wird genehmigt..."
-                      : "Genehmigen"}
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal(true)}
-                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
-                  >
-                    Ablehnen
-                  </button>
-                </div>
-              </div>
-            </section>
-          )}
+              </section>
+            )}
 
-          {/* Rejection Notice */}
-          {course.status === ContentStatus.REJECTED && course.reviewNotes && (
-            <section className="rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-900/20">
-              <h2 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
-                Ablehnungsgrund
+            {/* Rejection Notice */}
+            {course.status === ContentStatus.REJECTED && course.reviewNotes && (
+              <section className="mb-8 rounded-lg border border-red-200 bg-red-50 p-6 dark:border-red-900/50 dark:bg-red-900/20">
+                <h2 className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
+                  Ablehnungsgrund
+                </h2>
+                <p className="text-red-700 dark:text-red-400">
+                  {course.reviewNotes}
+                </p>
+                {course.reviewer && (
+                  <p className="mt-2 text-sm text-red-600 dark:text-red-500">
+                    Abgelehnt von {course.reviewer.displayName} am{" "}
+                    {course.reviewDate
+                      ? new Date(course.reviewDate).toLocaleDateString("de-DE")
+                      : ""}
+                  </p>
+                )}
+              </section>
+            )}
+
+            {course.image ? (
+              <DashboardFormMediaSplit
+                className="dark:border-dark-border mb-10 border-t border-gray-200/80 pt-10"
+                main={renderCourseInfoSection("dashboard-form-scroll-anchor")}
+                aside={
+                  <section className="overflow-hidden rounded-xl">
+                    <div className="relative aspect-video w-full">
+                      <Image
+                        src={course.image.url}
+                        alt={course.image.alt || course.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  </section>
+                }
+              />
+            ) : (
+              renderCourseInfoSection(
+                "dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10",
+              )
+            )}
+
+            {/* Description */}
+            {course.description && (
+              <section
+                id="course-detail-description"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Beschreibung
+                </h2>
+                <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                  {course.description.split("\n").map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Öffentliches Kurs-Team */}
+            {((course.collaborators?.length ?? 0) > 0 ||
+              (course.guestTeamMembers?.length ?? 0) > 0) && (
+              <section
+                id="course-detail-team"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Kurs-Team
+                </h2>
+                <ul className="space-y-2">
+                  {course.collaborators?.map((entry) => (
+                    <li key={entry.user.id} className="flex items-center gap-3">
+                      {entry.user.profileImage?.url ? (
+                        <Image
+                          src={entry.user.profileImage.url}
+                          alt={entry.user.displayName || ""}
+                          width={40}
+                          height={40}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                          <UserIcon className="h-5 w-5 text-gray-500" />
+                        </div>
+                      )}
+                      <span className="dark:text-dark-text text-gray-900">
+                        {entry.user.displayName}
+                      </span>
+                    </li>
+                  ))}
+                  {course.guestTeamMembers?.map((row) => (
+                    <li key={row.id} className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                        <UserIcon className="h-5 w-5 text-gray-500" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="dark:text-dark-text block text-gray-900">
+                          {row.displayName}
+                        </span>
+                        {row.bio ? (
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {row.bio}
+                          </span>
+                        ) : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* Prerequisites & What to Bring */}
+            {(course.prerequisites || course.whatToBring) && (
+              <section
+                id="course-detail-more"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Weitere Informationen
+                </h2>
+                <div className="space-y-4">
+                  {course.prerequisites && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Voraussetzungen
+                      </h3>
+                      <p className="dark:text-dark-text mt-1 text-gray-900">
+                        {course.prerequisites}
+                      </p>
+                    </div>
+                  )}
+                  {course.whatToBring && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Mitzubringen
+                      </h3>
+                      <p className="dark:text-dark-text mt-1 text-gray-900">
+                        {course.whatToBring}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+
+            {/* Custom Fields */}
+            {course.customFields && course.customFields.length > 0 && (
+              <section
+                id="course-detail-fields"
+                className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+              >
+                <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                  Zusätzliche Felder bei Anmeldung
+                </h2>
+                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                  Diese Felder werden bei der Anmeldung von den Teilnehmern
+                  abgefragt.
+                </p>
+                <div className="space-y-3">
+                  {course.customFields
+                    .sort((a, b) => a.sortOrder - b.sortOrder)
+                    .map((field) => (
+                      <div
+                        key={field.id}
+                        className="dark:border-dark-border rounded-lg border border-gray-100 p-4"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="dark:text-dark-text font-medium text-gray-900">
+                                {field.fieldName}
+                              </span>
+                              {field.isRequired && (
+                                <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                  Pflichtfeld
+                                </span>
+                              )}
+                            </div>
+                            {field.helpText && (
+                              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                {field.helpText}
+                              </p>
+                            )}
+                          </div>
+                          <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                            {customFieldTypeLabels[field.fieldType]}
+                          </span>
+                        </div>
+                        {field.fieldType === CustomFieldType.SELECT &&
+                          field.options && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Optionen:
+                              </span>
+                              {(typeof field.options === "string"
+                                ? field.options
+                                    .split(",")
+                                    .map((o) => o.trim())
+                                    .filter(Boolean)
+                                : Array.isArray(field.options)
+                                  ? (field.options as string[])
+                                  : []
+                              ).map((option: string, idx: number) => (
+                                <span
+                                  key={idx}
+                                  className="rounded bg-gray-50 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                                >
+                                  {option}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
+            {/* Pricing */}
+            <section
+              id="course-detail-prices"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Preise
               </h2>
-              <p className="text-red-700 dark:text-red-400">
-                {course.reviewNotes}
-              </p>
-              {course.reviewer && (
-                <p className="mt-2 text-sm text-red-600 dark:text-red-500">
-                  Abgelehnt von {course.reviewer.displayName} am{" "}
-                  {course.reviewDate
-                    ? new Date(course.reviewDate).toLocaleDateString("de-DE")
-                    : ""}
+              {course.isFree ? (
+                <p className="dark:text-dark-text text-gray-900">Kostenlos</p>
+              ) : course.priceOptions && course.priceOptions.length > 0 ? (
+                <div className="space-y-2">
+                  {course.priceOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      className="dark:border-dark-border flex items-center justify-between rounded-lg border border-gray-100 p-3"
+                    >
+                      <div>
+                        <span className="dark:text-dark-text font-medium text-gray-900">
+                          {option.label}
+                        </span>
+                        {option.description && (
+                          <p className="text-sm text-gray-500">
+                            {option.description}
+                          </p>
+                        )}
+                      </div>
+                      <span className="dark:text-dark-text font-semibold text-gray-900">
+                        {option.price.toFixed(2)} €
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : course.priceInfo ? (
+                <p className="dark:text-dark-text text-gray-900">
+                  {course.priceInfo}
+                </p>
+              ) : (
+                <p className="text-gray-500">
+                  Keine Preisinformationen verfügbar
                 </p>
               )}
             </section>
-          )}
 
-          {/* Course Image */}
-          {course.image && (
-            <section className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-              <div className="relative aspect-video w-full">
-                <Image
-                  src={course.image.url}
-                  alt={course.image.alt || course.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            </section>
-          )}
-
-          {/* Course Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Kursinformationen
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Kurstyp
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {courseTypeLabels[course.courseType]}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Beginn
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {formattedStartDate}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Ende
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {formattedEndDate}
-                </dd>
-              </div>
-              {course.bezirk && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Bezirk
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {course.bezirk.name}
-                  </dd>
-                </div>
-              )}
-              {course.location && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Veranstaltungsort
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {course.location.name && `${course.location.name}, `}
-                    {course.location.city}
-                    {course.location.street && (
-                      <span className="block text-sm text-gray-500">
-                        {course.location.street}, {course.location.zipCode}{" "}
-                        {course.location.city}
-                      </span>
-                    )}
-                  </dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Teilnehmer
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {confirmedCount}
-                  {course.maxParticipants && ` / ${course.maxParticipants}`}
-                  {course.allowWaitingList && (
-                    <span className="ml-2 text-sm text-gray-500">
-                      (Warteliste aktiviert)
-                    </span>
-                  )}
-                </dd>
-              </div>
-              {course.registrationOpensAt && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Anmeldung öffnet ab
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(course.registrationOpensAt).toLocaleDateString(
-                      "de-DE",
-                      {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      },
-                    )}{" "}
-                    um{" "}
-                    {new Date(course.registrationOpensAt).toLocaleTimeString(
-                      "de-DE",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      },
-                    )}{" "}
-                    Uhr
-                  </dd>
-                </div>
-              )}
-              {course.registrationDeadline && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Anmeldeschluss
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(course.registrationDeadline).toLocaleDateString(
-                      "de-DE",
-                    )}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </section>
-
-          {/* Description */}
-          {course.description && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            {/* Meta Info */}
+            <section
+              id="course-detail-meta"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Beschreibung
+                Metadaten
               </h2>
-              <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
-                {course.description.split("\n").map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Instructors */}
-          {course.instructors && course.instructors.length > 0 && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Dozenten
-              </h2>
-              <ul className="space-y-2">
-                {course.instructors.map((instructor) => (
-                  <li key={instructor.id} className="flex items-center gap-3">
-                    {instructor.profileImage?.url ? (
-                      <Image
-                        src={instructor.profileImage.url}
-                        alt={instructor.displayName || ""}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                        <UserIcon className="h-5 w-5 text-gray-500" />
-                      </div>
-                    )}
-                    <span className="dark:text-dark-text text-gray-900">
-                      {instructor.displayName}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {/* Prerequisites & What to Bring */}
-          {(course.prerequisites || course.whatToBring) && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Weitere Informationen
-              </h2>
-              <div className="space-y-4">
-                {course.prerequisites && (
+              <dl className="grid gap-4 sm:grid-cols-2">
+                {course.createdBy && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Voraussetzungen
-                    </h3>
-                    <p className="dark:text-dark-text mt-1 text-gray-900">
-                      {course.prerequisites}
-                    </p>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Erstellt von
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {course.createdBy.displayName}
+                    </dd>
                   </div>
                 )}
-                {course.whatToBring && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Erstellt am
+                  </dt>
+                  <dd className="dark:text-dark-text mt-1 text-gray-900">
+                    {new Date(course.createdAt).toLocaleDateString("de-DE")}
+                  </dd>
+                </div>
+                {course.reviewer && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Mitzubringen
-                    </h3>
-                    <p className="dark:text-dark-text mt-1 text-gray-900">
-                      {course.whatToBring}
-                    </p>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Geprüft von
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {course.reviewer.displayName}
+                    </dd>
                   </div>
                 )}
-              </div>
-            </section>
-          )}
-
-          {/* Custom Fields */}
-          {course.customFields && course.customFields.length > 0 && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Zusätzliche Felder bei Anmeldung
-              </h2>
-              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Diese Felder werden bei der Anmeldung von den Teilnehmern
-                abgefragt.
-              </p>
-              <div className="space-y-3">
-                {course.customFields
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((field) => (
-                    <div
-                      key={field.id}
-                      className="dark:border-dark-border rounded-lg border border-gray-100 p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="dark:text-dark-text font-medium text-gray-900">
-                              {field.fieldName}
-                            </span>
-                            {field.isRequired && (
-                              <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                Pflichtfeld
-                              </span>
-                            )}
-                          </div>
-                          {field.helpText && (
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                              {field.helpText}
-                            </p>
-                          )}
-                        </div>
-                        <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                          {customFieldTypeLabels[field.fieldType]}
-                        </span>
-                      </div>
-                      {field.fieldType === CustomFieldType.SELECT &&
-                        field.options && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              Optionen:
-                            </span>
-                            {(typeof field.options === "string"
-                              ? field.options
-                                  .split(",")
-                                  .map((o) => o.trim())
-                                  .filter(Boolean)
-                              : Array.isArray(field.options)
-                                ? (field.options as string[])
-                                : []
-                            ).map((option: string, idx: number) => (
-                              <span
-                                key={idx}
-                                className="rounded bg-gray-50 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                              >
-                                {option}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                  ))}
-              </div>
-            </section>
-          )}
-
-          {/* Pricing */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Preise
-            </h2>
-            {course.isFree ? (
-              <p className="dark:text-dark-text text-gray-900">Kostenlos</p>
-            ) : course.priceOptions && course.priceOptions.length > 0 ? (
-              <div className="space-y-2">
-                {course.priceOptions.map((option) => (
-                  <div
-                    key={option.id}
-                    className="dark:border-dark-border flex items-center justify-between rounded-lg border border-gray-100 p-3"
-                  >
-                    <div>
-                      <span className="dark:text-dark-text font-medium text-gray-900">
-                        {option.label}
-                      </span>
-                      {option.description && (
-                        <p className="text-sm text-gray-500">
-                          {option.description}
-                        </p>
-                      )}
-                    </div>
-                    <span className="dark:text-dark-text font-semibold text-gray-900">
-                      {option.price.toFixed(2)} €
-                    </span>
+                {course.reviewDate && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Geprüft am
+                    </dt>
+                    <dd className="dark:text-dark-text mt-1 text-gray-900">
+                      {new Date(course.reviewDate).toLocaleDateString("de-DE")}
+                    </dd>
                   </div>
-                ))}
-              </div>
-            ) : course.priceInfo ? (
-              <p className="dark:text-dark-text text-gray-900">
-                {course.priceInfo}
-              </p>
-            ) : (
-              <p className="text-gray-500">
-                Keine Preisinformationen verfügbar
-              </p>
-            )}
-          </section>
-
-          {/* Meta Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Metadaten
-            </h2>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              {course.createdBy && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Erstellt von
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {course.createdBy.displayName}
-                  </dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  Erstellt am
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  {new Date(course.createdAt).toLocaleDateString("de-DE")}
-                </dd>
-              </div>
-              {course.reviewer && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Geprüft von
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {course.reviewer.displayName}
-                  </dd>
-                </div>
-              )}
-              {course.reviewDate && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Geprüft am
-                  </dt>
-                  <dd className="dark:text-dark-text mt-1 text-gray-900">
-                    {new Date(course.reviewDate).toLocaleDateString("de-DE")}
-                  </dd>
-                </div>
-              )}
-            </dl>
-          </section>
-        </div>
+                )}
+              </dl>
+            </section>
+          </div>
+        </DashboardFormSectionLayout>
       )}
 
       {/* Participants Tab */}
@@ -797,7 +935,7 @@ export default function CourseDetailPage() {
           </div>
 
           {/* Summary */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Übersicht
             </h2>
@@ -840,7 +978,7 @@ export default function CourseDetailPage() {
           </section>
 
           {/* Registrations List */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Anmeldungen
             </h2>

@@ -1,23 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { getDistrictColor } from "@/lib/district-color";
 import PublicPage from "../general/public-page";
 import Image from "next/image";
 import MediaCredit from "@/app/_components/general/media-credit";
+import PublicShareButton from "@/app/_components/general/public-share-button";
+import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@/trpc/react";
-import { useToast } from "@/app/_components/ui/toast";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import {
   AlertTriangle,
+  Calendar,
   CalendarArrowDownIcon,
   CalendarIcon,
   CheckCircleIcon,
   CircleXIcon,
+  MapPin,
   MapPinIcon,
   NavigationIcon,
-  ShareIcon,
   Users,
   UsersIcon,
   EditIcon,
@@ -29,8 +30,37 @@ interface EventDetailViewProps {
   event: EventWithRelations;
 }
 
+function formatEventHeroSchedule(
+  eventDate: Date,
+  durationMinutes: number | null | undefined,
+): string {
+  const endDate = durationMinutes
+    ? new Date(eventDate.getTime() + durationMinutes * 60 * 1000)
+    : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
+  const datePart = eventDate.toLocaleDateString("de-DE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const timeStart = eventDate.toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const timeEnd = endDate.toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const dur =
+    durationMinutes && durationMinutes > 0
+      ? ` (${Math.floor(durationMinutes / 60)}h${
+          durationMinutes % 60 > 0 ? ` ${durationMinutes % 60}min` : ""
+        })`
+      : "";
+  return `${datePart}, ${timeStart} – ${timeEnd}${dur} Uhr`;
+}
+
 export default function EventDetailView({ event }: EventDetailViewProps) {
-  const toast = useToast();
   const { data: session } = useSession();
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
@@ -46,7 +76,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       (perm: string) => perm === "events.edit" || perm === "events.approve",
     );
 
-  const districtColor = getDistrictColor(event.bezirk?.number);
   const eventDate = new Date(event.eventDate);
 
   const canEdit =
@@ -60,6 +89,10 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
     ? new Date(eventDate.getTime() + event.duration * 60 * 1000)
     : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
   const isPast = eventDate < new Date();
+
+  const locationLine =
+    event.location &&
+    [event.location.name, event.location.city].filter(Boolean).join(", ");
 
   const handleDownloadIcs = () => {
     const icsContent = `BEGIN:VCALENDAR
@@ -87,34 +120,6 @@ END:VCALENDAR`;
     link.click();
   };
 
-  const shareEvent = async () => {
-    const shareData = {
-      title: event.title,
-      text:
-        event.motto ||
-        event.description ||
-        `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`,
-      url: typeof window !== "undefined" ? window.location.href : "",
-    };
-
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.log("Share cancelled or failed:", err);
-      }
-    } else {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        try {
-          await navigator.clipboard.writeText(window.location.href);
-          toast.success("Link wurde in die Zwischenablage kopiert!");
-        } catch (err) {
-          console.error("Failed to copy:", err);
-        }
-      }
-    }
-  };
-
   const district = !event.bezirk
     ? "primary"
     : (`district-${event.bezirk.number}` as
@@ -133,6 +138,86 @@ END:VCALENDAR`;
         | "district-13"
         | undefined);
 
+  const heroDescription = (
+    <div className="mt-1 space-y-4">
+      {event.motto ? (
+        <p
+          className={cn(
+            "italic opacity-90",
+            event.cancelled && "line-through opacity-75",
+          )}
+        >
+          {event.motto}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        {event.cancelled && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            ABGESAGT
+          </span>
+        )}
+        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+          {event.category}
+        </span>
+        {event.bezirk && (
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+            {`Bezirk ${event.bezirk.number} (${event.bezirk.shortName})`}
+          </span>
+        )}
+        {event.openToParticipants && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-700 px-2.5 py-0.5 text-xs font-bold text-white">
+            <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            Mitspielen möglich!
+          </span>
+        )}
+        {isPast && (
+          <span className="rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-semibold">
+            Vergangen
+          </span>
+        )}
+        {canEdit && (
+          <Link
+            href={`/dashboard/events/${event.id}/edit`}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+          >
+            <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
+            Bearbeiten
+          </Link>
+        )}
+        <PublicShareButton
+          title={event.title}
+          text={
+            event.motto ||
+            event.description ||
+            `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`
+          }
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+        />
+      </div>
+      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+        <span className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          {formatEventHeroSchedule(eventDate, event.duration)}
+        </span>
+        {locationLine ? (
+          <>
+            <span
+              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              aria-hidden
+            >
+              ·
+            </span>
+            <span className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              {locationLine}
+            </span>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
     <PublicPage
       title={event.title}
@@ -140,76 +225,12 @@ END:VCALENDAR`;
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
-        { label: "Event" },
+        { label: event.title },
       ]}
-      description={
-        event.motto ? (
-          <p className={event.cancelled ? "line-through opacity-75" : ""}>
-            {event.motto}
-          </p>
-        ) : undefined
-      }
+      heroSize="compact"
+      description={heroDescription}
     >
-      <div className="bg-background dark:bg-dark-background min-h-screen">
-        {/* Event Info bar */}
-        <section
-          className="py-6 text-white md:py-8"
-          style={{ backgroundColor: districtColor }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex flex-wrap items-center gap-3">
-                {event.cancelled && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg">
-                    <AlertTriangle className="h-4 w-4" />
-                    ABGESAGT
-                  </span>
-                )}
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  {event.category}
-                </span>
-                {event.bezirk && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {`Bezirk ${event.bezirk.number} (${event.bezirk.name})`}
-                  </span>
-                )}
-                {event.openToParticipants && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-lg">
-                    <Users className="h-4 w-4" />
-                    Mitspielen möglich!
-                  </span>
-                )}
-                {isPast && (
-                  <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
-                    Vergangen
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                {canEdit && (
-                  <Link
-                    href={`/dashboard/events/${event.id}/edit`}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
-                  >
-                    <EditIcon className="h-5 w-5" />
-                    <span className="hidden sm:inline">Bearbeiten</span>
-                  </Link>
-                )}
-                <button
-                  onClick={shareEvent}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
-                >
-                  <ShareIcon className="h-5 w-5" />
-                  <span className="hidden sm:inline">Teilen</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Content */}
+      <div className="bg-background dark:bg-dark-background -mt-2 min-h-screen md:-mt-4">
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

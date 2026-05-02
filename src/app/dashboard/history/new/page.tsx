@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -199,7 +200,7 @@ export default function NewHistoryEventPage() {
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Kategorie
               </label>
-              <select
+              <Select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
@@ -210,7 +211,7 @@ export default function NewHistoryEventPage() {
                 <option value="EXPANSION">Erweiterung</option>
                 <option value="MODERNIZATION">Modernisierung</option>
                 <option value="PARTNERSHIP">Partnerschaft</option>
-              </select>
+              </Select>
             </div>
 
             {/* Sort Order */}

@@ -72,15 +72,16 @@ export default function DashboardEventsPage() {
       actions={
         <>
           <button
+            type="button"
             onClick={() => setShowSocialMediaModal(true)}
-            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex items-center gap-2 rounded-md border-2 border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex items-center gap-2 rounded-lg border border-gray-200/90 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
           >
             <InstagramIcon className="h-4 w-4" />
             Instagram Posts
           </button>
           <Link
             href="/dashboard/events/new"
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+            className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors"
           >
             <Plus className="h-4 w-4" />
             Neuer Termin

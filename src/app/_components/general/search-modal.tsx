@@ -159,22 +159,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      document.body.classList.add("modal-open");
     } else {
       document.body.style.overflow = "";
+      document.body.classList.remove("modal-open");
     }
     return () => {
       document.body.style.overflow = "";
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    document.body.classList.add("modal-open");
-    return () => {
-      document.body.style.overflow = "unset";
       document.body.classList.remove("modal-open");
     };
-  }, []);
+  }, [isOpen]);
 
   const { data, isLoading } = api.search.global.useQuery(
     { query: debouncedQuery, limit: 20 },

@@ -9,24 +9,23 @@ import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
-import CourseRegistrationForm from "./course-registration-form";
-import { getDistrictColor } from "@/lib/district-color";
+import PublicShareButton from "@/app/_components/general/public-share-button";
+import { CourseExistingRegistrationOptions } from "./course-existing-registration-options";
 import {
   Clock,
   Calendar,
   CalendarArrowDownIcon,
+  MapPin,
   MapPinIcon,
+  Users,
+  Wallet,
   CheckCircleIcon,
   UsersIcon,
   CircleXIcon,
   EditIcon,
+  UserIcon,
 } from "lucide-react";
-import {
-  ScrollableModal,
-  ScrollableModalCard,
-  ScrollableModalBody,
-} from "@/app/_components/ui/scrollable-modal";
-
+import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
 
@@ -47,11 +46,41 @@ const formatIcsDate = (date: Date): string => {
   return `${year}${month}${day}T${hour}${minute}${second}`;
 };
 
+function formatCourseSchedule(course: {
+  startDate: Date;
+  endDate: Date;
+}): string {
+  const start = new Date(course.startDate);
+  const end = new Date(course.endDate);
+  const sameDay = start.toDateString() === end.toDateString();
+  if (sameDay) {
+    return `${start.toLocaleDateString("de-DE", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}, ${start.toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} – ${end.toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} Uhr`;
+  }
+  return `${start.toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "long",
+  })} – ${end.toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })}`;
+}
+
 export default function CourseDetailView({
   course,
   spots,
 }: CourseDetailViewProps) {
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [showRegistrationOptions, setShowRegistrationOptions] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
@@ -82,7 +111,6 @@ export default function CourseDetailView({
       course.createdBy?.id === session.user.id ||
       hasEditPermission);
 
-  const districtColor = getDistrictColor(course.bezirk?.number);
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
   const registrationDeadline = course.registrationDeadline
@@ -175,25 +203,7 @@ export default function CourseDetailView({
     URL.revokeObjectURL(url);
   };
 
-  const handleCloseRegistrationForm = () => {
-    setShowRegistrationForm(false);
-
-    router.refresh();
-  };
-
-  const handleRegistrationSuccess = () => {
-    setShowRegistrationForm(false);
-
-    router.refresh();
-  };
-
-  const handleRegisterClick = () => {
-    if (existingRegistration) {
-      setShowRegistrationOptions(true);
-    } else {
-      setShowRegistrationForm(true);
-    }
-  };
+  const anmeldenHref = `/termine/course/${course.id}/anmelden`;
 
   const handleEditExisting = () => {
     setShowRegistrationOptions(false);
@@ -202,8 +212,160 @@ export default function CourseDetailView({
 
   const handleCreateNew = () => {
     setShowRegistrationOptions(false);
-    setShowRegistrationForm(true);
+    router.push(anmeldenHref);
   };
+
+  const locationLine =
+    course.location &&
+    [course.location.name, course.location.city].filter(Boolean).join(", ");
+
+  const capacityMeta = isPast
+    ? null
+    : spots.isFull && course.allowWaitingList
+      ? "Warteliste"
+      : `${spots.availableSlots} / ${course.maxParticipants} frei`;
+
+  const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
+
+  const heroDescription = (
+    <div className="mt-1 space-y-4">
+      {course.motto ? (
+        <p className="italic opacity-90">{course.motto}</p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+          {course.courseType}
+        </span>
+        {course.bezirk && (
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+            {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
+          </span>
+        )}
+        {!isSameDay && (
+          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+            {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
+          </span>
+        )}
+        {isPast && (
+          <span className="rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-semibold">
+            Vergangen
+          </span>
+        )}
+        {spots.isFull && !course.allowWaitingList && (
+          <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold">
+            Ausgebucht
+          </span>
+        )}
+        {spots.isFull && course.allowWaitingList && (
+          <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold">
+            Nur Warteliste
+          </span>
+        )}
+        {canEdit && (
+          <Link
+            href={`/dashboard/courses/${course.id}/edit`}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+          >
+            <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
+            Bearbeiten
+          </Link>
+        )}
+        <PublicShareButton
+          title={course.title}
+          text={course.motto || course.description || course.title}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+        />
+      </div>
+      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+        <span className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          {formatCourseSchedule(course)}
+        </span>
+        {locationLine ? (
+          <>
+            <span
+              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              aria-hidden
+            >
+              ·
+            </span>
+            <span className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              {locationLine}
+            </span>
+          </>
+        ) : null}
+        {!isPast && capacityMeta ? (
+          <>
+            <span
+              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              aria-hidden
+            >
+              ·
+            </span>
+            <span className="flex items-center gap-2">
+              <Users className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              {capacityMeta}
+            </span>
+          </>
+        ) : null}
+        {!course.isFree && acceptedPaymentHero ? (
+          <>
+            <span
+              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              aria-hidden
+            >
+              ·
+            </span>
+            <span className="flex min-w-0 items-center gap-2">
+              <Wallet className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <span className="truncate">{acceptedPaymentHero}</span>
+            </span>
+          </>
+        ) : null}
+      </div>
+      {(registrationOpensAt && isRegistrationNotOpenYet) ||
+      (registrationDeadline && !isPast) ? (
+        <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+          {registrationOpensAt && isRegistrationNotOpenYet && (
+            <span className="flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              Anmeldung ab:{" "}
+              {registrationOpensAt.toLocaleDateString("de-DE", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}{" "}
+              Uhr
+            </span>
+          )}
+          {registrationDeadline && !isPast ? (
+            <>
+              {registrationOpensAt && isRegistrationNotOpenYet ? (
+                <span
+                  className="hidden shrink-0 px-1 text-white/45 sm:inline"
+                  aria-hidden
+                >
+                  ·
+                </span>
+              ) : null}
+              <span className="flex items-center gap-2">
+                <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+                Anmeldeschluss:{" "}
+                {registrationDeadline.toLocaleDateString("de-DE", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <PublicPage
@@ -212,132 +374,12 @@ export default function CourseDetailView({
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
-        { label: "Lehrgang" },
+        { label: course.title },
       ]}
-      description={
-        course.motto ? (
-          <p className="italic opacity-90">{course.motto}</p>
-        ) : undefined
-      }
+      heroSize="compact"
+      description={heroDescription}
     >
-      <div className="bg-background dark:bg-dark-background min-h-screen">
-        {/* Course Info bar */}
-        <section
-          className="py-6 text-white md:py-8"
-          style={{ backgroundColor: districtColor }}
-        >
-          <div className="container mx-auto px-4">
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div className="flex flex-1 flex-wrap items-center gap-3">
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  {course.courseType}
-                </span>
-                {course.bezirk && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
-                  </span>
-                )}
-                {!isSameDay && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
-                  </span>
-                )}
-                {isPast && (
-                  <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-semibold">
-                    Vergangen
-                  </span>
-                )}
-                {spots.isFull && !course.allowWaitingList && (
-                  <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold">
-                    Ausgebucht
-                  </span>
-                )}
-                {spots.isFull && course.allowWaitingList && (
-                  <span className="rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold">
-                    Nur Warteliste
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              {canEdit && (
-                <div className="flex gap-2">
-                  <Link
-                    href={`/dashboard/courses/${course.id}/edit`}
-                    className="flex cursor-pointer items-center gap-2 rounded-lg bg-white/20 px-4 py-2 transition-colors hover:bg-white/30"
-                  >
-                    <EditIcon className="h-5 w-5" />
-                    <span className="hidden sm:inline">Bearbeiten</span>
-                  </Link>
-                </div>
-              )}
-
-              {/* Registration Status */}
-              {!isPast && (
-                <div className="min-w-[200px] rounded-lg bg-white/20 p-4">
-                  <div className="text-center">
-                    <p className="mb-1 text-sm opacity-90">Verfügbare Plätze</p>
-                    <p className="text-3xl font-bold">
-                      {spots.availableSlots} / {course.maxParticipants}
-                    </p>
-                    <div className="mt-2 h-2 w-full rounded-full bg-white/20">
-                      <div
-                        className="h-2 rounded-full bg-white transition-all"
-                        style={{
-                          width: `${
-                            (((course.maxParticipants ?? 0) -
-                              spots.availableSlots) /
-                              (course.maxParticipants ?? 1)) *
-                            100
-                          }%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Registration Info */}
-            <div className="flex flex-wrap gap-4">
-              {registrationOpensAt && isRegistrationNotOpenYet && (
-                <div className="inline-block rounded-lg bg-white/10 p-4">
-                  <p className="flex items-center gap-2 text-sm">
-                    <Clock className="h-5 w-5" />
-                    <span>
-                      Anmeldung ab:{" "}
-                      {registrationOpensAt.toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      Uhr
-                    </span>
-                  </p>
-                </div>
-              )}
-              {registrationDeadline && !isPast && (
-                <div className="inline-block rounded-lg bg-white/10 p-4">
-                  <p className="flex items-center gap-2 text-sm">
-                    <Clock className="h-5 w-5" />
-                    <span>
-                      Anmeldeschluss:{" "}
-                      {registrationDeadline.toLocaleDateString("de-DE", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Content */}
+      <div className="bg-background dark:bg-dark-background -mt-2 min-h-screen md:-mt-4">
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -535,39 +577,65 @@ export default function CourseDetailView({
                   </div>
                 )}
 
-                {/* Instructors */}
-                {course.instructors && course.instructors.length > 0 && (
+                {/* Kurs-Team (öffentlich): Konten + freie Namen */}
+                {((course.collaborators?.length ?? 0) > 0 ||
+                  (course.guestTeamMembers?.length ?? 0) > 0) && (
                   <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                     <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-xl font-bold">
                       <UsersIcon className="text-primary h-6 w-6" />
-                      Dozenten
+                      Kurs-Team
                     </h2>
                     <div className="space-y-3">
-                      {course.instructors.map((instructor) => (
+                      {course.collaborators?.map((entry) => (
                         <div
-                          key={instructor.id}
+                          key={entry.user.id}
                           className="flex items-start gap-3"
                         >
-                          {instructor.profileImage?.url && (
-                            <Image
-                              src={instructor.profileImage.url}
-                              alt={
-                                instructor.profileImage.alt ||
-                                instructor.displayName ||
-                                "Instructor Image"
-                              }
-                              className="h-12 w-12 rounded-full object-cover"
-                            />
-                          )}
+                          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                            {entry.user.profileImage?.url ? (
+                              <Image
+                                src={entry.user.profileImage.url}
+                                alt={
+                                  entry.user.profileImage.alt ||
+                                  entry.user.displayName ||
+                                  "Profilbild"
+                                }
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-gray-400">
+                                <UserIcon className="h-6 w-6" />
+                              </span>
+                            )}
+                          </div>
                           <div>
                             <p className="text-dark dark:text-dark-text font-semibold">
-                              {instructor.displayName}
+                              {entry.user.displayName}
                             </p>
-                            {instructor.bio && (
+                            {entry.user.bio && (
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {instructor.bio}
+                                {entry.user.bio}
                               </p>
                             )}
+                          </div>
+                        </div>
+                      ))}
+                      {course.guestTeamMembers?.map((row) => (
+                        <div key={row.id} className="flex items-start gap-3">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                            <UserIcon className="h-6 w-6 text-gray-400" />
+                          </div>
+                          <div>
+                            <p className="text-dark dark:text-dark-text font-semibold">
+                              {row.displayName}
+                            </p>
+                            {row.bio ? (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {row.bio}
+                              </p>
+                            ) : null}
                           </div>
                         </div>
                       ))}
@@ -602,14 +670,26 @@ export default function CourseDetailView({
                       </div>
                     )}
 
-                    <button
-                      onClick={handleRegisterClick}
-                      className="bg-primary hover:bg-primary-dark mb-3 w-full rounded-lg px-6 py-3 font-bold text-white transition-colors"
-                    >
-                      {spots.isFull && course.allowWaitingList
-                        ? "Auf Warteliste setzen"
-                        : "Jetzt anmelden"}
-                    </button>
+                    {existingRegistration ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowRegistrationOptions(true)}
+                        className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
+                      >
+                        {spots.isFull && course.allowWaitingList
+                          ? "Auf Warteliste setzen"
+                          : "Jetzt anmelden"}
+                      </button>
+                    ) : (
+                      <Link
+                        href={anmeldenHref}
+                        className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
+                      >
+                        {spots.isFull && course.allowWaitingList
+                          ? "Auf Warteliste setzen"
+                          : "Jetzt anmelden"}
+                      </Link>
+                    )}
 
                     {registrationDeadline && !isDeadlinePassed && (
                       <p className="text-center text-xs text-gray-500">
@@ -703,6 +783,21 @@ export default function CourseDetailView({
                       {course.priceInfo}
                     </p>
                   )}
+                  {!course.isFree &&
+                    formatAcceptedCoursePaymentMethods(course) && (
+                      <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <p className="text-dark dark:text-dark-text mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                          Zahlung
+                        </p>
+                        <p className="text-dark dark:text-dark-text flex gap-2 text-sm">
+                          <Wallet
+                            className="text-primary h-4 w-4 shrink-0"
+                            aria-hidden
+                          />
+                          {formatAcceptedCoursePaymentMethods(course)}
+                        </p>
+                      </div>
+                    )}
                 </div>
 
                 {/* Back to Overview */}
@@ -719,59 +814,14 @@ export default function CourseDetailView({
 
         {/* Registration Options Modal */}
         {showRegistrationOptions && existingRegistration && (
-          <ScrollableModal>
-            <ScrollableModalCard maxW="md">
-              <ScrollableModalBody>
-                <h2 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
-                  Bestehende Anmeldung gefunden
-                </h2>
-                <p className="mb-6 text-gray-700 dark:text-gray-300">
-                  Sie haben bereits eine aktive Anmeldung für diesen Kurs mit{" "}
-                  <strong>
-                    {existingRegistration.participants.length}{" "}
-                    {existingRegistration.participants.length === 1
-                      ? "Teilnehmer"
-                      : "Teilnehmern"}
-                  </strong>
-                  . Möchten Sie Ihre bestehende Anmeldung bearbeiten oder eine
-                  zusätzliche Anmeldung erstellen?
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={handleEditExisting}
-                    className="bg-primary hover:bg-primary-dark w-full rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                  >
-                    Bestehende Anmeldung bearbeiten
-                  </button>
-                  <button
-                    onClick={handleCreateNew}
-                    className="dark:border-dark-border dark:hover:bg-dark-surface w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300"
-                  >
-                    Zusätzliche Anmeldung erstellen
-                  </button>
-                  <button
-                    onClick={() => setShowRegistrationOptions(false)}
-                    className="w-full rounded-lg px-6 py-3 font-semibold text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  >
-                    Abbrechen
-                  </button>
-                </div>
-              </ScrollableModalBody>
-            </ScrollableModalCard>
-          </ScrollableModal>
+          <CourseExistingRegistrationOptions
+            participantCount={existingRegistration.participants.length}
+            onEditExisting={handleEditExisting}
+            onCreateAdditional={handleCreateNew}
+            onCancel={() => setShowRegistrationOptions(false)}
+          />
         )}
       </div>
-
-      {/* Registration Form Modal */}
-      {showRegistrationForm && (
-        <CourseRegistrationForm
-          course={course}
-          onClose={handleCloseRegistrationForm}
-          onSuccess={handleRegistrationSuccess}
-          isWaitlist={spots.isFull && course.allowWaitingList}
-          currentUser={userProfile || null}
-        />
-      )}
     </PublicPage>
   );
 }

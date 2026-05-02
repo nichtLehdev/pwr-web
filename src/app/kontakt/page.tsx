@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
+import { ContactSubjectSelect } from "@/app/_components/forms/contact-subject-select";
 import { api } from "@/trpc/server";
 import PublicPage from "../_components/general/public-page";
 import {
@@ -432,21 +433,7 @@ export default async function KontaktPage() {
                     >
                       Betreff *
                     </label>
-                    <select
-                      id="subject"
-                      name="subject"
-                      required
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2"
-                    >
-                      <option value="">Bitte wählen...</option>
-                      <option value="allgemein">Allgemeine Anfrage</option>
-                      <option value="chor">Posaunenchor gründen/finden</option>
-                      <option value="ausbildung">Ausbildung</option>
-                      <option value="termine">Termine & Veranstaltungen</option>
-                      <option value="materialien">Noten & Materialien</option>
-                      <option value="foerderverein">Förderverein</option>
-                      <option value="sonstiges">Sonstiges</option>
-                    </select>
+                    <ContactSubjectSelect className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2" />
                   </div>
                 </div>
 
