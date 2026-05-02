@@ -393,7 +393,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
               {/* Sort Controls */}
               <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200 pl-4">
-                <select
+                <Select
                   value={sortBy}
                   onChange={(e) => {
                     setSortBy(
@@ -412,7 +412,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <button
                   onClick={toggleSortOrder}
                   className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white p-1.5 text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -461,7 +461,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                 <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
                   Kategorie
                 </label>
-                <select
+                <Select
                   value={categoryFilter}
                   onChange={(e) => {
                     setCategoryFilter(e.target.value as PostCategory | "all");
@@ -474,7 +474,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* Sort Controls */}
@@ -483,7 +483,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                   Sortierung
                 </label>
                 <div className="flex gap-2">
-                  <select
+                  <Select
                     value={sortBy}
                     onChange={(e) => {
                       setSortBy(
@@ -502,7 +502,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
                         {option.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <button
                     onClick={toggleSortOrder}
                     className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"

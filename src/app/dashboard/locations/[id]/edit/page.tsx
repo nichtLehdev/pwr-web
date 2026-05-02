@@ -6,8 +6,17 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type CourseFormNavItem,
+} from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
+
+const LOCATION_EDIT_NAV_ITEMS: CourseFormNavItem[] = [
+  { href: "#location-edit-grunddaten", label: "Grunddaten" },
+  { href: "#location-edit-koordinaten", label: "Koordinaten" },
+];
 
 export default function EditLocationPage() {
   const router = useRouter();
@@ -164,7 +173,14 @@ export default function EditLocationPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
-        <div className="space-y-6">
+        <DashboardSectionedFormLayout
+          navItems={LOCATION_EDIT_NAV_ITEMS}
+          contentClassName="space-y-6"
+        >
+          <div
+            id="location-edit-grunddaten"
+            className="dashboard-form-scroll-anchor"
+          >
           {/* Basic Information */}
           <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
@@ -252,7 +268,12 @@ export default function EditLocationPage() {
               </p>
             </div>
           </div>
+          </div>
 
+          <div
+            id="location-edit-koordinaten"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+          >
           {/* Coordinates */}
           <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
@@ -295,9 +316,10 @@ export default function EditLocationPage() {
               </p>
             </div>
           </div>
+          </div>
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <div className="dark:border-dark-border flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
             <button
               type="submit"
               disabled={isSubmitting || updateMutation.isPending}
@@ -314,7 +336,7 @@ export default function EditLocationPage() {
               Abbrechen
             </Link>
           </div>
-        </div>
+        </DashboardSectionedFormLayout>
       </form>
     </DashboardPage>
   );

@@ -12,7 +12,7 @@ import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
 import { CropIcon, EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
-import { Button, Input, Label } from "@/app/_components/ui";
+import { Button, Input, Label, Select } from "@/app/_components/ui";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -476,7 +476,7 @@ export default function DashboardMediaPage() {
             </div>
 
             {/* MIME Type Filter */}
-            <select
+            <Select
               value={mimeTypeFilter}
               onChange={(e) => {
                 setMimeTypeFilter(e.target.value);
@@ -489,11 +489,11 @@ export default function DashboardMediaPage() {
               <option value="video">Videos</option>
               <option value="audio">Audio</option>
               <option value="application/pdf">PDF</option>
-            </select>
+            </Select>
 
             {/* Status Filter */}
             {isReviewer && (
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value as ContentStatus | "");
@@ -507,7 +507,7 @@ export default function DashboardMediaPage() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
           </div>
         </div>

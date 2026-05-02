@@ -207,10 +207,22 @@ END:VEVENT`;
         include: {
           location: true,
           bezirk: true,
-          instructors: {
-            select: {
-              displayName: true,
+          collaborators: {
+            orderBy: [
+              { role: "asc" as const },
+              { user: { displayName: "asc" as const } },
+            ],
+            include: {
+              user: {
+                select: {
+                  displayName: true,
+                },
+              },
             },
+          },
+          guestTeamMembers: {
+            orderBy: { sortOrder: "asc" },
+            select: { displayName: true },
           },
         },
         orderBy: { startDate: "asc" },
@@ -247,13 +259,14 @@ END:VEVENT`;
           if (course.motto) {
             descriptionParts.push(`Motto: ${course.motto}`);
           }
-          if (course.instructors.length > 0) {
-            const instructorNames = course.instructors
-              .map((i) => i.displayName)
-              .filter(Boolean)
-              .join(", ");
-            if (instructorNames) {
-              descriptionParts.push(`Dozenten: ${instructorNames}`);
+          {
+            const accountNames = course.collaborators
+              .map((c) => c.user.displayName)
+              .filter(Boolean);
+            const guestNames = course.guestTeamMembers.map((g) => g.displayName);
+            const teamLine = [...accountNames, ...guestNames].join(", ");
+            if (teamLine) {
+              descriptionParts.push(`Kurs-Team: ${teamLine}`);
             }
           }
           if (course.priceInfo) {

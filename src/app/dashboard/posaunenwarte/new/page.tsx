@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -169,7 +170,7 @@ export default function NewPosaunenwartPage() {
             <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
               Art
             </label>
-            <select
+            <Select
               value={roleType}
               onChange={(e) =>
                 setRoleType(e.target.value as PosaunenwartRoleType)
@@ -181,7 +182,7 @@ export default function NewPosaunenwartPage() {
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="mt-4">
             <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

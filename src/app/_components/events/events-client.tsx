@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -501,7 +502,7 @@ export default function EventsClient({
                     <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Bezirk
                     </label>
-                    <select
+                    <Select
                       value={selectedDistrict}
                       onChange={(e) => setSelectedDistrict(e.target.value)}
                       className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
@@ -512,14 +513,14 @@ export default function EventsClient({
                           {district}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
 
                   <div>
                     <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
                       Kategorie
                     </label>
-                    <select
+                    <Select
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-transparent focus:ring-2"
@@ -545,7 +546,7 @@ export default function EventsClient({
                           </optgroup>
                         </>
                       )}
-                    </select>
+                    </Select>
                   </div>
                 </div>
 

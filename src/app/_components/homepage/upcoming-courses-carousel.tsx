@@ -536,22 +536,22 @@ export default function UpcomingCoursesCarousel({
                       <span>{leftCourse.location?.city || "Ort folgt"}</span>
                     </div>
 
-                    {leftCourse.instructors?.some(
-                      (i) => i.profileImage?.url,
+                    {leftCourse.collaborators?.some(
+                      (c) => c.user.profileImage?.url,
                     ) ? (
                       <div className="mb-6 flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                          Leitung
+                          Kurs-Team
                         </span>
                         <div className="flex -space-x-2">
-                          {leftCourse.instructors
-                            .filter((i) => i.profileImage?.url)
+                          {leftCourse.collaborators
+                            .filter((c) => c.user.profileImage?.url)
                             .slice(0, 4)
-                            .map((instructor) => (
+                            .map((c) => (
                               <Image
-                                key={instructor.id}
-                                src={instructor.profileImage!.url}
-                                alt={instructor.displayName ?? ""}
+                                key={c.user.id}
+                                src={c.user.profileImage!.url}
+                                alt={c.user.displayName ?? ""}
                                 width={40}
                                 height={40}
                                 className="border-background dark:border-dark-surface ring-background dark:ring-dark-surface h-10 w-10 rounded-full border-2 object-cover ring-2"

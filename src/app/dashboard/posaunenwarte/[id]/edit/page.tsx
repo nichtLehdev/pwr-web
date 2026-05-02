@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
@@ -335,7 +336,7 @@ export default function DashboardPosaunenwarteEditPage() {
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Art
               </label>
-              <select
+              <Select
                 value={roleType}
                 onChange={(e) =>
                   setRoleType(e.target.value as PosaunenwartRoleType)
@@ -347,7 +348,7 @@ export default function DashboardPosaunenwarteEditPage() {
                     {opt.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

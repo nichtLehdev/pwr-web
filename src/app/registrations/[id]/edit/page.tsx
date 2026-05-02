@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -1091,7 +1092,7 @@ export default function EditRegistrationPage() {
                       <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
                         Preisoption *
                       </label>
-                      <select
+                      <Select
                         value={participant.priceOptionId ?? ""}
                         onChange={(e) =>
                           updateParticipant(
@@ -1121,7 +1122,7 @@ export default function EditRegistrationPage() {
                             </option>
                           );
                         })}
-                      </select>
+                      </Select>
                     </div>
 
                     {/* Sibling Grouping */}

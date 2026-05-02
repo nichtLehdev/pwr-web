@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState } from "react";
 import { useSession } from "@/lib/auth";
@@ -162,7 +163,7 @@ export default function DashboardEnsemblesPage() {
 
           {/* Bezirk Filter */}
           <div className="sm:w-48">
-            <select
+            <Select
               value={selectedBezirk}
               onChange={(e) => {
                 setSelectedBezirk(e.target.value);
@@ -176,7 +177,7 @@ export default function DashboardEnsemblesPage() {
                   {bezirk.shortName}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* Show Inactive Toggle */}

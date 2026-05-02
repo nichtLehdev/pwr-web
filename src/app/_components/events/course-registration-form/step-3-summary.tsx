@@ -1,17 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { FileText, ExternalLink } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
+import { FileText, ExternalLink, Wallet } from "lucide-react";
 import type { RegistrationData, CourseWithRelations } from "./types";
 import {
   calculateTotalPrice,
   calculateOriginalPrice,
   calculateDiscountAmount,
 } from "./utils";
+import {
+  COURSE_PAYMENT_METHOD_LABELS,
+  courseAcceptsCash,
+  courseAcceptsInvoice,
+  courseRequiresPaymentMethodChoice,
+  registrationNeedsPaymentMethod,
+} from "@/lib/course-payment-methods";
 
 interface Step3SummaryProps {
   course: CourseWithRelations;
   registrationData: RegistrationData;
+  setRegistrationData: Dispatch<SetStateAction<RegistrationData>>;
   termsAccepted: boolean;
   setTermsAccepted: (accepted: boolean) => void;
   isWaitlist: boolean;
@@ -20,6 +29,7 @@ interface Step3SummaryProps {
 export function Step3Summary({
   course,
   registrationData,
+  setRegistrationData,
   termsAccepted,
   setTermsAccepted,
   isWaitlist,
@@ -136,6 +146,87 @@ export function Step3Summary({
           })}
         </div>
       </div>
+
+      {registrationNeedsPaymentMethod(course) && (
+        <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800/50">
+          <h4 className="text-dark dark:text-dark-text mb-3 flex items-center gap-2 font-bold">
+            <Wallet className="text-primary h-5 w-5" aria-hidden />
+            Zahlungsweise
+          </h4>
+          {courseRequiresPaymentMethodChoice(course) ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Bitte wählen Sie, wie Sie die Teilnahmegebühr begleichen möchten.
+              </p>
+              <div className="space-y-2">
+                {courseAcceptsCash(course) && (
+                  <label className="dark:border-dark-border flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:bg-dark-background dark:border-gray-600">
+                    <input
+                      type="radio"
+                      name="course-payment-method"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4"
+                      checked={registrationData.paymentMethod === "CASH"}
+                      onChange={() =>
+                        setRegistrationData((d) => ({
+                          ...d,
+                          paymentMethod: "CASH",
+                        }))
+                      }
+                    />
+                    <span className="text-dark dark:text-dark-text text-sm">
+                      {COURSE_PAYMENT_METHOD_LABELS.CASH}
+                    </span>
+                  </label>
+                )}
+                {courseAcceptsInvoice(course) && (
+                  <label className="dark:border-dark-border flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:bg-dark-background dark:border-gray-600">
+                    <input
+                      type="radio"
+                      name="course-payment-method"
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4"
+                      checked={registrationData.paymentMethod === "INVOICE"}
+                      onChange={() =>
+                        setRegistrationData((d) => ({
+                          ...d,
+                          paymentMethod: "INVOICE",
+                        }))
+                      }
+                    />
+                    <span className="text-dark dark:text-dark-text text-sm">
+                      {COURSE_PAYMENT_METHOD_LABELS.INVOICE}
+                    </span>
+                  </label>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Bei Überweisung erhalten Sie nach Bestätigung der Anmeldung eine
+                Rechnung mit den Zahlungsdaten.
+              </p>
+            </div>
+          ) : (
+            <p className="text-dark dark:text-dark-text text-sm">
+              {(() => {
+                const fixed =
+                  registrationData.paymentMethod ??
+                  (courseAcceptsCash(course) ? "CASH" : "INVOICE");
+                const detail =
+                  fixed === "INVOICE"
+                    ? "Sie erhalten nach Bestätigung eine Rechnung mit den Bankdaten."
+                    : "Die Gebühr wird vor Ort vor Beginn des Kurses in bar fällig.";
+                return (
+                  <>
+                    <span className="font-semibold">
+                      {COURSE_PAYMENT_METHOD_LABELS[fixed]}
+                    </span>
+                    {" — "}
+                    {detail}
+                  </>
+                );
+              })()}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Price Breakdown */}
       {registrationData.siblingDiscountApplied &&
