@@ -27,11 +27,13 @@ export function DashboardFormMediaSplit({
   return (
     <div
       className={cn(
-        "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(200px,280px)] lg:gap-10 lg:items-start",
+        "lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(200px,280px)] lg:items-start lg:gap-10",
         className,
       )}
     >
-      <div className={cn("min-w-0 space-y-10", mainColumnClassName)}>{main}</div>
+      <div className={cn("min-w-0 space-y-10", mainColumnClassName)}>
+        {main}
+      </div>
       <aside
         className={cn(
           "dashboard-sticky-shell-top mt-10 min-w-0 space-y-3 lg:sticky lg:mt-0 lg:self-start",

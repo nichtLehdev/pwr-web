@@ -22,7 +22,7 @@ export function DashboardFormStickySubnav({
     <nav
       aria-label="Formularabschnitte"
       className={cn(
-        "dashboard-sticky-shell-top dark:border-dark-border sticky z-30 -mx-1 mb-2 rounded-lg border border-gray-200 bg-gray-50/95 px-2 py-2.5 shadow-sm backdrop-blur-md dark:bg-dark-background/95 sm:-mx-0 sm:px-3",
+        "dashboard-sticky-shell-top dark:border-dark-border dark:bg-dark-background/95 sticky z-30 -mx-1 mb-2 rounded-lg border border-gray-200 bg-gray-50/95 px-2 py-2.5 shadow-sm backdrop-blur-md sm:-mx-0 sm:px-3",
         className,
       )}
     >
@@ -31,7 +31,7 @@ export function DashboardFormStickySubnav({
           <li key={item.href} className="px-0.5">
             <a
               href={item.href}
-              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:border-primary hover:text-primary dark:bg-dark-surface sm:text-sm"
+              className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface hover:border-primary hover:text-primary dark:bg-dark-surface inline-flex rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors sm:text-sm"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToDashboardSection(item.href);

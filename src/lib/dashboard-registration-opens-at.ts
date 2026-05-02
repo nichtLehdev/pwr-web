@@ -17,7 +17,6 @@ export function registrationOpensMerge(date: string, time: string): string {
   const d = date.trim();
   if (!d) return "";
   const tRaw = time.trim();
-  const t =
-    tRaw.length >= 4 ? tRaw.slice(0, 5) : DEFAULT_TIME;
+  const t = tRaw.length >= 4 ? tRaw.slice(0, 5) : DEFAULT_TIME;
   return `${d}T${t}`;
 }

@@ -183,145 +183,145 @@ export default function EditLocationPage() {
             id="location-edit-grunddaten"
             className="dashboard-form-scroll-anchor"
           >
-          <DashboardFormZoneHeader
-            step={1}
-            title="Grunddaten"
-            description="Name, Adresse und optionale Hinweise für diesen Veranstaltungsstandort."
-          />
-          <DashboardFormBlock title="Adresse">
-            <div className="space-y-6">
-            {/* Name */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={200}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Gemeindehaus Köln-Deutz"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Optional: Name des Standorts
-              </p>
-            </div>
+            <DashboardFormZoneHeader
+              step={1}
+              title="Grunddaten"
+              description="Name, Adresse und optionale Hinweise für diesen Veranstaltungsstandort."
+            />
+            <DashboardFormBlock title="Adresse">
+              <div className="space-y-6">
+                {/* Name */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Gemeindehaus Köln-Deutz"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Name des Standorts
+                  </p>
+                </div>
 
-            {/* City */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Stadt
-              </label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                maxLength={100}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Köln"
-              />
-            </div>
+                {/* City */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Stadt
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    maxLength={100}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Köln"
+                  />
+                </div>
 
-            {/* Street */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Straße
-              </label>
-              <input
-                type="text"
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
-                maxLength={200}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Musterstraße 123"
-              />
-            </div>
+                {/* Street */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Straße
+                  </label>
+                  <input
+                    type="text"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Musterstraße 123"
+                  />
+                </div>
 
-            {/* Zip Code */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Postleitzahl
-              </label>
-              <input
-                type="text"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
-                maxLength={20}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. 50679"
-              />
-            </div>
+                {/* Zip Code */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Postleitzahl
+                  </label>
+                  <input
+                    type="text"
+                    value={zipCode}
+                    onChange={(e) => setZipCode(e.target.value)}
+                    maxLength={20}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. 50679"
+                  />
+                </div>
 
-            {/* Additional Info */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Zusätzliche Informationen
-              </label>
-              <textarea
-                value={additionalInfo}
-                onChange={(e) => setAdditionalInfo(e.target.value)}
-                rows={3}
-                maxLength={500}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. Eingang über den Hinterhof"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Optional: Weitere Hinweise zum Standort
-              </p>
-            </div>
-            </div>
-          </DashboardFormBlock>
+                {/* Additional Info */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Zusätzliche Informationen
+                  </label>
+                  <textarea
+                    value={additionalInfo}
+                    onChange={(e) => setAdditionalInfo(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Eingang über den Hinterhof"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Weitere Hinweise zum Standort
+                  </p>
+                </div>
+              </div>
+            </DashboardFormBlock>
           </div>
 
           <div
             id="location-edit-koordinaten"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-          <DashboardFormZoneHeader
-            step={2}
-            title="Koordinaten"
-            description="Optional: geografische Punkte für Karten auf der öffentlichen Seite."
-          />
-          <DashboardFormBlock title="Kartenposition">
-            <div className="space-y-6">
-            {/* Latitude */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Breitengrad (Latitude)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. 50.9375"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Optional: Für die Anzeige auf einer Karte
-              </p>
-            </div>
+            <DashboardFormZoneHeader
+              step={2}
+              title="Koordinaten"
+              description="Optional: geografische Punkte für Karten auf der öffentlichen Seite."
+            />
+            <DashboardFormBlock title="Kartenposition">
+              <div className="space-y-6">
+                {/* Latitude */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Breitengrad (Latitude)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. 50.9375"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Für die Anzeige auf einer Karte
+                  </p>
+                </div>
 
-            {/* Longitude */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Längengrad (Longitude)
-              </label>
-              <input
-                type="number"
-                step="any"
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="z.B. 6.9603"
-              />
-              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                Optional: Für die Anzeige auf einer Karte
-              </p>
-            </div>
-            </div>
-          </DashboardFormBlock>
+                {/* Longitude */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Längengrad (Longitude)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. 6.9603"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Optional: Für die Anzeige auf einer Karte
+                  </p>
+                </div>
+              </div>
+            </DashboardFormBlock>
           </div>
 
           {/* Actions */}

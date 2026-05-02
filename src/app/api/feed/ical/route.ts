@@ -263,7 +263,9 @@ END:VEVENT`;
             const accountNames = course.collaborators
               .map((c) => c.user.displayName)
               .filter(Boolean);
-            const guestNames = course.guestTeamMembers.map((g) => g.displayName);
+            const guestNames = course.guestTeamMembers.map(
+              (g) => g.displayName,
+            );
             const teamLine = [...accountNames, ...guestNames].join(", ");
             if (teamLine) {
               descriptionParts.push(`Kurs-Team: ${teamLine}`);

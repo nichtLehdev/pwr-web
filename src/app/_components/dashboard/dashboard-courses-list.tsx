@@ -241,7 +241,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   }
 
   const scheduleSegment = (
-    <div className="inline-flex max-w-full rounded-md border border-gray-200/90 p-0.5 dark:border-dark-border">
+    <div className="dark:border-dark-border inline-flex max-w-full rounded-md border border-gray-200/90 p-0.5">
       {scheduleFilters.map((sf) => (
         <button
           key={sf.value}
@@ -253,7 +253,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           className={cn(
             "min-w-0 shrink-0 rounded px-2.5 py-1.5 text-center text-xs font-medium transition-colors sm:text-sm",
             scheduleFilter === sf.value
-              ? "bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-dark-text"
+              ? "dark:bg-dark-surface dark:text-dark-text bg-white text-gray-900 shadow-sm"
               : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200",
           )}
         >
@@ -289,11 +289,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           value={sortBy}
           onChange={(e) => {
             setSortBy(
-              e.target.value as
-                | "startDate"
-                | "title"
-                | "createdAt"
-                | "status",
+              e.target.value as "startDate" | "title" | "createdAt" | "status",
             );
             setPage(1);
           }}
@@ -309,7 +305,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
         <button
           type="button"
           onClick={toggleSortOrder}
-          className="text-dark dark:text-dark-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface"
+          className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
           title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
         >
           {sortOrder === "asc" ? (
@@ -325,9 +321,9 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   return (
     <div className="space-y-3">
       {!selectionMode && (
-        <div className="border-b border-gray-200/80 pb-2 dark:border-dark-border">
+        <div className="dark:border-dark-border border-b border-gray-200/80 pb-2">
           <div className="hidden w-full flex-nowrap items-center gap-x-3 sm:flex">
-            <p className="shrink-0 text-sm tabular-nums text-gray-600 dark:text-gray-400">
+            <p className="shrink-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
               {isLoading ? (
                 <span className="text-gray-500">Liste wird geladen…</span>
               ) : data ? (
@@ -355,7 +351,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
-            <p className="text-sm tabular-nums text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-600 tabular-nums dark:text-gray-400">
               {isLoading ? (
                 <span className="text-gray-500">Liste wird geladen…</span>
               ) : data ? (
@@ -392,13 +388,13 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 Zeitraum, Status, Sortierung
               </span>
               {adjustedFilterCount > 0 ? (
-                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:bg-dark-border dark:text-gray-200">
+                <span className="dark:bg-dark-border rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-200">
                   {adjustedFilterCount}
                 </span>
               ) : null}
             </button>
             {filtersOpen ? (
-              <div className="mt-2 space-y-3 rounded-md border border-gray-200/80 p-3 dark:border-dark-border">
+              <div className="dark:border-dark-border mt-2 space-y-3 rounded-md border border-gray-200/80 p-3">
                 {filterControlsRow}
               </div>
             ) : null}
@@ -407,7 +403,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
       )}
 
       {selectionMode && (
-        <div className="flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2 dark:border-dark-border">
+        <div className="dark:border-dark-border flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2">
           <span className="text-dark dark:text-dark-text text-sm font-medium tabular-nums">
             {selectedIds.size} ausgewählt
           </span>
@@ -416,7 +412,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <button
               type="button"
               onClick={selectAll}
-              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
               Alle
             </button>
@@ -424,7 +420,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <button
               type="button"
               onClick={deselectAll}
-              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
               Keine
             </button>
@@ -559,7 +555,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
       {/* Empty State */}
       {!isLoading && data?.courses && data.courses.length === 0 && (
-        <div className="border-t border-gray-200/80 py-14 text-center dark:border-dark-border">
+        <div className="dark:border-dark-border border-t border-gray-200/80 py-14 text-center">
           <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
           <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
             Keine Kurse gefunden
@@ -583,7 +579,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-background-secondary"
+            className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ArrowLeftIcon className="h-4 w-4" />
           </button>
@@ -596,7 +592,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             type="button"
             onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
             disabled={page === data.pages}
-            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-background-secondary"
+            className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ArrowRightIcon className="h-4 w-4" />
           </button>

@@ -238,9 +238,7 @@ export default function CourseDetailPage() {
   const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
-    isOwner ||
-    hasViewParticipantsPermission ||
-    hasCourseTeamAccess;
+    isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -386,17 +384,23 @@ export default function CourseDetailPage() {
               Anmeldung öffnet ab
             </dt>
             <dd className="dark:text-dark-text mt-1 text-gray-900">
-              {new Date(course.registrationOpensAt).toLocaleDateString("de-DE", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}{" "}
+              {new Date(course.registrationOpensAt).toLocaleDateString(
+                "de-DE",
+                {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                },
+              )}{" "}
               um{" "}
-              {new Date(course.registrationOpensAt).toLocaleTimeString("de-DE", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
+              {new Date(course.registrationOpensAt).toLocaleTimeString(
+                "de-DE",
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                },
+              )}{" "}
               Uhr
             </dd>
           </div>
@@ -407,7 +411,9 @@ export default function CourseDetailPage() {
               Anmeldeschluss
             </dt>
             <dd className="dark:text-dark-text mt-1 text-gray-900">
-              {new Date(course.registrationDeadline).toLocaleDateString("de-DE")}
+              {new Date(course.registrationDeadline).toLocaleDateString(
+                "de-DE",
+              )}
             </dd>
           </div>
         )}
@@ -477,35 +483,45 @@ export default function CourseDetailPage() {
         )}
       </div>
 
-      <section id="course-detail-overview" className="dashboard-form-scroll-anchor mb-8">
+      <section
+        id="course-detail-overview"
+        className="dashboard-form-scroll-anchor mb-8"
+      >
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Zeitraum
             </p>
-            <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
               {formattedStartDate}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">bis {formattedEndDate}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              bis {formattedEndDate}
+            </p>
           </div>
           <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Bezirk
             </p>
-            <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">{districtLabel}</p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {districtLabel}
+            </p>
           </div>
           <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Anmeldung
             </p>
-            <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">{registrationLabel}</p>
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {registrationLabel}
+            </p>
           </div>
           <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
               Teilnehmer
             </p>
-            <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
-              {confirmedCount}{course.maxParticipants ? ` / ${course.maxParticipants}` : ""}
+            <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
+              {confirmedCount}
+              {course.maxParticipants ? ` / ${course.maxParticipants}` : ""}
             </p>
           </div>
         </div>

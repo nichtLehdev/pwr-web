@@ -623,10 +623,7 @@ export default function CourseDetailView({
                         </div>
                       ))}
                       {course.guestTeamMembers?.map((row) => (
-                        <div
-                          key={row.id}
-                          className="flex items-start gap-3"
-                        >
+                        <div key={row.id} className="flex items-start gap-3">
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
                             <UserIcon className="h-6 w-6 text-gray-400" />
                           </div>

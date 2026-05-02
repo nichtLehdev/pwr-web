@@ -325,7 +325,9 @@ export const coursesRouter = createTRPCRouter({
         select: { courseId: true },
       });
       const collaboratorCourseIds = collaboratorRows.map((r) => r.courseId);
-      const sharedAccessOr: Record<string, unknown>[] = [{ createdById: userId }];
+      const sharedAccessOr: Record<string, unknown>[] = [
+        { createdById: userId },
+      ];
       if (collaboratorCourseIds.length > 0) {
         sharedAccessOr.push({ id: { in: collaboratorCourseIds } });
       }
@@ -357,10 +359,7 @@ export const coursesRouter = createTRPCRouter({
           }
         } else {
           where = {
-            OR: [
-              { status: { not: ContentStatus.DRAFT } },
-              ...sharedAccessOr,
-            ],
+            OR: [{ status: { not: ContentStatus.DRAFT } }, ...sharedAccessOr],
           };
         }
       } else {
@@ -736,13 +735,7 @@ export const coursesRouter = createTRPCRouter({
         ),
     )
     .mutation(async ({ ctx, input }) => {
-      const {
-        id,
-        priceOptions,
-        customFields,
-        status,
-        ...updateData
-      } = input;
+      const { id, priceOptions, customFields, status, ...updateData } = input;
 
       const course = await ctx.db.course.findUnique({
         where: { id },
@@ -793,8 +786,7 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      const mergedStart =
-        updateData.startDate ?? course.startDate;
+      const mergedStart = updateData.startDate ?? course.startDate;
       const mergedOpens =
         updateData.registrationOpensAt === undefined
           ? course.registrationOpensAt
@@ -818,8 +810,7 @@ export const coursesRouter = createTRPCRouter({
         ) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message:
-              "Anmeldungsstart muss vor oder am Anmeldeschluss liegen.",
+            message: "Anmeldungsstart muss vor oder am Anmeldeschluss liegen.",
           });
         }
       }
@@ -1112,11 +1103,7 @@ export const coursesRouter = createTRPCRouter({
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         ));
 
-      if (
-        !isCreator &&
-        !hasGlobalParticipantsAccess &&
-        !isCourseCollaborator
-      ) {
+      if (!isCreator && !hasGlobalParticipantsAccess && !isCourseCollaborator) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Insufficient permissions",

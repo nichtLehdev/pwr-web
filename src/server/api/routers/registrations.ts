@@ -297,10 +297,7 @@ export const registrationsRouter = createTRPCRouter({
               message: "Bitte wählen Sie eine Zahlungsweise.",
             });
           }
-          if (
-            inputPaymentMethod === CoursePaymentMethod.CASH &&
-            !acceptsCash
-          ) {
+          if (inputPaymentMethod === CoursePaymentMethod.CASH && !acceptsCash) {
             throw new TRPCError({
               code: "BAD_REQUEST",
               message: "Barzahlung ist für diesen Kurs nicht vorgesehen.",

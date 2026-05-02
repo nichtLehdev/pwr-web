@@ -61,7 +61,10 @@ export async function userCanManageCourseTeam(
   const canEdit = await userHasPermission(userId, PERMISSIONS.COURSES_EDIT);
   if (canEdit) return true;
 
-  const canApprove = await userHasPermission(userId, PERMISSIONS.COURSES_APPROVE);
+  const canApprove = await userHasPermission(
+    userId,
+    PERMISSIONS.COURSES_APPROVE,
+  );
   if (canApprove) return true;
 
   const organizer = await db.courseCollaborator.findUnique({

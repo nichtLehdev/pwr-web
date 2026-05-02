@@ -589,7 +589,9 @@ async function main() {
     console.log(`  ✓ Created ${coursesMap.size} courses`);
 
     // 13. Seed course team from legacy instructor links (STAFF collaborators)
-    console.log("👥 Creating course collaborators from backup instructor links...");
+    console.log(
+      "👥 Creating course collaborators from backup instructor links...",
+    );
     let teamLinks = 0;
     // UUID regex to filter out corrupted data
     const uuidRegex =
@@ -628,7 +630,9 @@ async function main() {
         }
       }
     }
-    console.log(`  ✓ Linked ${teamLinks} course team members (from backup instructors)`);
+    console.log(
+      `  ✓ Linked ${teamLinks} course team members (from backup instructors)`,
+    );
 
     // 14. Seed Course Custom Fields (depends on Course)
     console.log("📝 Creating Course Custom Fields...");

@@ -539,9 +539,7 @@ export default function RegistrationDetailPage() {
                   </span>
                   <span className="text-sm text-gray-900 dark:text-gray-100">
                     {registration.paymentMethod
-                      ? COURSE_PAYMENT_METHOD_LABELS[
-                          registration.paymentMethod
-                        ]
+                      ? COURSE_PAYMENT_METHOD_LABELS[registration.paymentMethod]
                       : "–"}
                   </span>
                 </div>

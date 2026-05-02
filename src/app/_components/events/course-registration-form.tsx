@@ -84,9 +84,7 @@ export default function CourseRegistrationForm({
       );
     } else if (!cash && inv) {
       setRegistrationData((d) =>
-        d.paymentMethod === "INVOICE"
-          ? d
-          : { ...d, paymentMethod: "INVOICE" },
+        d.paymentMethod === "INVOICE" ? d : { ...d, paymentMethod: "INVOICE" },
       );
     }
   }, [

@@ -262,7 +262,10 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
           </>
         ) : (
           <div className="from-primary/20 to-primary/5 flex h-full w-full items-center justify-center bg-linear-to-br">
-            <GraduationCap className="text-primary h-12 w-12 opacity-40" aria-hidden />
+            <GraduationCap
+              className="text-primary h-12 w-12 opacity-40"
+              aria-hidden
+            />
           </div>
         )}
       </div>
@@ -302,7 +305,9 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
         </div>
         <div className="mb-1.5 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
           <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-          <span className="min-w-0 leading-snug">{course.location?.city || "Ort folgt"}</span>
+          <span className="min-w-0 leading-snug">
+            {course.location?.city || "Ort folgt"}
+          </span>
         </div>
         {isRegistrationCurrentlyOpen(course) &&
         course.registrationTotalCapacity != null &&
@@ -493,7 +498,8 @@ export default function UpcomingCoursesCarousel({
   }, [leftAutoPlay, closedRegistrationCourses.length]);
 
   useEffect(() => {
-    if (!rightAutoPlay || openPageCount <= 1 || noClosedRegistrationHero) return;
+    if (!rightAutoPlay || openPageCount <= 1 || noClosedRegistrationHero)
+      return;
     const id = setInterval(() => {
       setRightEnterForward(true);
       setRightNavGeneration((g) => g + 1);
@@ -554,7 +560,11 @@ export default function UpcomingCoursesCarousel({
   ]);
 
   useEffect(() => {
-    if (!noClosedRegistrationHero || !fallbackAutoPlay || fallbackPageCount <= 1) {
+    if (
+      !noClosedRegistrationHero ||
+      !fallbackAutoPlay ||
+      fallbackPageCount <= 1
+    ) {
       return;
     }
     const len = fallbackPageCount;
@@ -564,11 +574,7 @@ export default function UpcomingCoursesCarousel({
       setFallbackPageIndex((prev) => (prev + 1) % len);
     }, CAROUSEL_AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [
-    fallbackAutoPlay,
-    fallbackPageCount,
-    noClosedRegistrationHero,
-  ]);
+  }, [fallbackAutoPlay, fallbackPageCount, noClosedRegistrationHero]);
 
   useEffect(() => {
     if (
