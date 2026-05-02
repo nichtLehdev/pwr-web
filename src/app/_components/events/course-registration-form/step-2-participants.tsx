@@ -16,6 +16,7 @@ import type { RegistrationData, CourseWithRelations } from "./types";
 import { getParticipantDisplayName, calculateDiscountAmount } from "./utils";
 import { ParticipantLibraryPopup } from "./participant-library-popup";
 import type { User } from "~/generated/prisma/client";
+import { parseSelectOptionValues } from "@/lib/course-custom-fields";
 
 interface Step2ParticipantsProps {
   course: CourseWithRelations;
@@ -42,6 +43,8 @@ interface Step2ParticipantsProps {
   headerHeight: number;
   groupIdCounterRef: React.MutableRefObject<number>;
   siblingDiscountError: string;
+  /** When false (e.g. full-page registration), use a static toolbar — no sticky offset hacks */
+  stickyToolbar?: boolean;
 }
 
 export function Step2Participants({
@@ -60,6 +63,7 @@ export function Step2Participants({
   headerHeight,
   groupIdCounterRef,
   siblingDiscountError,
+  stickyToolbar = true,
 }: Step2ParticipantsProps) {
   const addParticipant = () => {
     if (!course.priceOptions || course.priceOptions.length === 0) {
@@ -227,97 +231,94 @@ export function Step2Participants({
     (p) => p.siblingGroupId,
   );
 
+  const hasParticipants = registrationData.participants.length > 0;
+
+  const toolbarButtons = (
+    <div className="flex flex-wrap justify-center gap-2">
+      {currentUser && (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowParticipantLibrary(!showParticipantLibrary)}
+            className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold transition-colors hover:bg-gray-50 sm:px-4 sm:text-sm"
+          >
+            <BookOpen className="h-4 w-4 shrink-0" />
+            Aus Bibliothek
+          </button>
+          <ParticipantLibraryPopup
+            isOpen={showParticipantLibrary}
+            onClose={() => setShowParticipantLibrary(false)}
+            savedParticipants={savedParticipantsQuery.data}
+            onLoadParticipant={loadSavedParticipant}
+            headerHeight={headerHeight}
+          />
+        </div>
+      )}
+      {currentUser && (
+        <button
+          type="button"
+          onClick={addMyselfAsParticipant}
+          className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold transition-colors hover:bg-gray-50 sm:px-4 sm:text-sm"
+        >
+          <UserIcon className="h-4 w-4 shrink-0" />
+          Mich selbst
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={addParticipant}
+        className="bg-primary hover:bg-primary-dark flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors sm:px-4 sm:text-sm"
+      >
+        <Plus className="h-4 w-4 shrink-0" />
+        Hinzufügen
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex flex-col">
-      {/* Header Section - Not sticky on mobile */}
-      <div className="mb-4 space-y-4 px-2 sm:mb-6 sm:space-y-6 sm:px-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex-1">
-            <h3 className="text-dark dark:text-dark-text mb-1 text-lg font-bold sm:mb-2 sm:text-xl">
-              Teilnehmer
-            </h3>
-            <p className="text-xs text-gray-600 sm:text-sm dark:text-gray-400">
-              Fügen Sie alle Teilnehmer hinzu, die Sie anmelden möchten
-            </p>
-          </div>
-        </div>
+      <div className="mb-5">
+        <h3 className="text-dark dark:text-dark-text mb-1 text-lg font-bold sm:text-xl">
+          Teilnehmer
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Fügen Sie alle Personen hinzu, die Sie für diesen Lehrgang anmelden
+          möchten.
+        </p>
       </div>
 
-      {/* Sticky Buttons - sticky on mobile, also sticky on larger screens when participants exist */}
-      <div
-        className={`dark:bg-dark-surface sticky z-9 -mx-2 bg-white px-2 pt-2 pb-2 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_6px_-4px_rgba(0,0,0,0.3)] ${
-          registrationData.participants.length > 0
-            ? "sm:-mx-6 sm:w-[calc(100%+3rem)] sm:bg-white sm:px-6 sm:pt-4 sm:pb-4 sm:shadow-[0_4px_6px_rgba(0,0,0,0.1)] md:mb-6 sm:dark:bg-gray-900 sm:dark:shadow-[0_4px_6px_rgba(0,0,0,0.3)]"
-            : "sm:static sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:dark:bg-transparent sm:dark:shadow-none"
-        }`}
-        style={{ top: `${headerHeight}px` }}
-      >
-        <div className="relative flex flex-wrap justify-center gap-2 sm:flex-nowrap sm:justify-center">
-          {currentUser && (
-            <div className="relative">
-              <button
-                onClick={() =>
-                  setShowParticipantLibrary(!showParticipantLibrary)
-                }
-                className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:gap-2 sm:px-4 sm:text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                <BookOpen className="h-4 w-4 shrink-0" />
-                <span className="hidden sm:inline">Aus Bibliothek</span>
-              </button>
-              <ParticipantLibraryPopup
-                isOpen={showParticipantLibrary}
-                onClose={() => setShowParticipantLibrary(false)}
-                savedParticipants={savedParticipantsQuery.data}
-                onLoadParticipant={loadSavedParticipant}
-                headerHeight={headerHeight}
-              />
-            </div>
-          )}
-          {currentUser && (
-            <button
-              onClick={addMyselfAsParticipant}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-gray-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-gray-700 sm:gap-2 sm:px-4 sm:text-sm"
-            >
-              <UserIcon className="h-4 w-4 shrink-0" />
-              <span className="hidden sm:inline">Mich selbst</span>
-            </button>
-          )}
-          <button
-            onClick={addParticipant}
-            className="bg-primary hover:bg-primary-dark flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white transition-colors sm:gap-2 sm:px-4 sm:text-sm"
-          >
-            <Plus className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">Hinzufügen</span>
-          </button>
+      {stickyToolbar && hasParticipants && (
+        <div
+          className="dark:bg-dark-surface dark:border-dark-border sticky z-10 -mx-6 mb-6 border-b border-gray-100 bg-white px-6 py-3 shadow-sm"
+          style={{ top: `${headerHeight}px` }}
+        >
+          {toolbarButtons}
         </div>
-      </div>
+      )}
+
+      {!stickyToolbar && hasParticipants && (
+        <div className="dark:border-dark-border dark:bg-dark-background-secondary bg-background-secondary mb-5 rounded-lg border border-gray-200 p-4">
+          <p className="text-dark dark:text-dark-text mb-3 text-sm font-semibold">
+            Weitere Teilnehmer
+          </p>
+          {toolbarButtons}
+        </div>
+      )}
 
       {/* Scrollable Participants Section */}
       <div className="flex-1">
-        {registrationData.participants.length === 0 ? (
-          <div className="dark:border-dark-border rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center sm:py-12 dark:bg-gray-800">
-            <Users className="mx-auto mb-3 h-12 w-12 text-gray-400 sm:mb-4 sm:h-16 sm:w-16 dark:text-gray-500" />
-            <p className="mb-4 text-sm text-gray-600 sm:text-base dark:text-gray-400">
-              Noch keine Teilnehmer hinzugefügt
+        {!hasParticipants ? (
+          <div className="dark:border-dark-border dark:bg-dark-background-secondary bg-background-secondary rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center sm:py-9">
+            <Users className="text-primary/60 dark:text-primary/40 mx-auto mb-2 h-9 w-9" />
+            <p className="text-dark dark:text-dark-text text-sm font-medium">
+              Noch keine Teilnehmer
             </p>
-            <div className="flex flex-col justify-center gap-2 sm:flex-row sm:gap-3">
-              {currentUser && (
-                <button
-                  onClick={addMyselfAsParticipant}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm text-white transition-colors hover:bg-gray-700 sm:px-6 sm:text-base"
-                >
-                  <UserIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  Mich selbst hinzufügen
-                </button>
-              )}
-              <button
-                onClick={addParticipant}
-                className="bg-primary hover:bg-primary-dark flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm text-white transition-colors sm:px-6 sm:text-base"
-              >
-                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                Andere Person hinzufügen
-              </button>
-            </div>
+            <p className="mx-auto mt-1 mb-5 max-w-sm text-xs text-gray-500 dark:text-gray-400">
+              {currentUser
+                ? "Übernehmen Sie Daten aus Ihrer Bibliothek, tragen Sie sich selbst ein oder legen Sie eine neue Person an."
+                : "Legen Sie eine neue Teilnehmerperson an."}
+            </p>
+            {toolbarButtons}
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6">
@@ -332,13 +333,13 @@ export function Step2Participants({
               return (
                 <div
                   key={index}
-                  className={`rounded-lg border-2 p-4 sm:p-6 ${
+                  className={`rounded-lg border p-4 shadow-sm sm:p-6 ${
                     isInGroup
                       ? "border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
-                      : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                      : "dark:border-dark-border dark:bg-dark-background-secondary border-gray-200 bg-white"
                   }`}
                 >
-                  <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="dark:border-dark-border mb-5 flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <h4 className="text-dark dark:text-dark-text text-base font-semibold sm:text-lg">
                         Teilnehmer {index + 1}
@@ -361,7 +362,7 @@ export function Step2Participants({
                         <button
                           onClick={() => saveParticipant(index)}
                           disabled={saveParticipantMutation.isPending}
-                          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                          className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
                           title="Teilnehmer speichern"
                         >
                           <Save className="h-4 w-4" />
@@ -369,14 +370,14 @@ export function Step2Participants({
                       )}
                       <button
                         onClick={() => removeParticipant(index)}
-                        className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-gray-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                        className="dark:bg-dark-background rounded-lg border border-red-300 bg-white px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
                     <div>
                       <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                         Vorname *
@@ -389,7 +390,7 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
                           missingFields[index]?.includes("firstName")
                             ? "border-red-500 dark:border-red-500"
                             : "border-gray-300"
@@ -409,7 +410,7 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
                           missingFields[index]?.includes("lastName")
                             ? "border-red-500 dark:border-red-500"
                             : "border-gray-300"
@@ -507,7 +508,7 @@ export function Step2Participants({
                             .split("T")[0]
                         }
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
                           missingFields[index]?.includes("birthDate") ||
                           (validationErrors[index] &&
                             (validationErrors[index].includes("Geburtsdatum") ||
@@ -537,7 +538,7 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base dark:bg-gray-700 ${
+                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
                           missingFields[index]?.includes("city")
                             ? "border-red-500 dark:border-red-500"
                             : "border-gray-300"
@@ -560,7 +561,7 @@ export function Step2Participants({
                         className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
                           isInGroup
                             ? "bg-green-50 dark:bg-green-900/20"
-                            : "bg-white dark:bg-gray-700"
+                            : "dark:bg-dark-background bg-white"
                         }`}
                         placeholder="Trompete"
                       />
@@ -570,7 +571,7 @@ export function Step2Participants({
                       <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
                         Preisoption *
                       </label>
-                      <select
+                      <Select
                         value={participant.priceOptionId}
                         onChange={(e) =>
                           updateParticipant(
@@ -579,11 +580,8 @@ export function Step2Participants({
                             e.target.value,
                           )
                         }
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text h-[42px] w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none sm:h-auto sm:px-4 sm:text-base dark:bg-gray-700 ${
-                          missingFields[index]?.includes("priceOptionId")
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        error={missingFields[index]?.includes("priceOptionId")}
+                        className="text-sm sm:text-base"
                       >
                         {course.priceOptions.map(
                           (option: {
@@ -596,7 +594,7 @@ export function Step2Participants({
                             </option>
                           ),
                         )}
-                      </select>
+                      </Select>
                     </div>
 
                     {/* Custom Fields */}
@@ -609,18 +607,21 @@ export function Step2Participants({
                           >
                             {field.fieldName}
                           </Label>
-                          {field.fieldType === "SELECT" && field.options ? (
+                          {field.fieldType === "SELECT" &&
+                          parseSelectOptionValues(field.options).length > 0 ? (
                             <Select
                               value={
                                 (participant.customFields &&
                                 typeof participant.customFields === "object" &&
                                 field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
+                                  ? String(
+                                      (
+                                        participant.customFields as Record<
+                                          string,
+                                          any
+                                        >
+                                      )[field.fieldName] ?? "",
+                                    )
                                   : "") || ""
                               }
                               onChange={(e) =>
@@ -643,13 +644,64 @@ export function Step2Participants({
                               }`}
                             >
                               <option value="">Bitte wählen</option>
-                              {typeof field.options === "string" &&
-                                field.options.split(",").map((opt: string) => (
+                              {parseSelectOptionValues(field.options).map(
+                                (opt: string) => (
                                   <option key={opt} value={opt}>
                                     {opt}
                                   </option>
-                                ))}
+                                ),
+                              )}
                             </Select>
+                          ) : field.fieldType === "CHECKBOX" ? (
+                            <label
+                              className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm sm:text-base ${
+                                field.isRequired &&
+                                missingFields[index]?.includes(
+                                  `customField:${field.fieldName}`,
+                                )
+                                  ? "border-red-500 dark:border-red-500"
+                                  : "dark:border-dark-border border-gray-300"
+                              } ${
+                                isInGroup
+                                  ? "bg-green-50 dark:bg-green-900/20"
+                                  : "dark:bg-dark-background bg-white"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                                checked={(() => {
+                                  const v =
+                                    participant.customFields &&
+                                    typeof participant.customFields ===
+                                      "object" &&
+                                    participant.customFields !== null
+                                      ? (
+                                          participant.customFields as Record<
+                                            string,
+                                            any
+                                          >
+                                        )[field.fieldName]
+                                      : undefined;
+                                  return v === true || v === "true";
+                                })()}
+                                onChange={(e) =>
+                                  updateParticipant(index, "customFields", {
+                                    ...(typeof participant.customFields ===
+                                      "object" &&
+                                    participant.customFields !== null
+                                      ? participant.customFields
+                                      : {}),
+                                    [field.fieldName]: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span className="text-dark dark:text-dark-text leading-snug">
+                                {field.helpText?.trim()
+                                  ? field.helpText
+                                  : "Ja, trifft zu"}
+                              </span>
+                            </label>
                           ) : field.fieldType === "TEXTAREA" ? (
                             <Textarea
                               value={
@@ -759,7 +811,7 @@ export function Step2Participants({
                                   className={`inline-flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-xs transition-colors sm:gap-2 sm:px-3 sm:text-sm ${
                                     isLinked
                                       ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                      : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                                      : "dark:border-dark-border dark:bg-dark-background dark:hover:bg-dark-background-secondary border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:text-gray-300"
                                   }`}
                                 >
                                   {isLinked ? (

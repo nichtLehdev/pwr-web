@@ -59,6 +59,10 @@ export interface PublicPageProps {
   breadcrumbs: PublicPageBreadcrumb[];
   /** Optional intro content below the hero title (paragraphs, etc.) */
   description?: ReactNode;
+  /**
+   * `compact`: less vertical padding and a smaller hero title (e.g. forms / tool pages).
+   */
+  heroSize?: "default" | "compact";
   /** Main content (sections below the hero) */
   children: ReactNode;
 }
@@ -73,20 +77,37 @@ export default function PublicPage({
   color = "primary",
   breadcrumbs,
   description,
+  heroSize = "default",
   children,
 }: PublicPageProps) {
   const heroHeading = heroTitle ?? title;
   const bgClass = colorToBgClass[color];
+  const isCompact = heroSize === "compact";
+  /** Compact eyebrow only when the sticky title differs from the hero heading (e.g. registration flow). */
+  const showCompactEyebrow =
+    isCompact && heroTitle != null && heroTitle !== title;
+
+  const heroPadding = isCompact
+    ? "py-6 text-white md:py-8"
+    : "py-12 text-white md:py-16 lg:py-20";
+
+  const titleClasses = isCompact
+    ? "mb-3 text-2xl leading-tight font-bold md:text-3xl lg:text-4xl"
+    : "mb-6 text-3xl font-bold md:text-4xl lg:text-5xl";
+
+  const descriptionClasses = isCompact
+    ? "text-base leading-relaxed opacity-95 md:text-lg"
+    : "text-lg leading-relaxed opacity-95 md:text-xl";
 
   return (
     <div>
       <PageHeader title={title} color={color} />
 
       {/* Hero Section */}
-      <section className={`${bgClass} py-12 text-white md:py-16 lg:py-20`}>
-        <div className="container">
+      <section className={`${bgClass} ${heroPadding}`}>
+        <div className="container mx-auto">
           <nav
-            className="mb-4 flex items-center gap-2 text-sm opacity-90"
+            className="mb-3 flex flex-wrap items-center gap-2 text-sm opacity-90 md:mb-4"
             aria-label="Breadcrumb"
           >
             {breadcrumbs.map((item, index) => (
@@ -106,13 +127,14 @@ export default function PublicPage({
             ))}
           </nav>
           <div className="max-w-3xl">
-            <h1 className="mb-6 text-3xl font-bold md:text-4xl lg:text-5xl">
-              {heroHeading}
-            </h1>
+            {showCompactEyebrow && (
+              <p className="mb-1 text-xs font-semibold tracking-wide text-white/80 uppercase">
+                {title}
+              </p>
+            )}
+            <h1 className={titleClasses}>{heroHeading}</h1>
             {description && (
-              <div className="text-lg leading-relaxed opacity-95 md:text-xl">
-                {description}
-              </div>
+              <div className={descriptionClasses}>{description}</div>
             )}
           </div>
         </div>

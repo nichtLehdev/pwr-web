@@ -1,17 +1,25 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
-import { useState, useEffect, useRef, useMemo, startTransition } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  startTransition,
+} from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
   ContentStatus,
   CustomFieldType,
+  CourseCollaboratorRole,
 } from "~/generated/prisma/enums";
 import {
   Lock,
@@ -21,11 +29,24 @@ import {
   ArrowDownIcon,
   AlertTriangleIcon,
   ImageIcon,
+  UserPlus,
 } from "lucide-react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  DashboardFormMediaSplit,
+  CourseFormZoneHeader,
+  CourseFormBlock,
+  CourseFormEditMetaBar,
+  type CourseFormNavItem,
+} from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
+import {
+  registrationOpensMerge,
+  registrationOpensSplit,
+} from "@/lib/dashboard-registration-opens-at";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -49,6 +70,21 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   SELECT: "Auswahl",
   CHECKBOX: "Checkbox",
   TEXTAREA: "Mehrzeiliger Text",
+};
+
+const COURSE_FORM_NAV_ITEMS: CourseFormNavItem[] = [
+  { href: "#kurs-form-inhalt", label: "Inhalt" },
+  { href: "#kurs-form-termin", label: "Termin & Ort" },
+  { href: "#kurs-form-anmeldung", label: "Anmeldung" },
+  { href: "#kurs-form-team", label: "Kurs-Team" },
+  { href: "#kurs-form-preise", label: "Preise" },
+  { href: "#kurs-form-veroeffentlichung", label: "Veröffentlichung" },
+];
+
+const courseCollaboratorRoleLabels: Record<CourseCollaboratorRole, string> = {
+  [CourseCollaboratorRole.ORGANIZER]:
+    "Organisator:in (Kurs bearbeiten, Team verwalten)",
+  [CourseCollaboratorRole.STAFF]: "Team (Teilnehmerliste & Anmeldungen)",
 };
 
 // Dashboard access is now controlled by permissions
@@ -101,11 +137,15 @@ export default function EditCoursePage() {
   });
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
+  const [scheduledRegistrationOpens, setScheduledRegistrationOpens] =
+    useState(false);
   const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [allowWaitingList, setAllowWaitingList] = useState(false);
   const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
   const [isFree, setIsFree] = useState(true);
+  const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
+  const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -134,6 +174,7 @@ export default function EditCoursePage() {
     endDate: string;
     registrationDeadline: string;
     registrationOpensAt: string;
+    scheduledRegistrationOpens: boolean;
     locationId: string;
     bezirkId: string;
     maxParticipants: string;
@@ -141,6 +182,8 @@ export default function EditCoursePage() {
     allowWaitingList: boolean;
     allowSiblingDiscount: boolean;
     isFree: boolean;
+    paymentCashAllowed: boolean;
+    paymentInvoiceAllowed: boolean;
     priceInfo: string;
     priceOptions: PriceOption[];
     prerequisites: string;
@@ -169,6 +212,7 @@ export default function EditCoursePage() {
       endDate,
       registrationDeadline,
       registrationOpensAt,
+      scheduledRegistrationOpens,
       locationId,
       bezirkId,
       maxParticipants,
@@ -176,6 +220,8 @@ export default function EditCoursePage() {
       allowWaitingList,
       allowSiblingDiscount,
       isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -193,6 +239,7 @@ export default function EditCoursePage() {
       endDate,
       registrationDeadline,
       registrationOpensAt,
+      scheduledRegistrationOpens,
       locationId,
       bezirkId,
       maxParticipants,
@@ -200,6 +247,8 @@ export default function EditCoursePage() {
       allowWaitingList,
       allowSiblingDiscount,
       isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -237,7 +286,13 @@ export default function EditCoursePage() {
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
-          setRegistrationOpensAt(saved.registrationOpensAt || "");
+          const restoredScheduled =
+            saved.scheduledRegistrationOpens ??
+            Boolean(saved.registrationOpensAt);
+          setScheduledRegistrationOpens(restoredScheduled);
+          setRegistrationOpensAt(
+            restoredScheduled ? (saved.registrationOpensAt || "") : "",
+          );
           setLocationId(saved.locationId || "");
           setBezirkId(saved.bezirkId || "");
           setMaxParticipants(saved.maxParticipants || "");
@@ -245,6 +300,8 @@ export default function EditCoursePage() {
           setAllowWaitingList(saved.allowWaitingList || false);
           setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
           setIsFree(saved.isFree ?? true);
+          setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
+          setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
           setPriceInfo(saved.priceInfo || "");
           setPriceOptions(saved.priceOptions || []);
           setPrerequisites(saved.prerequisites || "");
@@ -285,6 +342,7 @@ export default function EditCoursePage() {
               return `${year}-${month}-${day}T${hours}:${minutes}`;
             })()
           : "",
+        scheduledRegistrationOpens: Boolean(course.registrationOpensAt),
         locationId: course.locationId || "",
         bezirkId: course.bezirkId || "",
         maxParticipants: course.maxParticipants?.toString() || "",
@@ -292,6 +350,8 @@ export default function EditCoursePage() {
         allowWaitingList: course.allowWaitingList || false,
         allowSiblingDiscount: course.allowSiblingDiscount || false,
         isFree: course.isFree ?? true,
+        paymentCashAllowed: course.paymentCashAllowed ?? true,
+        paymentInvoiceAllowed: course.paymentInvoiceAllowed ?? true,
         priceInfo: course.priceInfo || "",
         priceOptions:
           course.priceOptions?.map((opt) => ({
@@ -347,8 +407,60 @@ export default function EditCoursePage() {
   const hasApprovePermission =
     Array.isArray(userPermissions) &&
     userPermissions.some((perm: string) => perm === "courses.approve");
+  const hasCoursesEditPermission =
+    Array.isArray(userPermissions) &&
+    userPermissions.some(
+      (perm: string) =>
+        perm === "courses.edit" || perm === "courses.approve",
+    );
   const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
+
+  const canManageCourseTeamUi = useMemo(() => {
+    if (!course || !profile || !session?.user) return false;
+    const isDistrictManager =
+      !!profile.bezirkId &&
+      !!course.bezirkId &&
+      profile.bezirkId === course.bezirkId;
+    return (
+      course.createdById === session.user.id ||
+      hasCoursesEditPermission ||
+      isDistrictManager ||
+      course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER
+    );
+  }, [
+    course,
+    profile,
+    session?.user,
+    hasCoursesEditPermission,
+  ]);
+
+  const [courseTeamPickQuery, setCourseTeamPickQuery] = useState("");
+  const [guestTeamDraft, setGuestTeamDraft] = useState<
+    { displayName: string; bio: string }[]
+  >([]);
+
+  const opensScheduleParts = useMemo(() => {
+    const { date: opensDatePart, time: opensTimePart } =
+      registrationOpensSplit(registrationOpensAt);
+    const opensTimeMax =
+      opensDatePart && startDate && opensDatePart === startDate
+        ? startTime
+        : undefined;
+    return {
+      opensDatePart,
+      opensTimePart,
+      opensTimeMax,
+    };
+  }, [registrationOpensAt, startDate, startTime]);
+
+  const registrationFieldInputClass =
+    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+
+  const teamDenseInputClass = cn(
+    registrationFieldInputClass,
+    "py-1.5 text-sm leading-snug",
+  );
 
   useEffect(() => {
     if (course && !isInitialized) {
@@ -396,6 +508,10 @@ export default function EditCoursePage() {
           const hours = String(opensAt.getHours()).padStart(2, "0");
           const minutes = String(opensAt.getMinutes()).padStart(2, "0");
           setRegistrationOpensAt(`${year}-${month}-${day}T${hours}:${minutes}`);
+          setScheduledRegistrationOpens(true);
+        } else {
+          setRegistrationOpensAt("");
+          setScheduledRegistrationOpens(false);
         }
         if (course.registrationDeadline) {
           const deadline = new Date(course.registrationDeadline);
@@ -406,6 +522,8 @@ export default function EditCoursePage() {
         setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
 
         setIsFree(course.isFree);
+        setPaymentCashAllowed(course.paymentCashAllowed ?? true);
+        setPaymentInvoiceAllowed(course.paymentInvoiceAllowed ?? true);
         setPriceInfo(course.priceInfo || "");
         if (course.priceOptions && course.priceOptions.length > 0) {
           const options = course.priceOptions.map((opt) => ({
@@ -450,6 +568,74 @@ export default function EditCoursePage() {
   }, [course, isInitialized]);
 
   const utils = api.useUtils();
+
+  const { data: courseCollaboratorsFetched } =
+    api.courses.listCollaborators.useQuery(
+      { courseId },
+      {
+        enabled:
+          !!courseId && !!session?.user && canManageCourseTeamUi,
+      },
+    );
+
+  const { data: courseTeamPickUsers } = api.users.search.useQuery(
+    { query: courseTeamPickQuery.trim(), limit: 12 },
+    {
+      enabled:
+        courseTeamPickQuery.trim().length >= 2 &&
+        canManageCourseTeamUi &&
+        !!session?.user,
+    },
+  );
+
+  const setCollaboratorsMutation = api.courses.setCollaborators.useMutation({
+    onSuccess: async () => {
+      await utils.courses.listCollaborators.invalidate({ courseId });
+      await utils.courses.getById.invalidate({ id: courseId });
+      await utils.courses.getDashboardCourses.invalidate();
+    },
+    onError: (err) => {
+      toast.error(
+        "Team konnte nicht gespeichert werden: " + getErrorMessage(err),
+      );
+    },
+  });
+
+  const { data: guestTeamFetched } = api.courses.listGuestTeamMembers.useQuery(
+    { courseId },
+    {
+      enabled: !!courseId && !!session?.user && canManageCourseTeamUi,
+    },
+  );
+
+  const setGuestTeamMembersMutation =
+    api.courses.setGuestTeamMembers.useMutation({
+      onSuccess: async () => {
+        await utils.courses.listGuestTeamMembers.invalidate({ courseId });
+        await utils.courses.getById.invalidate({ id: courseId });
+        toast.success("Mitwirkende ohne Konto gespeichert");
+      },
+      onError: (err) => {
+        toast.error(
+          "Speichern fehlgeschlagen: " + getErrorMessage(err),
+        );
+      },
+    });
+
+  useEffect(() => {
+    if (guestTeamFetched === undefined) return;
+    const rows = guestTeamFetched.map((r) => ({
+      displayName: r.displayName,
+      bio: r.bio ?? "",
+    }));
+    startTransition(() => {
+      setGuestTeamDraft(rows);
+    });
+  }, [guestTeamFetched]);
+
+  const courseTeamListed = courseCollaboratorsFetched ?? [];
+  const teamMutationBusy = setCollaboratorsMutation.isPending;
+  const guestTeamMutationBusy = setGuestTeamMembersMutation.isPending;
 
   const updateCourseMutation = api.courses.update.useMutation({
     onSuccess: async () => {
@@ -522,18 +708,32 @@ export default function EditCoursePage() {
   useEffect(() => {
     if (course && profile && !hasRedirected.current) {
       const isCreator = course.createdById === session?.user?.id;
-      const isHigherRoleUser = hasApprovePermission;
       const isObleuteForDistrict =
-        profile.bezirkId && course.bezirkId === profile.bezirkId;
+        profile.bezirkId &&
+        course.bezirkId &&
+        profile.bezirkId === course.bezirkId;
+      const isDelegatedOrganizer =
+        course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
 
-      const canEdit = isCreator || isHigherRoleUser || isObleuteForDistrict;
+      const canEdit =
+        !!isCreator ||
+        hasCoursesEditPermission ||
+        isObleuteForDistrict ||
+        isDelegatedOrganizer;
 
       if (!canEdit) {
         hasRedirected.current = true;
         router.push(`/dashboard/courses/${courseId}`);
       }
     }
-  }, [course, profile, session, router, courseId, hasApprovePermission]);
+  }, [
+    course,
+    profile,
+    session,
+    router,
+    courseId,
+    hasCoursesEditPermission,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -665,6 +865,48 @@ export default function EditCoursePage() {
       return;
     }
 
+    if (scheduledRegistrationOpens) {
+      if (!registrationOpensAt.trim()) {
+        setError(
+          "Bitte wähle Datum und Uhrzeit für den geplanten Anmeldebeginn.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      const opensDt = new Date(registrationOpensAt);
+      const startDt = new Date(`${startDate}T${startTime}`);
+      if (Number.isNaN(opensDt.getTime()) || Number.isNaN(startDt.getTime())) {
+        setError("Datum oder Zeit für den Anmeldebeginn ist ungültig.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (opensDt.getTime() >= startDt.getTime()) {
+        setError(
+          "Der geplante Anmeldungsbeginn muss vor Kursbeginn (Datum und Uhrzeit) liegen.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      if (registrationDeadline) {
+        const dl = new Date(registrationDeadline);
+        if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
+          setError(
+            "Der geplante Anmeldungsbeginn darf nicht nach dem Anmeldeschluss liegen.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+    if (!isFree && !paymentCashAllowed && !paymentInvoiceAllowed) {
+      setError(
+        "Mindestens eine Zahlungsart (Bar vor Ort oder Rechnung per Überweisung) muss aktiv sein.",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
     const preparedPriceOptions = !isFree
       ? priceOptions
           .filter((opt) => opt.label && opt.price >= 0)
@@ -711,9 +953,10 @@ export default function EditCoursePage() {
       courseType,
       bezirkId: bezirkId || null,
       registrationOpen,
-      registrationOpensAt: registrationOpensAt
-        ? new Date(registrationOpensAt)
-        : null,
+      registrationOpensAt:
+        scheduledRegistrationOpens && registrationOpensAt
+          ? new Date(registrationOpensAt)
+          : null,
       registrationDeadline: registrationDeadline
         ? new Date(registrationDeadline)
         : null,
@@ -723,6 +966,8 @@ export default function EditCoursePage() {
         ? allowSiblingDiscount
         : undefined,
       isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
@@ -762,8 +1007,8 @@ export default function EditCoursePage() {
   return (
     <>
       <DashboardPage
-        title="Kurs bearbeiten"
-        description="Bearbeite die Kursinformationen"
+        title={title.trim() || course.title || "Kurs bearbeiten"}
+        description={`${courseTypeLabels[courseType]} · ${statusLabels[status]}`}
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Kurse", href: "/dashboard/courses" },
@@ -780,12 +1025,32 @@ export default function EditCoursePage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
+        <form onSubmit={handleSubmit}>
+          <CourseFormEditMetaBar
+            startDate={startDate}
+            startTime={startTime}
+            endDate={endDate}
+            endTime={endTime}
+            courseId={courseId}
+          />
+
+          <DashboardSectionedFormLayout
+            navItems={COURSE_FORM_NAV_ITEMS}
+            contentClassName="space-y-14 sm:space-y-16"
+          >
+          <div
+            id="kurs-form-inhalt"
+            className="dashboard-form-scroll-anchor"
+          >
+            <CourseFormZoneHeader
+              step={1}
+              title="Inhalt"
+              description="Das, was Besucher zuerst sehen: Titeltext, Bild und optionale Hinweise zur Teilnahme."
+            />
+            <DashboardFormMediaSplit
+              main={
+                <>
+                  <CourseFormBlock title="Grundinformationen">
             <div className="space-y-4">
               <div>
                 <label
@@ -850,7 +1115,7 @@ export default function EditCoursePage() {
                   >
                     Kurstyp *
                   </label>
-                  <select
+                  <Select
                     id="courseType"
                     value={courseType}
                     onChange={(e) =>
@@ -863,71 +1128,115 @@ export default function EditCoursePage() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
             </div>
-          </section>
+                  </CourseFormBlock>
 
-          {/* Image */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Bild
-            </h2>
-            <div className="space-y-4">
-              {imageUrl ? (
-                <div className="relative">
-                  <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
-                    <Image
-                      src={imageUrl}
-                      alt="Kursbild"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
-                    >
-                      Bild ändern
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageId(null);
-                        setImageUrl(null);
-                      }}
-                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      Bild entfernen
-                    </button>
-                  </div>
+                  <CourseFormBlock title="Weitere Informationen">
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="prerequisites"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Voraussetzungen (optional)
+                  </label>
+                  <textarea
+                    id="prerequisites"
+                    value={prerequisites}
+                    onChange={(e) => setPrerequisites(e.target.value)}
+                    rows={3}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    placeholder="z.B. Grundkenntnisse auf dem Instrument"
+                  />
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowMediaPicker(true)}
-                  className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
-                >
-                  <ImageIcon className="h-12 w-12 text-gray-400" />
-                  <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
-                    Bild auswählen
-                  </span>
-                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Aus der Medienbibliothek auswählen oder neues Bild hochladen
-                  </span>
-                </button>
-              )}
-            </div>
-          </section>
 
-          {/* Date & Location */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Datum & Ort
-            </h2>
+                <div>
+                  <label
+                    htmlFor="whatToBring"
+                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Mitzubringen (optional)
+                  </label>
+                  <textarea
+                    id="whatToBring"
+                    value={whatToBring}
+                    onChange={(e) => setWhatToBring(e.target.value)}
+                    rows={3}
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    placeholder="z.B. Instrument, Notenständer, ..."
+                  />
+                </div>
+              </div>
+                  </CourseFormBlock>
+                </>
+              }
+              aside={
+                <CourseFormBlock title="Titelbild">
+                  <div className="space-y-4">
+                    {imageUrl ? (
+                      <div className="relative">
+                        <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                          <Image
+                            src={imageUrl}
+                            alt="Kursbild"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowMediaPicker(true)}
+                            className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                          >
+                            Bild ändern
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImageId(null);
+                              setImageUrl(null);
+                            }}
+                            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                          >
+                            Bild entfernen
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaPicker(true)}
+                        className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 transition-colors hover:bg-gray-50 sm:p-8"
+                      >
+                        <ImageIcon className="h-10 w-10 text-gray-400 sm:h-12 sm:w-12" />
+                        <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                          Bild auswählen
+                        </span>
+                        <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+                          Mediathek oder neu hochladen
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </CourseFormBlock>
+              }
+            />
+          </div>
+
+          <div
+            id="kurs-form-termin"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+          >
+            <CourseFormZoneHeader
+              step={2}
+              title="Termin & Ort"
+              description="Zeitfenster, Bezirk und Veranstaltungsort steuern Kalender und Anfahrtshinweise."
+            />
+            <CourseFormBlock title="Datum & Ort">
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-4">
                 <div>
@@ -1020,7 +1329,7 @@ export default function EditCoursePage() {
                     <Lock className="h-5 w-5 shrink-0 text-gray-400" />
                   </div>
                 ) : (
-                  <select
+                  <Select
                     id="bezirk"
                     value={bezirkId}
                     onChange={(e) => setBezirkId(e.target.value)}
@@ -1032,7 +1341,7 @@ export default function EditCoursePage() {
                         Bezirk {bezirk.number} – {bezirk.shortName}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 )}
               </div>
 
@@ -1210,35 +1519,137 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-          </section>
+            </CourseFormBlock>
+          </div>
 
-          {/* Registration Settings */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Anmeldung
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="registrationOpen"
-                  checked={registrationOpen}
-                  onChange={(e) => setRegistrationOpen(e.target.checked)}
-                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                />
-                <label
-                  htmlFor="registrationOpen"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
-                  Anmeldung geöffnet
-                </label>
-              </div>
+          <div
+            id="kurs-form-anmeldung"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+          >
+            <CourseFormZoneHeader
+              step={3}
+              title="Anmeldung"
+              description="Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+            />
+            <div className="space-y-10">
+            <CourseFormBlock title="Anmeldeeinstellungen">
+            <div className="space-y-6">
+              <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                <legend className="sr-only">Anmeldezeitpunkt und -fenster</legend>
+                <div className="space-y-5">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="registrationOpen"
+                      checked={registrationOpen}
+                      onChange={(e) => setRegistrationOpen(e.target.checked)}
+                      className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                    />
+                    <label
+                      htmlFor="registrationOpen"
+                      className="dark:text-dark-text cursor-pointer text-sm font-medium leading-snug text-gray-700"
+                    >
+                      Anmeldung geöffnet
+                    </label>
+                  </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="scheduledRegistrationOpens"
+                        checked={scheduledRegistrationOpens}
+                        onChange={(e) => {
+                          const on = e.target.checked;
+                          setScheduledRegistrationOpens(on);
+                          if (!on) setRegistrationOpensAt("");
+                        }}
+                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                      />
+                      <span className="min-w-0">
+                        <span className="dark:text-dark-text block text-sm font-medium leading-snug text-gray-700">
+                          Anmeldebeginn später planen
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                          {scheduledRegistrationOpens
+                            ? "Datum und Uhrzeit vor Kursbeginn wählen; Kursbeschreibung ist schon vorher sichtbar."
+                            : "Ohne Planung gilt der normale Zeitpunkt, sobald die Anmeldung freigeschaltet ist."}
+                        </span>
+                      </span>
+                    </label>
+
+                    {scheduledRegistrationOpens ? (
+                      <div className="mt-4 space-y-2">
+                        <p className="dark:text-dark-text text-sm font-medium text-gray-900">
+                          Anmeldung öffnet ab
+                        </p>
+                        <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                          <div>
+                            <label
+                              htmlFor="registrationOpensDate"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Datum
+                            </label>
+                            <input
+                              type="date"
+                              id="registrationOpensDate"
+                              value={opensScheduleParts.opensDatePart}
+                              max={startDate || undefined}
+                              onChange={(e) =>
+                                setRegistrationOpensAt(
+                                  registrationOpensMerge(
+                                    e.target.value,
+                                    opensScheduleParts.opensTimePart,
+                                  ),
+                                )
+                              }
+                              title="Spätestens am Kurstag (vor oder am gleichen Datum wie Beginn)"
+                              className={registrationFieldInputClass}
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="registrationOpensTime"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Uhrzeit
+                            </label>
+                            <input
+                              type="time"
+                              id="registrationOpensTime"
+                              value={opensScheduleParts.opensTimePart}
+                              max={
+                                opensScheduleParts.opensTimeMax ?? undefined
+                              }
+                              title="Am Kurstag höchstens bis Kursbeginn"
+                              onChange={(e) =>
+                                setRegistrationOpensAt(
+                                  registrationOpensMerge(
+                                    opensScheduleParts.opensDatePart,
+                                    e.target.value,
+                                  ),
+                                )
+                              }
+                              className={registrationFieldInputClass}
+                            />
+                          </div>
+                        </div>
+                        <p className="max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                          Die Buttons zum Anmelden erscheinen erst ab diesem
+                          Zeitpunkt; der Kurstext bleibt sichtbar.
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </fieldset>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start sm:gap-6">
                 <div>
                   <label
                     htmlFor="maxParticipants"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                    className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
                   >
                     Maximale Teilnehmerzahl *
                   </label>
@@ -1249,36 +1660,15 @@ export default function EditCoursePage() {
                     onChange={(e) => setMaxParticipants(e.target.value)}
                     min="1"
                     max="500"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    className={registrationFieldInputClass}
                     required
                   />
                 </div>
 
                 <div>
                   <label
-                    htmlFor="registrationOpensAt"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Anmeldung öffnet ab (optional)
-                  </label>
-                  <input
-                    type="datetime-local"
-                    id="registrationOpensAt"
-                    value={registrationOpensAt}
-                    onChange={(e) => setRegistrationOpensAt(e.target.value)}
-                    min={new Date().toISOString().slice(0, 16)}
-                    max={registrationDeadline || undefined}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem
-                    Zeitpunkt
-                  </p>
-                </div>
-                <div>
-                  <label
                     htmlFor="registrationDeadline"
-                    className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
+                    className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
                   >
                     Anmeldeschluss (optional)
                   </label>
@@ -1288,13 +1678,14 @@ export default function EditCoursePage() {
                     value={registrationDeadline}
                     onChange={(e) => setRegistrationDeadline(e.target.value)}
                     min={
-                      registrationOpensAt
-                        ? new Date(registrationOpensAt)
-                            .toISOString()
-                            .split("T")[0]
+                      scheduledRegistrationOpens &&
+                      registrationOpensAt.includes("T")
+                        ? opensScheduleParts.opensDatePart || undefined
                         : undefined
                     }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                    max={startDate || undefined}
+                    title="Anmeldeschluss muss vor oder am Startdatum sein"
+                    className={registrationFieldInputClass}
                   />
                 </div>
               </div>
@@ -1335,13 +1726,630 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-          </section>
+            </CourseFormBlock>
 
-          {/* Pricing */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Preise
-            </h2>
+            <CourseFormBlock
+              title="Zusätzliche Anmeldefelder"
+              description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
+            >
+              {!hasRegistrations ? (
+                <div className="-mt-2 mb-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={addCustomField}
+                    className="text-primary hover:text-primary/80 text-sm font-medium"
+                  >
+                    + Feld hinzufügen
+                  </button>
+                </div>
+              ) : null}
+
+            {hasRegistrations && customFieldsChanged && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  <strong>Hinweis:</strong> Es sind bereits Anmeldungen
+                  vorhanden. Die Anmeldefelder können nicht mehr geändert
+                  werden.
+                </p>
+              </div>
+            )}
+
+            {hasRegistrations && originalCustomFields.length > 0 && (
+              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Hinweis:</strong> Es sind bereits {registrationCount}{" "}
+                  Anmeldung{registrationCount !== 1 ? "en" : ""} vorhanden. Die
+                  Anmeldefelder können nicht mehr geändert werden.
+                </p>
+              </div>
+            )}
+
+            {customFields.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Keine zusätzlichen Felder definiert.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {customFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className={`rounded-lg border p-4 ${hasRegistrations ? "dark:border-dark-border dark:bg-dark-background-secondary border-gray-100 bg-gray-50" : "dark:border-dark-border border-gray-200"}`}
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Feld {index + 1}
+                      </span>
+                      {!hasRegistrations && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveCustomField(field.id, "up")}
+                            disabled={index === 0}
+                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            <ArrowUpIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveCustomField(field.id, "down")}
+                            disabled={index === customFields.length - 1}
+                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                          >
+                            <ArrowDownIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeCustomField(field.id)}
+                            className="p-1 text-gray-400 hover:text-red-500"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Feldname *
+                        </label>
+                        <input
+                          type="text"
+                          value={field.fieldName}
+                          onChange={(e) =>
+                            updateCustomField(
+                              field.id,
+                              "fieldName",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="z.B. Ernährungsbesonderheiten"
+                          disabled={hasRegistrations}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Feldtyp
+                        </label>
+                        <Select
+                          value={field.fieldType}
+                          onChange={(e) =>
+                            updateCustomField(
+                              field.id,
+                              "fieldType",
+                              e.target.value as CustomFieldType,
+                            )
+                          }
+                          disabled={hasRegistrations}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                        >
+                          {Object.entries(customFieldTypeLabels).map(
+                            ([value, label]) => (
+                              <option key={value} value={value}>
+                                {label}
+                              </option>
+                            ),
+                          )}
+                        </Select>
+                      </div>
+
+                      {field.fieldType === CustomFieldType.SELECT && (
+                        <div className="sm:col-span-2">
+                          <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                            Auswahloptionen (kommagetrennt)
+                          </label>
+                          <input
+                            type="text"
+                            value={field.options}
+                            onChange={(e) =>
+                              updateCustomField(
+                                field.id,
+                                "options",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="z.B. Option 1, Option 2, Option 3"
+                            disabled={hasRegistrations}
+                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                          />
+                        </div>
+                      )}
+
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Hilfetext
+                        </label>
+                        <input
+                          type="text"
+                          value={field.helpText}
+                          onChange={(e) =>
+                            updateCustomField(
+                              field.id,
+                              "helpText",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="z.B. Bitte gib eventuelle Allergien an"
+                          disabled={hasRegistrations}
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          className={`flex items-center gap-2 ${hasRegistrations ? "cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={field.isRequired}
+                            onChange={(e) =>
+                              updateCustomField(
+                                field.id,
+                                "isRequired",
+                                e.target.checked,
+                              )
+                            }
+                            disabled={hasRegistrations}
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                          />
+                          <span
+                            className={`text-sm ${hasRegistrations ? "text-gray-400 dark:text-gray-500" : "dark:text-dark-text text-gray-700"}`}
+                          >
+                            Pflichtfeld
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CourseFormBlock>
+          </div>
+          </div>
+
+          <div
+            id="kurs-form-team"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+          >
+            <CourseFormZoneHeader
+              step={4}
+              title="Kurs-Team"
+              description="Zwei Bereiche unten: (1) Vereinskonten mit Rollen für Bearbeitung und Teilnehmerlisten, (2) freie Namen nur für die öffentliche Kursseite ohne eigenes Login."
+            />
+
+            {!canManageCourseTeamUi &&
+              course.viewerCollaboratorRole === CourseCollaboratorRole.STAFF && (
+              <div className="dark:border-dark-border mb-8 rounded-xl border border-sky-200/80 bg-sky-50/80 px-4 py-4 text-sm text-sky-950 dark:border-sky-900/60 dark:bg-sky-950/35 dark:text-sky-100">
+                <p className="font-medium">
+                  Du bist diesem Kurs als Teammitglied zugeordnet.
+                </p>
+                <p className="mt-2 leading-relaxed">
+                  Hier kann nur die Kurserstellung oder eingetragene Organisator:innen
+                  Personen hinzufügen. Für dich gilt Lese-/Teilnahme-Verwaltung ohne
+                  vollen Bearbeitungszugriff.
+                </p>
+              </div>
+            )}
+
+            {canManageCourseTeamUi ? (
+              <>
+              <CourseFormBlock
+                title="Organisator:innen und Teammitglieder"
+                description={`Über bestehende Nutzer:innen aus der Suche hinzufügen. Wer den Kurs angelegt hat, bleibt immer dabei${
+                  course.createdBy?.displayName
+                    ? ` (${course.createdBy.displayName})`
+                    : ""
+                }. Auf der öffentlichen Seite erscheint das mit Profilbild und Kurztext (falls im Profil gepflegt).`}
+              >
+                <div className="space-y-3">
+                  <p className="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                    Änderungen an Konten und Rollen werden sofort gespeichert —
+                    unabhängig vom Kurs-Formular weiter unten.
+                  </p>
+
+                  <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white dark:bg-dark-surface">
+                    <div className="dark:border-dark-border border-b border-gray-200 bg-gray-50 px-3 py-2.5 dark:bg-dark-background-secondary/70">
+                      <label
+                        htmlFor="course-team-search"
+                        className="dark:text-dark-text mb-1.5 flex items-center gap-1.5 text-xs font-medium text-gray-600"
+                      >
+                        <UserPlus className="text-primary h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Person suchen &amp; hinzufügen
+                      </label>
+                      <div className="relative w-full">
+                        <input
+                          id="course-team-search"
+                          type="text"
+                          value={courseTeamPickQuery}
+                          disabled={teamMutationBusy}
+                          onChange={(e) =>
+                            setCourseTeamPickQuery(e.target.value)
+                          }
+                          autoComplete="off"
+                          placeholder="Name oder E-Mail (mind. 2 Zeichen)"
+                          className={teamDenseInputClass}
+                        />
+                        {courseTeamPickQuery.trim().length >= 2 &&
+                          courseTeamPickUsers &&
+                          courseTeamPickUsers.length > 0 && (
+                            <ul
+                              className="dark:border-dark-border dark:bg-dark-surface absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+                              role="listbox"
+                            >
+                              {courseTeamPickUsers.map((u) => {
+                                if (
+                                  u.id === session?.user?.id ||
+                                  u.id === course.createdById
+                                )
+                                  return null;
+                                if (
+                                  courseTeamListed.some(
+                                    (w) => w.userId === u.id,
+                                  )
+                                )
+                                  return null;
+                                return (
+                                  <li key={u.id}>
+                                    <button
+                                      type="button"
+                                      disabled={teamMutationBusy}
+                                      role="option"
+                                      className="dark:hover:bg-dark-background-secondary dark:text-dark-text w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-100 disabled:opacity-50"
+                                      onClick={() => {
+                                        setCollaboratorsMutation.mutate({
+                                          courseId,
+                                          collaborators: [
+                                            ...courseTeamListed.map((r) => ({
+                                              userId: r.userId,
+                                              role: r.role,
+                                            })),
+                                            {
+                                              userId: u.id,
+                                              role: CourseCollaboratorRole.STAFF,
+                                            },
+                                          ],
+                                        });
+                                        setCourseTeamPickQuery("");
+                                      }}
+                                    >
+                                      <span className="font-medium">
+                                        {u.displayName ??
+                                          u.username ??
+                                          u.email}
+                                      </span>
+                                      <span className="dark:text-dark-muted mt-0.5 block text-xs text-gray-500">
+                                        {u.email}
+                                      </span>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                      </div>
+                    </div>
+
+                    {courseTeamListed.length === 0 ? (
+                      <p className="px-3 py-5 text-center text-sm text-gray-500 dark:text-gray-400">
+                        Keine zusätzlichen Team-Mitglied:innen.
+                      </p>
+                    ) : (
+                      <ul
+                        className="divide-y divide-gray-200 dark:divide-dark-border"
+                        role="list"
+                      >
+                        {courseTeamListed.map((row) => (
+                          <li
+                            key={row.userId}
+                            className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-gray-900 dark:text-dark-text">
+                                {row.user.displayName ?? row.user.email}
+                              </p>
+                              <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                                {row.user.email}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2 sm:justify-end">
+                              <Select
+                                value={row.role}
+                                disabled={teamMutationBusy}
+                                aria-label={`Rolle für ${row.user.email}`}
+                                onChange={(e) => {
+                                  const value = e.target
+                                    .value as CourseCollaboratorRole;
+                                  setCollaboratorsMutation.mutate({
+                                    courseId,
+                                    collaborators: courseTeamListed.map(
+                                      (t) =>
+                                        t.userId === row.userId
+                                          ? {
+                                              userId: t.userId,
+                                              role: value,
+                                            }
+                                          : {
+                                              userId: t.userId,
+                                              role: t.role,
+                                            },
+                                    ),
+                                  });
+                                }}
+                                className={cn(
+                                  "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text",
+                                  "h-9 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2.5 text-sm focus:ring-1 focus:outline-none sm:w-auto sm:min-w-[220px]",
+                                )}
+                              >
+                                {(
+                                  Object.keys(
+                                    courseCollaboratorRoleLabels,
+                                  ) as CourseCollaboratorRole[]
+                                ).map((rk) => (
+                                  <option key={rk} value={rk}>
+                                    {courseCollaboratorRoleLabels[rk]}
+                                  </option>
+                                ))}
+                              </Select>
+                              <button
+                                type="button"
+                                title="Zuordnung entfernen"
+                                disabled={teamMutationBusy}
+                                className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-red-600 disabled:opacity-40 dark:hover:bg-dark-background-secondary dark:hover:text-red-400"
+                                onClick={() => {
+                                  setCollaboratorsMutation.mutate({
+                                    courseId,
+                                    collaborators: courseTeamListed
+                                      .filter((t) => t.userId !== row.userId)
+                                      .map((t) => ({
+                                        userId: t.userId,
+                                        role: t.role,
+                                      })),
+                                  });
+                                }}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </CourseFormBlock>
+
+              <div className="mt-8">
+                <CourseFormBlock
+                  title="Weitere Namen (ohne Vereinskonto)"
+                  description="Nur Darstellung auf der öffentlichen Kursseite: kein Zugriff auf den Kurs, keine Teilnehmerliste. Praktisch z.&nbsp;B. für Gastreferent:innen ohne Account. Hier ein optionaler Kurztext pro Person möglich."
+                >
+                  <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white dark:bg-dark-surface">
+                    <div className="dark:border-dark-border border-b border-gray-200 bg-amber-50/80 px-3 py-2 text-xs leading-snug text-amber-950 dark:border-dark-border dark:bg-amber-950/25 dark:text-amber-100">
+                      Diese Einträge werden erst nach Klick auf{" "}
+                      <strong className="font-semibold">
+                        Mitwirkende ohne Konto speichern
+                      </strong>{" "}
+                      übernommen — im Unterschied zu den Konten im ersten Kasten.
+                    </div>
+
+                    {guestTeamDraft.length === 0 ? (
+                      <div className="flex flex-col items-center gap-3 px-4 py-10">
+                        <p className="max-w-sm text-center text-sm text-gray-600 dark:text-gray-400">
+                          Noch keine freien Namen. Nutze das unten, wenn z.&nbsp;B.
+                          Referent:innen ohne Vereinskonto auf der Kursseite
+                          erscheinen sollen.
+                        </p>
+                        <button
+                          type="button"
+                          disabled={guestTeamMutationBusy}
+                          className="text-primary hover:text-primary-dark text-sm font-semibold underline-offset-2 hover:underline disabled:opacity-50"
+                          onClick={() =>
+                            setGuestTeamDraft((rows) => [
+                              ...rows,
+                              { displayName: "", bio: "" },
+                            ])
+                          }
+                        >
+                          Erste Zeile hinzufügen
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <ul className="divide-y divide-gray-200 dark:divide-dark-border">
+                          {guestTeamDraft.map((row, idx) => (
+                            <li
+                              key={idx}
+                              className="flex flex-col gap-2 px-3 py-2 sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_auto] sm:items-center sm:gap-x-3"
+                            >
+                              <input
+                                type="text"
+                                value={row.displayName}
+                                disabled={guestTeamMutationBusy}
+                                aria-label={`Anzeigename Position ${idx + 1}`}
+                                onChange={(e) =>
+                                  setGuestTeamDraft((rows) =>
+                                    rows.map((r, i) =>
+                                      i === idx
+                                        ? {
+                                            ...r,
+                                            displayName: e.target.value,
+                                          }
+                                        : r,
+                                    ),
+                                  )
+                                }
+                                maxLength={200}
+                                placeholder="Anzeigename"
+                                className={teamDenseInputClass}
+                              />
+                              <textarea
+                                value={row.bio}
+                                disabled={guestTeamMutationBusy}
+                                aria-label={`Kurzinfo Position ${idx + 1}`}
+                                onChange={(e) =>
+                                  setGuestTeamDraft((rows) =>
+                                    rows.map((r, i) =>
+                                      i === idx
+                                        ? { ...r, bio: e.target.value }
+                                        : r,
+                                    ),
+                                  )
+                                }
+                                rows={2}
+                                maxLength={2000}
+                                placeholder="Kurzinfo (optional)"
+                                className={cn(
+                                  teamDenseInputClass,
+                                  "resize-y sm:min-h-[2.75rem]",
+                                )}
+                              />
+                              <div className="flex items-center justify-end gap-0.5 sm:flex-col sm:justify-center sm:pt-0">
+                                <button
+                                  type="button"
+                                  disabled={
+                                    guestTeamMutationBusy || idx === 0
+                                  }
+                                  className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:opacity-25 dark:hover:bg-dark-background-secondary dark:hover:text-gray-200"
+                                  title="Nach oben"
+                                  onClick={() => {
+                                    if (idx === 0) return;
+                                    setGuestTeamDraft((rows) => {
+                                      const copy = [...rows];
+                                      const a = copy[idx - 1];
+                                      const b = copy[idx];
+                                      if (!a || !b) return copy;
+                                      copy[idx - 1] = b;
+                                      copy[idx] = a;
+                                      return copy;
+                                    });
+                                  }}
+                                >
+                                  <ArrowUpIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={
+                                    guestTeamMutationBusy ||
+                                    idx >= guestTeamDraft.length - 1
+                                  }
+                                  className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 disabled:opacity-25 dark:hover:bg-dark-background-secondary dark:hover:text-gray-200"
+                                  title="Nach unten"
+                                  onClick={() => {
+                                    if (idx >= guestTeamDraft.length - 1)
+                                      return;
+                                    setGuestTeamDraft((rows) => {
+                                      const copy = [...rows];
+                                      const a = copy[idx];
+                                      const b = copy[idx + 1];
+                                      if (!a || !b) return copy;
+                                      copy[idx] = b;
+                                      copy[idx + 1] = a;
+                                      return copy;
+                                    });
+                                  }}
+                                >
+                                  <ArrowDownIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={guestTeamMutationBusy}
+                                  title="Zeile entfernen"
+                                  className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600 disabled:opacity-40 dark:hover:bg-dark-background-secondary dark:hover:text-red-400"
+                                  onClick={() =>
+                                    setGuestTeamDraft((rows) =>
+                                      rows.filter((_, i) => i !== idx),
+                                    )
+                                  }
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                        <div className="dark:border-dark-border flex flex-col gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 dark:bg-dark-background-secondary/70 sm:flex-row sm:items-center sm:justify-between">
+                          <button
+                            type="button"
+                            disabled={guestTeamMutationBusy}
+                            className="text-primary hover:text-primary-dark text-left text-sm font-medium disabled:opacity-50 sm:text-center"
+                            onClick={() =>
+                              setGuestTeamDraft((rows) => [
+                                ...rows,
+                                { displayName: "", bio: "" },
+                              ])
+                            }
+                          >
+                            + Weitere Zeile
+                          </button>
+                          <button
+                            type="button"
+                            disabled={guestTeamMutationBusy}
+                            className="bg-primary hover:bg-primary-dark shrink-0 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                            onClick={() => {
+                              const nonempty = guestTeamDraft.filter(
+                                (r) => r.displayName.trim().length > 0,
+                              );
+                              const blanks =
+                                guestTeamDraft.length - nonempty.length;
+                              if (blanks > 0) {
+                                toast.info(
+                                  `${blanks} leere Zeile${blanks === 1 ? "" : "n"} ohne Namen wurden ausgelassen.`,
+                                );
+                              }
+                              setGuestTeamMembersMutation.mutate({
+                                courseId,
+                                members: nonempty.map((r) => ({
+                                  displayName: r.displayName.trim(),
+                                  bio: r.bio.trim()
+                                    ? r.bio.trim()
+                                    : undefined,
+                                })),
+                              });
+                            }}
+                          >
+                            Mitwirkende ohne Konto speichern
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </CourseFormBlock>
+              </div>
+              </>
+            ) : null}
+          </div>
+
+          <div
+            id="kurs-form-preise"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+          >
+            <CourseFormZoneHeader
+              step={5}
+              title="Preise"
+              description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
+            />
 
             {/* Warning when there are registrations */}
             {hasRegistrations && (
@@ -1362,6 +2370,7 @@ export default function EditCoursePage() {
               </div>
             )}
 
+            <CourseFormBlock title="Honorar und Zahlungsweisen">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <input
@@ -1399,6 +2408,41 @@ export default function EditCoursePage() {
                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                       placeholder="z.B. Frühbucherrabatt bis zum..."
                     />
+                  </div>
+
+                  <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+                    <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                      Zahlungsweisen für Teilnehmer
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Mindestens eine Option aktivieren.
+                    </p>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={paymentCashAllowed}
+                        onChange={(e) =>
+                          setPaymentCashAllowed(e.target.checked)
+                        }
+                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                      />
+                      <span className="dark:text-dark-text text-sm text-gray-700">
+                        Barzahlung vor Ort
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={paymentInvoiceAllowed}
+                        onChange={(e) =>
+                          setPaymentInvoiceAllowed(e.target.checked)
+                        }
+                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                      />
+                      <span className="dark:text-dark-text text-sm text-gray-700">
+                        Überweisung nach Rechnung
+                      </span>
+                    </label>
                   </div>
 
                   <div>
@@ -1539,261 +2583,20 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-          </section>
+            </CourseFormBlock>
+          </div>
 
-          {/* Custom Fields */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                  Zusätzliche Anmeldefelder
-                </h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Definiere zusätzliche Felder, die bei der Anmeldung abgefragt
-                  werden
-                </p>
-              </div>
-              {!hasRegistrations && (
-                <button
-                  type="button"
-                  onClick={addCustomField}
-                  className="text-primary hover:text-primary/80 text-sm font-medium"
-                >
-                  + Feld hinzufügen
-                </button>
-              )}
-            </div>
+          <div
+            id="kurs-form-veroeffentlichung"
+            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+          >
+            <CourseFormZoneHeader
+              step={6}
+              title="Veröffentlichung"
+              description="Welchen redaktionellen Stand der Eintrag haben soll – wirkt sich auf die öffentliche Sichtbarkeit aus."
+            />
 
-            {hasRegistrations && customFieldsChanged && (
-              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-900/20">
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  <strong>Hinweis:</strong> Es sind bereits Anmeldungen
-                  vorhanden. Die Anmeldefelder können nicht mehr geändert
-                  werden.
-                </p>
-              </div>
-            )}
-
-            {hasRegistrations && originalCustomFields.length > 0 && (
-              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Hinweis:</strong> Es sind bereits {registrationCount}{" "}
-                  Anmeldung{registrationCount !== 1 ? "en" : ""} vorhanden. Die
-                  Anmeldefelder können nicht mehr geändert werden.
-                </p>
-              </div>
-            )}
-
-            {customFields.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Keine zusätzlichen Felder definiert.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {customFields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className={`rounded-lg border p-4 ${hasRegistrations ? "dark:border-dark-border dark:bg-dark-background-secondary border-gray-100 bg-gray-50" : "dark:border-dark-border border-gray-200"}`}
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Feld {index + 1}
-                      </span>
-                      {!hasRegistrations && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => moveCustomField(field.id, "up")}
-                            disabled={index === 0}
-                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <ArrowUpIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveCustomField(field.id, "down")}
-                            disabled={index === customFields.length - 1}
-                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                          >
-                            <ArrowDownIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeCustomField(field.id)}
-                            className="p-1 text-gray-400 hover:text-red-500"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Feldname *
-                        </label>
-                        <input
-                          type="text"
-                          value={field.fieldName}
-                          onChange={(e) =>
-                            updateCustomField(
-                              field.id,
-                              "fieldName",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="z.B. Ernährungsbesonderheiten"
-                          disabled={hasRegistrations}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Feldtyp
-                        </label>
-                        <select
-                          value={field.fieldType}
-                          onChange={(e) =>
-                            updateCustomField(
-                              field.id,
-                              "fieldType",
-                              e.target.value as CustomFieldType,
-                            )
-                          }
-                          disabled={hasRegistrations}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
-                        >
-                          {Object.entries(customFieldTypeLabels).map(
-                            ([value, label]) => (
-                              <option key={value} value={value}>
-                                {label}
-                              </option>
-                            ),
-                          )}
-                        </select>
-                      </div>
-
-                      {field.fieldType === CustomFieldType.SELECT && (
-                        <div className="sm:col-span-2">
-                          <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                            Auswahloptionen (kommagetrennt)
-                          </label>
-                          <input
-                            type="text"
-                            value={field.options}
-                            onChange={(e) =>
-                              updateCustomField(
-                                field.id,
-                                "options",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="z.B. Option 1, Option 2, Option 3"
-                            disabled={hasRegistrations}
-                            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
-                          />
-                        </div>
-                      )}
-
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Hilfetext
-                        </label>
-                        <input
-                          type="text"
-                          value={field.helpText}
-                          onChange={(e) =>
-                            updateCustomField(
-                              field.id,
-                              "helpText",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="z.B. Bitte gib eventuelle Allergien an"
-                          disabled={hasRegistrations}
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          className={`flex items-center gap-2 ${hasRegistrations ? "cursor-not-allowed" : "cursor-pointer"}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={field.isRequired}
-                            onChange={(e) =>
-                              updateCustomField(
-                                field.id,
-                                "isRequired",
-                                e.target.checked,
-                              )
-                            }
-                            disabled={hasRegistrations}
-                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                          <span
-                            className={`text-sm ${hasRegistrations ? "text-gray-400 dark:text-gray-500" : "dark:text-dark-text text-gray-700"}`}
-                          >
-                            Pflichtfeld
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Additional Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Weitere Informationen
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="prerequisites"
-                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Voraussetzungen (optional)
-                </label>
-                <textarea
-                  id="prerequisites"
-                  value={prerequisites}
-                  onChange={(e) => setPrerequisites(e.target.value)}
-                  rows={3}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
-                  placeholder="z.B. Grundkenntnisse auf dem Instrument"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="whatToBring"
-                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                >
-                  Mitzubringen (optional)
-                </label>
-                <textarea
-                  id="whatToBring"
-                  value={whatToBring}
-                  onChange={(e) => setWhatToBring(e.target.value)}
-                  rows={3}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
-                  placeholder="z.B. Instrument, Notenständer, ..."
-                />
-              </div>
-            </div>
-          </section>
-
-          {/* Status section */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Status
-            </h2>
+            <CourseFormBlock title="Redaktionsstatus">
 
             {/* Notice for approved/rejected courses being edited */}
             {(course?.status === ContentStatus.APPROVED ||
@@ -1891,10 +2694,11 @@ export default function EditCoursePage() {
                 )}
               </p>
             )}
-          </section>
+            </CourseFormBlock>
+          </div>
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/courses/${courseId}`}
               data-skip-warning
@@ -1913,6 +2717,7 @@ export default function EditCoursePage() {
                 : "Änderungen speichern"}
             </button>
           </div>
+          </DashboardSectionedFormLayout>
         </form>
 
         {/* Media Picker Modal */}

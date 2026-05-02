@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -257,7 +258,7 @@ function ChorFindenContent() {
                       >
                         Bezirk
                       </label>
-                      <select
+                      <Select
                         id="district"
                         value={selectedBezirk?.toString() || "all"}
                         onChange={(e) => {
@@ -279,7 +280,7 @@ function ChorFindenContent() {
                             Bezirk {bezirk.number} - {bezirk.shortName}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     {/* Stadt/PLZ-Suche */}

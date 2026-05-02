@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -129,7 +130,7 @@ export default function MaterialienPage() {
                   >
                     Kategorie
                   </label>
-                  <select
+                  <Select
                     id="category"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -141,7 +142,7 @@ export default function MaterialienPage() {
                         {capitalizeFirstLetter(category)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 

@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -725,7 +726,7 @@ export default function EditEventPage() {
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Kategorie *
                 </label>
-                <select
+                <Select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as EventCategory)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
@@ -735,7 +736,7 @@ export default function EditEventPage() {
                       {label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* Cancelled Toggle */}
@@ -1111,7 +1112,7 @@ export default function EditEventPage() {
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Bezirk auswählen
                 </label>
-                <select
+                <Select
                   value={bezirkId}
                   onChange={(e) => setBezirkId(e.target.value)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
@@ -1122,7 +1123,7 @@ export default function EditEventPage() {
                       Bezirk {bezirk.number} – {bezirk.shortName}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {!bezirkId && (
@@ -1152,7 +1153,7 @@ export default function EditEventPage() {
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Ensemble-Typ
                 </label>
-                <select
+                <Select
                   value={performingEnsembleType ?? ""}
                   onChange={(e) =>
                     setPerformingEnsembleType(
@@ -1169,7 +1170,7 @@ export default function EditEventPage() {
                       {label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {performingEnsembleType === "ENSEMBLE" && (

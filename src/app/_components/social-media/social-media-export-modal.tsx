@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -371,7 +372,7 @@ export default function SocialMediaExportModal({
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Monat
               </label>
-              <select
+              <Select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
                 className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2"
@@ -382,13 +383,13 @@ export default function SocialMediaExportModal({
                     {month}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Jahr
               </label>
-              <select
+              <Select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
                 className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2"
@@ -399,7 +400,7 @@ export default function SocialMediaExportModal({
                     {year}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

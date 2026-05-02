@@ -466,7 +466,7 @@ export default function NewPostPage() {
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Bezirk auswählen
                 </label>
-                <select
+                <Select
                   value={bezirkId}
                   onChange={(e) => setBezirkId(e.target.value)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
@@ -477,7 +477,7 @@ export default function NewPostPage() {
                       Bezirk {bezirk.number} – {bezirk.shortName}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
           </div>

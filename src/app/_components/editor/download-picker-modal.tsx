@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useRef, useCallback } from "react";
 import { api } from "@/trpc/react";
@@ -305,7 +306,7 @@ export default function DownloadPickerModal({
                   placeholder="Downloads durchsuchen..."
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
-                <select
+                <Select
                   value={categoryFilter}
                   onChange={(e) =>
                     setCategoryFilter(e.target.value as DownloadCategory | "")
@@ -318,7 +319,7 @@ export default function DownloadPickerModal({
                       {label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               {/* Downloads List */}
@@ -503,7 +504,7 @@ export default function DownloadPickerModal({
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Kategorie
                   </label>
-                  <select
+                  <Select
                     value={newCategory}
                     onChange={(e) =>
                       setNewCategory(e.target.value as DownloadCategory)
@@ -515,13 +516,13 @@ export default function DownloadPickerModal({
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Dateityp
                   </label>
-                  <select
+                  <Select
                     value={newFileType}
                     onChange={(e) => setNewFileType(e.target.value as FileType)}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
@@ -531,7 +532,7 @@ export default function DownloadPickerModal({
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 

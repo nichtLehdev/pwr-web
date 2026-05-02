@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -7,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
+  CourseCollaboratorRole,
   RegistrationStatus,
   PaymentStatus,
   SiblingDiscountStatus,
@@ -220,13 +222,16 @@ export default function CourseParticipantsPage() {
   }
 
   const isOwner = course.createdById === session.user.id;
-  const isInstructor = course.instructors?.some(
-    (i) => i.id === session.user.id,
-  );
+  const hasCourseTeamAccess =
+    course.viewerCollaboratorRole === CourseCollaboratorRole.STAFF ||
+    course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
   const canViewParticipants =
-    isOwner || isInstructor || hasViewParticipantsPermission;
+    isOwner ||
+    hasViewParticipantsPermission ||
+    hasCourseTeamAccess;
 
-  const canCreateInvoices = isInstructor || hasApprovePermission;
+  const canCreateInvoices =
+    hasApprovePermission || hasCourseTeamAccess;
 
   if (!canViewParticipants) {
     return (
@@ -657,7 +662,7 @@ export default function CourseParticipantsPage() {
               <label className="dark:text-dark-text text-sm font-medium text-gray-700">
                 Status:
               </label>
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) =>
                   setStatusFilter(
@@ -671,7 +676,7 @@ export default function CourseParticipantsPage() {
                 <option value={RegistrationStatus.CONFIRMED}>Bestätigt</option>
                 <option value={RegistrationStatus.WAITLIST}>Warteliste</option>
                 <option value={RegistrationStatus.CANCELLED}>Storniert</option>
-              </select>
+              </Select>
             </div>
 
             {/* Payment Filter */}
@@ -679,7 +684,7 @@ export default function CourseParticipantsPage() {
               <label className="dark:text-dark-text text-sm font-medium text-gray-700">
                 Zahlung:
               </label>
-              <select
+              <Select
                 value={paymentFilter}
                 onChange={(e) =>
                   setPaymentFilter(e.target.value as PaymentStatus | "ALL")
@@ -690,7 +695,7 @@ export default function CourseParticipantsPage() {
                 <option value={PaymentStatus.PENDING}>Ausstehend</option>
                 <option value={PaymentStatus.PAID}>Bezahlt</option>
                 <option value={PaymentStatus.REFUNDED}>Erstattet</option>
-              </select>
+              </Select>
             </div>
           </div>
         </div>

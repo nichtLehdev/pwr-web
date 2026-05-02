@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, startTransition } from "react";
+import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type CourseFormNavItem,
+} from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import { CourseType, CustomFieldType } from "~/generated/prisma/enums";
@@ -21,6 +25,10 @@ import {
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
+import {
+  registrationOpensMerge,
+  registrationOpensSplit,
+} from "@/lib/dashboard-registration-opens-at";
 import {
   Button,
   Input,
@@ -48,6 +56,14 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   CHECKBOX: "Checkbox",
   TEXTAREA: "Mehrzeiliger Text",
 };
+
+const NEW_COURSE_NAV_ITEMS: CourseFormNavItem[] = [
+  { href: "#kurs-form-inhalt", label: "Inhalt" },
+  { href: "#kurs-form-termin", label: "Termin & Ort" },
+  { href: "#kurs-form-anmeldung", label: "Anmeldung" },
+  { href: "#kurs-form-preise", label: "Preise" },
+  { href: "#kurs-form-veroeffentlichung", label: "Veröffentlichung" },
+];
 
 // Dashboard access is now controlled by permissions
 
@@ -101,6 +117,8 @@ export default function NewCoursePage() {
   const [endTime, setEndTime] = useState("17:00");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
+  const [scheduledRegistrationOpens, setScheduledRegistrationOpens] =
+    useState(false);
 
   const [locationId, setLocationId] = useState<string>("");
   const [locationSearch, setLocationSearch] = useState("");
@@ -123,6 +141,8 @@ export default function NewCoursePage() {
   const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
 
   const [isFree, setIsFree] = useState(false);
+  const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
+  const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
@@ -150,6 +170,7 @@ export default function NewCoursePage() {
     endDate,
     registrationDeadline,
     registrationOpensAt,
+    scheduledRegistrationOpens,
     locationId,
     bezirkId,
     maxParticipants,
@@ -157,6 +178,8 @@ export default function NewCoursePage() {
     allowWaitingList,
     allowSiblingDiscount,
     isFree,
+    paymentCashAllowed,
+    paymentInvoiceAllowed,
     priceInfo,
     priceOptions,
     prerequisites,
@@ -173,6 +196,23 @@ export default function NewCoursePage() {
   );
   useBeforeUnload(hasUnsavedChanges && !isSubmitting);
 
+  const opensScheduleParts = useMemo(() => {
+    const { date: opensDatePart, time: opensTimePart } =
+      registrationOpensSplit(registrationOpensAt);
+    const opensTimeMax =
+      opensDatePart && startDate && opensDatePart === startDate
+        ? startTime
+        : undefined;
+    return {
+      opensDatePart,
+      opensTimePart,
+      opensTimeMax,
+    };
+  }, [registrationOpensAt, startDate, startTime]);
+
+  const registrationScheduleFieldClass =
+    "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
+
   useEffect(() => {
     if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
       const saved = restore();
@@ -185,7 +225,13 @@ export default function NewCoursePage() {
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
-          setRegistrationOpensAt(saved.registrationOpensAt || "");
+          const restoredScheduled =
+            saved.scheduledRegistrationOpens ??
+            Boolean(saved.registrationOpensAt);
+          setScheduledRegistrationOpens(restoredScheduled);
+          setRegistrationOpensAt(
+            restoredScheduled ? (saved.registrationOpensAt || "") : "",
+          );
           setLocationId(saved.locationId || "");
           setBezirkId(saved.bezirkId || "");
           setMaxParticipants(saved.maxParticipants || 20);
@@ -193,6 +239,8 @@ export default function NewCoursePage() {
           setAllowWaitingList(saved.allowWaitingList || false);
           setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
           setIsFree(saved.isFree ?? false);
+          setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
+          setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
           setPriceInfo(saved.priceInfo || "");
           setPriceOptions(saved.priceOptions || []);
           setPrerequisites(saved.prerequisites || "");
@@ -425,8 +473,50 @@ export default function NewCoursePage() {
       return;
     }
 
+    if (scheduledRegistrationOpens) {
+      if (!registrationOpensAt.trim()) {
+        setError(
+          "Bitte wähle Datum und Uhrzeit für den geplanten Anmeldebeginn.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      const opensDt = new Date(registrationOpensAt);
+      const startDt = new Date(`${startDate}T${startTime}`);
+      if (Number.isNaN(opensDt.getTime()) || Number.isNaN(startDt.getTime())) {
+        setError("Datum oder Zeit für den Anmeldebeginn ist ungültig.");
+        setIsSubmitting(false);
+        return;
+      }
+      if (opensDt.getTime() >= startDt.getTime()) {
+        setError(
+          "Der geplante Anmeldungsbeginn muss vor Kursbeginn (Datum und Uhrzeit) liegen.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      if (registrationDeadline) {
+        const dl = new Date(registrationDeadline);
+        if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
+          setError(
+            "Der geplante Anmeldungsbeginn darf nicht nach dem Anmeldeschluss liegen.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
     if (!maxParticipants || maxParticipants < 1) {
       setError("Bitte gib eine maximale Teilnehmerzahl ein.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!isFree && !paymentCashAllowed && !paymentInvoiceAllowed) {
+      setError(
+        "Mindestens eine Zahlungsart (Bar vor Ort oder Rechnung per Überweisung) muss aktiv sein.",
+      );
       setIsSubmitting(false);
       return;
     }
@@ -473,9 +563,10 @@ export default function NewCoursePage() {
       registrationDeadline: registrationDeadline
         ? new Date(registrationDeadline)
         : undefined,
-      registrationOpensAt: registrationOpensAt
-        ? new Date(registrationOpensAt)
-        : undefined,
+      registrationOpensAt:
+        scheduledRegistrationOpens && registrationOpensAt
+          ? new Date(registrationOpensAt)
+          : undefined,
       locationId: locationId || undefined,
       bezirkId: bezirkId || undefined,
       courseType,
@@ -484,6 +575,8 @@ export default function NewCoursePage() {
       allowWaitingList,
       allowSiblingDiscount: isHigherRole ? allowSiblingDiscount : false,
       isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
       prerequisites: prerequisites.trim() || undefined,
@@ -524,7 +617,15 @@ export default function NewCoursePage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit}>
+        <DashboardSectionedFormLayout
+          navItems={NEW_COURSE_NAV_ITEMS}
+          contentClassName="space-y-8"
+        >
+        <div
+          id="kurs-form-inhalt"
+          className="dashboard-form-scroll-anchor space-y-8"
+        >
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -641,6 +742,46 @@ export default function NewCoursePage() {
           </div>
         </section>
 
+        {/* Additional Info */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Zusätzliche Informationen
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Voraussetzungen
+              </label>
+              <textarea
+                value={prerequisites}
+                onChange={(e) => setPrerequisites(e.target.value)}
+                rows={3}
+                placeholder="z.B. Mindestens 2 Jahre Spielerfahrung"
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Mitzubringen
+              </label>
+              <textarea
+                value={whatToBring}
+                onChange={(e) => setWhatToBring(e.target.value)}
+                rows={3}
+                placeholder="z.B. Eigenes Instrument, Notenständer"
+                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+              />
+            </div>
+          </div>
+        </section>
+
+        </div>
+
+        <div
+          id="kurs-form-termin"
+          className="dashboard-form-scroll-anchor space-y-8"
+        >
         {/* Date & Time */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
@@ -698,43 +839,119 @@ export default function NewCoursePage() {
               />
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Anmeldung öffnet ab (optional)
+          <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+            <legend className="dark:text-dark-text mb-3 block px-0.5 text-sm font-semibold text-gray-900">
+              Anmeldefenster (optional)
+            </legend>
+
+            <div className="space-y-5">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="newCourseScheduledOpens"
+                  checked={scheduledRegistrationOpens}
+                  onChange={(e) => {
+                    const on = e.target.checked;
+                    setScheduledRegistrationOpens(on);
+                    if (!on) setRegistrationOpensAt("");
+                  }}
+                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                />
+                <span className="min-w-0">
+                  <span className="dark:text-dark-text block text-sm font-medium leading-snug text-gray-700">
+                    Anmeldebeginn später planen
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                    {scheduledRegistrationOpens
+                      ? "Datum und Uhrzeit vor Kursbeginn; der Kurstext kann schon vorher gelesen werden."
+                      : "Ohne diese Option gilt der gewohnte Anmeldezeitpunkt, sobald du die Anmeldung freischaltest."}
+                  </span>
+                </span>
               </label>
-              <input
-                type="datetime-local"
-                value={registrationOpensAt}
-                onChange={(e) => setRegistrationOpensAt(e.target.value)}
-                min={new Date().toISOString().slice(0, 16)}
-                max={registrationDeadline || startDate || undefined}
-                title="Anmeldungsstart muss vor oder am Anmeldeschluss sein"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Kursdetails sind sofort sichtbar, Anmeldung öffnet zu diesem
-                Zeitpunkt
-              </p>
+
+              {scheduledRegistrationOpens ? (
+                <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                  <p className="dark:text-dark-text mb-3 text-sm font-medium text-gray-900">
+                    Anmeldung öffnet ab
+                  </p>
+                  <div className="grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                    <div>
+                      <label
+                        htmlFor="newCourseRegistrationOpensDate"
+                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                      >
+                        Datum
+                      </label>
+                      <input
+                        id="newCourseRegistrationOpensDate"
+                        type="date"
+                        value={opensScheduleParts.opensDatePart}
+                        max={startDate || undefined}
+                        onChange={(e) =>
+                          setRegistrationOpensAt(
+                            registrationOpensMerge(
+                              e.target.value,
+                              opensScheduleParts.opensTimePart,
+                            ),
+                          )
+                        }
+                        title="Spätestens am Kurstag"
+                        className={registrationScheduleFieldClass}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="newCourseRegistrationOpensTime"
+                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                      >
+                        Uhrzeit
+                      </label>
+                      <input
+                        id="newCourseRegistrationOpensTime"
+                        type="time"
+                        value={opensScheduleParts.opensTimePart}
+                        max={
+                          opensScheduleParts.opensTimeMax ?? undefined
+                        }
+                        title="Am Kurstag höchstens bis Kursbeginn"
+                        onChange={(e) =>
+                          setRegistrationOpensAt(
+                            registrationOpensMerge(
+                              opensScheduleParts.opensDatePart,
+                              e.target.value,
+                            ),
+                          )
+                        }
+                        className={registrationScheduleFieldClass}
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                    Anmelden ist erst nach diesem Datum und dieser Uhrzeit
+                    möglich.
+                  </p>
+                </div>
+              ) : null}
             </div>
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Anmeldeschluss
-              </label>
-              <input
-                type="date"
-                value={registrationDeadline}
-                onChange={(e) => setRegistrationDeadline(e.target.value)}
-                min={
-                  registrationOpensAt
-                    ? new Date(registrationOpensAt).toISOString().split("T")[0]
-                    : undefined
-                }
-                max={startDate || undefined}
-                title="Anmeldeschluss muss vor oder am Startdatum sein"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-            </div>
+          </fieldset>
+
+          <div className="mt-4 max-w-xl">
+            <label className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700">
+              Anmeldeschluss (optional)
+            </label>
+            <input
+              type="date"
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              min={
+                scheduledRegistrationOpens && registrationOpensAt.includes("T")
+                  ? opensScheduleParts.opensDatePart || undefined
+                  : undefined
+              }
+              max={startDate || undefined}
+              title="Anmeldeschluss muss vor oder am Startdatum sein"
+              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+            />
           </div>
         </section>
 
@@ -958,7 +1175,7 @@ export default function NewCoursePage() {
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Bezirk auswählen
                 </label>
-                <select
+                <Select
                   value={bezirkId}
                   onChange={(e) => setBezirkId(e.target.value)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
@@ -969,12 +1186,18 @@ export default function NewCoursePage() {
                       Bezirk {bezirk.number} – {bezirk.shortName}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             )}
           </div>
         </section>
 
+        </div>
+
+        <div
+          id="kurs-form-anmeldung"
+          className="dashboard-form-scroll-anchor space-y-8"
+        >
         {/* Capacity & Registration */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
@@ -1042,6 +1265,187 @@ export default function NewCoursePage() {
           </div>
         </section>
 
+
+        {/* Custom Fields */}
+        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                Zusätzliche Anmeldefelder
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Definiere zusätzliche Felder, die bei der Anmeldung abgefragt
+                werden
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={addCustomField}
+              className="text-primary hover:text-primary/80 text-sm font-medium"
+            >
+              + Feld hinzufügen
+            </button>
+          </div>
+
+          {customFields.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Keine zusätzlichen Felder definiert.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {customFields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Feld {index + 1}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => moveCustomField(field.id, "up")}
+                        disabled={index === 0}
+                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ArrowUpIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveCustomField(field.id, "down")}
+                        disabled={index === customFields.length - 1}
+                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      >
+                        <ArrowDownIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomField(field.id)}
+                        className="p-1 text-gray-400 hover:text-red-500"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Feldname *
+                      </label>
+                      <input
+                        type="text"
+                        value={field.fieldName}
+                        onChange={(e) =>
+                          updateCustomField(
+                            field.id,
+                            "fieldName",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="z.B. Ernährungsbesonderheiten"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Feldtyp
+                      </label>
+                      <Select
+                        value={field.fieldType}
+                        onChange={(e) =>
+                          updateCustomField(
+                            field.id,
+                            "fieldType",
+                            e.target.value as CustomFieldType,
+                          )
+                        }
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                      >
+                        {Object.entries(customFieldTypeLabels).map(
+                          ([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ),
+                        )}
+                      </Select>
+                    </div>
+
+                    {field.fieldType === "SELECT" && (
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Auswahloptionen (kommagetrennt)
+                        </label>
+                        <input
+                          type="text"
+                          value={field.options}
+                          onChange={(e) =>
+                            updateCustomField(
+                              field.id,
+                              "options",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="z.B. Option 1, Option 2, Option 3"
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Hilfetext
+                      </label>
+                      <input
+                        type="text"
+                        value={field.helpText}
+                        onChange={(e) =>
+                          updateCustomField(
+                            field.id,
+                            "helpText",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="z.B. Bitte gib eventuelle Allergien an"
+                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="flex cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={field.isRequired}
+                          onChange={(e) =>
+                            updateCustomField(
+                              field.id,
+                              "isRequired",
+                              e.target.checked,
+                            )
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="dark:text-dark-text text-sm text-gray-700">
+                          Pflichtfeld
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        </div>
+
+        <div
+          id="kurs-form-preise"
+          className="dashboard-form-scroll-anchor space-y-8"
+        >
+
         {/* Pricing */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
@@ -1076,6 +1480,39 @@ export default function NewCoursePage() {
                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
               />
             </div>
+
+            {!isFree && (
+              <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+                <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                  Zahlungsweisen für Teilnehmer
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Mindestens eine Option aktivieren.
+                </p>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={paymentCashAllowed}
+                    onChange={(e) => setPaymentCashAllowed(e.target.checked)}
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="dark:text-dark-text text-sm text-gray-700">
+                    Barzahlung vor Ort
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={paymentInvoiceAllowed}
+                    onChange={(e) => setPaymentInvoiceAllowed(e.target.checked)}
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  <span className="dark:text-dark-text text-sm text-gray-700">
+                    Überweisung nach Rechnung
+                  </span>
+                </label>
+              </div>
+            )}
 
             {!isFree && (
               <div>
@@ -1183,213 +1620,14 @@ export default function NewCoursePage() {
             )}
           </div>
         </section>
+        </div>
 
-        {/* Additional Info */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Zusätzliche Informationen
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Voraussetzungen
-              </label>
-              <textarea
-                value={prerequisites}
-                onChange={(e) => setPrerequisites(e.target.value)}
-                rows={3}
-                placeholder="z.B. Mindestens 2 Jahre Spielerfahrung"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-            </div>
+        <div
+          id="kurs-form-veroeffentlichung"
+          className="dashboard-form-scroll-anchor space-y-8"
+        >
 
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Mitzubringen
-              </label>
-              <textarea
-                value={whatToBring}
-                onChange={(e) => setWhatToBring(e.target.value)}
-                rows={3}
-                placeholder="z.B. Eigenes Instrument, Notenständer"
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-            </div>
-          </div>
-        </section>
 
-        {/* Custom Fields */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Zusätzliche Anmeldefelder
-              </h2>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Definiere zusätzliche Felder, die bei der Anmeldung abgefragt
-                werden
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={addCustomField}
-              className="text-primary hover:text-primary/80 text-sm font-medium"
-            >
-              + Feld hinzufügen
-            </button>
-          </div>
-
-          {customFields.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Keine zusätzlichen Felder definiert.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {customFields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Feld {index + 1}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveCustomField(field.id, "up")}
-                        disabled={index === 0}
-                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                      >
-                        <ArrowUpIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveCustomField(field.id, "down")}
-                        disabled={index === customFields.length - 1}
-                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                      >
-                        <ArrowDownIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeCustomField(field.id)}
-                        className="p-1 text-gray-400 hover:text-red-500"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Feldname *
-                      </label>
-                      <input
-                        type="text"
-                        value={field.fieldName}
-                        onChange={(e) =>
-                          updateCustomField(
-                            field.id,
-                            "fieldName",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="z.B. Ernährungsbesonderheiten"
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Feldtyp
-                      </label>
-                      <select
-                        value={field.fieldType}
-                        onChange={(e) =>
-                          updateCustomField(
-                            field.id,
-                            "fieldType",
-                            e.target.value as CustomFieldType,
-                          )
-                        }
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                      >
-                        {Object.entries(customFieldTypeLabels).map(
-                          ([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                    </div>
-
-                    {field.fieldType === "SELECT" && (
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Auswahloptionen (kommagetrennt)
-                        </label>
-                        <input
-                          type="text"
-                          value={field.options}
-                          onChange={(e) =>
-                            updateCustomField(
-                              field.id,
-                              "options",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="z.B. Option 1, Option 2, Option 3"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                        />
-                      </div>
-                    )}
-
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Hilfetext
-                      </label>
-                      <input
-                        type="text"
-                        value={field.helpText}
-                        onChange={(e) =>
-                          updateCustomField(
-                            field.id,
-                            "helpText",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="z.B. Bitte gib eventuelle Allergien an"
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="flex cursor-pointer items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={field.isRequired}
-                          onChange={(e) =>
-                            updateCustomField(
-                              field.id,
-                              "isRequired",
-                              e.target.checked,
-                            )
-                          }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                        />
-                        <span className="dark:text-dark-text text-sm text-gray-700">
-                          Pflichtfeld
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
 
         {/* Publication Status */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -1495,29 +1733,31 @@ export default function NewCoursePage() {
             )}
           </div>
         </section>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <Link
-            href="/dashboard/courses"
-            data-skip-warning
-            onClick={() => clear()}
-            className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            Abbrechen
-          </Link>
-          <Button
-            type="submit"
-            disabled={isSubmitting || createCourseMutation.isPending}
-            isLoading={isSubmitting || createCourseMutation.isPending}
-          >
-            {submitAsDraft
-              ? "Entwurf speichern"
-              : submitAsApproved
-                ? "Veröffentlichen"
-                : "Kurs einreichen"}
-          </Button>
         </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <Link
+              href="/dashboard/courses"
+              data-skip-warning
+              onClick={() => clear()}
+              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Abbrechen
+            </Link>
+            <Button
+              type="submit"
+              disabled={isSubmitting || createCourseMutation.isPending}
+              isLoading={isSubmitting || createCourseMutation.isPending}
+            >
+              {submitAsDraft
+                ? "Entwurf speichern"
+                : submitAsApproved
+                  ? "Veröffentlichen"
+                  : "Kurs einreichen"}
+            </Button>
+          </div>
+        </DashboardSectionedFormLayout>
       </form>
 
       {/* Media Picker Modal */}

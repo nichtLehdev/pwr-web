@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
+  CourseCollaboratorRole,
   CourseType,
   CustomFieldType,
   RegistrationStatus,
@@ -218,14 +219,24 @@ export default function CourseDetailPage() {
 
   const isReviewer = hasApprovePermission;
   const isOwner = course.createdById === session.user.id;
-  const isInstructor = course.instructors?.some(
-    (i) => i.id === session.user.id,
-  );
-  const canEdit = isOwner || hasEditPermission;
+  const hasCourseTeamAccess =
+    course.viewerCollaboratorRole === CourseCollaboratorRole.STAFF ||
+    course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
+  const hasDistrictCourseAccess =
+    !!profile.bezirkId &&
+    !!course.bezirkId &&
+    profile.bezirkId === course.bezirkId;
+  const canEdit =
+    isOwner ||
+    hasEditPermission ||
+    hasDistrictCourseAccess ||
+    course.viewerCollaboratorRole === CourseCollaboratorRole.ORGANIZER;
   const canDelete = isOwner || hasEditPermission;
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
-    isOwner || isInstructor || hasViewParticipantsPermission;
+    isOwner ||
+    hasViewParticipantsPermission ||
+    hasCourseTeamAccess;
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -560,19 +571,20 @@ export default function CourseDetailPage() {
             </section>
           )}
 
-          {/* Instructors */}
-          {course.instructors && course.instructors.length > 0 && (
+          {/* Öffentliches Kurs-Team */}
+          {((course.collaborators?.length ?? 0) > 0 ||
+            (course.guestTeamMembers?.length ?? 0) > 0) && (
             <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Dozenten
+                Kurs-Team
               </h2>
               <ul className="space-y-2">
-                {course.instructors.map((instructor) => (
-                  <li key={instructor.id} className="flex items-center gap-3">
-                    {instructor.profileImage?.url ? (
+                {course.collaborators?.map((entry) => (
+                  <li key={entry.user.id} className="flex items-center gap-3">
+                    {entry.user.profileImage?.url ? (
                       <Image
-                        src={instructor.profileImage.url}
-                        alt={instructor.displayName || ""}
+                        src={entry.user.profileImage.url}
+                        alt={entry.user.displayName || ""}
                         width={40}
                         height={40}
                         className="h-10 w-10 rounded-full object-cover"
@@ -583,8 +595,25 @@ export default function CourseDetailPage() {
                       </div>
                     )}
                     <span className="dark:text-dark-text text-gray-900">
-                      {instructor.displayName}
+                      {entry.user.displayName}
                     </span>
+                  </li>
+                ))}
+                {course.guestTeamMembers?.map((row) => (
+                  <li key={row.id} className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                      <UserIcon className="h-5 w-5 text-gray-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="dark:text-dark-text block text-gray-900">
+                        {row.displayName}
+                      </span>
+                      {row.bio ? (
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {row.bio}
+                        </span>
+                      ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
