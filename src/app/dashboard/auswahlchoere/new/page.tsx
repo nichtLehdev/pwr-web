@@ -15,6 +15,16 @@ import {
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { ImageIcon, X } from "lucide-react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Textarea,
+} from "@/app/_components/ui";
 
 const AUSWAHLCHOR_FORM_NAV: DashboardSectionNavItem[] = [
   { href: "#auswahlchor-form-grundlagen", label: "Grundlagen" },
