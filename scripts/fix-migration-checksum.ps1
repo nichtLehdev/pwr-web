@@ -64,8 +64,8 @@ $bytes = [System.Text.Encoding]::UTF8.GetBytes($migrationContent)
 $hashBytes = $sha256.ComputeHash($bytes)
 $sha256.Dispose()
 
-# Convert to hex string (uppercase, which is what Prisma uses)
-$checksum = ($hashBytes | ForEach-Object { $_.ToString("X2") }) -join ""
+# Prisma stores SHA-256 as lowercase hex (matches Node crypto digest('hex'))
+$checksum = ($hashBytes | ForEach-Object { $_.ToString("x2") }) -join ""
 
 Write-Host "Calculated checksum: $checksum" -ForegroundColor Green
 Write-Host ""

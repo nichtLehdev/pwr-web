@@ -52,7 +52,7 @@ model User {
   reviewedEvents                Event[]                      @relation("EventReviewer")
   reviewedCourses               Course[]                     @relation("CourseReviewer")
   reviewedPosts                 Post[]                       @relation("PostReviewer")
-  instructedCourses             Course[]                     @relation("CourseInstructors")
+  courseCollaborations          CourseCollaborator[]
   conductedEnsembles            Ensemble[]                   @relation("EnsembleConductor")
   representedEnsembles          Ensemble[]                   @relation("EnsembleRepresentative")
   conductedAuswahlChors         AuswahlChor[]                @relation("AuswahlChorConductor")
@@ -263,6 +263,17 @@ enum CustomFieldType {
   SELECT
   CHECKBOX
   TEXTAREA
+}
+
+/** Kurs-Team: Organizer bearbeitet den Kurs; Team sieht Teilnehmer (ohne volle Bearbeitung). */
+enum CourseCollaboratorRole {
+  ORGANIZER
+  STAFF
+}
+
+enum CoursePaymentMethod {
+  CASH // Barzahlung vor Ort
+  INVOICE // Überweisung nach Rechnung
 }
 
 enum PostCategory {
@@ -482,6 +493,9 @@ model Course {
   isFree               Boolean @default(false)
   priceInfo            String?
   allowSiblingDiscount Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
+  /** Welche Zahlungsweisen Teilnehmer bei kostenpflichtigen Kursen nutzen dürfen (mindestens eine, wenn nicht kostenlos). */
+  paymentCashAllowed    Boolean @default(true)
+  paymentInvoiceAllowed Boolean @default(true)
 
   // Additional Info
   prerequisites String?
@@ -493,8 +507,9 @@ model Course {
   reviewDate  DateTime?
 
   // Relations
-  instructors   User[]               @relation("CourseInstructors")
-  bezirk        Bezirk?              @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+  collaborators    CourseCollaborator[]
+  guestTeamMembers CourseGuestTeamMember[]
+  bezirk           Bezirk?              @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
   priceOptions  CoursePriceOption[] // Each can have their own maxParticipants
   customFields  CourseCustomField[]
   registrations CourseRegistration[]
@@ -511,6 +526,33 @@ model Course {
   @@index([startDate])
   @@index([courseType])
   @@index([bezirkId])
+}
+
+model CourseCollaborator {
+  id       String                 @id @default(uuid())
+  courseId String
+  course   Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     CourseCollaboratorRole
+
+  @@unique([courseId, userId])
+  @@index([userId])
+  @@index([courseId])
+  @@map("course_collaborator")
+}
+
+/// Public-facing team line only (no login, no dashboard access)
+model CourseGuestTeamMember {
+  id          String  @id @default(uuid())
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  displayName String
+  bio         String?
+  sortOrder   Int     @default(0)
+
+  @@index([courseId])
+  @@map("course_guest_team_member")
 }
 
 model CoursePriceOption {
@@ -566,6 +608,8 @@ model CourseRegistration {
   // Payment & Status
   totalPrice         Float
   paymentStatus      PaymentStatus      @default(PENDING)
+  /** Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist. */
+  paymentMethod      CoursePaymentMethod?
   registrationStatus RegistrationStatus @default(CONFIRMED)
 
   // Sibling Discount

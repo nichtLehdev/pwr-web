@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect } from "react";
 import { useToast } from "../_components/ui/toast";
@@ -192,7 +193,7 @@ export default function FeedbackPage() {
               >
                 Art des Feedbacks
               </label>
-              <select
+              <Select
                 id="feedback-type-modal"
                 value={type}
                 onChange={(e) =>
@@ -204,7 +205,7 @@ export default function FeedbackPage() {
                 <option value="bug">Fehler melden</option>
                 <option value="feature">Feature vorschlagen</option>
                 <option value="other">Allgemeines Feedback</option>
-              </select>
+              </Select>
 
               <label
                 className="mt-4 mb-1 block text-sm font-semibold"

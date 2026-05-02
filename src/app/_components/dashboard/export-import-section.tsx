@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState } from "react";
 import { DownloadIcon, UploadIcon } from "lucide-react";
@@ -155,7 +156,7 @@ export default function ExportImportSection() {
             <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
               Inhaltstyp
             </label>
-            <select
+            <Select
               value={selectedType ?? ""}
               onChange={(e) =>
                 setSelectedType(e.target.value as ContentType | null)
@@ -178,7 +179,7 @@ export default function ExportImportSection() {
                   {contentTypeLabels[type]}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div>
             <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">

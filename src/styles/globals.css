@@ -57,15 +57,56 @@ body.modal-open {
   padding-right: 1rem;
 }
 
-/* Overflow Fix für Mobile - aber sticky erlauben */
+/*
+ * Horizontal overflow: use `clip` instead of `hidden` so descendants can use
+ * `position: sticky` (Safari/Chromium treat overflow-x:hidden on html/body as
+ * blocking sticky). Still prevents sideways scroll from full-bleed sections.
+ */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
 }
 
 body {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/*
+ * Dashboard long forms: extra air below fixed shell for sticky UI.
+ * --main-padding-top is set on MainContent <main> as a fully resolved calc (no nested
+ * var(--nav-height)) so sticky offsets and scroll-margin inherit correctly in deep trees.
+ */
+:root {
+  --dashboard-sticky-top-extra: 1.5rem;
+}
+
+/*
+ * Sticky offsets for dashboard shell (nav + optional banner live in `--main-padding-top` on <main>).
+ * Defined here instead of Tailwind arbitrary `top-[calc(var(--,...))]` because commas inside
+ * arbitrary values break JIT parsing and yield invalid `top`, which disables `position: sticky`.
+ */
+@layer utilities {
+  .dashboard-sticky-shell-top {
+    top: calc(
+      var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)
+    );
+  }
+}
+
+/* Hash targets: shell + sticky pill nav (< xl); xl+ only needs shell + extra */
+.dashboard-form-scroll-anchor {
+  scroll-margin-top: calc(
+    var(--main-padding-top, 5rem) + 4rem + var(--dashboard-sticky-top-extra)
+  );
+}
+
+@media (min-width: 1280px) {
+  .dashboard-form-scroll-anchor {
+    scroll-margin-top: calc(
+      var(--main-padding-top, 5rem) + var(--dashboard-sticky-top-extra)
+    );
+  }
 }
 
 /* TipTap Editor Placeholder */

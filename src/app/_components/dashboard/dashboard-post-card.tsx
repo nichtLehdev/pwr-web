@@ -6,9 +6,9 @@ import {
   CheckCircleIcon,
   ExternalLinkIcon,
   EyeIcon,
-  MapPinIcon,
   PencilIcon,
   PinIcon,
+  TagIcon,
   UserIcon,
 } from "lucide-react";
 
@@ -112,67 +112,62 @@ export default function DashboardPostCard({
   const districtColor = getDistrictColor(district);
   const statusInfo = statusConfig[status];
   const categoryInfo = categoryConfig[category];
+  const metaIconClass =
+    "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md">
-      {/* Top Row: Status & Category */}
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200/80 bg-white p-4 pb-5 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
+      {/* Top Row: Status & Pinned */}
+      <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           {/* Status Badge */}
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusInfo.bgColor} ${statusInfo.textColor}`}
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
           >
             {statusInfo.label}
           </span>
 
           {/* Pinned Badge */}
           {pinned && (
-            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
               <PinIcon className="h-3 w-3 text-amber-800 dark:text-amber-300" />
               Gepinnt
             </span>
           )}
         </div>
-
-        {/* Category Badge */}
         <span
-          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${categoryInfo.bgColor} ${categoryInfo.textColor}`}
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs leading-none font-medium whitespace-nowrap text-gray-700 dark:text-gray-300"
+          title={district ? `Bezirk ${district}` : "Übergreifend"}
         >
-          {categoryInfo.label}
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: districtColor }}
+            aria-hidden
+          />
+          <span className="leading-none">
+            {district ? `Bezirk ${district}` : "Übergreifend"}
+          </span>
         </span>
       </div>
 
       {/* Title */}
-      <h3 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-bold">
+      <h3 className="text-dark dark:text-dark-text mb-3.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight sm:text-[1.0625rem]">
         {title}
       </h3>
 
       {/* Excerpt */}
       {excerpt && (
-        <p className="mb-3 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mb-3 line-clamp-2 text-sm leading-snug text-gray-600 dark:text-gray-400">
           {excerpt}
         </p>
       )}
 
       {/* Meta Info */}
-      <div className="mb-3 space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
-        {/* District */}
-        {district !== undefined && (
-          <div className="flex items-center gap-2">
-            <MapPinIcon className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />
-            <span
-              className="rounded px-1.5 py-0.5 text-xs font-medium text-white"
-              style={{ backgroundColor: districtColor }}
-            >
-              {district ? `Bezirk ${district}` : "Übergreifend"}
-            </span>
-          </div>
-        )}
-
+      <div className="mb-3 space-y-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
         {/* Published Date */}
         {publishedAt && (
           <div className="flex items-center gap-2">
-            <CalendarIcon className="h-4 w-4 shrink-0" />
+            <CalendarIcon className={metaIconClass} />
             <span>
               Veröffentlicht:{" "}
               {new Date(publishedAt).toLocaleDateString("de-DE", {
@@ -184,10 +179,15 @@ export default function DashboardPostCard({
           </div>
         )}
 
+        <div className="flex items-center gap-2">
+          <TagIcon className={metaIconClass} />
+          <span>{categoryInfo.label}</span>
+        </div>
+
         {/* Created By */}
         {createdBy && (
           <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />
+            <UserIcon className={metaIconClass} />
             <span className="truncate">
               {createdBy.displayName || "Unbekannt"}
               {createdAt && (
@@ -208,7 +208,7 @@ export default function DashboardPostCard({
         {/* Reviewer */}
         {reviewer && (
           <div className="flex items-center gap-2">
-            <CheckCircleIcon className="h-4 w-4 shrink-0" />
+            <CheckCircleIcon className={metaIconClass} />
             <span className="truncate">
               {reviewer.displayName || "Unbekannt"}
               {reviewDate && (
@@ -228,30 +228,30 @@ export default function DashboardPostCard({
       </div>
 
       {/* Actions */}
-      <div className="mt-auto flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+      <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
         <Link
           href={`/dashboard/posts/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium transition-colors"
+          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium whitespace-nowrap transition-colors"
         >
-          <EyeIcon className="h-4 w-4 shrink-0" />
+          <EyeIcon className="h-3.5 w-3.5" />
           Ansehen
         </Link>
 
         <Link
           href={`/dashboard/posts/${id}/edit`}
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="inline-flex items-center gap-1 text-sm whitespace-nowrap text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <PencilIcon className="h-4 w-4 shrink-0" />
+          <PencilIcon className="h-3.5 w-3.5" />
           Bearbeiten
         </Link>
 
         <Link
           href={`/aktuelles/${id}`}
-          className="ml-auto inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
           target="_blank"
+          rel="noopener noreferrer"
         >
-          <ExternalLinkIcon className="h-4 w-4 shrink-0" />
-          Öffentlich
+          <ExternalLinkIcon className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>

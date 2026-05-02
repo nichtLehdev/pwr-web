@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
@@ -385,7 +386,7 @@ export default function EditPosaunenratPage() {
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                 Rolle im Posaunenrat *
               </label>
-              <select
+              <Select
                 value={role}
                 onChange={(e) => setRole(e.target.value as PosaunenratRole)}
                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
@@ -395,7 +396,7 @@ export default function EditPosaunenratPage() {
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div>

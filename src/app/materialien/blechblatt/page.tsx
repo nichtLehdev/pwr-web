@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
@@ -73,7 +74,7 @@ export default function BlechblattPage() {
                       >
                         Ausgabe wählen
                       </label>
-                      <select
+                      <Select
                         id="edition-select"
                         value={selectedEdition?.id ?? ""}
                         onChange={(e) => handleEditionChange(e.target.value)}
@@ -84,7 +85,7 @@ export default function BlechblattPage() {
                             {edition.title}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     {/* Edition Info */}

@@ -26,6 +26,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { cn } from "@/lib/utils";
 
 type DashboardPostsListProps = Record<string, never>;
 
@@ -150,9 +151,11 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
     // Non-reviewers can't see drafts
     return filter.value !== "DRAFT";
-
-    return true;
   });
+  const adjustedFilterCount =
+    (statusFilter !== "all" ? 1 : 0) +
+    (categoryFilter !== "all" ? 1 : 0) +
+    (sortBy !== "createdAt" ? 1 : 0);
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -224,58 +227,178 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-dark dark:text-dark-text text-xl font-bold">
-            Beiträge
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {data?.total ?? 0} {data?.total === 1 ? "Beitrag" : "Beiträge"}{" "}
-            gefunden
-          </p>
-        </div>
+  const selectClass =
+    "dark:border-dark-border dark:bg-dark-background min-h-9 min-w-0 rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5 text-sm text-gray-900 dark:text-dark-text";
 
-        {/* Selection Mode Toggle */}
-        {!selectionMode ? (
-          <button
-            onClick={() => setSelectionMode(true)}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <SquareDashed className="h-4 w-4" />
-            Auswählen
-          </button>
-        ) : (
-          <button
-            onClick={exitSelectionMode}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <X className="h-4 w-4" />
-            Abbrechen
-          </button>
-        )}
+  const filterControlsRow = (
+    <div className="-mx-0.5 flex flex-nowrap items-center gap-x-2 overflow-x-auto px-0.5 pb-1 sm:mx-0 sm:gap-x-3 sm:overflow-visible sm:pb-0">
+      <Select
+        value={statusFilter}
+        onChange={(e) => {
+          setStatusFilter(e.target.value as ContentStatus | "all");
+          setPage(1);
+        }}
+        className={cn(selectClass, "w-[10.25rem] shrink-0 sm:w-[11.75rem]")}
+        aria-label="Status"
+      >
+        {availableFilters.map((filter) => (
+          <option key={String(filter.value)} value={String(filter.value)}>
+            {filter.label}
+          </option>
+        ))}
+      </Select>
+      <Select
+        value={categoryFilter}
+        onChange={(e) => {
+          setCategoryFilter(e.target.value as PostCategory | "all");
+          setPage(1);
+        }}
+        className={cn(selectClass, "w-[10.5rem] shrink-0 sm:w-[11.5rem]")}
+        aria-label="Kategorie"
+      >
+        {categoryFilters.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Select
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(
+              e.target.value as
+                | "publishedAt"
+                | "title"
+                | "createdAt"
+                | "status",
+            );
+            setPage(1);
+          }}
+          className={cn(selectClass, "w-[9.5rem]")}
+          aria-label="Sortierung"
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+        <button
+          type="button"
+          onClick={toggleSortOrder}
+          className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
+          title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
+        >
+          {sortOrder === "asc" ? (
+            <ArrowUpIcon className="h-4 w-4" />
+          ) : (
+            <ArrowDownIcon className="h-4 w-4" />
+          )}
+        </button>
       </div>
+    </div>
+  );
 
-      {/* Selection Mode Actions Bar */}
+  return (
+    <div className="space-y-3">
+      {!selectionMode && (
+        <div className="dark:border-dark-border border-b border-gray-200/80 pb-2">
+          <div className="hidden space-y-2 sm:block">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <p className="min-w-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
+                {isLoading ? (
+                  <span className="text-gray-500">Liste wird geladen…</span>
+                ) : data ? (
+                  <>
+                    <span className="text-dark dark:text-dark-text font-semibold">
+                      {data.total}
+                    </span>{" "}
+                    {data.total === 1 ? "Beitrag" : "Beiträge"}
+                  </>
+                ) : null}
+              </p>
+              <Button
+                onClick={() => setSelectionMode(true)}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                <SquareDashed className="h-4 w-4" />
+                Auswählen
+              </Button>
+            </div>
+            <div className="min-w-0">{filterControlsRow}</div>
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
+            <p className="text-sm text-gray-600 tabular-nums dark:text-gray-400">
+              {isLoading ? (
+                <span className="text-gray-500">Liste wird geladen…</span>
+              ) : data ? (
+                <>
+                  <span className="text-dark dark:text-dark-text font-semibold">
+                    {data.total}
+                  </span>{" "}
+                  {data.total === 1 ? "Beitrag" : "Beiträge"}
+                </>
+              ) : null}
+            </p>
+            <Button
+              onClick={() => setSelectionMode(true)}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              <SquareDashed className="h-4 w-4" />
+              Auswählen
+            </Button>
+          </div>
+
+          <div className="mt-2 sm:hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="dark:border-dark-border flex w-full items-center justify-between gap-2 rounded-md border border-gray-200/80 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              <span className="flex items-center gap-2">
+                <FilterIcon className="h-4 w-4 text-gray-400" />
+                Status, Kategorie, Sortierung
+              </span>
+              {adjustedFilterCount > 0 ? (
+                <span className="dark:bg-dark-border rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-200">
+                  {adjustedFilterCount}
+                </span>
+              ) : null}
+            </button>
+            {filtersOpen ? (
+              <div className="dark:border-dark-border mt-2 space-y-3 rounded-md border border-gray-200/80 p-3">
+                {filterControlsRow}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {selectionMode && (
-        <div className="border-primary/30 bg-primary/5 dark:border-primary/50 dark:bg-primary/10 flex flex-wrap items-center gap-3 rounded-lg border p-4">
-          <span className="text-dark dark:text-dark-text text-sm font-medium">
+        <div className="dark:border-dark-border flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2">
+          <span className="text-dark dark:text-dark-text text-sm font-medium tabular-nums">
             {selectedIds.size} ausgewählt
           </span>
 
-          <div className="flex items-center gap-2 border-l border-gray-300 pl-3 dark:border-gray-600">
+          <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200/90 pl-3">
             <button
+              type="button"
               onClick={selectAll}
-              className="text-primary text-sm hover:underline"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
-              Alle auswählen
+              Alle
             </button>
-            <span className="text-gray-400">|</span>
+            <span className="text-gray-300 dark:text-gray-600">·</span>
             <button
+              type="button"
               onClick={deselectAll}
-              className="text-primary text-sm hover:underline"
+              className="hover:text-primary text-sm font-medium text-gray-600 dark:text-gray-400"
             >
               Keine
             </button>
@@ -283,247 +406,58 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             {selectedIds.size === 1 && (
-              <button
+              <Button
                 onClick={handleDuplicate}
                 disabled={duplicateMutation.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                variant="outline"
+                size="sm"
+                isLoading={duplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
-                {duplicateMutation.isPending ? "..." : "Duplizieren"}
-              </button>
+                Duplizieren
+              </Button>
             )}
 
             {selectedIds.size > 1 && (
-              <button
+              <Button
                 onClick={handleBulkDuplicate}
                 disabled={bulkDuplicateMutation.isPending}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                variant="outline"
+                size="sm"
+                isLoading={bulkDuplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
-                {bulkDuplicateMutation.isPending
-                  ? "..."
-                  : `${selectedIds.size} duplizieren`}
-              </button>
+                {selectedIds.size} duplizieren
+              </Button>
             )}
 
-            <button
+            <Button
               onClick={() => setShowStatusChange(true)}
               disabled={selectedIds.size === 0}
-              className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+              variant="outline"
+              size="sm"
             >
               <PencilIcon className="h-4 w-4" />
-              Status ändern
-            </button>
+              Status
+            </Button>
 
-            <button
+            <Button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
-              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              variant="danger"
+              size="sm"
+              isLoading={bulkDeleteMutation.isPending}
             >
               <TrashIcon className="h-4 w-4" />
               Löschen
-            </button>
+            </Button>
+
+            <Button onClick={exitSelectionMode} variant="outline" size="sm">
+              <X className="h-4 w-4" />
+              Abbrechen
+            </Button>
           </div>
         </div>
-      )}
-
-      {/* Filters (hidden in selection mode) */}
-      {!selectionMode && (
-        <>
-          {/* Mobile Filter Toggle */}
-          <div className="sm:hidden">
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <span className="flex items-center gap-2">
-                <FilterIcon className="h-4 w-4" />
-                Filter & Sortierung
-              </span>
-              {(statusFilter !== "all" ||
-                categoryFilter !== "all" ||
-                sortBy !== "createdAt") && (
-                <span className="bg-primary flex h-5 w-5 items-center justify-center rounded-full text-xs text-white">
-                  {(statusFilter !== "all" ? 1 : 0) +
-                    (categoryFilter !== "all" ? 1 : 0) +
-                    (sortBy !== "createdAt" ? 1 : 0)}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Desktop Filters - Always visible */}
-          <div className="hidden flex-col gap-4 sm:flex">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Status Filter */}
-              <div className="flex flex-wrap gap-2">
-                {availableFilters.map((filter) => (
-                  <Button
-                    key={filter.value}
-                    onClick={() => {
-                      setStatusFilter(filter.value);
-                      setPage(1);
-                    }}
-                    variant={
-                      statusFilter === filter.value ? "primary" : "secondary"
-                    }
-                    size="sm"
-                  >
-                    {filter.label}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Category Filter */}
-              <div className="dark:border-dark-border border-l border-gray-200 pl-4">
-                <Select
-                  value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value as PostCategory | "all");
-                    setPage(1);
-                  }}
-                >
-                  {categoryFilters.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              {/* Sort Controls */}
-              <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200 pl-4">
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(
-                      e.target.value as
-                        | "publishedAt"
-                        | "title"
-                        | "createdAt"
-                        | "status",
-                    );
-                    setPage(1);
-                  }}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={toggleSortOrder}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white p-1.5 text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                  title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
-                >
-                  {sortOrder === "asc" ? (
-                    <ArrowUpIcon className="h-4 w-4" />
-                  ) : (
-                    <ArrowDownIcon className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Filters Panel */}
-          {filtersOpen && (
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-4 rounded-lg border border-gray-200 bg-white p-4 sm:hidden">
-              {/* Status Filter */}
-              <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {availableFilters.map((filter) => (
-                    <button
-                      key={filter.value}
-                      onClick={() => {
-                        setStatusFilter(filter.value);
-                        setPage(1);
-                      }}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        statusFilter === filter.value
-                          ? "bg-primary text-white"
-                          : "dark:bg-dark-background-secondary text-dark dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Category Filter */}
-              <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Kategorie
-                </label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value as PostCategory | "all");
-                    setPage(1);
-                  }}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
-                >
-                  {categoryFilters.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sort Controls */}
-              <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Sortierung
-                </label>
-                <div className="flex gap-2">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => {
-                      setSortBy(
-                        e.target.value as
-                          | "publishedAt"
-                          | "title"
-                          | "createdAt"
-                          | "status",
-                      );
-                      setPage(1);
-                    }}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
-                  >
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={toggleSortOrder}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                  >
-                    {sortOrder === "asc" ? (
-                      <>
-                        <ArrowUpIcon className="h-4 w-4" />
-                        Aufsteigend
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownIcon className="h-4 w-4" />
-                        Absteigend
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
       )}
 
       {/* Loading State */}
@@ -532,7 +466,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="dark:border-dark-border dark:bg-dark-surface h-48 animate-pulse rounded-lg border border-gray-200 bg-gray-100"
+              className="dark:border-dark-border dark:bg-dark-surface h-52 animate-pulse rounded-lg border border-gray-200/70 bg-gray-100"
             />
           ))}
         </div>
@@ -542,7 +476,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
       {!isLoading && data?.posts && data.posts.length > 0 && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.posts.map((post) => (
-            <div key={post.id} className="relative">
+            <div key={post.id} className="relative h-full">
               {selectionMode && (
                 <div
                   className={`absolute inset-0 z-10 cursor-pointer rounded-lg border-2 transition-colors ${
@@ -590,7 +524,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
       {/* Empty State */}
       {!isLoading && data?.posts && data.posts.length === 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white py-12 text-center">
+        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200/80 py-12 text-center">
           <X className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
           <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
             Keine Beiträge gefunden
@@ -605,7 +539,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
 
       {/* Pagination */}
       {data && data.pages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pt-1">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}

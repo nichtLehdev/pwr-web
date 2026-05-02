@@ -9,8 +9,19 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type DashboardSectionNavItem,
+} from "@/app/_components/dashboard";
 import { ImageIcon, X } from "lucide-react";
+
+const AUSWAHLCHOR_FORM_NAV: DashboardSectionNavItem[] = [
+  { href: "#auswahlchor-form-grundlagen", label: "Grundlagen" },
+  { href: "#auswahlchor-form-styling", label: "Styling" },
+  { href: "#auswahlchor-form-personen", label: "Personen" },
+  { href: "#auswahlchor-form-einstellungen", label: "Einstellungen" },
+];
 
 export default function EditAuswahlchorPage() {
   const router = useRouter();
@@ -238,333 +249,358 @@ export default function EditAuswahlchorPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
-            {/* Basic Information */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Grundinformationen
-              </h2>
+          <DashboardSectionedFormLayout
+            navItems={AUSWAHLCHOR_FORM_NAV}
+            contentClassName="space-y-6"
+          >
+            <div
+              id="auswahlchor-form-grundlagen"
+              className="dashboard-form-scroll-anchor"
+            >
+              {/* Basic Information */}
+              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Grundinformationen
+                </h2>
 
-              {/* Name */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  maxLength={255}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Con Spirito"
-                />
-              </div>
+                {/* Name */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    maxLength={255}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Con Spirito"
+                  />
+                </div>
 
-              {/* Slug */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Slug *
-                </label>
-                <input
-                  type="text"
-                  value={slug}
-                  onChange={(e) =>
-                    setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
-                  }
-                  required
-                  maxLength={15}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. conspirito"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
-                  und Bindestriche)
-                </p>
-              </div>
+                {/* Slug */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Slug *
+                  </label>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) =>
+                      setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
+                    }
+                    required
+                    maxLength={15}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. conspirito"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    URL-freundlicher Name (max. 15 Zeichen, nur Kleinbuchstaben
+                    und Bindestriche)
+                  </p>
+                </div>
 
-              {/* Subtitle */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Untertitel *
-                </label>
-                <input
-                  type="text"
-                  value={subtitle}
-                  onChange={(e) => setSubtitle(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. Das Spitzenensemble"
-                />
-              </div>
+                {/* Subtitle */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Untertitel *
+                  </label>
+                  <input
+                    type="text"
+                    value={subtitle}
+                    onChange={(e) => setSubtitle(e.target.value)}
+                    required
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. Das Spitzenensemble"
+                  />
+                </div>
 
-              {/* Founded */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Gegründet *
-                </label>
-                <input
-                  type="text"
-                  value={founded}
-                  onChange={(e) => setFounded(e.target.value)}
-                  required
-                  maxLength={100}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. 1995"
-                />
-              </div>
+                {/* Founded */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Gegründet *
+                  </label>
+                  <input
+                    type="text"
+                    value={founded}
+                    onChange={(e) => setFounded(e.target.value)}
+                    required
+                    maxLength={100}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. 1995"
+                  />
+                </div>
 
-              {/* Members */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Mitglieder *
-                </label>
-                <input
-                  type="text"
-                  value={members}
-                  onChange={(e) => setMembers(e.target.value)}
-                  required
-                  maxLength={200}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. ca. 25 Bläser"
-                />
-              </div>
+                {/* Members */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Mitglieder *
+                  </label>
+                  <input
+                    type="text"
+                    value={members}
+                    onChange={(e) => setMembers(e.target.value)}
+                    required
+                    maxLength={200}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="z.B. ca. 25 Bläser"
+                  />
+                </div>
 
-              {/* Description */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung *
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  required
-                  rows={6}
-                  maxLength={5000}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="Beschreibe den Auswahlchor..."
-                />
-              </div>
+                {/* Description */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Beschreibung *
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                    rows={6}
+                    maxLength={5000}
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder="Beschreibe den Auswahlchor..."
+                  />
+                </div>
 
-              {/* Image */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Bild
-                </label>
-                {imageUrl ? (
-                  <div className="flex items-start gap-4">
-                    <div className="relative h-24 w-24 overflow-hidden rounded-lg">
-                      <Image
-                        src={imageUrl}
-                        alt="Auswahlchor Bild"
-                        fill
-                        className="object-cover"
-                      />
+                {/* Image */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Bild
+                  </label>
+                  {imageUrl ? (
+                    <div className="flex items-start gap-4">
+                      <div className="relative h-24 w-24 overflow-hidden rounded-lg">
+                        <Image
+                          src={imageUrl}
+                          alt="Auswahlchor Bild"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowMediaPicker(true)}
+                          className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          Ändern
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageUrl("");
+                            setImageId(null);
+                          }}
+                          className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                        >
+                          Entfernen
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setShowMediaPicker(true)}
-                        className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Ändern
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setImageUrl("");
-                          setImageId(null);
-                        }}
-                        className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaPicker(true)}
-                    className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
-                  >
-                    <div className="text-center">
-                      <ImageIcon className="mx-auto h-8 w-8" />
-                      <span className="mt-1 block text-sm">Bild auswählen</span>
-                    </div>
-                  </button>
-                )}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaPicker(true)}
+                      className="dark:border-dark-border dark:text-dark-text flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 text-gray-500 transition-colors hover:border-gray-400 hover:text-gray-600"
+                    >
+                      <div className="text-center">
+                        <ImageIcon className="mx-auto h-8 w-8" />
+                        <span className="mt-1 block text-sm">
+                          Bild auswählen
+                        </span>
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Styling */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Styling
-              </h2>
+            <div
+              id="auswahlchor-form-styling"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
+              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Styling
+                </h2>
 
-              {/* Color */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Tailwind-Farbe
-                </label>
-                <input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  maxLength={50}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="z.B. bg-primary"
-                />
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Tailwind CSS-Klasse für die Farbe
-                </p>
-              </div>
-
-              {/* Color Hex */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Hex-Farbe
-                </label>
-                <div className="flex items-center gap-3">
+                {/* Color */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Tailwind-Farbe
+                  </label>
                   <input
                     type="text"
-                    value={colorHex}
-                    onChange={(e) => setColorHex(e.target.value)}
-                    maxLength={7}
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    maxLength={50}
                     className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="#faa619"
+                    placeholder="z.B. bg-primary"
                   />
-                  {colorHex && (
-                    <div
-                      className="h-10 w-10 rounded border border-gray-300"
-                      style={{ backgroundColor: colorHex }}
-                    />
-                  )}
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Tailwind CSS-Klasse für die Farbe
+                  </p>
                 </div>
-                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                  Hexadezimaler Farbcode (z.B. #faa619)
-                </p>
+
+                {/* Color Hex */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Hex-Farbe
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={colorHex}
+                      onChange={(e) => setColorHex(e.target.value)}
+                      maxLength={7}
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                      placeholder="#faa619"
+                    />
+                    {colorHex && (
+                      <div
+                        className="h-10 w-10 rounded border border-gray-300"
+                        style={{ backgroundColor: colorHex }}
+                      />
+                    )}
+                  </div>
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Hexadezimaler Farbcode (z.B. #faa619)
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* People */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Personen
-              </h2>
+            <div
+              id="auswahlchor-form-personen"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
+              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Personen
+                </h2>
 
-              {/* Conductor */}
-              <div className="relative" data-dropdown>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Chorleitung
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={conductorSearch}
-                    onChange={(e) => {
-                      setConductorSearch(e.target.value);
-                      setShowConductorDropdown(true);
-                      if (!e.target.value) setConductorId(null);
-                    }}
-                    onFocus={() => setShowConductorDropdown(true)}
-                    placeholder="Name oder E-Mail eingeben..."
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  />
-                  {conductorId && (
-                    <button
-                      type="button"
-                      onClick={handleClearConductor}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Conductor Dropdown */}
-                {showConductorDropdown && (
-                  <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                    <div
-                      className="overflow-y-auto"
-                      style={{ maxHeight: "240px" }}
-                    >
-                      {filteredConductorUsers &&
-                      filteredConductorUsers.length > 0 ? (
-                        filteredConductorUsers.map((user) => (
-                          <button
-                            key={user.id}
-                            type="button"
-                            onClick={() => handleConductorSelect(user)}
-                            className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <span className="dark:text-dark-text font-medium text-gray-900">
-                              {user.displayName || user.email}
-                            </span>
-                            {user.displayName && (
-                              <span className="text-gray-500 dark:text-gray-400">
-                                {" "}
-                                – {user.email}
-                              </span>
-                            )}
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                          {conductorSearch
-                            ? "Keine Benutzer gefunden"
-                            : "Tippe, um Benutzer zu suchen"}
-                        </div>
-                      )}
-                    </div>
+                {/* Conductor */}
+                <div className="relative" data-dropdown>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Chorleitung
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={conductorSearch}
+                      onChange={(e) => {
+                        setConductorSearch(e.target.value);
+                        setShowConductorDropdown(true);
+                        if (!e.target.value) setConductorId(null);
+                      }}
+                      onFocus={() => setShowConductorDropdown(true)}
+                      placeholder="Name oder E-Mail eingeben..."
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
                     {conductorId && (
                       <button
                         type="button"
                         onClick={handleClearConductor}
-                        className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                        className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
-                        Verknüpfung entfernen
+                        <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>
-                )}
 
-                {/* Selected conductor indicator */}
-                {conductorId && (
-                  <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                    ✓ Chorleitung verknüpft
-                  </p>
-                )}
+                  {/* Conductor Dropdown */}
+                  {showConductorDropdown && (
+                    <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                      <div
+                        className="overflow-y-auto"
+                        style={{ maxHeight: "240px" }}
+                      >
+                        {filteredConductorUsers &&
+                        filteredConductorUsers.length > 0 ? (
+                          filteredConductorUsers.map((user) => (
+                            <button
+                              key={user.id}
+                              type="button"
+                              onClick={() => handleConductorSelect(user)}
+                              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                              <span className="dark:text-dark-text font-medium text-gray-900">
+                                {user.displayName || user.email}
+                              </span>
+                              {user.displayName && (
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  {" "}
+                                  – {user.email}
+                                </span>
+                              )}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            {conductorSearch
+                              ? "Keine Benutzer gefunden"
+                              : "Tippe, um Benutzer zu suchen"}
+                          </div>
+                        )}
+                      </div>
+                      {conductorId && (
+                        <button
+                          type="button"
+                          onClick={handleClearConductor}
+                          className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                        >
+                          Verknüpfung entfernen
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Selected conductor indicator */}
+                  {conductorId && (
+                    <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                      ✓ Chorleitung verknüpft
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Settings */}
-            <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Einstellungen
-              </h2>
+            <div
+              id="auswahlchor-form-einstellungen"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
+              <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
+                  Einstellungen
+                </h2>
 
-              {/* Show Application */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="showApplication"
-                  checked={showApplication}
-                  onChange={(e) => setShowApplication(e.target.checked)}
-                  className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="showApplication"
-                  className="dark:text-dark-text text-sm font-medium text-gray-700"
-                >
-                  Bewerbung anzeigen
-                </label>
+                {/* Show Application */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="showApplication"
+                    checked={showApplication}
+                    onChange={(e) => setShowApplication(e.target.checked)}
+                    className="text-primary h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="showApplication"
+                    className="dark:text-dark-text text-sm font-medium text-gray-700"
+                  >
+                    Bewerbung anzeigen
+                  </label>
+                </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
               <button
                 type="submit"
                 disabled={isSubmitting || updateMutation.isPending}
@@ -581,7 +617,7 @@ export default function EditAuswahlchorPage() {
                 Abbrechen
               </Link>
             </div>
-          </div>
+          </DashboardSectionedFormLayout>
         </form>
       </DashboardPage>
       {/* Media Picker Modal */}

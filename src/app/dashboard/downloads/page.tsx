@@ -1,4 +1,5 @@
 "use client";
+import { Select } from "@/app/_components/ui";
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -416,7 +417,7 @@ export default function DashboardDownloadsPage() {
             </div>
 
             {/* Category Filter */}
-            <select
+            <Select
               value={categoryFilter}
               onChange={(e) => {
                 setCategoryFilter(e.target.value as DownloadCategory | "");
@@ -430,11 +431,11 @@ export default function DashboardDownloadsPage() {
                   {label}
                 </option>
               ))}
-            </select>
+            </Select>
 
             {/* Status Filter */}
             {isReviewer && (
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value as ContentStatus | "");
@@ -448,7 +449,7 @@ export default function DashboardDownloadsPage() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </Select>
             )}
           </div>
         </div>
@@ -718,7 +719,7 @@ export default function DashboardDownloadsPage() {
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Kategorie
                   </label>
-                  <select
+                  <Select
                     value={newCategory}
                     onChange={(e) =>
                       setNewCategory(e.target.value as DownloadCategory)
@@ -730,7 +731,7 @@ export default function DashboardDownloadsPage() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 {/* Tags */}
@@ -856,7 +857,7 @@ export default function DashboardDownloadsPage() {
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                     Kategorie
                   </label>
-                  <select
+                  <Select
                     value={editCategory}
                     onChange={(e) =>
                       setEditCategory(e.target.value as DownloadCategory)
@@ -868,7 +869,7 @@ export default function DashboardDownloadsPage() {
                         {label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 {/* Tags */}

@@ -1,5 +1,11 @@
 import type { RegistrationData, CourseWithRelations } from "./types";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
+import {
+  registrationNeedsPaymentMethod,
+  courseRequiresPaymentMethodChoice,
+} from "@/lib/course-payment-methods";
+import type { CoursePaymentMethod } from "~/generated/prisma/client";
 
 export function calculateTotalPrice(
   registrationData: RegistrationData,
@@ -210,10 +216,7 @@ export function validateStep(
                 | Record<string, unknown>
                 | undefined;
               const fieldValue = customFields?.[field.fieldName];
-              if (
-                !fieldValue ||
-                (typeof fieldValue === "string" && !fieldValue.trim())
-              ) {
+              if (isRequiredCustomFieldEmpty(field.fieldType, fieldValue)) {
                 return false;
               }
             }
@@ -221,8 +224,18 @@ export function validateStep(
         }
         return true;
       });
-    case 3:
+    case 3: {
+      if (
+        registrationNeedsPaymentMethod(course) &&
+        courseRequiresPaymentMethodChoice(course)
+      ) {
+        const pm = registrationData.paymentMethod as
+          | CoursePaymentMethod
+          | undefined;
+        if (pm !== "CASH" && pm !== "INVOICE") return false;
+      }
       return termsAccepted === true;
+    }
     default:
       return false;
   }
