@@ -94,6 +94,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
   useEffect(() => {
     if (data && data.pages > 0 && page > data.pages) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Clamp page when total pages shrink (filters / data)
       setPage(data.pages);
     }
   }, [data, page]);
