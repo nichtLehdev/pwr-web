@@ -8,7 +8,7 @@ import "./src/env.js";
 const config = {
   productionBrowserSourceMaps: false,
   crossOrigin: "anonymous",
-  allowedDevOrigins: ["192.168.6.244"],
+  allowedDevOrigins: ["192.168.6.*"],
 
   experimental: {
     webpackMemoryOptimizations: true,
