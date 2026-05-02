@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
 import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
+import PublicShareButton from "@/app/_components/general/public-share-button";
 import { CourseExistingRegistrationOptions } from "./course-existing-registration-options";
 import {
   Clock,
@@ -269,6 +270,11 @@ export default function CourseDetailView({
             Bearbeiten
           </Link>
         )}
+        <PublicShareButton
+          title={course.title}
+          text={course.motto || course.description || course.title}
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+        />
       </div>
       <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
         <span className="flex items-center gap-2">

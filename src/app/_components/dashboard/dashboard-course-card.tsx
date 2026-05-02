@@ -128,7 +128,7 @@ export default function DashboardCourseCard({
   const metaIconClass = "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
 
   return (
-    <div className="dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200/80 bg-white p-3.5 pb-4 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
+    <div className="dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200/80 bg-white p-4 pb-5 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           <span
@@ -212,7 +212,7 @@ export default function DashboardCourseCard({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3 dark:border-gray-700/60">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
         <Link
           href={`/dashboard/courses/${id}`}
           className="text-primary hover:text-primary-dark inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors"

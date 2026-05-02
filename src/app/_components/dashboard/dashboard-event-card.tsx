@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
-import type { ContentStatus } from "~/generated/prisma/client";
+import type { ContentStatus } from "~/generated/prisma/enums";
 import {
-  CalendarIcon,
-  CheckCircleIcon,
-  ExternalLinkIcon,
-  EyeIcon,
-  MapPinIcon,
-  PencilIcon,
-  TagIcon,
-  UserIcon,
+  Calendar,
+  Eye,
+  Edit,
+  ExternalLink,
+  MapPin,
+  Tag,
+  User,
 } from "lucide-react";
 
 interface DashboardEventCardProps {
@@ -27,11 +26,6 @@ interface DashboardEventCardProps {
     displayName: string | null;
   } | null;
   createdAt?: Date;
-  reviewer?: {
-    id: string;
-    displayName: string | null;
-  } | null;
-  reviewDate?: Date | null;
 }
 
 const statusConfig: Record<
@@ -76,148 +70,125 @@ export default function DashboardEventCard({
   cancelled,
   createdBy,
   createdAt,
-  reviewer,
-  reviewDate,
 }: DashboardEventCardProps) {
   const districtColor = getDistrictColor(district);
   const statusInfo = statusConfig[status];
 
+  const creatorLine =
+    createdBy &&
+    `${createdBy.displayName || "Unbekannt"}${
+      createdAt
+        ? ` · ${new Date(createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}`
+        : ""
+    }`;
+
+  const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
+
+  const metaIconClass = "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
+
+  const dateLabel = `${date.toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  })}, ${date.toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+
   return (
     <div
-      className={`dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md ${
+      className={`dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200/80 bg-white p-4 pb-5 shadow-sm transition-shadow hover:shadow-md dark:shadow-none ${
         cancelled ? "opacity-75" : ""
       }`}
     >
-      {/* Top Row: Status & District */}
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Badge */}
+      <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusInfo.bgColor} ${statusInfo.textColor}`}
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
           >
-            {statusInfo.label}
+            <span className="truncate">{statusInfo.label}</span>
           </span>
-
-          {/* Cancelled Badge */}
-          {cancelled && (
-            <span className="rounded-full bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
+          {cancelled ? (
+            <span className="inline-flex shrink-0 rounded-md bg-red-600/12 px-2 py-1 text-xs font-medium text-red-800 dark:text-red-300">
               Abgesagt
             </span>
-          )}
+          ) : null}
         </div>
-
-        {/* District Badge */}
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
-          style={{ backgroundColor: districtColor }}
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium whitespace-nowrap leading-none text-gray-700 dark:text-gray-300"
+          title={districtLabel}
         >
-          {district ? `Bezirk ${district}` : "Übergreifend"}
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: districtColor }}
+            aria-hidden
+          />
+          <span className="leading-none">{districtLabel}</span>
         </span>
       </div>
 
-      {/* Title */}
       <h3
-        className={`text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-bold ${
+        className={`text-dark dark:text-dark-text mb-2.5 line-clamp-2 text-base font-semibold leading-snug tracking-tight sm:text-[1.0625rem] ${
           cancelled ? "text-gray-500 line-through dark:text-gray-400" : ""
         }`}
       >
         {title}
       </h3>
 
-      {/* Meta Info */}
-      <div className="mb-3 space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
-        <div className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4 shrink-0" />
-          <span>
-            {date.toLocaleDateString("de-DE", {
-              day: "2-digit",
-              month: "short",
-              year: "numeric",
-            })}
-            {", "}
-            {date.toLocaleTimeString("de-DE", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
+      <div className="mb-3 space-y-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
+        <div className="flex gap-2">
+          <Calendar className={metaIconClass} aria-hidden />
+          <span className="min-w-0">{dateLabel}</span>
         </div>
-
-        <div className="flex items-center gap-2">
-          <MapPinIcon className="h-4 w-4 shrink-0" />
-          <span>{location || "Kein Ort angegeben"}</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <TagIcon className="h-4 w-4 shrink-0" />
+        {location ? (
+          <div className="flex gap-2">
+            <MapPin className={metaIconClass} aria-hidden />
+            <span className="min-w-0 break-words">{location}</span>
+          </div>
+        ) : null}
+        <div className="flex gap-2">
+          <Tag className={metaIconClass} aria-hidden />
           <span>{capitalizeFirstLetter(category)}</span>
         </div>
-
-        {createdBy && (
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {createdBy.displayName || "Unbekannt"}
-              {createdAt && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
-              )}
-            </span>
-          </div>
-        )}
-
-        {reviewer && (
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {reviewer.displayName || "Unbekannt"}
-              {reviewDate && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(reviewDate).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
-              )}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-auto flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+      {creatorLine ? (
+        <p className="mb-3 flex items-center gap-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+          <User
+            className="size-[0.9375rem] shrink-0 text-gray-400 dark:text-gray-500"
+            aria-hidden
+            strokeWidth={1.75}
+          />
+          <span className="min-w-0 break-words">{creatorLine}</span>
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3.5 dark:border-gray-700/60">
         <Link
           href={`/dashboard/events/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium transition-colors"
+          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors"
         >
-          <EyeIcon className="h-4 w-4 shrink-0" />
+          <Eye className="h-3.5 w-3.5" />
           Ansehen
         </Link>
 
         <Link
           href={`/dashboard/events/${id}/edit`}
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <PencilIcon className="h-4 w-4 shrink-0" />
+          <Edit className="h-3.5 w-3.5" />
           Bearbeiten
         </Link>
 
         <Link
           href={`/termine/event/${id}`}
-          className="ml-auto inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="ml-auto inline-flex items-center text-gray-500 transition-colors hover:text-primary dark:text-gray-500 dark:hover:text-primary"
           target="_blank"
+          rel="noopener noreferrer"
+          title="Öffentliche Terminseite"
+          aria-label="Öffentliche Terminseite öffnen"
         >
-          <ExternalLinkIcon className="h-4 w-4 shrink-0" />
-          Öffentlich
+          <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>

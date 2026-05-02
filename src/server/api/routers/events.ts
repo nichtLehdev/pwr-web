@@ -12,6 +12,7 @@ import {
   ContentStatus,
   EventEnsembleType,
 } from "~/generated/prisma/client";
+import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
@@ -219,8 +220,8 @@ export const eventsRouter = createTRPCRouter({
         sortBy: z
           .enum(["eventDate", "title", "createdAt", "status"])
           .default("eventDate"),
-        sortOrder: z.enum(["asc", "desc"]).default("desc"),
-        upcomingOnly: z.boolean().optional(),
+        sortOrder: z.enum(["asc", "desc"]).default("asc"),
+        schedule: z.enum(["active", "all", "past"]).default("active"),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -234,7 +235,7 @@ export const eventsRouter = createTRPCRouter({
         PERMISSIONS.EVENTS_CREATE,
       );
 
-      let where: Record<string, unknown> = {};
+      let where: Prisma.EventWhereInput = {};
 
       if (canApproveAll) {
         if (input.status) {
@@ -265,8 +266,20 @@ export const eventsRouter = createTRPCRouter({
         };
       }
 
-      if (input.upcomingOnly) {
-        where.eventDate = { gte: new Date() };
+      if (input.schedule === "active") {
+        const scheduleClause: Prisma.EventWhereInput = {
+          OR: [
+            { eventDate: { gte: new Date() } },
+            { status: ContentStatus.DRAFT },
+          ],
+        };
+        where = {
+          AND: [{ ...where }, scheduleClause],
+        };
+      } else if (input.schedule === "past") {
+        where = {
+          AND: [{ ...where }, { eventDate: { lt: new Date() } }],
+        };
       }
 
       const [events, total] = await Promise.all([

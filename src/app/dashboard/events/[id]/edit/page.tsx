@@ -1,6 +1,6 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
+import { Button, Select } from "@/app/_components/ui";
 import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -15,7 +15,14 @@ import {
   ContentStatus,
 } from "~/generated/prisma/enums";
 import { Trash2, AlertTriangle, ImageIcon, FileDown, X } from "lucide-react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  DashboardFormMediaSplit,
+  DashboardFormZoneHeader,
+  DashboardFormBlock,
+  type DashboardSectionNavItem,
+} from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
@@ -41,6 +48,14 @@ const statusLabels: Record<ContentStatus, string> = {
   REJECTED: "Abgelehnt",
   ARCHIVED: "Archiviert",
 };
+
+const EDIT_EVENT_NAV_ITEMS: DashboardSectionNavItem[] = [
+  { href: "#event-form-inhalt", label: "Inhalt" },
+  { href: "#event-form-termin", label: "Termin & Ort" },
+  { href: "#event-form-mitwirkung", label: "Ensemble & Teilnahme" },
+  { href: "#event-form-preise", label: "Eintritt" },
+  { href: "#event-form-veroeffentlichung", label: "Veröffentlichung" },
+];
 
 // Dashboard access is now controlled by permissions
 
@@ -671,14 +686,24 @@ export default function EditEventPage() {
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
-            <div className="space-y-4">
+        <form onSubmit={handleSubmit}>
+          <DashboardSectionedFormLayout
+            navItems={EDIT_EVENT_NAV_ITEMS}
+            contentClassName="space-y-14 sm:space-y-16"
+          >
+            <div
+              id="event-form-inhalt"
+              className="dashboard-form-scroll-anchor"
+            >
+              <DashboardFormZoneHeader
+                step={1}
+                title="Inhalt"
+                description="Was Besucher zuerst sehen: Texte, Bild und optionale Downloads."
+              />
+              <DashboardFormMediaSplit
+                main={
+                  <DashboardFormBlock title="Grundinformationen">
+                    <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Titel *
@@ -751,118 +776,124 @@ export default function EditEventPage() {
                   Veranstaltung abgesagt
                 </span>
               </label>
-            </div>
-          </section>
-
-          {/* Cover Image */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Titelbild
-            </h2>
-            <div className="space-y-4">
-              {coverImageUrl ? (
-                <div className="relative">
-                  <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-lg border border-gray-200">
-                    <Image
-                      src={coverImageUrl}
-                      alt="Titelbild"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowMediaPicker(true)}
-                      className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
-                    >
-                      Bild ändern
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCoverImageId(null);
-                        setCoverImageUrl(null);
-                      }}
-                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                    >
-                      Bild entfernen
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowMediaPicker(true)}
-                  className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-8 transition-colors hover:bg-gray-50"
-                >
-                  <ImageIcon className="h-12 w-12 text-gray-400" />
-                  <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
-                    Titelbild auswählen
-                  </span>
-                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Aus der Medienbibliothek auswählen oder neues Bild hochladen
-                  </span>
-                </button>
-              )}
-            </div>
-          </section>
-
-          {/* Downloads */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Downloads
-            </h2>
-            <div className="space-y-4">
-              {selectedDownloads.length > 0 && (
-                <div className="space-y-2">
-                  {selectedDownloads.map((download) => (
-                    <div
-                      key={download.id}
-                      className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileDown className="h-5 w-5 text-gray-400" />
-                        <span className="dark:text-dark-text text-sm font-medium text-gray-900">
-                          {download.title}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDownloadIds(
-                            downloadIds.filter((id) => id !== download.id),
-                          );
-                          setSelectedDownloads(
-                            selectedDownloads.filter(
-                              (d) => d.id !== download.id,
-                            ),
-                          );
-                        }}
-                        className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-red-600 dark:hover:bg-gray-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
                     </div>
-                  ))}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowDownloadPicker(true)}
-                className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-              >
-                <FileDown className="h-5 w-5" />
-                Download hinzufügen
-              </button>
+                  </DashboardFormBlock>
+                }
+                aside={
+                  <>
+                    <DashboardFormBlock title="Titelbild">
+                      <div className="space-y-4">
+                        {coverImageUrl ? (
+                          <div className="relative">
+                            <div className="dark:border-dark-border relative aspect-video w-full overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+                              <Image
+                                src={coverImageUrl}
+                                alt="Titelbild"
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setShowMediaPicker(true)}
+                                className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                              >
+                                Bild ändern
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCoverImageId(null);
+                                  setCoverImageUrl(null);
+                                }}
+                                className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                              >
+                                Bild entfernen
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowMediaPicker(true)}
+                            className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 transition-colors hover:bg-gray-50 sm:p-8"
+                          >
+                            <ImageIcon className="h-10 w-10 text-gray-400 sm:h-12 sm:w-12" />
+                            <span className="dark:text-dark-text mt-2 text-sm font-medium text-gray-700">
+                              Titelbild auswählen
+                            </span>
+                            <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
+                              Aus der Medienbibliothek auswählen oder neues Bild
+                              hochladen
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </DashboardFormBlock>
+                    <DashboardFormBlock title="Downloads">
+                      <div className="space-y-4">
+                        {selectedDownloads.length > 0 && (
+                          <div className="space-y-2">
+                            {selectedDownloads.map((download) => (
+                              <div
+                                key={download.id}
+                                className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <FileDown className="h-5 w-5 text-gray-400" />
+                                  <span className="dark:text-dark-text text-sm font-medium text-gray-900">
+                                    {download.title}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDownloadIds(
+                                      downloadIds.filter(
+                                        (id) => id !== download.id,
+                                      ),
+                                    );
+                                    setSelectedDownloads(
+                                      selectedDownloads.filter(
+                                        (d) => d.id !== download.id,
+                                      ),
+                                    );
+                                  }}
+                                  className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-red-600 dark:hover:bg-gray-700"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowDownloadPicker(true)}
+                          className="dark:border-dark-border hover:border-primary dark:hover:bg-dark-background-secondary flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          <FileDown className="h-5 w-5" />
+                          Download hinzufügen
+                        </button>
+                      </div>
+                    </DashboardFormBlock>
+                  </>
+                }
+              />
             </div>
-          </section>
 
-          {/* Date & Time */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Datum & Uhrzeit
-            </h2>
+            <div
+              id="event-form-termin"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={2}
+                title="Termin & Ort"
+                description="Datum und Ort erscheinen im Kalender; der Bezirk steuert die Einordnung im Verband."
+              />
+              <div className="space-y-10">
+                <DashboardFormBlock title="Datum & Uhrzeit">
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -907,13 +938,9 @@ export default function EditEventPage() {
                 />
               </div>
             </div>
-          </section>
+                </DashboardFormBlock>
 
-          {/* Location */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Veranstaltungsort
-            </h2>
+                <DashboardFormBlock title="Veranstaltungsort">
             <div className="space-y-4">
               <div className="relative" data-dropdown>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -1100,13 +1127,9 @@ export default function EditEventPage() {
                 </button>
               )}
             </div>
-          </section>
+                </DashboardFormBlock>
 
-          {/* Bezirk */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Bezirk
-            </h2>
+                <DashboardFormBlock title="Bezirk">
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -1141,13 +1164,21 @@ export default function EditEventPage() {
                 </div>
               )}
             </div>
-          </section>
+                </DashboardFormBlock>
+              </div>
+            </div>
 
-          {/* Performing Ensemble */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Auftretendes Ensemble
-            </h2>
+            <div
+              id="event-form-mitwirkung"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={3}
+                title="Ensemble & Teilnahme"
+                description="Mitwirkende, Leitung und ob externe Teilnahme möglich ist."
+              />
+              <div className="space-y-10">
+                <DashboardFormBlock title="Auftretendes Ensemble">
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -1333,13 +1364,9 @@ export default function EditEventPage() {
                 </div>
               )}
             </div>
-          </section>
+                </DashboardFormBlock>
 
-          {/* Participation */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Teilnahme
-            </h2>
+                <DashboardFormBlock title="Teilnahme">
             <div className="space-y-4">
               <label className="flex cursor-pointer items-center gap-3">
                 <input
@@ -1368,13 +1395,20 @@ export default function EditEventPage() {
                 </div>
               )}
             </div>
-          </section>
+                </DashboardFormBlock>
+              </div>
+            </div>
 
-          {/* Pricing */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Eintritt
-            </h2>
+            <div
+              id="event-form-preise"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={4}
+                title="Eintritt"
+                description="Freier Eintritt oder Preise und Kartenhinweise für Besucher."
+              />
+              <DashboardFormBlock title="Preise & Hinweise">
             <div className="space-y-4">
               <div className="flex gap-4">
                 <label className="flex cursor-pointer items-center gap-2">
@@ -1506,13 +1540,19 @@ export default function EditEventPage() {
                 </div>
               )}
             </div>
-          </section>
+              </DashboardFormBlock>
+            </div>
 
-          {/* Status section */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Status
-            </h2>
+            <div
+              id="event-form-veroeffentlichung"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={5}
+                title="Veröffentlichung"
+                description="Redaktionsstatus, Sichtbarkeit und Freigabe im öffentlichen Kalender."
+              />
+              <DashboardFormBlock title="Status & Freigabe">
 
             {/* Notice for approved/rejected events being edited */}
             {(event?.status === ContentStatus.APPROVED ||
@@ -1579,28 +1619,27 @@ export default function EditEventPage() {
                 )}
               </p>
             )}
-          </section>
+              </DashboardFormBlock>
+            </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <Link
-              href={`/dashboard/events/${eventId}`}
-              data-skip-warning
-              onClick={() => clear()}
-              className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Abbrechen
-            </Link>
-            <button
-              type="submit"
-              disabled={isSubmitting || updateEventMutation.isPending}
-              className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2.5 font-medium text-white transition-colors disabled:opacity-50"
-            >
-              {isSubmitting || updateEventMutation.isPending
-                ? "Wird gespeichert..."
-                : "Änderungen speichern"}
-            </button>
-          </div>
+            <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
+              <Link
+                href={`/dashboard/events/${eventId}`}
+                data-skip-warning
+                onClick={() => clear()}
+                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-6 py-2.5 text-center font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Abbrechen
+              </Link>
+              <Button
+                type="submit"
+                disabled={isSubmitting || updateEventMutation.isPending}
+                isLoading={isSubmitting || updateEventMutation.isPending}
+              >
+                Änderungen speichern
+              </Button>
+            </div>
+          </DashboardSectionedFormLayout>
         </form>
 
         {/* Media Picker Modal */}
