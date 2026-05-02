@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { DashboardSectionNavItem } from "./dashboard-form-sticky-subnav";
 import { scrollToDashboardSection } from "./dashboard-form-scroll";
+
+function readAnchorActivationLinePx(anchor: HTMLElement): number {
+  const raw = getComputedStyle(anchor).scrollMarginTop;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : 120;
+}
 
 export function DashboardFormSideRail({
   items,
@@ -14,32 +20,75 @@ export function DashboardFormSideRail({
 }) {
   const [active, setActive] = useState(items[0]?.href ?? "");
 
+  const itemHrefsKey = items.map((i) => i.href).join("\0");
+  const itemsRef = useRef(items);
   useEffect(() => {
-    const elements = items
-      .map((item) => document.getElementById(item.href.slice(1)))
-      .filter(Boolean) as HTMLElement[];
-    if (elements.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length === 0) return;
-        let best = visible[0]!;
-        for (const e of visible) {
-          if (e.intersectionRatio > best.intersectionRatio) best = e;
-        }
-        setActive(`#${best.target.id}`);
-      },
-      {
-        root: null,
-        rootMargin: "-10% 0px -52% 0px",
-        threshold: [0, 0.08, 0.2, 0.35, 0.55, 0.75, 1],
-      },
-    );
-
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    const navItems = itemsRef.current;
+    const initialPairs = navItems
+      .map((item) => ({
+        href: item.href,
+        el: document.getElementById(item.href.slice(1)),
+      }))
+      .filter((pair): pair is { href: string; el: HTMLElement } =>
+        Boolean(pair.el),
+      );
+    if (initialPairs.length === 0) return;
+
+    const compute = () => {
+      const currentItems = itemsRef.current;
+      if (currentItems.length === 0) return;
+
+      const pairs = currentItems
+        .map((item) => ({
+          href: item.href,
+          el: document.getElementById(item.href.slice(1)),
+        }))
+        .filter((pair): pair is { href: string; el: HTMLElement } =>
+          Boolean(pair.el),
+        );
+      if (pairs.length === 0) return;
+
+      const activationLine = readAnchorActivationLinePx(pairs[0]!.el);
+
+      let best = pairs[0]!.href;
+      for (const pair of pairs) {
+        if (pair.el.getBoundingClientRect().top <= activationLine) {
+          best = pair.href;
+        }
+      }
+
+      const doc = document.documentElement;
+      const scrollBottom = window.scrollY + window.innerHeight;
+      const nearBottom = scrollBottom >= doc.scrollHeight - 4;
+      if (nearBottom) {
+        best = pairs[pairs.length - 1]!.href;
+      }
+
+      setActive((prev) => (prev === best ? prev : best));
+    };
+
+    let ticking = false;
+    const onScrollOrResize = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        ticking = false;
+        compute();
+      });
+    };
+
+    compute();
+    window.addEventListener("scroll", onScrollOrResize, { passive: true });
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [itemHrefsKey]);
 
   if (items.length === 0) return null;
 
@@ -47,7 +96,7 @@ export function DashboardFormSideRail({
     <nav
       aria-label="Abschnitte"
       className={cn(
-        "hidden xl:block xl:self-start xl:sticky xl:top-[calc(var(--main-padding-top,9rem)+var(--dashboard-sticky-top-extra))]",
+        "dashboard-sticky-shell-top hidden xl:sticky xl:self-start xl:block",
         className,
       )}
     >
@@ -96,14 +145,23 @@ export function DashboardFormSideRail({
 export function DashboardFormSectionLayout({
   railItems,
   children,
+  className,
+  railClassName,
 }: {
   railItems: DashboardSectionNavItem[];
   children: ReactNode;
+  className?: string;
+  railClassName?: string;
 }) {
   return (
-    <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_10.5rem] xl:gap-14 xl:items-start xl:pt-4">
+    <div
+      className={cn(
+        "xl:grid xl:grid-cols-[minmax(0,1fr)_10.5rem] xl:items-start xl:gap-14 xl:pt-4",
+        className,
+      )}
+    >
       <div className="min-w-0">{children}</div>
-      <DashboardFormSideRail items={railItems} />
+      <DashboardFormSideRail className={railClassName} items={railItems} />
     </div>
   );
 }

@@ -18,7 +18,7 @@ import {
   TrashIcon,
   DownloadIcon,
 } from "lucide-react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import { DashboardFormSectionLayout, DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, EyeIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -205,6 +205,16 @@ export default function PostDetailPage() {
     post.coverImage?.status !== undefined;
   const hasUnapprovedContent =
     hasPendingDownloads || hasPendingMedia || hasPendingCoverImage;
+  const detailShortlinks = [
+    { href: "#post-detail-overview", label: "Überblick" },
+    ...(isReviewer && attachedContent
+      ? [{ href: "#post-detail-attached", label: "Anhaenge" }]
+      : []),
+    { href: "#post-detail-info", label: "Details" },
+    ...(post.coverImage ? [{ href: "#post-detail-cover", label: "Titelbild" }] : []),
+    { href: "#post-detail-content", label: "Inhalt" },
+    { href: "#post-detail-meta", label: "Infos" },
+  ];
 
   const handleApprove = () => {
     approveMutation.mutate({
@@ -262,7 +272,10 @@ export default function PostDetailPage() {
         maxWidth="7xl"
       >
         {/* Status Badges */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div
+          id="post-detail-overview"
+          className="dashboard-form-scroll-anchor mb-5 flex flex-wrap items-center gap-3"
+        >
           <span
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[post.status]}`}
           >
@@ -341,7 +354,10 @@ export default function PostDetailPage() {
 
         {/* Attached Content Section (for reviewers) */}
         {isReviewer && attachedContent && (
-          <section className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="post-detail-attached"
+            className="dashboard-form-scroll-anchor dark:border-dark-border mb-8 border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Angehängte Inhalte
             </h2>
@@ -512,7 +528,7 @@ export default function PostDetailPage() {
 
         {/* Review Notes (if exists) */}
         {post.reviewNotes && post.status !== ContentStatus.PENDING && (
-          <section className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="dark:border-dark-border mb-8 border-t border-gray-200/80 pt-10">
             <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
               Prüfungsanmerkungen
             </h2>
@@ -531,9 +547,17 @@ export default function PostDetailPage() {
         )}
 
         {/* Post Details */}
-        <div className="space-y-6">
+        <DashboardFormSectionLayout
+          className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
+          railClassName="dashboard-sticky-shell-top lg:sticky lg:block lg:self-start"
+          railItems={detailShortlinks}
+        >
+          <div className="space-y-0">
           {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="post-detail-info"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Beitragsdetails
             </h2>
@@ -561,7 +585,10 @@ export default function PostDetailPage() {
 
           {/* Cover Image */}
           {post.coverImage && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="post-detail-cover"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
                   Titelbild
@@ -603,7 +630,10 @@ export default function PostDetailPage() {
           )}
 
           {/* Content */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="post-detail-content"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Inhalt
             </h2>
@@ -620,7 +650,7 @@ export default function PostDetailPage() {
           </section>
 
           {/* Markdown Source */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Markdown-Quelltext
             </h2>
@@ -630,7 +660,10 @@ export default function PostDetailPage() {
           </section>
 
           {/* Meta Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="post-detail-meta"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Informationen
             </h2>
@@ -720,7 +753,8 @@ export default function PostDetailPage() {
               </div>
             </dl>
           </section>
-        </div>
+          </div>
+        </DashboardFormSectionLayout>
 
         {/* Back Link */}
         <div className="mt-8">

@@ -12,7 +12,7 @@ import {
   EventCategory,
   EventEnsembleType,
 } from "~/generated/prisma/enums";
-import { DashboardPage } from "@/app/_components/dashboard";
+import { DashboardFormSectionLayout, DashboardPage } from "@/app/_components/dashboard";
 import { ArrowLeftIcon, CheckIcon, Edit, Trash2, XIcon } from "lucide-react";
 import {
   ScrollableModal,
@@ -188,6 +188,31 @@ export default function EventDetailPage() {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const districtLabel = event.bezirk
+    ? `Bezirk ${event.bezirk.number} - ${event.bezirk.shortName}`
+    : event.districtName || "Übergreifend";
+  const locationLabel = event.location
+    ? [event.location.name, event.location.city].filter(Boolean).join(", ")
+    : "Kein Ort hinterlegt";
+  const detailShortlinks = [
+    { href: "#event-detail-overview", label: "Überblick" },
+    ...(event.downloads?.length
+      ? [{ href: "#event-detail-downloads", label: "Downloads" }]
+      : []),
+    { href: "#event-detail-info", label: "Details" },
+    ...(event.description
+      ? [{ href: "#event-detail-description", label: "Beschreibung" }]
+      : []),
+    ...(event.location ? [{ href: "#event-detail-location", label: "Ort" }] : []),
+    ...(event.performingEnsembleType
+      ? [{ href: "#event-detail-ensemble", label: "Ensemble" }]
+      : []),
+    ...(event.openToParticipants
+      ? [{ href: "#event-detail-participation", label: "Teilnahme" }]
+      : []),
+    { href: "#event-detail-pricing", label: "Eintritt" },
+    { href: "#event-detail-meta", label: "Infos" },
+  ];
 
   const getEnsembleName = () => {
     if (event.performingEnsembleType === "ENSEMBLE" && event.ensemble) {
@@ -261,13 +286,56 @@ export default function EventDetailPage() {
         maxWidth="7xl"
       >
         {/* Status Badge */}
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="mb-5 flex flex-wrap items-center gap-3">
           <span
             className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[event.status]}`}
           >
             {statusLabels[event.status]}
           </span>
         </div>
+
+        <section
+          id="event-detail-overview"
+          className="dashboard-form-scroll-anchor mb-8"
+        >
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                Termin
+              </p>
+              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+                {formattedDate}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formattedTime} Uhr
+              </p>
+            </div>
+            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                Bezirk
+              </p>
+              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+                {districtLabel}
+              </p>
+            </div>
+            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                Kategorie
+              </p>
+              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+                {categoryLabels[event.category]}
+              </p>
+            </div>
+            <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
+              <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                Ort
+              </p>
+              <p className="text-dark mt-1 text-sm font-semibold dark:text-dark-text">
+                {locationLabel}
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Cancelled Banner */}
         {event.cancelled && (
@@ -280,7 +348,7 @@ export default function EventDetailPage() {
 
         {/* Review Section (for reviewers with pending events) */}
         {canReview && (
-          <section className="mb-6 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-600 dark:bg-yellow-900/20">
+          <section className="mb-8 rounded-lg border-2 border-yellow-300 bg-yellow-50 p-6 dark:border-yellow-600 dark:bg-yellow-900/20">
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Prüfung
             </h2>
@@ -323,7 +391,7 @@ export default function EventDetailPage() {
 
         {/* Review Notes (if exists) */}
         {event.reviewNotes && event.status !== ContentStatus.PENDING && (
-          <section className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
             <h2 className="dark:text-dark-text mb-3 text-lg font-semibold text-gray-900">
               Prüfungsanmerkungen
             </h2>
@@ -344,10 +412,15 @@ export default function EventDetailPage() {
         )}
 
         {/* Event Details */}
-        <div className="space-y-6">
+        <DashboardFormSectionLayout
+          className="lg:grid lg:grid-cols-[minmax(0,1fr)_10.5rem] lg:items-start lg:gap-10 lg:pt-4 xl:gap-14"
+          railClassName="dashboard-sticky-shell-top lg:sticky lg:block lg:self-start"
+          railItems={detailShortlinks}
+        >
+          <div className="space-y-0">
           {/* Cover Image */}
           {event.coverImage && (
-            <section className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <section className="mb-10 overflow-hidden rounded-xl">
               <div className="relative aspect-video w-full">
                 <Image
                   src={event.coverImage.url}
@@ -361,7 +434,10 @@ export default function EventDetailPage() {
 
           {/* Downloads */}
           {event.downloads && event.downloads.length > 0 && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="event-detail-downloads"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Downloads
               </h2>
@@ -402,7 +478,10 @@ export default function EventDetailPage() {
           )}
 
           {/* Basic Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="event-detail-info"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Veranstaltungsdetails
             </h2>
@@ -446,7 +525,10 @@ export default function EventDetailPage() {
 
           {/* Description */}
           {event.description && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="event-detail-description"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Beschreibung
               </h2>
@@ -458,7 +540,10 @@ export default function EventDetailPage() {
 
           {/* Location */}
           {event.location && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="event-detail-location"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Veranstaltungsort
               </h2>
@@ -488,7 +573,10 @@ export default function EventDetailPage() {
 
           {/* Performing Ensemble */}
           {event.performingEnsembleType && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="event-detail-ensemble"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Auftretendes Ensemble
               </h2>
@@ -527,7 +615,10 @@ export default function EventDetailPage() {
 
           {/* Participation */}
           {event.openToParticipants && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section
+              id="event-detail-participation"
+              className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+            >
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Teilnahme
               </h2>
@@ -539,7 +630,10 @@ export default function EventDetailPage() {
           )}
 
           {/* Pricing */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="event-detail-pricing"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Eintritt
             </h2>
@@ -585,7 +679,10 @@ export default function EventDetailPage() {
           </section>
 
           {/* Meta Info */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <section
+            id="event-detail-meta"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
             <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
               Informationen
             </h2>
@@ -675,7 +772,8 @@ export default function EventDetailPage() {
               </div>
             </dl>
           </section>
-        </div>
+          </div>
+        </DashboardFormSectionLayout>
 
         {/* Back Link */}
         <div className="mt-8">

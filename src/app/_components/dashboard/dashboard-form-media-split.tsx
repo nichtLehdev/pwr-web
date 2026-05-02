@@ -34,7 +34,7 @@ export function DashboardFormMediaSplit({
       <div className={cn("min-w-0 space-y-10", mainColumnClassName)}>{main}</div>
       <aside
         className={cn(
-          "mt-10 min-w-0 space-y-3 lg:sticky lg:top-[calc(var(--main-padding-top,9rem)+var(--dashboard-sticky-top-extra))] lg:mt-0 lg:self-start",
+          "dashboard-sticky-shell-top mt-10 min-w-0 space-y-3 lg:sticky lg:mt-0 lg:self-start",
           asideClassName,
         )}
       >

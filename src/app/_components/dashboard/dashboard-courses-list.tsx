@@ -266,7 +266,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     "dark:border-dark-border dark:bg-dark-background min-h-9 min-w-0 rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5 text-sm text-gray-900 dark:text-dark-text";
 
   const filterControlsRow = (
-    <div className="-mx-0.5 flex flex-nowrap items-center gap-x-2 overflow-x-auto px-0.5 pb-1 sm:mx-0 sm:gap-x-2.5 sm:overflow-visible sm:pb-0">
+    <div className="-mx-0.5 flex flex-nowrap items-center gap-x-2 overflow-x-auto px-0.5 pb-1 sm:mx-0 sm:gap-x-3 sm:overflow-visible sm:pb-0">
       <div className="shrink-0">{scheduleSegment}</div>
       <Select
         value={statusFilter}
@@ -274,7 +274,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
           setStatusFilter(e.target.value as ContentStatus | "all");
           setPage(1);
         }}
-        className={cn(selectClass, "w-[10.25rem] shrink-0 sm:w-[11.5rem]")}
+        className={cn(selectClass, "w-[10.25rem] shrink-0 sm:w-[11.75rem]")}
         aria-label="Status"
       >
         {availableFilters.map((filter) => (
@@ -322,38 +322,35 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {!selectionMode && (
         <div className="border-b border-gray-200/80 pb-2 dark:border-dark-border">
-          {/* sm+: KPI + Auswählen on one row; filters on the next row (no flex-1 “dead lane” beside dropdowns). */}
-          <div className="hidden space-y-2 sm:block">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <p className="min-w-0 text-sm tabular-nums text-gray-600 dark:text-gray-400">
-                {isLoading ? (
-                  <span className="text-gray-500">Liste wird geladen…</span>
-                ) : data ? (
-                  <>
-                    <span className="text-dark dark:text-dark-text font-semibold">
-                      {data.total}
-                    </span>{" "}
-                    {data.total === 1 ? "Kurs" : "Kurse"}
-                    {scheduleFilter === "active" && " · aktuell & geplant"}
-                    {scheduleFilter === "past" && " · vergangen"}
-                    {scheduleFilter === "all" && " · alle Zeiträume"}
-                  </>
-                ) : null}
-              </p>
-              <Button
-                onClick={() => setSelectionMode(true)}
-                variant="outline"
-                size="sm"
-                className="shrink-0"
-              >
-                <SquareDashed className="h-4 w-4" />
-                Auswählen
-              </Button>
-            </div>
-            <div className="min-w-0">{filterControlsRow}</div>
+          <div className="hidden w-full flex-nowrap items-center gap-x-3 sm:flex">
+            <p className="shrink-0 text-sm tabular-nums text-gray-600 dark:text-gray-400">
+              {isLoading ? (
+                <span className="text-gray-500">Liste wird geladen…</span>
+              ) : data ? (
+                <>
+                  <span className="text-dark dark:text-dark-text font-semibold">
+                    {data.total}
+                  </span>{" "}
+                  {data.total === 1 ? "Kurs" : "Kurse"}
+                  {scheduleFilter === "active" && " · aktuell & geplant"}
+                  {scheduleFilter === "past" && " · vergangen"}
+                  {scheduleFilter === "all" && " · alle Zeiträume"}
+                </>
+              ) : null}
+            </p>
+            <div className="min-w-0 flex-1">{filterControlsRow}</div>
+            <Button
+              onClick={() => setSelectionMode(true)}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              <SquareDashed className="h-4 w-4" />
+              Auswählen
+            </Button>
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">

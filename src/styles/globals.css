@@ -81,6 +81,19 @@ body {
   --dashboard-sticky-top-extra: 1.5rem;
 }
 
+/*
+ * Sticky offsets for dashboard shell (nav + optional banner live in `--main-padding-top` on <main>).
+ * Defined here instead of Tailwind arbitrary `top-[calc(var(--,...))]` because commas inside
+ * arbitrary values break JIT parsing and yield invalid `top`, which disables `position: sticky`.
+ */
+@layer utilities {
+  .dashboard-sticky-shell-top {
+    top: calc(
+      var(--main-padding-top, 9rem) + var(--dashboard-sticky-top-extra)
+    );
+  }
+}
+
 /* Hash targets: shell + sticky pill nav (< xl); xl+ only needs shell + extra */
 .dashboard-form-scroll-anchor {
   scroll-margin-top: calc(

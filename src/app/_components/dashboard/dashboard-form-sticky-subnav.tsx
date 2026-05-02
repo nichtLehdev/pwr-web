@@ -22,7 +22,7 @@ export function DashboardFormStickySubnav({
     <nav
       aria-label="Formularabschnitte"
       className={cn(
-        "dark:border-dark-border sticky top-[calc(var(--main-padding-top,5rem)+var(--dashboard-sticky-top-extra))] z-30 -mx-1 mb-2 rounded-lg border border-gray-200 bg-gray-50/95 px-2 py-2.5 shadow-sm backdrop-blur-md dark:bg-dark-background/95 sm:-mx-0 sm:px-3",
+        "dashboard-sticky-shell-top dark:border-dark-border sticky z-30 -mx-1 mb-2 rounded-lg border border-gray-200 bg-gray-50/95 px-2 py-2.5 shadow-sm backdrop-blur-md dark:bg-dark-background/95 sm:-mx-0 sm:px-3",
         className,
       )}
     >

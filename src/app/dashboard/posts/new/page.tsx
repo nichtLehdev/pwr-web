@@ -6,7 +6,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardFormZoneHeader,
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type DashboardSectionNavItem,
+} from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
@@ -16,17 +21,16 @@ import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, Lock, X } from "lucide-react";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
-import {
-  Button,
-  Input,
-  Label,
-  Textarea,
-  Select,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/app/_components/ui";
+import { Button, Input, Label, Textarea, Select } from "@/app/_components/ui";
+
+const NEW_POST_NAV_ITEMS: DashboardSectionNavItem[] = [
+  { href: "#post-form-basic", label: "Grundlagen" },
+  { href: "#post-form-media", label: "Titelbild" },
+  { href: "#post-form-content", label: "Inhalt" },
+  { href: "#post-form-district", label: "Bezirk" },
+  { href: "#post-form-author", label: "Autor" },
+  { href: "#post-form-publish", label: "Veröffentlichung" },
+];
 
 const categoryLabels: Record<PostCategory, string> = {
   MAGAZIN: "Magazin",
@@ -281,13 +285,18 @@ export default function NewPostPage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Grundinformationen</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <form onSubmit={handleSubmit}>
+        <DashboardSectionedFormLayout
+          navItems={NEW_POST_NAV_ITEMS}
+          contentClassName="space-y-0"
+        >
+          {/* Basic Information */}
+          <section id="post-form-basic" className="dashboard-form-scroll-anchor">
+            <DashboardFormZoneHeader
+              step={1}
+              title="Grundlagen"
+              description="Titel, Kurzfassung und Kategorie des Beitrags."
+            />
             <div className="space-y-4">
               <div>
                 <Label required>Titel</Label>
@@ -326,14 +335,18 @@ export default function NewPostPage() {
                 </Select>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Cover Image */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Titelbild
-          </h2>
+          {/* Cover Image */}
+          <section
+            id="post-form-media"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={2}
+              title="Titelbild"
+              description="Optionales Bild fuer Vorschau und Header."
+            />
           <div className="space-y-4">
             {coverImageUrl ? (
               <div className="relative">
@@ -401,13 +414,18 @@ export default function NewPostPage() {
               </button>
             )}
           </div>
-        </section>
+          </section>
 
-        {/* Content */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Inhalt
-          </h2>
+          {/* Content */}
+          <section
+            id="post-form-content"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={3}
+              title="Inhalt"
+              description="Hauptinhalt des Beitrags mit Editor."
+            />
           <div className="space-y-4">
             <div>
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -424,13 +442,18 @@ export default function NewPostPage() {
               </p>
             </div>
           </div>
-        </section>
+          </section>
 
-        {/* District */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Bezirk
-          </h2>
+          {/* District */}
+          <section
+            id="post-form-district"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={4}
+              title="Bezirk"
+              description="Ordne den Beitrag einem Bezirk oder uebergreifend zu."
+            />
           <div className="space-y-4">
             {!isHigherRole && userBezirkId ? (
               <div>
@@ -481,13 +504,18 @@ export default function NewPostPage() {
               </div>
             )}
           </div>
-        </section>
+          </section>
 
-        {/* Author */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Autor
-          </h2>
+          {/* Author */}
+          <section
+            id="post-form-author"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={5}
+              title="Autor"
+              description="Optionalen Autor verknuepfen oder Namen setzen."
+            />
           <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
             Optional: Wenn der Beitrag von jemand anderem geschrieben wurde oder
             du einen benutzerdefinierten Autorennamen verwenden möchtest.
@@ -581,14 +609,14 @@ export default function NewPostPage() {
               </p>
             </div>
           </div>
-        </section>
+          </section>
 
-        {/* Options for users with approve permission */}
-        {hasApprovePermission && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Admin-Optionen
-            </h2>
+          {/* Options for users with approve permission */}
+          {hasApprovePermission && (
+            <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
+              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                Admin-Optionen
+              </h2>
             <div className="space-y-4">
               <label className="flex cursor-pointer items-center gap-3">
                 <input
@@ -602,14 +630,19 @@ export default function NewPostPage() {
                 </span>
               </label>
             </div>
-          </section>
-        )}
+            </section>
+          )}
 
-        {/* Submit Options */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Veröffentlichung
-          </h2>
+          {/* Submit Options */}
+          <section
+            id="post-form-publish"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={6}
+              title="Veröffentlichung"
+              description="Speichern, einreichen oder direkt veröffentlichen."
+            />
           <div className="space-y-4">
             {/* Status selection for higher roles */}
             {isHigherRole ? (
@@ -709,10 +742,10 @@ export default function NewPostPage() {
               </>
             )}
           </div>
-        </section>
+          </section>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          {/* Actions */}
+          <div className="dark:border-dark-border mt-10 flex flex-col gap-3 border-t border-gray-200/80 pt-6 sm:flex-row sm:justify-end">
           <Link
             href="/dashboard/posts"
             data-skip-warning
@@ -732,7 +765,8 @@ export default function NewPostPage() {
                 ? "Veröffentlichen"
                 : "Beitrag einreichen"}
           </Button>
-        </div>
+          </div>
+        </DashboardSectionedFormLayout>
       </form>
 
       {/* Media Picker Modal */}

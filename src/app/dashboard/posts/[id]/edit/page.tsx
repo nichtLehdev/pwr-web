@@ -14,7 +14,12 @@ import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
 import { useToast } from "@/app/_components/ui/toast";
 import { ImageIcon, AlertTriangle, X } from "lucide-react";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardFormZoneHeader,
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type DashboardSectionNavItem,
+} from "@/app/_components/dashboard";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
@@ -33,6 +38,15 @@ const statusLabels: Record<ContentStatus, string> = {
   REJECTED: "Abgelehnt",
   ARCHIVED: "Archiviert",
 };
+
+const EDIT_POST_NAV_ITEMS: DashboardSectionNavItem[] = [
+  { href: "#post-edit-basic", label: "Grundlagen" },
+  { href: "#post-edit-media", label: "Titelbild" },
+  { href: "#post-edit-content", label: "Inhalt" },
+  { href: "#post-edit-district", label: "Bezirk" },
+  { href: "#post-edit-author", label: "Autor" },
+  { href: "#post-edit-status", label: "Status" },
+];
 
 // Dashboard access is now controlled by permissions
 
@@ -402,12 +416,18 @@ export default function EditPostPage() {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit}>
+          <DashboardSectionedFormLayout
+            navItems={EDIT_POST_NAV_ITEMS}
+            contentClassName="space-y-0"
+          >
           {/* Basic Information */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Grundinformationen
-            </h2>
+          <section id="post-edit-basic" className="dashboard-form-scroll-anchor">
+            <DashboardFormZoneHeader
+              step={1}
+              title="Grundlagen"
+              description="Titel, Kurzfassung und Kategorie bearbeiten."
+            />
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -458,10 +478,15 @@ export default function EditPostPage() {
           </section>
 
           {/* Cover Image */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Titelbild
-            </h2>
+          <section
+            id="post-edit-media"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={2}
+              title="Titelbild"
+              description="Titelbild waehlen und Position anpassen."
+            />
             <div className="space-y-4">
               {coverImageUrl ? (
                 <div className="relative">
@@ -527,10 +552,15 @@ export default function EditPostPage() {
           </section>
 
           {/* Content */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Inhalt
-            </h2>
+          <section
+            id="post-edit-content"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={3}
+              title="Inhalt"
+              description="Text und Medien im Beitrag aktualisieren."
+            />
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -550,10 +580,15 @@ export default function EditPostPage() {
           </section>
 
           {/* District */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Bezirk
-            </h2>
+          <section
+            id="post-edit-district"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={4}
+              title="Bezirk"
+              description="Bezirkszuordnung anpassen."
+            />
             <div className="space-y-4">
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
@@ -576,10 +611,15 @@ export default function EditPostPage() {
           </section>
 
           {/* Author */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Autor
-            </h2>
+          <section
+            id="post-edit-author"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={5}
+              title="Autor"
+              description="Verknuepften oder benutzerdefinierten Autor setzen."
+            />
             <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
               Optional: Wenn der Beitrag von jemand anderem geschrieben wurde
               oder du einen benutzerdefinierten Autorennamen verwenden möchtest.
@@ -677,7 +717,7 @@ export default function EditPostPage() {
 
           {/* Options for users with approve permission */}
           {hasApprovePermission && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <section className="dark:border-dark-border border-t border-gray-200/80 pt-10">
               <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
                 Admin-Optionen
               </h2>
@@ -698,10 +738,15 @@ export default function EditPostPage() {
           )}
 
           {/* Status section */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Status
-            </h2>
+          <section
+            id="post-edit-status"
+            className="dashboard-form-scroll-anchor dark:border-dark-border border-t border-gray-200/80 pt-10"
+          >
+            <DashboardFormZoneHeader
+              step={6}
+              title="Status"
+              description="Pruef- und Veroeffentlichungsstatus festlegen."
+            />
 
             {/* Notice for approved/rejected posts being edited */}
             {(post?.status === ContentStatus.APPROVED ||
@@ -771,7 +816,7 @@ export default function EditPostPage() {
           </section>
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <div className="dark:border-dark-border mt-10 flex flex-col gap-3 border-t border-gray-200/80 pt-6 sm:flex-row sm:justify-end">
             <Link
               href={`/dashboard/posts/${postId}`}
               data-skip-warning
@@ -790,6 +835,7 @@ export default function EditPostPage() {
                 : "Änderungen speichern"}
             </button>
           </div>
+          </DashboardSectionedFormLayout>
         </form>
       </DashboardPage>
       {/* Media Picker Modal */}
