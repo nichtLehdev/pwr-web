@@ -2,23 +2,22 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import type { CourseFormNavItem } from "./course-form-subnav";
-import { CourseFormSubnav } from "./course-form-subnav";
-import { CourseFormWorkbench } from "./course-form-workbench";
+import type { DashboardSectionNavItem } from "./dashboard-form-sticky-subnav";
+import { DashboardFormStickySubnav } from "./dashboard-form-sticky-subnav";
+import { DashboardFormSectionLayout } from "./dashboard-form-section-layout";
 
 type DashboardSectionedFormLayoutProps = {
   /** Anchor targets (`#section-id`) must match section wrappers on the page */
-  navItems: CourseFormNavItem[];
+  navItems: DashboardSectionNavItem[];
   children: ReactNode;
   /** Classes on the wrapper around `children` (vertical rhythm between sections) */
   contentClassName?: string;
-  /** Extra classes on the horizontal subnav shown below `xl` */
+  /** Extra classes on the horizontal subnav shown below xl */
   subnavClassName?: string;
 };
 
 /**
- * Long dashboard forms: horizontal subnav below the xl breakpoint and “Auf dieser Seite” rail from xl upward.
- * Uses {@link CourseFormWorkbench} spacing and sticky offsets.
+ * Long dashboard forms: sticky pill subnav below xl and numbered “Auf dieser Seite” rail from xl up.
  */
 export function DashboardSectionedFormLayout({
   navItems,
@@ -27,12 +26,12 @@ export function DashboardSectionedFormLayout({
   subnavClassName,
 }: DashboardSectionedFormLayoutProps) {
   return (
-    <CourseFormWorkbench railItems={navItems}>
-      <CourseFormSubnav
+    <DashboardFormSectionLayout railItems={navItems}>
+      <DashboardFormStickySubnav
         className={cn("xl:hidden", subnavClassName)}
         items={navItems}
       />
       <div className={contentClassName}>{children}</div>
-    </CourseFormWorkbench>
+    </DashboardFormSectionLayout>
   );
 }

@@ -15,7 +15,7 @@ type DashboardFormMediaSplitProps = {
 
 /**
  * Two-column layout: main fields + sticky aside (e.g. Titelbild) on large screens.
- * Matches course edit “Inhalt” rhythm; reuse on other media-heavy edit forms.
+ * Shared rhythm for dashboard “Inhalt”-style splits; reuse on media-heavy edit forms.
  */
 export function DashboardFormMediaSplit({
   main,

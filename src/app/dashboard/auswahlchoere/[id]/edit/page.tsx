@@ -9,8 +9,19 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  DashboardSectionedFormLayout,
+  type DashboardSectionNavItem,
+} from "@/app/_components/dashboard";
 import { ImageIcon, X } from "lucide-react";
+
+const AUSWAHLCHOR_FORM_NAV: DashboardSectionNavItem[] = [
+  { href: "#auswahlchor-form-grundlagen", label: "Grundlagen" },
+  { href: "#auswahlchor-form-styling", label: "Styling" },
+  { href: "#auswahlchor-form-personen", label: "Personen" },
+  { href: "#auswahlchor-form-einstellungen", label: "Einstellungen" },
+];
 
 export default function EditAuswahlchorPage() {
   const router = useRouter();
@@ -238,7 +249,11 @@ export default function EditAuswahlchorPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6">
+          <DashboardSectionedFormLayout
+            navItems={AUSWAHLCHOR_FORM_NAV}
+            contentClassName="space-y-6"
+          >
+            <div id="auswahlchor-form-grundlagen" className="dashboard-form-scroll-anchor">
             {/* Basic Information */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
@@ -396,8 +411,13 @@ export default function EditAuswahlchorPage() {
                 )}
               </div>
             </div>
+            </div>
 
             {/* Styling */}
+            <div
+              id="auswahlchor-form-styling"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
                 Styling
@@ -447,8 +467,13 @@ export default function EditAuswahlchorPage() {
                 </p>
               </div>
             </div>
+            </div>
 
             {/* People */}
+            <div
+              id="auswahlchor-form-personen"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
                 Personen
@@ -538,8 +563,13 @@ export default function EditAuswahlchorPage() {
                 )}
               </div>
             </div>
+            </div>
 
             {/* Settings */}
+            <div
+              id="auswahlchor-form-einstellungen"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-10"
+            >
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
                 Einstellungen
@@ -562,9 +592,10 @@ export default function EditAuswahlchorPage() {
                 </label>
               </div>
             </div>
+            </div>
 
             {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="dark:border-dark-border mt-16 flex flex-col gap-3 border-t border-gray-200/80 pt-10 sm:flex-row sm:justify-end">
               <button
                 type="submit"
                 disabled={isSubmitting || updateMutation.isPending}
@@ -581,7 +612,7 @@ export default function EditAuswahlchorPage() {
                 Abbrechen
               </Link>
             </div>
-          </div>
+          </DashboardSectionedFormLayout>
         </form>
       </DashboardPage>
       {/* Media Picker Modal */}

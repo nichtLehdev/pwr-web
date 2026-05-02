@@ -74,7 +74,8 @@ body {
 
 /*
  * Dashboard long forms: extra air below fixed shell for sticky UI.
- * --main-padding-top is set on MainContent <main>.
+ * --main-padding-top is set on MainContent <main> as a fully resolved calc (no nested
+ * var(--nav-height)) so sticky offsets and scroll-margin inherit correctly in deep trees.
  */
 :root {
   --dashboard-sticky-top-extra: 1.5rem;

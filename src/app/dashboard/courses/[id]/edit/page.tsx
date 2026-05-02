@@ -35,10 +35,10 @@ import {
   DashboardPage,
   DashboardSectionedFormLayout,
   DashboardFormMediaSplit,
-  CourseFormZoneHeader,
-  CourseFormBlock,
+  DashboardFormZoneHeader,
+  DashboardFormBlock,
   CourseFormEditMetaBar,
-  type CourseFormNavItem,
+  type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
@@ -72,7 +72,7 @@ const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXTAREA: "Mehrzeiliger Text",
 };
 
-const COURSE_FORM_NAV_ITEMS: CourseFormNavItem[] = [
+const COURSE_FORM_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#kurs-form-inhalt", label: "Inhalt" },
   { href: "#kurs-form-termin", label: "Termin & Ort" },
   { href: "#kurs-form-anmeldung", label: "Anmeldung" },
@@ -1042,7 +1042,7 @@ export default function EditCoursePage() {
             id="kurs-form-inhalt"
             className="dashboard-form-scroll-anchor"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={1}
               title="Inhalt"
               description="Das, was Besucher zuerst sehen: Titeltext, Bild und optionale Hinweise zur Teilnahme."
@@ -1050,7 +1050,7 @@ export default function EditCoursePage() {
             <DashboardFormMediaSplit
               main={
                 <>
-                  <CourseFormBlock title="Grundinformationen">
+                  <DashboardFormBlock title="Grundinformationen">
             <div className="space-y-4">
               <div>
                 <label
@@ -1132,9 +1132,9 @@ export default function EditCoursePage() {
                 </div>
               </div>
             </div>
-                  </CourseFormBlock>
+                  </DashboardFormBlock>
 
-                  <CourseFormBlock title="Weitere Informationen">
+                  <DashboardFormBlock title="Weitere Informationen">
               <div className="space-y-4">
                 <div>
                   <label
@@ -1170,11 +1170,11 @@ export default function EditCoursePage() {
                   />
                 </div>
               </div>
-                  </CourseFormBlock>
+                  </DashboardFormBlock>
                 </>
               }
               aside={
-                <CourseFormBlock title="Titelbild">
+                <DashboardFormBlock title="Titelbild">
                   <div className="space-y-4">
                     {imageUrl ? (
                       <div className="relative">
@@ -1222,7 +1222,7 @@ export default function EditCoursePage() {
                       </button>
                     )}
                   </div>
-                </CourseFormBlock>
+                </DashboardFormBlock>
               }
             />
           </div>
@@ -1231,12 +1231,12 @@ export default function EditCoursePage() {
             id="kurs-form-termin"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={2}
               title="Termin & Ort"
               description="Zeitfenster, Bezirk und Veranstaltungsort steuern Kalender und Anfahrtshinweise."
             />
-            <CourseFormBlock title="Datum & Ort">
+            <DashboardFormBlock title="Datum & Ort">
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-4">
                 <div>
@@ -1519,20 +1519,20 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-            </CourseFormBlock>
+            </DashboardFormBlock>
           </div>
 
           <div
             id="kurs-form-anmeldung"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={3}
               title="Anmeldung"
               description="Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
             />
             <div className="space-y-10">
-            <CourseFormBlock title="Anmeldeeinstellungen">
+            <DashboardFormBlock title="Anmeldeeinstellungen">
             <div className="space-y-6">
               <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                 <legend className="sr-only">Anmeldezeitpunkt und -fenster</legend>
@@ -1726,9 +1726,9 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-            </CourseFormBlock>
+            </DashboardFormBlock>
 
-            <CourseFormBlock
+            <DashboardFormBlock
               title="Zusätzliche Anmeldefelder"
               description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
             >
@@ -1925,7 +1925,7 @@ export default function EditCoursePage() {
                 ))}
               </div>
             )}
-          </CourseFormBlock>
+          </DashboardFormBlock>
           </div>
           </div>
 
@@ -1933,7 +1933,7 @@ export default function EditCoursePage() {
             id="kurs-form-team"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={4}
               title="Kurs-Team"
               description="Zwei Bereiche unten: (1) Vereinskonten mit Rollen für Bearbeitung und Teilnehmerlisten, (2) freie Namen nur für die öffentliche Kursseite ohne eigenes Login."
@@ -1955,7 +1955,7 @@ export default function EditCoursePage() {
 
             {canManageCourseTeamUi ? (
               <>
-              <CourseFormBlock
+              <DashboardFormBlock
                 title="Organisator:innen und Teammitglieder"
                 description={`Über bestehende Nutzer:innen aus der Suche hinzufügen. Wer den Kurs angelegt hat, bleibt immer dabei${
                   course.createdBy?.displayName
@@ -2138,10 +2138,10 @@ export default function EditCoursePage() {
                     )}
                   </div>
                 </div>
-              </CourseFormBlock>
+              </DashboardFormBlock>
 
               <div className="mt-8">
-                <CourseFormBlock
+                <DashboardFormBlock
                   title="Weitere Namen (ohne Vereinskonto)"
                   description="Nur Darstellung auf der öffentlichen Kursseite: kein Zugriff auf den Kurs, keine Teilnehmerliste. Praktisch z.&nbsp;B. für Gastreferent:innen ohne Account. Hier ein optionaler Kurztext pro Person möglich."
                 >
@@ -2335,7 +2335,7 @@ export default function EditCoursePage() {
                       </>
                     )}
                   </div>
-                </CourseFormBlock>
+                </DashboardFormBlock>
               </div>
               </>
             ) : null}
@@ -2345,7 +2345,7 @@ export default function EditCoursePage() {
             id="kurs-form-preise"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={5}
               title="Preise"
               description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
@@ -2370,7 +2370,7 @@ export default function EditCoursePage() {
               </div>
             )}
 
-            <CourseFormBlock title="Honorar und Zahlungsweisen">
+            <DashboardFormBlock title="Honorar und Zahlungsweisen">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <input
@@ -2583,20 +2583,20 @@ export default function EditCoursePage() {
                 </div>
               )}
             </div>
-            </CourseFormBlock>
+            </DashboardFormBlock>
           </div>
 
           <div
             id="kurs-form-veroeffentlichung"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
-            <CourseFormZoneHeader
+            <DashboardFormZoneHeader
               step={6}
               title="Veröffentlichung"
               description="Welchen redaktionellen Stand der Eintrag haben soll – wirkt sich auf die öffentliche Sichtbarkeit aus."
             />
 
-            <CourseFormBlock title="Redaktionsstatus">
+            <DashboardFormBlock title="Redaktionsstatus">
 
             {/* Notice for approved/rejected courses being edited */}
             {(course?.status === ContentStatus.APPROVED ||
@@ -2694,7 +2694,7 @@ export default function EditCoursePage() {
                 )}
               </p>
             )}
-            </CourseFormBlock>
+            </DashboardFormBlock>
           </div>
 
           {/* Actions */}

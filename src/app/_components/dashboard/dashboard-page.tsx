@@ -55,7 +55,7 @@ export default function DashboardPage({
   const finalBreadcrumbs = breadcrumbs ?? defaultBreadcrumbs;
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
+    <div className="dark:bg-dark-background min-h-screen bg-gray-50">
       <div
         className={`container mx-auto ${maxWidthClasses[maxWidth]} px-4 py-8 sm:px-6 lg:px-8`}
       >
@@ -107,6 +107,6 @@ export default function DashboardPage({
         {/* Content */}
         {children}
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
-"use client";
-
-export function scrollToCourseFormSection(href: string) {
+/**
+ * Smooth-scroll to `href` anchors (e.g. `#section-id`) used by dashboard sectioned forms.
+ */
+export function scrollToDashboardSection(href: string) {
   document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
   try {
     history.replaceState(
