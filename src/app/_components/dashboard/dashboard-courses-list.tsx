@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/trpc/react";
 import { useRouter } from "next/navigation";
 import DashboardCourseCard from "./dashboard-course-card";
@@ -26,8 +26,20 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { cn } from "@/lib/utils";
 
 type DashboardCoursesListProps = Record<string, never>;
+
+type DashboardCoursesScheduleFilter = "active" | "all" | "past";
+
+const scheduleFilters: {
+  value: DashboardCoursesScheduleFilter;
+  label: string;
+}[] = [
+  { value: "active", label: "Aktuell" },
+  { value: "all", label: "Alle Zeiträume" },
+  { value: "past", label: "Vergangen" },
+];
 
 const statusFilters: { value: ContentStatus | "all"; label: string }[] = [
   { value: "all", label: "Alle" },
@@ -54,6 +66,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",
   );
+  const [scheduleFilter, setScheduleFilter] =
+    useState<DashboardCoursesScheduleFilter>("active");
   const [sortBy, setSortBy] = useState<
     "startDate" | "title" | "createdAt" | "status"
   >("startDate");
@@ -73,9 +87,16 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     page,
     limit,
     status: statusFilter === "all" ? undefined : statusFilter,
+    schedule: scheduleFilter,
     sortBy,
     sortOrder,
   });
+
+  useEffect(() => {
+    if (data && data.pages > 0 && page > data.pages) {
+      setPage(data.pages);
+    }
+  }, [data, page]);
 
   const bulkDeleteMutation = api.courses.bulkDelete.useMutation({
     onSuccess: (result) => {
@@ -139,6 +160,14 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     // Non-reviewers can't see drafts
     return filter.value !== "DRAFT";
   });
+
+  const adjustedFilterCount = useMemo(() => {
+    return (
+      (statusFilter !== "all" ? 1 : 0) +
+      (scheduleFilter !== "active" ? 1 : 0) +
+      (sortBy !== "startDate" || sortOrder !== "asc" ? 1 : 0)
+    );
+  }, [statusFilter, scheduleFilter, sortBy, sortOrder]);
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -210,55 +239,194 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-dark dark:text-dark-text text-xl font-bold">
-            Kurse
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {data?.total ?? 0} {data?.total === 1 ? "Kurs" : "Kurse"} gefunden
-          </p>
-        </div>
+  const scheduleSegment = (
+    <div className="inline-flex max-w-full rounded-md border border-gray-200/90 p-0.5 dark:border-dark-border">
+      {scheduleFilters.map((sf) => (
+        <button
+          key={sf.value}
+          type="button"
+          onClick={() => {
+            setScheduleFilter(sf.value);
+            setPage(1);
+          }}
+          className={cn(
+            "min-w-0 shrink-0 rounded px-2.5 py-1.5 text-center text-xs font-medium transition-colors sm:text-sm",
+            scheduleFilter === sf.value
+              ? "bg-white text-gray-900 shadow-sm dark:bg-dark-surface dark:text-dark-text"
+              : "text-gray-500 hover:text-gray-800 dark:hover:text-gray-200",
+          )}
+        >
+          {sf.label}
+        </button>
+      ))}
+    </div>
+  );
 
-        {/* Selection Mode Toggle */}
-        {!selectionMode ? (
-          <Button
-            onClick={() => setSelectionMode(true)}
-            variant="outline"
-            size="sm"
-          >
-            <SquareDashed className="h-4 w-4" />
-            Auswählen
-          </Button>
-        ) : (
-          <Button onClick={exitSelectionMode} variant="outline" size="sm">
-            <X className="h-4 w-4" />
-            Abbrechen
-          </Button>
-        )}
+  const selectClass =
+    "dark:border-dark-border dark:bg-dark-background min-h-9 min-w-0 rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5 text-sm text-gray-900 dark:text-dark-text";
+
+  const filterControlsRow = (
+    <div className="-mx-0.5 flex flex-nowrap items-center gap-x-2 overflow-x-auto px-0.5 pb-1 sm:mx-0 sm:gap-x-2.5 sm:overflow-visible sm:pb-0">
+      <div className="shrink-0">{scheduleSegment}</div>
+      <Select
+        value={statusFilter}
+        onChange={(e) => {
+          setStatusFilter(e.target.value as ContentStatus | "all");
+          setPage(1);
+        }}
+        className={cn(selectClass, "w-[10.25rem] shrink-0 sm:w-[11.5rem]")}
+        aria-label="Status"
+      >
+        {availableFilters.map((filter) => (
+          <option key={String(filter.value)} value={String(filter.value)}>
+            {filter.label}
+          </option>
+        ))}
+      </Select>
+      <div className="flex shrink-0 items-center gap-1.5">
+        <Select
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(
+              e.target.value as
+                | "startDate"
+                | "title"
+                | "createdAt"
+                | "status",
+            );
+            setPage(1);
+          }}
+          className={cn(selectClass, "w-[9.5rem]")}
+          aria-label="Sortierung"
+        >
+          {sortOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+        <button
+          type="button"
+          onClick={toggleSortOrder}
+          className="text-dark dark:text-dark-text inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50 dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface"
+          title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
+        >
+          {sortOrder === "asc" ? (
+            <ArrowUpIcon className="h-4 w-4" />
+          ) : (
+            <ArrowDownIcon className="h-4 w-4" />
+          )}
+        </button>
       </div>
+    </div>
+  );
 
-      {/* Selection Mode Actions Bar */}
+  return (
+    <div className="space-y-4">
+      {!selectionMode && (
+        <div className="border-b border-gray-200/80 pb-2 dark:border-dark-border">
+          {/* sm+: KPI + Auswählen on one row; filters on the next row (no flex-1 “dead lane” beside dropdowns). */}
+          <div className="hidden space-y-2 sm:block">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <p className="min-w-0 text-sm tabular-nums text-gray-600 dark:text-gray-400">
+                {isLoading ? (
+                  <span className="text-gray-500">Liste wird geladen…</span>
+                ) : data ? (
+                  <>
+                    <span className="text-dark dark:text-dark-text font-semibold">
+                      {data.total}
+                    </span>{" "}
+                    {data.total === 1 ? "Kurs" : "Kurse"}
+                    {scheduleFilter === "active" && " · aktuell & geplant"}
+                    {scheduleFilter === "past" && " · vergangen"}
+                    {scheduleFilter === "all" && " · alle Zeiträume"}
+                  </>
+                ) : null}
+              </p>
+              <Button
+                onClick={() => setSelectionMode(true)}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                <SquareDashed className="h-4 w-4" />
+                Auswählen
+              </Button>
+            </div>
+            <div className="min-w-0">{filterControlsRow}</div>
+          </div>
+
+          <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
+            <p className="text-sm tabular-nums text-gray-600 dark:text-gray-400">
+              {isLoading ? (
+                <span className="text-gray-500">Liste wird geladen…</span>
+              ) : data ? (
+                <>
+                  <span className="text-dark dark:text-dark-text font-semibold">
+                    {data.total}
+                  </span>{" "}
+                  {data.total === 1 ? "Kurs" : "Kurse"}
+                  {scheduleFilter === "active" && " · aktuell & geplant"}
+                  {scheduleFilter === "past" && " · vergangen"}
+                  {scheduleFilter === "all" && " · alle Zeiträume"}
+                </>
+              ) : null}
+            </p>
+            <Button
+              onClick={() => setSelectionMode(true)}
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+            >
+              <SquareDashed className="h-4 w-4" />
+              Auswählen
+            </Button>
+          </div>
+
+          <div className="mt-2 sm:hidden">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="dark:border-dark-border flex w-full items-center justify-between gap-2 rounded-md border border-gray-200/80 px-3 py-2 text-left text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              <span className="flex items-center gap-2">
+                <FilterIcon className="h-4 w-4 text-gray-400" />
+                Zeitraum, Status, Sortierung
+              </span>
+              {adjustedFilterCount > 0 ? (
+                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:bg-dark-border dark:text-gray-200">
+                  {adjustedFilterCount}
+                </span>
+              ) : null}
+            </button>
+            {filtersOpen ? (
+              <div className="mt-2 space-y-3 rounded-md border border-gray-200/80 p-3 dark:border-dark-border">
+                {filterControlsRow}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
       {selectionMode && (
-        <div className="border-primary/30 bg-primary/5 dark:border-primary/50 dark:bg-primary/10 flex flex-wrap items-center gap-3 rounded-lg border p-4">
-          <span className="text-dark dark:text-dark-text text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-3 gap-y-2 border-b border-gray-200/80 pb-2 dark:border-dark-border">
+          <span className="text-dark dark:text-dark-text text-sm font-medium tabular-nums">
             {selectedIds.size} ausgewählt
           </span>
 
-          <div className="flex items-center gap-2 border-l border-gray-300 pl-3 dark:border-gray-600">
+          <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200/90 pl-3">
             <button
+              type="button"
               onClick={selectAll}
-              className="text-primary text-sm hover:underline"
+              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
             >
-              Alle auswählen
+              Alle
             </button>
-            <span className="text-gray-400">|</span>
+            <span className="text-gray-300 dark:text-gray-600">·</span>
             <button
+              type="button"
               onClick={deselectAll}
-              className="text-primary text-sm hover:underline"
+              className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-400"
             >
               Keine
             </button>
@@ -269,9 +437,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               <Button
                 onClick={handleDuplicate}
                 disabled={duplicateMutation.isPending}
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={duplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -283,9 +450,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               <Button
                 onClick={handleBulkDuplicate}
                 disabled={bulkDuplicateMutation.isPending}
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="bg-blue-600 text-white hover:bg-blue-700"
                 isLoading={bulkDuplicateMutation.isPending}
               >
                 <CopyIcon className="h-4 w-4" />
@@ -296,12 +462,11 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             <Button
               onClick={() => setShowStatusChange(true)}
               disabled={selectedIds.size === 0}
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="bg-purple-600 text-white hover:bg-purple-700"
             >
               <PencilIcon className="h-4 w-4" />
-              Status ändern
+              Status
             </Button>
 
             <Button
@@ -314,172 +479,22 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               <TrashIcon className="h-4 w-4" />
               Löschen
             </Button>
+
+            <Button onClick={exitSelectionMode} variant="outline" size="sm">
+              <X className="h-4 w-4" />
+              Abbrechen
+            </Button>
           </div>
         </div>
       )}
 
-      {/* Filters (hidden in selection mode) */}
-      {!selectionMode && (
-        <>
-          {/* Mobile Filter Toggle */}
-          <div className="sm:hidden">
-            <button
-              onClick={() => setFiltersOpen(!filtersOpen)}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text flex w-full items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <span className="flex items-center gap-2">
-                <FilterIcon className="h-4 w-4" />
-                Filter & Sortierung
-              </span>
-              {(statusFilter !== "all" || sortBy !== "startDate") && (
-                <span className="bg-primary flex h-5 w-5 items-center justify-center rounded-full text-xs text-white">
-                  {(statusFilter !== "all" ? 1 : 0) +
-                    (sortBy !== "startDate" ? 1 : 0)}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {/* Desktop Filters - Always visible */}
-          <div className="hidden sm:flex sm:items-center sm:gap-4">
-            {/* Status Filter */}
-            <div className="flex flex-wrap gap-2">
-              {availableFilters.map((filter) => (
-                <Button
-                  key={filter.value}
-                  onClick={() => {
-                    setStatusFilter(filter.value);
-                    setPage(1);
-                  }}
-                  variant={
-                    statusFilter === filter.value ? "primary" : "secondary"
-                  }
-                  size="sm"
-                >
-                  {filter.label}
-                </Button>
-              ))}
-            </div>
-
-            {/* Sort Controls */}
-            <div className="dark:border-dark-border flex items-center gap-2 border-l border-gray-200 pl-4">
-              <Select
-                value={sortBy}
-                onChange={(e) => {
-                  setSortBy(
-                    e.target.value as
-                      | "startDate"
-                      | "title"
-                      | "createdAt"
-                      | "status",
-                  );
-                  setPage(1);
-                }}
-              >
-                {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-              <button
-                onClick={toggleSortOrder}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-200 bg-white p-1.5 text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
-              >
-                {sortOrder === "asc" ? (
-                  <ArrowUpIcon className="h-4 w-4" />
-                ) : (
-                  <ArrowDownIcon className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Filters Panel */}
-          {filtersOpen && (
-            <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 sm:hidden">
-              {/* Status Filter */}
-              <div className="mb-4">
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {availableFilters.map((filter) => (
-                    <button
-                      key={filter.value}
-                      onClick={() => {
-                        setStatusFilter(filter.value);
-                        setPage(1);
-                      }}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        statusFilter === filter.value
-                          ? "bg-primary text-white"
-                          : "text-dark dark:bg-dark-background-secondary dark:text-dark-text bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700"
-                      }`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sort Controls */}
-              <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Sortierung
-                </label>
-                <div className="flex gap-2">
-                  <Select
-                    value={sortBy}
-                    onChange={(e) => {
-                      setSortBy(
-                        e.target.value as
-                          | "startDate"
-                          | "title"
-                          | "createdAt"
-                          | "status",
-                      );
-                      setPage(1);
-                    }}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:ring-1 focus:outline-none"
-                  >
-                    {sortOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                  <button
-                    onClick={toggleSortOrder}
-                    className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                  >
-                    {sortOrder === "asc" ? (
-                      <>
-                        <ArrowUpIcon className="h-4 w-4" />
-                        Aufsteigend
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownIcon className="h-4 w-4" />
-                        Absteigend
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
       {/* Loading State */}
       {isLoading && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="dark:border-dark-border dark:bg-dark-surface h-56 animate-pulse rounded-lg border border-gray-200 bg-gray-100"
+              className="dark:border-dark-border dark:bg-dark-surface h-52 animate-pulse rounded-lg border border-gray-200/70 bg-gray-100"
             />
           ))}
         </div>
@@ -487,7 +502,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
       {/* Courses Grid */}
       {!isLoading && data?.courses && data.courses.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
           {data.courses.map((course) => (
             <div key={course.id} className="relative">
               {selectionMode && (
@@ -538,10 +553,6 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 confirmedCount={course._count.participants}
                 createdBy={course.createdBy}
                 createdAt={new Date(course.createdAt)}
-                reviewer={course.reviewer}
-                reviewDate={
-                  course.reviewDate ? new Date(course.reviewDate) : null
-                }
               />
             </div>
           ))}
@@ -550,38 +561,44 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
       {/* Empty State */}
       {!isLoading && data?.courses && data.courses.length === 0 && (
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white py-12 text-center">
-          <SquareDashed className="h-12 w-12 text-gray-400 dark:text-gray-500" />
+        <div className="border-t border-gray-200/80 py-14 text-center dark:border-dark-border">
+          <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
           <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
             Keine Kurse gefunden
           </h3>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             {statusFilter !== "all"
-              ? "Es gibt keine Kurse mit diesem Status."
-              : "Es gibt noch keine Kurse."}
+              ? "Für diese Statusfilter gibt es keine Treffer."
+              : scheduleFilter === "active"
+                ? "Keine Kurse mehr im aktuellen Zeitraum. Versuche „Alle Zeiträume“ oder „Vergangen“, oder lege einen neuen Kurs an."
+                : scheduleFilter === "past"
+                  ? "Keine vergangenen Kurse gefunden."
+                  : "Es gibt noch keine Kurse."}
           </p>
         </div>
       )}
 
       {/* Pagination */}
       {data && data.pages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           <button
+            type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-background-secondary"
           >
             <ArrowLeftIcon className="h-4 w-4" />
           </button>
 
-          <span className="text-dark dark:text-dark-text text-sm">
+          <span className="text-dark dark:text-dark-text text-sm tabular-nums">
             Seite {page} von {data.pages}
           </span>
 
           <button
+            type="button"
             onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
             disabled={page === data.pages}
-            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-dark-background-secondary"
           >
             <ArrowRightIcon className="h-4 w-4" />
           </button>
@@ -665,9 +682,10 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                   Abbrechen
                 </button>
                 <button
+                  type="button"
                   onClick={handleBulkStatusChange}
                   disabled={!newStatus || bulkStatusChangeMutation.isPending}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+                  className="bg-primary hover:bg-primary-dark rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
                 >
                   {bulkStatusChangeMutation.isPending
                     ? "Ändern..."

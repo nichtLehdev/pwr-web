@@ -7,7 +7,6 @@ import {
   Tag,
   Users,
   User,
-  CheckCircle,
   Eye,
   Edit,
   ExternalLink,
@@ -32,11 +31,6 @@ interface DashboardCourseCardProps {
     displayName: string | null;
   } | null;
   createdAt?: Date;
-  reviewer?: {
-    id: string;
-    displayName: string | null;
-  } | null;
-  reviewDate?: Date | null;
 }
 
 const statusConfig: Record<
@@ -94,8 +88,6 @@ export default function DashboardCourseCard({
   confirmedCount,
   createdBy,
   createdAt,
-  reviewer,
-  reviewDate,
 }: DashboardCourseCardProps) {
   const districtColor = getDistrictColor(district);
   const statusInfo = statusConfig[status];
@@ -123,21 +115,29 @@ export default function DashboardCourseCard({
     return `${startStr} - ${endStr}`;
   };
 
-  return (
-    <div className="dark:border-dark-border dark:bg-dark-surface relative flex h-full flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md">
-      {/* Top Row: Status & District */}
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Badge */}
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusInfo.bgColor} ${statusInfo.textColor}`}
-          >
-            {statusInfo.label}
-          </span>
+  const creatorLine =
+    createdBy &&
+    `${createdBy.displayName || "Unbekannt"}${
+      createdAt
+        ? ` · ${new Date(createdAt).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}`
+        : ""
+    }`;
 
-          {/* Registration Status */}
+  const districtLabel = district ? `Bezirk ${district}` : "Übergreifend";
+
+  const metaIconClass = "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
+
+  return (
+    <div className="dark:border-dark-border dark:bg-dark-surface relative flex flex-col rounded-lg border border-gray-200/80 bg-white p-3.5 pb-4 shadow-sm transition-shadow hover:shadow-md dark:shadow-none">
+      <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
+          <span
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
+          >
+            <span className="truncate">{statusInfo.label}</span>
+          </span>
           {isRegistrationNotOpenYet && registrationOpen ? (
-            <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-semibold text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+            <span className="inline-flex shrink-0 rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-900 dark:text-purple-200">
               Öffnet{" "}
               {registrationOpensAt?.toLocaleDateString("de-DE", {
                 day: "2-digit",
@@ -145,137 +145,107 @@ export default function DashboardCourseCard({
               })}
             </span>
           ) : isEffectivelyOpen ? (
-            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-              Offen
+            <span className="inline-flex shrink-0 rounded-md bg-sky-500/10 px-2 py-1 text-xs font-medium text-sky-900 dark:text-sky-200">
+              Anmeldung offen
             </span>
           ) : (
-            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-              {isDeadlinePassed ? "Frist vorbei" : "Geschlossen"}
+            <span className="inline-flex shrink-0 rounded-md bg-gray-500/10 px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+              {isDeadlinePassed ? "Frist vorbei" : "Anmeldung zu"}
             </span>
           )}
-
-          {isFull && (
-            <span className="rounded-full bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+          {isFull ? (
+            <span className="inline-flex shrink-0 rounded-md bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-950 dark:text-amber-200">
               Ausgebucht
             </span>
-          )}
+          ) : null}
         </div>
-
-        {/* District Badge */}
         <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold text-white"
-          style={{ backgroundColor: districtColor }}
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium whitespace-nowrap leading-none text-gray-700 dark:text-gray-300"
+          title={districtLabel}
         >
-          {district ? `Bezirk ${district}` : "Übergreifend"}
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            style={{ backgroundColor: districtColor }}
+            aria-hidden
+          />
+          <span className="leading-none">{districtLabel}</span>
         </span>
       </div>
 
-      {/* Title */}
-      <h3 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-lg font-bold">
+      <h3 className="text-dark dark:text-dark-text mb-2.5 line-clamp-2 text-base font-semibold leading-snug tracking-tight sm:text-[1.0625rem]">
         {title}
       </h3>
 
-      {/* Meta Info */}
-      <div className="mb-3 space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0" />
-          <span>{formatDateRange()}</span>
+      <div className="mb-3 space-y-1.5 text-sm leading-snug text-gray-600 dark:text-gray-400">
+        <div className="flex gap-2">
+          <Calendar className={metaIconClass} aria-hidden />
+          <span className="min-w-0">{formatDateRange()}</span>
         </div>
-
-        {location && (
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>{location}</span>
+        {location ? (
+          <div className="flex gap-2">
+            <MapPin className={metaIconClass} aria-hidden />
+            <span className="min-w-0 break-words">{location}</span>
           </div>
-        )}
-
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 shrink-0" />
+        ) : null}
+        <div className="flex gap-2">
+          <Tag className={metaIconClass} aria-hidden />
           <span>{courseTypeLabels[courseType]}</span>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 shrink-0" />
+        <div className="flex gap-2">
+          <Users className={metaIconClass} aria-hidden />
           <span>
             {confirmedCount}
-            {maxParticipants && ` / ${maxParticipants}`} Teilnehmer
+            {maxParticipants != null ? ` / ${maxParticipants}` : ""}{" "}
+            Teilnehmer
           </span>
         </div>
-
-        {createdBy && (
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {createdBy.displayName || "Unbekannt"}
-              {createdAt && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(createdAt).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
-              )}
-            </span>
-          </div>
-        )}
-
-        {reviewer && (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {reviewer.displayName || "Unbekannt"}
-              {reviewDate && (
-                <span className="text-gray-400 dark:text-gray-500">
-                  {" "}
-                  •{" "}
-                  {new Date(reviewDate).toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                  })}
-                </span>
-              )}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Actions */}
-      <div className="mt-auto flex items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+      {creatorLine ? (
+        <p className="mb-3 flex items-center gap-2 text-xs leading-normal text-gray-500 dark:text-gray-400">
+          <User
+            className="size-[0.9375rem] shrink-0 text-gray-400 dark:text-gray-500"
+            aria-hidden
+            strokeWidth={1.75}
+          />
+          <span className="min-w-0 break-words">{creatorLine}</span>
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-gray-100 pt-3 dark:border-gray-700/60">
         <Link
           href={`/dashboard/courses/${id}`}
-          className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-medium transition-colors"
+          className="text-primary hover:text-primary-dark inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium transition-colors"
         >
-          <Eye className="mr-1 h-4 w-4" />
+          <Eye className="h-3.5 w-3.5" />
           Ansehen
         </Link>
 
         <Link
           href={`/dashboard/courses/${id}/edit`}
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <Edit className="mr-1 h-4 w-4" />
+          <Edit className="h-3.5 w-3.5" />
           Bearbeiten
         </Link>
 
         <Link
           href={`/dashboard/courses/${id}/participants`}
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
         >
-          <Users className="mr-1 h-4 w-4" />
+          <Users className="h-3.5 w-3.5" />
           Teilnehmer
         </Link>
 
         <Link
           href={`/mitmachen/kurse/${id}`}
-          className="ml-auto inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="ml-auto inline-flex items-center text-gray-500 transition-colors hover:text-primary dark:text-gray-500 dark:hover:text-primary"
           target="_blank"
+          rel="noopener noreferrer"
+          title="Öffentliche Kursseite"
+          aria-label="Öffentliche Kursseite öffnen"
         >
-          <ExternalLink className="mr-1 h-4 w-4" />
-          Öffentlich
+          <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
