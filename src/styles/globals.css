@@ -57,15 +57,42 @@ body.modal-open {
   padding-right: 1rem;
 }
 
-/* Overflow Fix für Mobile - aber sticky erlauben */
+/*
+ * Horizontal overflow: use `clip` instead of `hidden` so descendants can use
+ * `position: sticky` (Safari/Chromium treat overflow-x:hidden on html/body as
+ * blocking sticky). Still prevents sideways scroll from full-bleed sections.
+ */
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
   width: 100%;
 }
 
 body {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+/*
+ * Dashboard long forms: extra air below fixed shell for sticky UI.
+ * --main-padding-top is set on MainContent <main>.
+ */
+:root {
+  --dashboard-sticky-top-extra: 1.5rem;
+}
+
+/* Hash targets: shell + sticky pill nav (< xl); xl+ only needs shell + extra */
+.dashboard-form-scroll-anchor {
+  scroll-margin-top: calc(
+    var(--main-padding-top, 5rem) + 4rem + var(--dashboard-sticky-top-extra)
+  );
+}
+
+@media (min-width: 1280px) {
+  .dashboard-form-scroll-anchor {
+    scroll-margin-top: calc(
+      var(--main-padding-top, 5rem) + var(--dashboard-sticky-top-extra)
+    );
+  }
 }
 
 /* TipTap Editor Placeholder */
