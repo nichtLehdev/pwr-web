@@ -4,6 +4,7 @@
  * This seed script uses data extracted from a database backup
  */
 import "dotenv/config";
+import { CourseCollaboratorRole } from "~/generated/prisma/client";
 import { db } from "@/server/db";
 
 // Import all seed data from backup
@@ -587,9 +588,9 @@ async function main() {
     }
     console.log(`  ✓ Created ${coursesMap.size} courses`);
 
-    // 13. Seed Course Instructors (many-to-many)
-    console.log("👨‍🏫 Creating Course Instructors...");
-    let instructorLinks = 0;
+    // 13. Seed course team from legacy instructor links (STAFF collaborators)
+    console.log("👥 Creating course collaborators from backup instructor links...");
+    let teamLinks = 0;
     // UUID regex to filter out corrupted data
     const uuidRegex =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -607,22 +608,27 @@ async function main() {
         coursesMap.has(cleaned.A) &&
         usersMap.has(cleaned.B)
       ) {
+        const courseId = coursesMap.get(cleaned.A)!;
+        const userId = usersMap.get(cleaned.B)!;
         try {
-          await db.course.update({
-            where: { id: coursesMap.get(cleaned.A)! },
-            data: {
-              instructors: {
-                connect: { id: usersMap.get(cleaned.B)! },
-              },
+          await db.courseCollaborator.upsert({
+            where: {
+              courseId_userId: { courseId, userId },
             },
+            create: {
+              courseId,
+              userId,
+              role: CourseCollaboratorRole.STAFF,
+            },
+            update: {},
           });
-          instructorLinks++;
+          teamLinks++;
         } catch {
-          // Skip if already connected or other error
+          // Skip on conflict or other errors
         }
       }
     }
-    console.log(`  ✓ Linked ${instructorLinks} course instructors`);
+    console.log(`  ✓ Linked ${teamLinks} course team members (from backup instructors)`);
 
     // 14. Seed Course Custom Fields (depends on Course)
     console.log("📝 Creating Course Custom Fields...");
