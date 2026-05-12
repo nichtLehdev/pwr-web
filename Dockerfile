@@ -12,8 +12,8 @@ WORKDIR /app
 COPY package.json ./
 RUN corepack enable && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
 
-# Copy lockfile after package.json + corepack for better caching
-COPY pnpm-lock.yaml ./
+# Copy lockfile + workspace config (pnpm 11: allowBuilds / strictDepBuilds lives here)
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Copy prisma schema for generation
 COPY prisma ./prisma
