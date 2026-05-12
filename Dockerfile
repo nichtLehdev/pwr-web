@@ -1,7 +1,7 @@
 # ================================
 # Build stage
 # ================================
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Install dependencies needed for native modules
 RUN apk add --no-cache libc6-compat
@@ -41,7 +41,7 @@ RUN pnpm build
 # ================================
 # Production stage
 # ================================
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 
 # Install dependencies needed for runtime
 RUN apk add --no-cache libc6-compat
