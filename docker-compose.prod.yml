@@ -52,7 +52,10 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
-    command: ["pnpm", "prisma", "migrate", "deploy"]
+    # Invoke prisma directly (not via pnpm) to avoid pnpm 11's
+    # runDepsStatusCheck which tries to reinstall node_modules at startup.
+    command:
+      ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
     restart: "no"
 
   # ===========================================================================
@@ -74,7 +77,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
-    command: ["pnpm", "tsx", "prisma/post-migration-setup.ts"]
+    command:
+      ["node", "node_modules/tsx/dist/cli.mjs", "prisma/post-migration-setup.ts"]
     restart: "no"
 
   # ===========================================================================
@@ -100,7 +104,7 @@ services:
       BETTER_AUTH_GITHUB_CLIENT_ID: ${BETTER_AUTH_GITHUB_CLIENT_ID:-}
       BETTER_AUTH_GITHUB_CLIENT_SECRET: ${BETTER_AUTH_GITHUB_CLIENT_SECRET:-}
       SKIP_ENV_VALIDATION: 1
-    command: ["pnpm", "tsx", "prisma/seed.ts"]
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/seed.ts"]
     restart: "no"
 
   # ===========================================================================

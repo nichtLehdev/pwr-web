@@ -49,9 +49,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Create non-root user for security and give it ownership of the workdir.
-# pnpm 11's runDepsStatusCheck writes a temp file into the CWD on every
-# script invocation (e.g. `pnpm start`), so `/app` itself must be writable
-# by the non-root user, not just the files inside it.
+# /app itself must be writable by the runtime user (next may write to cwd
+# in some cases) — the COPY --chown lines below only chown the files
+# copied in, not the /app directory entry itself.
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs nextjs \
   && chown nextjs:nodejs /app
@@ -60,9 +60,11 @@ RUN addgroup --system --gid 1001 nodejs \
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# pnpm version must match package.json "packageManager" (same as builder)
+# We do NOT install corepack/pnpm in the runner. All runtime entrypoints
+# (next, prisma, tsx) are invoked directly via node_modules/.bin to avoid
+# pnpm 11's runDepsStatusCheck, which tries to wipe and reinstall
+# node_modules on every script invocation and fails in containers (no TTY).
 COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
-RUN corepack enable && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
 
 # Copy the full build output (non-standalone)
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
@@ -93,5 +95,6 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-# Start the application using next start
-CMD ["pnpm", "start"]
+# Start the application using next directly (no pnpm wrapper, see comment
+# above about runDepsStatusCheck).
+CMD ["node", "node_modules/next/dist/bin/next", "start"]
