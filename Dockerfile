@@ -48,9 +48,13 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create non-root user for security and give it ownership of the workdir.
+# pnpm 11's runDepsStatusCheck writes a temp file into the CWD on every
+# script invocation (e.g. `pnpm start`), so `/app` itself must be writable
+# by the non-root user, not just the files inside it.
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 --ingroup nodejs nextjs \
+  && chown nextjs:nodejs /app
 
 # Set production environment
 ENV NODE_ENV=production
