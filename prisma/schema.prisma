@@ -228,6 +228,7 @@ model TwoFactor {
   user        User     @relation("UserTwoFactor", fields: [userId], references: [id], onDelete: Cascade)
   secret      String? //@db.Text
   backupCodes String? //@db.Text
+  verified    Boolean? @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
