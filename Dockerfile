@@ -3,16 +3,17 @@
 # ================================
 FROM node:24-alpine AS builder
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
-
 # Install dependencies needed for native modules
 RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copy package files first for better caching
-COPY package.json pnpm-lock.yaml ./
+# pnpm version must match package.json "packageManager" (e.g. pnpm@11.1.1)
+COPY package.json ./
+RUN corepack enable && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
+
+# Copy lockfile after package.json + corepack for better caching
+COPY pnpm-lock.yaml ./
 
 # Copy prisma schema for generation
 COPY prisma ./prisma
@@ -42,9 +43,6 @@ RUN pnpm build
 # ================================
 FROM node:24-alpine AS runner
 
-# Install pnpm (needed for running the app)
-RUN corepack enable && corepack prepare pnpm@10.24.0 --activate
-
 # Install dependencies needed for runtime
 RUN apk add --no-cache libc6-compat
 
@@ -58,11 +56,14 @@ RUN adduser --system --uid 1001 nextjs
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# pnpm version must match package.json "packageManager" (same as builder)
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
+RUN corepack enable && corepack prepare "$(node -p "require('./package.json').packageManager")" --activate
+
 # Copy the full build output (non-standalone)
 COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./
 
 # Copy Prisma files for migrations
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
