@@ -85,45 +85,40 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
     }
   }
 
+  const hasHeroMeta =
+    ensemble.bezirk || ensemble.location?.city || ensemble.image?.url;
+
   return (
     <PublicPage
       title={ensemble.name}
       color={district}
+      heroSize="compact"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Chor finden", href: "/mitmachen/chor-finden" },
         { label: "Ensemble" },
       ]}
-    >
-      {/* Ensemble Info */}
-      <section
-        className="py-8 text-white md:py-12 lg:py-16"
-        style={{ backgroundColor: districtColor }}
-      >
-        <div className="container mx-auto px-4">
-          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <div className="mb-4 flex flex-wrap items-center gap-3">
-                {ensemble.bezirk && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    Bezirk {ensemble.bezirk.number}
-                    {ensemble.bezirk.name && ` (${ensemble.bezirk.shortName})`}
-                  </span>
-                )}
-                {ensemble.location?.city && (
-                  <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                    {ensemble.location.city}
-                    {ensemble.location.zipCode &&
-                      `, ${ensemble.location.zipCode}`}
-                  </span>
-                )}
-              </div>
+      description={
+        hasHeroMeta ? (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+              {ensemble.bezirk && (
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                  Bezirk {ensemble.bezirk.number}
+                  {ensemble.bezirk.name && ` (${ensemble.bezirk.shortName})`}
+                </span>
+              )}
+              {ensemble.location?.city && (
+                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                  {ensemble.location.city}
+                  {ensemble.location.zipCode &&
+                    `, ${ensemble.location.zipCode}`}
+                </span>
+              )}
             </div>
-
-            {/* Ensemble Image */}
             {ensemble.image?.url && (
-              <div className="flex shrink-0 flex-col gap-1">
-                <div className="relative h-32 w-32 overflow-hidden rounded-lg shadow-lg md:h-40 md:w-40">
+              <div className="flex shrink-0 flex-col gap-1 sm:items-end">
+                <div className="relative h-24 w-24 overflow-hidden rounded-lg shadow-lg sm:h-28 sm:w-28">
                   <Image
                     src={ensemble.image.url}
                     alt={ensemble.name}
@@ -135,14 +130,14 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                   copyright={ensemble.image.copyright}
                   creator={ensemble.image.creator}
                   showCreatorIcon
-                  className="max-w-40 text-right"
+                  className="max-w-28 text-right text-white/80"
                 />
               </div>
             )}
           </div>
-        </div>
-      </section>
-
+        ) : undefined
+      }
+    >
       {/* Content */}
       <section className="bg-background dark:bg-dark-background py-8 md:py-12 lg:py-16">
         <div className="container mx-auto max-w-5xl px-4">
