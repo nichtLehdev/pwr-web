@@ -76,8 +76,8 @@ export function CourseRegistrationClosedOverview({
 
             <Text style={paragraph}>
               Die Anmeldefrist für den folgenden Kurs ist abgelaufen. Im Anhang
-              finden Sie eine Excel-Liste aller Teilnehmenden (ohne
-              stornierte Anmeldungen).
+              finden Sie eine Excel-Liste aller Teilnehmenden (ohne stornierte
+              Anmeldungen).
             </Text>
 
             <Section style={courseInfo}>

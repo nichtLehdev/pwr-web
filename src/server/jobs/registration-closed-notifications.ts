@@ -115,7 +115,10 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
   }
 
   const stats = computeCourseRegistrationStats(course.registrations);
-  const exportRows = buildCourseParticipantsExportRows(course, course.registrations);
+  const exportRows = buildCourseParticipantsExportRows(
+    course,
+    course.registrations,
+  );
   const excelBuffer = buildCourseParticipantsExcelBuffer(exportRows);
   const dateStr = now.toISOString().split("T")[0];
   const filename = `${sanitizeCourseTitleForFilename(course.title)}_teilnehmer_${dateStr}.xls`;
@@ -123,9 +126,8 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
   const baseUrl = getBaseUrl();
   const participantsUrl = `${baseUrl}/dashboard/courses/${course.id}/participants`;
 
-  const { sendCourseRegistrationClosedOverviewEmail } = await import(
-    "@/server/email"
-  );
+  const { sendCourseRegistrationClosedOverviewEmail } =
+    await import("@/server/email");
 
   for (const email of recipients) {
     await sendCourseRegistrationClosedOverviewEmail({
