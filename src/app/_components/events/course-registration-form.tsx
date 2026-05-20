@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
-import { X, AlertTriangle } from "lucide-react";
+import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
@@ -365,19 +365,6 @@ export default function CourseRegistrationForm({
     { num: 3 as const, label: "Übersicht" },
   ];
 
-  const betaDisclaimer = (
-    <div className="rounded-r-lg border-l-4 border-yellow-400 bg-yellow-50 p-4 dark:bg-yellow-900/20">
-      <div className="flex gap-3">
-        <AlertTriangle className="h-5 w-5 shrink-0 text-yellow-500 dark:text-yellow-400" />
-        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          <strong>Hinweis:</strong> Dies ist eine Beta-Version der Website.
-          Anmeldungen und Buchungen sind noch nicht gültig und werden nicht
-          bearbeitet.
-        </p>
-      </div>
-    </div>
-  );
-
   const stepBody = (
     <>
       {currentStep === 1 && (
@@ -521,7 +508,6 @@ export default function CourseRegistrationForm({
             </div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-            <div className="mx-4 mt-4 sm:mx-6">{betaDisclaimer}</div>
             <div className="p-5 sm:p-6">{stepBody}</div>
           </div>
           <div className="dark:border-dark-border dark:bg-dark-background-secondary flex shrink-0 flex-col items-stretch justify-between gap-2 rounded-none border-t border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:gap-3 sm:rounded-b-xl sm:p-4">
@@ -599,11 +585,8 @@ export default function CourseRegistrationForm({
       </div>
 
       <div className="container mx-auto max-w-3xl px-4 py-5 pb-20 md:py-6 md:pb-24">
-        <div className="dark:bg-dark-surface dark:shadow-dark-border space-y-4 rounded-lg border border-gray-200 bg-white p-5 shadow-md sm:p-6">
-          {betaDisclaimer}
-          <div className="dark:border-dark-border border-t border-gray-200 pt-4">
-            {stepBody}
-          </div>
+        <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-200 bg-white p-5 shadow-md sm:p-6">
+          {stepBody}
         </div>
       </div>
 
