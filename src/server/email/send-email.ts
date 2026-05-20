@@ -1,12 +1,18 @@
 import { transporter, isEmailConfigured } from "./transporter";
 import type { SendMailOptions } from "nodemailer";
 
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer;
+}
+
 export interface EmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
   from?: string;
+  attachments?: EmailAttachment[];
 }
 
 export async function sendEmail(options: EmailOptions) {
@@ -24,6 +30,12 @@ export async function sendEmail(options: EmailOptions) {
     subject: options.subject,
     html: options.html,
     ...(options.text && { text: options.text }),
+    ...(options.attachments?.length && {
+      attachments: options.attachments.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+      })),
+    }),
   };
 
   try {
