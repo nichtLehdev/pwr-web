@@ -20,31 +20,6 @@ export type RegistrationClosedNotificationResult = {
   errors: Array<{ courseId: string; error: string }>;
 };
 
-function formatGermanDate(date: Date): string {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-}
-
-function formatGermanDateOnly(date: Date): string {
-  return new Intl.DateTimeFormat("de-DE", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
-}
-
-function formatPrice(price: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(price);
-}
-
 async function resolveRecipientEmails(course: {
   createdBy: { email: string } | null;
   collaborators: Array<{
