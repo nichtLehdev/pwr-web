@@ -227,7 +227,7 @@ export default function PublicShareButton({
               <div className="dark:bg-dark-surface dark:border-dark-border relative z-[10000] w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-xl">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-base font-semibold text-gray-900 dark:text-dark-text">
+                    <p className="dark:text-dark-text text-base font-semibold text-gray-900">
                       Link teilen
                     </p>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
