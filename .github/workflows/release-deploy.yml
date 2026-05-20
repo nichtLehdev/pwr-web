@@ -21,6 +21,7 @@ env:
   # Hardcode lowercase image name (GitHub doesn't provide lowercase variables)
   IMAGE_NAME: nichtlehdev/pwr-web
   BACKUP_IMAGE_NAME: nichtlehdev/pwr-backup
+  CRON_IMAGE_NAME: nichtlehdev/pwr-cron
 
 jobs:
   # ===========================================================================
@@ -101,6 +102,29 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Extract metadata for Cron Docker image
+        id: meta-cron
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.CRON_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push Cron Docker image
+        id: build-cron
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./scripts/Dockerfile.cron
+          push: true
+          tags: ${{ steps.meta-cron.outputs.tags }}
+          labels: ${{ steps.meta-cron.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
   # ===========================================================================
   # Deploy to Server
   # ===========================================================================
@@ -147,6 +171,7 @@ jobs:
             # Pull the latest images
             docker pull ghcr.io/nichtlehdev/pwr-web:latest
             docker pull ghcr.io/nichtlehdev/pwr-backup:latest
+            docker pull ghcr.io/nichtlehdev/pwr-cron:latest
 
             # Update the running containers
             docker compose -f docker-compose.prod.yml pull
@@ -182,5 +207,13 @@ jobs:
             else
               echo "❌ Backup container is not running"
               docker logs posaunenwerk-backup --tail 50
+              exit 1
+            fi
+
+            if docker ps | grep -q posaunenwerk-registration-closed-cron; then
+              echo "✅ Registration-closed cron container is running"
+            else
+              echo "❌ Registration-closed cron container is not running"
+              docker logs posaunenwerk-registration-closed-cron --tail 50
               exit 1
             fi
