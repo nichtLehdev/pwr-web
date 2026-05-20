@@ -31,6 +31,8 @@ export const env = createEnv({
     SMTP_USER: z.string().email().optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_FROM: z.string().email().optional(),
+    /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
+    CRON_SECRET: z.string().min(16).optional(),
   },
 
   /**
@@ -59,6 +61,7 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_FROM: process.env.SMTP_FROM,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

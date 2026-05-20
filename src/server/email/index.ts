@@ -8,6 +8,8 @@ import { SiblingDiscountApproved } from "./templates/sibling-discount-approved";
 import { SiblingDiscountRejected } from "./templates/sibling-discount-rejected";
 import { CourseRegistrationPendingDiscount } from "./templates/course-registration-pending-discount";
 import { CourseRegistrationCancelled } from "./templates/course-registration-cancelled";
+import { CourseRegistrationClosedOverview } from "./templates/course-registration-closed-overview";
+import type { CourseRegistrationStats } from "@/lib/course-participants-export";
 
 export async function sendVerificationEmail(
   email: string,
@@ -236,6 +238,46 @@ export async function sendCourseRegistrationCancelledEmail(
     to: email,
     subject: `Anmeldung storniert: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+  });
+}
+
+export async function sendCourseRegistrationClosedOverviewEmail(params: {
+  to: string;
+  courseTitle: string;
+  registrationDeadline: Date;
+  startDate: Date;
+  endDate: Date;
+  locationName: string | null;
+  maxParticipants: number | null;
+  allowWaitingList: boolean;
+  stats: CourseRegistrationStats;
+  participantsUrl: string;
+  attachment: { filename: string; content: Buffer };
+}) {
+  const html = await render(
+    CourseRegistrationClosedOverview({
+      courseTitle: params.courseTitle,
+      registrationDeadline: params.registrationDeadline,
+      startDate: params.startDate,
+      endDate: params.endDate,
+      locationName: params.locationName,
+      maxParticipants: params.maxParticipants,
+      allowWaitingList: params.allowWaitingList,
+      stats: params.stats,
+      participantsUrl: params.participantsUrl,
+    }),
+  );
+
+  return sendEmail({
+    to: params.to,
+    subject: `Anmeldefrist beendet: ${params.courseTitle} – Posaunenwerk Rheinland`,
+    html,
+    attachments: [
+      {
+        filename: params.attachment.filename,
+        content: params.attachment.content,
+      },
+    ],
   });
 }
 
