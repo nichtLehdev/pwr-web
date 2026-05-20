@@ -759,9 +759,9 @@ export default function CourseDetailView({
                       {course.priceOptions.map((option, idx) => (
                         <div
                           key={idx}
-                          className="dark:border-dark-border flex items-center justify-between border-b border-gray-200 pb-3 last:border-0"
+                          className="dark:border-dark-border flex items-start justify-between gap-3 border-b border-gray-200 pb-3 last:border-0"
                         >
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <p className="text-dark dark:text-dark-text font-semibold">
                               {option.label}
                             </p>
@@ -771,8 +771,8 @@ export default function CourseDetailView({
                               </p>
                             )}
                           </div>
-                          <p className="text-primary text-lg font-bold">
-                            {option.price.toFixed(2)} €
+                          <p className="text-primary shrink-0 text-lg font-bold whitespace-nowrap tabular-nums">
+                            {option.price.toFixed(2)}&nbsp;€
                           </p>
                         </div>
                       ))}

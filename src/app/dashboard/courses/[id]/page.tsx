@@ -838,9 +838,9 @@ export default function CourseDetailPage() {
                   {course.priceOptions.map((option) => (
                     <div
                       key={option.id}
-                      className="dark:border-dark-border flex items-center justify-between rounded-lg border border-gray-100 p-3"
+                      className="dark:border-dark-border flex items-start justify-between gap-3 rounded-lg border border-gray-100 p-3"
                     >
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <span className="dark:text-dark-text font-medium text-gray-900">
                           {option.label}
                         </span>
@@ -850,8 +850,8 @@ export default function CourseDetailPage() {
                           </p>
                         )}
                       </div>
-                      <span className="dark:text-dark-text font-semibold text-gray-900">
-                        {option.price.toFixed(2)} €
+                      <span className="dark:text-dark-text shrink-0 font-semibold whitespace-nowrap text-gray-900 tabular-nums">
+                        {option.price.toFixed(2)}&nbsp;€
                       </span>
                     </div>
                   ))}
