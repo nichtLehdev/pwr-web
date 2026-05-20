@@ -368,7 +368,8 @@ export default function NewEnsemblePage() {
                     placeholder="z.B. 13-01"
                   />
                   <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                    Eindeutige Chor-Nummer aus dem Posaunenwerk-Register (z.B. 13-01). Optional.
+                    Eindeutige Chor-Nummer aus dem Posaunenwerk-Register (z.B.
+                    13-01). Optional.
                   </p>
                 </div>
 
@@ -1125,7 +1126,8 @@ export default function NewEnsemblePage() {
                 placeholder="https://www.example.de"
               />
               <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
-                E-Mail und Telefon werden pro Person (Chorleitung / Ansprechpartner) gepflegt.
+                E-Mail und Telefon werden pro Person (Chorleitung /
+                Ansprechpartner) gepflegt.
               </p>
             </div>
           </div>

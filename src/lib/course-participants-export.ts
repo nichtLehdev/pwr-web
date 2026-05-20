@@ -131,11 +131,13 @@ export function buildCourseParticipantsExportRows(
 export function buildCourseParticipantsExcelBuffer(
   rows: Record<string, string>[],
 ): Buffer {
-  const headers = Object.keys(rows[0] ?? {
-    vorname: "",
-    nachname: "",
-    status: "",
-  });
+  const headers = Object.keys(
+    rows[0] ?? {
+      vorname: "",
+      nachname: "",
+      status: "",
+    },
+  );
   const csvContent = [
     headers.map(escapeCSVValue).join(";"),
     ...rows.map((row) =>
