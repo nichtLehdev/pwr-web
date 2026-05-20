@@ -22,8 +22,8 @@ function authorizeCron(request: NextRequest): boolean {
  * POST /api/cron/registration-closed
  *
  * Sends overview e-mails to course creators and ORGANIZER collaborators when
- * registrationDeadline has passed. Schedule hourly (or similar) via your host's
- * cron / systemd timer.
+ * registrationDeadline has passed. In Docker, use the
+ * registration-closed-cron compose service (default: every 6 hours).
  *
  * Optional: ?courseId=<uuid> to process a single course (e.g. for testing).
  * Requires Authorization: Bearer <CRON_SECRET> or ?secret=<CRON_SECRET>.
