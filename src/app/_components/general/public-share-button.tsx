@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import QRCode from "qrcode";
 import { createPortal } from "react-dom";
 import {
@@ -120,12 +121,18 @@ export default function PublicShareButton({
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [qrGeneration, setQrGeneration] = useState(0);
+  const [shareUrl, setShareUrl] = useState("");
   const moreOptsRef = useRef<HTMLDivElement>(null);
 
-  const url = useMemo(
-    () => (typeof window !== "undefined" ? window.location.href : ""),
-    [],
-  );
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const resolveShareUrl = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    const qs = searchParams.toString();
+    const path = pathname + (qs ? `?${qs}` : "");
+    return `${window.location.origin}${path}`;
+  }, [pathname, searchParams]);
 
   const hasNativeShare =
     typeof navigator !== "undefined" && typeof navigator.share === "function";
@@ -144,20 +151,20 @@ export default function PublicShareButton({
   }, [moreOptionsOpen]);
 
   useEffect(() => {
-    if (!shareOpen || !url) return;
+    if (!shareOpen || !shareUrl) return;
     let alive = true;
     const dark = document.documentElement.classList.contains("dark");
     const logoSrc = dark
       ? "/images/logo-icon-dark.svg"
       : "/images/logo-icon.svg";
 
-    void buildShareQrDataUrl(url, logoSrc).then((data) => {
+    void buildShareQrDataUrl(shareUrl, logoSrc).then((data) => {
       if (alive) setQrDataUrl(data);
     });
     return () => {
       alive = false;
     };
-  }, [shareOpen, url, qrGeneration]);
+  }, [shareOpen, shareUrl, qrGeneration]);
 
   useEffect(() => {
     if (!copied) return;
@@ -171,12 +178,14 @@ export default function PublicShareButton({
   };
 
   const onOpenShare = () => {
+    setShareUrl(resolveShareUrl());
+    setQrDataUrl("");
     setShareOpen(true);
   };
 
   const onCopy = async () => {
     if (typeof navigator === "undefined" || !navigator.clipboard) return;
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
   };
 
@@ -184,7 +193,7 @@ export default function PublicShareButton({
     if (typeof navigator === "undefined" || !navigator.share) return;
     setMoreOptionsOpen(false);
     try {
-      await navigator.share({ title, text: text || title, url });
+      await navigator.share({ title, text: text || title, url: shareUrl });
     } catch {
       /* user cancelled or transient failure — keep modal open */
     }
@@ -218,7 +227,7 @@ export default function PublicShareButton({
               <div className="dark:bg-dark-surface dark:border-dark-border relative z-[10000] w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-xl">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-dark dark:text-dark-text text-base font-semibold">
+                    <p className="text-base font-semibold text-gray-900 dark:text-dark-text">
                       Link teilen
                     </p>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -237,7 +246,7 @@ export default function PublicShareButton({
 
                 <div className="dark:border-dark-border mb-4 overflow-hidden rounded-lg border border-gray-200">
                   <div className="bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-gray-900/40 dark:text-gray-300">
-                    {url}
+                    {shareUrl}
                   </div>
                 </div>
 
@@ -308,6 +317,7 @@ export default function PublicShareButton({
                   <button
                     type="button"
                     onClick={() => {
+                      setShareUrl(resolveShareUrl());
                       setQrDataUrl("");
                       setQrGeneration((g) => g + 1);
                     }}
@@ -318,17 +328,17 @@ export default function PublicShareButton({
                   </button>
                 </div>
 
-                <div className="rounded-lg bg-white p-3">
+                <div className="dark:border-dark-border rounded-lg border border-gray-200 p-3 dark:bg-gray-900/40">
                   <div className="flex justify-center">
                     {qrDataUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={qrDataUrl}
                         alt="QR-Code zum Teilen"
-                        className="h-56 w-56"
+                        className="h-56 w-56 dark:invert"
                       />
                     ) : (
-                      <div className="flex h-56 w-56 items-center justify-center text-sm text-gray-500">
+                      <div className="flex h-56 w-56 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
                         QR-Code wird erstellt...
                       </div>
                     )}
@@ -338,7 +348,7 @@ export default function PublicShareButton({
                       <button
                         type="button"
                         onClick={downloadQrPng}
-                        className="dark:border-dark-border inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                       >
                         <DownloadIcon className="h-4 w-4" aria-hidden />
                         QR-Code laden (PNG)
