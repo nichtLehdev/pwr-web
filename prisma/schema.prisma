@@ -749,6 +749,11 @@ model Ensemble {
   name        String
   description String?
 
+  // External / federation identifier, e.g. "13-01" (Chor-Nr from the
+  // Posaunenwerk-wide registry). Unique when set; nullable for chors that
+  // don't have one yet.
+  internalId String? @unique
+
   // District
   bezirkId String?
   bezirk   Bezirk? @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
@@ -768,24 +773,29 @@ model Ensemble {
   rehearsalDay  String? // e.g., "Montag", "Dienstag", etc.
   rehearsalTime String? // e.g., "19:30", "20:00-21:30"
 
-  // Contact
-  contactEmail   String?
-  contactPhone   String?
+  // Ensemble-level contact
   contactWebsite String?
 
-  // Representative (defaults to conductor)
-  representativeId   String?
-  representative     User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
-  representativeName String? // Custom name if not linked to a user
+  // Conductor (Leitung). Either link to a User (preferred) or provide
+  // free-text name/email/phone for non-user conductors.
+  conductorId    String?
+  conductor      User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  conductorName  String?
+  conductorEmail String?
+  conductorPhone String?
+
+  // Representative (Ansprechpartner). Defaults to conductor if not set.
+  representativeId    String?
+  representative      User?   @relation("EnsembleRepresentative", fields: [representativeId], references: [id], onDelete: SetNull)
+  representativeName  String?
+  representativeEmail String?
+  representativePhone String?
 
   // Status
   isActive Boolean @default(true)
 
   // Relations
-  conductorId   String?
-  conductor     User?   @relation("EnsembleConductor", fields: [conductorId], references: [id], onDelete: SetNull)
-  conductorName String? // Custom name if not linked to a user
-  events        Event[]
+  events Event[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

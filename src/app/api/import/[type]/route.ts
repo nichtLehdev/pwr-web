@@ -207,15 +207,41 @@ export async function POST(
             const imageId = ensembleData.imageId as string | undefined;
             const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
 
+            const legacyContactEmail = ensembleData.contactEmail as
+              | string
+              | undefined;
+            const legacyContactPhone = ensembleData.contactPhone as
+              | string
+              | undefined;
+
             return await db.ensemble.create({
               data: {
                 name: ensembleData.name as string,
                 description: (ensembleData.description as string) || null,
+                internalId: (ensembleData.internalId as string) || null,
                 bezirkId: (ensembleData.bezirkId as string) || null,
                 locationId: (ensembleData.locationId as string) || null,
+                rehearsalDay: (ensembleData.rehearsalDay as string) || null,
+                rehearsalTime: (ensembleData.rehearsalTime as string) || null,
+                contactWebsite: (ensembleData.contactWebsite as string) || null,
                 conductorId: (ensembleData.conductorId as string) || null,
+                conductorName: (ensembleData.conductorName as string) || null,
+                conductorEmail:
+                  (ensembleData.conductorEmail as string) ||
+                  legacyContactEmail ||
+                  null,
+                conductorPhone:
+                  (ensembleData.conductorPhone as string) ||
+                  legacyContactPhone ||
+                  null,
                 representativeId:
                   (ensembleData.representativeId as string) || null,
+                representativeName:
+                  (ensembleData.representativeName as string) || null,
+                representativeEmail:
+                  (ensembleData.representativeEmail as string) || null,
+                representativePhone:
+                  (ensembleData.representativePhone as string) || null,
                 imageId: newImageId,
                 isActive: (ensembleData.isActive as boolean) ?? true,
               },

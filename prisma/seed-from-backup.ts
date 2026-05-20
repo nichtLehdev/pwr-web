@@ -4,8 +4,8 @@
  * This seed script uses data extracted from a database backup
  */
 import "dotenv/config";
-import { CourseCollaboratorRole } from "~/generated/prisma/client";
-import { db } from "@/server/db";
+import { CourseCollaboratorRole } from "../generated/prisma/client";
+import { db } from "../src/server/db";
 
 // Import all seed data from backup
 import { AuswahlChorSeedData } from "./seed-data-from-backup/AuswahlChor";
@@ -107,9 +107,12 @@ function convertValue(value: any, fieldName: string): any {
     "authorName",
     "rehearsalDay",
     "rehearsalTime",
-    "contactEmail",
-    "contactPhone",
     "contactWebsite",
+    "conductorEmail",
+    "conductorPhone",
+    "representativeEmail",
+    "representativePhone",
+    "internalId",
     "audioSample",
     "identifier",
     "value",
@@ -208,11 +211,14 @@ function convertValue(value: any, fieldName: string): any {
   return value;
 }
 
+/** Loose row type after backup field conversion (FK remapping, nulls, etc.). */
+type CleanedSeedRow = Record<string, any>;
+
 /**
  * Clean and convert a data object
  */
-function cleanData<T extends Record<string, any>>(data: T): Partial<T> {
-  const cleaned: any = {};
+function cleanData<T extends Record<string, any>>(data: T): CleanedSeedRow {
+  const cleaned: CleanedSeedRow = {};
   for (const [key, value] of Object.entries(data)) {
     cleaned[key] = convertValue(value, key);
   }
@@ -222,7 +228,7 @@ function cleanData<T extends Record<string, any>>(data: T): Partial<T> {
 /**
  * Helper to upsert a record (create or update if exists)
  */
-async function upsertRecord<T extends { id: string }>(
+async function upsertRecord<T extends Record<string, any> & { id: string }>(
   model: {
     upsert: (args: { where: any; update: any; create: any }) => Promise<T>;
   },
@@ -412,6 +418,18 @@ async function main() {
       } else {
         cleaned.representativeId = null;
       }
+
+      // Migrate legacy ensemble-level contactEmail/contactPhone into the new
+      // per-person conductor fields. Mirrors the SQL migration.
+      const legacy = cleaned as Record<string, unknown>;
+      if (legacy.contactEmail && !legacy.conductorEmail) {
+        legacy.conductorEmail = legacy.contactEmail;
+      }
+      if (legacy.contactPhone && !legacy.conductorPhone) {
+        legacy.conductorPhone = legacy.contactPhone;
+      }
+      delete legacy.contactEmail;
+      delete legacy.contactPhone;
 
       const created = await upsertRecord(db.ensemble, cleaned);
       ensemblesMap.set(data.id, created.id);
@@ -910,24 +928,26 @@ async function main() {
     for (const data of NewsletterSubscriberSeedData) {
       const cleaned = cleanData(data);
       // Skip records with null, invalid, or non-email values (required field)
+      const subscriberId =
+        typeof cleaned.id === "string" ? cleaned.id : String(cleaned.id ?? "");
       if (
         !cleaned.email ||
         cleaned.email === "N" ||
         cleaned.email === "\\N" ||
         cleaned.email === null ||
+        typeof cleaned.email !== "string" ||
         !cleaned.email.includes("@") ||
-        cleaned.id === "." ||
-        cleaned.id === "--" ||
-        cleaned.id.includes("-- Data for")
+        subscriberId === "." ||
+        subscriberId === "--" ||
+        subscriberId.includes("-- Data for")
       ) {
         continue;
       }
       // Ensure isActive is boolean
       if (typeof cleaned.isActive !== "boolean") {
+        const rawActive = cleaned.isActive;
         cleaned.isActive =
-          cleaned.isActive === "t" ||
-          cleaned.isActive === true ||
-          cleaned.isActive === "true";
+          rawActive === "t" || rawActive === true || rawActive === "true";
       }
       await upsertRecord(db.newsletterSubscriber, cleaned, "email");
       subscriberCount++;

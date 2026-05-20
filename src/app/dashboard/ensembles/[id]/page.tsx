@@ -141,6 +141,11 @@ export default function EnsembleDetailPage() {
               {ensemble.bezirk.name}
             </span>
           )}
+          {ensemble.internalId && (
+            <span className="dark:bg-dark-background-secondary dark:text-dark-muted inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+              Chor-Nr {ensemble.internalId}
+            </span>
+          )}
         </div>
       </div>
 
@@ -206,6 +211,40 @@ export default function EnsembleDetailPage() {
               Keine Chorleitung zugewiesen
             </p>
           )}
+          {(ensemble.conductorEmail || ensemble.conductorPhone) && (
+            <dl className="dark:border-dark-border mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
+              {ensemble.conductorEmail && (
+                <div className="flex items-center gap-2">
+                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                    E-Mail
+                  </dt>
+                  <dd>
+                    <a
+                      href={`mailto:${ensemble.conductorEmail}`}
+                      className="text-primary hover:underline"
+                    >
+                      {ensemble.conductorEmail}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {ensemble.conductorPhone && (
+                <div className="flex items-center gap-2">
+                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                    Telefon
+                  </dt>
+                  <dd>
+                    <a
+                      href={`tel:${ensemble.conductorPhone}`}
+                      className="text-primary hover:underline"
+                    >
+                      {ensemble.conductorPhone}
+                    </a>
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
         </div>
 
         {/* Representative */}
@@ -246,20 +285,50 @@ export default function EnsembleDetailPage() {
                 <p className="dark:text-dark-text font-medium text-gray-900">
                   {ensemble.representative.displayName}
                 </p>
-                {ensemble.representative.email && (
-                  <a
-                    href={`mailto:${ensemble.representative.email}`}
-                    className="text-primary text-sm hover:underline"
-                  >
-                    {ensemble.representative.email}
-                  </a>
-                )}
               </div>
             </div>
           ) : (
             <p className="dark:text-dark-muted text-gray-500 italic">
               Kein Ansprechpartner zugewiesen
             </p>
+          )}
+          {(ensemble.representativeEmail ||
+            ensemble.representativePhone ||
+            ensemble.representative?.email) && (
+            <dl className="dark:border-dark-border mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
+              {(ensemble.representativeEmail ||
+                ensemble.representative?.email) && (
+                <div className="flex items-center gap-2">
+                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                    E-Mail
+                  </dt>
+                  <dd>
+                    <a
+                      href={`mailto:${ensemble.representativeEmail ?? ensemble.representative?.email}`}
+                      className="text-primary hover:underline"
+                    >
+                      {ensemble.representativeEmail ??
+                        ensemble.representative?.email}
+                    </a>
+                  </dd>
+                </div>
+              )}
+              {ensemble.representativePhone && (
+                <div className="flex items-center gap-2">
+                  <dt className="dark:text-dark-muted w-16 text-gray-500">
+                    Telefon
+                  </dt>
+                  <dd>
+                    <a
+                      href={`tel:${ensemble.representativePhone}`}
+                      className="text-primary hover:underline"
+                    >
+                      {ensemble.representativePhone}
+                    </a>
+                  </dd>
+                </div>
+              )}
+            </dl>
           )}
         </div>
       </div>
@@ -335,67 +404,22 @@ export default function EnsembleDetailPage() {
         </dl>
       </div>
 
-      {/* Contact Information */}
-      <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-          Kontaktdaten
-        </h2>
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
-              E-Mail
-            </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {ensemble.contactEmail ? (
-                <a
-                  href={`mailto:${ensemble.contactEmail}`}
-                  className="text-primary hover:underline"
-                >
-                  {ensemble.contactEmail}
-                </a>
-              ) : (
-                "–"
-              )}
-            </dd>
-          </div>
-          <div>
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
-              Telefon
-            </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {ensemble.contactPhone ? (
-                <a
-                  href={`tel:${ensemble.contactPhone}`}
-                  className="text-primary hover:underline"
-                >
-                  {ensemble.contactPhone}
-                </a>
-              ) : (
-                "–"
-              )}
-            </dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="dark:text-dark-muted text-sm text-gray-500">
-              Website
-            </dt>
-            <dd className="dark:text-dark-text font-medium text-gray-900">
-              {ensemble.contactWebsite ? (
-                <a
-                  href={ensemble.contactWebsite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  {ensemble.contactWebsite}
-                </a>
-              ) : (
-                "–"
-              )}
-            </dd>
-          </div>
-        </dl>
-      </div>
+      {/* Website */}
+      {ensemble.contactWebsite && (
+        <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+            Website
+          </h2>
+          <a
+            href={ensemble.contactWebsite}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {ensemble.contactWebsite}
+          </a>
+        </div>
+      )}
 
       {/* Upcoming Events */}
       {ensemble.events && ensemble.events.length > 0 && (

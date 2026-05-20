@@ -166,8 +166,10 @@ export async function GET(
             imageUrl: ensemble.image?.url,
             locationName: ensemble.location?.name,
             bezirkName: ensemble.bezirk?.name,
-            conductorEmail: ensemble.conductor?.email,
-            representativeEmail: ensemble.representative?.email,
+            conductorEmail:
+              ensemble.conductor?.email ?? ensemble.conductorEmail,
+            representativeEmail:
+              ensemble.representative?.email ?? ensemble.representativeEmail,
           })),
           exportedAt: new Date().toISOString(),
           count: ensembles.length,
