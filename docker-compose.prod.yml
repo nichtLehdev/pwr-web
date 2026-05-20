@@ -137,9 +137,7 @@ services:
   # Registration-closed e-mails (every 6h, calls app cron API)
   # ===========================================================================
   registration-closed-cron:
-    build:
-      context: .
-      dockerfile: scripts/Dockerfile.cron
+    image: ghcr.io/nichtlehdev/pwr-cron:latest
     container_name: posaunenwerk-registration-closed-cron
     restart: unless-stopped
     init: true
