@@ -656,10 +656,15 @@ function ChorFindenContent() {
                                 </span>
                               </div>
                             )}
-                            {choir.contactPhone && (
+                            {(choir.representativePhone ||
+                              choir.conductorPhone) && (
                               <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
                                 <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                <span>Telefon: {choir.contactPhone}</span>
+                                <span>
+                                  Telefon:{" "}
+                                  {choir.representativePhone ??
+                                    choir.conductorPhone}
+                                </span>
                               </div>
                             )}
                             {choir.contactWebsite && (
@@ -679,7 +684,10 @@ function ChorFindenContent() {
 
                           <Link
                             href={`mailto:${
-                              choir.representative?.email || choir.contactEmail
+                              choir.representative?.email ??
+                              choir.representativeEmail ??
+                              choir.conductorEmail ??
+                              ""
                             }`}
                             className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
                           >

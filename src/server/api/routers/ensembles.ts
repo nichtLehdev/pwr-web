@@ -141,6 +141,7 @@ export const ensemblesRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1).max(200),
         description: z.string().max(5000).optional(),
+        internalId: z.string().max(50).optional(),
         bezirkId: z.string().optional(),
         imageId: z.string().optional(),
         locationId: z.string().optional(),
@@ -154,17 +155,23 @@ export const ensemblesRouter = createTRPCRouter({
             }),
           )
           .optional(),
-        contactEmail: z.string().email().optional(),
-        contactPhone: z
+        contactWebsite: z.string().url().optional(),
+        conductorId: z.string().optional(),
+        conductorName: z.string().max(200).optional(),
+        conductorEmail: z.string().email().optional(),
+        conductorPhone: z
           .string()
           .max(50)
           .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
           .optional(),
-        contactWebsite: z.string().url().optional(),
-        conductorId: z.string().optional(),
-        conductorName: z.string().max(200).optional(),
         representativeId: z.string().optional(),
         representativeName: z.string().max(200).optional(),
+        representativeEmail: z.string().email().optional(),
+        representativePhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional(),
         isActive: z.boolean().default(true),
       }),
     )
@@ -198,6 +205,7 @@ export const ensemblesRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().min(1).max(200).optional(),
         description: z.string().max(5000).optional(),
+        internalId: z.string().max(50).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
         imageId: z.string().optional().nullable(),
         locationId: z.string().optional().nullable(),
@@ -211,17 +219,25 @@ export const ensemblesRouter = createTRPCRouter({
             }),
           )
           .optional(),
-        contactEmail: z.string().email().optional().nullable(),
-        contactPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
         contactWebsite: z.string().url().optional().nullable(),
         conductorId: z.string().optional().nullable(),
         conductorName: z.string().max(200).optional().nullable(),
+        conductorEmail: z.string().email().optional().nullable(),
+        conductorPhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional()
+          .nullable(),
         representativeId: z.string().optional().nullable(),
         representativeName: z.string().max(200).optional().nullable(),
+        representativeEmail: z.string().email().optional().nullable(),
+        representativePhone: z
+          .string()
+          .max(50)
+          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
+          .optional()
+          .nullable(),
         isActive: z.boolean().optional(),
       }),
     )
@@ -351,8 +367,11 @@ export const ensemblesRouter = createTRPCRouter({
           imageUrl: ensemble.image?.url,
           locationName: ensemble.location?.name,
           bezirkName: ensemble.bezirk?.name,
-          conductorEmail: ensemble.conductor?.email,
-          representativeEmail: ensemble.representative?.email,
+          // Prefer the linked user's email; fall back to the stored
+          // conductor/representative email for non-user contacts.
+          conductorEmail: ensemble.conductor?.email ?? ensemble.conductorEmail,
+          representativeEmail:
+            ensemble.representative?.email ?? ensemble.representativeEmail,
         })),
         exportedAt: new Date().toISOString(),
         count: ensembles.length,
@@ -367,18 +386,21 @@ export const ensemblesRouter = createTRPCRouter({
           z.object({
             name: z.string(),
             description: z.string().optional().nullable(),
+            internalId: z.string().optional().nullable(),
             bezirkId: z.string().optional().nullable(),
             imageId: z.string().optional().nullable(),
             locationId: z.string().optional().nullable(),
             rehearsalDay: z.string().optional().nullable(),
             rehearsalTime: z.string().optional().nullable(),
-            contactEmail: z.string().email().optional().nullable(),
-            contactPhone: z.string().optional().nullable(),
             contactWebsite: z.string().url().optional().nullable(),
             conductorId: z.string().optional().nullable(),
             conductorName: z.string().optional().nullable(),
+            conductorEmail: z.string().email().optional().nullable(),
+            conductorPhone: z.string().optional().nullable(),
             representativeId: z.string().optional().nullable(),
             representativeName: z.string().optional().nullable(),
+            representativeEmail: z.string().email().optional().nullable(),
+            representativePhone: z.string().optional().nullable(),
             isActive: z.boolean().optional(),
             originalId: z.string().optional(),
           }),

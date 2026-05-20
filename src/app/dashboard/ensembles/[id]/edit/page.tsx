@@ -79,6 +79,7 @@ export default function EditEnsemblePage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [internalId, setInternalId] = useState<string | null>("");
   const [bezirkId, setBezirkId] = useState<string | null>("");
   const [imageId, setImageId] = useState<string | null>("");
   const [imageUrl, setImageUrl] = useState("");
@@ -97,8 +98,12 @@ export default function EditEnsemblePage() {
     "Samstag",
     "Sonntag",
   ];
-  const [contactEmail, setContactEmail] = useState<string | null>("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [conductorEmail, setConductorEmail] = useState<string | null>("");
+  const [conductorPhone, setConductorPhone] = useState("");
+  const [representativeEmail, setRepresentativeEmail] = useState<string | null>(
+    "",
+  );
+  const [representativePhone, setRepresentativePhone] = useState("");
   const [contactWebsite, setContactWebsite] = useState<string | null>("");
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState("");
@@ -147,8 +152,11 @@ export default function EditEnsemblePage() {
           time,
         })),
       );
-      setContactEmail(ensemble.contactEmail);
-      setContactPhone(ensemble.contactPhone ?? "");
+      setInternalId(ensemble.internalId ?? "");
+      setConductorEmail(ensemble.conductorEmail);
+      setConductorPhone(ensemble.conductorPhone ?? "");
+      setRepresentativeEmail(ensemble.representativeEmail);
+      setRepresentativePhone(ensemble.representativePhone ?? "");
       setContactWebsite(ensemble.contactWebsite);
       setConductorId(ensemble.conductorId);
       setRepresentativeId(ensemble.representativeId);
@@ -337,17 +345,20 @@ export default function EditEnsemblePage() {
                 })),
               )
           : undefined,
-      contactEmail: contactEmail?.trim() || null,
-      contactPhone: contactPhone.trim() || undefined,
+      internalId: internalId?.trim() || null,
       contactWebsite: contactWebsite?.trim() || null,
       conductorId: useCustomConductor ? null : conductorId || null,
       conductorName: useCustomConductor ? conductorName.trim() || null : null,
+      conductorEmail: conductorEmail?.trim() || null,
+      conductorPhone: conductorPhone.trim() || null,
       representativeId: useCustomRepresentative
         ? null
         : representativeId || null,
       representativeName: useCustomRepresentative
         ? representativeName.trim() || null
         : null,
+      representativeEmail: representativeEmail?.trim() || null,
+      representativePhone: representativePhone.trim() || null,
       isActive,
     });
   };
@@ -431,6 +442,24 @@ export default function EditEnsemblePage() {
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="z.B. Posaunenchor Musterstadt"
                 />
+              </div>
+
+              {/* Internal ID (Chor-Nr from Posaunenwerk registry) */}
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Chor-Nr (intern)
+                </label>
+                <input
+                  type="text"
+                  value={internalId ?? ""}
+                  onChange={(e) => setInternalId(e.target.value || null)}
+                  maxLength={50}
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  placeholder="z.B. 13-01"
+                />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Eindeutige Chor-Nummer aus dem Posaunenwerk-Register (z.B. 13-01). Optional.
+                </p>
               </div>
 
               {/* Description */}
@@ -663,6 +692,39 @@ export default function EditEnsemblePage() {
                     ✓ Benutzerdefinierte Chorleitung
                   </p>
                 )}
+
+                {/* Conductor contact (optional, useful for non-user conductors) */}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                      E-Mail (Chorleitung)
+                    </label>
+                    <input
+                      type="email"
+                      value={conductorEmail ?? ""}
+                      onChange={(e) =>
+                        setConductorEmail(e.target.value || null)
+                      }
+                      maxLength={255}
+                      placeholder="leitung@example.de"
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                      Telefon (Chorleitung)
+                    </label>
+                    <input
+                      type="tel"
+                      value={conductorPhone}
+                      onChange={(e) => setConductorPhone(e.target.value)}
+                      maxLength={50}
+                      pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                      placeholder="+49 123 456789"
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Representative */}
@@ -788,6 +850,39 @@ export default function EditEnsemblePage() {
                     ✓ Benutzerdefinierter Ansprechpartner
                   </p>
                 )}
+
+                {/* Representative contact (optional, useful for non-user representatives) */}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                      E-Mail (Ansprechpartner)
+                    </label>
+                    <input
+                      type="email"
+                      value={representativeEmail ?? ""}
+                      onChange={(e) =>
+                        setRepresentativeEmail(e.target.value || null)
+                      }
+                      maxLength={255}
+                      placeholder="ap@example.de"
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                      Telefon (Ansprechpartner)
+                    </label>
+                    <input
+                      type="tel"
+                      value={representativePhone}
+                      onChange={(e) => setRepresentativePhone(e.target.value)}
+                      maxLength={50}
+                      pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                      placeholder="+49 123 456789"
+                      className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1121,48 +1216,15 @@ export default function EditEnsemblePage() {
               )}
             </div>
 
-            {/* Contact */}
+            {/* Website (ensemble-level) */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Kontaktdaten
+                Website
               </h2>
 
-              {/* Email */}
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={contactEmail ?? ""}
-                  onChange={(e) => setContactEmail(e.target.value || null)}
-                  maxLength={255}
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="kontakt@example.de"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Telefon
-                </label>
-                <input
-                  type="tel"
-                  value={contactPhone}
-                  onChange={(e) => setContactPhone(e.target.value)}
-                  maxLength={50}
-                  pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
-                  title="Bitte geben Sie eine gültige Telefonnummer ein"
-                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                  placeholder="+49 123 456789"
-                />
-              </div>
-
-              {/* Website */}
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Website
+                  Website des Chores
                 </label>
                 <input
                   type="url"
@@ -1172,6 +1234,9 @@ export default function EditEnsemblePage() {
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                   placeholder="https://www.example.de"
                 />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  E-Mail und Telefon werden pro Person (Chorleitung / Ansprechpartner) gepflegt.
+                </p>
               </div>
             </div>
           </div>

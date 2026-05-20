@@ -40,10 +40,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "generated",
-    "prisma/seed-from-backup.ts",
-    "scripts/**/*.cjs"
-  ]
+  "exclude": ["node_modules", "generated", "scripts/**/*.cjs"]
 }

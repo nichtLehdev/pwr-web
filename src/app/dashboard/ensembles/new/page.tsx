@@ -81,6 +81,7 @@ export default function NewEnsemblePage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [internalId, setInternalId] = useState("");
   const [bezirkId, setBezirkId] = useState("");
   const [imageId, setImageId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -99,8 +100,10 @@ export default function NewEnsemblePage() {
     "Samstag",
     "Sonntag",
   ];
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
+  const [conductorEmail, setConductorEmail] = useState("");
+  const [conductorPhone, setConductorPhone] = useState("");
+  const [representativeEmail, setRepresentativeEmail] = useState("");
+  const [representativePhone, setRepresentativePhone] = useState("");
   const [contactWebsite, setContactWebsite] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState("");
@@ -271,23 +274,26 @@ export default function NewEnsemblePage() {
     createMutation.mutate({
       name: name.trim(),
       description: description.trim() || undefined,
+      internalId: internalId.trim() || undefined,
       bezirkId: bezirkId || undefined,
       imageId: imageId || undefined,
       locationId: locationId || undefined,
       rehearsalSchedules: transformedRehearsalSchedules,
-      contactEmail: contactEmail.trim() || undefined,
-      contactPhone: contactPhone.trim() || undefined,
       contactWebsite: contactWebsite.trim() || undefined,
       conductorId: useCustomConductor ? undefined : conductorId || undefined,
       conductorName: useCustomConductor
         ? conductorName.trim() || undefined
         : undefined,
+      conductorEmail: conductorEmail.trim() || undefined,
+      conductorPhone: conductorPhone.trim() || undefined,
       representativeId: useCustomRepresentative
         ? undefined
         : representativeId || undefined,
       representativeName: useCustomRepresentative
         ? representativeName.trim() || undefined
         : undefined,
+      representativeEmail: representativeEmail.trim() || undefined,
+      representativePhone: representativePhone.trim() || undefined,
       isActive,
     });
   };
@@ -349,6 +355,21 @@ export default function NewEnsemblePage() {
                     maxLength={200}
                     placeholder="z.B. Posaunenchor Musterstadt"
                   />
+                </div>
+
+                {/* Internal ID (Chor-Nr from Posaunenwerk registry) */}
+                <div>
+                  <Label>Chor-Nr (intern)</Label>
+                  <Input
+                    type="text"
+                    value={internalId}
+                    onChange={(e) => setInternalId(e.target.value)}
+                    maxLength={50}
+                    placeholder="z.B. 13-01"
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Eindeutige Chor-Nummer aus dem Posaunenwerk-Register (z.B. 13-01). Optional.
+                  </p>
                 </div>
 
                 {/* Description */}
@@ -583,6 +604,37 @@ export default function NewEnsemblePage() {
                   ✓ Benutzerdefinierte Chorleitung
                 </p>
               )}
+
+              {/* Conductor contact (optional, useful for non-user conductors) */}
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                    E-Mail (Chorleitung)
+                  </label>
+                  <input
+                    type="email"
+                    value={conductorEmail}
+                    onChange={(e) => setConductorEmail(e.target.value)}
+                    maxLength={255}
+                    placeholder="leitung@example.de"
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                    Telefon (Chorleitung)
+                  </label>
+                  <input
+                    type="tel"
+                    value={conductorPhone}
+                    onChange={(e) => setConductorPhone(e.target.value)}
+                    maxLength={50}
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                    placeholder="+49 123 456789"
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Representative */}
@@ -708,6 +760,37 @@ export default function NewEnsemblePage() {
                   ✓ Benutzerdefinierter Ansprechpartner
                 </p>
               )}
+
+              {/* Representative contact (optional, useful for non-user representatives) */}
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                    E-Mail (Ansprechpartner)
+                  </label>
+                  <input
+                    type="email"
+                    value={representativeEmail}
+                    onChange={(e) => setRepresentativeEmail(e.target.value)}
+                    maxLength={255}
+                    placeholder="ap@example.de"
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-xs font-medium text-gray-700">
+                    Telefon (Ansprechpartner)
+                  </label>
+                  <input
+                    type="tel"
+                    value={representativePhone}
+                    onChange={(e) => setRepresentativePhone(e.target.value)}
+                    maxLength={50}
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
+                    placeholder="+49 123 456789"
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1023,48 +1106,15 @@ export default function NewEnsemblePage() {
             )}
           </div>
 
-          {/* Contact */}
+          {/* Website (ensemble-level) */}
           <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Kontaktdaten
+              Website
             </h2>
 
-            {/* Email */}
             <div>
               <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                E-Mail
-              </label>
-              <input
-                type="email"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
-                maxLength={255}
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="kontakt@example.de"
-              />
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Telefon
-              </label>
-              <input
-                type="tel"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                maxLength={50}
-                pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*"
-                title="Bitte geben Sie eine gültige Telefonnummer ein"
-                className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                placeholder="+49 123 456789"
-              />
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Website
+                Website des Chores
               </label>
               <input
                 type="url"
@@ -1074,6 +1124,9 @@ export default function NewEnsemblePage() {
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                 placeholder="https://www.example.de"
               />
+              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                E-Mail und Telefon werden pro Person (Chorleitung / Ansprechpartner) gepflegt.
+              </p>
             </div>
           </div>
         </div>

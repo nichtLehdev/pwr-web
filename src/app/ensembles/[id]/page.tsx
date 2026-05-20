@@ -403,7 +403,10 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
             {/* Sidebar */}
             <div className="space-y-6">
               {/* Conductor */}
-              {(ensemble.conductorName || ensemble.conductor) && (
+              {(ensemble.conductorName ||
+                ensemble.conductor ||
+                ensemble.conductorEmail ||
+                ensemble.conductorPhone) && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Chorleitung
@@ -449,11 +452,38 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                       </div>
                     </div>
                   ) : null}
+                  {(ensemble.conductorEmail || ensemble.conductorPhone) && (
+                    <div className="mt-3 space-y-2 text-sm">
+                      {ensemble.conductorEmail && (
+                        <a
+                          href={`mailto:${ensemble.conductorEmail}`}
+                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                        >
+                          <MailIcon className="h-4 w-4 shrink-0" />
+                          <span className="break-all">
+                            {ensemble.conductorEmail}
+                          </span>
+                        </a>
+                      )}
+                      {ensemble.conductorPhone && (
+                        <a
+                          href={`tel:${ensemble.conductorPhone}`}
+                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                        >
+                          <PhoneIcon className="h-4 w-4 shrink-0" />
+                          <span>{ensemble.conductorPhone}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Representative */}
-              {(ensemble.representativeName || ensemble.representative) && (
+              {(ensemble.representativeName ||
+                ensemble.representative ||
+                ensemble.representativeEmail ||
+                ensemble.representativePhone) && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Ansprechpartner
@@ -492,64 +522,57 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                         <p className="dark:text-dark-text font-medium text-gray-900">
                           {ensemble.representative.displayName}
                         </p>
-                        {ensemble.representative.email && (
-                          <a
-                            href={`mailto:${ensemble.representative.email}`}
-                            className="text-primary mt-1 text-sm hover:underline"
-                          >
-                            {ensemble.representative.email}
-                          </a>
-                        )}
                       </div>
                     </div>
                   ) : null}
+                  {(ensemble.representativeEmail ||
+                    ensemble.representativePhone ||
+                    ensemble.representative?.email) && (
+                    <div className="mt-3 space-y-2 text-sm">
+                      {(ensemble.representativeEmail ||
+                        ensemble.representative?.email) && (
+                        <a
+                          href={`mailto:${ensemble.representativeEmail ?? ensemble.representative?.email}`}
+                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                        >
+                          <MailIcon className="h-4 w-4 shrink-0" />
+                          <span className="break-all">
+                            {ensemble.representativeEmail ??
+                              ensemble.representative?.email}
+                          </span>
+                        </a>
+                      )}
+                      {ensemble.representativePhone && (
+                        <a
+                          href={`tel:${ensemble.representativePhone}`}
+                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                        >
+                          <PhoneIcon className="h-4 w-4 shrink-0" />
+                          <span>{ensemble.representativePhone}</span>
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Contact Information */}
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                  Kontakt
-                </h2>
-                <div className="space-y-3">
-                  {ensemble.contactEmail && (
-                    <a
-                      href={`mailto:${ensemble.contactEmail}`}
-                      className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                    >
-                      <MailIcon className="h-5 w-5 shrink-0" />
-                      <span className="break-all">{ensemble.contactEmail}</span>
-                    </a>
-                  )}
-                  {ensemble.contactPhone && (
-                    <a
-                      href={`tel:${ensemble.contactPhone}`}
-                      className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                    >
-                      <PhoneIcon className="h-5 w-5 shrink-0" />
-                      <span>{ensemble.contactPhone}</span>
-                    </a>
-                  )}
-                  {ensemble.contactWebsite && (
-                    <a
-                      href={ensemble.contactWebsite}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                    >
-                      <GlobeIcon className="h-5 w-5 shrink-0" />
-                      <span className="break-all">Webseite besuchen</span>
-                    </a>
-                  )}
-                  {!ensemble.contactEmail &&
-                    !ensemble.contactPhone &&
-                    !ensemble.contactWebsite && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Keine Kontaktdaten verfügbar
-                      </p>
-                    )}
+              {/* Website (only when set) */}
+              {ensemble.contactWebsite && (
+                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                  <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                    Webseite
+                  </h2>
+                  <a
+                    href={ensemble.contactWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                  >
+                    <GlobeIcon className="h-5 w-5 shrink-0" />
+                    <span className="break-all">Webseite besuchen</span>
+                  </a>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
