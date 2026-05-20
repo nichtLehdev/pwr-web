@@ -88,16 +88,6 @@ export function CourseRegistrationCancelled({
 
             <Hr style={hr} />
 
-            <Section style={betaWarning}>
-              <Text style={betaWarningTitle}>⚠️ Wichtiger Hinweis</Text>
-              <Text style={betaWarningText}>
-                Dies ist eine Beta-Version der Website. Anmeldungen und
-                Buchungen sind noch nicht gültig und werden nicht bearbeitet.
-              </Text>
-            </Section>
-
-            <Hr style={hr} />
-
             <Text style={paragraph}>
               Bei Fragen kannst du dich gerne an uns wenden.
             </Text>
@@ -223,28 +213,6 @@ const infoBoxText = {
   fontSize: "14px",
   lineHeight: "20px",
   color: "#1e3a8a",
-  margin: "0",
-};
-
-const betaWarning = {
-  backgroundColor: "#fef3c7",
-  padding: "16px",
-  borderRadius: "8px",
-  margin: "24px 0",
-  border: "2px solid #fbbf24",
-};
-
-const betaWarningTitle = {
-  fontSize: "16px",
-  fontWeight: "bold",
-  color: "#92400e",
-  marginBottom: "8px",
-};
-
-const betaWarningText = {
-  fontSize: "14px",
-  lineHeight: "20px",
-  color: "#78350f",
   margin: "0",
 };
 
