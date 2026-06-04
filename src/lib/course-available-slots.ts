@@ -9,9 +9,25 @@ type CourseCapacityCourse = {
   }>;
 };
 
+function countParticipantsForPriceOption(
+  course: CourseCapacityCourse,
+  label: string,
+) {
+  return course.registrations.reduce(
+    (sum, registration) =>
+      sum +
+      registration.participants.filter((p) => p.priceOption === label).length,
+    0,
+  );
+}
+
 /**
  * Same capacity / free-slot rules as the former inline logic in
  * `courses.getAvailableSlots`.
+ *
+ * Free seats = sum of remaining capacity per price tier (limited tiers
+ * individually; unlimited tiers share one pool), capped by course max minus
+ * confirmed bookings.
  */
 export function getCourseCapacitySummary(course: CourseCapacityCourse) {
   const confirmedParticipants = course.registrations.reduce(
@@ -22,59 +38,74 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
   const priceOptionsWithLimits = course.priceOptions.filter(
     (po) => po.maxParticipants !== null,
   );
+  const priceOptionsWithoutLimits = course.priceOptions.filter(
+    (po) => po.maxParticipants === null,
+  );
 
-  let totalCapacity: number;
   const capacityByPriceOption: Record<string, number> = {};
+  let sumPerOptionRemaining = 0;
 
-  if (priceOptionsWithLimits.length > 0) {
-    totalCapacity = priceOptionsWithLimits.reduce(
-      (sum, po) => sum + (po.maxParticipants || 0),
+  const limitedCapacitySum = priceOptionsWithLimits.reduce(
+    (sum, po) => sum + (po.maxParticipants || 0),
+    0,
+  );
+
+  for (const priceOption of priceOptionsWithLimits) {
+    const usedSlots = countParticipantsForPriceOption(
+      course,
+      priceOption.label,
+    );
+    const remaining = Math.max(
       0,
+      (priceOption.maxParticipants || 0) - usedSlots,
     );
-
-    for (const priceOption of priceOptionsWithLimits) {
-      const usedSlots = course.registrations.reduce((sum, registration) => {
-        const participantsForThisOption = registration.participants.filter(
-          (p) => p.priceOption === priceOption.label,
-        ).length;
-        return sum + participantsForThisOption;
-      }, 0);
-
-      capacityByPriceOption[priceOption.label] =
-        (priceOption.maxParticipants || 0) - usedSlots;
-    }
-
-    const priceOptionsWithoutLimits = course.priceOptions.filter(
-      (po) => po.maxParticipants === null,
-    );
-
-    if (priceOptionsWithoutLimits.length > 0) {
-      const remainingCourseCapacity = Math.max(
-        0,
-        (course.maxParticipants ?? 0) - totalCapacity,
-      );
-
-      for (const priceOption of priceOptionsWithoutLimits) {
-        const usedSlots = course.registrations.reduce((sum, registration) => {
-          const participantsForThisOption = registration.participants.filter(
-            (p) => p.priceOption === priceOption.label,
-          ).length;
-          return sum + participantsForThisOption;
-        }, 0);
-
-        capacityByPriceOption[priceOption.label] = Math.max(
-          0,
-          remainingCourseCapacity - usedSlots,
-        );
-      }
-    }
-
-    totalCapacity = Math.min(totalCapacity, course.maxParticipants ?? 0);
-  } else {
-    totalCapacity = course.maxParticipants ?? 0;
+    capacityByPriceOption[priceOption.label] = remaining;
+    sumPerOptionRemaining += remaining;
   }
 
-  const availableSlots = Math.max(0, totalCapacity - confirmedParticipants);
+  if (priceOptionsWithoutLimits.length > 0 && course.maxParticipants != null) {
+    const unlimitedPoolMax = Math.max(
+      0,
+      course.maxParticipants - limitedCapacitySum,
+    );
+    const usedOnUnlimited = priceOptionsWithoutLimits.reduce(
+      (sum, priceOption) =>
+        sum + countParticipantsForPriceOption(course, priceOption.label),
+      0,
+    );
+    const unlimitedPoolRemaining = Math.max(
+      0,
+      unlimitedPoolMax - usedOnUnlimited,
+    );
+    sumPerOptionRemaining += unlimitedPoolRemaining;
+
+    for (const priceOption of priceOptionsWithoutLimits) {
+      capacityByPriceOption[priceOption.label] = unlimitedPoolRemaining;
+    }
+  }
+
+  let totalCapacity: number;
+  if (course.maxParticipants != null) {
+    totalCapacity = course.maxParticipants;
+  } else if (priceOptionsWithLimits.length > 0) {
+    totalCapacity = limitedCapacitySum;
+  } else {
+    totalCapacity = 0;
+  }
+
+  const overallRemaining =
+    course.maxParticipants != null
+      ? Math.max(0, course.maxParticipants - confirmedParticipants)
+      : Math.max(0, sumPerOptionRemaining);
+
+  const hasPerOptionBreakdown =
+    priceOptionsWithLimits.length > 0 || priceOptionsWithoutLimits.length > 0;
+
+  const availableSlots =
+    course.maxParticipants != null && hasPerOptionBreakdown
+      ? Math.max(0, Math.min(sumPerOptionRemaining, overallRemaining))
+      : Math.max(0, overallRemaining);
+
   const isFull = availableSlots === 0;
   const hasWaitingList = course.registrations.some(
     (r) => r.registrationStatus === RegistrationStatus.WAITLIST,

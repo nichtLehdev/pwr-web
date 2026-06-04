@@ -1,7 +1,7 @@
 "use client";
-import { Select } from "@/app/_components/ui";
 
 import { useState, useEffect, useRef } from "react";
+import { ParticipantPriceOptionField } from "@/app/_components/events/course-registration-form/participant-price-option-field";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
@@ -1088,42 +1088,36 @@ export default function EditRegistrationPage() {
                       />
                     </div>
 
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Preisoption *
-                      </label>
-                      <Select
+                    {registration.course.priceOptions.length > 0 ? (
+                      <ParticipantPriceOptionField
+                        priceOptions={registration.course.priceOptions}
                         value={participant.priceOptionId ?? ""}
-                        onChange={(e) =>
+                        onChange={(priceOptionId) =>
                           updateParticipant(
                             participant.id,
                             "priceOptionId",
-                            e.target.value,
+                            priceOptionId,
                           )
                         }
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                        required
-                      >
-                        <option value="">Bitte wählen</option>
-                        {registration.course.priceOptions.map((option) => {
+                        placeholderOption
+                        isOptionDisabled={(optionId) =>
+                          !participant.isNew ||
+                          isPriceOptionAvailable(optionId)
+                            ? false
+                            : participant.priceOptionId !== optionId
+                        }
+                        getOptionSuffix={(optionId) => {
                           const isAvailable =
                             !participant.isNew ||
-                            isPriceOptionAvailable(option.id);
+                            isPriceOptionAvailable(optionId);
                           const isCurrent =
-                            participant.priceOptionId === option.id;
-                          return (
-                            <option
-                              key={option.id}
-                              value={option.id}
-                              disabled={!isAvailable && !isCurrent}
-                            >
-                              {option.label} - {option.price.toFixed(2)} €
-                              {!isAvailable && !isCurrent && " (ausgebucht)"}
-                            </option>
-                          );
-                        })}
-                      </Select>
-                    </div>
+                            participant.priceOptionId === optionId;
+                          return !isAvailable && !isCurrent
+                            ? " (ausgebucht)"
+                            : "";
+                        }}
+                      />
+                    ) : null}
 
                     {/* Sibling Grouping */}
                     {registration.course.allowSiblingDiscount &&
