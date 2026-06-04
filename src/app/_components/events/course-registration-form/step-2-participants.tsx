@@ -17,6 +17,7 @@ import { getParticipantDisplayName, calculateDiscountAmount } from "./utils";
 import { ParticipantLibraryPopup } from "./participant-library-popup";
 import type { User } from "~/generated/prisma/client";
 import { parseSelectOptionValues } from "@/lib/course-custom-fields";
+import { ParticipantPriceOptionField } from "./participant-price-option-field";
 
 interface Step2ParticipantsProps {
   course: CourseWithRelations;
@@ -567,35 +568,20 @@ export function Step2Participants({
                       />
                     </div>
 
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
-                        Preisoption *
-                      </label>
-                      <Select
+                    {course.priceOptions.length > 0 ? (
+                      <ParticipantPriceOptionField
+                        priceOptions={course.priceOptions}
                         value={participant.priceOptionId}
-                        onChange={(e) =>
+                        onChange={(priceOptionId) =>
                           updateParticipant(
                             index,
                             "priceOptionId",
-                            e.target.value,
+                            priceOptionId,
                           )
                         }
                         error={missingFields[index]?.includes("priceOptionId")}
-                        className="text-sm sm:text-base"
-                      >
-                        {course.priceOptions.map(
-                          (option: {
-                            id: string;
-                            label: string;
-                            price: number;
-                          }) => (
-                            <option key={option.id} value={option.id}>
-                              {option.label} - {option.price.toFixed(2)} €
-                            </option>
-                          ),
-                        )}
-                      </Select>
-                    </div>
+                      />
+                    ) : null}
 
                     {/* Custom Fields */}
                     {course.customFields?.map((field) => {
