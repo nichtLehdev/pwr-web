@@ -1101,8 +1101,7 @@ export default function EditRegistrationPage() {
                         }
                         placeholderOption
                         isOptionDisabled={(optionId) =>
-                          !participant.isNew ||
-                          isPriceOptionAvailable(optionId)
+                          !participant.isNew || isPriceOptionAvailable(optionId)
                             ? false
                             : participant.priceOptionId !== optionId
                         }
