@@ -6,6 +6,7 @@ import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
+import { keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,6 +25,7 @@ export default function DashboardEnsemblesPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [selectedBezirk, setSelectedBezirk] = useState<string>("");
   const [showInactive, setShowInactive] = useState(false);
@@ -51,17 +53,32 @@ export default function DashboardEnsemblesPage() {
         perm === "ensembles.manage" || perm === "ensembles.delete",
     );
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const next = searchInput.trim();
+      setSearch((prev) => {
+        if (prev !== next) setPage(1);
+        return next;
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const {
     data: ensemblesData,
     isLoading: ensemblesLoading,
+    isFetching: ensemblesFetching,
     refetch,
-  } = api.ensembles.getAll.useQuery({
-    search: search || undefined,
-    bezirkId: selectedBezirk || undefined,
-    isActive: showInactive ? undefined : true,
-    page,
-    limit,
-  });
+  } = api.ensembles.getAll.useQuery(
+    {
+      search: search || undefined,
+      bezirkId: selectedBezirk || undefined,
+      isActive: showInactive ? undefined : true,
+      page,
+      limit,
+    },
+    { placeholderData: keepPreviousData },
+  );
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -108,7 +125,10 @@ export default function DashboardEnsemblesPage() {
     deleteMutation.mutate({ id });
   };
 
-  if (isPending || profileLoading || ensemblesLoading) {
+  const isInitialEnsemblesLoad =
+    ensemblesLoading && ensemblesData === undefined;
+
+  if (isPending || profileLoading || isInitialEnsemblesLoad) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -150,11 +170,8 @@ export default function DashboardEnsemblesPage() {
               <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Ensemble suchen..."
                 className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 focus:border-transparent focus:ring-2 focus:ring-blue-500"
               />
@@ -199,6 +216,13 @@ export default function DashboardEnsemblesPage() {
       </div>
 
       {/* Ensembles List */}
+      <div
+        className={
+          ensemblesFetching && !isInitialEnsemblesLoad
+            ? "opacity-60 transition-opacity"
+            : undefined
+        }
+      >
       {ensembles.length === 0 ? (
         <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
           <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
@@ -463,6 +487,7 @@ export default function DashboardEnsemblesPage() {
           </div>
         </div>
       )}
+      </div>
     </DashboardPage>
   );
 }

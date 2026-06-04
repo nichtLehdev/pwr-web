@@ -463,6 +463,11 @@ export default function UpcomingCoursesCarousel({
 
   const noClosedRegistrationHero = closedRegistrationCourses.length === 0;
 
+  /** Split 2/3 + 1/3 layout only when both hero (closed) and open-registration cards exist. */
+  const showOpenRegistrationColumn =
+    closedRegistrationCourses.length > 0 &&
+    openRegistrationCourses.length > 0;
+
   const fallbackPageCount = Math.max(
     1,
     Math.ceil(allUpcomingSorted.length / FALLBACK_COURSES_PER_PAGE),
@@ -498,7 +503,7 @@ export default function UpcomingCoursesCarousel({
   }, [leftAutoPlay, closedRegistrationCourses.length]);
 
   useEffect(() => {
-    if (!rightAutoPlay || openPageCount <= 1 || noClosedRegistrationHero)
+    if (!rightAutoPlay || openPageCount <= 1 || !showOpenRegistrationColumn)
       return;
     const id = setInterval(() => {
       setRightEnterForward(true);
@@ -506,7 +511,7 @@ export default function UpcomingCoursesCarousel({
       setOpenPageIndex((prev) => (prev + 1) % openPageCount);
     }, CAROUSEL_AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [rightAutoPlay, openPageCount, noClosedRegistrationHero]);
+  }, [rightAutoPlay, openPageCount, showOpenRegistrationColumn]);
 
   useEffect(() => {
     return () => {
@@ -537,7 +542,7 @@ export default function UpcomingCoursesCarousel({
   }, [effectiveLeftIndex, leftAutoPlay, closedRegistrationCourses.length]);
 
   useEffect(() => {
-    if (openPageCount <= 1 || !rightAutoPlay || noClosedRegistrationHero) {
+    if (openPageCount <= 1 || !rightAutoPlay || !showOpenRegistrationColumn) {
       return;
     }
     let rafId = 0;
@@ -556,7 +561,7 @@ export default function UpcomingCoursesCarousel({
     effectiveOpenPageIndex,
     rightAutoPlay,
     openPageCount,
-    noClosedRegistrationHero,
+    showOpenRegistrationColumn,
   ]);
 
   useEffect(() => {
@@ -614,7 +619,7 @@ export default function UpcomingCoursesCarousel({
   const leftProgressDisplay =
     closedRegistrationCourses.length <= 1 ? 0 : leftProgress;
   const rightProgressDisplay =
-    noClosedRegistrationHero || openPageCount <= 1 ? 0 : rightProgress;
+    !showOpenRegistrationColumn || openPageCount <= 1 ? 0 : rightProgress;
   const fallbackProgressDisplay =
     !noClosedRegistrationHero || fallbackPageCount <= 1 ? 0 : fallbackProgress;
 
@@ -687,14 +692,14 @@ export default function UpcomingCoursesCarousel({
     <div
       className={cn(
         "grid grid-cols-1 gap-x-6 gap-y-8 lg:items-stretch lg:gap-6",
-        !noClosedRegistrationHero && "lg:grid-cols-3",
+        showOpenRegistrationColumn && "lg:grid-cols-3",
       )}
     >
       {/* Large hero (closed registration) or full-width fallback carousel */}
       <div
         className={cn(
           "flex min-h-0 min-w-0 flex-col",
-          !noClosedRegistrationHero && "lg:col-span-2 lg:h-full",
+          showOpenRegistrationColumn && "lg:col-span-2 lg:h-full",
         )}
       >
         {leftCourse ? (
@@ -720,7 +725,7 @@ export default function UpcomingCoursesCarousel({
                   )}
                   style={{ borderLeftColor: leftDistrictColor }}
                 >
-                  <div className="relative h-[220px] w-full shrink-0 sm:h-[240px] lg:h-full lg:min-h-[480px] lg:w-[42%] lg:max-w-md">
+                  <div className="relative min-h-[220px] w-full shrink-0 self-stretch sm:min-h-[240px] lg:min-h-0 lg:w-[42%] lg:max-w-md">
                     {leftCourse.image?.url ? (
                       <>
                         <Image
@@ -728,11 +733,15 @@ export default function UpcomingCoursesCarousel({
                           alt={leftCourse.image.alt || leftCourse.title}
                           fill
                           className="object-cover"
-                          sizes="(max-width: 1024px) 100vw, 40vw"
+                          sizes={
+                            showOpenRegistrationColumn
+                              ? "(max-width: 1024px) 100vw, 40vw"
+                              : "(max-width: 1024px) 100vw, 33vw"
+                          }
                         />
                         {(leftCourse.image.copyright ||
                           leftCourse.image.creator) && (
-                          <div className="absolute right-2 bottom-2 flex justify-end">
+                          <div className="absolute right-2 bottom-2 z-10 flex justify-end">
                             <MediaCredit
                               copyright={leftCourse.image.copyright}
                               creator={leftCourse.image.creator}
@@ -744,7 +753,7 @@ export default function UpcomingCoursesCarousel({
                         )}
                       </>
                     ) : (
-                      <div className="from-primary/20 to-primary/5 flex h-full w-full items-center justify-center bg-linear-to-br">
+                      <div className="from-primary/20 to-primary/5 absolute inset-0 flex items-center justify-center bg-linear-to-br">
                         <GraduationCap
                           className="text-primary h-20 w-20 opacity-40"
                           aria-hidden
@@ -950,72 +959,59 @@ export default function UpcomingCoursesCarousel({
         )}
       </div>
 
-      {!noClosedRegistrationHero ? (
+      {showOpenRegistrationColumn ? (
         /* Vertical carousel: 2 stacked small cards; dots sit to the right of the cards */
         <div className="max-lg:dark:border-dark-border flex min-h-0 w-full flex-col max-lg:border-t max-lg:border-gray-200 max-lg:pt-6 lg:h-full lg:min-h-0">
-          {openRegistrationCourses.length > 0 ? (
-            <div className="flex w-full flex-1 flex-col lg:min-h-0">
-              <div
-                key={effectiveOpenPageIndex}
-                className={cn(
-                  "flex w-full flex-col items-stretch gap-3 sm:gap-4 lg:flex-row",
-                  rightNavGeneration > 0 &&
-                    (rightEnterForward
-                      ? "animate-homepage-open-fwd"
-                      : "animate-homepage-open-bwd"),
-                  "motion-reduce:animate-none",
-                )}
-              >
-                <div
-                  className={cn(
-                    "flex h-full min-h-0 min-w-0 flex-1 flex-col gap-6",
-                    openCarouselColumnHeightClass,
-                  )}
-                >
-                  {openPageCourses.map((course) => (
-                    <SmallOpenRegistrationCard
-                      key={course.id}
-                      course={course}
-                      className="min-h-0 flex-1 basis-0"
-                    />
-                  ))}
-                  {openPageCourses.length === 1 ? (
-                    <div className="min-h-0 flex-1 basis-0" aria-hidden />
-                  ) : null}
-                </div>
-
-                {showOpenCarousel ? (
-                  <>
-                    <div
-                      className="flex w-full justify-center gap-1.5 pt-1 lg:hidden"
-                      role="tablist"
-                      aria-label="Seiten Lehrgänge mit offener Anmeldung"
-                    >
-                      {openRegistrationPillButtons("horizontal")}
-                    </div>
-                    <div
-                      className="hidden shrink-0 flex-col items-center justify-center gap-1.5 self-stretch py-1 pl-1 lg:flex"
-                      aria-label="Seiten Lehrgänge mit offener Anmeldung"
-                      role="tablist"
-                    >
-                      {openRegistrationPillButtons("vertical")}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
+          <div className="flex w-full flex-1 flex-col lg:min-h-0">
             <div
+              key={effectiveOpenPageIndex}
               className={cn(
-                "dark:bg-dark-surface dark:border-dark-border flex flex-1 items-center justify-center rounded-xl border border-gray-200 bg-white p-5 text-center shadow-sm",
-                openCarouselColumnHeightClass,
+                "flex w-full flex-col items-stretch gap-3 sm:gap-4 lg:flex-row",
+                rightNavGeneration > 0 &&
+                  (rightEnterForward
+                    ? "animate-homepage-open-fwd"
+                    : "animate-homepage-open-bwd"),
+                "motion-reduce:animate-none",
               )}
             >
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Aktuell keine Lehrgänge mit offener Anmeldung.
-              </p>
+              <div
+                className={cn(
+                  "flex h-full min-h-0 min-w-0 flex-1 flex-col gap-6",
+                  openCarouselColumnHeightClass,
+                )}
+              >
+                {openPageCourses.map((course) => (
+                  <SmallOpenRegistrationCard
+                    key={course.id}
+                    course={course}
+                    className="min-h-0 flex-1 basis-0"
+                  />
+                ))}
+                {openPageCourses.length === 1 ? (
+                  <div className="min-h-0 flex-1 basis-0" aria-hidden />
+                ) : null}
+              </div>
+
+              {showOpenCarousel ? (
+                <>
+                  <div
+                    className="flex w-full justify-center gap-1.5 pt-1 lg:hidden"
+                    role="tablist"
+                    aria-label="Seiten Lehrgänge mit offener Anmeldung"
+                  >
+                    {openRegistrationPillButtons("horizontal")}
+                  </div>
+                  <div
+                    className="hidden shrink-0 flex-col items-center justify-center gap-1.5 self-stretch py-1 pl-1 lg:flex"
+                    aria-label="Seiten Lehrgänge mit offener Anmeldung"
+                    role="tablist"
+                  >
+                    {openRegistrationPillButtons("vertical")}
+                  </div>
+                </>
+              ) : null}
             </div>
-          )}
+          </div>
         </div>
       ) : null}
     </div>

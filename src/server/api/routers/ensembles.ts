@@ -8,7 +8,21 @@ import {
 } from "../trpc";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { resolveRolePublicContact } from "@/lib/resolve-ensemble-contact";
 import { permissionProcedure } from "../middleware/permissions";
+
+const linkedUserContactSelect = {
+  id: true,
+  displayName: true,
+  email: true,
+  phone: true,
+  street: true,
+  zipCode: true,
+  city: true,
+  preferences: true,
+  profileImage: true,
+  bio: true,
+} as const;
 
 export const ensemblesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -87,22 +101,8 @@ export const ensemblesRouter = createTRPCRouter({
           image: true,
           location: true,
           bezirk: true,
-          conductor: {
-            select: {
-              id: true,
-              displayName: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-          representative: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-            },
-          },
+          conductor: { select: linkedUserContactSelect },
+          representative: { select: linkedUserContactSelect },
           events: {
             where: {
               status: "APPROVED",
@@ -133,7 +133,47 @@ export const ensemblesRouter = createTRPCRouter({
         });
       }
 
-      return ensemble;
+      const conductorContact = resolveRolePublicContact(
+        ensemble.conductorEmail,
+        ensemble.conductorPhone,
+        ensemble.conductor,
+      );
+      const representativeContact = resolveRolePublicContact(
+        ensemble.representativeEmail,
+        ensemble.representativePhone,
+        ensemble.representative,
+      );
+
+      const { conductor, representative, ...rest } = ensemble;
+
+      return {
+        ...rest,
+        conductorEmail: conductorContact.email,
+        conductorPhone: conductorContact.phone,
+        conductorStreet: conductorContact.street,
+        conductorZipCode: conductorContact.zipCode,
+        conductorCity: conductorContact.city,
+        representativeEmail: representativeContact.email,
+        representativePhone: representativeContact.phone,
+        representativeStreet: representativeContact.street,
+        representativeZipCode: representativeContact.zipCode,
+        representativeCity: representativeContact.city,
+        conductor: conductor
+          ? {
+              id: conductor.id,
+              displayName: conductor.displayName,
+              profileImage: conductor.profileImage,
+              bio: conductor.bio,
+            }
+          : null,
+        representative: representative
+          ? {
+              id: representative.id,
+              displayName: representative.displayName,
+              profileImage: representative.profileImage,
+            }
+          : null,
+      };
     }),
 
   create: posaunenratProcedure

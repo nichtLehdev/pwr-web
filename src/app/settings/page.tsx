@@ -24,7 +24,7 @@ import {
   Monitor,
   List,
 } from "lucide-react";
-import { useTrackingConsent } from "@/app/_components/stats/tracking-consent-context";
+import { useTrackingPreference } from "@/app/_components/stats/tracking-consent-context";
 import { Input, Label } from "@/app/_components/ui";
 import {
   ScrollableModal,
@@ -1301,37 +1301,24 @@ export default function SettingsPage() {
 }
 
 function TrackingConsentSection() {
-  const ctx = useTrackingConsent();
+  const ctx = useTrackingPreference();
   if (!ctx) return null;
-  const { consent, setConsent } = ctx;
-  const current = consent ?? "none";
-  const hasChosen = consent !== null;
+  const { preference, setPreference } = ctx;
 
   return (
-    <div>
+    <div id="nutzungsstatistik">
       <Label>Nutzungsstatistik</Label>
       <p className="mt-1 mb-3 text-xs text-gray-500 dark:text-gray-400">
-        Wir erfassen anonym die Nutzung unserer Webseite (Seitenaufrufe), um sie
-        zu verbessern. Es werden keine personenbezogenen Daten gespeichert,
-        sofern Sie es nicht erlauben.
+        Seitenaufrufe werden immer anonym erfasst, um die Webseite zu
+        verbessern. Optional können Aufrufe Ihrem Konto zugeordnet werden (nur
+        wenn Sie eingeloggt sind).
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
-          onClick={() => setConsent("none")}
+          onClick={() => setPreference("anonymous")}
           className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-            current === "none"
-              ? "border-primary bg-primary text-white"
-              : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-          }`}
-        >
-          Ablehnen
-        </button>
-        <button
-          type="button"
-          onClick={() => setConsent("anonymous")}
-          className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-            current === "anonymous"
+            preference === "anonymous"
               ? "border-primary bg-primary text-white"
               : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
@@ -1340,9 +1327,9 @@ function TrackingConsentSection() {
         </button>
         <button
           type="button"
-          onClick={() => setConsent("anonymous_and_user")}
+          onClick={() => setPreference("anonymous_and_user")}
           className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-            current === "anonymous_and_user"
+            preference === "anonymous_and_user"
               ? "border-primary bg-primary text-white"
               : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           }`}
@@ -1350,16 +1337,12 @@ function TrackingConsentSection() {
           Anonym + Zuordnung zu meinem Konto
         </button>
       </div>
-      {hasChosen && (
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Aktuelle Einstellung:{" "}
-          {current === "none"
-            ? "Ablehnen"
-            : current === "anonymous"
-              ? "Nur anonym"
-              : "Anonym + Zuordnung zu meinem Konto"}
-        </p>
-      )}
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        Aktuelle Einstellung:{" "}
+        {preference === "anonymous"
+          ? "Nur anonym"
+          : "Anonym + Zuordnung zu meinem Konto"}
+      </p>
     </div>
   );
 }

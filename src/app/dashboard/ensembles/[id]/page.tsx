@@ -292,23 +292,19 @@ export default function EnsembleDetailPage() {
               Kein Ansprechpartner zugewiesen
             </p>
           )}
-          {(ensemble.representativeEmail ||
-            ensemble.representativePhone ||
-            ensemble.representative?.email) && (
+          {(ensemble.representativeEmail || ensemble.representativePhone) && (
             <dl className="dark:border-dark-border mt-4 space-y-1 border-t border-gray-100 pt-3 text-sm">
-              {(ensemble.representativeEmail ||
-                ensemble.representative?.email) && (
+              {ensemble.representativeEmail && (
                 <div className="flex items-center gap-2">
                   <dt className="dark:text-dark-muted w-16 text-gray-500">
                     E-Mail
                   </dt>
                   <dd>
                     <a
-                      href={`mailto:${ensemble.representativeEmail ?? ensemble.representative?.email}`}
+                      href={`mailto:${ensemble.representativeEmail}`}
                       className="text-primary hover:underline"
                     >
-                      {ensemble.representativeEmail ??
-                        ensemble.representative?.email}
+                      {ensemble.representativeEmail}
                     </a>
                   </dd>
                 </div>
