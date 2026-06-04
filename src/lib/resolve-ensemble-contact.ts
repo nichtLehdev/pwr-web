@@ -36,7 +36,9 @@ export function resolveRolePublicContact(
   };
 }
 
-export function formatPublicAddress(contact: ResolvedPublicContact): string | null {
+export function formatPublicAddress(
+  contact: ResolvedPublicContact,
+): string | null {
   const line = [
     contact.street,
     [contact.zipCode, contact.city].filter(Boolean).join(" "),
@@ -46,7 +48,9 @@ export function formatPublicAddress(contact: ResolvedPublicContact): string | nu
   return line || null;
 }
 
-export function hasPublicContactDetails(contact: ResolvedPublicContact): boolean {
+export function hasPublicContactDetails(
+  contact: ResolvedPublicContact,
+): boolean {
   return !!(
     contact.email ||
     contact.phone ||

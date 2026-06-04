@@ -465,8 +465,7 @@ export default function UpcomingCoursesCarousel({
 
   /** Split 2/3 + 1/3 layout only when both hero (closed) and open-registration cards exist. */
   const showOpenRegistrationColumn =
-    closedRegistrationCourses.length > 0 &&
-    openRegistrationCourses.length > 0;
+    closedRegistrationCourses.length > 0 && openRegistrationCourses.length > 0;
 
   const fallbackPageCount = Math.max(
     1,
