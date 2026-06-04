@@ -1,20 +1,17 @@
 "use client";
 
-import { useTrackingConsent } from "./tracking-consent-context";
+import Link from "next/link";
 
 export function TrackingConsentLink({
   className,
-  children = "Tracking-Einstellung",
+  children = "Nutzungsstatistik",
 }: {
   className?: string;
   children?: React.ReactNode;
 }) {
-  const ctx = useTrackingConsent();
-  if (!ctx) return null;
-
   return (
-    <button type="button" onClick={ctx.clearConsent} className={className}>
+    <Link href="/settings#nutzungsstatistik" className={className}>
       {children}
-    </button>
+    </Link>
   );
 }

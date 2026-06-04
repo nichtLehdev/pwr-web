@@ -9,7 +9,6 @@ import { ToastProvider, Toaster } from "./_components/ui/toast";
 import { BannerProvider } from "./_components/ui/banner-context";
 import { PageViewTracker } from "./_components/stats/page-view-tracker";
 import { TrackingConsentProvider } from "./_components/stats/tracking-consent-context";
-import { TrackingConsentBanner } from "./_components/stats/tracking-consent-banner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -72,7 +71,6 @@ export default function RootLayout({
             <TRPCReactProvider>
               <ThemeSync />
               <TrackingConsentProvider>
-                <TrackingConsentBanner />
                 <PageViewTracker />
                 <BannerProvider>
                   <AppChrome>{children}</AppChrome>

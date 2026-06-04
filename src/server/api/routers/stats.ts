@@ -22,8 +22,8 @@ function canViewStats(identifier: string): boolean {
 
 export const statsRouter = createTRPCRouter({
   /**
-   * Record a page or section view. Respects consent: "none" = no record,
-   * "anonymous" = record without userId, "anonymous_and_user" = record with userId if provided.
+   * Record a page or section view. "none" is legacy (no record).
+   * "anonymous" = without userId; "anonymous_and_user" = with userId when provided.
    */
   recordView: publicProcedure
     .input(

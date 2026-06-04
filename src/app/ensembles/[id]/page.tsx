@@ -15,6 +15,53 @@ import {
   UserIcon,
   NavigationIcon,
 } from "lucide-react";
+import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
+
+function EnsembleRoleContact({
+  email,
+  phone,
+  street,
+  zipCode,
+  city,
+}: {
+  email: string | null;
+  phone: string | null;
+  street: string | null;
+  zipCode: string | null;
+  city: string | null;
+}) {
+  const address = formatPublicAddress({ email, phone, street, zipCode, city });
+  if (!email && !phone && !address) return null;
+
+  return (
+    <div className="mt-3 space-y-2 text-sm">
+      {email && (
+        <a
+          href={`mailto:${email}`}
+          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+        >
+          <MailIcon className="h-4 w-4 shrink-0" />
+          <span className="break-all">{email}</span>
+        </a>
+      )}
+      {phone && (
+        <a
+          href={`tel:${phone}`}
+          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+        >
+          <PhoneIcon className="h-4 w-4 shrink-0" />
+          <span>{phone}</span>
+        </a>
+      )}
+      {address && (
+        <p className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+          <MapPinIcon className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{address}</span>
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -401,7 +448,9 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
               {(ensemble.conductorName ||
                 ensemble.conductor ||
                 ensemble.conductorEmail ||
-                ensemble.conductorPhone) && (
+                ensemble.conductorPhone ||
+                ensemble.conductorStreet ||
+                ensemble.conductorCity) && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Chorleitung
@@ -447,30 +496,13 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                       </div>
                     </div>
                   ) : null}
-                  {(ensemble.conductorEmail || ensemble.conductorPhone) && (
-                    <div className="mt-3 space-y-2 text-sm">
-                      {ensemble.conductorEmail && (
-                        <a
-                          href={`mailto:${ensemble.conductorEmail}`}
-                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <MailIcon className="h-4 w-4 shrink-0" />
-                          <span className="break-all">
-                            {ensemble.conductorEmail}
-                          </span>
-                        </a>
-                      )}
-                      {ensemble.conductorPhone && (
-                        <a
-                          href={`tel:${ensemble.conductorPhone}`}
-                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <PhoneIcon className="h-4 w-4 shrink-0" />
-                          <span>{ensemble.conductorPhone}</span>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <EnsembleRoleContact
+                    email={ensemble.conductorEmail}
+                    phone={ensemble.conductorPhone}
+                    street={ensemble.conductorStreet}
+                    zipCode={ensemble.conductorZipCode}
+                    city={ensemble.conductorCity}
+                  />
                 </div>
               )}
 
@@ -478,7 +510,9 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
               {(ensemble.representativeName ||
                 ensemble.representative ||
                 ensemble.representativeEmail ||
-                ensemble.representativePhone) && (
+                ensemble.representativePhone ||
+                ensemble.representativeStreet ||
+                ensemble.representativeCity) && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Ansprechpartner
@@ -520,34 +554,13 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                       </div>
                     </div>
                   ) : null}
-                  {(ensemble.representativeEmail ||
-                    ensemble.representativePhone ||
-                    ensemble.representative?.email) && (
-                    <div className="mt-3 space-y-2 text-sm">
-                      {(ensemble.representativeEmail ||
-                        ensemble.representative?.email) && (
-                        <a
-                          href={`mailto:${ensemble.representativeEmail ?? ensemble.representative?.email}`}
-                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <MailIcon className="h-4 w-4 shrink-0" />
-                          <span className="break-all">
-                            {ensemble.representativeEmail ??
-                              ensemble.representative?.email}
-                          </span>
-                        </a>
-                      )}
-                      {ensemble.representativePhone && (
-                        <a
-                          href={`tel:${ensemble.representativePhone}`}
-                          className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <PhoneIcon className="h-4 w-4 shrink-0" />
-                          <span>{ensemble.representativePhone}</span>
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <EnsembleRoleContact
+                    email={ensemble.representativeEmail}
+                    phone={ensemble.representativePhone}
+                    street={ensemble.representativeStreet}
+                    zipCode={ensemble.representativeZipCode}
+                    city={ensemble.representativeCity}
+                  />
                 </div>
               )}
 

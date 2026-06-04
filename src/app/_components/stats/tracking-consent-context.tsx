@@ -8,74 +8,62 @@ import {
   type ReactNode,
 } from "react";
 
+/** Stored in localStorage; sent to stats.recordView. "none" is legacy and treated as anonymous. */
 export type TrackingConsent = "none" | "anonymous" | "anonymous_and_user";
+
+export type TrackingPreference = "anonymous" | "anonymous_and_user";
 
 const STORAGE_KEY = "tracking_consent";
 
+const DEFAULT_PREFERENCE: TrackingPreference = "anonymous";
+
 interface TrackingConsentContextValue {
-  consent: TrackingConsent | null;
-  setConsent: (value: TrackingConsent) => void;
-  /** Clear stored choice so the banner is shown again */
-  clearConsent: () => void;
-  hasChosen: boolean;
+  /** Effective preference for linked vs anonymous-only tracking */
+  preference: TrackingPreference;
+  setPreference: (value: TrackingPreference) => void;
 }
 
 const TrackingConsentContext =
   createContext<TrackingConsentContextValue | null>(null);
 
-function readStored(): TrackingConsent | null {
-  if (typeof window === "undefined") return null;
+function readStored(): TrackingPreference {
+  if (typeof window === "undefined") return DEFAULT_PREFERENCE;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === "none" || raw === "anonymous" || raw === "anonymous_and_user") {
-      return raw;
-    }
-    return null;
+    if (raw === "anonymous_and_user") return "anonymous_and_user";
+    return DEFAULT_PREFERENCE;
   } catch {
-    return null;
+    return DEFAULT_PREFERENCE;
   }
 }
 
 export function TrackingConsentProvider({ children }: { children: ReactNode }) {
-  const [consent, setConsentState] = useState<TrackingConsent | null>(() =>
-    typeof window === "undefined" ? null : readStored(),
+  const [preference, setPreferenceState] = useState<TrackingPreference>(() =>
+    typeof window === "undefined" ? DEFAULT_PREFERENCE : readStored(),
   );
 
-  const setConsent = useCallback((value: TrackingConsent) => {
+  const setPreference = useCallback((value: TrackingPreference) => {
     try {
       localStorage.setItem(STORAGE_KEY, value);
     } catch {
       // ignore
     }
-    setConsentState(value);
+    setPreferenceState(value);
   }, []);
-
-  const clearConsent = useCallback(() => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-    setConsentState(null);
-  }, []);
-
-  const hasChosen = consent !== null;
 
   return (
-    <TrackingConsentContext.Provider
-      value={{
-        consent,
-        setConsent,
-        clearConsent,
-        hasChosen,
-      }}
-    >
+    <TrackingConsentContext.Provider value={{ preference, setPreference }}>
       {children}
     </TrackingConsentContext.Provider>
   );
 }
 
-export function useTrackingConsent() {
+/** Consent value passed to the stats API (anonymous page views are always recorded). */
+export function useTrackingConsent(): TrackingConsent {
   const ctx = useContext(TrackingConsentContext);
-  return ctx;
+  return ctx?.preference ?? DEFAULT_PREFERENCE;
+}
+
+export function useTrackingPreference() {
+  return useContext(TrackingConsentContext);
 }

@@ -9,11 +9,11 @@ import { useTrackingConsent } from "./tracking-consent-context";
 const THROTTLE_MS = 60_000; // Don't record same path more than once per minute
 
 /**
- * Tracks page views when user has consented. Respects consent (none / anonymous / anonymous_and_user).
+ * Tracks page views (always anonymous; userId only when preference is anonymous_and_user).
  */
 export function PageViewTracker() {
   const pathname = usePathname();
-  const { consent } = useTrackingConsent() ?? { consent: null };
+  const consent = useTrackingConsent();
   const { data: session } = useSession();
   const recordView = api.stats.recordView.useMutation();
   const lastRecorded = useRef<{
@@ -23,7 +23,7 @@ export function PageViewTracker() {
   } | null>(null);
 
   useEffect(() => {
-    if (!pathname || consent === "none" || consent === null) return;
+    if (!pathname) return;
     const now = Date.now();
     const last = lastRecorded.current;
     if (
@@ -47,17 +47,16 @@ export function PageViewTracker() {
 
 /**
  * Call this from a section (e.g. hero, footer) to record a section view.
- * Respects tracking consent; path defaults to current pathname.
+ * Path defaults to current pathname.
  */
 export function useRecordSection(section: string, path?: string) {
   const pathname = usePathname();
-  const { consent } = useTrackingConsent() ?? { consent: null };
+  const consent = useTrackingConsent();
   const { data: session } = useSession();
   const recordView = api.stats.recordView.useMutation();
   const recorded = useRef(false);
 
   useEffect(() => {
-    if (consent === "none" || consent === null) return;
     const p = path ?? pathname;
     if (!p || !section || recorded.current) return;
     recorded.current = true;
