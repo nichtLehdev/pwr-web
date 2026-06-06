@@ -30,6 +30,7 @@ export type CourseCustomFieldRule = {
   fieldType: CourseCustomFieldTypeName | string;
   options: unknown;
   isRequired: boolean;
+  helpText?: string | null;
 };
 
 /** Coerce legacy / saved-participant values so SELECT and CHECKBOX match persisted course rules. */
