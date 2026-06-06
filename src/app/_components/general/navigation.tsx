@@ -114,16 +114,7 @@ export default function Navigation() {
         { href: "/materialien/literatur", label: "Literatur & CDs" },
       ],
     },
-    {
-      href: "/spiele",
-      label: "Spiele",
-      dropdown: [
-        { href: "/spiele/rhythmus", label: "Rhythmus-Training" },
-        { href: "/spiele/noten-lesen", label: "Noten lesen" },
-        { href: "/spiele/griffe", label: "Griffe" },
-        { href: "/spiele/notenwaage", label: "Notenwaage" },
-      ],
-    },
+    { href: "/spiele", label: "Spiele" },
     {
       href: "/ueber-uns",
       label: "Über uns",
