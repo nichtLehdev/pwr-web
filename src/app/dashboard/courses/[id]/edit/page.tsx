@@ -728,7 +728,12 @@ export default function EditCoursePage() {
   }, []);
 
   const hasRegistrations = (course?._count?.participants ?? 0) > 0;
-  const registrationCount = course?._count?.participants ?? 0;
+  const registrationCount =
+    course?.registrationStats?.totalConfirmedParticipants ??
+    course?._count?.participants ??
+    0;
+  const participantsByPriceOption =
+    course?.registrationStats?.byPriceOptionLabel ?? {};
 
   const addPriceOption = () => {
     const newOptions = [
@@ -841,6 +846,28 @@ export default function EditCoursePage() {
       setError("Bitte gib die maximale Teilnehmerzahl an.");
       setIsSubmitting(false);
       return;
+    }
+
+    if (hasRegistrations && parseInt(maxParticipants) < registrationCount) {
+      setError(
+        `Die maximale Teilnehmerzahl darf nicht unter ${registrationCount} liegen (bereits angemeldet).`,
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (hasRegistrations && !isFree) {
+      for (const option of priceOptions) {
+        if (option.maxParticipants == null) continue;
+        const minForOption = participantsByPriceOption[option.label] ?? 0;
+        if (option.maxParticipants < minForOption) {
+          setError(
+            `Das Limit für „${option.label}“ darf nicht unter ${minForOption} liegen (bereits angemeldet).`,
+          );
+          setIsSubmitting(false);
+          return;
+        }
+      }
     }
 
     if (scheduledRegistrationOpens) {
@@ -1640,11 +1667,18 @@ export default function EditCoursePage() {
                           id="maxParticipants"
                           value={maxParticipants}
                           onChange={(e) => setMaxParticipants(e.target.value)}
-                          min="1"
+                          min={hasRegistrations ? registrationCount : 1}
                           max="500"
                           className={registrationFieldInputClass}
                           required
                         />
+                        {hasRegistrations ? (
+                          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            {registrationCount} bereits angemeldet. Erhöhen oder
+                            Verringern möglich, solange nicht unter die aktuelle
+                            Anmeldungszahl.
+                          </p>
+                        ) : null}
                       </div>
 
                       <div>
@@ -2359,13 +2393,15 @@ export default function EditCoursePage() {
                     <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
                     <div>
                       <p className="dark:text-dark-text font-medium text-gray-700">
-                        Preisänderungen nicht möglich
+                        Preisänderungen eingeschränkt
                       </p>
                       <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
                         Es gibt bereits {registrationCount} Teilnehmer für
-                        diesen Kurs. Die Preiskategorien können nicht mehr
-                        geändert werden, da dies bestehende Anmeldungen
-                        beeinflussen würde.
+                        diesen Kurs. Bezeichnung, Preis und Beschreibung der
+                        Preiskategorien können nicht mehr geändert werden. Die
+                        maximale Teilnehmerzahl (gesamt und pro Preiskategorie)
+                        lässt sich weiter anpassen – mindestens auf die Zahl
+                        bereits angemeldeter Teilnehmer.
                       </p>
                     </div>
                   </div>
@@ -2552,12 +2588,30 @@ export default function EditCoursePage() {
                                             : null,
                                         )
                                       }
-                                      min="1"
+                                      min={
+                                        hasRegistrations
+                                          ? Math.max(
+                                              1,
+                                              participantsByPriceOption[
+                                                option.label
+                                              ] ?? 0,
+                                            )
+                                          : 1
+                                      }
                                       max="500"
                                       placeholder="Unbegrenzt"
-                                      disabled={hasRegistrations}
                                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
                                     />
+                                    {hasRegistrations &&
+                                    (participantsByPriceOption[option.label] ??
+                                      0) > 0 ? (
+                                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        {participantsByPriceOption[
+                                          option.label
+                                        ] ?? 0}{" "}
+                                        bereits angemeldet
+                                      </p>
+                                    ) : null}
                                   </div>
                                 </div>
                                 <div className="mt-3">

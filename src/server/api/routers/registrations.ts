@@ -441,6 +441,9 @@ export const registrationsRouter = createTRPCRouter({
                   maxParticipants: true,
                 },
               },
+              customFields: {
+                orderBy: { sortOrder: "asc" },
+              },
               location: {
                 select: {
                   name: true,

@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ParticipantPriceOptionField } from "@/app/_components/events/course-registration-form/participant-price-option-field";
+import { ParticipantCustomFields } from "@/app/_components/events/course-registration-form/participant-custom-fields";
+import {
+  isRequiredCustomFieldEmpty,
+  normalizeParticipantCustomFieldsValues,
+} from "@/lib/course-custom-fields";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
@@ -67,6 +72,10 @@ export default function EditRegistrationPage() {
   const [birthdateErrors, setBirthdateErrors] = useState<
     Record<string, string>
   >({});
+  const [
+    invalidCustomFieldsByParticipant,
+    setInvalidCustomFieldsByParticipant,
+  ] = useState<Record<string, string[]>>({});
   const [siblingDiscountApplied, setSiblingDiscountApplied] = useState(false);
   const groupIdCounterRef = useRef(0);
 
@@ -159,6 +168,10 @@ export default function EditRegistrationPage() {
             ...participantWithoutLabel,
             birthDate: new Date(p.birthDate),
             priceOptionId: priceOption?.id ?? null,
+            customFields: normalizeParticipantCustomFieldsValues(
+              p.customFields as Record<string, unknown> | undefined,
+              registration.course.customFields ?? [],
+            ),
             siblingGroupId: p.siblingGroupId ?? null,
             isNew: false,
             isDeleted: false,
@@ -311,6 +324,22 @@ export default function EditRegistrationPage() {
         p.id === participantId ? { ...p, [field]: value } : p,
       ),
     );
+  };
+
+  const updateParticipantCustomFields = (
+    participantId: string,
+    customFields: Record<string, unknown>,
+  ) => {
+    setParticipants(
+      participants.map((p) =>
+        p.id === participantId ? { ...p, customFields } : p,
+      ),
+    );
+    setInvalidCustomFieldsByParticipant((prev) => {
+      const next = { ...prev };
+      delete next[participantId];
+      return next;
+    });
   };
 
   const calculateOriginalPrice = () => {
@@ -489,7 +518,38 @@ export default function EditRegistrationPage() {
         setIsSubmitting(false);
         return;
       }
+
+      const missingCustomFields =
+        registration?.course.customFields
+          ?.filter((field) => {
+            if (!field.isRequired) return false;
+            const record =
+              p.customFields &&
+              typeof p.customFields === "object" &&
+              !Array.isArray(p.customFields)
+                ? (p.customFields as Record<string, unknown>)
+                : {};
+            return isRequiredCustomFieldEmpty(
+              field.fieldType,
+              record[field.fieldName],
+            );
+          })
+          .map((field) => field.fieldName) ?? [];
+
+      if (missingCustomFields.length > 0) {
+        setInvalidCustomFieldsByParticipant((prev) => ({
+          ...prev,
+          [p.id]: missingCustomFields,
+        }));
+        setError(
+          "Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus (einschließlich Zusatzfelder).",
+        );
+        setIsSubmitting(false);
+        return;
+      }
     }
+
+    setInvalidCustomFieldsByParticipant({});
 
     if (useSeparateBilling) {
       if (
@@ -1115,6 +1175,23 @@ export default function EditRegistrationPage() {
                             ? " (ausgebucht)"
                             : "";
                         }}
+                      />
+                    ) : null}
+
+                    {registration.course.customFields &&
+                    registration.course.customFields.length > 0 ? (
+                      <ParticipantCustomFields
+                        fields={registration.course.customFields}
+                        customFields={participant.customFields}
+                        onChange={(customFields) =>
+                          updateParticipantCustomFields(
+                            participant.id,
+                            customFields,
+                          )
+                        }
+                        invalidFieldNames={
+                          invalidCustomFieldsByParticipant[participant.id]
+                        }
                       />
                     ) : null}
 
