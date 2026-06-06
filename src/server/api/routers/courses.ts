@@ -18,6 +18,7 @@ import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
+import { getCourseRegistrationStats } from "@/lib/course-registration-stats";
 import { permissionProcedure } from "../middleware/permissions";
 import {
   userCanEditCourseRecord,
@@ -164,16 +165,6 @@ export const coursesRouter = createTRPCRouter({
               displayName: true,
             },
           },
-          registrations: {
-            where: {
-              registrationStatus: RegistrationStatus.CONFIRMED,
-            },
-            include: {
-              _count: {
-                select: { participants: true },
-              },
-            },
-          },
         },
       });
 
@@ -225,20 +216,18 @@ export const coursesRouter = createTRPCRouter({
         }
       }
 
-      const participantCount = courseRaw.registrations.reduce(
-        (sum, reg) => sum + reg._count.participants,
-        0,
+      const registrationStats = await getCourseRegistrationStats(
+        ctx.db,
+        courseRaw.id,
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { registrations, ...courseWithoutRegistrations } = courseRaw;
-
       return {
-        ...courseWithoutRegistrations,
+        ...courseRaw,
         viewerCollaboratorRole,
         _count: {
-          participants: participantCount,
+          participants: registrationStats.totalConfirmedParticipants,
         },
+        registrationStats,
       };
     }),
 
@@ -877,19 +866,105 @@ export const coursesRouter = createTRPCRouter({
       }
 
       if (priceOptions) {
-        await ctx.db.coursePriceOption.deleteMany({
-          where: { courseId: id },
-        });
+        const registrationStats = await getCourseRegistrationStats(ctx.db, id);
+        const hasConfirmedRegistrations =
+          registrationStats.totalConfirmedParticipants > 0;
 
-        await ctx.db.coursePriceOption.createMany({
-          data: priceOptions.map((option) => ({
-            courseId: id,
-            price: option.price,
-            label: option.label,
-            description: option.description,
-            maxParticipants: option.maxParticipants,
-          })),
-        });
+        if (
+          updateData.maxParticipants !== undefined &&
+          updateData.maxParticipants <
+            registrationStats.totalConfirmedParticipants
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Die maximale Teilnehmerzahl darf nicht unter ${registrationStats.totalConfirmedParticipants} liegen (bereits angemeldet).`,
+          });
+        }
+
+        if (hasConfirmedRegistrations) {
+          const existingOptions = await ctx.db.coursePriceOption.findMany({
+            where: { courseId: id },
+          });
+
+          if (priceOptions.length !== existingOptions.length) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Preiskategorien können nach Beginn der Anmeldungen nicht hinzugefügt oder entfernt werden.",
+            });
+          }
+
+          for (const inputOption of priceOptions) {
+            const existing = existingOptions.find(
+              (option) =>
+                (inputOption.id && option.id === inputOption.id) ||
+                option.label === inputOption.label,
+            );
+
+            if (!existing) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "Preiskategorien können nach Beginn der Anmeldungen nicht geändert werden.",
+              });
+            }
+
+            if (
+              inputOption.label !== existing.label ||
+              inputOption.price !== existing.price
+            ) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "Bezeichnung und Preis einer Preiskategorie können nach Anmeldungen nicht mehr geändert werden.",
+              });
+            }
+
+            if (inputOption.maxParticipants != null) {
+              const usedCount =
+                registrationStats.byPriceOptionLabel[existing.label] ?? 0;
+              if (inputOption.maxParticipants < usedCount) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `Das Limit für „${existing.label}“ darf nicht unter ${usedCount} liegen (bereits angemeldet).`,
+                });
+              }
+            }
+          }
+
+          await Promise.all(
+            priceOptions.map((inputOption) => {
+              const existing = existingOptions.find(
+                (option) =>
+                  (inputOption.id && option.id === inputOption.id) ||
+                  option.label === inputOption.label,
+              );
+              if (!existing) {
+                return Promise.resolve();
+              }
+              return ctx.db.coursePriceOption.update({
+                where: { id: existing.id },
+                data: {
+                  maxParticipants: inputOption.maxParticipants ?? null,
+                },
+              });
+            }),
+          );
+        } else {
+          await ctx.db.coursePriceOption.deleteMany({
+            where: { courseId: id },
+          });
+
+          await ctx.db.coursePriceOption.createMany({
+            data: priceOptions.map((option) => ({
+              courseId: id,
+              price: option.price,
+              label: option.label,
+              description: option.description,
+              maxParticipants: option.maxParticipants,
+            })),
+          });
+        }
       }
 
       if (customFields) {
