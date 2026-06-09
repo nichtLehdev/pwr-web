@@ -53,12 +53,9 @@ const externalRegistrationUrlSchema = z
   .string()
   .max(2000)
   .optional()
-  .refine(
-    (val) => !val?.trim() || /^https?:\/\/.+/i.test(val.trim()),
-    {
-      message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
-    },
-  );
+  .refine((val) => !val?.trim() || /^https?:\/\/.+/i.test(val.trim()), {
+    message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
+  });
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -637,11 +634,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
-      if (
-        !external &&
-        input.allowSiblingDiscount &&
-        !canManageDiscounts
-      ) {
+      if (!external && input.allowSiblingDiscount && !canManageDiscounts) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can enable sibling discount",
@@ -830,7 +823,9 @@ export const coursesRouter = createTRPCRouter({
       const mergedExternalUrl =
         updateData.externalRegistrationUrl === undefined
           ? course.externalRegistrationUrl
-          : normalizeExternalRegistrationUrl(updateData.externalRegistrationUrl);
+          : normalizeExternalRegistrationUrl(
+              updateData.externalRegistrationUrl,
+            );
       const mergedExternal = isExternalCourse({
         externalRegistrationUrl: mergedExternalUrl,
       });

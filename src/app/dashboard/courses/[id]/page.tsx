@@ -15,7 +15,13 @@ import {
   RegistrationStatus,
   PaymentStatus,
 } from "~/generated/prisma/enums";
-import { ArrowRightIcon, Edit, ExternalLink, Trash2, UserIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  Edit,
+  ExternalLink,
+  Trash2,
+  UserIcon,
+} from "lucide-react";
 import { isExternalCourse } from "@/lib/course-external";
 import {
   DashboardFormMediaSplit,
