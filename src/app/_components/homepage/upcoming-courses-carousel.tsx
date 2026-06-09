@@ -132,9 +132,7 @@ function isSaveTheDateCourse(course: CourseListItem): boolean {
 
 /** Large hero carousel: closed registration or save-the-date courses. */
 function isHeroCarouselCourse(course: CourseListItem): boolean {
-  return (
-    hasRegistrationDeadlinePassed(course) || isSaveTheDateCourse(course)
-  );
+  return hasRegistrationDeadlinePassed(course) || isSaveTheDateCourse(course);
 }
 
 function SaveTheDateTag({ className }: { className?: string }) {
@@ -636,11 +634,7 @@ export default function UpcomingCoursesCarousel({
   ]);
 
   useEffect(() => {
-    if (
-      !noHeroCarousel ||
-      !fallbackAutoPlay ||
-      fallbackPageCount <= 1
-    ) {
+    if (!noHeroCarousel || !fallbackAutoPlay || fallbackPageCount <= 1) {
       return;
     }
     const len = fallbackPageCount;
@@ -653,11 +647,7 @@ export default function UpcomingCoursesCarousel({
   }, [fallbackAutoPlay, fallbackPageCount, noHeroCarousel]);
 
   useEffect(() => {
-    if (
-      !noHeroCarousel ||
-      fallbackPageCount <= 1 ||
-      !fallbackAutoPlay
-    ) {
+    if (!noHeroCarousel || fallbackPageCount <= 1 || !fallbackAutoPlay) {
       return;
     }
     let rafId = 0;
