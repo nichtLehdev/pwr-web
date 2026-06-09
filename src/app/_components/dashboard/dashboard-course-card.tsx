@@ -69,6 +69,7 @@ const courseTypeLabels: Record<CourseType, string> = {
   FREIZEIT: "Freizeit",
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
+  VERANSTALTUNG: "Veranstaltung",
   OTHER: "Sonstiges",
 };
 

@@ -255,6 +255,7 @@ enum CourseType {
   FREIZEIT // Retreat
   WORKSHOP
   KOMPONISTENPORTRAIT // Composer Portrait
+  VERANSTALTUNG // Event
   OTHER
 }
 
@@ -487,6 +488,9 @@ model Course {
   registrationOpen     Boolean   @default(false)
   registrationOpensAt  DateTime? // When registrations become available (details visible before this)
   registrationDeadline DateTime?
+  /** When set, registration happens on an external provider website instead of this platform. */
+  externalProviderName    String?
+  externalRegistrationUrl String?
   /** When the post-deadline overview e-mail was sent to creator/organizers. */
   registrationClosedNotifiedAt DateTime?
   maxParticipants      Int? // optional hard cap

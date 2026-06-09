@@ -15,7 +15,14 @@ import {
   RegistrationStatus,
   PaymentStatus,
 } from "~/generated/prisma/enums";
-import { ArrowRightIcon, Edit, Trash2, UserIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  Edit,
+  ExternalLink,
+  Trash2,
+  UserIcon,
+} from "lucide-react";
+import { isExternalCourse } from "@/lib/course-external";
 import {
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
@@ -33,6 +40,7 @@ const courseTypeLabels: Record<CourseType, string> = {
   FREIZEIT: "Freizeit",
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
+  VERANSTALTUNG: "Veranstaltung",
   OTHER: "Sonstiges",
 };
 
@@ -277,6 +285,7 @@ export default function CourseDetailPage() {
   };
 
   const confirmedCount = course._count?.participants ?? 0;
+  const isExternal = isExternalCourse(course);
   const districtLabel = course.bezirk
     ? `${course.bezirk.name}`
     : "Übergreifend";
@@ -364,20 +373,42 @@ export default function CourseDetailPage() {
             </dd>
           </div>
         )}
-        <div>
-          <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Teilnehmer
-          </dt>
-          <dd className="dark:text-dark-text mt-1 text-gray-900">
-            {confirmedCount}
-            {course.maxParticipants && ` / ${course.maxParticipants}`}
-            {course.allowWaitingList && (
-              <span className="ml-2 text-sm text-gray-500">
-                (Warteliste aktiviert)
-              </span>
-            )}
-          </dd>
-        </div>
+        {isExternal ? (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Externe Anmeldung
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {course.externalProviderName || "Externer Anbieter"}
+              {course.externalRegistrationUrl ? (
+                <a
+                  href={course.externalRegistrationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary mt-1 inline-flex items-center gap-1 text-sm hover:underline"
+                >
+                  Zur Anmeldung
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+            </dd>
+          </div>
+        ) : (
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Teilnehmer
+            </dt>
+            <dd className="dark:text-dark-text mt-1 text-gray-900">
+              {confirmedCount}
+              {course.maxParticipants && ` / ${course.maxParticipants}`}
+              {course.allowWaitingList && (
+                <span className="ml-2 text-sm text-gray-500">
+                  (Warteliste aktiviert)
+                </span>
+              )}
+            </dd>
+          </div>
+        )}
         {course.registrationOpensAt && (
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -517,18 +548,19 @@ export default function CourseDetailPage() {
           </div>
           <div className="dark:bg-dark-background-secondary rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">
-              Teilnehmer
+              {isExternal ? "Anbieter" : "Teilnehmer"}
             </p>
             <p className="text-dark dark:text-dark-text mt-1 text-sm font-semibold">
-              {confirmedCount}
-              {course.maxParticipants ? ` / ${course.maxParticipants}` : ""}
+              {isExternal
+                ? course.externalProviderName || "Extern"
+                : `${confirmedCount}${course.maxParticipants ? ` / ${course.maxParticipants}` : ""}`}
             </p>
           </div>
         </div>
       </section>
 
       {/* Tabs */}
-      {canViewParticipants && (
+      {canViewParticipants && !isExternal && (
         <div className="dark:border-dark-border mb-6 border-b border-gray-200">
           <nav className="-mb-px flex gap-4">
             <button
