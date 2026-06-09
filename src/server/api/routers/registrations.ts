@@ -14,6 +14,7 @@ import {
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
+import { isExternalCourse } from "@/lib/course-external";
 
 function collaboratorsForViewer(userId: string) {
   return {
@@ -114,6 +115,13 @@ export const registrationsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Course not found",
+        });
+      }
+
+      if (isExternalCourse(course)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Dieser Kurs wird über einen externen Anbieter angemeldet.",
         });
       }
 

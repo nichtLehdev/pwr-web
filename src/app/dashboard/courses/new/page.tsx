@@ -39,6 +39,7 @@ const courseTypeLabels: Record<CourseType, string> = {
   FREIZEIT: "Freizeit",
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
+  VERANSTALTUNG: "Veranstaltung",
   OTHER: "Sonstiges",
 };
 
@@ -109,6 +110,7 @@ export default function NewCoursePage() {
   const [endDate, setEndDate] = useState("");
   const [endTime, setEndTime] = useState("17:00");
   const [registrationDeadline, setRegistrationDeadline] = useState("");
+  const [hasRegistrationDeadline, setHasRegistrationDeadline] = useState(false);
   const [registrationOpensAt, setRegistrationOpensAt] = useState("");
   const [scheduledRegistrationOpens, setScheduledRegistrationOpens] =
     useState(false);
@@ -128,6 +130,9 @@ export default function NewCoursePage() {
   const [bezirkId, setBezirkId] = useState<string>("");
   const userBezirkId = profile?.bezirkId ?? null;
 
+  const [isExternalProvider, setIsExternalProvider] = useState(false);
+  const [externalProviderName, setExternalProviderName] = useState("");
+  const [externalRegistrationUrl, setExternalRegistrationUrl] = useState("");
   const [maxParticipants, setMaxParticipants] = useState<number>(20);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [allowWaitingList, setAllowWaitingList] = useState(false);
@@ -162,10 +167,14 @@ export default function NewCoursePage() {
     startDate,
     endDate,
     registrationDeadline,
+    hasRegistrationDeadline,
     registrationOpensAt,
     scheduledRegistrationOpens,
     locationId,
     bezirkId,
+    isExternalProvider,
+    externalProviderName,
+    externalRegistrationUrl,
     maxParticipants,
     registrationOpen,
     allowWaitingList,
@@ -218,6 +227,10 @@ export default function NewCoursePage() {
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
+          setHasRegistrationDeadline(
+            saved.hasRegistrationDeadline ??
+              Boolean(saved.registrationDeadline),
+          );
           const restoredScheduled =
             saved.scheduledRegistrationOpens ??
             Boolean(saved.registrationOpensAt);
@@ -227,6 +240,9 @@ export default function NewCoursePage() {
           );
           setLocationId(saved.locationId || "");
           setBezirkId(saved.bezirkId || "");
+          setIsExternalProvider(saved.isExternalProvider || false);
+          setExternalProviderName(saved.externalProviderName || "");
+          setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
           setMaxParticipants(saved.maxParticipants || 20);
           setRegistrationOpen(saved.registrationOpen || false);
           setAllowWaitingList(saved.allowWaitingList || false);
@@ -488,7 +504,7 @@ export default function NewCoursePage() {
         setIsSubmitting(false);
         return;
       }
-      if (registrationDeadline) {
+      if (hasRegistrationDeadline && registrationDeadline) {
         const dl = new Date(registrationDeadline);
         if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
           setError(
@@ -500,13 +516,43 @@ export default function NewCoursePage() {
       }
     }
 
-    if (!maxParticipants || maxParticipants < 1) {
+    if (hasRegistrationDeadline && !registrationDeadline) {
+      setError(
+        "Bitte wähle ein Datum für den Anmeldeschluss oder deaktiviere die Option.",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (isExternalProvider) {
+      const url = externalRegistrationUrl.trim();
+      if (!url) {
+        setError("Bitte gib die URL zur externen Anmeldung an.");
+        setIsSubmitting(false);
+        return;
+      }
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          throw new Error("invalid protocol");
+        }
+      } catch {
+        setError("Bitte gib eine gültige URL ein (mit http:// oder https://).");
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (!maxParticipants || maxParticipants < 1) {
       setError("Bitte gib eine maximale Teilnehmerzahl ein.");
       setIsSubmitting(false);
       return;
     }
 
-    if (!isFree && !paymentCashAllowed && !paymentInvoiceAllowed) {
+    if (
+      !isExternalProvider &&
+      !isFree &&
+      !paymentCashAllowed &&
+      !paymentInvoiceAllowed
+    ) {
       setError(
         "Mindestens eine Zahlungsart (Bar vor Ort oder Rechnung per Überweisung) muss aktiv sein.",
       );
@@ -514,36 +560,39 @@ export default function NewCoursePage() {
       return;
     }
 
-    const preparedPriceOptions = !isFree
-      ? priceOptions
-          .filter((opt) => opt.label.trim())
-          .map(({ label, price, description, maxParticipants }) => ({
-            label: label.trim(),
-            price,
-            description: description.trim() || undefined,
-            maxParticipants: maxParticipants || undefined,
-          }))
-      : undefined;
+    const preparedPriceOptions =
+      !isExternalProvider && !isFree
+        ? priceOptions
+            .filter((opt) => opt.label.trim())
+            .map(({ label, price, description, maxParticipants }) => ({
+              label: label.trim(),
+              price,
+              description: description.trim() || undefined,
+              maxParticipants: maxParticipants || undefined,
+            }))
+        : undefined;
 
-    const preparedCustomFields = customFields
-      .filter((cf) => cf.fieldName.trim())
-      .map(
-        ({
-          fieldName,
-          fieldType,
-          options,
-          isRequired,
-          helpText,
-          sortOrder,
-        }) => ({
-          fieldName: fieldName.trim(),
-          fieldType,
-          options: fieldType === "SELECT" ? options.trim() : undefined,
-          isRequired,
-          helpText: helpText.trim() || undefined,
-          sortOrder,
-        }),
-      );
+    const preparedCustomFields = isExternalProvider
+      ? []
+      : customFields
+          .filter((cf) => cf.fieldName.trim())
+          .map(
+            ({
+              fieldName,
+              fieldType,
+              options,
+              isRequired,
+              helpText,
+              sortOrder,
+            }) => ({
+              fieldName: fieldName.trim(),
+              fieldType,
+              options: fieldType === "SELECT" ? options.trim() : undefined,
+              isRequired,
+              helpText: helpText.trim() || undefined,
+              sortOrder,
+            }),
+          );
 
     clear();
 
@@ -553,9 +602,10 @@ export default function NewCoursePage() {
       description: description.trim(),
       startDate: new Date(`${startDate}T${startTime}`),
       endDate: new Date(`${endDate}T${endTime}`),
-      registrationDeadline: registrationDeadline
-        ? new Date(registrationDeadline)
-        : undefined,
+      registrationDeadline:
+        hasRegistrationDeadline && registrationDeadline
+          ? new Date(registrationDeadline)
+          : undefined,
       registrationOpensAt:
         scheduledRegistrationOpens && registrationOpensAt
           ? new Date(registrationOpensAt)
@@ -563,11 +613,18 @@ export default function NewCoursePage() {
       locationId: locationId || undefined,
       bezirkId: bezirkId || undefined,
       courseType,
-      maxParticipants,
+      externalProviderName: isExternalProvider
+        ? externalProviderName.trim() || undefined
+        : undefined,
+      externalRegistrationUrl: isExternalProvider
+        ? externalRegistrationUrl.trim()
+        : undefined,
+      maxParticipants: isExternalProvider ? undefined : maxParticipants,
       registrationOpen,
-      allowWaitingList,
-      allowSiblingDiscount: isHigherRole ? allowSiblingDiscount : false,
-      isFree,
+      allowWaitingList: isExternalProvider ? false : allowWaitingList,
+      allowSiblingDiscount:
+        isExternalProvider || !isHigherRole ? false : allowSiblingDiscount,
+      isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
       priceInfo: priceInfo.trim() || undefined,
@@ -1121,11 +1178,97 @@ export default function NewCoursePage() {
             <DashboardFormZoneHeader
               step={3}
               title="Anmeldung"
-              description="Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+              description={
+                isExternalProvider
+                  ? "Anmeldung über eine externe Website – ohne Teilnehmerverwaltung auf dieser Plattform."
+                  : "Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+              }
             />
             <div className="space-y-10">
               <DashboardFormBlock title="Anmeldeeinstellungen">
                 <div className="space-y-6">
+                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="new-course-external-provider"
+                        checked={isExternalProvider}
+                        onChange={(e) =>
+                          setIsExternalProvider(e.target.checked)
+                        }
+                        className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                      />
+                      <span className="min-w-0">
+                        <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                          Externer Anbieter
+                        </span>
+                        <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                          Die Anmeldung erfolgt auf einer externen Website. Es
+                          gibt kein Anmeldeformular und keine
+                          Teilnehmerverwaltung hier.
+                        </span>
+                      </span>
+                    </label>
+
+                    {isExternalProvider ? (
+                      <div className="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <div>
+                          <label
+                            htmlFor="new-course-external-provider-name"
+                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                          >
+                            Name des Anbieters (optional)
+                          </label>
+                          <input
+                            type="text"
+                            id="new-course-external-provider-name"
+                            value={externalProviderName}
+                            onChange={(e) =>
+                              setExternalProviderName(e.target.value)
+                            }
+                            placeholder="z.B. Evangelische Akademie"
+                            className={registrationFieldInputClass}
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="new-course-external-registration-url"
+                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                          >
+                            Link zur Anmeldung *
+                          </label>
+                          <input
+                            type="url"
+                            id="new-course-external-registration-url"
+                            value={externalRegistrationUrl}
+                            onChange={(e) =>
+                              setExternalRegistrationUrl(e.target.value)
+                            }
+                            placeholder="https://..."
+                            className={registrationFieldInputClass}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="new-course-external-price-info"
+                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                          >
+                            Hinweis zu Kosten (optional)
+                          </label>
+                          <input
+                            type="text"
+                            id="new-course-external-price-info"
+                            value={priceInfo}
+                            onChange={(e) => setPriceInfo(e.target.value)}
+                            placeholder="z.B. Kosten auf Anfrage beim Anbieter"
+                            className={registrationFieldInputClass}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+
                   <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                     <legend className="sr-only">
                       Anmeldezeitpunkt und -fenster
@@ -1238,458 +1381,503 @@ export default function NewCoursePage() {
                           </div>
                         ) : null}
                       </div>
+
+                      <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <label className="flex cursor-pointer items-start gap-3">
+                          <input
+                            type="checkbox"
+                            id="new-course-has-registration-deadline"
+                            checked={hasRegistrationDeadline}
+                            onChange={(e) => {
+                              const on = e.target.checked;
+                              setHasRegistrationDeadline(on);
+                              if (!on) setRegistrationDeadline("");
+                            }}
+                            className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                          />
+                          <span className="min-w-0">
+                            <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                              Anmeldeschluss festlegen
+                            </span>
+                            <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                              {hasRegistrationDeadline
+                                ? isExternalProvider
+                                  ? "Datum wählen, bis wann der Anmelde-Link sichtbar bleibt."
+                                  : "Datum wählen, bis wann sich Teilnehmer anmelden können."
+                                : "Ohne Frist bleibt die Anmeldung bis Kursbeginn offen."}
+                            </span>
+                          </span>
+                        </label>
+
+                        {hasRegistrationDeadline ? (
+                          <div className="mt-4 max-w-xs">
+                            <label
+                              htmlFor="new-course-registration-deadline"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Anmeldeschluss
+                            </label>
+                            <input
+                              type="date"
+                              id="new-course-registration-deadline"
+                              value={registrationDeadline}
+                              onChange={(e) =>
+                                setRegistrationDeadline(e.target.value)
+                              }
+                              min={
+                                scheduledRegistrationOpens &&
+                                registrationOpensAt.includes("T")
+                                  ? opensScheduleParts.opensDatePart ||
+                                    undefined
+                                  : undefined
+                              }
+                              max={startDate || undefined}
+                              title="Anmeldeschluss muss vor oder am Startdatum sein"
+                              className={registrationFieldInputClass}
+                              required
+                            />
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </fieldset>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start sm:gap-6">
-                    <div>
-                      <label
-                        htmlFor="new-course-max-participants"
-                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                      >
-                        Maximale Teilnehmerzahl *
-                      </label>
-                      <input
-                        type="number"
-                        id="new-course-max-participants"
-                        value={maxParticipants}
-                        onChange={(e) =>
-                          setMaxParticipants(parseInt(e.target.value, 10) || 0)
-                        }
-                        min="1"
-                        max="500"
-                        className={registrationFieldInputClass}
-                        required
-                      />
-                    </div>
+                  {!isExternalProvider ? (
+                    <>
+                      <div className="max-w-xs">
+                        <label
+                          htmlFor="new-course-max-participants"
+                          className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                        >
+                          Maximale Teilnehmerzahl *
+                        </label>
+                        <input
+                          type="number"
+                          id="new-course-max-participants"
+                          value={maxParticipants}
+                          onChange={(e) =>
+                            setMaxParticipants(
+                              parseInt(e.target.value, 10) || 0,
+                            )
+                          }
+                          min="1"
+                          max="500"
+                          className={registrationFieldInputClass}
+                          required
+                        />
+                      </div>
 
-                    <div>
-                      <label
-                        htmlFor="new-course-registration-deadline"
-                        className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                      >
-                        Anmeldeschluss (optional)
-                      </label>
-                      <input
-                        type="date"
-                        id="new-course-registration-deadline"
-                        value={registrationDeadline}
-                        onChange={(e) =>
-                          setRegistrationDeadline(e.target.value)
-                        }
-                        min={
-                          scheduledRegistrationOpens &&
-                          registrationOpensAt.includes("T")
-                            ? opensScheduleParts.opensDatePart || undefined
-                            : undefined
-                        }
-                        max={startDate || undefined}
-                        title="Anmeldeschluss muss vor oder am Startdatum sein"
-                        className={registrationFieldInputClass}
-                      />
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          id="new-course-waiting-list"
+                          checked={allowWaitingList}
+                          onChange={(e) =>
+                            setAllowWaitingList(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <label
+                          htmlFor="new-course-waiting-list"
+                          className="dark:text-dark-text text-sm font-medium text-gray-700"
+                        >
+                          Warteliste aktivieren
+                        </label>
+                      </div>
 
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="new-course-waiting-list"
-                      checked={allowWaitingList}
-                      onChange={(e) => setAllowWaitingList(e.target.checked)}
-                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                    />
-                    <label
-                      htmlFor="new-course-waiting-list"
-                      className="dark:text-dark-text text-sm font-medium text-gray-700"
-                    >
-                      Warteliste aktivieren
-                    </label>
-                  </div>
-
-                  {isHigherRole ? (
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="new-course-sibling-discount"
-                        checked={allowSiblingDiscount}
-                        onChange={(e) =>
-                          setAllowSiblingDiscount(e.target.checked)
-                        }
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <label
-                        htmlFor="new-course-sibling-discount"
-                        className="dark:text-dark-text text-sm font-medium text-gray-700"
-                      >
-                        Geschwisterkindrabatt erlauben (20% auf die Gebühr jedes
-                        weiteren Geschwisterkindes ab dem zweiten Kind)
-                      </label>
-                    </div>
+                      {isHigherRole ? (
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="new-course-sibling-discount"
+                            checked={allowSiblingDiscount}
+                            onChange={(e) =>
+                              setAllowSiblingDiscount(e.target.checked)
+                            }
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor="new-course-sibling-discount"
+                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                          >
+                            Geschwisterkindrabatt erlauben (20% auf die Gebühr
+                            jedes weiteren Geschwisterkindes ab dem zweiten
+                            Kind)
+                          </label>
+                        </div>
+                      ) : null}
+                    </>
                   ) : null}
                 </div>
               </DashboardFormBlock>
 
-              <DashboardFormBlock
-                title="Zusätzliche Anmeldefelder"
-                description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
-              >
-                <div className="-mt-2 mb-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={addCustomField}
-                    className="text-primary hover:text-primary/80 text-sm font-medium"
-                  >
-                    + Feld hinzufügen
-                  </button>
-                </div>
+              {!isExternalProvider ? (
+                <DashboardFormBlock
+                  title="Zusätzliche Anmeldefelder"
+                  description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
+                >
+                  <div className="-mt-2 mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={addCustomField}
+                      className="text-primary hover:text-primary/80 text-sm font-medium"
+                    >
+                      + Feld hinzufügen
+                    </button>
+                  </div>
 
-                {customFields.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Keine zusätzlichen Felder definiert.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {customFields.map((field, index) => (
-                      <div
-                        key={field.id}
-                        className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
-                      >
-                        <div className="mb-3 flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Feld {index + 1}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => moveCustomField(field.id, "up")}
-                              disabled={index === 0}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                            >
-                              <ArrowUpIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveCustomField(field.id, "down")}
-                              disabled={index === customFields.length - 1}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                            >
-                              <ArrowDownIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeCustomField(field.id)}
-                              className="p-1 text-gray-400 hover:text-red-500"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Feldname *
-                            </label>
-                            <input
-                              type="text"
-                              value={field.fieldName}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "fieldName",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="z.B. Ernährungsbesonderheiten"
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Feldtyp
-                            </label>
-                            <Select
-                              value={field.fieldType}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "fieldType",
-                                  e.target.value as CustomFieldType,
-                                )
-                              }
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            >
-                              {Object.entries(customFieldTypeLabels).map(
-                                ([value, label]) => (
-                                  <option key={value} value={value}>
-                                    {label}
-                                  </option>
-                                ),
-                              )}
-                            </Select>
+                  {customFields.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Keine zusätzlichen Felder definiert.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {customFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                              Feld {index + 1}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveCustomField(field.id, "up")}
+                                disabled={index === 0}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                              >
+                                <ArrowUpIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  moveCustomField(field.id, "down")
+                                }
+                                disabled={index === customFields.length - 1}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                              >
+                                <ArrowDownIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeCustomField(field.id)}
+                                className="p-1 text-gray-400 hover:text-red-500"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
 
-                          {field.fieldType === "SELECT" && (
-                            <div className="sm:col-span-2">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Auswahloptionen (kommagetrennt)
+                                Feldname *
                               </label>
                               <input
                                 type="text"
-                                value={field.options}
+                                value={field.fieldName}
                                 onChange={(e) =>
                                   updateCustomField(
                                     field.id,
-                                    "options",
+                                    "fieldName",
                                     e.target.value,
                                   )
                                 }
-                                placeholder="z.B. Option 1, Option 2, Option 3"
+                                placeholder="z.B. Ernährungsbesonderheiten"
                                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />
                             </div>
-                          )}
-
-                          <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Hilfetext
-                            </label>
-                            <input
-                              type="text"
-                              value={field.helpText}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "helpText",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="z.B. Bitte gib eventuelle Allergien an"
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="flex cursor-pointer items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={field.isRequired}
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Feldtyp
+                              </label>
+                              <Select
+                                value={field.fieldType}
                                 onChange={(e) =>
                                   updateCustomField(
                                     field.id,
-                                    "isRequired",
-                                    e.target.checked,
+                                    "fieldType",
+                                    e.target.value as CustomFieldType,
                                   )
                                 }
-                                className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                              />
-                              <span className="dark:text-dark-text text-sm text-gray-700">
-                                Pflichtfeld
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </DashboardFormBlock>
-            </div>
-          </div>
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                              >
+                                {Object.entries(customFieldTypeLabels).map(
+                                  ([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  ),
+                                )}
+                              </Select>
+                            </div>
 
-          <div
-            id="kurs-form-preise"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
-          >
-            <DashboardFormZoneHeader
-              step={4}
-              title="Preise"
-              description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
-            />
-            <DashboardFormBlock title="Honorar und Zahlungsweisen">
-              <div className="space-y-4">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isFree}
-                    onChange={(e) => setIsFree(e.target.checked)}
-                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Kostenloser Kurs
-                  </span>
-                </label>
-
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Preis-Informationen
-                  </label>
-                  <input
-                    type="text"
-                    value={priceInfo}
-                    onChange={(e) => setPriceInfo(e.target.value)}
-                    placeholder={
-                      isFree
-                        ? "z.B. Verpflegung inklusive"
-                        : "z.B. Frühbucherrabatt bis 31.01."
-                    }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-
-                {!isFree && (
-                  <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-                    <p className="dark:text-dark-text text-sm font-medium text-gray-700">
-                      Zahlungsweisen für Teilnehmer
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Mindestens eine Option aktivieren.
-                    </p>
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={paymentCashAllowed}
-                        onChange={(e) =>
-                          setPaymentCashAllowed(e.target.checked)
-                        }
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
-                        Barzahlung vor Ort
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={paymentInvoiceAllowed}
-                        onChange={(e) =>
-                          setPaymentInvoiceAllowed(e.target.checked)
-                        }
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
-                        Überweisung nach Rechnung
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                {!isFree && (
-                  <div>
-                    <div className="mb-2 flex items-center justify-between">
-                      <label className="dark:text-dark-text text-sm font-medium text-gray-700">
-                        Preiskategorien
-                      </label>
-                      <button
-                        type="button"
-                        onClick={addPriceOption}
-                        className="text-primary hover:text-primary/80 text-sm font-medium"
-                      >
-                        + Kategorie hinzufügen
-                      </button>
-                    </div>
-
-                    {priceOptions.length === 0 ? (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Noch keine Preiskategorien angelegt. Füge mindestens
-                        eine hinzu.
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {priceOptions.map((option) => (
-                          <div
-                            key={option.id}
-                            className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
-                          >
-                            <div className="flex-1 space-y-2">
-                              <div className="grid gap-2 sm:grid-cols-3">
+                            {field.fieldType === "SELECT" && (
+                              <div className="sm:col-span-2">
+                                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  Auswahloptionen (kommagetrennt)
+                                </label>
                                 <input
                                   type="text"
-                                  value={option.label}
+                                  value={field.options}
                                   onChange={(e) =>
-                                    updatePriceOption(
-                                      option.id,
-                                      "label",
+                                    updateCustomField(
+                                      field.id,
+                                      "options",
                                       e.target.value,
                                     )
                                   }
-                                  placeholder="Bezeichnung (z.B. Erwachsene)"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                                />
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="number"
-                                    value={option.price}
-                                    onChange={(e) =>
-                                      updatePriceOption(
-                                        option.id,
-                                        "price",
-                                        parseFloat(e.target.value) || 0,
-                                      )
-                                    }
-                                    min="0"
-                                    step="0.01"
-                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                                  />
-                                  <span className="text-sm text-gray-500">
-                                    €
-                                  </span>
-                                </div>
-                                <input
-                                  type="number"
-                                  value={option.maxParticipants || ""}
-                                  onChange={(e) =>
-                                    updatePriceOption(
-                                      option.id,
-                                      "maxParticipants",
-                                      e.target.value
-                                        ? parseInt(e.target.value)
-                                        : undefined,
-                                    )
-                                  }
-                                  min="1"
-                                  max="500"
-                                  placeholder="Max. Plätze (optional)"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  placeholder="z.B. Option 1, Option 2, Option 3"
+                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                                 />
                               </div>
+                            )}
+
+                            <div className="sm:col-span-2">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Hilfetext
+                              </label>
                               <input
                                 type="text"
-                                value={option.description}
+                                value={field.helpText}
                                 onChange={(e) =>
-                                  updatePriceOption(
-                                    option.id,
-                                    "description",
+                                  updateCustomField(
+                                    field.id,
+                                    "helpText",
                                     e.target.value,
                                   )
                                 }
-                                placeholder="Beschreibung (optional)"
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                placeholder="z.B. Bitte gib eventuelle Allergien an"
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removePriceOption(option.id)}
-                              className="p-1 text-gray-400 hover:text-red-500"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
+
+                            <div>
+                              <label className="flex cursor-pointer items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.isRequired}
+                                  onChange={(e) =>
+                                    updateCustomField(
+                                      field.id,
+                                      "isRequired",
+                                      e.target.checked,
+                                    )
+                                  }
+                                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                                />
+                                <span className="dark:text-dark-text text-sm text-gray-700">
+                                  Pflichtfeld
+                                </span>
+                              </label>
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </DashboardFormBlock>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </DashboardFormBlock>
+              ) : null}
+            </div>
           </div>
+
+          {!isExternalProvider ? (
+            <div
+              id="kurs-form-preise"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={4}
+                title="Preise"
+                description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
+              />
+              <DashboardFormBlock title="Honorar und Zahlungsweisen">
+                <div className="space-y-4">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isFree}
+                      onChange={(e) => setIsFree(e.target.checked)}
+                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="dark:text-dark-text text-sm text-gray-700">
+                      Kostenloser Kurs
+                    </span>
+                  </label>
+
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Preis-Informationen
+                    </label>
+                    <input
+                      type="text"
+                      value={priceInfo}
+                      onChange={(e) => setPriceInfo(e.target.value)}
+                      placeholder={
+                        isFree
+                          ? "z.B. Verpflegung inklusive"
+                          : "z.B. Frühbucherrabatt bis 31.01."
+                      }
+                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    />
+                  </div>
+
+                  {!isFree && (
+                    <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+                      <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                        Zahlungsweisen für Teilnehmer
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Mindestens eine Option aktivieren.
+                      </p>
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={paymentCashAllowed}
+                          onChange={(e) =>
+                            setPaymentCashAllowed(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="dark:text-dark-text text-sm text-gray-700">
+                          Barzahlung vor Ort
+                        </span>
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={paymentInvoiceAllowed}
+                          onChange={(e) =>
+                            setPaymentInvoiceAllowed(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="dark:text-dark-text text-sm text-gray-700">
+                          Überweisung nach Rechnung
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {!isFree && (
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+                          Preiskategorien
+                        </label>
+                        <button
+                          type="button"
+                          onClick={addPriceOption}
+                          className="text-primary hover:text-primary/80 text-sm font-medium"
+                        >
+                          + Kategorie hinzufügen
+                        </button>
+                      </div>
+
+                      {priceOptions.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Noch keine Preiskategorien angelegt. Füge mindestens
+                          eine hinzu.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {priceOptions.map((option) => (
+                            <div
+                              key={option.id}
+                              className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
+                            >
+                              <div className="flex-1 space-y-2">
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                  <input
+                                    type="text"
+                                    value={option.label}
+                                    onChange={(e) =>
+                                      updatePriceOption(
+                                        option.id,
+                                        "label",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Bezeichnung (z.B. Erwachsene)"
+                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  />
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      value={option.price}
+                                      onChange={(e) =>
+                                        updatePriceOption(
+                                          option.id,
+                                          "price",
+                                          parseFloat(e.target.value) || 0,
+                                        )
+                                      }
+                                      min="0"
+                                      step="0.01"
+                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                    />
+                                    <span className="text-sm text-gray-500">
+                                      €
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="number"
+                                    value={option.maxParticipants || ""}
+                                    onChange={(e) =>
+                                      updatePriceOption(
+                                        option.id,
+                                        "maxParticipants",
+                                        e.target.value
+                                          ? parseInt(e.target.value)
+                                          : undefined,
+                                      )
+                                    }
+                                    min="1"
+                                    max="500"
+                                    placeholder="Max. Plätze (optional)"
+                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  />
+                                </div>
+                                <input
+                                  type="text"
+                                  value={option.description}
+                                  onChange={(e) =>
+                                    updatePriceOption(
+                                      option.id,
+                                      "description",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Beschreibung (optional)"
+                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removePriceOption(option.id)}
+                                className="p-1 text-gray-400 hover:text-red-500"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </DashboardFormBlock>
+            </div>
+          ) : null}
 
           <div
             id="kurs-form-veroeffentlichung"
             className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
           >
             <DashboardFormZoneHeader
-              step={5}
+              step={isExternalProvider ? 4 : 5}
               title="Veröffentlichung"
               description="Welchen redaktionellen Stand der Eintrag haben soll – wirkt sich auf die öffentliche Sichtbarkeit aus."
             />

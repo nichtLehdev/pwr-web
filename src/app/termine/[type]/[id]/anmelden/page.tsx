@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { api } from "@/trpc/server";
 import CourseRegistrationPage from "@/app/_components/events/course-registration-page";
 import type { RouterOutputs } from "@/trpc/react";
+import { isExternalCourse } from "@/lib/course-external";
 
 type Course = NonNullable<RouterOutputs["courses"]["getById"]>;
 type Spots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -46,6 +47,10 @@ export default async function CourseAnmeldenPage({ params }: PageProps) {
 
   if (!course) {
     notFound();
+  }
+
+  if (isExternalCourse(course) && course.externalRegistrationUrl) {
+    redirect(course.externalRegistrationUrl);
   }
 
   if (!canRegisterForCourse(course, spots)) {
