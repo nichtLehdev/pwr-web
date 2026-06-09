@@ -119,6 +119,51 @@ function hasRegistrationDeadlinePassed(course: CourseListItem): boolean {
   return new Date(course.registrationDeadline).getTime() < Date.now();
 }
 
+/** Save-the-date: upcoming course whose registration is not open yet (and deadline has not passed). */
+function isSaveTheDateCourse(course: CourseListItem): boolean {
+  if (isRegistrationCurrentlyOpen(course)) {
+    return false;
+  }
+  if (hasRegistrationDeadlinePassed(course)) {
+    return false;
+  }
+  return true;
+}
+
+/** Large hero carousel: closed registration or save-the-date courses. */
+function isHeroCarouselCourse(course: CourseListItem): boolean {
+  return (
+    hasRegistrationDeadlinePassed(course) || isSaveTheDateCourse(course)
+  );
+}
+
+function SaveTheDateTag({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
+        className,
+      )}
+    >
+      Save the Date
+    </span>
+  );
+}
+
+function saveTheDateRegistrationHint(course: CourseListItem): string | null {
+  const opensAt = course.registrationOpensAt
+    ? new Date(course.registrationOpensAt)
+    : null;
+  if (opensAt && opensAt.getTime() > Date.now()) {
+    return `Anmeldung ab ${opensAt.toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })}`;
+  }
+  return null;
+}
+
 function SmallOpenRegistrationCard({
   course,
   className,
@@ -223,12 +268,16 @@ function homeCourseRegistrationStatus(course: CourseListItem): {
   if (!course.registrationOpen) {
     return { label: "Details zur Anmeldung", emphasis: false };
   }
-  return { label: "Kommender Lehrgang", emphasis: false };
+  return { label: "kommende Veranstaltung", emphasis: false };
 }
 
 function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
   const districtColor = getDistrictColor(course?.bezirk?.number);
   const status = homeCourseRegistrationStatus(course);
+  const isSaveTheDate = isSaveTheDateCourse(course);
+  const saveTheDateHint = isSaveTheDate
+    ? saveTheDateRegistrationHint(course)
+    : null;
 
   return (
     <Link
@@ -272,16 +321,29 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
 
       <div className="flex min-h-0 flex-1 flex-col p-5 sm:p-6">
         <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-          <p
-            className={cn(
-              "text-sm font-semibold",
-              status.emphasis
-                ? "text-primary"
-                : "text-gray-600 dark:text-gray-400",
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            {isSaveTheDate ? (
+              <>
+                <SaveTheDateTag />
+                {saveTheDateHint ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {saveTheDateHint}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p
+                className={cn(
+                  "text-sm font-semibold",
+                  status.emphasis
+                    ? "text-primary"
+                    : "text-gray-600 dark:text-gray-400",
+                )}
+              >
+                {status.label}
+              </p>
             )}
-          >
-            {status.label}
-          </p>
+          </div>
           <span
             className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
             style={{ backgroundColor: districtColor }}
@@ -355,10 +417,10 @@ interface UpcomingCoursesCarouselProps {
 export default function UpcomingCoursesCarousel({
   courses,
 }: UpcomingCoursesCarouselProps) {
-  const closedRegistrationCourses = useMemo(
+  const heroCarouselCourses = useMemo(
     () =>
       courses
-        .filter(hasRegistrationDeadlinePassed)
+        .filter(isHeroCarouselCourse)
         .sort(
           (a, b) =>
             new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
@@ -439,13 +501,13 @@ export default function UpcomingCoursesCarousel({
   );
 
   const effectiveLeftIndex =
-    closedRegistrationCourses.length === 0
+    heroCarouselCourses.length === 0
       ? 0
-      : Math.min(leftIndex, closedRegistrationCourses.length - 1);
+      : Math.min(leftIndex, heroCarouselCourses.length - 1);
 
   const effectiveOpenPageIndex = Math.min(openPageIndex, openPageCount - 1);
 
-  const leftCourse = closedRegistrationCourses[effectiveLeftIndex];
+  const leftCourse = heroCarouselCourses[effectiveLeftIndex];
 
   const openPageCourses = useMemo(() => {
     const start = effectiveOpenPageIndex * OPEN_CARDS_PER_PAGE;
@@ -461,11 +523,11 @@ export default function UpcomingCoursesCarousel({
     [courses],
   );
 
-  const noClosedRegistrationHero = closedRegistrationCourses.length === 0;
+  const noHeroCarousel = heroCarouselCourses.length === 0;
 
-  /** Split 2/3 + 1/3 layout only when both hero (closed) and open-registration cards exist. */
+  /** Split 2/3 + 1/3 layout only when both hero and open-registration cards exist. */
   const showOpenRegistrationColumn =
-    closedRegistrationCourses.length > 0 && openRegistrationCourses.length > 0;
+    heroCarouselCourses.length > 0 && openRegistrationCourses.length > 0;
 
   const fallbackPageCount = Math.max(
     1,
@@ -487,19 +549,29 @@ export default function UpcomingCoursesCarousel({
     : "";
 
   const leftDistrictColor = getDistrictColor(leftCourse?.bezirk?.number);
+  const leftCourseStatus = leftCourse
+    ? homeCourseRegistrationStatus(leftCourse)
+    : null;
+  const leftIsSaveTheDate = leftCourse
+    ? isSaveTheDateCourse(leftCourse)
+    : false;
+  const leftSaveTheDateHint =
+    leftCourse && leftIsSaveTheDate
+      ? saveTheDateRegistrationHint(leftCourse)
+      : null;
 
   const showOpenCarousel = openRegistrationCourses.length > OPEN_CARDS_PER_PAGE;
 
   useEffect(() => {
-    if (!leftAutoPlay || closedRegistrationCourses.length <= 1) return;
-    const len = closedRegistrationCourses.length;
+    if (!leftAutoPlay || heroCarouselCourses.length <= 1) return;
+    const len = heroCarouselCourses.length;
     const id = setInterval(() => {
       setLeftEnterForward(true);
       setLeftNavGeneration((g) => g + 1);
       setLeftIndex((prev) => (prev + 1) % len);
     }, CAROUSEL_AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [leftAutoPlay, closedRegistrationCourses.length]);
+  }, [leftAutoPlay, heroCarouselCourses.length]);
 
   useEffect(() => {
     if (!rightAutoPlay || openPageCount <= 1 || !showOpenRegistrationColumn)
@@ -523,7 +595,7 @@ export default function UpcomingCoursesCarousel({
   }, []);
 
   useEffect(() => {
-    if (closedRegistrationCourses.length <= 1 || !leftAutoPlay) {
+    if (heroCarouselCourses.length <= 1 || !leftAutoPlay) {
       return;
     }
     let rafId = 0;
@@ -538,7 +610,7 @@ export default function UpcomingCoursesCarousel({
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [effectiveLeftIndex, leftAutoPlay, closedRegistrationCourses.length]);
+  }, [effectiveLeftIndex, leftAutoPlay, heroCarouselCourses.length]);
 
   useEffect(() => {
     if (openPageCount <= 1 || !rightAutoPlay || !showOpenRegistrationColumn) {
@@ -565,7 +637,7 @@ export default function UpcomingCoursesCarousel({
 
   useEffect(() => {
     if (
-      !noClosedRegistrationHero ||
+      !noHeroCarousel ||
       !fallbackAutoPlay ||
       fallbackPageCount <= 1
     ) {
@@ -578,11 +650,11 @@ export default function UpcomingCoursesCarousel({
       setFallbackPageIndex((prev) => (prev + 1) % len);
     }, CAROUSEL_AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [fallbackAutoPlay, fallbackPageCount, noClosedRegistrationHero]);
+  }, [fallbackAutoPlay, fallbackPageCount, noHeroCarousel]);
 
   useEffect(() => {
     if (
-      !noClosedRegistrationHero ||
+      !noHeroCarousel ||
       fallbackPageCount <= 1 ||
       !fallbackAutoPlay
     ) {
@@ -604,23 +676,23 @@ export default function UpcomingCoursesCarousel({
     effectiveFallbackPageIndex,
     fallbackAutoPlay,
     fallbackPageCount,
-    noClosedRegistrationHero,
+    noHeroCarousel,
   ]);
 
   if (courses.length === 0) {
     return (
       <p className="text-gray-600 dark:text-gray-400">
-        Aktuell keine Lehrgänge verfügbar.
+        Aktuell keine Veranstaltungen verfügbar.
       </p>
     );
   }
 
   const leftProgressDisplay =
-    closedRegistrationCourses.length <= 1 ? 0 : leftProgress;
+    heroCarouselCourses.length <= 1 ? 0 : leftProgress;
   const rightProgressDisplay =
     !showOpenRegistrationColumn || openPageCount <= 1 ? 0 : rightProgress;
   const fallbackProgressDisplay =
-    !noClosedRegistrationHero || fallbackPageCount <= 1 ? 0 : fallbackProgress;
+    !noHeroCarousel || fallbackPageCount <= 1 ? 0 : fallbackProgress;
 
   const openRegistrationPillButtons = (
     layout: "horizontal" | "vertical",
@@ -694,7 +766,7 @@ export default function UpcomingCoursesCarousel({
         showOpenRegistrationColumn && "lg:grid-cols-3",
       )}
     >
-      {/* Large hero (closed registration) or full-width fallback carousel */}
+      {/* Large hero (save-the-date / closed registration) or full-width fallback carousel */}
       <div
         className={cn(
           "flex min-h-0 min-w-0 flex-col",
@@ -763,9 +835,29 @@ export default function UpcomingCoursesCarousel({
 
                   <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-6">
                     <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-primary text-sm font-semibold">
-                        Anmeldung geschlossen
-                      </p>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        {leftIsSaveTheDate ? (
+                          <>
+                            <SaveTheDateTag />
+                            {leftSaveTheDateHint ? (
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {leftSaveTheDateHint}
+                              </p>
+                            ) : null}
+                          </>
+                        ) : (
+                          <p
+                            className={cn(
+                              "text-sm font-semibold",
+                              leftCourseStatus?.emphasis
+                                ? "text-primary"
+                                : "text-gray-600 dark:text-gray-400",
+                            )}
+                          >
+                            {leftCourseStatus?.label}
+                          </p>
+                        )}
+                      </div>
                       <span
                         className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
                         style={{ backgroundColor: leftDistrictColor }}
@@ -832,13 +924,13 @@ export default function UpcomingCoursesCarousel({
               </div>
             </div>
 
-            {closedRegistrationCourses.length > 1 ? (
+            {heroCarouselCourses.length > 1 ? (
               <div
                 className="mt-3 flex justify-center gap-1.5"
                 role="tablist"
-                aria-label="Lehrgänge mit abgelaufener Anmeldefrist"
+                aria-label="kommende Veranstaltungen"
               >
-                {closedRegistrationCourses.map((c, i) => {
+                {heroCarouselCourses.map((c, i) => {
                   const isActive = i === effectiveLeftIndex;
                   return (
                     <button
@@ -846,7 +938,7 @@ export default function UpcomingCoursesCarousel({
                       type="button"
                       onClick={() => {
                         if (i === effectiveLeftIndex) return;
-                        const len = closedRegistrationCourses.length;
+                        const len = heroCarouselCourses.length;
                         setLeftEnterForward(
                           isCarouselForward(effectiveLeftIndex, i, len),
                         );
@@ -859,7 +951,7 @@ export default function UpcomingCoursesCarousel({
                           ? "h-2 w-6 bg-gray-300 dark:bg-gray-600"
                           : "h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600"
                       }`}
-                      aria-label={`Lehrgang ${i + 1} von ${closedRegistrationCourses.length}${
+                      aria-label={`Veranstaltung ${i + 1} von ${heroCarouselCourses.length}${
                         isActive
                           ? `, Fortschritt ${Math.round(leftProgressDisplay)} Prozent`
                           : ""
@@ -906,7 +998,7 @@ export default function UpcomingCoursesCarousel({
               <div
                 className="mt-3 flex justify-center gap-1.5"
                 role="tablist"
-                aria-label="Weitere kommende Lehrgänge"
+                aria-label="Weitere kommende Veranstaltungen"
               >
                 {Array.from({ length: fallbackPageCount }, (_, i) => {
                   const isActive = i === effectiveFallbackPageIndex;
@@ -996,13 +1088,13 @@ export default function UpcomingCoursesCarousel({
                   <div
                     className="flex w-full justify-center gap-1.5 pt-1 lg:hidden"
                     role="tablist"
-                    aria-label="Seiten Lehrgänge mit offener Anmeldung"
+                    aria-label="Seiten Veranstaltungen mit offener Anmeldung"
                   >
                     {openRegistrationPillButtons("horizontal")}
                   </div>
                   <div
                     className="hidden shrink-0 flex-col items-center justify-center gap-1.5 self-stretch py-1 pl-1 lg:flex"
-                    aria-label="Seiten Lehrgänge mit offener Anmeldung"
+                    aria-label="Seiten Veranstaltungen mit offener Anmeldung"
                     role="tablist"
                   >
                     {openRegistrationPillButtons("vertical")}

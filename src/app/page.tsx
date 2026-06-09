@@ -130,18 +130,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Kommende Lehrgänge Section */}
+      {/* kommende Veranstaltungen Section */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
-            title="Kommende Lehrgänge"
-            linkText="Alle Lehrgänge"
+            title="kommende Veranstaltungen"
+            linkText="Alle Veranstaltungen"
             linkHref="/termine?type=courses&view=list"
           />
 
           {isLoadingCourses ? (
             <div className="flex items-center justify-center py-12">
-              <LoadingSpinner text="Lade Lehrgänge..." />
+              <LoadingSpinner text="Lade Veranstaltungen..." />
             </div>
           ) : (
             <UpcomingCoursesCarousel courses={upcomingCourses?.courses ?? []} />
