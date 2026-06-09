@@ -18,6 +18,10 @@ import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
+import {
+  isExternalCourse,
+  normalizeExternalRegistrationUrl,
+} from "@/lib/course-external";
 import { getCourseRegistrationStats } from "@/lib/course-registration-stats";
 import { permissionProcedure } from "../middleware/permissions";
 import {
@@ -42,6 +46,19 @@ const courseCollaboratorsForPublic = {
     },
   },
 };
+
+const externalProviderNameSchema = z.string().max(200).optional();
+
+const externalRegistrationUrlSchema = z
+  .string()
+  .max(2000)
+  .optional()
+  .refine(
+    (val) => !val?.trim() || /^https?:\/\/.+/i.test(val.trim()),
+    {
+      message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
+    },
+  );
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -517,7 +534,9 @@ export const coursesRouter = createTRPCRouter({
           registrationOpen: z.boolean().default(false),
           registrationOpensAt: z.date().optional(),
           registrationDeadline: z.date().optional(),
-          maxParticipants: z.number().min(1).max(500),
+          externalProviderName: externalProviderNameSchema,
+          externalRegistrationUrl: externalRegistrationUrlSchema,
+          maxParticipants: z.number().min(1).max(500).optional(),
           allowWaitingList: z.boolean().default(false),
           allowSiblingDiscount: z.boolean().default(false),
           isFree: z.boolean().default(false),
@@ -583,6 +602,20 @@ export const coursesRouter = createTRPCRouter({
         )
         .refine(
           (data) =>
+            isExternalCourse({
+              externalRegistrationUrl: data.externalRegistrationUrl ?? null,
+            }) ||
+            (data.maxParticipants != null && data.maxParticipants >= 1),
+          {
+            message: "Bitte gib eine maximale Teilnehmerzahl ein.",
+            path: ["maxParticipants"],
+          },
+        )
+        .refine(
+          (data) =>
+            isExternalCourse({
+              externalRegistrationUrl: data.externalRegistrationUrl ?? null,
+            }) ||
             data.isFree ||
             data.paymentCashAllowed ||
             data.paymentInvoiceAllowed,
@@ -595,12 +628,20 @@ export const coursesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { priceOptions, customFields, ...courseData } = input;
+      const externalUrl = normalizeExternalRegistrationUrl(
+        input.externalRegistrationUrl,
+      );
+      const external = Boolean(externalUrl);
 
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
       );
-      if (input.allowSiblingDiscount && !canManageDiscounts) {
+      if (
+        !external &&
+        input.allowSiblingDiscount &&
+        !canManageDiscounts
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can enable sibling discount",
@@ -610,17 +651,29 @@ export const coursesRouter = createTRPCRouter({
       const course = await ctx.db.course.create({
         data: {
           ...courseData,
+          externalProviderName: external
+            ? input.externalProviderName?.trim() || null
+            : null,
+          externalRegistrationUrl: externalUrl,
+          maxParticipants: external ? null : courseData.maxParticipants,
+          allowWaitingList: external ? false : courseData.allowWaitingList,
+          allowSiblingDiscount: external
+            ? false
+            : input.allowSiblingDiscount && canManageDiscounts,
+          isFree: external ? true : courseData.isFree,
           createdById: ctx.session.user.id,
-          priceOptions: priceOptions
-            ? {
-                create: priceOptions,
-              }
-            : undefined,
-          customFields: customFields
-            ? {
-                create: customFields,
-              }
-            : undefined,
+          priceOptions:
+            !external && priceOptions
+              ? {
+                  create: priceOptions,
+                }
+              : undefined,
+          customFields:
+            !external && customFields
+              ? {
+                  create: customFields,
+                }
+              : undefined,
         },
         include: {
           location: true,
@@ -649,7 +702,9 @@ export const coursesRouter = createTRPCRouter({
           registrationOpen: z.boolean().optional(),
           registrationOpensAt: z.date().optional().nullable(),
           registrationDeadline: z.date().optional().nullable(),
-          maxParticipants: z.number().min(1).max(500).optional(),
+          externalProviderName: externalProviderNameSchema.nullable(),
+          externalRegistrationUrl: externalRegistrationUrlSchema.nullable(),
+          maxParticipants: z.number().min(1).max(500).optional().nullable(),
           allowWaitingList: z.boolean().optional(),
           allowSiblingDiscount: z.boolean().optional(),
           isFree: z.boolean().optional(),
@@ -739,6 +794,16 @@ export const coursesRouter = createTRPCRouter({
           startDate: true,
           registrationOpensAt: true,
           registrationDeadline: true,
+          externalRegistrationUrl: true,
+          _count: {
+            select: {
+              registrations: {
+                where: {
+                  registrationStatus: RegistrationStatus.CONFIRMED,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -762,12 +827,35 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      const mergedIsFree = updateData.isFree ?? course.isFree;
+      const mergedExternalUrl =
+        updateData.externalRegistrationUrl === undefined
+          ? course.externalRegistrationUrl
+          : normalizeExternalRegistrationUrl(updateData.externalRegistrationUrl);
+      const mergedExternal = isExternalCourse({
+        externalRegistrationUrl: mergedExternalUrl,
+      });
+      const wasExternal = isExternalCourse(course);
+
+      if (
+        mergedExternal &&
+        !wasExternal &&
+        (course._count?.registrations ?? 0) > 0
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Kurse mit bestehenden Anmeldungen können nicht auf externe Anmeldung umgestellt werden.",
+        });
+      }
+
+      const mergedIsFree = mergedExternal
+        ? true
+        : (updateData.isFree ?? course.isFree);
       const mergedCash =
         updateData.paymentCashAllowed ?? course.paymentCashAllowed;
       const mergedInv =
         updateData.paymentInvoiceAllowed ?? course.paymentInvoiceAllowed;
-      if (!mergedIsFree && !mergedCash && !mergedInv) {
+      if (!mergedExternal && !mergedIsFree && !mergedCash && !mergedInv) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message:
@@ -810,6 +898,30 @@ export const coursesRouter = createTRPCRouter({
       );
 
       const data: Prisma.CourseUpdateInput = { ...updateData };
+
+      if (updateData.externalRegistrationUrl !== undefined) {
+        data.externalRegistrationUrl = mergedExternalUrl;
+      }
+
+      if (updateData.externalProviderName !== undefined) {
+        data.externalProviderName = mergedExternal
+          ? updateData.externalProviderName?.trim() || null
+          : null;
+      }
+
+      if (mergedExternal) {
+        data.isFree = true;
+        data.allowWaitingList = false;
+        data.maxParticipants = null;
+        if (updateData.allowSiblingDiscount !== undefined) {
+          data.allowSiblingDiscount = false;
+        }
+      }
+
+      if (mergedExternal && !wasExternal) {
+        await ctx.db.coursePriceOption.deleteMany({ where: { courseId: id } });
+        await ctx.db.courseCustomField.deleteMany({ where: { courseId: id } });
+      }
 
       if (status !== undefined) {
         if (!canApproveContent) {
@@ -865,13 +977,13 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      if (priceOptions) {
+      if (priceOptions && !mergedExternal) {
         const registrationStats = await getCourseRegistrationStats(ctx.db, id);
         const hasConfirmedRegistrations =
           registrationStats.totalConfirmedParticipants > 0;
 
         if (
-          updateData.maxParticipants !== undefined &&
+          updateData.maxParticipants != null &&
           updateData.maxParticipants <
             registrationStats.totalConfirmedParticipants
         ) {
@@ -967,7 +1079,7 @@ export const coursesRouter = createTRPCRouter({
         }
       }
 
-      if (customFields) {
+      if (customFields && !mergedExternal) {
         await ctx.db.courseCustomField.deleteMany({
           where: { courseId: id },
         });
@@ -1130,6 +1242,18 @@ export const coursesRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Course not found",
         });
+      }
+
+      if (isExternalCourse(course)) {
+        return {
+          totalCapacity: 0,
+          confirmedParticipants: 0,
+          availableSlots: 0,
+          isFull: false,
+          hasWaitingList: false,
+          capacityByPriceOption: null,
+          allowWaitingList: false,
+        };
       }
 
       const summary = getCourseCapacitySummary(course);

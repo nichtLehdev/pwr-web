@@ -41,12 +41,14 @@ import {
   registrationOpensMerge,
   registrationOpensSplit,
 } from "@/lib/dashboard-registration-opens-at";
+import { isExternalCourse } from "@/lib/course-external";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
   FREIZEIT: "Freizeit",
   WORKSHOP: "Workshop",
   KOMPONISTENPORTRAIT: "Komponistenportrait",
+  VERANSTALTUNG: "Veranstaltung",
   OTHER: "Sonstiges",
 };
 
@@ -134,6 +136,10 @@ export default function EditCoursePage() {
   const [scheduledRegistrationOpens, setScheduledRegistrationOpens] =
     useState(false);
   const [registrationDeadline, setRegistrationDeadline] = useState("");
+  const [hasRegistrationDeadline, setHasRegistrationDeadline] = useState(false);
+  const [isExternalProvider, setIsExternalProvider] = useState(false);
+  const [externalProviderName, setExternalProviderName] = useState("");
+  const [externalRegistrationUrl, setExternalRegistrationUrl] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
   const [allowWaitingList, setAllowWaitingList] = useState(false);
   const [allowSiblingDiscount, setAllowSiblingDiscount] = useState(false);
@@ -167,10 +173,14 @@ export default function EditCoursePage() {
     startDate: string;
     endDate: string;
     registrationDeadline: string;
+    hasRegistrationDeadline: boolean;
     registrationOpensAt: string;
     scheduledRegistrationOpens: boolean;
     locationId: string;
     bezirkId: string;
+    isExternalProvider: boolean;
+    externalProviderName: string;
+    externalRegistrationUrl: string;
     maxParticipants: string;
     registrationOpen: boolean;
     allowWaitingList: boolean;
@@ -205,10 +215,14 @@ export default function EditCoursePage() {
       startDate,
       endDate,
       registrationDeadline,
+      hasRegistrationDeadline,
       registrationOpensAt,
       scheduledRegistrationOpens,
       locationId,
       bezirkId,
+      isExternalProvider,
+      externalProviderName,
+      externalRegistrationUrl,
       maxParticipants,
       registrationOpen,
       allowWaitingList,
@@ -232,10 +246,14 @@ export default function EditCoursePage() {
       startDate,
       endDate,
       registrationDeadline,
+      hasRegistrationDeadline,
       registrationOpensAt,
       scheduledRegistrationOpens,
       locationId,
       bezirkId,
+      isExternalProvider,
+      externalProviderName,
+      externalRegistrationUrl,
       maxParticipants,
       registrationOpen,
       allowWaitingList,
@@ -280,6 +298,10 @@ export default function EditCoursePage() {
           setStartDate(saved.startDate || "");
           setEndDate(saved.endDate || "");
           setRegistrationDeadline(saved.registrationDeadline || "");
+          setHasRegistrationDeadline(
+            saved.hasRegistrationDeadline ??
+              Boolean(saved.registrationDeadline),
+          );
           const restoredScheduled =
             saved.scheduledRegistrationOpens ??
             Boolean(saved.registrationOpensAt);
@@ -289,6 +311,9 @@ export default function EditCoursePage() {
           );
           setLocationId(saved.locationId || "");
           setBezirkId(saved.bezirkId || "");
+          setIsExternalProvider(saved.isExternalProvider || false);
+          setExternalProviderName(saved.externalProviderName || "");
+          setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
           setMaxParticipants(saved.maxParticipants || "");
           setRegistrationOpen(saved.registrationOpen || false);
           setAllowWaitingList(saved.allowWaitingList || false);
@@ -325,6 +350,7 @@ export default function EditCoursePage() {
               .toISOString()
               .split("T")[0] ?? "")
           : "",
+        hasRegistrationDeadline: Boolean(course.registrationDeadline),
         registrationOpensAt: course.registrationOpensAt
           ? (() => {
               const opensAt = new Date(course.registrationOpensAt);
@@ -339,6 +365,9 @@ export default function EditCoursePage() {
         scheduledRegistrationOpens: Boolean(course.registrationOpensAt),
         locationId: course.locationId || "",
         bezirkId: course.bezirkId || "",
+        isExternalProvider: isExternalCourse(course),
+        externalProviderName: course.externalProviderName || "",
+        externalRegistrationUrl: course.externalRegistrationUrl || "",
         maxParticipants: course.maxParticipants?.toString() || "",
         registrationOpen: course.registrationOpen || false,
         allowWaitingList: course.allowWaitingList || false,
@@ -504,7 +533,14 @@ export default function EditCoursePage() {
         if (course.registrationDeadline) {
           const deadline = new Date(course.registrationDeadline);
           setRegistrationDeadline(deadline.toISOString().split("T")[0] || "");
+          setHasRegistrationDeadline(true);
+        } else {
+          setRegistrationDeadline("");
+          setHasRegistrationDeadline(false);
         }
+        setIsExternalProvider(isExternalCourse(course));
+        setExternalProviderName(course.externalProviderName || "");
+        setExternalRegistrationUrl(course.externalRegistrationUrl || "");
         setMaxParticipants(course.maxParticipants?.toString() || "");
         setAllowWaitingList(course.allowWaitingList);
         setAllowSiblingDiscount(course.allowSiblingDiscount ?? false);
@@ -842,13 +878,41 @@ export default function EditCoursePage() {
       return;
     }
 
-    if (!maxParticipants || parseInt(maxParticipants) < 1) {
+    if (isExternalProvider) {
+      const url = externalRegistrationUrl.trim();
+      if (!url) {
+        setError("Bitte gib die URL zur externen Anmeldung an.");
+        setIsSubmitting(false);
+        return;
+      }
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          throw new Error("invalid protocol");
+        }
+      } catch {
+        setError("Bitte gib eine gültige URL ein (mit http:// oder https://).");
+        setIsSubmitting(false);
+        return;
+      }
+      if (hasRegistrations && course && !isExternalCourse(course)) {
+        setError(
+          "Kurse mit bestehenden Anmeldungen können nicht auf externe Anmeldung umgestellt werden.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (!maxParticipants || parseInt(maxParticipants) < 1) {
       setError("Bitte gib die maximale Teilnehmerzahl an.");
       setIsSubmitting(false);
       return;
     }
 
-    if (hasRegistrations && parseInt(maxParticipants) < registrationCount) {
+    if (
+      !isExternalProvider &&
+      hasRegistrations &&
+      parseInt(maxParticipants) < registrationCount
+    ) {
       setError(
         `Die maximale Teilnehmerzahl darf nicht unter ${registrationCount} liegen (bereits angemeldet).`,
       );
@@ -892,7 +956,7 @@ export default function EditCoursePage() {
         setIsSubmitting(false);
         return;
       }
-      if (registrationDeadline) {
+      if (hasRegistrationDeadline && registrationDeadline) {
         const dl = new Date(registrationDeadline);
         if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
           setError(
@@ -904,7 +968,20 @@ export default function EditCoursePage() {
       }
     }
 
-    if (!isFree && !paymentCashAllowed && !paymentInvoiceAllowed) {
+    if (hasRegistrationDeadline && !registrationDeadline) {
+      setError(
+        "Bitte wähle ein Datum für den Anmeldeschluss oder deaktiviere die Option.",
+      );
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (
+      !isExternalProvider &&
+      !isFree &&
+      !paymentCashAllowed &&
+      !paymentInvoiceAllowed
+    ) {
       setError(
         "Mindestens eine Zahlungsart (Bar vor Ort oder Rechnung per Überweisung) muss aktiv sein.",
       );
@@ -912,7 +989,8 @@ export default function EditCoursePage() {
       return;
     }
 
-    const preparedPriceOptions = !isFree
+    const preparedPriceOptions =
+      !isExternalProvider && !isFree
       ? priceOptions
           .filter((opt) => opt.label && opt.price >= 0)
           .map(({ id, label, price, description, maxParticipants }) => ({
@@ -924,7 +1002,9 @@ export default function EditCoursePage() {
           }))
       : [];
 
-    const preparedCustomFields = customFields
+    const preparedCustomFields = isExternalProvider
+      ? []
+      : customFields
       .filter((cf) => cf.fieldName.trim())
       .map(
         ({
@@ -962,15 +1042,23 @@ export default function EditCoursePage() {
         scheduledRegistrationOpens && registrationOpensAt
           ? new Date(registrationOpensAt)
           : null,
-      registrationDeadline: registrationDeadline
-        ? new Date(registrationDeadline)
+      registrationDeadline:
+        hasRegistrationDeadline && registrationDeadline
+          ? new Date(registrationDeadline)
+          : null,
+      externalProviderName: isExternalProvider
+        ? externalProviderName.trim() || null
         : null,
-      maxParticipants: parseInt(maxParticipants),
-      allowWaitingList,
-      allowSiblingDiscount: hasApprovePermission
-        ? allowSiblingDiscount
-        : undefined,
-      isFree,
+      externalRegistrationUrl: isExternalProvider
+        ? externalRegistrationUrl.trim()
+        : null,
+      maxParticipants: isExternalProvider ? null : parseInt(maxParticipants),
+      allowWaitingList: isExternalProvider ? false : allowWaitingList,
+      allowSiblingDiscount:
+        isExternalProvider || !hasApprovePermission
+          ? false
+          : allowSiblingDiscount,
+      isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
       priceInfo: priceInfo.trim() || undefined,
@@ -1533,11 +1621,99 @@ export default function EditCoursePage() {
               <DashboardFormZoneHeader
                 step={3}
                 title="Anmeldung"
-                description="Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+                description={
+                  isExternalProvider
+                    ? "Anmeldung über eine externe Website – ohne Teilnehmerverwaltung auf dieser Plattform."
+                    : "Wer sich wann eintragen darf, wie viele Plätze es gibt und welche Extrafragen gestellt werden."
+                }
               />
               <div className="space-y-10">
                 <DashboardFormBlock title="Anmeldeeinstellungen">
                   <div className="space-y-6">
+                    <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="edit-course-external-provider"
+                          checked={isExternalProvider}
+                          disabled={hasRegistrations && !isExternalProvider}
+                          onChange={(e) =>
+                            setIsExternalProvider(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 disabled:opacity-50"
+                        />
+                        <span className="min-w-0">
+                          <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                            Externer Anbieter
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                            Die Anmeldung erfolgt auf einer externen Website.
+                            {hasRegistrations && !isExternalProvider
+                              ? " Nicht verfügbar, solange Anmeldungen vorhanden sind."
+                              : " Es gibt kein Anmeldeformular und keine Teilnehmerverwaltung hier."}
+                          </span>
+                        </span>
+                      </label>
+
+                      {isExternalProvider ? (
+                        <div className="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                          <div>
+                            <label
+                              htmlFor="edit-course-external-provider-name"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Name des Anbieters (optional)
+                            </label>
+                            <input
+                              type="text"
+                              id="edit-course-external-provider-name"
+                              value={externalProviderName}
+                              onChange={(e) =>
+                                setExternalProviderName(e.target.value)
+                              }
+                              placeholder="z.B. Evangelische Akademie"
+                              className={registrationFieldInputClass}
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="edit-course-external-registration-url"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Link zur Anmeldung *
+                            </label>
+                            <input
+                              type="url"
+                              id="edit-course-external-registration-url"
+                              value={externalRegistrationUrl}
+                              onChange={(e) =>
+                                setExternalRegistrationUrl(e.target.value)
+                              }
+                              placeholder="https://..."
+                              className={registrationFieldInputClass}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label
+                              htmlFor="edit-course-external-price-info"
+                              className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                            >
+                              Hinweis zu Kosten (optional)
+                            </label>
+                            <input
+                              type="text"
+                              id="edit-course-external-price-info"
+                              value={priceInfo}
+                              onChange={(e) => setPriceInfo(e.target.value)}
+                              placeholder="z.B. Kosten auf Anfrage beim Anbieter"
+                              className={registrationFieldInputClass}
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
                     <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
                       <legend className="sr-only">
                         Anmeldezeitpunkt und -fenster
@@ -1651,81 +1827,119 @@ export default function EditCoursePage() {
                             </div>
                           ) : null}
                         </div>
+
+                        <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
+                          <label className="flex cursor-pointer items-start gap-3">
+                            <input
+                              type="checkbox"
+                              id="hasRegistrationDeadline"
+                              checked={hasRegistrationDeadline}
+                              onChange={(e) => {
+                                const on = e.target.checked;
+                                setHasRegistrationDeadline(on);
+                                if (!on) setRegistrationDeadline("");
+                              }}
+                              className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
+                            />
+                            <span className="min-w-0">
+                              <span className="dark:text-dark-text block text-sm leading-snug font-medium text-gray-700">
+                                Anmeldeschluss festlegen
+                              </span>
+                              <span className="mt-1 block text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                                {hasRegistrationDeadline
+                                  ? isExternalProvider
+                                    ? "Datum wählen, bis wann der Anmelde-Link sichtbar bleibt."
+                                    : "Datum wählen, bis wann sich Teilnehmer anmelden können."
+                                  : "Ohne Frist bleibt die Anmeldung bis Kursbeginn offen."}
+                              </span>
+                            </span>
+                          </label>
+
+                          {hasRegistrationDeadline ? (
+                            <div className="mt-4 max-w-xs">
+                              <label
+                                htmlFor="registrationDeadline"
+                                className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                              >
+                                Anmeldeschluss
+                              </label>
+                              <input
+                                type="date"
+                                id="registrationDeadline"
+                                value={registrationDeadline}
+                                onChange={(e) =>
+                                  setRegistrationDeadline(e.target.value)
+                                }
+                                min={
+                                  scheduledRegistrationOpens &&
+                                  registrationOpensAt.includes("T")
+                                    ? opensScheduleParts.opensDatePart ||
+                                      undefined
+                                    : undefined
+                                }
+                                max={startDate || undefined}
+                                title="Anmeldeschluss muss vor oder am Startdatum sein"
+                                className={registrationFieldInputClass}
+                                required
+                              />
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </fieldset>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start sm:gap-6">
-                      <div>
-                        <label
-                          htmlFor="maxParticipants"
-                          className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                        >
-                          Maximale Teilnehmerzahl *
-                        </label>
-                        <input
-                          type="number"
-                          id="maxParticipants"
-                          value={maxParticipants}
-                          onChange={(e) => setMaxParticipants(e.target.value)}
-                          min={hasRegistrations ? registrationCount : 1}
-                          max="500"
-                          className={registrationFieldInputClass}
-                          required
-                        />
-                        {hasRegistrations ? (
-                          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            {registrationCount} bereits angemeldet. Erhöhen oder
-                            Verringern möglich, solange nicht unter die aktuelle
-                            Anmeldungszahl.
-                          </p>
-                        ) : null}
-                      </div>
+                    {!isExternalProvider ? (
+                      <>
+                        <div className="max-w-xs">
+                          <label
+                            htmlFor="maxParticipants"
+                            className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
+                          >
+                            Maximale Teilnehmerzahl *
+                          </label>
+                          <input
+                            type="number"
+                            id="maxParticipants"
+                            value={maxParticipants}
+                            onChange={(e) =>
+                              setMaxParticipants(e.target.value)
+                            }
+                            min={hasRegistrations ? registrationCount : 1}
+                            max="500"
+                            className={registrationFieldInputClass}
+                            required
+                          />
+                          {hasRegistrations ? (
+                            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                              {registrationCount} bereits angemeldet. Erhöhen
+                              oder Verringern möglich, solange nicht unter die
+                              aktuelle Anmeldungszahl.
+                            </p>
+                          ) : null}
+                        </div>
 
-                      <div>
-                        <label
-                          htmlFor="registrationDeadline"
-                          className="dark:text-dark-text mb-1.5 block text-sm font-medium text-gray-700"
-                        >
-                          Anmeldeschluss (optional)
-                        </label>
-                        <input
-                          type="date"
-                          id="registrationDeadline"
-                          value={registrationDeadline}
-                          onChange={(e) =>
-                            setRegistrationDeadline(e.target.value)
-                          }
-                          min={
-                            scheduledRegistrationOpens &&
-                            registrationOpensAt.includes("T")
-                              ? opensScheduleParts.opensDatePart || undefined
-                              : undefined
-                          }
-                          max={startDate || undefined}
-                          title="Anmeldeschluss muss vor oder am Startdatum sein"
-                          className={registrationFieldInputClass}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="allowWaitingList"
-                        checked={allowWaitingList}
-                        onChange={(e) => setAllowWaitingList(e.target.checked)}
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <label
-                        htmlFor="allowWaitingList"
-                        className="dark:text-dark-text text-sm font-medium text-gray-700"
-                      >
-                        Warteliste aktivieren
-                      </label>
-                    </div>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="allowWaitingList"
+                            checked={allowWaitingList}
+                            onChange={(e) =>
+                              setAllowWaitingList(e.target.checked)
+                            }
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor="allowWaitingList"
+                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                          >
+                            Warteliste aktivieren
+                          </label>
+                        </div>
+                      </>
+                    ) : null}
 
                     {/* Sibling Discount - Only for users with approve permission */}
-                    {hasApprovePermission && (
+                    {hasApprovePermission && !isExternalProvider && (
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
@@ -1748,6 +1962,7 @@ export default function EditCoursePage() {
                   </div>
                 </DashboardFormBlock>
 
+                {!isExternalProvider ? (
                 <DashboardFormBlock
                   title="Zusätzliche Anmeldefelder"
                   description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
@@ -1951,6 +2166,7 @@ export default function EditCoursePage() {
                     </div>
                   )}
                 </DashboardFormBlock>
+                ) : null}
               </div>
             </div>
 
@@ -2376,6 +2592,7 @@ export default function EditCoursePage() {
               ) : null}
             </div>
 
+            {!isExternalProvider ? (
             <div
               id="kurs-form-preise"
               className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
@@ -2643,13 +2860,14 @@ export default function EditCoursePage() {
                 </div>
               </DashboardFormBlock>
             </div>
+            ) : null}
 
             <div
               id="kurs-form-veroeffentlichung"
               className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
             >
               <DashboardFormZoneHeader
-                step={6}
+                step={isExternalProvider ? 5 : 6}
                 title="Veröffentlichung"
                 description="Welchen redaktionellen Stand der Eintrag haben soll – wirkt sich auf die öffentliche Sichtbarkeit aus."
               />

@@ -3,6 +3,7 @@ import { api } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getDistrictColor } from "@/lib/district-color";
 import CourseCardSkeleton from "./course-card-skeleton";
+import { isExternalCourse } from "@/lib/course-external";
 import {
   CalendarIcon,
   CheckIcon,
@@ -46,12 +47,14 @@ export default function CourseCard({
     : null;
   const isRegistrationNotOpenYet =
     registrationOpensAt && registrationOpensAt > new Date();
+  const isExternal = course ? isExternalCourse(course) : false;
   const registrationOpen =
     course &&
     course.registrationOpen &&
     !isRegistrationNotOpenYet &&
-    course.registrationDeadline &&
-    new Date() < new Date(course.registrationDeadline);
+    (isExternal ||
+      !course.registrationDeadline ||
+      new Date() < new Date(course.registrationDeadline));
 
   if (!spotsAvailable || !course) {
     return <CourseCardSkeleton />;
@@ -169,7 +172,7 @@ export default function CourseCard({
               {location}
             </div>
 
-            {registrationOpen && !spotsAvailable.isFull && (
+            {registrationOpen && !isExternal && !spotsAvailable.isFull && (
               <div className="text-primary flex items-center gap-2 font-semibold">
                 <CheckIcon className="h-4 w-4 shrink-0" />
                 Noch {spotsAvailable.availableSlots}{" "}
@@ -179,8 +182,10 @@ export default function CourseCard({
           </div>
 
           <div className="text-primary mt-auto inline-flex items-center text-sm font-semibold">
-            {registrationOpen && !spotsAvailable.isFull
-              ? "Jetzt anmelden"
+            {registrationOpen && (isExternal || !spotsAvailable.isFull)
+              ? isExternal
+                ? "Zur Anmeldung"
+                : "Jetzt anmelden"
               : "Details ansehen"}
             <ChevronRightIcon className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
