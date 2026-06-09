@@ -121,8 +121,7 @@ export const registrationsRouter = createTRPCRouter({
       if (isExternalCourse(course)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message:
-            "Dieser Kurs wird über einen externen Anbieter angemeldet.",
+          message: "Dieser Kurs wird über einen externen Anbieter angemeldet.",
         });
       }
 

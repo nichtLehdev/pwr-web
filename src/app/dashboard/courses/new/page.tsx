@@ -562,37 +562,37 @@ export default function NewCoursePage() {
 
     const preparedPriceOptions =
       !isExternalProvider && !isFree
-      ? priceOptions
-          .filter((opt) => opt.label.trim())
-          .map(({ label, price, description, maxParticipants }) => ({
-            label: label.trim(),
-            price,
-            description: description.trim() || undefined,
-            maxParticipants: maxParticipants || undefined,
-          }))
-      : undefined;
+        ? priceOptions
+            .filter((opt) => opt.label.trim())
+            .map(({ label, price, description, maxParticipants }) => ({
+              label: label.trim(),
+              price,
+              description: description.trim() || undefined,
+              maxParticipants: maxParticipants || undefined,
+            }))
+        : undefined;
 
     const preparedCustomFields = isExternalProvider
       ? []
       : customFields
-      .filter((cf) => cf.fieldName.trim())
-      .map(
-        ({
-          fieldName,
-          fieldType,
-          options,
-          isRequired,
-          helpText,
-          sortOrder,
-        }) => ({
-          fieldName: fieldName.trim(),
-          fieldType,
-          options: fieldType === "SELECT" ? options.trim() : undefined,
-          isRequired,
-          helpText: helpText.trim() || undefined,
-          sortOrder,
-        }),
-      );
+          .filter((cf) => cf.fieldName.trim())
+          .map(
+            ({
+              fieldName,
+              fieldType,
+              options,
+              isRequired,
+              helpText,
+              sortOrder,
+            }) => ({
+              fieldName: fieldName.trim(),
+              fieldType,
+              options: fieldType === "SELECT" ? options.trim() : undefined,
+              isRequired,
+              helpText: helpText.trim() || undefined,
+              sortOrder,
+            }),
+          );
 
     clear();
 
@@ -1193,7 +1193,9 @@ export default function NewCoursePage() {
                         type="checkbox"
                         id="new-course-external-provider"
                         checked={isExternalProvider}
-                        onChange={(e) => setIsExternalProvider(e.target.checked)}
+                        onChange={(e) =>
+                          setIsExternalProvider(e.target.checked)
+                        }
                         className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
                       />
                       <span className="min-w-0">
@@ -1499,7 +1501,8 @@ export default function NewCoursePage() {
                             className="dark:text-dark-text text-sm font-medium text-gray-700"
                           >
                             Geschwisterkindrabatt erlauben (20% auf die Gebühr
-                            jedes weiteren Geschwisterkindes ab dem zweiten Kind)
+                            jedes weiteren Geschwisterkindes ab dem zweiten
+                            Kind)
                           </label>
                         </div>
                       ) : null}
@@ -1509,362 +1512,364 @@ export default function NewCoursePage() {
               </DashboardFormBlock>
 
               {!isExternalProvider ? (
-              <DashboardFormBlock
-                title="Zusätzliche Anmeldefelder"
-                description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
-              >
-                <div className="-mt-2 mb-4 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={addCustomField}
-                    className="text-primary hover:text-primary/80 text-sm font-medium"
-                  >
-                    + Feld hinzufügen
-                  </button>
-                </div>
+                <DashboardFormBlock
+                  title="Zusätzliche Anmeldefelder"
+                  description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
+                >
+                  <div className="-mt-2 mb-4 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={addCustomField}
+                      className="text-primary hover:text-primary/80 text-sm font-medium"
+                    >
+                      + Feld hinzufügen
+                    </button>
+                  </div>
 
-                {customFields.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Keine zusätzlichen Felder definiert.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {customFields.map((field, index) => (
-                      <div
-                        key={field.id}
-                        className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
-                      >
-                        <div className="mb-3 flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Feld {index + 1}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => moveCustomField(field.id, "up")}
-                              disabled={index === 0}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                            >
-                              <ArrowUpIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => moveCustomField(field.id, "down")}
-                              disabled={index === customFields.length - 1}
-                              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                            >
-                              <ArrowDownIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeCustomField(field.id)}
-                              className="p-1 text-gray-400 hover:text-red-500"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Feldname *
-                            </label>
-                            <input
-                              type="text"
-                              value={field.fieldName}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "fieldName",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="z.B. Ernährungsbesonderheiten"
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Feldtyp
-                            </label>
-                            <Select
-                              value={field.fieldType}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "fieldType",
-                                  e.target.value as CustomFieldType,
-                                )
-                              }
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            >
-                              {Object.entries(customFieldTypeLabels).map(
-                                ([value, label]) => (
-                                  <option key={value} value={value}>
-                                    {label}
-                                  </option>
-                                ),
-                              )}
-                            </Select>
+                  {customFields.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Keine zusätzlichen Felder definiert.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {customFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                              Feld {index + 1}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => moveCustomField(field.id, "up")}
+                                disabled={index === 0}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                              >
+                                <ArrowUpIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  moveCustomField(field.id, "down")
+                                }
+                                disabled={index === customFields.length - 1}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                              >
+                                <ArrowDownIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeCustomField(field.id)}
+                                className="p-1 text-gray-400 hover:text-red-500"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
 
-                          {field.fieldType === "SELECT" && (
-                            <div className="sm:col-span-2">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
                               <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Auswahloptionen (kommagetrennt)
+                                Feldname *
                               </label>
                               <input
                                 type="text"
-                                value={field.options}
+                                value={field.fieldName}
                                 onChange={(e) =>
                                   updateCustomField(
                                     field.id,
-                                    "options",
+                                    "fieldName",
                                     e.target.value,
                                   )
                                 }
-                                placeholder="z.B. Option 1, Option 2, Option 3"
+                                placeholder="z.B. Ernährungsbesonderheiten"
                                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />
                             </div>
-                          )}
-
-                          <div className="sm:col-span-2">
-                            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                              Hilfetext
-                            </label>
-                            <input
-                              type="text"
-                              value={field.helpText}
-                              onChange={(e) =>
-                                updateCustomField(
-                                  field.id,
-                                  "helpText",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="z.B. Bitte gib eventuelle Allergien an"
-                              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="flex cursor-pointer items-center gap-2">
-                              <input
-                                type="checkbox"
-                                checked={field.isRequired}
+                            <div>
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Feldtyp
+                              </label>
+                              <Select
+                                value={field.fieldType}
                                 onChange={(e) =>
                                   updateCustomField(
                                     field.id,
-                                    "isRequired",
-                                    e.target.checked,
+                                    "fieldType",
+                                    e.target.value as CustomFieldType,
                                   )
                                 }
-                                className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                              >
+                                {Object.entries(customFieldTypeLabels).map(
+                                  ([value, label]) => (
+                                    <option key={value} value={value}>
+                                      {label}
+                                    </option>
+                                  ),
+                                )}
+                              </Select>
+                            </div>
+
+                            {field.fieldType === "SELECT" && (
+                              <div className="sm:col-span-2">
+                                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  Auswahloptionen (kommagetrennt)
+                                </label>
+                                <input
+                                  type="text"
+                                  value={field.options}
+                                  onChange={(e) =>
+                                    updateCustomField(
+                                      field.id,
+                                      "options",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="z.B. Option 1, Option 2, Option 3"
+                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                />
+                              </div>
+                            )}
+
+                            <div className="sm:col-span-2">
+                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Hilfetext
+                              </label>
+                              <input
+                                type="text"
+                                value={field.helpText}
+                                onChange={(e) =>
+                                  updateCustomField(
+                                    field.id,
+                                    "helpText",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="z.B. Bitte gib eventuelle Allergien an"
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                               />
-                              <span className="dark:text-dark-text text-sm text-gray-700">
-                                Pflichtfeld
-                              </span>
-                            </label>
+                            </div>
+
+                            <div>
+                              <label className="flex cursor-pointer items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={field.isRequired}
+                                  onChange={(e) =>
+                                    updateCustomField(
+                                      field.id,
+                                      "isRequired",
+                                      e.target.checked,
+                                    )
+                                  }
+                                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                                />
+                                <span className="dark:text-dark-text text-sm text-gray-700">
+                                  Pflichtfeld
+                                </span>
+                              </label>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </DashboardFormBlock>
+                      ))}
+                    </div>
+                  )}
+                </DashboardFormBlock>
               ) : null}
             </div>
           </div>
 
           {!isExternalProvider ? (
-          <div
-            id="kurs-form-preise"
-            className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
-          >
-            <DashboardFormZoneHeader
-              step={4}
-              title="Preise"
-              description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
-            />
-            <DashboardFormBlock title="Honorar und Zahlungsweisen">
-              <div className="space-y-4">
-                <label className="flex cursor-pointer items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={isFree}
-                    onChange={(e) => setIsFree(e.target.checked)}
-                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                  />
-                  <span className="dark:text-dark-text text-sm text-gray-700">
-                    Kostenloser Kurs
-                  </span>
-                </label>
-
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Preis-Informationen
+            <div
+              id="kurs-form-preise"
+              className="dark:border-dark-border dashboard-form-scroll-anchor border-t border-gray-200/80 pt-14"
+            >
+              <DashboardFormZoneHeader
+                step={4}
+                title="Preise"
+                description="Honorare und Zahlungsarten – und wie sie auf der öffentlichen Anmeldung erscheinen."
+              />
+              <DashboardFormBlock title="Honorar und Zahlungsweisen">
+                <div className="space-y-4">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isFree}
+                      onChange={(e) => setIsFree(e.target.checked)}
+                      className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                    />
+                    <span className="dark:text-dark-text text-sm text-gray-700">
+                      Kostenloser Kurs
+                    </span>
                   </label>
-                  <input
-                    type="text"
-                    value={priceInfo}
-                    onChange={(e) => setPriceInfo(e.target.value)}
-                    placeholder={
-                      isFree
-                        ? "z.B. Verpflegung inklusive"
-                        : "z.B. Frühbucherrabatt bis 31.01."
-                    }
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
 
-                {!isFree && (
-                  <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
-                    <p className="dark:text-dark-text text-sm font-medium text-gray-700">
-                      Zahlungsweisen für Teilnehmer
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Mindestens eine Option aktivieren.
-                    </p>
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={paymentCashAllowed}
-                        onChange={(e) =>
-                          setPaymentCashAllowed(e.target.checked)
-                        }
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
-                        Barzahlung vor Ort
-                      </span>
-                    </label>
-                    <label className="flex cursor-pointer items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={paymentInvoiceAllowed}
-                        onChange={(e) =>
-                          setPaymentInvoiceAllowed(e.target.checked)
-                        }
-                        className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                      />
-                      <span className="dark:text-dark-text text-sm text-gray-700">
-                        Überweisung nach Rechnung
-                      </span>
-                    </label>
-                  </div>
-                )}
-
-                {!isFree && (
                   <div>
-                    <div className="mb-2 flex items-center justify-between">
-                      <label className="dark:text-dark-text text-sm font-medium text-gray-700">
-                        Preiskategorien
-                      </label>
-                      <button
-                        type="button"
-                        onClick={addPriceOption}
-                        className="text-primary hover:text-primary/80 text-sm font-medium"
-                      >
-                        + Kategorie hinzufügen
-                      </button>
-                    </div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Preis-Informationen
+                    </label>
+                    <input
+                      type="text"
+                      value={priceInfo}
+                      onChange={(e) => setPriceInfo(e.target.value)}
+                      placeholder={
+                        isFree
+                          ? "z.B. Verpflegung inklusive"
+                          : "z.B. Frühbucherrabatt bis 31.01."
+                      }
+                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    />
+                  </div>
 
-                    {priceOptions.length === 0 ? (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Noch keine Preiskategorien angelegt. Füge mindestens
-                        eine hinzu.
+                  {!isFree && (
+                    <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+                      <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                        Zahlungsweisen für Teilnehmer
                       </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {priceOptions.map((option) => (
-                          <div
-                            key={option.id}
-                            className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
-                          >
-                            <div className="flex-1 space-y-2">
-                              <div className="grid gap-2 sm:grid-cols-3">
-                                <input
-                                  type="text"
-                                  value={option.label}
-                                  onChange={(e) =>
-                                    updatePriceOption(
-                                      option.id,
-                                      "label",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Bezeichnung (z.B. Erwachsene)"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                                />
-                                <div className="flex items-center gap-1">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Mindestens eine Option aktivieren.
+                      </p>
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={paymentCashAllowed}
+                          onChange={(e) =>
+                            setPaymentCashAllowed(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="dark:text-dark-text text-sm text-gray-700">
+                          Barzahlung vor Ort
+                        </span>
+                      </label>
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={paymentInvoiceAllowed}
+                          onChange={(e) =>
+                            setPaymentInvoiceAllowed(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                        />
+                        <span className="dark:text-dark-text text-sm text-gray-700">
+                          Überweisung nach Rechnung
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {!isFree && (
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <label className="dark:text-dark-text text-sm font-medium text-gray-700">
+                          Preiskategorien
+                        </label>
+                        <button
+                          type="button"
+                          onClick={addPriceOption}
+                          className="text-primary hover:text-primary/80 text-sm font-medium"
+                        >
+                          + Kategorie hinzufügen
+                        </button>
+                      </div>
+
+                      {priceOptions.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Noch keine Preiskategorien angelegt. Füge mindestens
+                          eine hinzu.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {priceOptions.map((option) => (
+                            <div
+                              key={option.id}
+                              className="dark:border-dark-border flex items-start gap-3 rounded-lg border border-gray-200 p-3"
+                            >
+                              <div className="flex-1 space-y-2">
+                                <div className="grid gap-2 sm:grid-cols-3">
                                   <input
-                                    type="number"
-                                    value={option.price}
+                                    type="text"
+                                    value={option.label}
                                     onChange={(e) =>
                                       updatePriceOption(
                                         option.id,
-                                        "price",
-                                        parseFloat(e.target.value) || 0,
+                                        "label",
+                                        e.target.value,
                                       )
                                     }
-                                    min="0"
-                                    step="0.01"
-                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                    placeholder="Bezeichnung (z.B. Erwachsene)"
+                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                                   />
-                                  <span className="text-sm text-gray-500">
-                                    €
-                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      value={option.price}
+                                      onChange={(e) =>
+                                        updatePriceOption(
+                                          option.id,
+                                          "price",
+                                          parseFloat(e.target.value) || 0,
+                                        )
+                                      }
+                                      min="0"
+                                      step="0.01"
+                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-24 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                    />
+                                    <span className="text-sm text-gray-500">
+                                      €
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="number"
+                                    value={option.maxParticipants || ""}
+                                    onChange={(e) =>
+                                      updatePriceOption(
+                                        option.id,
+                                        "maxParticipants",
+                                        e.target.value
+                                          ? parseInt(e.target.value)
+                                          : undefined,
+                                      )
+                                    }
+                                    min="1"
+                                    max="500"
+                                    placeholder="Max. Plätze (optional)"
+                                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  />
                                 </div>
                                 <input
-                                  type="number"
-                                  value={option.maxParticipants || ""}
+                                  type="text"
+                                  value={option.description}
                                   onChange={(e) =>
                                     updatePriceOption(
                                       option.id,
-                                      "maxParticipants",
-                                      e.target.value
-                                        ? parseInt(e.target.value)
-                                        : undefined,
+                                      "description",
+                                      e.target.value,
                                     )
                                   }
-                                  min="1"
-                                  max="500"
-                                  placeholder="Max. Plätze (optional)"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                  placeholder="Beschreibung (optional)"
+                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                                 />
                               </div>
-                              <input
-                                type="text"
-                                value={option.description}
-                                onChange={(e) =>
-                                  updatePriceOption(
-                                    option.id,
-                                    "description",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="Beschreibung (optional)"
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                              />
+                              <button
+                                type="button"
+                                onClick={() => removePriceOption(option.id)}
+                                className="p-1 text-gray-400 hover:text-red-500"
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => removePriceOption(option.id)}
-                              className="p-1 text-gray-400 hover:text-red-500"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </DashboardFormBlock>
-          </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </DashboardFormBlock>
+            </div>
           ) : null}
 
           <div
