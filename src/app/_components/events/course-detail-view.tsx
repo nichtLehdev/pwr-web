@@ -23,9 +23,11 @@ import {
   UsersIcon,
   CircleXIcon,
   EditIcon,
+  ExternalLink,
   UserIcon,
 } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
+import { isExternalCourse } from "@/lib/course-external";
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
 
@@ -130,12 +132,14 @@ export default function CourseDetailView({
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 
+  const isExternal = isExternalCourse(course);
+
   const canRegister =
     course.registrationOpen &&
     !isPast &&
     !isDeadlinePassed &&
     !isRegistrationNotOpenYet &&
-    (!spots.isFull || course.allowWaitingList);
+    (isExternal || !spots.isFull || course.allowWaitingList);
 
   const district = !course.bezirk
     ? "primary"
@@ -203,7 +207,9 @@ export default function CourseDetailView({
     URL.revokeObjectURL(url);
   };
 
-  const anmeldenHref = `/termine/course/${course.id}/anmelden`;
+  const anmeldenHref = isExternal
+    ? (course.externalRegistrationUrl ?? `/termine/course/${course.id}`)
+    : `/termine/course/${course.id}/anmelden`;
 
   const handleEditExisting = () => {
     setShowRegistrationOptions(false);
@@ -219,11 +225,12 @@ export default function CourseDetailView({
     course.location &&
     [course.location.name, course.location.city].filter(Boolean).join(", ");
 
-  const capacityMeta = isPast
-    ? null
-    : spots.isFull && course.allowWaitingList
-      ? "Warteliste"
-      : `${spots.availableSlots} / ${course.maxParticipants} frei`;
+  const capacityMeta =
+    isPast || isExternal
+      ? null
+      : spots.isFull && course.allowWaitingList
+        ? "Warteliste"
+        : `${spots.availableSlots} / ${course.maxParticipants} frei`;
 
   const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
 
@@ -251,12 +258,12 @@ export default function CourseDetailView({
             Vergangen
           </span>
         )}
-        {spots.isFull && !course.allowWaitingList && (
+        {!isExternal && spots.isFull && !course.allowWaitingList && (
           <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold">
             Ausgebucht
           </span>
         )}
-        {spots.isFull && course.allowWaitingList && (
+        {!isExternal && spots.isFull && course.allowWaitingList && (
           <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold">
             Nur Warteliste
           </span>
@@ -309,7 +316,7 @@ export default function CourseDetailView({
             </span>
           </>
         ) : null}
-        {!course.isFree && acceptedPaymentHero ? (
+        {!isExternal && !course.isFree && acceptedPaymentHero ? (
           <>
             <span
               className="hidden shrink-0 px-1 text-white/45 sm:inline"
@@ -653,7 +660,15 @@ export default function CourseDetailView({
                       Anmeldung
                     </h3>
 
-                    {spots.isFull && course.allowWaitingList ? (
+                    {isExternal ? (
+                      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/30">
+                        <p className="text-sm text-blue-900 dark:text-blue-200">
+                          {course.externalProviderName
+                            ? `Die Anmeldung erfolgt über ${course.externalProviderName}.`
+                            : "Die Anmeldung erfolgt über einen externen Anbieter."}
+                        </p>
+                      </div>
+                    ) : spots.isFull && course.allowWaitingList ? (
                       <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/30">
                         <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">
                           Der Kurs ist ausgebucht. Sie können sich auf die
@@ -670,7 +685,17 @@ export default function CourseDetailView({
                       </div>
                     )}
 
-                    {existingRegistration ? (
+                    {isExternal ? (
+                      <a
+                        href={anmeldenHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-primary hover:bg-primary-dark mb-3 flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
+                      >
+                        Zur Anmeldung
+                        <ExternalLink className="h-4 w-4 shrink-0" />
+                      </a>
+                    ) : existingRegistration ? (
                       <button
                         type="button"
                         onClick={() => setShowRegistrationOptions(true)}
@@ -716,7 +741,9 @@ export default function CourseDetailView({
                               ? "Anmeldung noch nicht geöffnet"
                               : isDeadlinePassed
                                 ? "Anmeldefrist abgelaufen"
-                                : spots.isFull && !course.allowWaitingList
+                                : !isExternal &&
+                                    spots.isFull &&
+                                    !course.allowWaitingList
                                   ? "Kurs ausgebucht"
                                   : "Anmeldung geschlossen"}
                           </p>
@@ -734,7 +761,9 @@ export default function CourseDetailView({
                                 )} Uhr. Die Kursdetails sind bereits verfügbar.`
                               : isDeadlinePassed
                                 ? `Die Anmeldefrist für diesen Kurs ist am ${registrationDeadline?.toLocaleDateString("de-DE")} abgelaufen.`
-                                : spots.isFull && !course.allowWaitingList
+                                : !isExternal &&
+                                    spots.isFull &&
+                                    !course.allowWaitingList
                                   ? "Alle Plätze sind belegt und es gibt keine Warteliste."
                                   : "Die Anmeldung für diesen Kurs ist derzeit nicht möglich."}
                           </p>
@@ -745,60 +774,74 @@ export default function CourseDetailView({
                 )}
 
                 {/* Price Info */}
-                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                  <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                    {course.isFree ? "Kostenlos" : "Preise"}
-                  </h3>
-                  {course.isFree ? (
-                    <p className="flex items-center gap-2 font-semibold text-green-700">
-                      <CheckCircleIcon className="h-5 w-5" />
-                      Dieser Kurs ist kostenfrei
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {course.priceOptions.map((option, idx) => (
-                        <div
-                          key={idx}
-                          className="dark:border-dark-border flex items-start justify-between gap-3 border-b border-gray-200 pb-3 last:border-0"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-dark dark:text-dark-text font-semibold">
-                              {option.label}
-                            </p>
-                            {option.description && (
-                              <p className="text-xs text-gray-500 dark:text-gray-500">
-                                {option.description}
+                {!isExternal || course.priceInfo ? (
+                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
+                    <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+                      {isExternal
+                        ? "Kosten"
+                        : course.isFree
+                          ? "Kostenlos"
+                          : "Preise"}
+                    </h3>
+                    {!isExternal &&
+                      (course.isFree ? (
+                        <p className="flex items-center gap-2 font-semibold text-green-700">
+                          <CheckCircleIcon className="h-5 w-5" />
+                          Dieser Kurs ist kostenfrei
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {course.priceOptions.map((option, idx) => (
+                            <div
+                              key={idx}
+                              className="dark:border-dark-border flex items-start justify-between gap-3 border-b border-gray-200 pb-3 last:border-0"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-dark dark:text-dark-text font-semibold">
+                                  {option.label}
+                                </p>
+                                {option.description && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                                    {option.description}
+                                  </p>
+                                )}
+                              </div>
+                              <p className="text-primary shrink-0 text-lg font-bold whitespace-nowrap tabular-nums">
+                                {option.price.toFixed(2)}&nbsp;€
                               </p>
-                            )}
-                          </div>
-                          <p className="text-primary shrink-0 text-lg font-bold whitespace-nowrap tabular-nums">
-                            {option.price.toFixed(2)}&nbsp;€
-                          </p>
+                            </div>
+                          ))}
                         </div>
                       ))}
-                    </div>
-                  )}
-                  {course.priceInfo && (
-                    <p className="mt-4 text-xs text-gray-500 dark:text-gray-500">
-                      {course.priceInfo}
-                    </p>
-                  )}
-                  {!course.isFree &&
-                    formatAcceptedCoursePaymentMethods(course) && (
-                      <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <p className="text-dark dark:text-dark-text mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                          Zahlung
-                        </p>
-                        <p className="text-dark dark:text-dark-text flex gap-2 text-sm">
-                          <Wallet
-                            className="text-primary h-4 w-4 shrink-0"
-                            aria-hidden
-                          />
-                          {formatAcceptedCoursePaymentMethods(course)}
-                        </p>
-                      </div>
+                    {course.priceInfo && (
+                      <p
+                        className={
+                          isExternal || course.isFree
+                            ? "text-sm text-gray-600 dark:text-gray-400"
+                            : "mt-4 text-xs text-gray-500 dark:text-gray-500"
+                        }
+                      >
+                        {course.priceInfo}
+                      </p>
                     )}
-                </div>
+                    {!isExternal &&
+                      !course.isFree &&
+                      formatAcceptedCoursePaymentMethods(course) && (
+                        <div className="dark:border-dark-border mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                          <p className="text-dark dark:text-dark-text mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                            Zahlung
+                          </p>
+                          <p className="text-dark dark:text-dark-text flex gap-2 text-sm">
+                            <Wallet
+                              className="text-primary h-4 w-4 shrink-0"
+                              aria-hidden
+                            />
+                            {formatAcceptedCoursePaymentMethods(course)}
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                ) : null}
 
                 {/* Back to Overview */}
                 <Link

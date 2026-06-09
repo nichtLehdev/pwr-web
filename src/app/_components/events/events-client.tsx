@@ -44,7 +44,8 @@ const COURSE_TYPE_MAP: Record<string, string> = {
   Freizeit: "FREIZEIT",
   Workshop: "WORKSHOP",
   Komponistenportrait: "KOMPONISTENPORTRAIT",
-  Andere: "ANDERE",
+  Veranstaltung: "VERANSTALTUNG",
+  Andere: "OTHER",
 };
 
 interface EventsClientProps {
@@ -346,6 +347,7 @@ export default function EventsClient({
     "Freizeit",
     "Workshop",
     "Komponistenportrait",
+    "Veranstaltung",
     "Andere",
   ];
 
