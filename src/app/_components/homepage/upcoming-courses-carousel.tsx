@@ -902,9 +902,9 @@ export default function UpcomingCoursesCarousel({
       );
     });
 
-  /** Stable min-height on mobile; content area sizes image/meta so title stays visible. */
+  /** Stable min-height on mobile; fill grid cell height beside open-registration column. */
   const mainBannerHeightClass =
-    "max-lg:min-h-[500px] lg:h-auto lg:min-h-[480px]";
+    "max-lg:min-h-[500px] lg:h-full lg:min-h-[480px]";
   /** Matches banner min height so each small card can be exactly half the column. */
   const openCarouselColumnHeightClass =
     "h-[520px] min-h-[520px] max-h-[520px] lg:h-[540px] lg:min-h-[540px] lg:max-h-none";
@@ -945,11 +945,11 @@ export default function UpcomingCoursesCarousel({
               />
             ) : null}
 
-            <div className="w-full min-w-0">
+            <div className="w-full min-w-0 lg:h-full">
               <div
                 key={leftCourse.id}
                 className={cn(
-                  "w-full",
+                  "h-full w-full",
                   mainBannerHeightClass,
                   leftNavGeneration > 0 &&
                     (leftEnterForward
@@ -966,7 +966,7 @@ export default function UpcomingCoursesCarousel({
                   )}
                   style={{ borderLeftColor: leftDistrictColor }}
                 >
-                  <div className="relative h-36 w-full shrink-0 sm:h-40 lg:h-full lg:min-h-0 lg:w-[42%] lg:max-w-md lg:self-stretch">
+                  <div className="relative h-36 w-full shrink-0 overflow-hidden sm:h-40 lg:h-full lg:min-h-0 lg:w-[42%] lg:max-w-md">
                     {leftCourse.image?.url ? (
                       <>
                         <Image
