@@ -183,6 +183,16 @@ body {
   animation: homepage-open-enter-bwd 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@media (max-width: 1023px) {
+  .animate-homepage-course-fwd,
+  .animate-homepage-course-bwd,
+  .animate-homepage-open-fwd,
+  .animate-homepage-open-bwd {
+    animation-duration: 700ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
 /* Rhythmus-Spiel: Einzähler-Zahl kurz „ploppen“ */
 @keyframes rhythm-count-pop {
   0% {
