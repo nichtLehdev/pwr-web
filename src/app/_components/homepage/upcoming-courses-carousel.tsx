@@ -8,6 +8,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import type { RouterOutputs } from "@/trpc/react";
@@ -238,7 +239,102 @@ function SmallOpenRegistrationCard({
 const OPEN_CARDS_PER_PAGE = 2;
 
 /** Homepage fallback when no “closed registration” hero course: carousel pages of upcoming courses */
-const FALLBACK_COURSES_PER_PAGE = 3;
+const FALLBACK_COURSES_PER_PAGE_LG = 3;
+const FALLBACK_COURSES_PER_PAGE_MD = 2;
+
+function getFallbackCoursesPerPage(): number {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+  if (window.matchMedia("(min-width: 1024px)").matches) {
+    return FALLBACK_COURSES_PER_PAGE_LG;
+  }
+  if (window.matchMedia("(min-width: 768px)").matches) {
+    return FALLBACK_COURSES_PER_PAGE_MD;
+  }
+  return 1;
+}
+
+function subscribeFallbackCoursesPerPage(onStoreChange: () => void) {
+  const mqMd = window.matchMedia("(min-width: 768px)");
+  const mqLg = window.matchMedia("(min-width: 1024px)");
+  const handler = () => onStoreChange();
+  mqMd.addEventListener("change", handler);
+  mqLg.addEventListener("change", handler);
+  return () => {
+    mqMd.removeEventListener("change", handler);
+    mqLg.removeEventListener("change", handler);
+  };
+}
+
+function useFallbackCoursesPerPage() {
+  return useSyncExternalStore(
+    subscribeFallbackCoursesPerPage,
+    getFallbackCoursesPerPage,
+    () => 1,
+  );
+}
+
+function CarouselDotNav({
+  count,
+  activeIndex,
+  progress,
+  onSelect,
+  ariaLabel,
+  className,
+}: {
+  count: number;
+  activeIndex: number;
+  progress: number;
+  onSelect: (index: number) => void;
+  ariaLabel: string;
+  className?: string;
+}) {
+  if (count <= 1) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn("flex justify-center gap-2", className)}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
+      {Array.from({ length: count }, (_, i) => {
+        const isActive = i === activeIndex;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(i)}
+            className={cn(
+              "relative shrink-0 overflow-hidden rounded-full transition-[width,height]",
+              "max-lg:h-2.5 max-lg:min-h-[10px] max-lg:min-w-[10px]",
+              isActive
+                ? "h-2 w-6 bg-gray-300 max-lg:w-10 dark:bg-gray-600"
+                : "h-2 w-2 bg-gray-300 hover:bg-gray-400 max-lg:w-2.5 dark:bg-gray-600",
+            )}
+            aria-label={`Seite ${i + 1} von ${count}${
+              isActive ? `, Fortschritt ${Math.round(progress)} Prozent` : ""
+            }`}
+            aria-current={isActive}
+          >
+            {isActive ? (
+              <span
+                className="bg-primary absolute inset-y-0 left-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                style={{
+                  width: `${progress}%`,
+                  transition: "none",
+                }}
+                aria-hidden
+              />
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function homeCourseRegistrationStatus(course: CourseListItem): {
   label: string;
@@ -282,6 +378,7 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
       href={`/termine/course/${course.id}`}
       className={cn(
         "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md",
+        "max-lg:h-[440px] max-lg:max-h-[440px] max-lg:min-h-[440px]",
       )}
       style={{ borderLeftColor: districtColor }}
     >
@@ -527,9 +624,11 @@ export default function UpcomingCoursesCarousel({
   const showOpenRegistrationColumn =
     heroCarouselCourses.length > 0 && openRegistrationCourses.length > 0;
 
+  const fallbackCoursesPerPage = useFallbackCoursesPerPage();
+
   const fallbackPageCount = Math.max(
     1,
-    Math.ceil(allUpcomingSorted.length / FALLBACK_COURSES_PER_PAGE),
+    Math.ceil(allUpcomingSorted.length / fallbackCoursesPerPage),
   );
 
   const effectiveFallbackPageIndex = Math.min(
@@ -538,9 +637,9 @@ export default function UpcomingCoursesCarousel({
   );
 
   const fallbackPageCourses = useMemo(() => {
-    const start = effectiveFallbackPageIndex * FALLBACK_COURSES_PER_PAGE;
-    return allUpcomingSorted.slice(start, start + FALLBACK_COURSES_PER_PAGE);
-  }, [allUpcomingSorted, effectiveFallbackPageIndex]);
+    const start = effectiveFallbackPageIndex * fallbackCoursesPerPage;
+    return allUpcomingSorted.slice(start, start + fallbackCoursesPerPage);
+  }, [allUpcomingSorted, effectiveFallbackPageIndex, fallbackCoursesPerPage]);
 
   const leftDescriptionExcerpt = leftCourse?.description
     ? extractPlainTextFromMarkdown(leftCourse.description, 5, 320)
@@ -707,8 +806,8 @@ export default function UpcomingCoursesCarousel({
             "relative shrink-0 overflow-hidden rounded-full transition-[width,height]",
             horizontal
               ? isActive
-                ? "h-2 w-6 bg-gray-300 dark:bg-gray-600"
-                : "h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600"
+                ? "h-2 w-6 bg-gray-300 max-lg:h-2.5 max-lg:w-10 dark:bg-gray-600"
+                : "h-2 w-2 bg-gray-300 hover:bg-gray-400 max-lg:h-2.5 max-lg:w-2.5 dark:bg-gray-600"
               : isActive
                 ? "h-6 w-1.5 bg-gray-300 dark:bg-gray-600"
                 : "h-2 w-1.5 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600",
@@ -744,10 +843,12 @@ export default function UpcomingCoursesCarousel({
       );
     });
 
-  const mainBannerMinClass = "min-h-[520px] lg:min-h-[480px]";
+  /** Fixed height on mobile prevents layout jumps between carousel slides. */
+  const mainBannerHeightClass =
+    "h-[520px] min-h-[520px] max-h-[520px] overflow-hidden lg:h-auto lg:max-h-none lg:min-h-[480px]";
   /** Matches banner min height so each small card can be exactly half the column. */
   const openCarouselColumnHeightClass =
-    "h-[520px] min-h-[520px] lg:h-[480px] lg:min-h-[480px]";
+    "h-[520px] min-h-[520px] max-h-[520px] lg:h-[480px] lg:min-h-[480px] lg:max-h-none";
 
   return (
     <div
@@ -765,12 +866,32 @@ export default function UpcomingCoursesCarousel({
       >
         {leftCourse ? (
           <>
+            {heroCarouselCourses.length > 1 ? (
+              <CarouselDotNav
+                className="mb-3 lg:hidden"
+                count={heroCarouselCourses.length}
+                activeIndex={effectiveLeftIndex}
+                progress={leftProgressDisplay}
+                ariaLabel="kommende Veranstaltungen"
+                onSelect={(i) => {
+                  if (i === effectiveLeftIndex) return;
+                  const len = heroCarouselCourses.length;
+                  setLeftEnterForward(
+                    isCarouselForward(effectiveLeftIndex, i, len),
+                  );
+                  setLeftNavGeneration((g) => g + 1);
+                  setLeftIndex(i);
+                  pauseLeftAutoTemporarily();
+                }}
+              />
+            ) : null}
+
             <div className="w-full min-w-0">
               <div
                 key={leftCourse.id}
                 className={cn(
                   "w-full",
-                  mainBannerMinClass,
+                  mainBannerHeightClass,
                   leftNavGeneration > 0 &&
                     (leftEnterForward
                       ? "animate-homepage-course-fwd"
@@ -782,7 +903,7 @@ export default function UpcomingCoursesCarousel({
                   href={`/termine/course/${leftCourse.id}`}
                   className={cn(
                     "group bg-background dark:bg-dark-surface dark:border-dark-border flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md lg:flex-row lg:items-stretch",
-                    mainBannerMinClass,
+                    mainBannerHeightClass,
                   )}
                   style={{ borderLeftColor: leftDistrictColor }}
                 >
@@ -857,7 +978,7 @@ export default function UpcomingCoursesCarousel({
                           : "Bezirksübergreifend"}
                       </span>
                     </div>
-                    <h3 className="text-dark dark:text-dark-text mb-3 text-2xl font-bold">
+                    <h3 className="text-dark dark:text-dark-text mb-3 line-clamp-3 text-2xl font-bold lg:line-clamp-none">
                       {leftCourse.title}
                     </h3>
 
@@ -915,62 +1036,56 @@ export default function UpcomingCoursesCarousel({
             </div>
 
             {heroCarouselCourses.length > 1 ? (
-              <div
-                className="mt-3 flex justify-center gap-1.5"
-                role="tablist"
-                aria-label="kommende Veranstaltungen"
-              >
-                {heroCarouselCourses.map((c, i) => {
-                  const isActive = i === effectiveLeftIndex;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        if (i === effectiveLeftIndex) return;
-                        const len = heroCarouselCourses.length;
-                        setLeftEnterForward(
-                          isCarouselForward(effectiveLeftIndex, i, len),
-                        );
-                        setLeftNavGeneration((g) => g + 1);
-                        setLeftIndex(i);
-                        pauseLeftAutoTemporarily();
-                      }}
-                      className={`relative shrink-0 overflow-hidden rounded-full transition-[width,height] ${
-                        isActive
-                          ? "h-2 w-6 bg-gray-300 dark:bg-gray-600"
-                          : "h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600"
-                      }`}
-                      aria-label={`Veranstaltung ${i + 1} von ${heroCarouselCourses.length}${
-                        isActive
-                          ? `, Fortschritt ${Math.round(leftProgressDisplay)} Prozent`
-                          : ""
-                      }`}
-                      aria-current={isActive}
-                    >
-                      {isActive ? (
-                        <span
-                          className="bg-primary absolute inset-y-0 left-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                          style={{
-                            width: `${leftProgressDisplay}%`,
-                            transition: "none",
-                          }}
-                          aria-hidden
-                        />
-                      ) : null}
-                    </button>
+              <CarouselDotNav
+                className="mt-3 hidden lg:flex"
+                count={heroCarouselCourses.length}
+                activeIndex={effectiveLeftIndex}
+                progress={leftProgressDisplay}
+                ariaLabel="kommende Veranstaltungen"
+                onSelect={(i) => {
+                  if (i === effectiveLeftIndex) return;
+                  const len = heroCarouselCourses.length;
+                  setLeftEnterForward(
+                    isCarouselForward(effectiveLeftIndex, i, len),
                   );
-                })}
-              </div>
+                  setLeftNavGeneration((g) => g + 1);
+                  setLeftIndex(i);
+                  pauseLeftAutoTemporarily();
+                }}
+              />
             ) : null}
           </>
         ) : (
           <>
+            {fallbackPageCount > 1 ? (
+              <CarouselDotNav
+                className="mb-3 lg:hidden"
+                count={fallbackPageCount}
+                activeIndex={effectiveFallbackPageIndex}
+                progress={fallbackProgressDisplay}
+                ariaLabel="Weitere kommende Veranstaltungen"
+                onSelect={(i) => {
+                  if (i === effectiveFallbackPageIndex) return;
+                  setFallbackEnterForward(
+                    isCarouselForward(
+                      effectiveFallbackPageIndex,
+                      i,
+                      fallbackPageCount,
+                    ),
+                  );
+                  setFallbackNavGeneration((g) => g + 1);
+                  setFallbackPageIndex(i);
+                  pauseFallbackAutoTemporarily();
+                }}
+              />
+            ) : null}
+
             <div className="w-full min-w-0">
               <div
                 key={`fallback-${effectiveFallbackPageIndex}`}
                 className={cn(
                   "grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6",
+                  fallbackPageCourses.length === 1 && "max-lg:min-h-[440px]",
                   fallbackNavGeneration > 0 &&
                     (fallbackEnterForward
                       ? "animate-homepage-open-fwd"
@@ -985,56 +1100,26 @@ export default function UpcomingCoursesCarousel({
             </div>
 
             {fallbackPageCount > 1 ? (
-              <div
-                className="mt-3 flex justify-center gap-1.5"
-                role="tablist"
-                aria-label="Weitere kommende Veranstaltungen"
-              >
-                {Array.from({ length: fallbackPageCount }, (_, i) => {
-                  const isActive = i === effectiveFallbackPageIndex;
-                  return (
-                    <button
-                      key={`fallback-page-${i}`}
-                      type="button"
-                      onClick={() => {
-                        if (i === effectiveFallbackPageIndex) return;
-                        setFallbackEnterForward(
-                          isCarouselForward(
-                            effectiveFallbackPageIndex,
-                            i,
-                            fallbackPageCount,
-                          ),
-                        );
-                        setFallbackNavGeneration((g) => g + 1);
-                        setFallbackPageIndex(i);
-                        pauseFallbackAutoTemporarily();
-                      }}
-                      className={`relative shrink-0 overflow-hidden rounded-full transition-[width,height] ${
-                        isActive
-                          ? "h-2 w-6 bg-gray-300 dark:bg-gray-600"
-                          : "h-2 w-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600"
-                      }`}
-                      aria-label={`Seite ${i + 1} von ${fallbackPageCount}${
-                        isActive
-                          ? `, Fortschritt ${Math.round(fallbackProgressDisplay)} Prozent`
-                          : ""
-                      }`}
-                      aria-current={isActive}
-                    >
-                      {isActive ? (
-                        <span
-                          className="bg-primary absolute inset-y-0 left-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                          style={{
-                            width: `${fallbackProgressDisplay}%`,
-                            transition: "none",
-                          }}
-                          aria-hidden
-                        />
-                      ) : null}
-                    </button>
+              <CarouselDotNav
+                className="mt-3 hidden lg:flex"
+                count={fallbackPageCount}
+                activeIndex={effectiveFallbackPageIndex}
+                progress={fallbackProgressDisplay}
+                ariaLabel="Weitere kommende Veranstaltungen"
+                onSelect={(i) => {
+                  if (i === effectiveFallbackPageIndex) return;
+                  setFallbackEnterForward(
+                    isCarouselForward(
+                      effectiveFallbackPageIndex,
+                      i,
+                      fallbackPageCount,
+                    ),
                   );
-                })}
-              </div>
+                  setFallbackNavGeneration((g) => g + 1);
+                  setFallbackPageIndex(i);
+                  pauseFallbackAutoTemporarily();
+                }}
+              />
             ) : null}
           </>
         )}
@@ -1044,6 +1129,16 @@ export default function UpcomingCoursesCarousel({
         /* Vertical carousel: 2 stacked small cards; dots sit to the right of the cards */
         <div className="max-lg:dark:border-dark-border flex min-h-0 w-full flex-col max-lg:border-t max-lg:border-gray-200 max-lg:pt-6 lg:h-full lg:min-h-0">
           <div className="flex w-full flex-1 flex-col lg:min-h-0">
+            {showOpenCarousel ? (
+              <div
+                className="mb-3 flex w-full justify-center gap-2 lg:hidden"
+                role="tablist"
+                aria-label="Seiten Veranstaltungen mit offener Anmeldung"
+              >
+                {openRegistrationPillButtons("horizontal")}
+              </div>
+            ) : null}
+
             <div
               key={effectiveOpenPageIndex}
               className={cn(
@@ -1065,7 +1160,7 @@ export default function UpcomingCoursesCarousel({
                   <SmallOpenRegistrationCard
                     key={course.id}
                     course={course}
-                    className="min-h-0 flex-1 basis-0"
+                    className="min-h-0 flex-1 basis-0 overflow-hidden"
                   />
                 ))}
                 {openPageCourses.length === 1 ? (
@@ -1074,22 +1169,13 @@ export default function UpcomingCoursesCarousel({
               </div>
 
               {showOpenCarousel ? (
-                <>
-                  <div
-                    className="flex w-full justify-center gap-1.5 pt-1 lg:hidden"
-                    role="tablist"
-                    aria-label="Seiten Veranstaltungen mit offener Anmeldung"
-                  >
-                    {openRegistrationPillButtons("horizontal")}
-                  </div>
-                  <div
-                    className="hidden shrink-0 flex-col items-center justify-center gap-1.5 self-stretch py-1 pl-1 lg:flex"
-                    aria-label="Seiten Veranstaltungen mit offener Anmeldung"
-                    role="tablist"
-                  >
-                    {openRegistrationPillButtons("vertical")}
-                  </div>
-                </>
+                <div
+                  className="hidden shrink-0 flex-col items-center justify-center gap-1.5 self-stretch py-1 pl-1 lg:flex"
+                  aria-label="Seiten Veranstaltungen mit offener Anmeldung"
+                  role="tablist"
+                >
+                  {openRegistrationPillButtons("vertical")}
+                </div>
               ) : null}
             </div>
           </div>
