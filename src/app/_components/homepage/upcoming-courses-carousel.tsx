@@ -149,6 +149,50 @@ function SaveTheDateTag({ className }: { className?: string }) {
   );
 }
 
+function CourseBezirkBadge({
+  bezirkNumber,
+  districtColor,
+}: {
+  bezirkNumber?: number | null;
+  districtColor: string;
+}) {
+  return (
+    <span
+      className="shrink-0 self-start rounded-full px-3 py-1 text-xs font-semibold text-white"
+      style={{ backgroundColor: districtColor }}
+    >
+      {bezirkNumber ? `Bezirk ${bezirkNumber}` : "Bezirksübergreifend"}
+    </span>
+  );
+}
+
+function CourseCardTopRow({
+  districtColor,
+  bezirkNumber,
+  children,
+  className,
+}: {
+  districtColor: string;
+  bezirkNumber?: number | null;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-2 flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2",
+        className,
+      )}
+    >
+      <div className="w-full min-w-0 sm:w-auto">{children}</div>
+      <CourseBezirkBadge
+        bezirkNumber={bezirkNumber}
+        districtColor={districtColor}
+      />
+    </div>
+  );
+}
+
 function saveTheDateRegistrationHint(course: CourseListItem): string | null {
   const opensAt = course.registrationOpensAt
     ? new Date(course.registrationOpensAt)
@@ -182,17 +226,13 @@ function SmallOpenRegistrationCard({
       style={{ borderLeftColor: districtColor }}
     >
       <div className="flex min-w-0 flex-1 flex-col p-6 sm:p-7">
-        <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+        <CourseCardTopRow
+          districtColor={districtColor}
+          bezirkNumber={course.bezirk?.number}
+          className="mb-1"
+        >
           <p className="text-primary text-sm font-semibold">Anmeldung offen</p>
-          <span
-            className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
-            style={{ backgroundColor: districtColor }}
-          >
-            {course.bezirk?.number
-              ? `Bezirk ${course.bezirk.number}`
-              : "Bezirksübergreifend"}
-          </span>
-        </div>
+        </CourseCardTopRow>
         <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-3 text-base leading-snug font-semibold sm:text-lg">
           {course.title}
         </h4>
@@ -378,7 +418,7 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
       href={`/termine/course/${course.id}`}
       className={cn(
         "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md",
-        "max-lg:h-[440px] max-lg:max-h-[440px] max-lg:min-h-[440px]",
+        "max-lg:min-h-[400px]",
       )}
       style={{ borderLeftColor: districtColor }}
     >
@@ -415,39 +455,32 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col p-5 sm:p-6">
-        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            {isSaveTheDate ? (
-              <>
-                <SaveTheDateTag />
-                {saveTheDateHint ? (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {saveTheDateHint}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <p
-                className={cn(
-                  "text-sm font-semibold",
-                  status.emphasis
-                    ? "text-primary"
-                    : "text-gray-600 dark:text-gray-400",
-                )}
-              >
-                {status.label}
-              </p>
-            )}
-          </div>
-          <span
-            className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
-            style={{ backgroundColor: districtColor }}
-          >
-            {course.bezirk?.number
-              ? `Bezirk ${course.bezirk.number}`
-              : "Bezirksübergreifend"}
-          </span>
-        </div>
+        <CourseCardTopRow
+          districtColor={districtColor}
+          bezirkNumber={course.bezirk?.number}
+        >
+          {isSaveTheDate ? (
+            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+              <SaveTheDateTag />
+              {saveTheDateHint ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {saveTheDateHint}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <p
+              className={cn(
+                "text-sm font-semibold",
+                status.emphasis
+                  ? "text-primary"
+                  : "text-gray-600 dark:text-gray-400",
+              )}
+            >
+              {status.label}
+            </p>
+          )}
+        </CourseCardTopRow>
         <p className="text-primary mb-2 text-xs font-medium">
           {capitalizeFirstLetter(course.courseType)}
         </p>
@@ -493,6 +526,8 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
 }
 
 const CAROUSEL_AUTO_ADVANCE_MS = 6000;
+/** Right column starts halfway through the left cycle so both never switch together. */
+const CAROUSEL_RIGHT_PHASE_OFFSET_MS = CAROUSEL_AUTO_ADVANCE_MS / 2;
 
 /** Next index in a circular list (autoplay always moves “forward”). */
 function isCarouselForward(
@@ -556,6 +591,7 @@ export default function UpcomingCoursesCarousel({
   const fallbackResumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
+  const rightProgressCycleMsRef = useRef(CAROUSEL_RIGHT_PHASE_OFFSET_MS);
 
   const pauseLeftAutoTemporarily = useCallback(() => {
     setLeftAutoPlay(false);
@@ -569,6 +605,7 @@ export default function UpcomingCoursesCarousel({
   }, []);
 
   const pauseRightAutoTemporarily = useCallback(() => {
+    rightProgressCycleMsRef.current = CAROUSEL_AUTO_ADVANCE_MS;
     setRightAutoPlay(false);
     if (rightResumeTimerRef.current) {
       clearTimeout(rightResumeTimerRef.current);
@@ -671,14 +708,30 @@ export default function UpcomingCoursesCarousel({
   }, [leftAutoPlay, heroCarouselCourses.length]);
 
   useEffect(() => {
-    if (!rightAutoPlay || openPageCount <= 1 || !showOpenRegistrationColumn)
+    if (!rightAutoPlay || openPageCount <= 1 || !showOpenRegistrationColumn) {
       return;
-    const id = setInterval(() => {
+    }
+
+    rightProgressCycleMsRef.current = CAROUSEL_RIGHT_PHASE_OFFSET_MS;
+    const len = openPageCount;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+
+    const advanceRight = () => {
       setRightEnterForward(true);
       setRightNavGeneration((g) => g + 1);
-      setOpenPageIndex((prev) => (prev + 1) % openPageCount);
-    }, CAROUSEL_AUTO_ADVANCE_MS);
-    return () => clearInterval(id);
+      setOpenPageIndex((prev) => (prev + 1) % len);
+    };
+
+    const timeoutId = setTimeout(() => {
+      rightProgressCycleMsRef.current = CAROUSEL_AUTO_ADVANCE_MS;
+      advanceRight();
+      intervalId = setInterval(advanceRight, CAROUSEL_AUTO_ADVANCE_MS);
+    }, CAROUSEL_RIGHT_PHASE_OFFSET_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [rightAutoPlay, openPageCount, showOpenRegistrationColumn]);
 
   useEffect(() => {
@@ -714,10 +767,11 @@ export default function UpcomingCoursesCarousel({
       return;
     }
     let rafId = 0;
+    const cycleMs = rightProgressCycleMsRef.current;
     const start = performance.now();
     const tick = (now: number) => {
       const elapsed = now - start;
-      const p = Math.min(100, (elapsed / CAROUSEL_AUTO_ADVANCE_MS) * 100);
+      const p = Math.min(100, (elapsed / cycleMs) * 100);
       setRightProgress(p);
       if (p < 100) {
         rafId = requestAnimationFrame(tick);
@@ -843,9 +897,9 @@ export default function UpcomingCoursesCarousel({
       );
     });
 
-  /** Fixed height on mobile prevents layout jumps between carousel slides. */
+  /** Stable min-height on mobile; content area sizes image/meta so title stays visible. */
   const mainBannerHeightClass =
-    "h-[520px] min-h-[520px] max-h-[520px] overflow-hidden lg:h-auto lg:max-h-none lg:min-h-[480px]";
+    "max-lg:min-h-[500px] lg:h-auto lg:min-h-[480px]";
   /** Matches banner min height so each small card can be exactly half the column. */
   const openCarouselColumnHeightClass =
     "h-[520px] min-h-[520px] max-h-[520px] lg:h-[480px] lg:min-h-[480px] lg:max-h-none";
@@ -907,7 +961,7 @@ export default function UpcomingCoursesCarousel({
                   )}
                   style={{ borderLeftColor: leftDistrictColor }}
                 >
-                  <div className="relative min-h-[220px] w-full shrink-0 self-stretch sm:min-h-[240px] lg:min-h-0 lg:w-[42%] lg:max-w-md">
+                  <div className="relative h-36 w-full shrink-0 sm:h-40 lg:min-h-0 lg:w-[42%] lg:max-w-md lg:self-stretch">
                     {leftCourse.image?.url ? (
                       <>
                         <Image
@@ -944,51 +998,44 @@ export default function UpcomingCoursesCarousel({
                     )}
                   </div>
 
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-6">
-                    <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        {leftIsSaveTheDate ? (
-                          <>
-                            <SaveTheDateTag />
-                            {leftSaveTheDateHint ? (
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {leftSaveTheDateHint}
-                              </p>
-                            ) : null}
-                          </>
-                        ) : (
-                          <p
-                            className={cn(
-                              "text-sm font-semibold",
-                              leftCourseStatus?.emphasis
-                                ? "text-primary"
-                                : "text-gray-600 dark:text-gray-400",
-                            )}
-                          >
-                            {leftCourseStatus?.label}
-                          </p>
-                        )}
-                      </div>
-                      <span
-                        className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white"
-                        style={{ backgroundColor: leftDistrictColor }}
-                      >
-                        {leftCourse.bezirk?.number
-                          ? `Bezirk ${leftCourse.bezirk.number}`
-                          : "Bezirksübergreifend"}
-                      </span>
-                    </div>
-                    <h3 className="text-dark dark:text-dark-text mb-3 line-clamp-3 text-2xl font-bold lg:line-clamp-none">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 sm:p-6">
+                    <CourseCardTopRow
+                      districtColor={leftDistrictColor}
+                      bezirkNumber={leftCourse.bezirk?.number}
+                    >
+                      {leftIsSaveTheDate ? (
+                        <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
+                          <SaveTheDateTag />
+                          {leftSaveTheDateHint ? (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {leftSaveTheDateHint}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <p
+                          className={cn(
+                            "text-sm font-semibold",
+                            leftCourseStatus?.emphasis
+                              ? "text-primary"
+                              : "text-gray-600 dark:text-gray-400",
+                          )}
+                        >
+                          {leftCourseStatus?.label}
+                        </p>
+                      )}
+                    </CourseCardTopRow>
+                    <h3 className="text-dark dark:text-dark-text mb-2 line-clamp-2 shrink-0 text-xl leading-snug font-bold sm:mb-3 sm:text-2xl lg:line-clamp-none">
                       {leftCourse.title}
                     </h3>
 
                     {leftDescriptionExcerpt ? (
-                      <p className="mb-4 line-clamp-5 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                      <p className="mb-3 line-clamp-2 shrink-0 text-sm leading-relaxed text-gray-600 sm:mb-4 lg:line-clamp-5 dark:text-gray-300">
                         {leftDescriptionExcerpt}
                       </p>
                     ) : null}
 
-                    <div className="mb-2 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="mb-1.5 flex shrink-0 items-start gap-2 text-sm text-gray-600 sm:mb-2 dark:text-gray-300">
                       <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" />
                       <span className="min-w-0 leading-snug">
                         {formatGermanCourseDateTimeRange(
@@ -997,7 +1044,7 @@ export default function UpcomingCoursesCarousel({
                         )}
                       </span>
                     </div>
-                    <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="mb-3 flex shrink-0 items-center gap-2 text-sm text-gray-600 sm:mb-4 dark:text-gray-300">
                       <MapPin className="h-4 w-4 shrink-0" />
                       <span>{leftCourse.location?.city || "Ort folgt"}</span>
                     </div>
@@ -1005,7 +1052,7 @@ export default function UpcomingCoursesCarousel({
                     {leftCourse.collaborators?.some(
                       (c) => c.user.profileImage?.url,
                     ) ? (
-                      <div className="mb-6 flex flex-wrap items-center gap-2">
+                      <div className="mb-4 hidden flex-wrap items-center gap-2 sm:mb-6 lg:flex">
                         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                           Kurs-Team
                         </span>
@@ -1085,7 +1132,7 @@ export default function UpcomingCoursesCarousel({
                 key={`fallback-${effectiveFallbackPageIndex}`}
                 className={cn(
                   "grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6",
-                  fallbackPageCourses.length === 1 && "max-lg:min-h-[440px]",
+                  fallbackPageCourses.length === 1 && "max-lg:min-h-[400px]",
                   fallbackNavGeneration > 0 &&
                     (fallbackEnterForward
                       ? "animate-homepage-open-fwd"
