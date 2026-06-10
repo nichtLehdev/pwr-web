@@ -79,12 +79,10 @@ function formatGermanRegistrationDeadline(input: string | Date): string {
   if (Number.isNaN(d.getTime())) {
     return "";
   }
-  return d.toLocaleString("de-DE", {
+  return d.toLocaleDateString("de-DE", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
@@ -171,20 +169,26 @@ function CourseCardTopRow({
   bezirkNumber,
   children,
   className,
+  compact = false,
 }: {
   districtColor: string;
   bezirkNumber?: number | null;
   children: ReactNode;
   className?: string;
+  /** Keep status + badge stacked (narrow side column). */
+  compact?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "mb-2 flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2",
+        "mb-2 flex flex-col items-start gap-1.5",
+        !compact && "sm:flex-row sm:items-center sm:justify-between sm:gap-2",
         className,
       )}
     >
-      <div className="w-full min-w-0 sm:w-auto">{children}</div>
+      <div className={cn("w-full min-w-0", !compact && "sm:w-auto")}>
+        {children}
+      </div>
       <CourseBezirkBadge
         bezirkNumber={bezirkNumber}
         districtColor={districtColor}
@@ -225,15 +229,16 @@ function SmallOpenRegistrationCard({
       )}
       style={{ borderLeftColor: districtColor }}
     >
-      <div className="flex min-w-0 flex-1 flex-col p-6 sm:p-7">
+      <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6 lg:p-5 xl:p-6">
         <CourseCardTopRow
           districtColor={districtColor}
           bezirkNumber={course.bezirk?.number}
           className="mb-1"
+          compact
         >
           <p className="text-primary text-sm font-semibold">Anmeldung offen</p>
         </CourseCardTopRow>
-        <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-3 text-base leading-snug font-semibold sm:text-lg">
+        <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-base leading-snug font-semibold">
           {course.title}
         </h4>
         <div className="mb-1.5 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -902,7 +907,7 @@ export default function UpcomingCoursesCarousel({
     "max-lg:min-h-[500px] lg:h-auto lg:min-h-[480px]";
   /** Matches banner min height so each small card can be exactly half the column. */
   const openCarouselColumnHeightClass =
-    "h-[520px] min-h-[520px] max-h-[520px] lg:h-[480px] lg:min-h-[480px] lg:max-h-none";
+    "h-[520px] min-h-[520px] max-h-[520px] lg:h-[540px] lg:min-h-[540px] lg:max-h-none";
 
   return (
     <div
@@ -961,7 +966,7 @@ export default function UpcomingCoursesCarousel({
                   )}
                   style={{ borderLeftColor: leftDistrictColor }}
                 >
-                  <div className="relative h-36 w-full shrink-0 sm:h-40 lg:min-h-0 lg:w-[42%] lg:max-w-md lg:self-stretch">
+                  <div className="relative h-36 w-full shrink-0 sm:h-40 lg:h-full lg:min-h-0 lg:w-[42%] lg:max-w-md lg:self-stretch">
                     {leftCourse.image?.url ? (
                       <>
                         <Image
