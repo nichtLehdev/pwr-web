@@ -1,7 +1,8 @@
 "use client";
 import { Select } from "@/app/_components/ui";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { capitalizeFirstLetter, getFileIcon } from "@/lib/utils";
 import { api } from "@/trpc/react";
@@ -17,11 +18,13 @@ import {
   X,
 } from "lucide-react";
 
-export default function MaterialienPage() {
+function MaterialienContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
   const [selectedCategory, setSelectedCategory] = useState<string | "all">(
     "all",
   );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const downloads = api.materials.getDownloads.useQuery(
     {
       page: 1,
@@ -335,5 +338,13 @@ export default function MaterialienPage() {
         </div>
       </section>
     </PublicPage>
+  );
+}
+
+export default function MaterialienPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner text="Laden..." />}>
+      <MaterialienContent />
+    </Suspense>
   );
 }

@@ -134,7 +134,7 @@ export default function Home() {
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
           <SectionHeader
-            title="kommende Veranstaltungen"
+            title="Kommende Veranstaltungen"
             linkText="Alle Veranstaltungen"
             linkHref="/termine?type=courses&view=list"
           />
