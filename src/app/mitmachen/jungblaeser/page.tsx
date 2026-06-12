@@ -1,11 +1,10 @@
 import PublicPage from "@/app/_components/general/public-page";
 import {
+  ArrowRightIcon,
   BookOpenIcon,
   BrainIcon,
-  CalendarIcon,
   ChurchIcon,
   DownloadIcon,
-  MailIcon,
   Music2Icon,
   Music3Icon,
   MusicIcon,
@@ -149,7 +148,7 @@ export default function JungblaserPage() {
                   key={offering.id}
                   className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg transition-all hover:shadow-xl"
                 >
-                  <div className="bg-district-9 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                  <div className="bg-district-9 mb-4 flex h-12 w-12 items-center justify-center rounded-full text-white">
                     {offering.icon}
                   </div>
                   <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
@@ -160,16 +159,6 @@ export default function JungblaserPage() {
                   </p>
                 </div>
               ))}
-            </div>
-
-            <div className="mt-10 text-center">
-              <Link
-                href="/termine?type=courses&category=Anfänger"
-                className="bg-district-9 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
-              >
-                <CalendarIcon className="mr-2 h-5 w-5" />
-                Aktuelle Termine für Jungbläser
-              </Link>
             </div>
           </div>
         </div>
@@ -189,7 +178,7 @@ export default function JungblaserPage() {
                   key={index}
                   className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md"
                 >
-                  <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+                  <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full text-white">
                     {benefit.icon}
                   </div>
                   <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
@@ -257,7 +246,7 @@ export default function JungblaserPage() {
                       Fortschritt Ihrer Jungbläser dokumentieren und motivieren.
                     </p>
                     <Link
-                      href="/mitmachen/bildung#leistungsstufen"
+                      href="/materialien?search=leistungsstempel"
                       className="text-primary hover:text-primary-dark inline-flex items-center font-semibold"
                     >
                       Mehr zu Leistungsstempeln →
@@ -272,17 +261,16 @@ export default function JungblaserPage() {
                   Beratung & Unterstützung
                 </h3>
                 <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300">
-                  Unser Referent für Jungbläserarbeit steht Ihnen bei allen
-                  Fragen rund um die Ausbildung junger Bläserinnen und Bläser
-                  zur Seite. Von der Konzeption bis zur praktischen Umsetzung –
-                  wir unterstützen Sie gerne!
+                  Unsere Regionalposaunenwarte stehen für Fragen rund um die
+                  Jungbläserarbeit gerne zur Verfügung – von der Planung bis zur
+                  Umsetzung. Zögern Sie nicht, sich bei Bedarf an sie zu wenden!
                 </p>
                 <Link
-                  href="/kontakt"
+                  href="/ueber-uns/posaunenwarte"
                   className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                 >
-                  <MailIcon className="mr-2 h-5 w-5" />
-                  Kontakt Jungbläser-Referent
+                  Regionalposaunenwarte
+                  <ArrowRightIcon className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
             </div>

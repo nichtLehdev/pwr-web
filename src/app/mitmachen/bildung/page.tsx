@@ -55,7 +55,7 @@ export default function BildungPage() {
       title: "Bläserfreizeiten",
       description:
         "Gemeinsames Musizieren, Lernen und Erleben für alle Altersgruppen",
-      icon: <Globe2Icon className="text-primary dark:text-dark-text h-6 w-6" />,
+      icon: <Globe2Icon className="h-6 w-6" />,
       color: "bg-district-9",
     },
   ];
@@ -117,7 +117,7 @@ export default function BildungPage() {
                   }}
                 >
                   <div
-                    className={`h-12 w-12 ${category.color} mb-4 flex items-center justify-center rounded-full`}
+                    className={`h-12 w-12 ${category.color} mb-4 flex items-center justify-center rounded-full text-white`}
                   >
                     {category.icon}
                   </div>
@@ -151,7 +151,7 @@ export default function BildungPage() {
                 Lehrgänge anmelden.
               </p>
               <Link
-                href="/termine?type=courses"
+                href="/termine?type=courses&view=list"
                 className="bg-district-2 inline-flex items-center rounded-lg px-8 py-4 font-bold text-white shadow-lg transition-opacity hover:opacity-90"
               >
                 <CalendarIcon className="mr-2 h-5 w-5" />
