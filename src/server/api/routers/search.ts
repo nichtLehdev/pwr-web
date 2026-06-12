@@ -840,7 +840,7 @@ export const searchRouter = createTRPCRouter({
           type: "download",
           title: download.title,
           description: download.description,
-          url: `/materialien#${download.id}`,
+          url: `/materialien?search=${encodeURIComponent(download.title)}`,
           imageUrl: null,
           date: download.createdAt,
           category: download.category,
