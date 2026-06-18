@@ -1,28 +1,13 @@
 /**
  * Get the base URL for the application.
- * Tries multiple sources in order of preference:
- * 1. Request headers (if available) - most reliable for server-side
- * 2. BETTER_AUTH_URL environment variable
- * 3. NEXT_PUBLIC_APP_URL environment variable
- * 4. VERCEL_URL (for Vercel deployments)
- * 5. Default to localhost (development only)
+ * Uses environment variables only -- never trusts request headers, which can
+ * be forged and lead to host-header-injection attacks (e.g. poisoned password
+ * reset links).
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getBaseUrl(request?: {
   headers: Headers | { get: (key: string) => string | null };
 }): string {
-  if (request) {
-    const host = request.headers.get("host");
-    const protocol =
-      request.headers.get("x-forwarded-proto") ||
-      request.headers.get("x-forwarded-protocol") ||
-      (request.headers.get("x-forwarded-ssl") === "on" ? "https" : "http");
-
-    if (host) {
-      const cleanHost = host.replace(/:80$/, "").replace(/:443$/, "");
-      return `${protocol}://${cleanHost}`;
-    }
-  }
-
   if (process.env.BETTER_AUTH_URL) {
     return process.env.BETTER_AUTH_URL;
   }

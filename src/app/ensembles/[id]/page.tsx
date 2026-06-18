@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/trpc/server";
 import { getDistrictColor } from "@/lib/district-color";
+import { sanitizeHtml } from "@/lib/sanitize";
 import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper";
 import PublicPage from "@/app/_components/general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
@@ -199,7 +200,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                   </h2>
                   <div
                     className="prose max-w-none text-gray-700 dark:text-gray-300"
-                    dangerouslySetInnerHTML={{ __html: ensemble.description }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(ensemble.description) }}
                   />
                 </div>
               )}

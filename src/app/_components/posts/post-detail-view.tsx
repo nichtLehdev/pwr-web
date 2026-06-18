@@ -13,6 +13,7 @@ import PublicShareButton from "@/app/_components/general/public-share-button";
 import type { FileType } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import {
   ArrowLeftIcon,
   ArrowUpRightIcon,
@@ -293,7 +294,7 @@ export default function PostDetailView({
             {/* Main Content */}
             <div
               className="article-content"
-              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contentHtml) }}
             />
 
             {/* Share & Back */}

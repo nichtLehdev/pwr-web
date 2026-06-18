@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { ContentStatus, PostCategory } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
+import { sanitizeHtml } from "@/lib/sanitize";
 import {
   Edit,
   Trash2,
@@ -645,7 +646,7 @@ export default function PostDetailPage() {
               {post.contentHtml ? (
                 <div
                   className="article-content"
-                  dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contentHtml) }}
                 />
               ) : (
                 <pre className="dark:text-dark-muted font-sans whitespace-pre-wrap text-gray-700">
