@@ -332,13 +332,11 @@ export default function NewCoursePage() {
     }
   }, [profile, profileLoading, hasDashboardAccess, router]);
 
-  /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
     if (!isHigherRole && userBezirkId && !bezirkId) {
       setBezirkId(userBezirkId);
     }
   }, [isHigherRole, userBezirkId, bezirkId]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -1187,7 +1185,7 @@ export default function NewCoursePage() {
             <div className="space-y-10">
               <DashboardFormBlock title="Anmeldeeinstellungen">
                 <div className="space-y-6">
-                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <div className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
                     <label className="flex cursor-pointer items-start gap-3">
                       <input
                         type="checkbox"
@@ -1269,7 +1267,7 @@ export default function NewCoursePage() {
                     ) : null}
                   </div>
 
-                  <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                  <fieldset className="dark:border-dark-border rounded-lg border border-gray-200 p-4">
                     <legend className="sr-only">
                       Anmeldezeitpunkt und -fenster
                     </legend>
@@ -1725,7 +1723,7 @@ export default function NewCoursePage() {
                   </div>
 
                   {!isFree && (
-                    <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-600">
+                    <div className="dark:border-dark-border space-y-3 rounded-lg border border-gray-200 p-4">
                       <p className="dark:text-dark-text text-sm font-medium text-gray-700">
                         Zahlungsweisen für Teilnehmer
                       </p>
