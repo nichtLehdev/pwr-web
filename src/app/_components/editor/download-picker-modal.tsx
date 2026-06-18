@@ -262,6 +262,7 @@ export default function DownloadPickerModal({
               Download einfügen
             </h2>
             <button
+              type="button"
               onClick={onClose}
               className="dark:hover:bg-dark-background-secondary rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400"
             >
@@ -273,6 +274,7 @@ export default function DownloadPickerModal({
         {/* Tabs */}
         <div className="dark:border-dark-border flex border-b border-gray-200">
           <button
+            type="button"
             onClick={() => setActiveTab("library")}
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === "library"
@@ -283,6 +285,7 @@ export default function DownloadPickerModal({
             Vorhandene Downloads
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab("create")}
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === "create"
@@ -339,6 +342,7 @@ export default function DownloadPickerModal({
                   {downloadsData?.downloads.map((download) => (
                     <button
                       key={download.id}
+                      type="button"
                       onClick={() =>
                         setSelectedDownload({
                           id: download.id,
@@ -410,6 +414,7 @@ export default function DownloadPickerModal({
                       </p>
                     </div>
                     <button
+                      type="button"
                       onClick={() => {
                         setUploadedFileUrl("");
                         setUploadedFileSize(0);
@@ -545,6 +550,7 @@ export default function DownloadPickerModal({
 
               {/* Create Button */}
               <button
+                type="button"
                 onClick={handleCreateDownload}
                 disabled={
                   !newTitle.trim() ||
@@ -569,6 +575,7 @@ export default function DownloadPickerModal({
           </div>
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100"
             >
@@ -576,6 +583,7 @@ export default function DownloadPickerModal({
             </button>
             {activeTab === "library" && (
               <button
+                type="button"
                 onClick={handleInsert}
                 disabled={!selectedDownload}
                 className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"

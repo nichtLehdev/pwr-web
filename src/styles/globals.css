@@ -122,6 +122,51 @@ body {
   color: #6b7280;
 }
 
+/* TipTap Table: selected cells */
+.tiptap td.selectedCell,
+.tiptap th.selectedCell {
+  background-color: rgba(250, 166, 25, 0.15);
+  border-color: #faa619;
+}
+
+.dark .tiptap td.selectedCell,
+.dark .tiptap th.selectedCell {
+  background-color: rgba(250, 166, 25, 0.25);
+  border-color: #fbb847;
+}
+
+/* TipTap Table: column resize handle */
+.tiptap .column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: -2px;
+  width: 4px;
+  background-color: #faa619;
+  pointer-events: none;
+}
+
+/* Keep the table layout aware of resize handles */
+.tiptap table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  overflow: hidden;
+}
+
+.tiptap td,
+.tiptap th {
+  position: relative;
+  min-width: 50px;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+/* Resize cursor when hovering near column borders */
+.tiptap.resize-cursor {
+  cursor: col-resize;
+}
+
 /* Homepage upcoming courses carousels — direction matches navigation (incl. wrap) */
 @keyframes homepage-course-enter-fwd {
   from {
