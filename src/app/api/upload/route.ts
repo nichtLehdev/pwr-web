@@ -27,6 +27,41 @@ const maxSizeByFolder: Record<string, number> = {
   media: 10 * 1024 * 1024,
 };
 
+const magicBytes: Record<string, number[][]> = {
+  "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/png": [[0x89, 0x50, 0x4e, 0x47]],
+  "image/gif": [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61],
+  ],
+  "image/webp": [[0x52, 0x49, 0x46, 0x46]],
+  "application/pdf": [[0x25, 0x50, 0x44, 0x46]],
+  "application/zip": [
+    [0x50, 0x4b, 0x03, 0x04],
+    [0x50, 0x4b, 0x05, 0x06],
+  ],
+  "application/x-zip-compressed": [
+    [0x50, 0x4b, 0x03, 0x04],
+    [0x50, 0x4b, 0x05, 0x06],
+  ],
+  "audio/mpeg": [
+    [0xff, 0xfb],
+    [0xff, 0xf3],
+    [0xff, 0xf2],
+    [0x49, 0x44, 0x33],
+  ],
+  "audio/wav": [[0x52, 0x49, 0x46, 0x46]],
+  "audio/ogg": [[0x4f, 0x67, 0x67, 0x53]],
+};
+
+function validateMagicBytes(buffer: Buffer, claimedType: string): boolean {
+  const signatures = magicBytes[claimedType];
+  if (!signatures) return true;
+  return signatures.some((sig) =>
+    sig.every((byte, i) => buffer.length > i && buffer[i] === byte),
+  );
+}
+
 function getExtension(filename: string, mimeType: string): string {
   const fromFilename = filename.split(".").pop()?.toLowerCase();
   if (fromFilename) return fromFilename;
@@ -98,6 +133,13 @@ export async function POST(request: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    if (!validateMagicBytes(buffer, file.type)) {
+      return NextResponse.json(
+        { error: "File content does not match its declared type" },
+        { status: 400 },
+      );
+    }
 
     const timestamp = Date.now();
     const userId = session.user.id;

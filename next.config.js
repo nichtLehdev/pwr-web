@@ -36,7 +36,7 @@ const config = {
               style-src 'self' 'unsafe-inline';
               img-src 'self' data: https: blob:;
               font-src 'self' https: data:;
-              connect-src 'self';
+              connect-src 'self' https://static.cloudflareinsights.com;
               frame-ancestors 'self';
               base-uri 'self';
               form-action 'self';
