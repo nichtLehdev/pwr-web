@@ -12,6 +12,8 @@ function UnsubscribeContent() {
     return emailParam ? decodeURIComponent(emailParam) : "";
   }, [searchParams]);
 
+  const token = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
+
   const [email, setEmail] = useState(initialEmail);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
@@ -23,9 +25,9 @@ function UnsubscribeContent() {
     setStatus("loading");
     setMessage("");
 
-    if (!email) {
+    if (!email || !token) {
       setStatus("error");
-      setMessage("Bitte gib eine E-Mail-Adresse ein.");
+      setMessage("Ungültiger Abmeldelink. Bitte nutze den Link aus der Newsletter-E-Mail.");
       return;
     }
 
@@ -35,7 +37,7 @@ function UnsubscribeContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, token }),
       });
 
       const data = await response.json();

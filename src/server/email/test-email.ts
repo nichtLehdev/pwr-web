@@ -46,7 +46,7 @@ async function testEmail() {
       pass: smtpPassword,
     },
     tls: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: process.env.NODE_ENV === "production",
     },
   });
 

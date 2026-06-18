@@ -12,6 +12,7 @@ import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
+import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 
 marked.use({
   gfm: true,
@@ -426,7 +427,7 @@ export const newsletterRouter = createTRPCRouter({
       if (input.testEmail) {
         const emailHtml = generateNewsletterHtml({
           content: htmlContent,
-          unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(input.testEmail)}`,
+          unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(input.testEmail)}&token=${createUnsubscribeToken(input.testEmail)}`,
         });
 
         await sendEmail({
@@ -460,7 +461,7 @@ export const newsletterRouter = createTRPCRouter({
         try {
           const emailHtml = generateNewsletterHtml({
             content: htmlContent,
-            unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}`,
+            unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}&token=${createUnsubscribeToken(subscriber.email)}`,
             subscriberName: subscriber.name || undefined,
           });
 

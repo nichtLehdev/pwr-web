@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
+import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const rl = rateLimit(`newsletter-subscribe:${email.toLowerCase()}`, {
+      maxRequests: 3,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!rl.success) return rateLimitResponse();
 
     if (email.length > 254) {
       return NextResponse.json(

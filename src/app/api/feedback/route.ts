@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  const rl = rateLimit(`feedback:${ip}`, {
+    maxRequests: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!rl.success) return rateLimitResponse();
+
   const { feedback, email, type, subject, url, device } = await req.json();
   if (!feedback || typeof feedback !== "string" || !subject) {
     return NextResponse.json(

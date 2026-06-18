@@ -28,7 +28,7 @@ export const transporter = isSmtpConfigured()
           pass: env.SMTP_PASSWORD!,
         },
         tls: {
-          rejectUnauthorized: false,
+          rejectUnauthorized: process.env.NODE_ENV === "production",
         },
       };
 
