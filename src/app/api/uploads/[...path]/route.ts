@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { readFile, stat } from "fs/promises";
+import { stat } from "fs/promises";
+import { createReadStream } from "fs";
 import { join } from "path";
 
 const mimeTypes: Record<string, string> = {
@@ -42,18 +43,29 @@ export async function GET(
 
     const fullPath = join(process.cwd(), "public", "uploads", filePath);
 
+    let fileStats;
     try {
-      await stat(fullPath);
+      fileStats = await stat(fullPath);
     } catch {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
-
-    const fileBuffer = await readFile(fullPath);
     const mimeType = getMimeType(filePath);
+    const nodeStream = createReadStream(fullPath);
+    const webStream = new ReadableStream({
+      start(controller) {
+        nodeStream.on("data", (chunk: Buffer) => controller.enqueue(chunk));
+        nodeStream.on("end", () => controller.close());
+        nodeStream.on("error", (err) => controller.error(err));
+      },
+      cancel() {
+        nodeStream.destroy();
+      },
+    });
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(webStream, {
       headers: {
         "Content-Type": mimeType,
+        "Content-Length": fileStats.size.toString(),
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
