@@ -137,7 +137,7 @@ export default function FeedbackPage() {
       }
     >
       {/* Issues Section */}
-      <section className="py-8 md:py-16">
+      <section className="flex-1 bg-background py-8 dark:bg-dark-background md:py-16">
         <div className="container mx-auto max-w-3xl px-4">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-dark dark:text-dark-text text-xl font-bold">
@@ -174,7 +174,7 @@ export default function FeedbackPage() {
         >
           <ScrollableModalCard
             maxW="2xl"
-            className="bg-background dark:bg-dark-surface relative"
+            className="bg-background dark:bg-dark-surface relative p-6"
           >
             <button
               onClick={() => setShowModal(false)}
@@ -188,7 +188,7 @@ export default function FeedbackPage() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <label
-                className="mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mb-1 block text-sm font-semibold"
                 htmlFor="feedback-type-modal"
               >
                 Art des Feedbacks
@@ -208,7 +208,7 @@ export default function FeedbackPage() {
               </Select>
 
               <label
-                className="mt-4 mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mt-4 mb-1 block text-sm font-semibold"
                 htmlFor="feedback-subject-modal"
               >
                 Betreff
@@ -225,7 +225,7 @@ export default function FeedbackPage() {
               />
 
               <label
-                className="mt-4 mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mt-4 mb-1 block text-sm font-semibold"
                 htmlFor="feedback-textarea-modal"
               >
                 Beschreibung
@@ -240,7 +240,7 @@ export default function FeedbackPage() {
               />
 
               <label
-                className="mt-4 mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mt-4 mb-1 block text-sm font-semibold"
                 htmlFor="feedback-url-modal"
               >
                 (Optional) URL der betroffenen Seite
@@ -255,7 +255,7 @@ export default function FeedbackPage() {
               />
 
               <label
-                className="mt-4 mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mt-4 mb-1 block text-sm font-semibold"
                 htmlFor="feedback-device-modal"
               >
                 (Optional) Gerät/Betriebssystem & Browser
@@ -270,7 +270,7 @@ export default function FeedbackPage() {
               />
 
               <label
-                className="mt-4 mb-1 block text-sm font-semibold"
+                className="text-dark dark:text-dark-text mt-4 mb-1 block text-sm font-semibold"
                 htmlFor="feedback-email-modal"
               >
                 (Optional) Deine E-Mail-Adresse

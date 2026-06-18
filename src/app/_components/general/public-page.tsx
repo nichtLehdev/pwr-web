@@ -100,7 +100,7 @@ export default function PublicPage({
     : "text-lg leading-relaxed opacity-95 md:text-xl";
 
   return (
-    <div>
+    <div className="flex min-h-screen flex-col">
       <PageHeader title={title} color={color} />
 
       {/* Hero Section */}
