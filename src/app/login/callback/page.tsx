@@ -14,7 +14,8 @@ export default function LoginCallbackPage() {
       enabled: !!session?.user,
     });
 
-  const { hasDashboardAccess, isLoading: permissionsLoading } = usePermissions();
+  const { hasDashboardAccess, isLoading: permissionsLoading } =
+    usePermissions();
 
   useEffect(() => {
     if (sessionLoading || profileLoading || permissionsLoading) return;

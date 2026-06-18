@@ -116,12 +116,15 @@ export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 import { z } from "zod";
 
-export const VALID_PERMISSION_KEYS = new Set<string>(Object.values(PERMISSIONS));
-
-export const permissionKeySchema = z.string().refine(
-  (key) => VALID_PERMISSION_KEYS.has(key),
-  { message: "Invalid permission key" },
+export const VALID_PERMISSION_KEYS = new Set<string>(
+  Object.values(PERMISSIONS),
 );
+
+export const permissionKeySchema = z
+  .string()
+  .refine((key) => VALID_PERMISSION_KEYS.has(key), {
+    message: "Invalid permission key",
+  });
 
 /**
  * Permission definitions for seeding

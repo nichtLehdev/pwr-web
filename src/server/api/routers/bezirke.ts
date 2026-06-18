@@ -325,7 +325,9 @@ export const bezirkeRouter = createTRPCRouter({
   /**
    * Get all users for dropdown selection
    */
-  getUsersForDropdown: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE).query(async ({ ctx }) => {
+  getUsersForDropdown: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
+  ).query(async ({ ctx }) => {
     return await ctx.db.user.findMany({
       select: {
         id: true,

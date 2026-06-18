@@ -125,7 +125,9 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  createPosaunenratMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT)
+  createPosaunenratMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
+  )
     .input(
       z.object({
         name: z.string().optional(),
@@ -146,7 +148,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  updatePosaunenratMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT)
+  updatePosaunenratMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -171,7 +175,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  deletePosaunenratMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT)
+  deletePosaunenratMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.posaunenratMember.delete({
@@ -507,7 +513,9 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  createVorstandMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND)
+  createVorstandMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
+  )
     .input(
       z.object({
         name: z.string().max(100).optional(),
@@ -548,7 +556,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  updateVorstandMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND)
+  updateVorstandMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -580,7 +590,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  deleteVorstandMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND)
+  deleteVorstandMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.vorstandMember.delete({
@@ -760,7 +772,9 @@ export const organizationRouter = createTRPCRouter({
       return member;
     }),
 
-  createFoerdervereinMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN)
+  createFoerdervereinMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
+  )
     .input(
       z.object({
         name: z.string().optional(),
@@ -807,7 +821,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  updateFoerdervereinMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN)
+  updateFoerdervereinMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -847,7 +863,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  deleteFoerdervereinMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN)
+  deleteFoerdervereinMember: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.foerdervereinMember.delete({
@@ -1273,7 +1291,9 @@ export const organizationRouter = createTRPCRouter({
     };
   }),
 
-  createPosaunenwart: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  createPosaunenwart: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         userId: z.string().optional(),
@@ -1315,7 +1335,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  updatePosaunenwart: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  updatePosaunenwart: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -1341,7 +1363,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  deletePosaunenwart: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  deletePosaunenwart: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.posaunenwart.delete({ where: { id: input.id } });
@@ -1351,7 +1375,9 @@ export const organizationRouter = createTRPCRouter({
   /**
    * Add a Bezirk to a Posaunenwart's responsibilities
    */
-  addPosaunenwartResponsibility: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  addPosaunenwartResponsibility: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         posaunenwartId: z.string(),
@@ -1402,7 +1428,9 @@ export const organizationRouter = createTRPCRouter({
   /**
    * Remove a Bezirk from a Posaunenwart's responsibilities
    */
-  removePosaunenwartResponsibility: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  removePosaunenwartResponsibility: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         posaunenwartId: z.string(),
@@ -1424,7 +1452,9 @@ export const organizationRouter = createTRPCRouter({
   /**
    * Update a Posaunenwart responsibility
    */
-  updatePosaunenwartResponsibility: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  updatePosaunenwartResponsibility: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         posaunenwartId: z.string(),
@@ -1450,7 +1480,9 @@ export const organizationRouter = createTRPCRouter({
   /**
    * Bulk update: Set all Bezirke for an RPW
    */
-  setRpwBezirke: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE)
+  setRpwBezirke: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
+  )
     .input(
       z.object({
         posaunenwartId: z.string(),
@@ -1547,7 +1579,9 @@ export const organizationRouter = createTRPCRouter({
       return historyEvent;
     }),
 
-  createHistoryEvent: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_HISTORY)
+  createHistoryEvent: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
+  )
     .input(
       z.object({
         year: z.number(),
@@ -1568,7 +1602,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  updateHistoryEvent: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_HISTORY)
+  updateHistoryEvent: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -1593,7 +1629,9 @@ export const organizationRouter = createTRPCRouter({
       });
     }),
 
-  deleteHistoryEvent: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_HISTORY)
+  deleteHistoryEvent: permissionProcedure(
+    PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.historyEvent.delete({

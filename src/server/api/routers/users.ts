@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 // UserRole enum removed - using permissions system instead
@@ -421,49 +417,51 @@ export const usersRouter = createTRPCRouter({
   /**
    * Get user statistics
    */
-  getStatistics: permissionProcedure(PERMISSIONS.USERS_MANAGE).query(async ({ ctx }) => {
-    const [
-      totalUsers,
-      usersByRole,
-      usersWithTeam,
-      usersWithVorstand,
-      usersWithPosaunenrat,
-      usersWithFoerderverein,
-      recentUsers,
-    ] = await Promise.all([
-      ctx.db.user.count(),
-      Promise.resolve([]), // Role grouping no longer available
-      ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { foerdervereinMember: { isNot: null } } }),
-      ctx.db.user.count({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+  getStatistics: permissionProcedure(PERMISSIONS.USERS_MANAGE).query(
+    async ({ ctx }) => {
+      const [
+        totalUsers,
+        usersByRole,
+        usersWithTeam,
+        usersWithVorstand,
+        usersWithPosaunenrat,
+        usersWithFoerderverein,
+        recentUsers,
+      ] = await Promise.all([
+        ctx.db.user.count(),
+        Promise.resolve([]), // Role grouping no longer available
+        ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { foerdervereinMember: { isNot: null } } }),
+        ctx.db.user.count({
+          where: {
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
-    return {
-      totalUsers,
-      usersByRole: usersByRole.reduce(
-        (acc) => {
-          // role-based grouping removed
-          return acc;
+      return {
+        totalUsers,
+        usersByRole: usersByRole.reduce(
+          (acc) => {
+            // role-based grouping removed
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+        membership: {
+          team: usersWithTeam,
+          vorstand: usersWithVorstand,
+          posaunenrat: usersWithPosaunenrat,
+          foerderverein: usersWithFoerderverein,
         },
-        {} as Record<string, number>,
-      ),
-      membership: {
-        team: usersWithTeam,
-        vorstand: usersWithVorstand,
-        posaunenrat: usersWithPosaunenrat,
-        foerderverein: usersWithFoerderverein,
-      },
-      recentUsers,
-    };
-  }),
+        recentUsers,
+      };
+    },
+  ),
 
   /**
    * Create a new user (admin)

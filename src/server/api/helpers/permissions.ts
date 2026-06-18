@@ -113,7 +113,10 @@ export async function batchResolveRolePermissions(
   // Now resolve permissions for each requested role by walking up the hierarchy in memory
   const result = new Map<string, Set<PermissionKey>>();
 
-  function resolveForRole(roleId: string, visited: Set<string>): Set<PermissionKey> {
+  function resolveForRole(
+    roleId: string,
+    visited: Set<string>,
+  ): Set<PermissionKey> {
     if (result.has(roleId)) return result.get(roleId)!;
     if (visited.has(roleId)) return new Set(); // circular reference guard
 

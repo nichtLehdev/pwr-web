@@ -74,11 +74,16 @@ export default function EventDetailPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("events.approve" as any);
   const hasEditPermission =
-    hasPermission("events.edit" as any) || hasPermission("events.approve" as any);
+    hasPermission("events.edit" as any) ||
+    hasPermission("events.approve" as any);
 
   const {
     data: event,
@@ -129,11 +134,7 @@ export default function EventDetailPage() {
   }, [session, sessionLoading, router, eventId]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }

@@ -112,11 +112,16 @@ export default function DashboardMediaPage() {
       enabled: !!session?.user,
     });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("media.approve" as any);
   const hasDeletePermission =
-    hasPermission("media.delete" as any) || hasPermission("media.manage" as any);
+    hasPermission("media.delete" as any) ||
+    hasPermission("media.manage" as any);
 
   const utils = api.useUtils();
 
@@ -196,11 +201,7 @@ export default function DashboardMediaPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       redirect("/");
     }

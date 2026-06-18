@@ -1,6 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../trpc";
-import { resolveUserPermissions, type PermissionKey } from "../helpers/permissions";
+import {
+  resolveUserPermissions,
+  type PermissionKey,
+} from "../helpers/permissions";
 
 function getOrResolvePermissions(
   ctx: { permissionCache: Map<string, Promise<Set<PermissionKey>>> },
