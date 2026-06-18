@@ -11,11 +11,7 @@ function authorizeCron(request: NextRequest): boolean {
     return false;
   }
   const authHeader = request.headers.get("authorization");
-  if (authHeader === `Bearer ${secret}`) {
-    return true;
-  }
-  const url = new URL(request.url);
-  return url.searchParams.get("secret") === secret;
+  return authHeader === `Bearer ${secret}`;
 }
 
 /**
@@ -26,7 +22,7 @@ function authorizeCron(request: NextRequest): boolean {
  * registration-closed-cron compose service (default: every 6 hours).
  *
  * Optional: ?courseId=<uuid> to process a single course (e.g. for testing).
- * Requires Authorization: Bearer <CRON_SECRET> or ?secret=<CRON_SECRET>.
+ * Requires Authorization: Bearer <CRON_SECRET>.
  */
 export async function POST(request: NextRequest) {
   if (!authorizeCron(request)) {
