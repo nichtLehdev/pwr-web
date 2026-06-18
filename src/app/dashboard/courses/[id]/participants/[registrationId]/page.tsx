@@ -192,7 +192,8 @@ export default function RegistrationDetailPage() {
   const { hasPermission } = usePermissions();
 
   const hasApprovePermission =
-    hasPermission("courses.approve" as any) || hasPermission("courses.manage" as any);
+    hasPermission("courses.approve" as any) ||
+    hasPermission("courses.manage" as any);
 
   const canManagePaymentStatus = hasPermission("invoices.manage" as any);
   const canMarkPaidOnly =

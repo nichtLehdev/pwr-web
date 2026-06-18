@@ -1,10 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  publicProcedure,
-  protectedProcedure,
-} from "../trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import {
   CourseCollaboratorRole,
   CoursePaymentMethod,
@@ -1424,7 +1420,9 @@ export const registrationsRouter = createTRPCRouter({
       };
     }),
 
-  approveSiblingDiscount: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
+  approveSiblingDiscount: permissionProcedure(
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+  )
     .input(
       z.object({
         registrationId: z.string(),
@@ -1498,7 +1496,9 @@ export const registrationsRouter = createTRPCRouter({
       return updated;
     }),
 
-  rejectSiblingDiscount: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
+  rejectSiblingDiscount: permissionProcedure(
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+  )
     .input(
       z.object({
         registrationId: z.string(),

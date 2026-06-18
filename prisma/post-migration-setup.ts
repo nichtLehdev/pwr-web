@@ -87,9 +87,13 @@ async function ensureSystemRolesExist() {
 
   // 2. Delete legacy roles (Landesposaunenwart, Benutzer) if they exist
   for (const legacyName of ["Landesposaunenwart", "Benutzer"]) {
-    const legacyRole = await db.role.findUnique({ where: { name: legacyName } });
+    const legacyRole = await db.role.findUnique({
+      where: { name: legacyName },
+    });
     if (legacyRole) {
-      await db.userRoleAssignment.deleteMany({ where: { roleId: legacyRole.id } });
+      await db.userRoleAssignment.deleteMany({
+        where: { roleId: legacyRole.id },
+      });
       await db.rolePermission.deleteMany({ where: { roleId: legacyRole.id } });
       await db.role.delete({ where: { id: legacyRole.id } });
       console.log(`  ✓ Deleted legacy role: ${legacyName}`);
@@ -97,7 +101,9 @@ async function ensureSystemRolesExist() {
   }
 
   // 3. Regionalposaunenwart Role (renamed from Posaunenrat)
-  const existingPosaunenrat = await db.role.findUnique({ where: { name: "Posaunenrat" } });
+  const existingPosaunenrat = await db.role.findUnique({
+    where: { name: "Posaunenrat" },
+  });
   let rpwRole;
   if (existingPosaunenrat) {
     rpwRole = await db.role.update({

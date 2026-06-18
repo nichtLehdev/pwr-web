@@ -421,11 +421,16 @@ export default function EditCoursePage() {
     );
   });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("courses.approve" as any);
   const hasCoursesEditPermission =
-    hasPermission("courses.edit" as any) || hasPermission("courses.approve" as any);
+    hasPermission("courses.edit" as any) ||
+    hasPermission("courses.approve" as any);
   const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
@@ -706,11 +711,7 @@ export default function EditCoursePage() {
   }, [session, sessionLoading, router, courseId]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }

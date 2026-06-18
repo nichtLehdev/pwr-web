@@ -374,19 +374,21 @@ export const newsletterRouter = createTRPCRouter({
       };
     }),
 
-  getStatistics: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE).query(async ({ ctx }) => {
-    const [total, active, inactive] = await Promise.all([
-      ctx.db.newsletterSubscriber.count(),
-      ctx.db.newsletterSubscriber.count({ where: { isActive: true } }),
-      ctx.db.newsletterSubscriber.count({ where: { isActive: false } }),
-    ]);
+  getStatistics: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE).query(
+    async ({ ctx }) => {
+      const [total, active, inactive] = await Promise.all([
+        ctx.db.newsletterSubscriber.count(),
+        ctx.db.newsletterSubscriber.count({ where: { isActive: true } }),
+        ctx.db.newsletterSubscriber.count({ where: { isActive: false } }),
+      ]);
 
-    return {
-      total,
-      active,
-      inactive,
-    };
-  }),
+      return {
+        total,
+        active,
+        inactive,
+      };
+    },
+  ),
 
   deleteSubscriber: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(z.object({ id: z.string() }))

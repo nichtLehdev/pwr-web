@@ -1,10 +1,17 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { PERMISSION_DEFINITIONS, PERMISSIONS, permissionKeySchema } from "@/lib/permissions";
+import {
+  PERMISSION_DEFINITIONS,
+  PERMISSIONS,
+  permissionKeySchema,
+} from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { wouldCreateCircularReference } from "../helpers/role-permissions";
-import { resolveUserPermissions, getUserPermissions } from "../helpers/permissions";
+import {
+  resolveUserPermissions,
+  getUserPermissions,
+} from "../helpers/permissions";
 
 const manageProcedure = permissionProcedure(PERMISSIONS.PERMISSIONS_MANAGE);
 
@@ -200,10 +207,15 @@ export const permissionsRouter = createTRPCRouter({
             message: "Cannot modify the Admin role",
           });
         }
-        if (input.name !== undefined || input.description !== undefined || input.parentRoleId !== undefined) {
+        if (
+          input.name !== undefined ||
+          input.description !== undefined ||
+          input.parentRoleId !== undefined
+        ) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "Cannot modify system role name, description, or hierarchy",
+            message:
+              "Cannot modify system role name, description, or hierarchy",
           });
         }
       }
@@ -220,10 +232,13 @@ export const permissionsRouter = createTRPCRouter({
             });
           }
 
-          if (await wouldCreateCircularReference(input.id, input.parentRoleId)) {
+          if (
+            await wouldCreateCircularReference(input.id, input.parentRoleId)
+          ) {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: "Cannot set parent role: would create circular reference",
+              message:
+                "Cannot set parent role: would create circular reference",
             });
           }
         }
@@ -462,7 +477,8 @@ export const permissionsRouter = createTRPCRouter({
 
       // Resolve role permissions (including hierarchy) using in-memory batch approach
       // We already have the roles loaded, but need hierarchy resolution
-      const { batchResolveRolePermissions } = await import("../helpers/permissions");
+      const { batchResolveRolePermissions } =
+        await import("../helpers/permissions");
       const rolePermMap = await batchResolveRolePermissions(input.roleIds);
 
       for (const role of roles) {

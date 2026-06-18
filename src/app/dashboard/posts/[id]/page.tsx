@@ -76,7 +76,11 @@ export default function PostDetailPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("posts.approve" as any);
   const hasEditPermission =
@@ -146,11 +150,7 @@ export default function PostDetailPage() {
   }, [session, sessionLoading, router, postId]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }

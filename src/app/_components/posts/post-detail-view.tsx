@@ -108,10 +108,8 @@ export default function PostDetailView({
     post.author?.profileImage || post.createdBy?.profileImage;
   const userId = displayUser?.id;
 
-  const {
-    hasDashboardAccess: hasAnyPermission,
-    hasAnyPermission: hasAnyPerm,
-  } = usePermissions();
+  const { hasDashboardAccess: hasAnyPermission, hasAnyPermission: hasAnyPerm } =
+    usePermissions();
 
   const hasEditPermission = hasAnyPerm([
     "posts.edit" as any,

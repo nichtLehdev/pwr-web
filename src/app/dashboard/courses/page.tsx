@@ -19,7 +19,8 @@ export default function DashboardCoursesPage() {
       enabled: !!session?.user,
     });
 
-  const { hasDashboardAccess, isLoading: permissionsLoading } = usePermissions();
+  const { hasDashboardAccess, isLoading: permissionsLoading } =
+    usePermissions();
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -29,11 +30,7 @@ export default function DashboardCoursesPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       redirect("/");
     }

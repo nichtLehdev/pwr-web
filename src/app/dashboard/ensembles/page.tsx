@@ -41,9 +41,7 @@ export default function DashboardEnsemblesPage() {
     });
 
   const { hasDashboardAccess, hasAnyPermission } = usePermissions();
-  const hasManagePermission = hasAnyPermission([
-    "ensembles.delete" as any,
-  ]);
+  const hasManagePermission = hasAnyPermission(["ensembles.delete" as any]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

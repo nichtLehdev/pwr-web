@@ -298,7 +298,9 @@ export const materialsRouter = createTRPCRouter({
       return blaserhefte;
     }),
 
-  createBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
+  createBlaserheft: permissionProcedure(
+    PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
+  )
     .input(
       z.object({
         title: z.string().min(1).max(200),
@@ -329,7 +331,9 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  updateBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
+  updateBlaserheft: permissionProcedure(
+    PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
+  )
     .input(
       z.object({
         id: z.string(),
@@ -364,7 +368,9 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  deleteBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
+  deleteBlaserheft: permissionProcedure(
+    PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
+  )
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.blaeserheft.delete({

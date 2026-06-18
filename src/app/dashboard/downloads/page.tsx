@@ -115,11 +115,16 @@ export default function DashboardDownloadsPage() {
       enabled: !!session?.user,
     });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("downloads.approve" as any);
   const hasDeletePermission =
-    hasPermission("downloads.delete" as any) || hasPermission("downloads.manage" as any);
+    hasPermission("downloads.delete" as any) ||
+    hasPermission("downloads.manage" as any);
 
   const utils = api.useUtils();
 
@@ -190,11 +195,7 @@ export default function DashboardDownloadsPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       redirect("/");
     }

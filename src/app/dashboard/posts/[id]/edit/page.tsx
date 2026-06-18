@@ -62,7 +62,11 @@ export default function EditPostPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("posts.approve" as any);
   const isHigherRole = hasApprovePermission;
@@ -275,11 +279,7 @@ export default function EditPostPage() {
   }, [session, sessionLoading, router, postId]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }
@@ -288,7 +288,8 @@ export default function EditPostPage() {
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
       const hasEditPermission =
-        hasPermission("posts.edit" as any) || hasPermission("posts.approve" as any);
+        hasPermission("posts.edit" as any) ||
+        hasPermission("posts.approve" as any);
       const canEdit =
         post.createdById === session?.user?.id || hasEditPermission;
 

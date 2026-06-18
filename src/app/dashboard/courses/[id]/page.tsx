@@ -112,13 +112,22 @@ export default function CourseDetailPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { hasDashboardAccess, hasPermission, hasAnyPermission, isLoading: permissionsLoading } = usePermissions();
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    hasAnyPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
   const hasApprovePermission = hasPermission("courses.approve" as any);
   const hasEditPermission =
-    hasPermission("courses.edit" as any) || hasPermission("courses.approve" as any);
-  const hasViewParticipantsPermission =
-    hasAnyPermission(["courses.view" as any, "courses.approve" as any, "courses.manage" as any]);
+    hasPermission("courses.edit" as any) ||
+    hasPermission("courses.approve" as any);
+  const hasViewParticipantsPermission = hasAnyPermission([
+    "courses.view" as any,
+    "courses.approve" as any,
+    "courses.manage" as any,
+  ]);
 
   const {
     data: course,
@@ -177,11 +186,7 @@ export default function CourseDetailPage() {
   }, [session, sessionLoading, router, courseId]);
 
   useEffect(() => {
-    if (
-      !permissionsLoading &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }

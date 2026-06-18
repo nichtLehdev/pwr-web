@@ -276,7 +276,11 @@ function RolesTab() {
                         <button
                           onClick={() => handleEdit(role)}
                           className="text-blue-600 hover:text-blue-900"
-                          title={role.isSystem ? "Berechtigungen bearbeiten" : "Bearbeiten"}
+                          title={
+                            role.isSystem
+                              ? "Berechtigungen bearbeiten"
+                              : "Bearbeiten"
+                          }
                         >
                           <Edit className="h-4 w-4" />
                         </button>
@@ -284,7 +288,9 @@ function RolesTab() {
                           <button
                             onClick={() => {
                               if (
-                                confirm(`Rolle "${role.name}" wirklich löschen?`)
+                                confirm(
+                                  `Rolle "${role.name}" wirklich löschen?`,
+                                )
                               ) {
                                 deleteMutation.mutate({ id: role.id });
                               }
@@ -346,7 +352,10 @@ function RolesTab() {
                     <textarea
                       value={formData.description}
                       onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
                       }
                       rows={3}
                       className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
@@ -358,7 +367,8 @@ function RolesTab() {
                 <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                   <p className="font-medium">Systemrolle: {formData.name}</p>
                   <p className="mt-1 text-xs">
-                    Name und Beschreibung können nicht geändert werden. Berechtigungen können angepasst werden.
+                    Name und Beschreibung können nicht geändert werden.
+                    Berechtigungen können angepasst werden.
                   </p>
                 </div>
               )}
@@ -637,7 +647,9 @@ function UsersTab() {
         void utils.permissions.previewEffectivePermissions.invalidate();
       },
       onError: (error) => {
-        toast.error("Fehler beim Zuweisen der Berechtigungen: " + error.message);
+        toast.error(
+          "Fehler beim Zuweisen der Berechtigungen: " + error.message,
+        );
       },
     });
 
