@@ -554,7 +554,9 @@ export default function CourseDetailView({
                     </h2>
                     <div
                       className="prose max-w-none text-gray-700 dark:text-gray-300"
-                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
+                      dangerouslySetInnerHTML={{
+                        __html: sanitizeHtml(course.description),
+                      }}
                     />
                   </div>
                 )}

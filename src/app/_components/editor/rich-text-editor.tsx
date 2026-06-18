@@ -12,7 +12,13 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import TurndownService from "turndown";
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 import { marked } from "marked";
 import MediaPickerModal from "./media-picker-modal";
 import DownloadPickerModal from "./download-picker-modal";
@@ -185,7 +191,7 @@ function ContextMenuItem({
           ? "cursor-not-allowed opacity-40"
           : destructive
             ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-            : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-background-secondary"
+            : "dark:hover:bg-dark-background-secondary text-gray-700 hover:bg-gray-100 dark:text-gray-300"
       }`}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
