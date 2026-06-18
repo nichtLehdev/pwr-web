@@ -63,6 +63,8 @@ model User {
   vorstandMember      VorstandMember?      @relation("VorstandMemberUser")
   foerdervereinMember FoerdervereinMember? @relation("FoerdervereinMemberUser")
 
+  lastLoginAt         DateTime?
+
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   courseRegistrations CourseRegistration[]

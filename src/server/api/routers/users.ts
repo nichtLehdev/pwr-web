@@ -397,6 +397,7 @@ export const usersRouter = createTRPCRouter({
             posaunenratMember: true,
             vorstandMember: true,
             foerdervereinMember: true,
+            posaunenwart: true,
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
