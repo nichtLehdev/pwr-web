@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth/config";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const rl = rateLimit(`forgot-password:${email.toLowerCase()}`, {
+      maxRequests: 3,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!rl.success) return rateLimitResponse();
 
     const baseUrl = getBaseUrl(request);
     const redirectTo = `${baseUrl}/reset-password`;

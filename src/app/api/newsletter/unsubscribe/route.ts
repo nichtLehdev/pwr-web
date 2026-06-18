@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
+import { verifyUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, token } = body;
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
         { message: "Email is required" },
         { status: 400 },
+      );
+    }
+
+    if (!token || typeof token !== "string") {
+      return NextResponse.json(
+        { message: "Invalid unsubscribe link" },
+        { status: 400 },
+      );
+    }
+
+    if (!verifyUnsubscribeToken(email, token)) {
+      return NextResponse.json(
+        { message: "Invalid unsubscribe link" },
+        { status: 403 },
       );
     }
 
@@ -41,7 +56,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: "An error occurred",
       },
       { status: 500 },
     );

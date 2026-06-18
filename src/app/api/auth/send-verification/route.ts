@@ -3,6 +3,8 @@ import { db } from "@/server/db";
 import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { randomBytes } from "crypto";
+import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -14,6 +16,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    const rl = rateLimit(`send-verification:${email.toLowerCase()}`, {
+      maxRequests: 3,
+      windowMs: 15 * 60 * 1000,
+    });
+    if (!rl.success) return rateLimitResponse();
 
     const user = await db.user.findUnique({
       where: { email },
