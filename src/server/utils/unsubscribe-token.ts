@@ -2,7 +2,8 @@ import { createHmac } from "crypto";
 
 function getSecret(): string {
   const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) throw new Error("BETTER_AUTH_SECRET is required for unsubscribe tokens");
+  if (!secret)
+    throw new Error("BETTER_AUTH_SECRET is required for unsubscribe tokens");
   return secret;
 }
 

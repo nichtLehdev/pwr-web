@@ -200,7 +200,9 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                   </h2>
                   <div
                     className="prose max-w-none text-gray-700 dark:text-gray-300"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(ensemble.description) }}
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(ensemble.description),
+                    }}
                   />
                 </div>
               )}

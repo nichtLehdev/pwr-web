@@ -646,7 +646,9 @@ export default function PostDetailPage() {
               {post.contentHtml ? (
                 <div
                   className="article-content"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contentHtml) }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizeHtml(post.contentHtml),
+                  }}
                 />
               ) : (
                 <pre className="dark:text-dark-muted font-sans whitespace-pre-wrap text-gray-700">

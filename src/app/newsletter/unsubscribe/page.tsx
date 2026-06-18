@@ -27,7 +27,9 @@ function UnsubscribeContent() {
 
     if (!email || !token) {
       setStatus("error");
-      setMessage("Ungültiger Abmeldelink. Bitte nutze den Link aus der Newsletter-E-Mail.");
+      setMessage(
+        "Ungültiger Abmeldelink. Bitte nutze den Link aus der Newsletter-E-Mail.",
+      );
       return;
     }
 

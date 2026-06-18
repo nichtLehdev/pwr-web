@@ -137,7 +137,7 @@ export default function FeedbackPage() {
       }
     >
       {/* Issues Section */}
-      <section className="flex-1 bg-background py-8 dark:bg-dark-background md:py-16">
+      <section className="bg-background dark:bg-dark-background flex-1 py-8 md:py-16">
         <div className="container mx-auto max-w-3xl px-4">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-dark dark:text-dark-text text-xl font-bold">
