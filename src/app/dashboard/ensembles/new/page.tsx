@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -34,13 +35,7 @@ export default function NewEnsemblePage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const { hasDashboardAccess } = usePermissions();
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 

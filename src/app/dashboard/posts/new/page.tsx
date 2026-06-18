@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   DashboardFormZoneHeader,
   DashboardPage,
@@ -51,14 +53,9 @@ export default function NewPostPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, hasPermission } = usePermissions();
 
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "posts.approve");
+  const hasApprovePermission = hasPermission(PERMISSIONS.POSTS_APPROVE);
   const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
@@ -190,16 +187,12 @@ export default function NewPostPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      const hasDashboardAccess =
-        Array.isArray(userPermissions) && userPermissions.length > 0;
-      const canCreatePosts = hasDashboardAccess;
-
-      if (!canCreatePosts) {
+      if (!hasDashboardAccess) {
         hasRedirected.current = true;
         router.push("/dashboard");
       }
     }
-  }, [profile, profileLoading, router, userPermissions]);
+  }, [profile, profileLoading, router, hasDashboardAccess]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

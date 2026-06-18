@@ -13,6 +13,8 @@ import PublicShareButton from "@/app/_components/general/public-share-button";
 import type { FileType } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { sanitizeHtml } from "@/lib/sanitize";
 import {
   ArrowLeftIcon,
@@ -106,18 +108,15 @@ export default function PostDetailView({
     post.author?.profileImage || post.createdBy?.profileImage;
   const userId = displayUser?.id;
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const {
+    hasDashboardAccess: hasAnyPermission,
+    hasAnyPermission: hasAnyPerm,
+  } = usePermissions();
 
-  const hasAnyPermission =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasEditPermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "posts.edit" || perm === "posts.approve",
-    );
+  const hasEditPermission = hasAnyPerm([
+    "posts.edit" as any,
+    "posts.approve" as any,
+  ]);
 
   const canViewUserProfile = session?.user && profile && hasAnyPermission;
 

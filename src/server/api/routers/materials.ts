@@ -1,12 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  lpwProcedure,
-  publicProcedure,
-  reviewerProcedure,
-  contentCreatorProcedure,
-} from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   DownloadCategory,
   FileType,
@@ -162,7 +156,7 @@ export const materialsRouter = createTRPCRouter({
     }));
   }),
 
-  createDownload: contentCreatorProcedure
+  createDownload: permissionProcedure(PERMISSIONS.DOWNLOADS_UPLOAD)
     .input(
       z.object({
         title: z.string().min(1).max(200),
@@ -192,7 +186,7 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  updateDownload: reviewerProcedure
+  updateDownload: permissionProcedure(PERMISSIONS.DOWNLOADS_EDIT)
     .input(
       z.object({
         id: z.string(),
@@ -215,7 +209,7 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  deleteDownload: lpwProcedure
+  deleteDownload: permissionProcedure(PERMISSIONS.DOWNLOADS_DELETE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.download.delete({
@@ -225,7 +219,7 @@ export const materialsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  reviewDownload: reviewerProcedure
+  reviewDownload: permissionProcedure(PERMISSIONS.DOWNLOADS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -304,7 +298,7 @@ export const materialsRouter = createTRPCRouter({
       return blaserhefte;
     }),
 
-  createBlaserheft: lpwProcedure
+  createBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
     .input(
       z.object({
         title: z.string().min(1).max(200),
@@ -335,7 +329,7 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  updateBlaserheft: lpwProcedure
+  updateBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
     .input(
       z.object({
         id: z.string(),
@@ -370,7 +364,7 @@ export const materialsRouter = createTRPCRouter({
       });
     }),
 
-  deleteBlaserheft: lpwProcedure
+  deleteBlaserheft: permissionProcedure(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.blaeserheft.delete({

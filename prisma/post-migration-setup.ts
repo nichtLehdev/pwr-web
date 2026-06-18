@@ -85,83 +85,45 @@ async function ensureSystemRolesExist() {
     `  ✓ Administrator role ready (${adminPermissionKeys.length} permissions)`,
   );
 
-  // 2. Landesposaunenwart (LPW) Role
-  const lpwRole = await db.role.upsert({
-    where: { name: "Landesposaunenwart" },
-    update: {
-      description: "Kann alle Inhalte genehmigen",
-      isSystem: true,
-    },
-    create: {
-      name: "Landesposaunenwart",
-      description: "Kann alle Inhalte genehmigen",
-      isSystem: true,
-    },
-  });
+  // 2. Delete legacy roles (Landesposaunenwart, Benutzer) if they exist
+  for (const legacyName of ["Landesposaunenwart", "Benutzer"]) {
+    const legacyRole = await db.role.findUnique({ where: { name: legacyName } });
+    if (legacyRole) {
+      await db.userRoleAssignment.deleteMany({ where: { roleId: legacyRole.id } });
+      await db.rolePermission.deleteMany({ where: { roleId: legacyRole.id } });
+      await db.role.delete({ where: { id: legacyRole.id } });
+      console.log(`  ✓ Deleted legacy role: ${legacyName}`);
+    }
+  }
 
-  const lpwPermissionKeys = [
-    PERMISSIONS.EVENTS_CREATE,
-    PERMISSIONS.EVENTS_EDIT,
-    PERMISSIONS.EVENTS_DELETE,
-    PERMISSIONS.EVENTS_APPROVE,
-    PERMISSIONS.EVENTS_VIEW,
-    PERMISSIONS.COURSES_CREATE,
-    PERMISSIONS.COURSES_EDIT,
-    PERMISSIONS.COURSES_DELETE,
-    PERMISSIONS.COURSES_APPROVE,
-    PERMISSIONS.COURSES_VIEW,
-    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-    PERMISSIONS.POSTS_CREATE,
-    PERMISSIONS.POSTS_EDIT,
-    PERMISSIONS.POSTS_DELETE,
-    PERMISSIONS.POSTS_APPROVE,
-    PERMISSIONS.POSTS_VIEW,
-    PERMISSIONS.MEDIA_UPLOAD,
-    PERMISSIONS.MEDIA_DELETE,
-    PERMISSIONS.MEDIA_APPROVE,
-    PERMISSIONS.MEDIA_VIEW,
-    PERMISSIONS.DOWNLOADS_UPLOAD,
-    PERMISSIONS.DOWNLOADS_DELETE,
-    PERMISSIONS.DOWNLOADS_APPROVE,
-    PERMISSIONS.DOWNLOADS_VIEW,
-    PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
-    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
-    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
-    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
-  ];
-
-  await db.rolePermission.deleteMany({
-    where: { roleId: lpwRole.id },
-  });
-
-  if (lpwPermissionKeys.length > 0) {
-    await db.rolePermission.createMany({
-      data: lpwPermissionKeys.map((permissionKey) => ({
-        roleId: lpwRole.id,
-        permissionKey,
-      })),
-      skipDuplicates: true,
+  // 3. Regionalposaunenwart Role (renamed from Posaunenrat)
+  const existingPosaunenrat = await db.role.findUnique({ where: { name: "Posaunenrat" } });
+  let rpwRole;
+  if (existingPosaunenrat) {
+    rpwRole = await db.role.update({
+      where: { name: "Posaunenrat" },
+      data: {
+        name: "Regionalposaunenwart",
+        description: "Kann Inhalte erstellen und bearbeiten",
+        isSystem: true,
+      },
+    });
+  } else {
+    rpwRole = await db.role.upsert({
+      where: { name: "Regionalposaunenwart" },
+      update: {
+        description: "Kann Inhalte erstellen und bearbeiten",
+        isSystem: true,
+      },
+      create: {
+        name: "Regionalposaunenwart",
+        description: "Kann Inhalte erstellen und bearbeiten",
+        isSystem: true,
+      },
     });
   }
-  console.log(
-    `  ✓ Landesposaunenwart role ready (${lpwPermissionKeys.length} permissions)`,
-  );
 
-  // 3. Posaunenrat Role
-  const posaunenratRole = await db.role.upsert({
-    where: { name: "Posaunenrat" },
-    update: {
-      description: "Kann Inhalte erstellen und bearbeiten",
-      isSystem: true,
-    },
-    create: {
-      name: "Posaunenrat",
-      description: "Kann Inhalte erstellen und bearbeiten",
-      isSystem: true,
-    },
-  });
-
-  const posaunenratPermissionKeys = [
+  const rpwPermissionKeys = [
     PERMISSIONS.EVENTS_CREATE,
     PERMISSIONS.EVENTS_EDIT,
     PERMISSIONS.EVENTS_VIEW,
@@ -178,20 +140,20 @@ async function ensureSystemRolesExist() {
   ];
 
   await db.rolePermission.deleteMany({
-    where: { roleId: posaunenratRole.id },
+    where: { roleId: rpwRole.id },
   });
 
-  if (posaunenratPermissionKeys.length > 0) {
+  if (rpwPermissionKeys.length > 0) {
     await db.rolePermission.createMany({
-      data: posaunenratPermissionKeys.map((permissionKey) => ({
-        roleId: posaunenratRole.id,
+      data: rpwPermissionKeys.map((permissionKey) => ({
+        roleId: rpwRole.id,
         permissionKey,
       })),
       skipDuplicates: true,
     });
   }
   console.log(
-    `  ✓ Posaunenrat role ready (${posaunenratPermissionKeys.length} permissions)`,
+    `  ✓ Regionalposaunenwart role ready (${rpwPermissionKeys.length} permissions)`,
   );
 
   // 4. Obleute Role
@@ -236,45 +198,6 @@ async function ensureSystemRolesExist() {
   }
   console.log(
     `  ✓ Obleute role ready (${obleutePermissionKeys.length} permissions)`,
-  );
-
-  // 5. User Role (view only)
-  const userRole = await db.role.upsert({
-    where: { name: "Benutzer" },
-    update: {
-      description: "Standard-Benutzer mit Lesezugriff",
-      isSystem: true,
-    },
-    create: {
-      name: "Benutzer",
-      description: "Standard-Benutzer mit Lesezugriff",
-      isSystem: true,
-    },
-  });
-
-  const userPermissionKeys = [
-    PERMISSIONS.EVENTS_VIEW,
-    PERMISSIONS.COURSES_VIEW,
-    PERMISSIONS.POSTS_VIEW,
-    PERMISSIONS.MEDIA_VIEW,
-    PERMISSIONS.DOWNLOADS_VIEW,
-  ];
-
-  await db.rolePermission.deleteMany({
-    where: { roleId: userRole.id },
-  });
-
-  if (userPermissionKeys.length > 0) {
-    await db.rolePermission.createMany({
-      data: userPermissionKeys.map((permissionKey) => ({
-        roleId: userRole.id,
-        permissionKey,
-      })),
-      skipDuplicates: true,
-    });
-  }
-  console.log(
-    `  ✓ Benutzer role ready (${userPermissionKeys.length} permissions)`,
   );
 
   return adminRole;

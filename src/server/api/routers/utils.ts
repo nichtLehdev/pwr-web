@@ -1,11 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  lpwProcedure,
-  posaunenratProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
+import { permissionProcedure } from "../middleware/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
 import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
 import { getBaseUrl } from "@/server/utils/get-base-url";
@@ -117,7 +114,7 @@ export const locationsRouter = createTRPCRouter({
       return location;
     }),
 
-  create: posaunenratProcedure
+  create: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
     .input(
       z.object({
         name: z.string().max(200).optional(),
@@ -154,7 +151,7 @@ export const locationsRouter = createTRPCRouter({
       });
     }),
 
-  update: lpwProcedure
+  update: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
     .input(
       z.object({
         id: z.string(),
@@ -213,7 +210,7 @@ export const locationsRouter = createTRPCRouter({
       });
     }),
 
-  delete: lpwProcedure
+  delete: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const location = await ctx.db.location.findUnique({
@@ -340,7 +337,7 @@ export const newsletterRouter = createTRPCRouter({
       });
     }),
 
-  getSubscribers: lpwProcedure
+  getSubscribers: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -377,7 +374,7 @@ export const newsletterRouter = createTRPCRouter({
       };
     }),
 
-  getStatistics: lpwProcedure.query(async ({ ctx }) => {
+  getStatistics: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE).query(async ({ ctx }) => {
     const [total, active, inactive] = await Promise.all([
       ctx.db.newsletterSubscriber.count(),
       ctx.db.newsletterSubscriber.count({ where: { isActive: true } }),
@@ -391,7 +388,7 @@ export const newsletterRouter = createTRPCRouter({
     };
   }),
 
-  deleteSubscriber: lpwProcedure
+  deleteSubscriber: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.newsletterSubscriber.delete({
@@ -401,7 +398,7 @@ export const newsletterRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  sendNewsletter: lpwProcedure
+  sendNewsletter: permissionProcedure(PERMISSIONS.NEWSLETTER_SEND)
     .input(
       z.object({
         subject: z.string().min(1).max(200),
@@ -489,7 +486,7 @@ export const newsletterRouter = createTRPCRouter({
       };
     }),
 
-  generateNewsletter: lpwProcedure
+  generateNewsletter: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(
       z.object({
         includeNews: z.boolean().default(true),

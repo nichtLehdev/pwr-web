@@ -1,127 +1,169 @@
 import type { PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 
 export type { PermissionKey };
 import { db } from "@/server/db";
 
 /**
- * Permission checking helper functions
+ * Resolve all effective permissions for a user in a single pass.
  *
- * These functions check if a user has a specific permission, either through:
- * 1. Custom roles assigned to them
- * 2. Direct permissions assigned to them
+ * 1. Single Prisma query fetches user + roles + role permissions + direct permissions
+ * 2. Batch-loads the role hierarchy (instead of one query per ancestor)
+ * 3. Applies deny logic: explicit denies override both direct grants and role grants
  */
+export async function resolveUserPermissions(
+  userId: string,
+): Promise<Set<PermissionKey>> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: {
+      customRoles: {
+        include: {
+          role: {
+            include: {
+              permissions: true,
+            },
+          },
+        },
+      },
+      userPermissions: true,
+    },
+  });
+
+  if (!user) return new Set();
+
+  // Check for admin role — implicitly grants all permissions
+  const allPermissionValues = Object.values(PERMISSIONS) as PermissionKey[];
+  for (const ura of user.customRoles) {
+    const roleName = ura.role.name.toLowerCase();
+    if (roleName === "administrator" || roleName === "admin") {
+      return new Set(allPermissionValues);
+    }
+  }
+
+  const deniedKeys = new Set<string>(
+    user.userPermissions
+      .filter((up) => !up.granted)
+      .map((up) => up.permissionKey),
+  );
+
+  const permissions = new Set<PermissionKey>();
+
+  // 1. Add directly granted permissions (skip denied)
+  for (const up of user.userPermissions) {
+    if (up.granted && !deniedKeys.has(up.permissionKey)) {
+      permissions.add(up.permissionKey as PermissionKey);
+    }
+  }
+
+  // 2. Collect all role IDs that need hierarchy resolution
+  const roleIds = user.customRoles.map((ura) => ura.role.id);
+  const allRolePermissions = await batchResolveRolePermissions(roleIds);
+
+  for (const roleId of roleIds) {
+    const rolePerms = allRolePermissions.get(roleId);
+    if (!rolePerms) continue;
+    for (const permissionKey of rolePerms) {
+      if (!deniedKeys.has(permissionKey)) {
+        permissions.add(permissionKey);
+      }
+    }
+  }
+
+  return permissions;
+}
 
 /**
- * Check if a user has a specific permission
- *
- * Checks in this order:
- * 1. Direct user permissions (granted/denied)
- * 2. Permissions from custom roles
- *
- * @param userId - User ID to check
- * @param permissionKey - Permission key to check
- * @returns true if user has the permission, false otherwise
+ * Batch-resolve permissions for multiple roles including inherited permissions.
+ * Loads the entire role hierarchy in batches instead of one query per ancestor.
+ */
+export async function batchResolveRolePermissions(
+  roleIds: string[],
+): Promise<Map<string, Set<PermissionKey>>> {
+  if (roleIds.length === 0) return new Map();
+
+  // Load all roles we'll need in batches, walking up the hierarchy
+  const allRoles = new Map<
+    string,
+    { id: string; parentRoleId: string | null; permissionKeys: string[] }
+  >();
+  let toFetch = [...roleIds];
+
+  while (toFetch.length > 0) {
+    const roles = await db.role.findMany({
+      where: { id: { in: toFetch } },
+      include: { permissions: true },
+    });
+
+    const nextFetch: string[] = [];
+    for (const role of roles) {
+      if (allRoles.has(role.id)) continue;
+      allRoles.set(role.id, {
+        id: role.id,
+        parentRoleId: role.parentRoleId,
+        permissionKeys: role.permissions.map((rp) => rp.permissionKey),
+      });
+      if (role.parentRoleId && !allRoles.has(role.parentRoleId)) {
+        nextFetch.push(role.parentRoleId);
+      }
+    }
+    toFetch = nextFetch;
+  }
+
+  // Now resolve permissions for each requested role by walking up the hierarchy in memory
+  const result = new Map<string, Set<PermissionKey>>();
+
+  function resolveForRole(roleId: string, visited: Set<string>): Set<PermissionKey> {
+    if (result.has(roleId)) return result.get(roleId)!;
+    if (visited.has(roleId)) return new Set(); // circular reference guard
+
+    visited.add(roleId);
+    const role = allRoles.get(roleId);
+    if (!role) return new Set();
+
+    const perms = new Set<PermissionKey>();
+
+    // Inherit from parent first
+    if (role.parentRoleId) {
+      const parentPerms = resolveForRole(role.parentRoleId, visited);
+      for (const p of parentPerms) perms.add(p);
+    }
+
+    // Add own permissions
+    for (const key of role.permissionKeys) {
+      perms.add(key as PermissionKey);
+    }
+
+    result.set(roleId, perms);
+    return perms;
+  }
+
+  for (const roleId of roleIds) {
+    resolveForRole(roleId, new Set());
+  }
+
+  return result;
+}
+
+/**
+ * Check if a user has a specific permission.
+ * Thin wrapper around resolveUserPermissions.
  */
 export async function userHasPermission(
   userId: string,
   permissionKey: PermissionKey,
 ): Promise<boolean> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: {
-      customRoles: {
-        include: {
-          role: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      },
-      userPermissions: true,
-    },
-  });
-
-  if (!user) return false;
-
-  // 1. Check direct user permissions first (explicit grant/deny)
-  const directPermission = user.userPermissions.find(
-    (up) => up.permissionKey === permissionKey,
-  );
-  if (directPermission) {
-    return directPermission.granted;
-  }
-
-  // 2. Check permissions from custom roles (including inherited)
-  const { getRolePermissionsIncludingInherited } =
-    await import("./role-permissions");
-  for (const userRole of user.customRoles) {
-    const rolePermissions = await getRolePermissionsIncludingInherited(
-      userRole.role.id,
-    );
-    if (rolePermissions.has(permissionKey)) return true;
-  }
-
-  return false;
+  const perms = await resolveUserPermissions(userId);
+  return perms.has(permissionKey);
 }
 
 /**
- * Get all permission keys a user has
- *
- * Combines permissions from:
- * 1. Direct user permissions
- * 2. Custom roles
- *
- * @param userId - User ID
- * @returns Array of permission keys the user has
+ * Get all permission keys a user has.
+ * Thin wrapper around resolveUserPermissions.
  */
 export async function getUserPermissions(
   userId: string,
 ): Promise<PermissionKey[]> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    include: {
-      customRoles: {
-        include: {
-          role: {
-            include: {
-              permissions: true,
-            },
-          },
-        },
-      },
-      userPermissions: true,
-    },
-  });
-
-  if (!user) return [];
-
-  const permissions = new Set<PermissionKey>();
-
-  // 1. Add direct permissions (only granted ones)
-  user.userPermissions
-    .filter((up) => up.granted)
-    .forEach((up) => {
-      permissions.add(up.permissionKey as PermissionKey);
-    });
-
-  // 2. Add permissions from custom roles (including inherited)
-  const { getRolePermissionsIncludingInherited } =
-    await import("./role-permissions");
-  for (const userRole of user.customRoles) {
-    const rolePermissions = await getRolePermissionsIncludingInherited(
-      userRole.role.id,
-    );
-    rolePermissions.forEach((permissionKey) => {
-      // Only add if not explicitly denied
-      const denied = user.userPermissions.find(
-        (up) => up.permissionKey === permissionKey && !up.granted,
-      );
-      if (!denied) {
-        permissions.add(permissionKey);
-      }
-    });
-  }
-
-  return Array.from(permissions);
+  const perms = await resolveUserPermissions(userId);
+  return Array.from(perms);
 }

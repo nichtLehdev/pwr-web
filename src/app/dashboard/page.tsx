@@ -4,6 +4,7 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import Link from "next/link";
 import {
   Calendar,
@@ -50,13 +51,7 @@ export default function DashboardPage() {
   );
 
   // Check if user has any dashboard permissions
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const { hasDashboardAccess } = usePermissions();
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {

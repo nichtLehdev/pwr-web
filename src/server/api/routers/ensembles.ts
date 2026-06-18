@@ -2,7 +2,6 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import {
   createTRPCRouter,
-  posaunenratProcedure,
   protectedProcedure,
   publicProcedure,
 } from "../trpc";
@@ -176,7 +175,7 @@ export const ensemblesRouter = createTRPCRouter({
       };
     }),
 
-  create: posaunenratProcedure
+  create: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES)
     .input(
       z.object({
         name: z.string().min(1).max(200),

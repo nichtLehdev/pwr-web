@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
@@ -60,11 +61,9 @@ const sortOptions: {
 
 export default function DashboardPostsList({}: DashboardPostsListProps) {
   const router = useRouter();
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery();
+  const { hasPermission } = usePermissions();
 
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "posts.approve");
+  const hasApprovePermission = hasPermission("posts.approve" as any);
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure, adminProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { maskUserContact } from "@/lib/mask-user-contact";
@@ -325,7 +325,7 @@ export const bezirkeRouter = createTRPCRouter({
   /**
    * Get all users for dropdown selection
    */
-  getUsersForDropdown: adminProcedure.query(async ({ ctx }) => {
+  getUsersForDropdown: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE).query(async ({ ctx }) => {
     return await ctx.db.user.findMany({
       select: {
         id: true,
@@ -341,7 +341,7 @@ export const bezirkeRouter = createTRPCRouter({
    * Assign users to district with custom role names
    * Each user can have a custom role name (e.g., "Bezirksobmann", "Bezirksobfrau", "Obleute")
    */
-  assignUsers: adminProcedure
+  assignUsers: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE)
     .input(
       z.object({
         bezirkId: z.string(),

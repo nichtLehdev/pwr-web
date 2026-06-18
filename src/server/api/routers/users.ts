@@ -4,9 +4,9 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
-  adminProcedure,
-  lpwProcedure,
 } from "../trpc";
+import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 // UserRole enum removed - using permissions system instead
 
 /**
@@ -354,7 +354,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * List all users with pagination and filters
    */
-  list: adminProcedure
+  list: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -421,7 +421,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Get user statistics
    */
-  getStatistics: adminProcedure.query(async ({ ctx }) => {
+  getStatistics: permissionProcedure(PERMISSIONS.USERS_MANAGE).query(async ({ ctx }) => {
     const [
       totalUsers,
       usersByRole,
@@ -468,7 +468,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Create a new user (admin)
    */
-  create: adminProcedure
+  create: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         firstName: z.string().min(1, "Vorname ist erforderlich").max(100),
@@ -550,7 +550,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Update any user (admin)
    */
-  update: adminProcedure
+  update: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         id: z.string(),
@@ -629,7 +629,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Delete a user (admin) - soft delete by archiving
    */
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
@@ -674,7 +674,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Update user role and permissions
    */
-  updateRole: lpwProcedure
+  updateRole: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
         userId: z.string(),
@@ -708,7 +708,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Bulk update user roles
    */
-  bulkUpdateRoles: lpwProcedure
+  bulkUpdateRoles: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
         updates: z.array(

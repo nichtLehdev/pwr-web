@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -78,16 +79,9 @@ export default function EditEventPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
 
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "events.approve");
+  const hasApprovePermission = hasPermission("events.approve" as any);
   const isHigherRole = hasApprovePermission;
 
   const { data: event, isLoading: eventLoading } = api.events.getById.useQuery(
@@ -473,23 +467,19 @@ export default function EditEventPage() {
 
   useEffect(() => {
     if (
-      !profileLoading &&
-      profile &&
+      !permissionsLoading &&
       !hasDashboardAccess &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess, router]);
+  }, [permissionsLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (event && profile && !hasRedirected.current) {
       const hasEditPermission =
-        Array.isArray(userPermissions) &&
-        userPermissions.some(
-          (perm: string) => perm === "events.edit" || perm === "events.approve",
-        );
+        hasPermission("events.edit" as any) || hasPermission("events.approve" as any);
       const canEdit =
         event.createdById === session?.user?.id || hasEditPermission;
 
@@ -498,7 +488,7 @@ export default function EditEventPage() {
         router.push(`/dashboard/events/${eventId}`);
       }
     }
-  }, [event, profile, session, router, eventId, userPermissions]);
+  }, [event, profile, session, router, eventId, hasPermission]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -634,7 +624,7 @@ export default function EditEventPage() {
     });
   };
 
-  if (sessionLoading || profileLoading || eventLoading) {
+  if (sessionLoading || profileLoading || permissionsLoading || eventLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />

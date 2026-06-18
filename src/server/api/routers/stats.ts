@@ -1,24 +1,10 @@
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { permissionProcedure } from "../middleware/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
+import { resolveUserPermissions } from "../helpers/permissions";
 
-/**
- * Hardcoded list of usernames or emails allowed to view the stats page.
- * Add usernames (e.g. "admin") or emails (e.g. "admin@example.com") here.
- */
-const ALLOWED_STATS_VIEWERS: string[] = [
-  // "admin",
-  // "admin@example.com",
-  "lars.lehmann",
-];
-
-function canViewStats(identifier: string): boolean {
-  if (!identifier) return false;
-  const normalized = identifier.trim().toLowerCase();
-  return ALLOWED_STATS_VIEWERS.some(
-    (allowed) => allowed.trim().toLowerCase() === normalized,
-  );
-}
+const statsProcedure = permissionProcedure(PERMISSIONS.STATS_VIEW);
 
 export const statsRouter = createTRPCRouter({
   /**
@@ -52,7 +38,7 @@ export const statsRouter = createTRPCRouter({
   /**
    * Get aggregated stats. Only allowed usernames/emails can call this.
    */
-  getStats: protectedProcedure
+  getStats: statsProcedure
     .input(
       z
         .object({
@@ -66,22 +52,6 @@ export const statsRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const pathPeriod = input?.pathPeriod ?? "last30Days";
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
-      });
-      if (!user) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
-      const allowed =
-        canViewStats(user.email) ||
-        (user.username ? canViewStats(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to view statistics",
-        });
-      }
 
       const from = input?.from ? new Date(input.from) : undefined;
       const to = input?.to ? new Date(input.to) : undefined;
@@ -308,22 +278,7 @@ export const statsRouter = createTRPCRouter({
   /**
    * Site-wide content and user counts (for stats dashboard). Same allowlist as getStats.
    */
-  getSiteStats: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.db.user.findUnique({
-      where: { id: ctx.session.user.id },
-      select: { email: true, username: true },
-    });
-    if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
-    const allowed =
-      canViewStats(user.email) ||
-      (user.username ? canViewStats(user.username) : false);
-    if (!allowed) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "You are not allowed to view statistics",
-      });
-    }
-
+  getSiteStats: statsProcedure.query(async ({ ctx }) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     thirtyDaysAgo.setHours(0, 0, 0, 0);
@@ -378,7 +333,7 @@ export const statsRouter = createTRPCRouter({
    * Get page views that are associated with a user (consent: anonymous_and_user).
    * Returns which users visited which pages with counts. Same allowlist as getStats.
    */
-  getViewsByUser: protectedProcedure
+  getViewsByUser: statsProcedure
     .input(
       z
         .object({
@@ -388,21 +343,6 @@ export const statsRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { email: true, username: true },
-      });
-      if (!user) throw new TRPCError({ code: "UNAUTHORIZED" });
-      const allowed =
-        canViewStats(user.email) ||
-        (user.username ? canViewStats(user.username) : false);
-      if (!allowed) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You are not allowed to view statistics",
-        });
-      }
-
       const from = input?.from ? new Date(input.from) : undefined;
       const to = input?.to ? new Date(input.to) : undefined;
       const where = {
@@ -499,14 +439,7 @@ export const statsRouter = createTRPCRouter({
    * Check whether the current user is allowed to view stats (for UI redirect).
    */
   canViewStats: protectedProcedure.query(async ({ ctx }) => {
-    const user = await ctx.db.user.findUnique({
-      where: { id: ctx.session.user.id },
-      select: { email: true, username: true },
-    });
-    if (!user) return false;
-    return (
-      canViewStats(user.email) ||
-      (user.username ? canViewStats(user.username) : false)
-    );
+    const perms = await resolveUserPermissions(ctx.session.user.id);
+    return perms.has(PERMISSIONS.STATS_VIEW);
   }),
 });

@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
   CourseCollaboratorRole,
@@ -141,26 +142,12 @@ export default function CourseParticipantsPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, hasPermission, hasAnyPermission, isLoading: permissionsLoading } = usePermissions();
 
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
   const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "courses.approve" || perm === "courses.manage",
-    );
+    hasPermission("courses.approve" as any) || hasPermission("courses.manage" as any);
   const hasViewParticipantsPermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) =>
-        perm === "courses.view" ||
-        perm === "courses.approve" ||
-        perm === "courses.manage",
-    );
+    hasAnyPermission(["courses.view" as any, "courses.approve" as any, "courses.manage" as any]);
 
   const { data: course, isLoading: courseLoading } =
     api.courses.getById.useQuery(
@@ -185,17 +172,16 @@ export default function CourseParticipantsPage() {
 
   useEffect(() => {
     if (
-      !profileLoading &&
-      profile &&
+      !permissionsLoading &&
       !hasDashboardAccess &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess, router]);
+  }, [permissionsLoading, hasDashboardAccess, router]);
 
-  if (sessionLoading || profileLoading || courseLoading) {
+  if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
