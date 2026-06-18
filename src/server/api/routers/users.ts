@@ -107,21 +107,16 @@ export const usersRouter = createTRPCRouter({
       return user;
     }),
 
-  /**
-   * Search users (public - for mentions, etc.)
-   */
-  search: publicProcedure
+  search: protectedProcedure
     .input(
       z.object({
         query: z.string().min(2),
         limit: z.number().min(1).max(50).default(10),
-        // role filter removed - use permissions system instead
       }),
     )
     .query(async ({ ctx, input }) => {
       const users = await ctx.db.user.findMany({
         where: {
-          // role filter removed
           OR: [
             { displayName: { contains: input.query, mode: "insensitive" } },
             { email: { contains: input.query, mode: "insensitive" } },
@@ -142,32 +137,6 @@ export const usersRouter = createTRPCRouter({
         },
         take: input.limit,
         orderBy: { displayName: "asc" },
-      });
-
-      return users;
-    }),
-
-  /**
-   * Get users by role (deprecated - use permissions system instead)
-   * Returns all users since role filtering is no longer available
-   */
-  getByRole: publicProcedure
-    .input(
-      z.object({
-        // role parameter removed - use permissions system instead
-        includeBezirk: z.boolean().default(false),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const users = await ctx.db.user.findMany({
-        where: {}, // role filter removed - use permissions system instead
-        include: {
-          profileImage: true,
-          ...(input.includeBezirk && {
-            bezirk: true,
-          }),
-        },
-        orderBy: [{ bezirk: { number: "asc" } }, { displayName: "asc" }],
       });
 
       return users;

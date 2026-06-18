@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
@@ -553,7 +554,7 @@ export default function CourseDetailView({
                     </h2>
                     <div
                       className="prose max-w-none text-gray-700 dark:text-gray-300"
-                      dangerouslySetInnerHTML={{ __html: course.description }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(course.description) }}
                     />
                   </div>
                 )}

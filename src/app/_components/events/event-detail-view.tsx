@@ -6,6 +6,7 @@ import Image from "next/image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize";
 import type { RouterOutputs } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -424,7 +425,7 @@ END:VCALENDAR`;
                     </h2>
                     <div
                       className="prose max-w-none text-gray-700 dark:text-gray-300"
-                      dangerouslySetInnerHTML={{ __html: event.description }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(event.description) }}
                     />
                   </div>
                 )}
