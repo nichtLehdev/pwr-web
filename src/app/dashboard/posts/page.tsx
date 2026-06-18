@@ -4,6 +4,7 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import Link from "next/link";
 import DashboardPostsList from "../../_components/dashboard/dashboard-posts-list";
 import { DashboardPage } from "../../_components/dashboard";
@@ -18,13 +19,7 @@ export default function DashboardPostsPage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const { hasDashboardAccess } = usePermissions();
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {

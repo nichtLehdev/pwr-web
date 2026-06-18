@@ -4,8 +4,6 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
-  reviewerProcedure,
-  adminProcedure,
 } from "../trpc";
 import {
   EventCategory,
@@ -317,7 +315,7 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  getPendingReview: reviewerProcedure
+  getPendingReview: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -596,7 +594,7 @@ export const eventsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  approve: reviewerProcedure
+  approve: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -683,7 +681,7 @@ export const eventsRouter = createTRPCRouter({
       });
     }),
 
-  reject: reviewerProcedure
+  reject: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -991,7 +989,7 @@ export const eventsRouter = createTRPCRouter({
       return events;
     }),
 
-  exportEvents: adminProcedure.query(async ({ ctx }) => {
+  exportEvents: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(async ({ ctx }) => {
     const events = await ctx.db.event.findMany({
       include: {
         coverImage: true,

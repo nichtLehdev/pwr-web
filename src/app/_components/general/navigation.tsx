@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import ThemeToggle from "./theme-toggle";
 import SearchModal from "./search-modal";
 import { useBanner } from "../ui/banner-context";
@@ -34,13 +35,7 @@ export default function Navigation() {
     enabled: !!session?.user,
   });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const { hasDashboardAccess } = usePermissions();
 
   useEffect(() => {
     const checkDarkMode = () => {

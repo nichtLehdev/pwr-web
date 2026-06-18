@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import type { RouterOutputs } from "@/trpc/react";
 import { sanitizeHtml } from "@/lib/sanitize";
 import PublicPage from "../general/public-page";
@@ -96,16 +97,12 @@ export default function CourseDetailView({
       { enabled: !!session?.user },
     );
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasAnyPermission } = usePermissions();
 
-  const hasEditPermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "courses.edit" || perm === "courses.approve",
-    );
+  const hasEditPermission = hasAnyPermission([
+    "courses.edit" as any,
+    "courses.approve" as any,
+  ]);
 
   const canEdit =
     session?.user &&

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
-// Dashboard access is now controlled by permissions
+import { usePermissions } from "@/lib/use-permissions";
 
 export default function LoginCallbackPage() {
   const router = useRouter();
@@ -14,13 +14,10 @@ export default function LoginCallbackPage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, isLoading: permissionsLoading } = usePermissions();
 
   useEffect(() => {
-    if (sessionLoading || profileLoading) return;
+    if (sessionLoading || profileLoading || permissionsLoading) return;
 
     if (!session?.user) {
       router.push("/login");
@@ -31,7 +28,7 @@ export default function LoginCallbackPage() {
     sessionStorage.removeItem("loginRedirect");
     const redirectTo = storedRedirect ?? "/";
 
-    if (userPermissions && userPermissions.length > 0) {
+    if (hasDashboardAccess) {
       router.push("/dashboard");
     } else {
       router.push(redirectTo);
@@ -39,7 +36,8 @@ export default function LoginCallbackPage() {
   }, [
     session,
     profile,
-    userPermissions,
+    hasDashboardAccess,
+    permissionsLoading,
     sessionLoading,
     profileLoading,
     router,

@@ -4,8 +4,6 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
-  lpwProcedure,
-  reviewerProcedure,
 } from "../trpc";
 import {
   CourseType,
@@ -447,7 +445,7 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  getPendingReview: lpwProcedure
+  getPendingReview: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -1140,7 +1138,7 @@ export const coursesRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  approve: reviewerProcedure
+  approve: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -1186,7 +1184,7 @@ export const coursesRouter = createTRPCRouter({
       });
     }),
 
-  reject: reviewerProcedure
+  reject: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         id: z.string(),

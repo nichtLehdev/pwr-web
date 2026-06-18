@@ -10,6 +10,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import type { RouterOutputs } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import {
   AlertTriangle,
   Calendar,
@@ -66,16 +67,12 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
   });
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasAnyPermission } = usePermissions();
 
-  const hasEditPermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "events.edit" || perm === "events.approve",
-    );
+  const hasEditPermission = hasAnyPermission([
+    "events.edit" as any,
+    "events.approve" as any,
+  ]);
 
   const eventDate = new Date(event.eventDate);
 

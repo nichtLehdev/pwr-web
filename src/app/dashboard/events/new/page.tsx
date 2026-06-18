@@ -7,6 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
@@ -67,14 +69,9 @@ export default function NewEventPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, hasPermission } = usePermissions();
 
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "events.approve");
+  const hasApprovePermission = hasPermission(PERMISSIONS.EVENTS_APPROVE);
   const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
@@ -271,16 +268,12 @@ export default function NewEventPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      const hasDashboardAccess =
-        Array.isArray(userPermissions) && userPermissions.length > 0;
-      const canCreateEvents = hasDashboardAccess;
-
-      if (!canCreateEvents) {
+      if (!hasDashboardAccess) {
         hasRedirected.current = true;
         router.push("/dashboard");
       }
     }
-  }, [profile, profileLoading, router, userPermissions]);
+  }, [profile, profileLoading, router, hasDashboardAccess]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

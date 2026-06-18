@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { EditIcon, MusicIcon } from "lucide-react";
 import { UserIcon } from "lucide-react";
@@ -23,13 +24,7 @@ export default function EnsembleDetailPage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
+  const { hasDashboardAccess } = usePermissions();
 
   const { data: ensemble, isLoading: ensembleLoading } =
     api.ensembles.getById.useQuery(

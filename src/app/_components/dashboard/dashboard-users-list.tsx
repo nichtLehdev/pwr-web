@@ -183,12 +183,6 @@ export default function DashboardUsersList() {
                       />
                     </div>
                   </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
-                    Rolle
-                  </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
-                    Bezirk
-                  </th>
                   <th
                     className="dark:text-dark-muted dark:hover:text-dark-text hidden cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:text-gray-700 md:table-cell"
                     onClick={() => handleSort("createdAt")}
@@ -242,28 +236,6 @@ export default function DashboardUsersList() {
                           </p>
                         </div>
                       </div>
-                    </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      {user.districtRoleName ? (
-                        <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          {user.districtRoleName}
-                        </span>
-                      ) : (
-                        <span className="dark:text-dark-muted text-sm text-gray-400">
-                          –
-                        </span>
-                      )}
-                    </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      {user.bezirk ? (
-                        <span className="dark:text-dark-text text-sm text-gray-900">
-                          Bezirk {user.bezirk.number}
-                        </span>
-                      ) : (
-                        <span className="dark:text-dark-muted text-sm text-gray-400">
-                          –
-                        </span>
-                      )}
                     </td>
                     <td className="hidden px-6 py-4 whitespace-nowrap md:table-cell">
                       <span className="dark:text-dark-muted text-sm text-gray-500">

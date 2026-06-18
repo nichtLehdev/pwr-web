@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -420,21 +421,11 @@ export default function EditCoursePage() {
     );
   });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasDashboardAccess, hasPermission, isLoading: permissionsLoading } = usePermissions();
 
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "courses.approve");
+  const hasApprovePermission = hasPermission("courses.approve" as any);
   const hasCoursesEditPermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "courses.edit" || perm === "courses.approve",
-    );
+    hasPermission("courses.edit" as any) || hasPermission("courses.approve" as any);
   const isHigherRole = hasApprovePermission;
   const userBezirkId = profile?.bezirkId ?? null;
 
@@ -716,15 +707,14 @@ export default function EditCoursePage() {
 
   useEffect(() => {
     if (
-      !profileLoading &&
-      profile &&
+      !permissionsLoading &&
       !hasDashboardAccess &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess, router]);
+  }, [permissionsLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (course && profile && !hasRedirected.current) {
@@ -1073,7 +1063,7 @@ export default function EditCoursePage() {
     });
   };
 
-  if (sessionLoading || profileLoading || courseLoading) {
+  if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />

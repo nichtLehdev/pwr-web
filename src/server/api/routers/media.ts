@@ -6,7 +6,6 @@ import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
-  reviewerProcedure,
 } from "../trpc";
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
@@ -370,7 +369,7 @@ export const mediaRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  review: reviewerProcedure
+  review: permissionProcedure(PERMISSIONS.MEDIA_APPROVE)
     .input(
       z.object({
         id: z.string(),

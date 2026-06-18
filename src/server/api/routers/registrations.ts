@@ -4,7 +4,6 @@ import {
   createTRPCRouter,
   publicProcedure,
   protectedProcedure,
-  lpwProcedure,
 } from "../trpc";
 import {
   CourseCollaboratorRole,
@@ -1331,7 +1330,7 @@ export const registrationsRouter = createTRPCRouter({
       return updated;
     }),
 
-  delete: lpwProcedure
+  delete: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.courseRegistration.delete({
@@ -1425,7 +1424,7 @@ export const registrationsRouter = createTRPCRouter({
       };
     }),
 
-  approveSiblingDiscount: lpwProcedure
+  approveSiblingDiscount: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(
       z.object({
         registrationId: z.string(),
@@ -1499,7 +1498,7 @@ export const registrationsRouter = createTRPCRouter({
       return updated;
     }),
 
-  rejectSiblingDiscount: lpwProcedure
+  rejectSiblingDiscount: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(
       z.object({
         registrationId: z.string(),

@@ -1,30 +1,22 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../trpc";
-import { userHasPermission, type PermissionKey } from "../helpers/permissions";
+import { resolveUserPermissions, type PermissionKey } from "../helpers/permissions";
 
-/**
- * Create a procedure that requires a specific permission
- *
- * @example
- * ```ts
- * export const eventsRouter = createTRPCRouter({
- *   create: permissionProcedure(PERMISSIONS.EVENTS_CREATE)
- *     .input(z.object({ title: z.string() }))
- *     .mutation(async ({ ctx, input }) => {
- *       // User is guaranteed to have EVENTS_CREATE permission
- *       return await ctx.db.event.create({ data: input });
- *     }),
- * });
- * ```
- */
+function getOrResolvePermissions(
+  ctx: { permissionCache: Map<string, Promise<Set<PermissionKey>>> },
+  userId: string,
+): Promise<Set<PermissionKey>> {
+  if (!ctx.permissionCache.has(userId)) {
+    ctx.permissionCache.set(userId, resolveUserPermissions(userId));
+  }
+  return ctx.permissionCache.get(userId)!;
+}
+
 export function permissionProcedure(permission: PermissionKey) {
   return protectedProcedure.use(async ({ ctx, next }) => {
-    const hasPermission = await userHasPermission(
-      ctx.session.user.id,
-      permission,
-    );
+    const userPerms = await getOrResolvePermissions(ctx, ctx.session.user.id);
 
-    if (!hasPermission) {
+    if (!userPerms.has(permission)) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: `Permission required: ${permission}`,
@@ -35,32 +27,12 @@ export function permissionProcedure(permission: PermissionKey) {
   });
 }
 
-/**
- * Create a procedure that requires any of the specified permissions
- *
- * @example
- * ```ts
- * export const eventsRouter = createTRPCRouter({
- *   edit: permissionProcedureAny([
- *     PERMISSIONS.EVENTS_EDIT,
- *     PERMISSIONS.EVENTS_APPROVE,
- *   ])
- *     .input(z.object({ id: z.string() }))
- *     .mutation(async ({ ctx, input }) => {
- *       // User has at least one of the permissions
- *     }),
- * });
- * ```
- */
 export function permissionProcedureAny(permissions: PermissionKey[]) {
   return protectedProcedure.use(async ({ ctx, next }) => {
-    const userPermissions = await Promise.all(
-      permissions.map((perm) => userHasPermission(ctx.session.user.id, perm)),
-    );
+    const userPerms = await getOrResolvePermissions(ctx, ctx.session.user.id);
+    const hasAny = permissions.some((perm) => userPerms.has(perm));
 
-    const hasAnyPermission = userPermissions.some((has) => has);
-
-    if (!hasAnyPermission) {
+    if (!hasAny) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: `One of these permissions required: ${permissions.join(", ")}`,
@@ -71,32 +43,12 @@ export function permissionProcedureAny(permissions: PermissionKey[]) {
   });
 }
 
-/**
- * Create a procedure that requires all of the specified permissions
- *
- * @example
- * ```ts
- * export const eventsRouter = createTRPCRouter({
- *   delete: permissionProcedureAll([
- *     PERMISSIONS.EVENTS_DELETE,
- *     PERMISSIONS.EVENTS_APPROVE,
- *   ])
- *     .input(z.object({ id: z.string() }))
- *     .mutation(async ({ ctx, input }) => {
- *       // User has all permissions
- *     }),
- * });
- * ```
- */
 export function permissionProcedureAll(permissions: PermissionKey[]) {
   return protectedProcedure.use(async ({ ctx, next }) => {
-    const userPermissions = await Promise.all(
-      permissions.map((perm) => userHasPermission(ctx.session.user.id, perm)),
-    );
+    const userPerms = await getOrResolvePermissions(ctx, ctx.session.user.id);
+    const hasAll = permissions.every((perm) => userPerms.has(perm));
 
-    const hasAllPermissions = userPermissions.every((has) => has);
-
-    if (!hasAllPermissions) {
+    if (!hasAll) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: `All of these permissions required: ${permissions.join(", ")}`,
