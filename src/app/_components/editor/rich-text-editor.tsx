@@ -12,7 +12,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 import TurndownService from "turndown";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { marked } from "marked";
 import MediaPickerModal from "./media-picker-modal";
 import DownloadPickerModal from "./download-picker-modal";
@@ -36,6 +36,11 @@ import {
   Redo,
   X,
   Plus,
+  Rows3,
+  Columns3,
+  Merge,
+  Split,
+  Trash2,
 } from "lucide-react";
 
 interface RichTextEditorProps {
@@ -49,6 +54,20 @@ const turndownService = new TurndownService({
   headingStyle: "atx",
   codeBlockStyle: "fenced",
   bulletListMarker: "-",
+});
+
+turndownService.addRule("underline", {
+  filter: ["u"],
+  replacement: function (content) {
+    return `<u>${content}</u>`;
+  },
+});
+
+turndownService.addRule("strikethrough", {
+  filter: ["del", "s"],
+  replacement: function (content) {
+    return `~~${content}~~`;
+  },
 });
 
 turndownService.addRule("tableCell", {
@@ -141,6 +160,182 @@ function ToolbarButton({
 
 function ToolbarSeparator() {
   return <div className="dark:bg-dark-border mx-1 h-6 w-px bg-gray-300" />;
+}
+
+function ContextMenuItem({
+  onClick,
+  disabled = false,
+  destructive = false,
+  icon: Icon,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex w-full items-center gap-2 rounded px-3 py-1.5 text-left text-sm transition-colors ${
+        disabled
+          ? "cursor-not-allowed opacity-40"
+          : destructive
+            ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-background-secondary"
+      }`}
+    >
+      {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+      {children}
+    </button>
+  );
+}
+
+function ContextMenuSeparator() {
+  return <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />;
+}
+
+function TableContextMenu({
+  editor,
+  position,
+  onClose,
+}: {
+  editor: Editor;
+  position: { x: number; y: number };
+  onClose: () => void;
+}) {
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: globalThis.MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!menuRef.current) return;
+    const rect = menuRef.current.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+      menuRef.current.style.left = `${position.x - rect.width}px`;
+    }
+    if (rect.bottom > window.innerHeight) {
+      menuRef.current.style.top = `${position.y - rect.height}px`;
+    }
+  }, [position]);
+
+  const run = (action: () => void) => {
+    action();
+    onClose();
+  };
+
+  return (
+    <div
+      ref={menuRef}
+      className="dark:border-dark-border dark:bg-dark-surface fixed z-[200] min-w-52 rounded-lg border border-gray-200 bg-white p-1 shadow-xl"
+      style={{ left: position.x, top: position.y }}
+    >
+      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+        Zeile
+      </div>
+      <ContextMenuItem
+        icon={Rows3}
+        onClick={() => run(() => editor.chain().focus().addRowBefore().run())}
+      >
+        Zeile darüber einfügen
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={Rows3}
+        onClick={() => run(() => editor.chain().focus().addRowAfter().run())}
+      >
+        Zeile darunter einfügen
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={Trash2}
+        destructive
+        onClick={() => run(() => editor.chain().focus().deleteRow().run())}
+      >
+        Zeile löschen
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+        Spalte
+      </div>
+      <ContextMenuItem
+        icon={Columns3}
+        onClick={() =>
+          run(() => editor.chain().focus().addColumnBefore().run())
+        }
+      >
+        Spalte links einfügen
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={Columns3}
+        onClick={() => run(() => editor.chain().focus().addColumnAfter().run())}
+      >
+        Spalte rechts einfügen
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={Trash2}
+        destructive
+        onClick={() => run(() => editor.chain().focus().deleteColumn().run())}
+      >
+        Spalte löschen
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
+        Zelle
+      </div>
+      <ContextMenuItem
+        icon={Merge}
+        disabled={!editor.can().mergeCells()}
+        onClick={() => run(() => editor.chain().focus().mergeCells().run())}
+      >
+        Zellen verbinden
+      </ContextMenuItem>
+      <ContextMenuItem
+        icon={Split}
+        disabled={!editor.can().splitCell()}
+        onClick={() => run(() => editor.chain().focus().splitCell().run())}
+      >
+        Zelle teilen
+      </ContextMenuItem>
+      <ContextMenuItem
+        onClick={() =>
+          run(() => editor.chain().focus().toggleHeaderRow().run())
+        }
+      >
+        Kopfzeile umschalten
+      </ContextMenuItem>
+
+      <ContextMenuSeparator />
+
+      <ContextMenuItem
+        icon={Trash2}
+        destructive
+        onClick={() => run(() => editor.chain().focus().deleteTable().run())}
+      >
+        Tabelle löschen
+      </ContextMenuItem>
+    </div>
+  );
 }
 
 function Toolbar({
@@ -397,129 +592,39 @@ function Toolbar({
         </ToolbarButton>
         {showTableMenu && (
           <div className="dark:border-dark-border dark:bg-dark-surface absolute top-full left-0 z-50 mt-1 min-w-48 rounded-lg border border-gray-200 bg-white p-1 shadow-xl">
-            {!editor.isActive("table") ? (
-              <button
-                type="button"
-                onClick={() => {
-                  editor
-                    .chain()
-                    .focus()
-                    .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-                    .run();
-                  setShowTableMenu(false);
-                }}
-                className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-              >
-                <Plus className="h-4 w-4" />
-                Tabelle einfügen (3×3)
-              </button>
-            ) : (
+            <button
+              type="button"
+              onClick={() => {
+                editor
+                  .chain()
+                  .focus()
+                  .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                  .run();
+                setShowTableMenu(false);
+              }}
+              disabled={editor.isActive("table")}
+              className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              Tabelle einfügen (3×3)
+            </button>
+            {editor.isActive("table") && (
               <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().addRowAfter().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-                >
-                  Zeile darunter einfügen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().addRowBefore().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-                >
-                  Zeile darüber einfügen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().deleteRow().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                >
-                  Zeile löschen
-                </button>
-                <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().addColumnAfter().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-                >
-                  Spalte rechts einfügen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().addColumnBefore().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-                >
-                  Spalte links einfügen
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().deleteColumn().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                >
-                  Spalte löschen
-                </button>
-                <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().toggleHeaderRow().run();
-                    setShowTableMenu(false);
-                  }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100"
-                >
-                  Kopfzeile umschalten
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().mergeCells().run();
-                    setShowTableMenu(false);
-                  }}
-                  disabled={!editor.can().mergeCells()}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Zellen verbinden
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    editor.chain().focus().splitCell().run();
-                    setShowTableMenu(false);
-                  }}
-                  disabled={!editor.can().splitCell()}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Zelle teilen
-                </button>
-                <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />
                 <button
                   type="button"
                   onClick={() => {
                     editor.chain().focus().deleteTable().run();
                     setShowTableMenu(false);
                   }}
-                  className="dark:hover:bg-dark-background-secondary flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                  className="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-red-900/20"
                 >
+                  <Trash2 className="h-4 w-4" />
                   Tabelle löschen
                 </button>
+                <div className="dark:bg-dark-border my-1 h-px bg-gray-200" />
+                <p className="px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500">
+                  Rechtsklick auf Zelle für weitere Optionen
+                </p>
               </>
             )}
           </div>
@@ -556,6 +661,10 @@ export default function RichTextEditor({
   const isInitialized = useRef(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [showDownloadPicker, setShowDownloadPicker] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const initialHtml = content ? String(marked.parse(content)) : "";
 
@@ -644,6 +753,23 @@ export default function RichTextEditor({
     [editor],
   );
 
+  const handleContextMenu = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      if (!editor) return;
+
+      const target = e.target as HTMLElement;
+      const isInTable = !!target.closest("table");
+
+      if (isInTable && editor.isActive("table")) {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      } else {
+        setContextMenu(null);
+      }
+    },
+    [editor],
+  );
+
   useEffect(() => {
     if (editor && content && !isInitialized.current) {
       const newHtml = String(marked.parse(content));
@@ -665,10 +791,21 @@ export default function RichTextEditor({
           onOpenMediaPicker={() => setShowMediaPicker(true)}
           onOpenDownloadPicker={() => setShowDownloadPicker(true)}
         />
-        <div className="text-gray-900 dark:text-gray-100">
+        <div
+          className="text-gray-900 dark:text-gray-100"
+          onContextMenu={handleContextMenu}
+        >
           <EditorContent editor={editor} />
         </div>
       </div>
+
+      {contextMenu && editor && (
+        <TableContextMenu
+          editor={editor}
+          position={contextMenu}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
 
       {/* Media Picker Modal */}
       <MediaPickerModal
