@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -41,7 +42,9 @@ export default function DashboardEnsemblesPage() {
     });
 
   const { hasDashboardAccess, hasAnyPermission } = usePermissions();
-  const hasManagePermission = hasAnyPermission(["ensembles.delete" as any]);
+  const hasManagePermission = hasAnyPermission([
+    "ensembles.delete" as PermissionKey,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

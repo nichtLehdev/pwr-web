@@ -14,7 +14,7 @@ import type { FileType } from "~/generated/prisma/enums";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { sanitizeHtml } from "@/lib/sanitize";
 import {
   ArrowLeftIcon,
@@ -112,8 +112,8 @@ export default function PostDetailView({
     usePermissions();
 
   const hasEditPermission = hasAnyPerm([
-    "posts.edit" as any,
-    "posts.approve" as any,
+    "posts.edit" as PermissionKey,
+    "posts.approve" as PermissionKey,
   ]);
 
   const canViewUserProfile = session?.user && profile && hasAnyPermission;

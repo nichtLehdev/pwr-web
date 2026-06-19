@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -121,10 +122,12 @@ export default function DashboardDownloadsPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("downloads.approve" as any);
+  const hasApprovePermission = hasPermission(
+    "downloads.approve" as PermissionKey,
+  );
   const hasDeletePermission =
-    hasPermission("downloads.delete" as any) ||
-    hasPermission("downloads.manage" as any);
+    hasPermission("downloads.delete" as PermissionKey) ||
+    hasPermission("downloads.manage" as PermissionKey);
 
   const utils = api.useUtils();
 

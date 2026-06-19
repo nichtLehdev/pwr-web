@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import type { RouterOutputs } from "@/trpc/react";
 import { sanitizeHtml } from "@/lib/sanitize";
 import PublicPage from "../general/public-page";
@@ -100,8 +101,8 @@ export default function CourseDetailView({
   const { hasAnyPermission } = usePermissions();
 
   const hasEditPermission = hasAnyPermission([
-    "courses.edit" as any,
-    "courses.approve" as any,
+    "courses.edit" as PermissionKey,
+    "courses.approve" as PermissionKey,
   ]);
 
   const canEdit =

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { useRouter } from "next/navigation";
 import DashboardPostCard from "./dashboard-post-card";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
@@ -63,7 +64,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
   const router = useRouter();
   const { hasPermission } = usePermissions();
 
-  const hasApprovePermission = hasPermission("posts.approve" as any);
+  const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<ContentStatus | "all">(
     "all",

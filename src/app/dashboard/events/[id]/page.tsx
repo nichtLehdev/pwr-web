@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
@@ -80,10 +80,10 @@ export default function EventDetailPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("events.approve" as any);
+  const hasApprovePermission = hasPermission("events.approve" as PermissionKey);
   const hasEditPermission =
-    hasPermission("events.edit" as any) ||
-    hasPermission("events.approve" as any);
+    hasPermission("events.edit" as PermissionKey) ||
+    hasPermission("events.approve" as PermissionKey);
 
   const {
     data: event,

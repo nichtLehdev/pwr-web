@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { ContentStatus } from "~/generated/prisma/enums";
@@ -118,10 +119,10 @@ export default function DashboardMediaPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("media.approve" as any);
+  const hasApprovePermission = hasPermission("media.approve" as PermissionKey);
   const hasDeletePermission =
-    hasPermission("media.delete" as any) ||
-    hasPermission("media.manage" as any);
+    hasPermission("media.delete" as PermissionKey) ||
+    hasPermission("media.manage" as PermissionKey);
 
   const utils = api.useUtils();
 
