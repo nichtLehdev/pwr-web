@@ -8,6 +8,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  CheckCircle2,
+  XCircle,
   Filter,
   Users,
   Search,
@@ -184,10 +186,10 @@ export default function DashboardUsersList() {
                     </div>
                   </th>
                   <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
-                    Rolle
+                    Mitgliedschaften
                   </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
-                    Bezirk
+                  <th className="dark:text-dark-muted hidden px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell">
+                    E-Mail bestätigt
                   </th>
                   <th
                     className="dark:text-dark-muted dark:hover:text-dark-text hidden cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:text-gray-700 md:table-cell"
@@ -201,6 +203,9 @@ export default function DashboardUsersList() {
                         sortOrder={sortOrder}
                       />
                     </div>
+                  </th>
+                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell">
+                    Letzter Login
                   </th>
                   <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
                     Aktionen
@@ -244,30 +249,67 @@ export default function DashboardUsersList() {
                       </div>
                     </td>
                     <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      {user.districtRoleName ? (
-                        <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          {user.districtRoleName}
-                        </span>
-                      ) : (
-                        <span className="dark:text-dark-muted text-sm text-gray-400">
-                          –
-                        </span>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {user.posaunenwart?.roleType === "LPW" && (
+                          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            LPW
+                          </span>
+                        )}
+                        {user.posaunenwart?.roleType === "RPW" && (
+                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                            RPW
+                          </span>
+                        )}
+                        {user.teamMember && (
+                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            Team
+                          </span>
+                        )}
+                        {user.vorstandMember && (
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                            Vorstand
+                          </span>
+                        )}
+                        {user.posaunenratMember && (
+                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            Posaunenrat
+                          </span>
+                        )}
+                        {user.foerdervereinMember && (
+                          <span className="bg-foerderverein-light/40 text-foerderverein-dark dark:bg-foerderverein/20 dark:text-foerderverein-light rounded-full px-2 py-0.5 text-xs font-medium">
+                            Förderverein
+                          </span>
+                        )}
+                        {!user.teamMember &&
+                          !user.vorstandMember &&
+                          !user.posaunenratMember &&
+                          !user.foerdervereinMember &&
+                          !user.posaunenwart && (
+                            <span className="dark:text-dark-muted text-sm text-gray-400">
+                              –
+                            </span>
+                          )}
+                      </div>
                     </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      {user.bezirk ? (
-                        <span className="dark:text-dark-text text-sm text-gray-900">
-                          Bezirk {user.bezirk.number}
-                        </span>
+                    <td className="hidden px-6 py-4 text-center whitespace-nowrap md:table-cell">
+                      {user.emailVerified ? (
+                        <CheckCircle2 className="mx-auto h-5 w-5 text-green-500 dark:text-green-400" />
                       ) : (
-                        <span className="dark:text-dark-muted text-sm text-gray-400">
-                          –
-                        </span>
+                        <XCircle className="mx-auto h-5 w-5 text-amber-500 dark:text-amber-400" />
                       )}
                     </td>
                     <td className="hidden px-6 py-4 whitespace-nowrap md:table-cell">
                       <span className="dark:text-dark-muted text-sm text-gray-500">
                         {new Date(user.createdAt).toLocaleDateString("de-DE")}
+                      </span>
+                    </td>
+                    <td className="hidden px-6 py-4 whitespace-nowrap lg:table-cell">
+                      <span className="dark:text-dark-muted text-sm text-gray-500">
+                        {user.lastLoginAt
+                          ? new Date(user.lastLoginAt).toLocaleDateString(
+                              "de-DE",
+                            )
+                          : "–"}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">

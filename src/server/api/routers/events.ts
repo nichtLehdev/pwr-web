@@ -1,12 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-  reviewerProcedure,
-  adminProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import {
   EventCategory,
   ContentStatus,
@@ -317,7 +311,7 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
-  getPendingReview: reviewerProcedure
+  getPendingReview: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -596,7 +590,7 @@ export const eventsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  approve: reviewerProcedure
+  approve: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -683,7 +677,7 @@ export const eventsRouter = createTRPCRouter({
       });
     }),
 
-  reject: reviewerProcedure
+  reject: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -991,53 +985,55 @@ export const eventsRouter = createTRPCRouter({
       return events;
     }),
 
-  exportEvents: adminProcedure.query(async ({ ctx }) => {
-    const events = await ctx.db.event.findMany({
-      include: {
-        coverImage: true,
-        location: true,
-        bezirk: true,
-        ensemble: {
-          include: {
-            conductor: {
-              select: {
-                id: true,
-                displayName: true,
-                email: true,
+  exportEvents: permissionProcedure(PERMISSIONS.DATA_EXPORT).query(
+    async ({ ctx }) => {
+      const events = await ctx.db.event.findMany({
+        include: {
+          coverImage: true,
+          location: true,
+          bezirk: true,
+          ensemble: {
+            include: {
+              conductor: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  email: true,
+                },
               },
+              image: true,
             },
-            image: true,
+          },
+          auswahlChor: {
+            include: {
+              conductor: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  email: true,
+                },
+              },
+              image: true,
+            },
           },
         },
-        auswahlChor: {
-          include: {
-            conductor: {
-              select: {
-                id: true,
-                displayName: true,
-                email: true,
-              },
-            },
-            image: true,
-          },
-        },
-      },
-      orderBy: { eventDate: "desc" },
-    });
+        orderBy: { eventDate: "desc" },
+      });
 
-    return {
-      events: events.map((event) => ({
-        ...event,
-        coverImageUrl: event.coverImage?.url,
-        locationName: event.location?.name,
-        bezirkName: event.bezirk?.name,
-        ensembleName: event.ensemble?.name,
-        auswahlChorName: event.auswahlChor?.name,
-      })),
-      exportedAt: new Date().toISOString(),
-      count: events.length,
-    };
-  }),
+      return {
+        events: events.map((event) => ({
+          ...event,
+          coverImageUrl: event.coverImage?.url,
+          locationName: event.location?.name,
+          bezirkName: event.bezirk?.name,
+          ensembleName: event.ensemble?.name,
+          auswahlChorName: event.auswahlChor?.name,
+        })),
+        exportedAt: new Date().toISOString(),
+        count: events.length,
+      };
+    },
+  ),
 
   importEvents: permissionProcedure(PERMISSIONS.DATA_IMPORT)
     .input(

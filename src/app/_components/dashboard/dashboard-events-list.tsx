@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { useRouter } from "next/navigation";
 import DashboardEventCard from "./dashboard-event-card";
 import type { ContentStatus } from "~/generated/prisma/enums";
@@ -164,11 +166,9 @@ export default function DashboardEventsList({}: DashboardEventsListProps) {
     },
   });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery();
+  const { hasPermission } = usePermissions();
 
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "events.approve");
+  const hasApprovePermission = hasPermission("events.approve" as PermissionKey);
 
   const availableFilters = statusFilters.filter((filter) => {
     if (hasApprovePermission) return true;

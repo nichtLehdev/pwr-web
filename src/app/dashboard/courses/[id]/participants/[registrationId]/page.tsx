@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import {
   RegistrationStatus,
   PaymentStatus,
@@ -188,25 +190,17 @@ export default function RegistrationDetailPage() {
       },
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const { hasPermission } = usePermissions();
 
   const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "courses.approve" || perm === "courses.manage",
-    );
+    hasPermission("courses.approve" as PermissionKey) ||
+    hasPermission("courses.manage" as PermissionKey);
 
-  const canManagePaymentStatus =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "invoices.manage");
+  const canManagePaymentStatus = hasPermission(
+    "invoices.manage" as PermissionKey,
+  );
   const canMarkPaidOnly =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) => perm === "registrations.mark_paid",
-    ) &&
+    hasPermission("registrations.mark_paid" as PermissionKey) &&
     !canManagePaymentStatus;
 
   const canApproveDiscount =

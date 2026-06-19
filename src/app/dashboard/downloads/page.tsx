@@ -5,6 +5,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -114,22 +116,18 @@ export default function DashboardDownloadsPage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "downloads.approve");
+  const hasApprovePermission = hasPermission(
+    "downloads.approve" as PermissionKey,
+  );
   const hasDeletePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) =>
-        perm === "downloads.delete" || perm === "downloads.manage",
-    );
+    hasPermission("downloads.delete" as PermissionKey) ||
+    hasPermission("downloads.manage" as PermissionKey);
 
   const utils = api.useUtils();
 
@@ -200,16 +198,11 @@ export default function DashboardDownloadsPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (
-      !profileLoading &&
-      profile &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       redirect("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess]);
+  }, [permissionsLoading, hasDashboardAccess]);
 
   const resetUploadForm = () => {
     setNewTitle("");
@@ -361,7 +354,7 @@ export default function DashboardDownloadsPage() {
     });
   };
 
-  if (isPending || profileLoading) {
+  if (isPending || profileLoading || permissionsLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />

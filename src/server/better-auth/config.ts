@@ -237,6 +237,22 @@ export const auth = betterAuth({
         type: "string", // JSON fields are stored as strings
         required: false,
       },
+      lastLoginAt: {
+        type: "date",
+        required: false,
+      },
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          await db.user.update({
+            where: { id: session.userId },
+            data: { lastLoginAt: new Date() },
+          });
+        },
+      },
     },
   },
 });

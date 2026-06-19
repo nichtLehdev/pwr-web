@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-  adminProcedure,
-  lpwProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { PERMISSIONS } from "@/lib/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 // UserRole enum removed - using permissions system instead
 
 /**
@@ -354,7 +350,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * List all users with pagination and filters
    */
-  list: adminProcedure
+  list: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -401,6 +397,7 @@ export const usersRouter = createTRPCRouter({
             posaunenratMember: true,
             vorstandMember: true,
             foerdervereinMember: true,
+            posaunenwart: true,
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
@@ -421,54 +418,56 @@ export const usersRouter = createTRPCRouter({
   /**
    * Get user statistics
    */
-  getStatistics: adminProcedure.query(async ({ ctx }) => {
-    const [
-      totalUsers,
-      usersByRole,
-      usersWithTeam,
-      usersWithVorstand,
-      usersWithPosaunenrat,
-      usersWithFoerderverein,
-      recentUsers,
-    ] = await Promise.all([
-      ctx.db.user.count(),
-      Promise.resolve([]), // Role grouping no longer available
-      ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
-      ctx.db.user.count({ where: { foerdervereinMember: { isNot: null } } }),
-      ctx.db.user.count({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+  getStatistics: permissionProcedure(PERMISSIONS.USERS_MANAGE).query(
+    async ({ ctx }) => {
+      const [
+        totalUsers,
+        usersByRole,
+        usersWithTeam,
+        usersWithVorstand,
+        usersWithPosaunenrat,
+        usersWithFoerderverein,
+        recentUsers,
+      ] = await Promise.all([
+        ctx.db.user.count(),
+        Promise.resolve([]), // Role grouping no longer available
+        ctx.db.user.count({ where: { teamMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { vorstandMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { posaunenratMember: { isNot: null } } }),
+        ctx.db.user.count({ where: { foerdervereinMember: { isNot: null } } }),
+        ctx.db.user.count({
+          where: {
+            createdAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
-    return {
-      totalUsers,
-      usersByRole: usersByRole.reduce(
-        (acc) => {
-          // role-based grouping removed
-          return acc;
+      return {
+        totalUsers,
+        usersByRole: usersByRole.reduce(
+          (acc) => {
+            // role-based grouping removed
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+        membership: {
+          team: usersWithTeam,
+          vorstand: usersWithVorstand,
+          posaunenrat: usersWithPosaunenrat,
+          foerderverein: usersWithFoerderverein,
         },
-        {} as Record<string, number>,
-      ),
-      membership: {
-        team: usersWithTeam,
-        vorstand: usersWithVorstand,
-        posaunenrat: usersWithPosaunenrat,
-        foerderverein: usersWithFoerderverein,
-      },
-      recentUsers,
-    };
-  }),
+        recentUsers,
+      };
+    },
+  ),
 
   /**
    * Create a new user (admin)
    */
-  create: adminProcedure
+  create: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         firstName: z.string().min(1, "Vorname ist erforderlich").max(100),
@@ -550,7 +549,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Update any user (admin)
    */
-  update: adminProcedure
+  update: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(
       z.object({
         id: z.string(),
@@ -629,7 +628,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Delete a user (admin) - soft delete by archiving
    */
-  delete: adminProcedure
+  delete: permissionProcedure(PERMISSIONS.USERS_MANAGE)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
@@ -674,7 +673,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Update user role and permissions
    */
-  updateRole: lpwProcedure
+  updateRole: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
         userId: z.string(),
@@ -708,7 +707,7 @@ export const usersRouter = createTRPCRouter({
   /**
    * Bulk update user roles
    */
-  bulkUpdateRoles: lpwProcedure
+  bulkUpdateRoles: permissionProcedure(PERMISSIONS.USERS_EDIT_ROLES)
     .input(
       z.object({
         updates: z.array(
