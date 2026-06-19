@@ -11,6 +11,7 @@ import type { RouterOutputs } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import {
   AlertTriangle,
   Calendar,
@@ -70,8 +71,8 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   const { hasAnyPermission } = usePermissions();
 
   const hasEditPermission = hasAnyPermission([
-    "events.edit" as any,
-    "events.approve" as any,
+    "events.edit" as PermissionKey,
+    "events.approve" as PermissionKey,
   ]);
 
   const eventDate = new Date(event.eventDate);

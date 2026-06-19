@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
@@ -95,7 +96,9 @@ export default function NewCoursePage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("courses.approve" as any);
+  const hasApprovePermission = hasPermission(
+    "courses.approve" as PermissionKey,
+  );
   const isHigherRole = hasApprovePermission;
 
   const [title, setTitle] = useState("");

@@ -673,6 +673,7 @@ function UsersTab() {
 
   useEffect(() => {
     if (userPermissions) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing state from async query data
       setSelectedRoleIds((prev) => {
         const newIds = derivedRoleIds;
         if (

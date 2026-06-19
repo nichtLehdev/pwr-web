@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { useRouter } from "next/navigation";
 import DashboardCourseCard from "./dashboard-course-card";
 import type { ContentStatus } from "~/generated/prisma/enums";
@@ -152,7 +153,9 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
 
   const { hasPermission } = usePermissions();
 
-  const hasApprovePermission = hasPermission("courses.approve" as any);
+  const hasApprovePermission = hasPermission(
+    "courses.approve" as PermissionKey,
+  );
 
   const availableFilters = statusFilters.filter((filter) => {
     if (hasApprovePermission) return true;

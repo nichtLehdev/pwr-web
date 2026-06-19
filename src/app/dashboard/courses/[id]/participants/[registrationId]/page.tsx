@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import {
   RegistrationStatus,
   PaymentStatus,
@@ -192,12 +193,15 @@ export default function RegistrationDetailPage() {
   const { hasPermission } = usePermissions();
 
   const hasApprovePermission =
-    hasPermission("courses.approve" as any) ||
-    hasPermission("courses.manage" as any);
+    hasPermission("courses.approve" as PermissionKey) ||
+    hasPermission("courses.manage" as PermissionKey);
 
-  const canManagePaymentStatus = hasPermission("invoices.manage" as any);
+  const canManagePaymentStatus = hasPermission(
+    "invoices.manage" as PermissionKey,
+  );
   const canMarkPaidOnly =
-    hasPermission("registrations.mark_paid" as any) && !canManagePaymentStatus;
+    hasPermission("registrations.mark_paid" as PermissionKey) &&
+    !canManagePaymentStatus;
 
   const canApproveDiscount =
     profile &&

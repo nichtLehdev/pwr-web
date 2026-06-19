@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
@@ -68,7 +69,7 @@ export default function EditPostPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("posts.approve" as any);
+  const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
 
   const { data: post, isLoading: postLoading } = api.posts.getById.useQuery(
@@ -288,8 +289,8 @@ export default function EditPostPage() {
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
       const hasEditPermission =
-        hasPermission("posts.edit" as any) ||
-        hasPermission("posts.approve" as any);
+        hasPermission("posts.edit" as PermissionKey) ||
+        hasPermission("posts.approve" as PermissionKey);
       const canEdit =
         post.createdById === session?.user?.id || hasEditPermission;
 

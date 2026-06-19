@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -85,7 +86,7 @@ export default function EditEventPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("events.approve" as any);
+  const hasApprovePermission = hasPermission("events.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
 
   const { data: event, isLoading: eventLoading } = api.events.getById.useQuery(
@@ -479,8 +480,8 @@ export default function EditEventPage() {
   useEffect(() => {
     if (event && profile && !hasRedirected.current) {
       const hasEditPermission =
-        hasPermission("events.edit" as any) ||
-        hasPermission("events.approve" as any);
+        hasPermission("events.edit" as PermissionKey) ||
+        hasPermission("events.approve" as PermissionKey);
       const canEdit =
         event.createdById === session?.user?.id || hasEditPermission;
 

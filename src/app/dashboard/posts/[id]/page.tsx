@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { ContentStatus, PostCategory } from "~/generated/prisma/enums";
 import "@/styles/article-content.css";
 import { useToast } from "@/app/_components/ui/toast";
@@ -82,9 +82,10 @@ export default function PostDetailPage() {
     isLoading: permissionsLoading,
   } = usePermissions();
 
-  const hasApprovePermission = hasPermission("posts.approve" as any);
+  const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const hasEditPermission =
-    hasPermission("posts.edit" as any) || hasPermission("posts.approve" as any);
+    hasPermission("posts.edit" as PermissionKey) ||
+    hasPermission("posts.approve" as PermissionKey);
 
   const {
     data: post,
