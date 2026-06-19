@@ -280,9 +280,15 @@ export default function DashboardUsersList() {
                             Förderverein
                           </span>
                         )}
-                        {!user.teamMember && !user.vorstandMember && !user.posaunenratMember && !user.foerdervereinMember && !user.posaunenwart && (
-                          <span className="dark:text-dark-muted text-sm text-gray-400">–</span>
-                        )}
+                        {!user.teamMember &&
+                          !user.vorstandMember &&
+                          !user.posaunenratMember &&
+                          !user.foerdervereinMember &&
+                          !user.posaunenwart && (
+                            <span className="dark:text-dark-muted text-sm text-gray-400">
+                              –
+                            </span>
+                          )}
                       </div>
                     </td>
                     <td className="hidden px-6 py-4 text-center whitespace-nowrap md:table-cell">
@@ -300,7 +306,9 @@ export default function DashboardUsersList() {
                     <td className="hidden px-6 py-4 whitespace-nowrap lg:table-cell">
                       <span className="dark:text-dark-muted text-sm text-gray-500">
                         {user.lastLoginAt
-                          ? new Date(user.lastLoginAt).toLocaleDateString("de-DE")
+                          ? new Date(user.lastLoginAt).toLocaleDateString(
+                              "de-DE",
+                            )
                           : "–"}
                       </span>
                     </td>
