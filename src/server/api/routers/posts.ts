@@ -1,12 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { marked } from "marked";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-  reviewerProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -301,7 +296,7 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  getAttachedContent: reviewerProcedure
+  getAttachedContent: permissionProcedure(PERMISSIONS.POSTS_APPROVE)
     .input(z.object({ postId: z.string() }))
     .query(async ({ ctx, input }) => {
       const post = await ctx.db.post.findUnique({
@@ -395,7 +390,7 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
-  getPendingReview: reviewerProcedure
+  getPendingReview: permissionProcedure(PERMISSIONS.POSTS_APPROVE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -656,7 +651,7 @@ export const postsRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  approve: reviewerProcedure
+  approve: permissionProcedure(PERMISSIONS.POSTS_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -748,7 +743,7 @@ export const postsRouter = createTRPCRouter({
       });
     }),
 
-  reject: reviewerProcedure
+  reject: permissionProcedure(PERMISSIONS.POSTS_APPROVE)
     .input(
       z.object({
         id: z.string(),

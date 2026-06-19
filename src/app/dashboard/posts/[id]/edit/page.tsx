@@ -7,6 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor";
@@ -61,16 +63,13 @@ export default function EditPostPage() {
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, { enabled: !!session?.user });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
+  const {
+    hasDashboardAccess,
+    hasPermission,
+    isLoading: permissionsLoading,
+  } = usePermissions();
 
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasApprovePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some((perm: string) => perm === "posts.approve");
+  const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
 
   const { data: post, isLoading: postLoading } = api.posts.getById.useQuery(
@@ -281,24 +280,17 @@ export default function EditPostPage() {
   }, [session, sessionLoading, router, postId]);
 
   useEffect(() => {
-    if (
-      !profileLoading &&
-      profile &&
-      !hasDashboardAccess &&
-      !hasRedirected.current
-    ) {
+    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
       hasRedirected.current = true;
       router.push("/");
     }
-  }, [profile, profileLoading, hasDashboardAccess, router]);
+  }, [permissionsLoading, hasDashboardAccess, router]);
 
   useEffect(() => {
     if (post && profile && !hasRedirected.current) {
       const hasEditPermission =
-        Array.isArray(userPermissions) &&
-        userPermissions.some(
-          (perm: string) => perm === "posts.edit" || perm === "posts.approve",
-        );
+        hasPermission("posts.edit" as PermissionKey) ||
+        hasPermission("posts.approve" as PermissionKey);
       const canEdit =
         post.createdById === session?.user?.id || hasEditPermission;
 
@@ -307,7 +299,7 @@ export default function EditPostPage() {
         router.push(`/dashboard/posts/${postId}`);
       }
     }
-  }, [post, profile, session, router, postId, userPermissions]);
+  }, [post, profile, session, router, postId, hasPermission]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -369,7 +361,7 @@ export default function EditPostPage() {
     });
   };
 
-  if (sessionLoading || profileLoading || postLoading) {
+  if (sessionLoading || profileLoading || permissionsLoading || postLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />

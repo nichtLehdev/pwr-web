@@ -150,11 +150,6 @@ export default function UserDetailPage() {
             </div>
           )}
         </div>
-        {user.districtRoleName && (
-          <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-            {user.districtRoleName}
-          </span>
-        )}
       </div>
 
       {/* User Info Sections */}
@@ -262,53 +257,6 @@ export default function UserDetailPage() {
             </dl>
           </section>
         )}
-
-        {/* Role & Permissions */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Rolle & Berechtigungen
-          </h2>
-          <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                Rolle
-              </dt>
-              <dd className="mt-1">
-                {user.districtRoleName ? (
-                  <span className="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                    {user.districtRoleName}
-                  </span>
-                ) : (
-                  <span className="text-gray-500 dark:text-gray-400">–</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                Angezeigte Rolle
-              </dt>
-              <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {user.districtRoleName ?? "-"}
-              </dd>
-            </div>
-            {user.bezirk && (
-              <div className="sm:col-span-2">
-                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                  Bezirk
-                </dt>
-                <dd className="dark:text-dark-text mt-1 text-gray-900">
-                  Bezirk {user.bezirk.number} – {user.bezirk.shortName}
-                  {user.districtRoleName && (
-                    <span className="text-gray-500">
-                      {" "}
-                      ({user.districtRoleName})
-                    </span>
-                  )}
-                </dd>
-              </div>
-            )}
-          </dl>
-        </section>
 
         {/* Memberships */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

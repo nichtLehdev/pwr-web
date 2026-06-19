@@ -8,6 +8,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import type { PermissionKey } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -39,19 +41,10 @@ export default function DashboardEnsemblesPage() {
       enabled: !!session?.user,
     });
 
-  const { data: userPermissions } = api.permissions.getMyPermissions.useQuery(
-    undefined,
-    { enabled: !!session?.user?.id },
-  );
-
-  const hasDashboardAccess =
-    Array.isArray(userPermissions) && userPermissions.length > 0;
-  const hasManagePermission =
-    Array.isArray(userPermissions) &&
-    userPermissions.some(
-      (perm: string) =>
-        perm === "ensembles.manage" || perm === "ensembles.delete",
-    );
+  const { hasDashboardAccess, hasAnyPermission } = usePermissions();
+  const hasManagePermission = hasAnyPermission([
+    "ensembles.delete" as PermissionKey,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

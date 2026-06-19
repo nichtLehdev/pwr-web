@@ -17,27 +17,9 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
+  Eye,
 } from "lucide-react";
-
-/**
- * Hardcoded list of usernames or emails allowed to manage permissions.
- */
-const ALLOWED_PERMISSION_MANAGERS: string[] = [
-  "lars.lehmann",
-  // Add more emails/usernames here as needed
-];
-
-function canManagePermissions(
-  email?: string | null,
-  username?: string | null,
-): boolean {
-  const identifier = email || username;
-  if (!identifier) return false;
-  const normalized = identifier.trim().toLowerCase();
-  return ALLOWED_PERMISSION_MANAGERS.some(
-    (allowed) => allowed.trim().toLowerCase() === normalized,
-  );
-}
+import { useToast } from "@/app/_components/ui/toast";
 
 type Tab = "roles" | "users";
 
@@ -46,14 +28,10 @@ export default function PermissionsPage() {
   const hasRedirected = useRef(false);
   const [activeTab, setActiveTab] = useState<Tab>("roles");
 
-  const { data: profile, isLoading: profileLoading } =
-    api.users.getMyProfile.useQuery(undefined, {
+  const { data: canManage, isLoading: canManageLoading } =
+    api.permissions.canManage.useQuery(undefined, {
       enabled: !!session?.user,
     });
-
-  const { data: canManage } = api.permissions.canManage.useQuery(undefined, {
-    enabled: !!session?.user,
-  });
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -63,21 +41,13 @@ export default function PermissionsPage() {
   }, [isPending, session]);
 
   useEffect(() => {
-    if (
-      !profileLoading &&
-      profile &&
-      !hasRedirected.current &&
-      canManage !== undefined
-    ) {
-      const allowed = canManagePermissions(profile.email, profile.username);
-      if (!allowed && !canManage) {
-        hasRedirected.current = true;
-        redirect("/dashboard");
-      }
+    if (!canManageLoading && canManage === false && !hasRedirected.current) {
+      hasRedirected.current = true;
+      redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManage]);
+  }, [canManage, canManageLoading]);
 
-  if (isPending || profileLoading || canManage === undefined) {
+  if (isPending || canManageLoading || canManage === undefined) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
         <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
@@ -85,8 +55,7 @@ export default function PermissionsPage() {
     );
   }
 
-  const allowed = canManagePermissions(profile?.email, profile?.username);
-  if (!session || !profile || (!allowed && !canManage)) {
+  if (!session || !canManage) {
     return null;
   }
 
@@ -99,7 +68,6 @@ export default function PermissionsPage() {
         { label: "Berechtigungen" },
       ]}
     >
-      {/* Tabs */}
       <div className="dark:border-dark-border mb-6 border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           <button
@@ -127,7 +95,6 @@ export default function PermissionsPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
       {activeTab === "roles" && <RolesTab />}
       {activeTab === "users" && <UsersTab />}
     </DashboardPage>
@@ -169,6 +136,14 @@ function RolesTab() {
     },
   });
 
+  const editingRole = roles?.find((r) => r.id === editingId);
+  const isEditingSystemRole = editingRole?.isSystem ?? false;
+
+  const isAdminRole = (roleName: string) => {
+    const name = roleName.toLowerCase();
+    return name === "administrator" || name === "admin";
+  };
+
   const handleEdit = (role: NonNullable<typeof roles>[0]) => {
     setEditingId(role.id);
     setFormData({
@@ -180,12 +155,19 @@ function RolesTab() {
 
   const handleSave = () => {
     if (editingId) {
-      updateMutation.mutate({
-        id: editingId,
-        name: formData.name,
-        description: formData.description || null,
-        permissionKeys: formData.permissionKeys,
-      });
+      if (isEditingSystemRole) {
+        updateMutation.mutate({
+          id: editingId,
+          permissionKeys: formData.permissionKeys,
+        });
+      } else {
+        updateMutation.mutate({
+          id: editingId,
+          name: formData.name,
+          description: formData.description || null,
+          permissionKeys: formData.permissionKeys,
+        });
+      }
     } else {
       createMutation.mutate(formData);
     }
@@ -227,7 +209,6 @@ function RolesTab() {
         </button>
       </div>
 
-      {/* Roles List */}
       {roles && roles.length > 0 ? (
         <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
           <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
@@ -266,8 +247,8 @@ function RolesTab() {
                     {role.permissions.length !== 1 ? "en" : ""}
                   </td>
                   <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                    {role.isSystem ? (
-                      <span className="text-gray-400">System</span>
+                    {role.isSystem && isAdminRole(role.name) ? (
+                      <span className="text-gray-400">Admin</span>
                     ) : editingId === role.id ? (
                       <div className="flex items-center justify-end gap-2">
                         <button
@@ -295,21 +276,30 @@ function RolesTab() {
                         <button
                           onClick={() => handleEdit(role)}
                           className="text-blue-600 hover:text-blue-900"
+                          title={
+                            role.isSystem
+                              ? "Berechtigungen bearbeiten"
+                              : "Bearbeiten"
+                          }
                         >
                           <Edit className="h-4 w-4" />
                         </button>
-                        <button
-                          onClick={() => {
-                            if (
-                              confirm(`Rolle "${role.name}" wirklich löschen?`)
-                            ) {
-                              deleteMutation.mutate({ id: role.id });
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {!role.isSystem && (
+                          <button
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Rolle "${role.name}" wirklich löschen?`,
+                                )
+                              ) {
+                                deleteMutation.mutate({ id: role.id });
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     )}
                   </td>
@@ -332,36 +322,56 @@ function RolesTab() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
             <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              {editingId ? "Rolle bearbeiten" : "Neue Rolle"}
+              {editingId
+                ? isEditingSystemRole
+                  ? "Berechtigungen bearbeiten"
+                  : "Rolle bearbeiten"
+                : "Neue Rolle"}
             </h3>
             <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="z.B. Content Manager"
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Beschreibung
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  rows={3}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
+              {(!isEditingSystemRole || !editingId) && (
+                <>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="z.B. Content Manager"
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Beschreibung
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={3}
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                    />
+                  </div>
+                </>
+              )}
+              {isEditingSystemRole && editingId && (
+                <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                  <p className="font-medium">Systemrolle: {formData.name}</p>
+                  <p className="mt-1 text-xs">
+                    Name und Beschreibung können nicht geändert werden.
+                    Berechtigungen können angepasst werden.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
                   Berechtigungen
@@ -410,7 +420,7 @@ function RolesTab() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!formData.name}
+                disabled={!editingId && !formData.name}
                 className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 Speichern
@@ -448,7 +458,6 @@ function UserSearchDropdown({
 
   const selectedUser = users?.find((u) => u.id === selectedUserId);
 
-  // Filter users based on search query
   const filteredUsers =
     users?.filter((user) => {
       if (!searchQuery.trim()) return true;
@@ -463,7 +472,6 @@ function UserSearchDropdown({
       );
     }) || [];
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -517,7 +525,6 @@ function UserSearchDropdown({
             }}
             onFocus={() => {
               setIsOpen(true);
-              // Clear search when focusing if user is selected, to allow new search
               if (selectedUser) {
                 setSearchQuery("");
               }
@@ -550,7 +557,6 @@ function UserSearchDropdown({
           )}
         </div>
 
-        {/* Dropdown */}
         {isOpen && (
           <div className="dark:bg-dark-surface dark:border-dark-border absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
             {filteredUsers.length > 0 ? (
@@ -592,6 +598,7 @@ function UserSearchDropdown({
 }
 
 function UsersTab() {
+  const toast = useToast();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [selectedPermissionKeys, setSelectedPermissionKeys] = useState<
@@ -607,20 +614,45 @@ function UsersTab() {
     { enabled: !!selectedUserId },
   );
 
+  // Effective permission preview
+  const { data: preview } =
+    api.permissions.previewEffectivePermissions.useQuery(
+      {
+        userId: selectedUserId!,
+        roleIds: selectedRoleIds,
+        directPermissions: selectedPermissionKeys.map((key) => ({
+          permissionKey: key,
+          granted: true,
+        })),
+      },
+      { enabled: !!selectedUserId },
+    );
+
   const assignRolesMutation = api.permissions.assignRolesToUser.useMutation({
     onSuccess: () => {
+      toast.success("Rollen erfolgreich zugewiesen");
       void utils.permissions.getUserPermissions.invalidate();
+      void utils.permissions.previewEffectivePermissions.invalidate();
+    },
+    onError: (error) => {
+      toast.error("Fehler beim Zuweisen der Rollen: " + error.message);
     },
   });
 
   const assignPermissionsMutation =
     api.permissions.assignPermissionsToUser.useMutation({
       onSuccess: () => {
+        toast.success("Berechtigungen erfolgreich zugewiesen");
         void utils.permissions.getUserPermissions.invalidate();
+        void utils.permissions.previewEffectivePermissions.invalidate();
+      },
+      onError: (error) => {
+        toast.error(
+          "Fehler beim Zuweisen der Berechtigungen: " + error.message,
+        );
       },
     });
 
-  // Derive initial values from userPermissions
   const derivedRoleIds = useMemo(
     () =>
       userPermissions
@@ -639,10 +671,9 @@ function UsersTab() {
     [userPermissions],
   );
 
-  // Sync derived values to state only when they change
   useEffect(() => {
     if (userPermissions) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing state from async query data is a valid pattern
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing state from async query data
       setSelectedRoleIds((prev) => {
         const newIds = derivedRoleIds;
         if (
@@ -692,7 +723,6 @@ function UsersTab() {
     });
   };
 
-  // Check if Administrator role is assigned (either in selectedRoleIds or in userPermissions)
   const hasAdminRole =
     roles?.some(
       (role) =>
@@ -702,14 +732,43 @@ function UsersTab() {
           userPermissions?.customRoles.some((ura) => ura.role.id === role.id)),
     ) ?? false;
 
+  // Group preview permissions by category
+  const groupedPreview = useMemo(() => {
+    if (!preview || !permissions) return null;
+    const groups: Record<
+      string,
+      Array<{
+        key: string;
+        name: string;
+        sources: string[];
+        granted: boolean;
+      }>
+    > = {};
+
+    for (const perm of permissions) {
+      const detail = preview.permissionSources[perm.key];
+      if (!detail) continue;
+      const cat = perm.category || "other";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push({
+        key: perm.key,
+        name: perm.name,
+        sources: detail.sources,
+        granted: detail.granted,
+      });
+    }
+
+    return groups;
+  }, [preview, permissions]);
+
   return (
     <div className="space-y-6">
       <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
         Benutzerzuweisungen
       </h2>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* User Selection */}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        {/* Left Column: User Selection + Assignment */}
         <div className="space-y-4">
           <div>
             <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
@@ -765,11 +824,9 @@ function UsersTab() {
 
                               if (e.target.checked) {
                                 if (isAdminRole) {
-                                  // When Admin is selected, clear all other roles and permissions
                                   setSelectedRoleIds([role.id]);
                                   setSelectedPermissionKeys([]);
                                 } else {
-                                  // When non-Admin role is selected, remove Admin if it exists
                                   const adminRole = roles?.find(
                                     (r) =>
                                       r.name.toLowerCase() ===
@@ -892,75 +949,67 @@ function UsersTab() {
           )}
         </div>
 
-        {/* Current Assignments */}
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 p-4">
-          <h3 className="dark:text-dark-text mb-3 text-sm font-semibold text-gray-900">
-            Aktuelle Zuweisungen
+        {/* Right Column: Effective Permission Preview */}
+        <div className="dark:bg-dark-surface dark:border-dark-border sticky top-4 max-h-[calc(100vh-6rem)] overflow-hidden rounded-lg border border-gray-200 p-4">
+          <h3 className="dark:text-dark-text mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <Eye className="h-4 w-4" />
+            Effektive Berechtigungen
           </h3>
-          {userPermissions ? (
-            <div className="space-y-4">
-              <div>
-                <h4 className="dark:text-dark-text mb-2 text-xs font-medium text-gray-700">
-                  Rollen
-                </h4>
-                {userPermissions.customRoles.length > 0 ? (
+          {selectedUserId && groupedPreview ? (
+            <div className="max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto">
+              {Object.entries(groupedPreview).map(([category, perms]) => (
+                <div key={category}>
+                  <h4 className="dark:text-dark-text mb-2 text-xs font-semibold tracking-wider text-gray-500 uppercase">
+                    {category}
+                  </h4>
                   <div className="space-y-1">
-                    {userPermissions.customRoles.map((ura) => (
+                    {perms.map((perm) => (
                       <div
-                        key={ura.id}
-                        className="dark:bg-dark-surface rounded bg-gray-50 px-3 py-2 text-sm"
-                      >
-                        {ura.role.name}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
-                    Keine Rollen zugewiesen
-                  </p>
-                )}
-              </div>
-              <div>
-                <h4 className="dark:text-dark-text mb-2 text-xs font-medium text-gray-700">
-                  Direkte Berechtigungen
-                </h4>
-                {userPermissions.userPermissions.length > 0 ? (
-                  <div className="space-y-1">
-                    {userPermissions.userPermissions.map((up) => (
-                      <div
-                        key={up.id}
-                        className={`dark:bg-dark-surface rounded px-3 py-2 text-sm ${
-                          up.granted
-                            ? "bg-green-50 text-green-700 dark:text-green-400"
-                            : "bg-red-50 text-red-700 dark:text-red-400"
+                        key={perm.key}
+                        className={`rounded px-3 py-2 text-sm ${
+                          perm.granted
+                            ? "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+                            : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"
                         }`}
                       >
-                        {(() => {
-                          const permDef = permissions?.find(
-                            (p) => p.key === up.permissionKey,
-                          );
-                          return permDef
-                            ? `${permDef.name} (${up.permissionKey})`
-                            : up.permissionKey;
-                        })()}
-                        {up.granted ? (
-                          <Check className="ml-2 inline h-4 w-4" />
-                        ) : (
-                          <X className="ml-2 inline h-4 w-4" />
-                        )}
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{perm.name}</span>
+                          {perm.granted ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <X className="h-3.5 w-3.5" />
+                          )}
+                        </div>
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          {perm.sources.map((source, i) => (
+                            <span
+                              key={i}
+                              className={`inline-block rounded px-1.5 py-0.5 text-xs ${
+                                perm.granted
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                                  : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                              }`}
+                            >
+                              {source}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
-                    Keine direkten Berechtigungen
-                  </p>
-                )}
-              </div>
+                </div>
+              ))}
+              {Object.keys(groupedPreview).length === 0 && (
+                <p className="dark:text-dark-muted text-sm text-gray-500">
+                  Keine Berechtigungen mit aktueller Auswahl
+                </p>
+              )}
             </div>
           ) : (
             <p className="dark:text-dark-muted text-sm text-gray-500">
-              Wählen Sie einen Benutzer aus
+              {selectedUserId
+                ? "Vorschau wird geladen..."
+                : "Wählen Sie einen Benutzer aus, um die effektiven Berechtigungen zu sehen"}
             </p>
           )}
         </div>

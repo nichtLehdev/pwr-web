@@ -2,12 +2,7 @@ import { z } from "zod";
 import { join } from "path";
 import { unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-  reviewerProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -370,7 +365,7 @@ export const mediaRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  review: reviewerProcedure
+  review: permissionProcedure(PERMISSIONS.MEDIA_APPROVE)
     .input(
       z.object({
         id: z.string(),

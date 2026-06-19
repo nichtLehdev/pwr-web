@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 
@@ -104,7 +104,7 @@ export const auswahlchoereRouter = createTRPCRouter({
       };
     }),
 
-  create: adminProcedure
+  create: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE)
     .input(
       z.object({
         name: z.string().min(1).max(255),
@@ -163,7 +163,7 @@ export const auswahlchoereRouter = createTRPCRouter({
       return auswahlChor;
     }),
 
-  update: adminProcedure
+  update: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE)
     .input(
       z.object({
         id: z.string(),

@@ -104,9 +104,27 @@ export const PERMISSIONS = {
 
   // Permissions Management (meta-permission)
   PERMISSIONS_MANAGE: "permissions.manage",
+
+  // Organization History
+  ORGANIZATION_MANAGE_HISTORY: "organization.manage_history",
+
+  // Bläserhefte
+  DOWNLOADS_MANAGE_BLAESERHEFTE: "downloads.manage_blaeserhefte",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+import { z } from "zod";
+
+export const VALID_PERMISSION_KEYS = new Set<string>(
+  Object.values(PERMISSIONS),
+);
+
+export const permissionKeySchema = z
+  .string()
+  .refine((key) => VALID_PERMISSION_KEYS.has(key), {
+    message: "Invalid permission key",
+  });
 
 /**
  * Permission definitions for seeding
@@ -515,5 +533,21 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Berechtigungen verwalten",
     description: "Berechtigung zum Verwalten von Berechtigungen und Rollen",
     category: "permissions",
+  },
+
+  // Organization History
+  {
+    key: PERMISSIONS.ORGANIZATION_MANAGE_HISTORY,
+    name: "Historie verwalten",
+    description: "Berechtigung zum Verwalten der Vereinschronik",
+    category: "organization",
+  },
+
+  // Bläserhefte
+  {
+    key: PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
+    name: "Bläserhefte verwalten",
+    description: "Berechtigung zum Verwalten von Bläserheften",
+    category: "downloads",
   },
 ];

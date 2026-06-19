@@ -1,12 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-  lpwProcedure,
-  reviewerProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import {
   CourseType,
   ContentStatus,
@@ -447,7 +441,7 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
-  getPendingReview: lpwProcedure
+  getPendingReview: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -1140,7 +1134,7 @@ export const coursesRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  approve: reviewerProcedure
+  approve: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         id: z.string(),
@@ -1186,7 +1180,7 @@ export const coursesRouter = createTRPCRouter({
       });
     }),
 
-  reject: reviewerProcedure
+  reject: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
     .input(
       z.object({
         id: z.string(),
