@@ -6,12 +6,27 @@ import {
   Select,
 } from "@/app/_components/ui";
 
-import { useState, useMemo, Suspense } from "react";
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  Suspense,
+  type CSSProperties,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import PublicPage from "@/app/_components/general/public-page";
 import { getDistrictColor } from "@/lib/district-color";
+import { geoToBezirkeMapPoint } from "@/lib/bezirke-map-geo";
+import {
+  BEZIRK_MAP_BOUNDS,
+  getBezirkZoomViewBox,
+  getVisibleViewBoxRect,
+} from "@/lib/bezirke-map-bounds";
+import { BEZIRK_REFERENCE_CITIES } from "@/lib/bezirke-reference-cities";
+import { wrapSvgText } from "@/lib/wrap-svg-text";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 import {
   ArrowLeftIcon,
@@ -29,14 +44,52 @@ function ChorFindenContent() {
   const searchParams = useSearchParams();
   const initialSearch = searchParams.get("search") ?? "";
   const [selectedBezirk, setSelectedBezirk] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [searchTerm, setSearchTerm] = useState<string>(initialSearch);
   const [hoveredBezirk, setHoveredBezirk] = useState<number | null>(null);
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
+  const [hoveredEnsembleId, setHoveredEnsembleId] = useState<string | null>(
+    null,
+  );
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [mapContainerSize, setMapContainerSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const CHOIRS_PER_PAGE = 6;
+
+  // Touch devices have no hover, so tapping a marker fires the same
+  // synthetic mouseenter+click sequence as a mouse click - there's no way
+  // to "preview" the tooltip before navigating. On coarse pointers, the
+  // first tap on a marker shows its tooltip instead of navigating; a
+  // second tap (or the link inside the tooltip) navigates. Read lazily so
+  // this only runs once and is safe during SSR (no window).
+  const [isCoarsePointer] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches,
+  );
+
+  // Only meaningful on mouse devices (no continuous pointer on touch).
+  // Used to position the district tooltip near the cursor instead of a
+  // fixed point, since districts are large/irregular shapes and jumping
+  // the tooltip to a generic center point on every hover looks jarring.
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const rect = container.getBoundingClientRect();
+      setMapContainerSize({ width: rect.width, height: rect.height });
+    };
+    updateSize();
+
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const ensembles = api.ensembles.getAll.useQuery({
     isActive: true,
@@ -50,6 +103,105 @@ function ChorFindenContent() {
     [ensembles.data],
   );
   const allBezirke = bezirke.data || [];
+
+  const ensembleMarkers = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+
+    return choirs
+      .filter(
+        (choir) =>
+          choir.location?.latitude != null &&
+          choir.location?.longitude != null &&
+          (!search ||
+            choir.location?.city?.toLowerCase().includes(search) ||
+            choir.location?.zipCode?.includes(search) ||
+            choir.name.toLowerCase().includes(search)),
+      )
+      .map((choir) => ({
+        id: choir.id,
+        name: choir.name,
+        bezirkNumber: choir.bezirk?.number,
+        ...geoToBezirkeMapPoint(
+          choir.location!.latitude!,
+          choir.location!.longitude!,
+        ),
+      }));
+  }, [choirs, searchTerm]);
+
+  const visibleEnsembleMarkers = useMemo(
+    () =>
+      selectedBezirk === null
+        ? ensembleMarkers
+        : ensembleMarkers.filter(
+            (marker) => marker.bezirkNumber === selectedBezirk,
+          ),
+    [ensembleMarkers, selectedBezirk],
+  );
+
+  // Reference cities for the zoomed-in view: two real, well-known cities
+  // within the selected Bezirk, used as visual orientation points.
+  const referenceCities = useMemo(() => {
+    if (selectedBezirk === null) return [];
+    const cities = BEZIRK_REFERENCE_CITIES[selectedBezirk];
+    if (!cities) return [];
+
+    return cities.map((city) => ({
+      city: city.name,
+      ...geoToBezirkeMapPoint(city.latitude, city.longitude),
+    }));
+  }, [selectedBezirk]);
+
+  // Marker/label sizes are proportional to the visible viewBox width so
+  // they look the same on screen whether a small or large district is
+  // zoomed into - a fixed SVG-unit size would look huge on a small
+  // district and tiny on a large one.
+  const visibleViewBoxRect = getVisibleViewBoxRect(selectedBezirk);
+  const visibleViewBoxWidth = visibleViewBoxRect.width;
+  const referenceCityMarkerSize = visibleViewBoxWidth * 0.03;
+  const referenceCityFontSize = visibleViewBoxWidth * 0.04;
+  const referenceCityLineHeight = referenceCityFontSize * 1.15;
+  const zoomedEnsembleRadius = visibleViewBoxWidth * 0.015;
+  const zoomedEnsembleHoverRadius = visibleViewBoxWidth * 0.022;
+
+  // Converts an SVG-space point into pixels relative to the map container,
+  // for positioning tooltips. Anchored to the data point itself (marker or
+  // district center) rather than the cursor, since touch devices don't
+  // have a meaningful cursor position to track via mousemove. Reads
+  // mapContainerSize (state, kept in sync via ResizeObserver) instead of
+  // the ref directly, since ref reads aren't allowed during render.
+  const svgPointToContainerPixels = (svgX: number, svgY: number) => {
+    if (!mapContainerSize) return { x: 0, y: 0 };
+    return {
+      x:
+        ((svgX - visibleViewBoxRect.x) / visibleViewBoxRect.width) *
+        mapContainerSize.width,
+      y:
+        ((svgY - visibleViewBoxRect.y) / visibleViewBoxRect.height) *
+        mapContainerSize.height,
+    };
+  };
+
+  // Inverse of svgPointToContainerPixels - used to size an invisible touch
+  // target in real screen pixels regardless of zoom level, since the
+  // visible marker (a few SVG units) can render as just 2-3 screen pixels
+  // at full map zoom, far below a tappable size.
+  const pixelsToSvgUnits = (px: number) => {
+    if (!mapContainerSize || mapContainerSize.width === 0) return 0;
+    return (px * visibleViewBoxWidth) / mapContainerSize.width;
+  };
+  const ensembleTouchHitRadius = Math.max(
+    pixelsToSvgUnits(22),
+    zoomedEnsembleRadius,
+  );
+
+  const bezirkPathStyle = (bezirkNumber: number) => ({
+    opacity:
+      selectedBezirk !== null && selectedBezirk !== bezirkNumber ? 0.1 : 1,
+    pointerEvents: (selectedBezirk !== null && selectedBezirk !== bezirkNumber
+      ? "none"
+      : "auto") as CSSProperties["pointerEvents"],
+    transition: "opacity 0.3s ease",
+  });
 
   const filteredChoirs = useMemo(() => {
     let filtered = choirs;
@@ -84,6 +236,14 @@ function ChorFindenContent() {
     } else {
       setSelectedBezirk(bezirkNumber);
     }
+    setCurrentPage(1);
+  };
+
+  const handleMapBackgroundClick = () => {
+    setHoveredBezirk(null);
+    setHoveredEnsembleId(null);
+    if (selectedBezirk === null) return;
+    setSelectedBezirk(null);
     setCurrentPage(1);
   };
 
@@ -266,18 +426,55 @@ function ChorFindenContent() {
               </div>
             </Alert>
 
+            <div className="mb-8 inline-flex rounded-lg border border-gray-300 p-1 dark:border-gray-600">
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                  viewMode === "list"
+                    ? "bg-primary text-white"
+                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                }`}
+              >
+                Liste
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("map")}
+                className={`rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+                  viewMode === "map"
+                    ? "bg-primary text-white"
+                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                }`}
+              >
+                Karte
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Left Column: Filters */}
-              <div className="space-y-6 lg:col-span-1">
+              <div
+                className={
+                  viewMode === "map"
+                    ? "space-y-6 lg:col-span-3"
+                    : "space-y-6 lg:col-span-1"
+                }
+              >
                 {/* Traditional Filters */}
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Filter
                   </h3>
 
-                  <div className="space-y-4">
+                  <div
+                    className={
+                      viewMode === "map"
+                        ? "flex flex-wrap items-end gap-4"
+                        : "space-y-4"
+                    }
+                  >
                     {/* Bezirk-Filter */}
-                    <div>
+                    <div className={viewMode === "map" ? "w-56" : undefined}>
                       <label
                         htmlFor="district"
                         className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
@@ -310,7 +507,7 @@ function ChorFindenContent() {
                     </div>
 
                     {/* Stadt/PLZ-Suche */}
-                    <div>
+                    <div className={viewMode === "map" ? "w-64" : undefined}>
                       <label
                         htmlFor="search"
                         className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
@@ -331,7 +528,13 @@ function ChorFindenContent() {
                     </div>
 
                     {/* Results count */}
-                    <div className="flex items-center justify-between pt-2">
+                    <div
+                      className={
+                        viewMode === "map"
+                          ? "flex items-center gap-3 pb-2"
+                          : "flex items-center justify-between pt-2"
+                      }
+                    >
                       <div className="text-sm text-gray-600 dark:text-gray-400">
                         <span className="font-semibold">
                           {filteredChoirs.length}
@@ -350,18 +553,23 @@ function ChorFindenContent() {
                     </div>
 
                     {/* Pagination info */}
-                    {filteredChoirs.length > CHOIRS_PER_PAGE && (
-                      <div className="dark:border-dark-border border-t pt-2 text-sm text-gray-600 dark:text-gray-400">
-                        Zeige {startIndex + 1} bis{" "}
-                        {Math.min(endIndex, filteredChoirs.length)} von{" "}
-                        {filteredChoirs.length}
-                      </div>
-                    )}
+                    {viewMode === "list" &&
+                      filteredChoirs.length > CHOIRS_PER_PAGE && (
+                        <div className="dark:border-dark-border w-full border-t pt-2 text-sm text-gray-600 dark:text-gray-400">
+                          Zeige {startIndex + 1} bis{" "}
+                          {Math.min(endIndex, filteredChoirs.length)} von{" "}
+                          {filteredChoirs.length}
+                        </div>
+                      )}
                   </div>
                 </div>
 
                 {/* Map placeholder - you can add your interactive map here */}
-                <div className="dark:bg-dark-surface dark:shadow-dark-border hidden rounded-lg bg-white p-6 shadow-md lg:block">
+                <div
+                  className={`dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md ${
+                    viewMode === "map" ? "block" : "hidden lg:block"
+                  }`}
+                >
                   <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                     Bezirk auf Karte wählen
                   </h3>
@@ -370,8 +578,11 @@ function ChorFindenContent() {
                   </p>
                   {/* Add your SVG map here */}
                   <div
+                    ref={mapContainerRef}
                     className="relative"
+                    onClick={handleMapBackgroundClick}
                     onMouseMove={(e) => {
+                      if (isCoarsePointer) return;
                       const rect = e.currentTarget.getBoundingClientRect();
                       setMousePosition({
                         x: e.clientX - rect.left,
@@ -382,12 +593,19 @@ function ChorFindenContent() {
                     <svg
                       width="100%"
                       height="100%"
-                      viewBox="0 0 1523 2428"
+                      viewBox={
+                        selectedBezirk !== null
+                          ? getBezirkZoomViewBox(selectedBezirk)
+                          : "0 0 1523 2428"
+                      }
                       fillRule="evenodd"
                       clipRule="evenodd"
                       strokeLinejoin="round"
                       strokeMiterlimit={2}
-                      className="h-96"
+                      className={
+                        viewMode === "map" ? "h-[min(640px,70vh)]" : "h-96"
+                      }
+                      style={{ transition: "all 0.3s ease" }}
                     >
                       <g id="Base-Layer">
                         <path
@@ -423,9 +641,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-13 bezirk-path"
+                        style={bezirkPathStyle(13)}
                         onClick={() => handleBezirkClick(13)}
-                        onMouseEnter={() => setHoveredBezirk(13)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(13)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-12"
@@ -435,9 +658,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-12 bezirk-path"
+                        style={bezirkPathStyle(12)}
                         onClick={() => handleBezirkClick(12)}
-                        onMouseEnter={() => setHoveredBezirk(12)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(12)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-11"
@@ -447,19 +675,29 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-11 bezirk-path"
+                        style={bezirkPathStyle(11)}
                         onClick={() => handleBezirkClick(11)}
-                        onMouseEnter={() => setHoveredBezirk(11)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(11)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <g
                         id="Bezirk-10"
                         className="text-district-10 bezirk-path"
+                        style={bezirkPathStyle(10)}
                         fill="currentColor"
                         fillRule="nonzero"
                         stroke="currentColor"
                         strokeWidth={2}
-                        onMouseEnter={() => setHoveredBezirk(10)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(10)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                         onClick={() => handleBezirkClick(10)}
                       >
                         <path d="M1479.387,1079.239c-7.498,4.452 -14.059,16.636 -17.339,32.336c-4.686,22.494 -4.218,26.712 5.155,45.223c8.201,16.168 8.67,16.402 15.699,14.996c16.402,-3.515 27.884,-23.9 28.352,-50.612c0.234,-12.184 0.703,-13.825 5.858,-14.996c4.686,-1.172 5.155,-2.343 3.983,-8.904c-2.109,-11.247 -14.059,-20.151 -27.181,-20.151c-5.858,0 -12.419,0.937 -14.528,2.109Z" />
@@ -474,9 +712,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-9 bezirk-path"
+                        style={bezirkPathStyle(9)}
                         onClick={() => handleBezirkClick(9)}
-                        onMouseEnter={() => setHoveredBezirk(9)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(9)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-8"
@@ -486,9 +729,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-8 bezirk-path"
+                        style={bezirkPathStyle(8)}
                         onClick={() => handleBezirkClick(8)}
-                        onMouseEnter={() => setHoveredBezirk(8)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(8)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-7"
@@ -498,9 +746,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-7 bezirk-path"
+                        style={bezirkPathStyle(7)}
                         onClick={() => handleBezirkClick(7)}
-                        onMouseEnter={() => setHoveredBezirk(7)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(7)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-6"
@@ -510,9 +763,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-6 bezirk-path"
+                        style={bezirkPathStyle(6)}
                         onClick={() => handleBezirkClick(6)}
-                        onMouseEnter={() => setHoveredBezirk(6)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(6)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-5"
@@ -522,9 +780,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-5 bezirk-path"
+                        style={bezirkPathStyle(5)}
                         onClick={() => handleBezirkClick(5)}
-                        onMouseEnter={() => setHoveredBezirk(5)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(5)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-4"
@@ -534,9 +797,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-4 bezirk-path"
+                        style={bezirkPathStyle(4)}
                         onClick={() => handleBezirkClick(4)}
-                        onMouseEnter={() => setHoveredBezirk(4)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(4)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-3"
@@ -546,9 +814,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-3 bezirk-path"
+                        style={bezirkPathStyle(3)}
                         onClick={() => handleBezirkClick(3)}
-                        onMouseEnter={() => setHoveredBezirk(3)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(3)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-2"
@@ -558,9 +831,14 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-2 bezirk-path"
+                        style={bezirkPathStyle(2)}
                         onClick={() => handleBezirkClick(2)}
-                        onMouseEnter={() => setHoveredBezirk(2)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(2)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
                       <path
                         id="Bezirk-1"
@@ -570,198 +848,407 @@ function ChorFindenContent() {
                         stroke="currentColor"
                         strokeWidth={2}
                         className="text-district-1 bezirk-path"
+                        style={bezirkPathStyle(1)}
                         onClick={() => handleBezirkClick(1)}
-                        onMouseEnter={() => setHoveredBezirk(1)}
-                        onMouseLeave={() => setHoveredBezirk(null)}
+                        onMouseEnter={() =>
+                          !isCoarsePointer && setHoveredBezirk(1)
+                        }
+                        onMouseLeave={() =>
+                          !isCoarsePointer && setHoveredBezirk(null)
+                        }
                       />
+                      <g id="Reference-Cities">
+                        {referenceCities.map((ref) => {
+                          // Flip the label to whichever side has more room -
+                          // a marker sitting near the zoomed viewBox's edge
+                          // (e.g. Königswinter near Bonn's eastern border)
+                          // can otherwise leave almost no space on its
+                          // default (right) side, forcing ugly
+                          // character-by-character wrapping.
+                          const spaceRight =
+                            visibleViewBoxRect.x +
+                            visibleViewBoxRect.width -
+                            (ref.x + referenceCityMarkerSize) -
+                            referenceCityMarkerSize;
+                          const spaceLeft =
+                            ref.x -
+                            referenceCityMarkerSize -
+                            visibleViewBoxRect.x -
+                            referenceCityMarkerSize;
+                          const useLeftSide = spaceLeft > spaceRight;
+                          const labelX = useLeftSide
+                            ? ref.x - referenceCityMarkerSize
+                            : ref.x + referenceCityMarkerSize;
+                          const availableWidth = useLeftSide
+                            ? spaceLeft
+                            : spaceRight;
+                          const lines = wrapSvgText(
+                            ref.city,
+                            availableWidth,
+                            referenceCityFontSize,
+                          );
+
+                          return (
+                            <g key={ref.city} className="pointer-events-none">
+                              <rect
+                                x={ref.x - referenceCityMarkerSize / 2}
+                                y={ref.y - referenceCityMarkerSize / 2}
+                                width={referenceCityMarkerSize}
+                                height={referenceCityMarkerSize}
+                                fill="#6b7280"
+                                stroke="#fff"
+                                strokeWidth={referenceCityMarkerSize * 0.2}
+                              />
+                              <text
+                                x={labelX}
+                                y={ref.y + referenceCityFontSize * 0.35}
+                                textAnchor={useLeftSide ? "end" : "start"}
+                                fontSize={referenceCityFontSize}
+                                fontWeight={600}
+                                fill="#374151"
+                                stroke="#fff"
+                                strokeWidth={referenceCityFontSize * 0.18}
+                                paintOrder="stroke"
+                              >
+                                {lines.map((line, index) => (
+                                  <tspan
+                                    key={line}
+                                    x={labelX}
+                                    dy={
+                                      index === 0 ? 0 : referenceCityLineHeight
+                                    }
+                                  >
+                                    {line}
+                                  </tspan>
+                                ))}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </g>
+                      <g id="Ensemble-Markers">
+                        {visibleEnsembleMarkers.map((marker) =>
+                          selectedBezirk === null ? (
+                            // Zoomed out: markers are too small/dense to
+                            // usefully click or hover, so render them as
+                            // plain, non-interactive dots.
+                            <circle
+                              key={marker.id}
+                              cx={marker.x}
+                              cy={marker.y}
+                              r={7}
+                              fill={getDistrictColor(marker.bezirkNumber)}
+                              stroke="#fff"
+                              strokeWidth={2}
+                            />
+                          ) : (
+                            <a
+                              key={marker.id}
+                              href={`/ensembles/${marker.id}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (
+                                  isCoarsePointer &&
+                                  hoveredEnsembleId !== marker.id
+                                ) {
+                                  e.preventDefault();
+                                  setHoveredEnsembleId(marker.id);
+                                }
+                              }}
+                              onMouseEnter={() =>
+                                !isCoarsePointer &&
+                                setHoveredEnsembleId(marker.id)
+                              }
+                              onMouseLeave={() =>
+                                !isCoarsePointer && setHoveredEnsembleId(null)
+                              }
+                            >
+                              {/* Invisible, generously-sized hit target -
+                                  the visible circle below can render as
+                                  just a couple of screen pixels at full
+                                  map zoom, far too small to reliably tap. */}
+                              <circle
+                                cx={marker.x}
+                                cy={marker.y}
+                                r={ensembleTouchHitRadius}
+                                fill="transparent"
+                                className="cursor-pointer"
+                              />
+                              <circle
+                                cx={marker.x}
+                                cy={marker.y}
+                                r={
+                                  hoveredEnsembleId === marker.id
+                                    ? zoomedEnsembleHoverRadius
+                                    : zoomedEnsembleRadius
+                                }
+                                fill={getDistrictColor(marker.bezirkNumber)}
+                                stroke="#fff"
+                                strokeWidth={2}
+                                className="pointer-events-none transition-[r]"
+                              />
+                            </a>
+                          ),
+                        )}
+                      </g>
                     </svg>
-                    {/* Tooltip */}
-                    {hoveredBezirk && (
-                      <div
-                        className="pointer-events-none absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg"
-                        style={{
-                          left: `${mousePosition.x + 15}px`,
-                          top: `${mousePosition.y + 15}px`,
-                          transform: "translate(0, -50%)",
-                        }}
-                      >
-                        <p className="font-semibold">Bezirk {hoveredBezirk}</p>
-                        <p className="text-xs text-gray-300">
-                          {allBezirke.find((b) => b.number === hoveredBezirk)
-                            ?.name || ""}
-                        </p>
-                      </div>
-                    )}
+                    {/* Tooltip - on touch, anchored to the district's
+                        bounding-box center (no continuous pointer to
+                        track); on mouse, follows the cursor like a normal
+                        hover tooltip, since districts are large/irregular
+                        shapes and jumping to a fixed center on every hover
+                        looks jarring. */}
+                    {hoveredBezirk &&
+                      !hoveredEnsembleId &&
+                      (() => {
+                        let pos: { x: number; y: number };
+                        if (isCoarsePointer) {
+                          const bounds = BEZIRK_MAP_BOUNDS[hoveredBezirk];
+                          if (!bounds) return null;
+                          pos = svgPointToContainerPixels(
+                            (bounds.minX + bounds.maxX) / 2,
+                            (bounds.minY + bounds.maxY) / 2,
+                          );
+                        } else {
+                          pos = {
+                            x: mousePosition.x + 15,
+                            y: mousePosition.y + 15,
+                          };
+                        }
+                        return (
+                          <div
+                            className="pointer-events-none absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg"
+                            style={{
+                              left: `${pos.x}px`,
+                              top: `${pos.y}px`,
+                              transform: isCoarsePointer
+                                ? "translate(-50%, -100%)"
+                                : "translate(0, -50%)",
+                            }}
+                          >
+                            <p className="font-semibold">
+                              Bezirk {hoveredBezirk}
+                            </p>
+                            <p className="text-xs text-gray-300">
+                              {allBezirke.find(
+                                (b) => b.number === hoveredBezirk,
+                              )?.name || ""}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    {hoveredEnsembleId &&
+                      (() => {
+                        const marker = ensembleMarkers.find(
+                          (m) => m.id === hoveredEnsembleId,
+                        );
+                        if (!marker) return null;
+                        const pos = svgPointToContainerPixels(
+                          marker.x,
+                          marker.y,
+                        );
+                        return (
+                          <div
+                            className={`absolute z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg ${
+                              isCoarsePointer ? "" : "pointer-events-none"
+                            }`}
+                            style={{
+                              left: `${pos.x}px`,
+                              top: `${pos.y}px`,
+                              transform: "translate(-50%, -100%)",
+                            }}
+                          >
+                            <p className="font-semibold">{marker.name}</p>
+                            {/* Only needed on touch, where the marker itself
+                                is too small to reliably re-tap; on desktop
+                                the marker is already directly clickable. */}
+                            {isCoarsePointer && (
+                              <Link
+                                href={`/ensembles/${marker.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-primary-light mt-1 inline-block underline"
+                              >
+                                Chorseite öffnen
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })()}
                   </div>
                 </div>
               </div>
 
               {/* Right Column: Choir List */}
-              <div className="lg:col-span-2">
-                {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
+              {viewMode === "list" && (
+                <div className="lg:col-span-2">
+                  {ensembles.isLoading && <LoadingSpinner text="Lade Chöre" />}
 
-                {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                      {paginatedChoirs.map((choir) => (
-                        <div
-                          key={choir.id}
-                          className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-                        >
-                          <div className="mb-4 flex items-start justify-between">
-                            <div className="flex-1">
-                              <Link
-                                href={`/ensembles/${choir.id}`}
-                                className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
-                              >
-                                {choir.name}
-                              </Link>
-                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                                <div className="flex items-center gap-1">
-                                  <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                                  {choir.location?.city},{" "}
-                                  {choir.location?.zipCode}
+                  {!ensembles.isLoading && paginatedChoirs.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {paginatedChoirs.map((choir) => (
+                          <div
+                            key={choir.id}
+                            className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+                          >
+                            <div className="mb-4 flex items-start justify-between">
+                              <div className="flex-1">
+                                <Link
+                                  href={`/ensembles/${choir.id}`}
+                                  className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
+                                >
+                                  {choir.name}
+                                </Link>
+                                <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                  <div className="flex items-center gap-1">
+                                    <MapPinIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                                    {choir.location?.city},{" "}
+                                    {choir.location?.zipCode}
+                                  </div>
+                                  <span className="text-gray-400">•</span>
+                                  {choir.bezirk && (
+                                    <span
+                                      className="rounded px-2 py-1 font-semibold"
+                                      style={{
+                                        backgroundColor: `${getDistrictColor(
+                                          choir.bezirk.number,
+                                        )}20`,
+                                        color: getDistrictColor(
+                                          choir.bezirk.number,
+                                        ),
+                                      }}
+                                    >
+                                      Bezirk {choir.bezirk.number}
+                                    </span>
+                                  )}
                                 </div>
-                                <span className="text-gray-400">•</span>
-                                {choir.bezirk && (
-                                  <span
-                                    className="rounded px-2 py-1 font-semibold"
-                                    style={{
-                                      backgroundColor: `${getDistrictColor(
-                                        choir.bezirk.number,
-                                      )}20`,
-                                      color: getDistrictColor(
-                                        choir.bezirk.number,
-                                      ),
-                                    }}
-                                  >
-                                    Bezirk {choir.bezirk.number}
-                                  </span>
-                                )}
                               </div>
                             </div>
-                          </div>
 
-                          <div className="mb-4 space-y-2">
-                            {((choir.rehearsalSchedules &&
-                              choir.rehearsalSchedules.length > 0) ||
-                              (choir.rehearsalDay && choir.rehearsalTime)) && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <ClockIcon
-                                  className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                  />
-                                </ClockIcon>
-                                <span>
-                                  Proben:{" "}
-                                  {choir.rehearsalSchedules &&
-                                  choir.rehearsalSchedules.length > 0
-                                    ? choir.rehearsalSchedules
-                                        .map((s) => `${s.day} ${s.time}`)
-                                        .join(", ")
-                                    : choir.rehearsalDay && choir.rehearsalTime
-                                      ? `${choir.rehearsalDay} um ${choir.rehearsalTime} Uhr`
-                                      : ""}
-                                </span>
-                              </div>
-                            )}
-                            {choir.location && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                <span>
-                                  {choir.location.street},{" "}
-                                  {choir.location.zipCode} {choir.location.city}
-                                </span>
-                              </div>
-                            )}
-                            {(choir.representativePhone ||
-                              choir.conductorPhone) && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                <span>
-                                  Telefon:{" "}
-                                  {choir.representativePhone ??
-                                    choir.conductorPhone}
-                                </span>
-                              </div>
-                            )}
-                            {choir.contactWebsite && (
-                              <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <GlobeIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                                <Link
-                                  href={choir.contactWebsite}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:text-primary-dark text-sm font-semibold"
-                                >
-                                  Webseite
-                                </Link>
-                              </div>
-                            )}
-                          </div>
+                            <div className="mb-4 space-y-2">
+                              {((choir.rehearsalSchedules &&
+                                choir.rehearsalSchedules.length > 0) ||
+                                (choir.rehearsalDay &&
+                                  choir.rehearsalTime)) && (
+                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                  <ClockIcon
+                                    className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                  </ClockIcon>
+                                  <span>
+                                    Proben:{" "}
+                                    {choir.rehearsalSchedules &&
+                                    choir.rehearsalSchedules.length > 0
+                                      ? choir.rehearsalSchedules
+                                          .map((s) => `${s.day} ${s.time}`)
+                                          .join(", ")
+                                      : choir.rehearsalDay &&
+                                          choir.rehearsalTime
+                                        ? `${choir.rehearsalDay} um ${choir.rehearsalTime} Uhr`
+                                        : ""}
+                                  </span>
+                                </div>
+                              )}
+                              {choir.location && (
+                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                  <MapPinIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                                  <span>
+                                    {choir.location.street},{" "}
+                                    {choir.location.zipCode}{" "}
+                                    {choir.location.city}
+                                  </span>
+                                </div>
+                              )}
+                              {(choir.representativePhone ||
+                                choir.conductorPhone) && (
+                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                  <PhoneIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                                  <span>
+                                    Telefon:{" "}
+                                    {choir.representativePhone ??
+                                      choir.conductorPhone}
+                                  </span>
+                                </div>
+                              )}
+                              {choir.contactWebsite && (
+                                <div className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                  <GlobeIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                                  <Link
+                                    href={choir.contactWebsite}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary hover:text-primary-dark text-sm font-semibold"
+                                  >
+                                    Webseite
+                                  </Link>
+                                </div>
+                              )}
+                            </div>
 
-                          <Link
-                            href={`mailto:${
-                              choir.representative?.email ??
-                              choir.representativeEmail ??
-                              choir.conductorEmail ??
-                              ""
-                            }`}
-                            className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
+                            <Link
+                              href={`mailto:${
+                                choir.representative?.email ??
+                                choir.representativeEmail ??
+                                choir.conductorEmail ??
+                                ""
+                              }`}
+                              className="text-primary hover:text-primary-dark inline-flex items-center text-sm font-semibold"
+                            >
+                              <MailIcon className="mr-2 h-4 w-4" />
+                              Kontakt aufnehmen
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Pagination */}
+                      {/* eslint-disable-next-line react-hooks/static-components */}
+                      <Pagination
+                        totalPages={totalPages}
+                        currentPage={currentPage}
+                        setCurrentPage={setCurrentPage}
+                      />
+                    </>
+                  ) : (
+                    !ensembles.isLoading && (
+                      <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
+                        <SearchIcon className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
+                        <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+                          Keine Chöre gefunden
+                        </h3>
+                        <p className="mb-6 text-gray-600 dark:text-gray-400">
+                          {hasActiveFilters
+                            ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
+                            : "Es konnten keine Chöre geladen werden."}
+                        </p>
+                        {hasActiveFilters && (
+                          <button
+                            onClick={clearFilters}
+                            className="border-primary text-primary hover:bg-primary mr-2 mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
                           >
-                            <MailIcon className="mr-2 h-4 w-4" />
-                            Kontakt aufnehmen
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Pagination */}
-                    {/* eslint-disable-next-line react-hooks/static-components */}
-                    <Pagination
-                      totalPages={totalPages}
-                      currentPage={currentPage}
-                      setCurrentPage={setCurrentPage}
-                    />
-                  </>
-                ) : (
-                  !ensembles.isLoading && (
-                    <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-12 text-center shadow-md">
-                      <SearchIcon className="mx-auto mb-4 h-16 w-16 text-gray-300 dark:text-gray-600" />
-                      <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                        Keine Chöre gefunden
-                      </h3>
-                      <p className="mb-6 text-gray-600 dark:text-gray-400">
-                        {hasActiveFilters
-                          ? "Probiere andere Suchkriterien oder kontaktiere uns für persönliche Beratung."
-                          : "Es konnten keine Chöre geladen werden."}
-                      </p>
-                      {hasActiveFilters && (
-                        <button
-                          onClick={clearFilters}
-                          className="border-primary text-primary hover:bg-primary mr-2 mb-4 inline-flex items-center rounded-lg border-2 px-6 py-3 font-semibold transition-colors hover:text-white"
+                            Filter zurücksetzen
+                          </button>
+                        )}
+                        <Link
+                          href="/kontakt"
+                          className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
                         >
-                          Filter zurücksetzen
-                        </button>
-                      )}
-                      <Link
-                        href="/kontakt"
-                        className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                      >
-                        Kontakt aufnehmen
-                      </Link>
-                    </div>
-                  )
-                )}
-              </div>
+                          Kontakt aufnehmen
+                        </Link>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
