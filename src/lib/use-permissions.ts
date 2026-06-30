@@ -1,12 +1,16 @@
 "use client";
 
 import { api } from "@/trpc/react";
+import { useSession } from "@/lib/auth";
 import type { PermissionKey } from "@/lib/permissions";
 
 export function usePermissions() {
+  const { data: session } = useSession();
+
   const { data: userPermissions, isLoading } =
     api.permissions.getMyPermissions.useQuery(undefined, {
       staleTime: 5 * 60 * 1000,
+      enabled: !!session?.user,
     });
 
   const permissions = new Set<PermissionKey>(
