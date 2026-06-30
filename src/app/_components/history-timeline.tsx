@@ -89,7 +89,7 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-200 overflow-x-auto pb-4"
+          className="scrollbar-thumb-primary scrollbar-thin scrollbar-track-gray-200 overflow-x-auto pb-4"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#faa619 #e5e7eb",
