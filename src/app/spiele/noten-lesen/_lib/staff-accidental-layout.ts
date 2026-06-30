@@ -17,8 +17,7 @@ export function randomAdvancedKeySpec(): AdvancedKeySpec {
 }
 
 export type StaffAccidentalLayout =
-  | { kind: "explicit" }
-  | { kind: "keySignature"; keySpec: AdvancedKeySpec };
+  { kind: "explicit" } | { kind: "keySignature"; keySpec: AdvancedKeySpec };
 
 export const STAFF_LAYOUT_EXPLICIT: StaffAccidentalLayout = {
   kind: "explicit",

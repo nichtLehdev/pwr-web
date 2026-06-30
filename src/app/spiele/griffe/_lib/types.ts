@@ -3,10 +3,7 @@ import type { GameModeId } from "../../noten-lesen/_lib/types";
 export type { GameModeId };
 
 export type GriffeInstrumentId =
-  | "trumpet_c"
-  | "trumpet_bb"
-  | "trombone"
-  | "tuba";
+  "trumpet_c" | "trumpet_bb" | "trombone" | "tuba";
 
 export type GriffeDifficultyId = "beginner" | "intermediate" | "advanced";
 
