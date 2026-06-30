@@ -208,11 +208,9 @@ export async function POST(
             const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
 
             const legacyContactEmail = ensembleData.contactEmail as
-              | string
-              | undefined;
+              string | undefined;
             const legacyContactPhone = ensembleData.contactPhone as
-              | string
-              | undefined;
+              string | undefined;
 
             return await db.ensemble.create({
               data: {
