@@ -71,8 +71,7 @@ export type CalendarCourseInternal = CalendarCourseItem & {
 };
 
 export type CalendarItemInternal =
-  | CalendarEventInternal
-  | CalendarCourseInternal;
+  CalendarEventInternal | CalendarCourseInternal;
 
 interface DesktopCalendarViewProps {
   items: CalendarItem[];

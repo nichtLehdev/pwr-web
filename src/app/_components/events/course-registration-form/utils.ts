@@ -213,8 +213,7 @@ export function validateStep(
           for (const field of course.customFields) {
             if (field.isRequired) {
               const customFields = p.customFields as
-                | Record<string, unknown>
-                | undefined;
+                Record<string, unknown> | undefined;
               const fieldValue = customFields?.[field.fieldName];
               if (isRequiredCustomFieldEmpty(field.fieldType, fieldValue)) {
                 return false;
@@ -230,8 +229,7 @@ export function validateStep(
         courseRequiresPaymentMethodChoice(course)
       ) {
         const pm = registrationData.paymentMethod as
-          | CoursePaymentMethod
-          | undefined;
+          CoursePaymentMethod | undefined;
         if (pm !== "CASH" && pm !== "INVOICE") return false;
       }
       return termsAccepted === true;

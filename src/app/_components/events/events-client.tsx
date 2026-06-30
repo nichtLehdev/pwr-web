@@ -164,9 +164,10 @@ export default function EventsClient({
   const allItems = useMemo<CalendarItem[]>(
     () => [
       ...initialEvents.map((e): CalendarEventItem => ({ ...e, type: "event" })),
-      ...initialCourses.map(
-        (c): CalendarCourseItem => ({ ...c, type: "course" }),
-      ),
+      ...initialCourses.map((c): CalendarCourseItem => ({
+        ...c,
+        type: "course",
+      })),
     ],
     [initialEvents, initialCourses],
   );

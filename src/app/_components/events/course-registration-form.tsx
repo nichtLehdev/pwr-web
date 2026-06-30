@@ -187,8 +187,7 @@ export default function CourseRegistrationForm({
           for (const field of course.customFields) {
             if (field.isRequired) {
               const customFields = p.customFields as
-                | Record<string, any>
-                | undefined;
+                Record<string, any> | undefined;
               const fieldValue = customFields?.[field.fieldName];
               if (isRequiredCustomFieldEmpty(field.fieldType, fieldValue)) {
                 fieldErrors.push(field.fieldName);
