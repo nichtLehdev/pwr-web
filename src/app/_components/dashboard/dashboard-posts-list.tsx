@@ -268,10 +268,7 @@ export default function DashboardPostsList({}: DashboardPostsListProps) {
           onChange={(e) => {
             setSortBy(
               e.target.value as
-                | "publishedAt"
-                | "title"
-                | "createdAt"
-                | "status",
+                "publishedAt" | "title" | "createdAt" | "status",
             );
             setPage(1);
           }}

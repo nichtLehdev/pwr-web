@@ -3,11 +3,7 @@
  * (safe for client components / browser bundles).
  */
 export type CourseCustomFieldTypeName =
-  | "TEXT"
-  | "NUMBER"
-  | "SELECT"
-  | "CHECKBOX"
-  | "TEXTAREA";
+  "TEXT" | "NUMBER" | "SELECT" | "CHECKBOX" | "TEXTAREA";
 
 /** Parsed option values for SELECT fields (comma string or JSON array from Prisma Json). */
 export function parseSelectOptionValues(options: unknown): string[] {
