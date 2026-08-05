@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
+import { useToast } from "@/app/_components/ui/toast";
 import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
   CourseCollaboratorRole,
@@ -125,6 +126,8 @@ export default function CourseParticipantsPage() {
 
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<null | "paid" | "confirm">(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -170,6 +173,57 @@ export default function CourseParticipantsPage() {
       { courseId, all: true },
       { enabled: !!courseId && !!session?.user },
     );
+
+  const toast = useToast();
+  const utils = api.useUtils();
+  const bulkPaymentMutation =
+    api.registrations.updatePaymentStatus.useMutation();
+  const bulkStatusMutation = api.registrations.updateStatus.useMutation();
+
+  const runBulkAction = async (action: "paid" | "confirm") => {
+    const ids = [...selectedIds];
+    if (ids.length === 0 || bulkAction) return;
+    setBulkAction(action);
+    let succeeded = 0;
+    let firstError = "";
+    // Sequential on purpose: confirming waitlist entries re-checks capacity
+    // in a serializable transaction per registration.
+    for (const id of ids) {
+      try {
+        if (action === "paid") {
+          await bulkPaymentMutation.mutateAsync({
+            id,
+            paymentStatus: PaymentStatus.PAID,
+          });
+        } else {
+          await bulkStatusMutation.mutateAsync({
+            id,
+            registrationStatus: RegistrationStatus.CONFIRMED,
+          });
+        }
+        succeeded++;
+      } catch (error) {
+        if (!firstError) {
+          firstError = error instanceof Error ? error.message : String(error);
+        }
+      }
+    }
+    setBulkAction(null);
+    setSelectedIds(new Set());
+    void utils.courses.getRegistrations.invalidate({ courseId });
+    const failed = ids.length - succeeded;
+    if (failed === 0) {
+      toast.success(
+        action === "paid"
+          ? `${succeeded} Anmeldungen als bezahlt markiert`
+          : `${succeeded} Anmeldungen bestätigt`,
+      );
+    } else {
+      toast.error(
+        `${succeeded} erfolgreich, ${failed} fehlgeschlagen${firstError ? `: ${firstError}` : ""}`,
+      );
+    }
+  };
 
   useEffect(() => {
     if (!sessionLoading && !session && !hasRedirected.current) {
@@ -282,6 +336,39 @@ export default function CourseParticipantsPage() {
       }
       return true;
     }) ?? [];
+
+  const selectedRegistrations = filteredRegistrations.filter((r) =>
+    selectedIds.has(r.id),
+  );
+  const selectedWaitlisted = selectedRegistrations.filter(
+    (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
+  ).length;
+  const selectedUnpaid = selectedRegistrations.filter(
+    (r) => r.paymentStatus === PaymentStatus.PENDING,
+  ).length;
+  const allFilteredSelected =
+    filteredRegistrations.length > 0 &&
+    filteredRegistrations.every((r) => selectedIds.has(r.id));
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    setSelectedIds(
+      allFilteredSelected
+        ? new Set()
+        : new Set(filteredRegistrations.map((r) => r.id)),
+    );
+  };
 
   const confirmedCount =
     registrationsData?.registrations
@@ -800,178 +887,235 @@ export default function CourseParticipantsPage() {
             </div>
           ) : (
             /* Registrations List View */
-            <div className="dark:divide-dark-border divide-y divide-gray-200">
-              {filteredRegistrations.map((registration) => (
-                <div key={registration.id} className="p-4 sm:p-6">
-                  {/* Registration Header */}
-                  <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <Link
-                        href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                        className="dark:text-dark-text hover:text-primary text-lg font-medium text-gray-900 transition-colors"
-                      >
-                        {registration.registrantFirstName}{" "}
-                        {registration.registrantLastName}
-                      </Link>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                        <a
-                          href={`mailto:${registration.registrantEmail}`}
-                          className="hover:text-primary"
-                        >
-                          {registration.registrantEmail}
-                        </a>
-                        {registration.registrantPhone && (
-                          <a
-                            href={`tel:${registration.registrantPhone}`}
-                            className="hover:text-primary"
+            <div>
+              {/* Selection toolbar */}
+              <div className="dark:border-dark-border dark:bg-dark-background-secondary flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3 sm:px-6">
+                <label className="dark:text-dark-text flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={allFilteredSelected}
+                    onChange={toggleSelectAll}
+                    className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                  />
+                  {selectedIds.size > 0
+                    ? `${selectedIds.size} ausgewählt`
+                    : "Alle auswählen"}
+                </label>
+                {selectedIds.size > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void runBulkAction("paid")}
+                      disabled={bulkAction !== null || selectedUnpaid === 0}
+                      className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {bulkAction === "paid"
+                        ? "Wird gespeichert..."
+                        : `Als bezahlt markieren (${selectedUnpaid})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runBulkAction("confirm")}
+                      disabled={bulkAction !== null || selectedWaitlisted === 0}
+                      className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {bulkAction === "confirm"
+                        ? "Wird bestätigt..."
+                        : `Von Warteliste bestätigen (${selectedWaitlisted})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set())}
+                      disabled={bulkAction !== null}
+                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Auswahl aufheben
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="dark:divide-dark-border divide-y divide-gray-200">
+                {filteredRegistrations.map((registration) => (
+                  <div key={registration.id} className="p-4 sm:p-6">
+                    {/* Registration Header */}
+                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(registration.id)}
+                          onChange={() => toggleSelected(registration.id)}
+                          aria-label={`${registration.registrantFirstName} ${registration.registrantLastName} auswählen`}
+                          className="text-primary focus:ring-primary mt-1.5 h-4 w-4 rounded border-gray-300"
+                        />
+                        <div>
+                          <Link
+                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                            className="dark:text-dark-text hover:text-primary text-lg font-medium text-gray-900 transition-colors"
                           >
-                            {registration.registrantPhone}
-                          </a>
-                        )}
-                        {registration.invoiceId && (
-                          <span className="font-mono">
-                            Rechnungsnr.: {registration.invoiceId}
-                          </span>
-                        )}
+                            {registration.registrantFirstName}{" "}
+                            {registration.registrantLastName}
+                          </Link>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                            <a
+                              href={`mailto:${registration.registrantEmail}`}
+                              className="hover:text-primary"
+                            >
+                              {registration.registrantEmail}
+                            </a>
+                            {registration.registrantPhone && (
+                              <a
+                                href={`tel:${registration.registrantPhone}`}
+                                className="hover:text-primary"
+                              >
+                                {registration.registrantPhone}
+                              </a>
+                            )}
+                            {registration.invoiceId && (
+                              <span className="font-mono">
+                                Rechnungsnr.: {registration.invoiceId}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
+                        >
+                          {
+                            registrationStatusLabels[
+                              registration.registrationStatus
+                            ]
+                          }
+                        </span>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
+                        >
+                          {paymentStatusLabels[registration.paymentStatus]}
+                        </span>
+                        {registration.siblingDiscountStatus &&
+                          registration.siblingDiscountStatus !==
+                            SiblingDiscountStatus.NONE && (
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                            >
+                              {
+                                siblingDiscountStatusLabels[
+                                  registration.siblingDiscountStatus
+                                ]
+                              }
+                            </span>
+                          )}
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
-                      >
-                        {
-                          registrationStatusLabels[
-                            registration.registrationStatus
-                          ]
-                        }
-                      </span>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-                      >
-                        {paymentStatusLabels[registration.paymentStatus]}
-                      </span>
-                      {registration.siblingDiscountStatus &&
-                        registration.siblingDiscountStatus !==
-                          SiblingDiscountStatus.NONE && (
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
-                          >
-                            {
-                              siblingDiscountStatusLabels[
-                                registration.siblingDiscountStatus
-                              ]
-                            }
-                          </span>
-                        )}
-                    </div>
-                  </div>
 
-                  {/* Participants Table */}
-                  {registration.participants.length > 0 && (
-                    <div className="dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200">
-                      <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
-                        <thead className="dark:bg-dark-background-secondary bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                              Name
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                              Ort
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                              Instrument
-                            </th>
-                            <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                              Preiskategorie
-                            </th>
-                            {/* Custom Fields Headers */}
-                            {showCustomFields &&
-                              course.customFields?.map((field) => (
-                                <th
-                                  key={field.id}
-                                  className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
-                                >
-                                  {field.fieldName}
-                                </th>
-                              ))}
-                          </tr>
-                        </thead>
-                        <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
-                          {registration.participants.map((participant) => (
-                            <tr key={participant.id}>
-                              <td className="dark:text-dark-text px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900">
-                                {participant.firstName} {participant.lastName}
-                              </td>
-                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                {participant.city || "–"}
-                              </td>
-                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                {participant.instrument || "–"}
-                              </td>
-                              <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                {participant.priceOption || "–"}
-                              </td>
-                              {/* Custom Fields Values */}
+                    {/* Participants Table */}
+                    {registration.participants.length > 0 && (
+                      <div className="dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
+                          <thead className="dark:bg-dark-background-secondary bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                Name
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                Ort
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                Instrument
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                Preiskategorie
+                              </th>
+                              {/* Custom Fields Headers */}
                               {showCustomFields &&
                                 course.customFields?.map((field) => (
-                                  <td
+                                  <th
                                     key={field.id}
-                                    className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                                    className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
                                   >
-                                    {getCustomFieldValue(
-                                      participant,
-                                      field.fieldName,
-                                    )}
-                                  </td>
+                                    {field.fieldName}
+                                  </th>
                                 ))}
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                          </thead>
+                          <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
+                            {registration.participants.map((participant) => (
+                              <tr key={participant.id}>
+                                <td className="dark:text-dark-text px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900">
+                                  {participant.firstName} {participant.lastName}
+                                </td>
+                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                  {participant.city || "–"}
+                                </td>
+                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                  {participant.instrument || "–"}
+                                </td>
+                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                  {participant.priceOption || "–"}
+                                </td>
+                                {/* Custom Fields Values */}
+                                {showCustomFields &&
+                                  course.customFields?.map((field) => (
+                                    <td
+                                      key={field.id}
+                                      className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                                    >
+                                      {getCustomFieldValue(
+                                        participant,
+                                        field.fieldName,
+                                      )}
+                                    </td>
+                                  ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
 
-                  {/* Registration Footer */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Angemeldet am{" "}
-                      {new Date(registration.createdAt).toLocaleDateString(
-                        "de-DE",
-                        {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}
-                    </span>
-                    <div className="flex flex-wrap items-center gap-3">
-                      {registration.invoiceId && (
-                        <span className="text-gray-600 dark:text-gray-400">
-                          Rechnungsnr.:{" "}
-                          <span className="font-mono">
-                            {registration.invoiceId}
-                          </span>
-                        </span>
-                      )}
-                      <span className="dark:text-dark-text font-semibold text-gray-900">
-                        Gesamt: {registration.totalPrice.toFixed(2)} €
+                    {/* Registration Footer */}
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Angemeldet am{" "}
+                        {new Date(registration.createdAt).toLocaleDateString(
+                          "de-DE",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {registration.invoiceId && (
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Rechnungsnr.:{" "}
+                            <span className="font-mono">
+                              {registration.invoiceId}
+                            </span>
+                          </span>
+                        )}
+                        <span className="dark:text-dark-text font-semibold text-gray-900">
+                          Gesamt: {registration.totalPrice.toFixed(2)} €
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Notes */}
-                  {registration.notes && (
-                    <div className="dark:bg-dark-background-secondary mt-3 rounded-lg bg-gray-50 p-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Anmerkungen:</span>{" "}
-                        {registration.notes}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* Notes */}
+                    {registration.notes && (
+                      <div className="dark:bg-dark-background-secondary mt-3 rounded-lg bg-gray-50 p-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Anmerkungen:</span>{" "}
+                          {registration.notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
