@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import {
   Calendar,
@@ -51,7 +52,7 @@ export default function DashboardPage() {
   );
 
   // Check if user has any dashboard permissions
-  const { hasDashboardAccess } = usePermissions();
+  const { hasDashboardAccess, hasPermission } = usePermissions();
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -143,6 +144,16 @@ export default function DashboardPage() {
                       icon={<Clock className="h-5 w-5" />}
                       href="/dashboard/history"
                     />
+                    {hasPermission(
+                      PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+                    ) && (
+                      <DashboardCard
+                        title="Anmeldungen"
+                        description="Alle Kursanmeldungen"
+                        icon={<Users className="h-5 w-5" />}
+                        href="/dashboard/registrations"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -301,7 +312,9 @@ export default function DashboardPage() {
             )}
 
             {/* System & Verwaltung - Stats & Permissions */}
-            {(canManagePermissions || canViewStats) && (
+            {(canManagePermissions ||
+              canViewStats ||
+              hasPermission(PERMISSIONS.AUDIT_VIEW)) && (
               <section className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
                   <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
@@ -336,6 +349,14 @@ export default function DashboardPage() {
                           description="Rollen & Berechtigungen verwalten"
                           icon={<Shield className="h-5 w-5" />}
                           href="/dashboard/permissions"
+                        />
+                      )}
+                      {hasPermission(PERMISSIONS.AUDIT_VIEW) && (
+                        <DashboardCard
+                          title="Audit-Log"
+                          description="Sicherheitsrelevante Aktionen"
+                          icon={<Shield className="h-5 w-5" />}
+                          href="/dashboard/audit"
                         />
                       )}
                     </div>
