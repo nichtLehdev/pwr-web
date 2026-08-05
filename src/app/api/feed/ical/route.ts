@@ -50,6 +50,16 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "100", 10);
     const bezirksuebergreifend =
       searchParams.get("bezirksuebergreifend") === "true";
+    // Single-item mode: ?eventId= / ?courseId= produce a one-entry .ics for
+    // the "add to calendar" buttons on detail pages.
+    const singleEventId = searchParams.get("eventId");
+    const singleCourseId = searchParams.get("courseId");
+    const includeEvents = singleEventId
+      ? true
+      : !singleCourseId && (type === "events" || type === "both");
+    const includeCourses = singleCourseId
+      ? true
+      : !singleEventId && (type === "courses" || type === "both");
 
     const baseUrl = getBaseUrl({ headers: request.headers });
 
@@ -59,7 +69,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const icalEvents: string[] = [];
 
-    if (type === "events" || type === "both") {
+    if (includeEvents) {
       const eventWhere: {
         status: ContentStatus;
         OR?: Array<{ bezirkId: string | { in: string[] } | null }>;
@@ -90,7 +100,9 @@ export async function GET(request: NextRequest) {
       }
 
       const events = await db.event.findMany({
-        where: eventWhere,
+        where: singleEventId
+          ? { id: singleEventId, status: ContentStatus.APPROVED }
+          : eventWhere,
         include: {
           location: true,
           bezirk: true,
@@ -174,7 +186,7 @@ END:VEVENT`;
       );
     }
 
-    if (type === "courses" || type === "both") {
+    if (includeCourses) {
       const courseWhere: {
         status: ContentStatus;
         OR?: Array<{ bezirkId: string | { in: string[] } | null }>;
@@ -203,7 +215,9 @@ END:VEVENT`;
       }
 
       const courses = await db.course.findMany({
-        where: courseWhere,
+        where: singleCourseId
+          ? { id: singleCourseId, status: ContentStatus.APPROVED }
+          : courseWhere,
         include: {
           location: true,
           bezirk: true,
@@ -351,6 +365,11 @@ X-WR-TIMEZONE:Europe/Berlin
 ${icalEvents.join("\n")}
 END:VCALENDAR`;
 
+    if (singleEventId || singleCourseId) {
+      calendarName = "Posaunenwerk - Termin";
+      calendarDescription = "Einzelner Termin vom Posaunenwerk";
+    }
+
     const filenameParts = ["posaunenwerk"];
     if (type === "events") filenameParts.push("events");
     else if (type === "courses") filenameParts.push("courses");
@@ -358,6 +377,9 @@ END:VCALENDAR`;
     if (bezirkIds.length > 0) {
       filenameParts.push(`bezirk-${bezirkIds.join("-")}`);
     }
+    if (singleEventId) filenameParts.push(`event-${singleEventId.slice(0, 8)}`);
+    if (singleCourseId)
+      filenameParts.push(`kurs-${singleCourseId.slice(0, 8)}`);
 
     return new NextResponse(ical, {
       status: 200,
