@@ -5,6 +5,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -35,9 +37,9 @@ export default function FoerdervereinDetailPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
   );
 
   const { data: member, isLoading: memberLoading } =
@@ -70,13 +72,20 @@ export default function FoerdervereinDetailPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   const handleDelete = async () => {
     if (

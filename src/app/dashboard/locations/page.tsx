@@ -6,6 +6,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
@@ -35,9 +37,9 @@ export default function DashboardLocationsPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageLocations } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageLocations = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
   );
 
   const {
@@ -73,13 +75,14 @@ export default function DashboardLocationsPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageLocations &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageLocations, router]);
 
   const handleDelete = async (id: string, name: string) => {
     if (

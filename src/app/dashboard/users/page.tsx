@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import DashboardUsersList from "@/app/_components/dashboard/dashboard-users-list";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -18,10 +20,8 @@ export default function DashboardUsersPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageUsers } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -34,13 +34,14 @@ export default function DashboardUsersPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageUsers &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManageUsers]);
+  }, [profile, profileLoading, permissionsLoading, canManageUsers]);
 
   if (isPending || profileLoading) {
     return (

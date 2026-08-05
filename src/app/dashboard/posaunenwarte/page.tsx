@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -25,9 +27,9 @@ export default function DashboardPosaunenwartenPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   );
 
   const { data: posaunenwarte, isLoading: posaunenwarteLoading } =
@@ -44,13 +46,20 @@ export default function DashboardPosaunenwartenPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   if (isPending || profileLoading || posaunenwarteLoading) {
     return (

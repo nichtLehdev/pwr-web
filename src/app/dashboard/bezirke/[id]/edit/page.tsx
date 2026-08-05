@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { SaveIcon, Search, X, ChevronDown, ChevronUp } from "lucide-react";
@@ -23,9 +25,9 @@ export default function EditBezirkPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageBezirke } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageBezirke = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
   );
 
   const { data: bezirk, isLoading: bezirkLoading } =
@@ -121,13 +123,14 @@ export default function EditBezirkPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageBezirke &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageBezirke, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

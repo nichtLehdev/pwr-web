@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect, useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, Trash2 } from "lucide-react";
@@ -28,10 +30,8 @@ export default function UserDetailPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageUsers } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageUsers = hasPermission(PERMISSIONS.USERS_VIEW);
 
   const { data: user, isLoading: userLoading } = api.users.getById.useQuery(
     { id: userId },
@@ -61,13 +61,14 @@ export default function UserDetailPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageUsers &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManageUsers]);
+  }, [profile, profileLoading, permissionsLoading, canManageUsers]);
 
   if (isPending || profileLoading || userLoading) {
     return (

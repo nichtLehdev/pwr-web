@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
@@ -33,9 +35,9 @@ export default function EditLocationPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageLocations } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageLocations = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
   );
 
   const { data: location, isLoading: locationLoading } =
@@ -96,13 +98,14 @@ export default function EditLocationPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageLocations &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageLocations, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

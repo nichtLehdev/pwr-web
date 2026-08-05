@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
@@ -194,22 +196,21 @@ export default function NewUserPage() {
     }
   }, [session, sessionLoading, router]);
 
-  const { data: canManageUsers } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
   useEffect(() => {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageUsers &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageUsers, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageUsers, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
