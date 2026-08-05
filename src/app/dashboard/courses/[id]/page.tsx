@@ -143,7 +143,7 @@ export default function CourseDetailPage() {
 
   const { data: registrationsData, isLoading: registrationsLoading } =
     api.courses.getRegistrations.useQuery(
-      { courseId, page: 1, limit: 100 },
+      { courseId, all: true },
       {
         enabled: !!courseId && !!session?.user && activeTab === "participants",
       },
