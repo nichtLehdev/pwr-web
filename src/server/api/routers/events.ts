@@ -327,13 +327,13 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      // PENDING is the review marker itself — a separate pendingReview
+      // column never existed in the schema.
       const where: {
         status: ContentStatus;
-        pendingReview: boolean;
         bezirkId?: string;
       } = {
         status: ContentStatus.PENDING,
-        pendingReview: true,
       };
 
       // Check if user can only approve for their district
