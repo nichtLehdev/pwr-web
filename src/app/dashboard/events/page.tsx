@@ -7,7 +7,13 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import Link from "next/link";
 import DashboardEventsList from "../../_components/dashboard/dashboard-events-list";
-import SocialMediaExportModal from "../../_components/social-media/social-media-export-modal";
+// Lazy: pulls in html-to-image + JSZip, only needed when the modal opens.
+import dynamic from "next/dynamic";
+
+const SocialMediaExportModal = dynamic(
+  () => import("../../_components/social-media/social-media-export-modal"),
+  { ssr: false },
+);
 import { DashboardPage } from "../../_components/dashboard";
 import { InstagramIcon, Plus } from "lucide-react";
 

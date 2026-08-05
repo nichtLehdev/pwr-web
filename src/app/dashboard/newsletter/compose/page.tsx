@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import Link from "next/link";
-import RichTextEditor from "@/app/_components/editor/rich-text-editor";
+import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ScrollableModal,

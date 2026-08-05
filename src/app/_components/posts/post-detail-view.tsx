@@ -145,7 +145,8 @@ export default function PostDetailView({
                     : undefined,
               }}
             />
-            <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
+            {/* Stronger scrim so titles stay readable on busy cover images */}
+            <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/40 to-black/10" />
             {(post.coverImage.copyright || post.coverImage.creator) && (
               <div className="absolute right-4 bottom-4 z-10 flex justify-end">
                 <MediaCredit

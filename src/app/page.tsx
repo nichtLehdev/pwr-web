@@ -93,61 +93,65 @@ export default function Home() {
           </div>
         </section>
       )}
-      {/* Termine Section */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <SectionHeader
-            title="Kommende Termine"
-            linkText="Alle Termine"
-            linkHref="/termine"
-          />
+      {/* Termine Section — hidden entirely when there is nothing upcoming */}
+      {(isLoadingEvents ||
+        (upcomingEvents?.events && upcomingEvents.events.length > 0)) && (
+        <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
+          <div className="container">
+            <SectionHeader
+              title="Kommende Termine"
+              linkText="Alle Termine"
+              linkHref="/termine"
+            />
 
-          {isLoadingEvents ? (
-            <div className="flex items-center justify-center py-12">
-              <LoadingSpinner text="Lade Termine..." />
-            </div>
-          ) : upcomingEvents?.events && upcomingEvents.events.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {upcomingEvents.events.map((event) => (
-                <EventCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title}
-                  date={event.eventDate}
-                  duration={event.duration}
-                  location={event.location?.city || ""}
-                  category={event.category}
-                  district={event.bezirk?.number}
-                  cancelled={event.cancelled}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-600 dark:text-gray-400">
-              Aktuell keine Termine verfügbar.
-            </p>
-          )}
-        </div>
-      </section>
+            {isLoadingEvents ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner text="Lade Termine..." />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {upcomingEvents?.events.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    title={event.title}
+                    date={event.eventDate}
+                    duration={event.duration}
+                    location={event.location?.city || ""}
+                    category={event.category}
+                    district={event.bezirk?.number}
+                    cancelled={event.cancelled}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
-      {/* kommende Veranstaltungen Section */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <SectionHeader
-            title="Kommende Veranstaltungen"
-            linkText="Alle Veranstaltungen"
-            linkHref="/termine?type=courses&view=list"
-          />
+      {/* kommende Veranstaltungen Section — hidden entirely when empty */}
+      {(isLoadingCourses ||
+        (upcomingCourses?.courses && upcomingCourses.courses.length > 0)) && (
+        <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+          <div className="container">
+            <SectionHeader
+              title="Kommende Veranstaltungen"
+              linkText="Alle Veranstaltungen"
+              linkHref="/termine?type=courses&view=list"
+            />
 
-          {isLoadingCourses ? (
-            <div className="flex items-center justify-center py-12">
-              <LoadingSpinner text="Lade Veranstaltungen..." />
-            </div>
-          ) : (
-            <UpcomingCoursesCarousel courses={upcomingCourses?.courses ?? []} />
-          )}
-        </div>
-      </section>
+            {isLoadingCourses ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner text="Lade Veranstaltungen..." />
+              </div>
+            ) : (
+              <UpcomingCoursesCarousel
+                courses={upcomingCourses?.courses ?? []}
+              />
+            )}
+          </div>
+        </section>
+      )}
 
       {/* News Section */}
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
-import {
-  generateBulkInvoices,
-  type InvoiceCourse,
-  type InvoiceRegistration,
+// Type-only import: the implementation (jsPDF + JSZip, ~450 KB) is loaded
+// on demand in the click handler below.
+import type {
+  InvoiceCourse,
+  InvoiceRegistration,
 } from "@/lib/invoice-generator";
 import { SignatureCanvas } from "./SignatureCanvas";
 import { useToast } from "@/app/_components/ui/toast";
@@ -118,6 +119,7 @@ export function BulkInvoiceModal({
     setIsComplete(false);
 
     try {
+      const { generateBulkInvoices } = await import("@/lib/invoice-generator");
       await generateBulkInvoices(
         course,
         registrations,

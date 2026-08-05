@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import type { RouterOutputs } from "@/trpc/react";
 import MediaCredit from "@/app/_components/general/media-credit";
 import {
@@ -157,18 +157,12 @@ export default function HistoryTimeline({ events }: HistoryTimelineProps) {
           {/* Bild */}
           <div className="flex flex-col gap-1">
             <div className="relative h-64 min-h-[300px] overflow-hidden rounded-lg bg-gray-200 lg:h-full">
-              {event.image ? (
-                <Image
-                  src={event.image.url}
-                  alt={event.image.alt || event.title || "Ereignisbild"}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-gray-400">{config.icon}</div>
-                </div>
-              )}
+              <ImageWithFallback
+                src={event.image?.url}
+                alt={event.image?.alt || event.title || "Ereignisbild"}
+                fill
+                className="object-cover"
+              />
             </div>
             {event.image && (
               <MediaCredit

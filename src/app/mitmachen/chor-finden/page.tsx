@@ -56,7 +56,7 @@ function ChorFindenContent() {
     height: number;
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const CHOIRS_PER_PAGE = 6;
+  const CHOIRS_PER_PAGE = 12;
 
   // Touch devices have no hover, so tapping a marker fires the same
   // synthetic mouseenter+click sequence as a mouse click - there's no way
@@ -355,7 +355,7 @@ function ChorFindenContent() {
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },
-        { label: "Chor Finden" },
+        { label: "Chor finden" },
       ]}
       description={
         <p>
@@ -574,7 +574,7 @@ function ChorFindenContent() {
                     Bezirk auf Karte wählen
                   </h3>
                   <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                    Klicken Sie auf einen Bezirk, um Chöre zu filtern
+                    Klicke auf einen Bezirk, um Chöre zu filtern
                   </p>
                   {/* Add your SVG map here */}
                   <div

@@ -10,6 +10,9 @@ import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import type { RouterOutputs } from "@/trpc/react";
 import { sanitizeHtml } from "@/lib/sanitize";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
+import { calendarDaysInclusive } from "@/lib/format-date-range";
+import { formatAvailableSlots } from "@/lib/format-available-slots";
 import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
@@ -38,18 +41,6 @@ interface CourseDetailViewProps {
   course: CourseWithRelations;
   spots: CourseSpots;
 }
-
-const formatIcsDate = (date: Date): string => {
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  const year = date.getFullYear();
-  const month = pad(date.getMonth() + 1);
-  const day = pad(date.getDate());
-  const hour = pad(date.getHours());
-  const minute = pad(date.getMinutes());
-  const second = pad(date.getSeconds());
-
-  return `${year}${month}${day}T${hour}${minute}${second}`;
-};
 
 function formatCourseSchedule(course: {
   startDate: Date;
@@ -121,15 +112,12 @@ export default function CourseDetailView({
     ? new Date(course.registrationOpensAt)
     : null;
   const isPast = endDate < new Date();
-  const isDeadlinePassed =
-    registrationDeadline && registrationDeadline < new Date();
+  const isDeadlinePassed = isRegistrationDeadlinePassed(registrationDeadline);
   const isRegistrationNotOpenYet =
     registrationOpensAt && registrationOpensAt > new Date();
 
   const isSameDay = startDate.toDateString() === endDate.toDateString();
-  const durationDays = Math.ceil(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const durationDays = calendarDaysInclusive(startDate, endDate);
 
   const isExternal = isExternalCourse(course);
 
@@ -159,51 +147,8 @@ export default function CourseDetailView({
         | undefined);
 
   const handleDownloadIcs = () => {
-    const array = new Uint32Array(2);
-    window.crypto.getRandomValues(array);
-    const randomString = Array.from(array)
-      .map((num) => num.toString(36))
-      .join("");
-    // eslint-disable-next-line react-hooks/purity
-    const uid = `${Date.now()}-${randomString}`;
-
-    const icsStartDate = formatIcsDate(startDate);
-    const icsEndDate = formatIcsDate(endDate);
-
-    const location =
-      course.location?.name ||
-      `${course.location?.street}, ${course.location?.city}`;
-
-    const icsContent = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//MyCompany//NONSGML Course Calendar//EN",
-      "BEGIN:VEVENT",
-      `UID:${uid}`,
-      `DTSTAMP:${formatIcsDate(new Date())}`,
-
-      `DTSTART:${icsStartDate}`,
-      `DTEND:${icsEndDate}`,
-      `SUMMARY:${course.title}`,
-      `DESCRIPTION:${
-        course.motto ? course.motto + "\\n\\n" : ""
-      }Weitere Informationen: [Deine Kurs-URL hier]`,
-      `LOCATION:${location}`,
-      "END:VEVENT",
-      "END:VCALENDAR",
-    ].join("\n");
-
-    const blob = new Blob([icsContent], {
-      type: "text/calendar;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${course.title.replace(/ /g, "_")}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Server-generated single-item ICS: proper escaping, description, URL
+    window.location.href = `/api/feed/ical?courseId=${course.id}`;
   };
 
   const anmeldenHref = isExternal
@@ -229,7 +174,7 @@ export default function CourseDetailView({
       ? null
       : spots.isFull && course.allowWaitingList
         ? "Warteliste"
-        : `${spots.availableSlots} / ${course.maxParticipants} frei`;
+        : formatAvailableSlots(spots.availableSlots);
 
   const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
 
@@ -460,17 +405,7 @@ export default function CourseDetailView({
                           })}
                         </p>
                         <p className="text-gray-600 dark:text-gray-400">
-                          {startDate.toLocaleTimeString("de-DE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          Uhr -{" "}
-                          {endDate.toLocaleTimeString("de-DE", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          Uhr ({durationDays}{" "}
-                          {durationDays === 1 ? "Tag" : "Tage"})
+                          {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
                         </p>
                       </>
                     )}
@@ -652,11 +587,11 @@ export default function CourseDetailView({
                 )}
               </div>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
+              {/* Sidebar — pinned while the long main column scrolls */}
+              <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
                 {/* Registration CTA */}
                 {canRegister && (
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border sticky top-20 rounded-lg bg-white p-6 shadow-md">
+                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                     <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
                       Anmeldung
                     </h3>
@@ -679,9 +614,7 @@ export default function CourseDetailView({
                     ) : (
                       <div className="mb-4">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Noch <strong>{spots.availableSlots}</strong>{" "}
-                          {spots.availableSlots === 1 ? "Platz" : "Plätze"}{" "}
-                          verfügbar
+                          {formatAvailableSlots(spots.availableSlots)}
                         </p>
                       </div>
                     )}
