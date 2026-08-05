@@ -84,9 +84,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       event.createdBy?.id === session.user.id ||
       hasEditPermission);
 
-  const endDate = event.duration
-    ? new Date(eventDate.getTime() + event.duration * 60 * 1000)
-    : new Date(eventDate.getTime() + 2 * 60 * 60 * 1000);
   const isPast = eventDate < new Date();
 
   const locationLine =
@@ -94,29 +91,8 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
     [event.location.name, event.location.city].filter(Boolean).join(", ");
 
   const handleDownloadIcs = () => {
-    const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Posaunenwerk Rheinland//Event//DE
-BEGIN:VEVENT
-UID:${event.id}@posaunenwerk-rheinland.de
-DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-DTSTART:${eventDate.toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-DTEND:${endDate.toISOString().replace(/[-:]/g, "").split(".")[0]}Z
-SUMMARY:${event.title}
-DESCRIPTION:${event.description || ""}
-LOCATION:${event.location?.name ? event.location.name + ", " : ""}${
-      event.location?.street ? event.location.street + ", " : ""
-    }${event.location?.zipCode || ""} ${event.location?.city}
-END:VEVENT
-END:VCALENDAR`;
-
-    const blob = new Blob([icsContent], {
-      type: "text/calendar;charset=utf-8",
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `${event.title.replace(/[^a-z0-9]/gi, "_")}.ics`;
-    link.click();
+    // Server-generated single-item ICS: proper escaping, description, URL
+    window.location.href = `/api/feed/ical?eventId=${event.id}`;
   };
 
   const district = !event.bezirk
@@ -552,11 +528,11 @@ END:VCALENDAR`;
                 )}
               </div>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
+              {/* Sidebar — pinned while the long main column scrolls */}
+              <div className="space-y-6 lg:sticky lg:top-24 lg:self-start">
                 {/* Mitmachangebot - Prominent! */}
                 {event.openToParticipants && (
-                  <div className="sticky top-20 rounded-lg bg-linear-to-br from-green-500 to-green-700 p-6 text-white shadow-xl">
+                  <div className="rounded-lg bg-linear-to-br from-green-500 to-green-700 p-6 text-white shadow-xl">
                     <div className="mb-4 flex items-start gap-3">
                       <CheckCircleIcon className="h-8 w-8 shrink-0" />
                       <div>

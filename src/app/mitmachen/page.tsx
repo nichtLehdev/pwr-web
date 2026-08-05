@@ -88,11 +88,7 @@ export default function MitmachenPage() {
       {/* Einstiegsmöglichkeiten */}
       <section className="bg-background dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
         <div className="container">
-          <SectionHeader
-            title="Deine Einstiegsmöglichkeiten"
-            linkText=""
-            linkHref="#"
-          />
+          <SectionHeader title="Deine Einstiegsmöglichkeiten" />
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {participationOptions.map((option) => (
@@ -195,7 +191,8 @@ export default function MitmachenPage() {
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   Erlebe die Freude am gemeinsamen Musizieren in einer starken
-                  Gemeinschaft von über 11.000 Bläserinnen und Bläsern.
+                  Gemeinschaft von über 2.000 Bläserinnen und Bläsern im
+                  Rheinland.
                 </p>
               </div>
 
@@ -233,8 +230,8 @@ export default function MitmachenPage() {
                   Teil einer Bewegung
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Werde Teil einer über 150 Jahre alten Tradition mit mehr als
-                  330 Posaunenchören im Rheinland.
+                  Werde Teil einer über 140 Jahre alten Tradition mit mehr als
+                  200 Posaunenchören im Rheinland.
                 </p>
               </div>
             </div>

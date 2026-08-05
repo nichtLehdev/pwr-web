@@ -35,7 +35,7 @@ import {
   type StaffAccidentalLayout,
 } from "../_lib/staff-accidental-layout";
 import { InstrumentSelector } from "./instrument-selector";
-import { StaffDisplay, type StaffFlash } from "./staff-display";
+import { StaffDisplay, type StaffFlash } from "./staff-display-loader";
 import { AnswerButtons } from "./answer-buttons";
 import { ScoreBar } from "./score-bar";
 import { NoteReadingResultView, type NoteReadingResult } from "./result-view";

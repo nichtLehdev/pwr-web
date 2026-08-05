@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
+import {
+  calendarDaysInclusive,
+  formatDateRange,
+} from "@/lib/format-date-range";
+import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { api } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { getDistrictColor } from "@/lib/district-color";
@@ -34,8 +40,7 @@ export default function CourseCard({
   const end = new Date(endDate);
   const isSameDay = start.toDateString() === end.toDateString();
 
-  const durationMs = end.getTime() - start.getTime();
-  const durationDays = Math.ceil(durationMs / (1000 * 60 * 60 * 24));
+  const durationDays = calendarDaysInclusive(start, end);
 
   const districtColor = getDistrictColor(district);
   const spotsAvailable = api.courses.getAvailableSlots.useQuery({
@@ -52,9 +57,7 @@ export default function CourseCard({
     course &&
     course.registrationOpen &&
     !isRegistrationNotOpenYet &&
-    (isExternal ||
-      !course.registrationDeadline ||
-      new Date() < new Date(course.registrationDeadline));
+    (isExternal || !isRegistrationDeadlinePassed(course.registrationDeadline));
 
   if (!spotsAvailable || !course) {
     return <CourseCardSkeleton />;
@@ -123,48 +126,7 @@ export default function CourseCard({
           <div className="mb-4 flex-col space-y-2 text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center gap-2">
               <CalendarIcon className="h-4 w-4 shrink-0" />
-              {isSameDay ? (
-                <span>
-                  {start.toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  {", "}
-                  {start.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {" - "}
-                  {end.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              ) : (
-                <span>
-                  {start.toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "short",
-                  })}
-                  {", "}
-                  {start.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {" - "}
-                  {end.toLocaleDateString("de-DE", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                  {", "}
-                  {end.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              )}
+              <span>{formatDateRange(start, end)}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -175,8 +137,7 @@ export default function CourseCard({
             {registrationOpen && !isExternal && !spotsAvailable.isFull && (
               <div className="text-primary flex items-center gap-2 font-semibold">
                 <CheckIcon className="h-4 w-4 shrink-0" />
-                Noch {spotsAvailable.availableSlots}{" "}
-                {spotsAvailable.availableSlots === 1 ? "Platz" : "Plätze"} frei
+                {formatAvailableSlots(spotsAvailable.availableSlots)}
               </div>
             )}
           </div>

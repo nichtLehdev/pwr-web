@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { signUp } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import {
@@ -23,6 +24,7 @@ export default function RegisterPage() {
     username: "",
   });
   const [usernameEdited, setUsernameEdited] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -371,15 +373,32 @@ export default function RegisterPage() {
               <Label htmlFor="password" required>
                 Passwort
               </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={
+                    showPassword ? "Passwort verbergen" : "Passwort anzeigen"
+                  }
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <EyeOffIcon className="h-4 w-4" />
+                  ) : (
+                    <EyeIcon className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Mindestens 8 Zeichen
               </p>
@@ -388,6 +407,17 @@ export default function RegisterPage() {
             <Button type="submit" isLoading={isLoading} className="w-full">
               Konto erstellen
             </Button>
+
+            <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+              Mit der Registrierung nimmst du unsere{" "}
+              <Link
+                href="/datenschutz"
+                className="text-primary hover:underline"
+              >
+                Datenschutzerklärung
+              </Link>{" "}
+              zur Kenntnis.
+            </p>
           </form>
         </div>
       </div>
