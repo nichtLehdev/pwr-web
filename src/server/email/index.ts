@@ -9,6 +9,10 @@ import { SiblingDiscountRejected } from "./templates/sibling-discount-rejected";
 import { CourseRegistrationPendingDiscount } from "./templates/course-registration-pending-discount";
 import { CourseRegistrationCancelled } from "./templates/course-registration-cancelled";
 import { CourseRegistrationClosedOverview } from "./templates/course-registration-closed-overview";
+import {
+  ContentReviewResult,
+  type ReviewedContentType,
+} from "./templates/content-review-result";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
 
 export async function sendVerificationEmail(
@@ -278,6 +282,41 @@ export async function sendCourseRegistrationClosedOverviewEmail(params: {
         content: params.attachment.content,
       },
     ],
+  });
+}
+
+export async function sendContentReviewResultEmail(params: {
+  to: string;
+  recipientName: string;
+  contentType: ReviewedContentType;
+  title: string;
+  approved: boolean;
+  reviewNotes?: string | null;
+  dashboardUrl: string;
+}) {
+  const typeLabel =
+    params.contentType === "event"
+      ? "Veranstaltung"
+      : params.contentType === "course"
+        ? "Kurs"
+        : "Beitrag";
+  const html = await render(
+    ContentReviewResult({
+      recipientName: params.recipientName,
+      contentType: params.contentType,
+      title: params.title,
+      approved: params.approved,
+      reviewNotes: params.reviewNotes,
+      dashboardUrl: params.dashboardUrl,
+    }),
+  );
+
+  return sendEmail({
+    to: params.to,
+    subject: params.approved
+      ? `${typeLabel} veröffentlicht: ${params.title} – Posaunenwerk Rheinland`
+      : `${typeLabel} abgelehnt: ${params.title} – Posaunenwerk Rheinland`,
+    html,
   });
 }
 
