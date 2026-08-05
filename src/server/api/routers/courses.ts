@@ -1336,6 +1336,10 @@ export const coursesRouter = createTRPCRouter({
         courseId: z.string(),
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(100).default(50),
+        // Admin views compute stats, exports and invoice batches from this
+        // list — with `all` they get every registration instead of a silent
+        // 100-row slice that produced wrong totals on large courses.
+        all: z.boolean().default(false),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -1392,8 +1396,12 @@ export const coursesRouter = createTRPCRouter({
           include: {
             participants: true,
           },
-          skip: (input.page - 1) * input.limit,
-          take: input.limit,
+          ...(input.all
+            ? {}
+            : {
+                skip: (input.page - 1) * input.limit,
+                take: input.limit,
+              }),
           orderBy: { createdAt: "desc" },
         }),
         ctx.db.courseRegistration.count({ where }),
@@ -1402,7 +1410,7 @@ export const coursesRouter = createTRPCRouter({
       return {
         registrations,
         total,
-        pages: Math.ceil(total / input.limit),
+        pages: input.all ? 1 : Math.ceil(total / input.limit),
       };
     }),
 
