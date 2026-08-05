@@ -922,6 +922,7 @@ export const organizationRouter = createTRPCRouter({
         bio: p.user?.bio ?? null,
         profileImage: p.image ?? p.user?.profileImage ?? null,
         userId: p.userId,
+        sortOrder: p.sortOrder,
         bezirke: p.responsibilities.map((r) => ({
           id: r.bezirk.id,
           number: r.bezirk.number,

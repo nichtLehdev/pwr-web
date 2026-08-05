@@ -1,16 +1,24 @@
 "use client";
 
 import { useSession } from "@/lib/auth";
+import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { EditIcon, EyeIcon, PlusIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EditIcon,
+  EyeIcon,
+  PlusIcon,
+} from "lucide-react";
 import { UserIcon, UsersIcon } from "lucide-react";
+import { computeReorderUpdates } from "@/lib/reorder";
 
 const ROLE_LABELS: Record<string, string> = {
   LPW: "Landesposaunenwart",
@@ -20,7 +28,9 @@ const ROLE_LABELS: Record<string, string> = {
 export default function DashboardPosaunenwartenPage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const toast = useToast();
   const hasRedirected = useRef(false);
+  const [isReordering, setIsReordering] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -32,8 +42,42 @@ export default function DashboardPosaunenwartenPage() {
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   );
 
-  const { data: posaunenwarte, isLoading: posaunenwarteLoading } =
-    api.organization.getPosaunenwarte.useQuery();
+  const {
+    data: posaunenwarte,
+    isLoading: posaunenwarteLoading,
+    refetch,
+  } = api.organization.getPosaunenwarte.useQuery();
+
+  const reorderMutation = api.organization.updatePosaunenwart.useMutation();
+
+  // Die Liste ist nach Rolle gruppiert (LPW vor RPW) – Verschieben ist nur
+  // innerhalb der eigenen Rollengruppe möglich.
+  const handleMove = async (personId: string, direction: "up" | "down") => {
+    if (!posaunenwarte || isReordering) return;
+    const person = posaunenwarte.find((p) => p.id === personId);
+    if (!person) return;
+    const group = posaunenwarte.filter((p) => p.role === person.role);
+    const index = group.findIndex((p) => p.id === personId);
+    const updates = computeReorderUpdates(group, index, direction);
+    if (!updates) return;
+    setIsReordering(true);
+    try {
+      for (const update of updates) {
+        await reorderMutation.mutateAsync({
+          id: update.id,
+          sortOrder: update.sortOrder,
+        });
+      }
+      await refetch();
+    } catch (error) {
+      toast.error(
+        "Fehler beim Ändern der Reihenfolge: " +
+          (error instanceof Error ? error.message : "Unbekannter Fehler"),
+      );
+    } finally {
+      setIsReordering(false);
+    }
+  };
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -133,7 +177,7 @@ export default function DashboardPosaunenwartenPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {posaunenwarte.map((person) => (
+                {posaunenwarte.map((person, index) => (
                   <tr
                     key={person.id}
                     className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
@@ -215,6 +259,30 @@ export default function DashboardPosaunenwartenPage() {
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => void handleMove(person.id, "up")}
+                          disabled={
+                            posaunenwarte[index - 1]?.role !== person.role ||
+                            isReordering
+                          }
+                          aria-label="Nach oben"
+                          title="Nach oben"
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                        >
+                          <ChevronUpIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => void handleMove(person.id, "down")}
+                          disabled={
+                            posaunenwarte[index + 1]?.role !== person.role ||
+                            isReordering
+                          }
+                          aria-label="Nach unten"
+                          title="Nach unten"
+                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                        >
+                          <ChevronDownIcon className="h-4 w-4" />
+                        </button>
                         <Link
                           href={`/dashboard/posaunenwarte/${person.id}`}
                           className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"

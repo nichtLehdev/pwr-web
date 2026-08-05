@@ -203,6 +203,10 @@ export default function NewPosaunenwartPage() {
               onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
               className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
             />
+            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
+              Pfeiltasten ändern.
+            </p>
           </div>
         </section>
 
