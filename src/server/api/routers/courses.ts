@@ -10,6 +10,10 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import {
+  notifyCreatorOfReviewResult,
+  notifySubmittedForReview,
+} from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 import {
@@ -101,7 +105,11 @@ export const coursesRouter = createTRPCRouter({
               where: {
                 registrationStatus: RegistrationStatus.CONFIRMED,
               },
-              include: {
+              // select (not include): a registration row carries the
+              // registrant's full contact and billing data, which a public
+              // course list must never fetch just to count participants.
+              select: {
+                registrationStatus: true,
                 participants: {
                   select: { priceOption: true },
                 },
@@ -209,10 +217,12 @@ export const coursesRouter = createTRPCRouter({
           (await userHasPermission(
             ctx.session.user.id,
             PERMISSIONS.COURSES_VIEW,
+            ctx.permissionCache,
           )) ||
           (await userHasPermission(
             ctx.session.user.id,
             PERMISSIONS.COURSES_APPROVE,
+            ctx.permissionCache,
           )) ||
           viewerCollaboratorRole !== null;
 
@@ -265,7 +275,7 @@ export const coursesRouter = createTRPCRouter({
               where: {
                 registrationStatus: RegistrationStatus.CONFIRMED,
               },
-              include: {
+              select: {
                 _count: {
                   select: { participants: true },
                 },
@@ -332,10 +342,12 @@ export const coursesRouter = createTRPCRouter({
       const canApproveAll = await userHasPermission(
         userId,
         PERMISSIONS.COURSES_APPROVE,
+        ctx.permissionCache,
       );
       const canApproveOwn = await userHasPermission(
         userId,
         PERMISSIONS.COURSES_CREATE,
+        ctx.permissionCache,
       );
 
       let where: Record<string, unknown> = {};
@@ -405,7 +417,7 @@ export const coursesRouter = createTRPCRouter({
               where: {
                 registrationStatus: RegistrationStatus.CONFIRMED,
               },
-              include: {
+              select: {
                 _count: {
                   select: { participants: true },
                 },
@@ -473,7 +485,7 @@ export const coursesRouter = createTRPCRouter({
               where: {
                 registrationStatus: RegistrationStatus.CONFIRMED,
               },
-              include: {
+              select: {
                 _count: {
                   select: { participants: true },
                 },
@@ -564,9 +576,12 @@ export const coursesRouter = createTRPCRouter({
           path: ["endDate"],
         })
         .refine(
+          // The deadline arrives as end-of-day (23:59:59), so "on the start
+          // date" means it may be up to 24h past the start moment.
           (data) =>
             !data.registrationDeadline ||
-            data.registrationDeadline <= data.startDate,
+            data.registrationDeadline.getTime() <=
+              data.startDate.getTime() + 24 * 60 * 60 * 1000,
           {
             message: "Anmeldeschluss muss vor oder am Startdatum sein",
             path: ["registrationDeadline"],
@@ -627,6 +642,7 @@ export const coursesRouter = createTRPCRouter({
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       if (!external && input.allowSiblingDiscount && !canManageDiscounts) {
         throw new TRPCError({
@@ -668,6 +684,16 @@ export const coursesRouter = createTRPCRouter({
           customFields: true,
         },
       });
+
+      if (course.status === ContentStatus.PENDING) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "course",
+          contentId: course.id,
+          title: course.title,
+          actorId: ctx.session.user.id,
+        });
+      }
 
       return course;
     }),
@@ -735,10 +761,13 @@ export const coursesRouter = createTRPCRouter({
           },
         )
         .refine(
+          // The deadline arrives as end-of-day (23:59:59), so "on the start
+          // date" means it may be up to 24h past the start moment.
           (data) =>
             !data.registrationDeadline ||
             !data.startDate ||
-            data.registrationDeadline <= data.startDate,
+            data.registrationDeadline.getTime() <=
+              data.startDate.getTime() + 24 * 60 * 60 * 1000,
           {
             message: "Anmeldeschluss muss vor oder am Startdatum sein",
             path: ["registrationDeadline"],
@@ -805,6 +834,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db,
         ctx.session.user.id,
         course,
+        ctx.permissionCache,
       );
 
       if (!canEdit) {
@@ -884,6 +914,7 @@ export const coursesRouter = createTRPCRouter({
       const canApproveContent = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_APPROVE,
+        ctx.permissionCache,
       );
 
       const data: Prisma.CourseUpdateInput = { ...updateData };
@@ -958,6 +989,7 @@ export const coursesRouter = createTRPCRouter({
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       if (input.allowSiblingDiscount !== undefined && !canManageDiscounts) {
         throw new TRPCError({
@@ -1086,7 +1118,7 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.db.course.update({
+      const updated = await ctx.db.course.update({
         where: { id },
         data,
         include: {
@@ -1096,6 +1128,21 @@ export const coursesRouter = createTRPCRouter({
           customFields: true,
         },
       });
+
+      if (
+        status === ContentStatus.PENDING &&
+        course.status !== ContentStatus.PENDING
+      ) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "course",
+          contentId: updated.id,
+          title: updated.title,
+          actorId: ctx.session.user.id,
+        });
+      }
+
+      return updated;
     }),
 
   delete: protectedProcedure
@@ -1116,6 +1163,7 @@ export const coursesRouter = createTRPCRouter({
       const canDeleteCourse = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_DELETE,
+        ctx.permissionCache,
       );
       const canDelete =
         course.createdById === ctx.session.user.id || canDeleteCourse;
@@ -1168,7 +1216,7 @@ export const coursesRouter = createTRPCRouter({
         }
       }
 
-      return await ctx.db.course.update({
+      const approved = await ctx.db.course.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.APPROVED,
@@ -1178,6 +1226,19 @@ export const coursesRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "course",
+        contentId: approved.id,
+        title: approved.title,
+        createdById: approved.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: true,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return approved;
     }),
 
   reject: permissionProcedure(PERMISSIONS.COURSES_APPROVE)
@@ -1188,7 +1249,7 @@ export const coursesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.course.update({
+      const rejected = await ctx.db.course.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.REJECTED,
@@ -1197,6 +1258,19 @@ export const coursesRouter = createTRPCRouter({
           reviewNotes: input.reviewNotes,
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "course",
+        contentId: rejected.id,
+        title: rejected.title,
+        createdById: rejected.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: false,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return rejected;
     }),
 
   getAvailableSlots: publicProcedure
@@ -1219,8 +1293,11 @@ export const coursesRouter = createTRPCRouter({
             where: {
               registrationStatus: RegistrationStatus.CONFIRMED,
             },
-            include: {
-              participants: true,
+            select: {
+              registrationStatus: true,
+              participants: {
+                select: { priceOption: true },
+              },
             },
           },
         },
@@ -1284,11 +1361,20 @@ export const coursesRouter = createTRPCRouter({
         select: { id: true },
       });
       const hasGlobalParticipantsAccess =
-        (await userHasPermission(uid, PERMISSIONS.COURSES_VIEW)) ||
-        (await userHasPermission(uid, PERMISSIONS.COURSES_APPROVE)) ||
+        (await userHasPermission(
+          uid,
+          PERMISSIONS.COURSES_VIEW,
+          ctx.permissionCache,
+        )) ||
+        (await userHasPermission(
+          uid,
+          PERMISSIONS.COURSES_APPROVE,
+          ctx.permissionCache,
+        )) ||
         (await userHasPermission(
           uid,
           PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+          ctx.permissionCache,
         ));
 
       if (!isCreator && !hasGlobalParticipantsAccess && !isCourseCollaborator) {
@@ -1337,6 +1423,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db,
         ctx.session.user.id,
         course,
+        ctx.permissionCache,
       );
       if (!canManage) {
         throw new TRPCError({
@@ -1388,6 +1475,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db,
         ctx.session.user.id,
         course,
+        ctx.permissionCache,
       );
       if (!canManage) {
         throw new TRPCError({
@@ -1448,6 +1536,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db,
         ctx.session.user.id,
         course,
+        ctx.permissionCache,
       );
       if (!canManage) {
         throw new TRPCError({
@@ -1492,6 +1581,7 @@ export const coursesRouter = createTRPCRouter({
         ctx.db,
         ctx.session.user.id,
         course,
+        ctx.permissionCache,
       );
       if (!canManage) {
         throw new TRPCError({
@@ -1531,6 +1621,7 @@ export const coursesRouter = createTRPCRouter({
       const canDeleteAny = await userHasPermission(
         userId,
         PERMISSIONS.COURSES_DELETE,
+        ctx.permissionCache,
       );
 
       const courses = await ctx.db.course.findMany({
@@ -1690,6 +1781,7 @@ export const coursesRouter = createTRPCRouter({
       const canApprove = await userHasPermission(
         userId,
         PERMISSIONS.COURSES_APPROVE,
+        ctx.permissionCache,
       );
 
       const courses = await ctx.db.course.findMany({

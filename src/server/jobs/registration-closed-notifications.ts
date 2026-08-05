@@ -8,6 +8,7 @@ import {
   sanitizeCourseTitleForFilename,
 } from "@/lib/course-participants-export";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import {
   ContentStatus,
   CourseCollaboratorRole,
@@ -73,7 +74,22 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
   }
 
   const now = new Date();
-  if (course.registrationDeadline > now) {
+  // Deadlines are inclusive of their whole day — only notify once the day
+  // is fully over.
+  if (!isRegistrationDeadlinePassed(course.registrationDeadline, now)) {
+    return "skipped";
+  }
+
+  // Claim before sending: the conditional updateMany only succeeds for one
+  // caller, so overlapping cron runs (or a manual trigger during a scheduled
+  // run) cannot both mail the same course. If the process dies mid-send the
+  // course stays claimed — at-most-once beats duplicate mails with
+  // attachments to every organizer.
+  const claim = await db.course.updateMany({
+    where: { id: course.id, registrationClosedNotifiedAt: null },
+    data: { registrationClosedNotifiedAt: now },
+  });
+  if (claim.count === 0) {
     return "skipped";
   }
 
@@ -82,10 +98,6 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
     console.warn(
       `[registration-closed] No recipients for course ${course.id} (${course.title})`,
     );
-    await db.course.update({
-      where: { id: course.id },
-      data: { registrationClosedNotifiedAt: now },
-    });
     return "skipped";
   }
 
@@ -104,29 +116,41 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
   const { sendCourseRegistrationClosedOverviewEmail } =
     await import("@/server/email");
 
-  for (const email of recipients) {
-    await sendCourseRegistrationClosedOverviewEmail({
-      to: email,
-      courseTitle: course.title,
-      registrationDeadline: course.registrationDeadline,
-      startDate: course.startDate,
-      endDate: course.endDate,
-      locationName: course.location?.name ?? null,
-      maxParticipants: course.maxParticipants,
-      allowWaitingList: course.allowWaitingList,
-      stats,
-      participantsUrl,
-      attachment: {
-        filename,
-        content: excelBuffer,
-      },
-    });
+  let sentCount = 0;
+  try {
+    for (const email of recipients) {
+      await sendCourseRegistrationClosedOverviewEmail({
+        to: email,
+        courseTitle: course.title,
+        registrationDeadline: course.registrationDeadline,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        locationName: course.location?.name ?? null,
+        maxParticipants: course.maxParticipants,
+        allowWaitingList: course.allowWaitingList,
+        stats,
+        participantsUrl,
+        attachment: {
+          filename,
+          content: excelBuffer,
+        },
+      });
+      sentCount += 1;
+    }
+  } catch (error) {
+    // If nobody was reached yet, retrying is safe — release the claim so the
+    // next run picks the course up again. After a partial send, keep the
+    // claim: at-most-once beats duplicate mails to the earlier recipients.
+    if (sentCount === 0) {
+      await db.course
+        .update({
+          where: { id: course.id },
+          data: { registrationClosedNotifiedAt: null },
+        })
+        .catch(() => undefined);
+    }
+    throw error;
   }
-
-  await db.course.update({
-    where: { id: course.id },
-    data: { registrationClosedNotifiedAt: now },
-  });
 
   return "emailed";
 }

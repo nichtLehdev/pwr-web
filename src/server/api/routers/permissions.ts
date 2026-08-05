@@ -7,6 +7,7 @@ import {
   permissionKeySchema,
 } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
+import { logAudit } from "../helpers/audit";
 import { wouldCreateCircularReference } from "../helpers/role-permissions";
 import {
   resolveUserPermissions,
@@ -22,7 +23,7 @@ export const permissionsRouter = createTRPCRouter({
   }),
 
   getMyPermissions: protectedProcedure.query(async ({ ctx }) => {
-    return await getUserPermissions(ctx.session.user.id);
+    return await getUserPermissions(ctx.session.user.id, ctx.permissionCache);
   }),
 
   // ========== PERMISSIONS ==========
@@ -159,6 +160,15 @@ export const permissionsRouter = createTRPCRouter({
 
       const role = await ctx.db.role.create({ data: roleData });
 
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "role.create",
+        entityType: "role",
+        entityId: role.id,
+        details: { name: role.name, permissionKeys: permissionKeys ?? [] },
+      });
+
       if (permissionKeys && permissionKeys.length > 0) {
         await ctx.db.rolePermission.createMany({
           data: permissionKeys.map((permissionKey) => ({
@@ -269,6 +279,19 @@ export const permissionsRouter = createTRPCRouter({
         }
       }
 
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "role.update",
+        entityType: "role",
+        entityId: roleId,
+        details: {
+          name: role.name,
+          changes: updateData,
+          ...(permissionKeys !== undefined ? { permissionKeys } : {}),
+        },
+      });
+
       return await ctx.db.role.findUnique({
         where: { id: roleId },
         include: {
@@ -299,6 +322,16 @@ export const permissionsRouter = createTRPCRouter({
       }
 
       await ctx.db.role.delete({ where: { id: input.id } });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "role.delete",
+        entityType: "role",
+        entityId: input.id,
+        details: { name: role.name },
+      });
+
       return { success: true };
     }),
 
@@ -332,6 +365,15 @@ export const permissionsRouter = createTRPCRouter({
           skipDuplicates: true,
         });
       }
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "user.roles_set",
+        entityType: "user",
+        entityId: input.userId,
+        details: { targetEmail: targetUser.email, roleIds: input.roleIds },
+      });
 
       return { success: true };
     }),
@@ -390,6 +432,18 @@ export const permissionsRouter = createTRPCRouter({
           skipDuplicates: true,
         });
       }
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "user.permissions_set",
+        entityType: "user",
+        entityId: input.userId,
+        details: {
+          targetEmail: targetUser.email,
+          permissions: input.permissions,
+        },
+      });
 
       return { success: true };
     }),

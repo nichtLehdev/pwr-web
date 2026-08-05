@@ -294,6 +294,7 @@ export const ensemblesRouter = createTRPCRouter({
       const canManageEnsembles = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
+        ctx.permissionCache,
       );
       const canEdit =
         ensemble.conductorId === ctx.session.user.id ||

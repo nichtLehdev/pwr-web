@@ -382,33 +382,24 @@ export const bezirkeRouter = createTRPCRouter({
         });
       }
 
-      // Remove all existing users from this district
-      await ctx.db.user.updateMany({
-        where: { bezirkId },
-        data: { bezirkId: null, districtRoleName: null },
-      });
-
-      // Assign all obleute users with their custom role names
-      for (const assignment of obleuteAssignments) {
-        await ctx.db.user.update({
-          where: { id: assignment.userId },
-          data: {
-            bezirkId,
-            districtRoleName: assignment.roleName,
-          },
-        });
-      }
-
-      // Assign all stell. obleute users with their custom role names
-      for (const assignment of stellObleuteAssignments) {
-        await ctx.db.user.update({
-          where: { id: assignment.userId },
-          data: {
-            bezirkId,
-            districtRoleName: assignment.roleName,
-          },
-        });
-      }
+      // Clear + reassign atomically: a failure mid-way must not leave the
+      // district half-emptied.
+      await ctx.db.$transaction([
+        ctx.db.user.updateMany({
+          where: { bezirkId },
+          data: { bezirkId: null, districtRoleName: null },
+        }),
+        ...[...obleuteAssignments, ...stellObleuteAssignments].map(
+          (assignment) =>
+            ctx.db.user.update({
+              where: { id: assignment.userId },
+              data: {
+                bezirkId,
+                districtRoleName: assignment.roleName,
+              },
+            }),
+        ),
+      ]);
 
       return { success: true };
     }),

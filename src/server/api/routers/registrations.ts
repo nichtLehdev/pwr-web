@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  rateLimitedPublicProcedure,
+} from "../trpc";
 import {
   CourseCollaboratorRole,
   CoursePaymentMethod,
@@ -10,6 +14,7 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { isExternalCourse } from "@/lib/course-external";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 
 function collaboratorsForViewer(userId: string) {
   return {
@@ -29,8 +34,21 @@ import {
   permissionProcedure,
   permissionProcedureAny,
 } from "../middleware/permissions";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
 import { resolveParticipantCustomFieldsForPersist } from "@/lib/course-custom-fields";
+import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
+import {
+  assertPriceTierCapacity,
+  computeCourseCapacity,
+  countConfirmedParticipants,
+  runSerializable,
+} from "../helpers/course-capacity";
+import { nextInvoiceId } from "../helpers/invoice-number";
+import { logAudit } from "../helpers/audit";
+import { createNotification } from "../helpers/notifications";
+import {
+  promoteFromWaitlist,
+  sendPromotionEmails,
+} from "../helpers/waitlist-promotion";
 import {
   courseAcceptsCash,
   courseAcceptsInvoice,
@@ -40,7 +58,10 @@ import {
 const getEmailService = async () => import("@/server/email");
 
 export const registrationsRouter = createTRPCRouter({
-  create: publicProcedure
+  create: rateLimitedPublicProcedure("registrations.create", {
+    maxRequests: 20,
+    windowMs: 60 * 60 * 1000,
+  })
     .input(
       z.object({
         courseId: z.string(),
@@ -92,15 +113,6 @@ export const registrationsRouter = createTRPCRouter({
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
-          _count: {
-            select: {
-              registrations: {
-                where: {
-                  registrationStatus: RegistrationStatus.CONFIRMED,
-                },
-              },
-            },
-          },
           priceOptions: true,
           customFields: true,
         },
@@ -137,10 +149,7 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (
-        course.registrationDeadline &&
-        new Date() > course.registrationDeadline
-      ) {
+      if (isRegistrationDeadlinePassed(course.registrationDeadline)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Registration deadline has passed",
@@ -169,7 +178,9 @@ export const registrationsRouter = createTRPCRouter({
       });
 
       let totalPrice = 0;
-      const participantsWithPriceOptions = [];
+      const participantsWithPriceOptions: Array<
+        (typeof participants)[number] & { priceOption: string }
+      > = [];
 
       for (const participant of participants) {
         const priceOption = course.priceOptions.find(
@@ -191,91 +202,32 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const originalTotalPrice = totalPrice;
+      const originalTotalPrice = roundMoney(totalPrice);
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus: SiblingDiscountStatus =
         SiblingDiscountStatus.NONE;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        const siblingGroups = new Map<string, typeof participants>();
-        const soloParticipants: typeof participants = [];
-
-        for (const participant of participants) {
-          if (participant.siblingGroupId) {
-            if (!siblingGroups.has(participant.siblingGroupId)) {
-              siblingGroups.set(participant.siblingGroupId, []);
-            }
-            siblingGroups.get(participant.siblingGroupId)?.push(participant);
-          } else {
-            soloParticipants.push(participant);
-          }
-        }
-
-        for (const [, groupParticipants] of siblingGroups) {
-          if (groupParticipants.length > 1) {
-            for (let i = 1; i < groupParticipants.length; i++) {
-              const participant = groupParticipants[i];
-              if (participant) {
-                const priceOption = course.priceOptions.find(
-                  (p) => p.id === participant.priceOptionId,
-                );
-                if (priceOption) {
-                  siblingDiscountAmount += priceOption.price * 0.2;
-                }
-              }
-            }
-          }
-        }
+        // Age eligibility is evaluated at course start, so the discount does
+        // not change between registration and invoicing.
+        const { totalDiscount } = computeSiblingDiscounts(
+          participantsWithPriceOptions.map((p) => ({
+            birthDate: p.birthDate,
+            siblingGroupId: p.siblingGroupId,
+            price:
+              course.priceOptions.find((po) => po.id === p.priceOptionId)
+                ?.price ?? 0,
+          })),
+          course.startDate,
+        );
+        siblingDiscountAmount = totalDiscount;
 
         if (siblingDiscountAmount > 0) {
-          totalPrice = originalTotalPrice - siblingDiscountAmount;
+          totalPrice = roundMoney(originalTotalPrice - siblingDiscountAmount);
           siblingDiscountStatus = SiblingDiscountStatus.PENDING;
         }
-      }
-
-      const currentParticipantsCount = await ctx.db.participant.count({
-        where: {
-          registration: {
-            courseId: input.courseId,
-            OR: [
-              { registrationStatus: RegistrationStatus.CONFIRMED },
-              {
-                siblingDiscountStatus: SiblingDiscountStatus.PENDING,
-              },
-            ],
-          },
-        },
-      });
-
-      const newParticipants = participants.length;
-      const totalAfterRegistration = currentParticipantsCount + newParticipants;
-
-      const maxParticipants = Math.min(
-        course.maxParticipants || Infinity,
-        course.priceOptions.reduce(
-          (sum, p) => sum + (p.maxParticipants || Infinity),
-          0,
-        ),
-      );
-
-      const availableSpots = maxParticipants - currentParticipantsCount;
-
-      let registrationStatus: RegistrationStatus = RegistrationStatus.CONFIRMED;
-
-      if (totalAfterRegistration > maxParticipants) {
-        if (!course.allowWaitingList) {
-          if (availableSpots > 0 && availableSpots < newParticipants) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer oder kontaktieren Sie uns.`,
-            });
-          }
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Course is full and waiting list is not available",
-          });
-        }
-        registrationStatus = RegistrationStatus.WAITLIST;
+      } else {
+        totalPrice = originalTotalPrice;
       }
 
       let resolvedPaymentMethod: CoursePaymentMethod | null = null;
@@ -320,48 +272,102 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
-      const registration = await ctx.db.courseRegistration.create({
-        data: {
-          ...registrationData,
-          ...(resolvedPaymentMethod != null
-            ? { paymentMethod: resolvedPaymentMethod }
-            : {}),
-          totalPrice, // Use server-calculated price (after discount if applied)
-          originalTotalPrice:
-            input.siblingDiscountApplied && siblingDiscountAmount > 0
-              ? originalTotalPrice
-              : null,
-          siblingDiscountAmount:
-            input.siblingDiscountApplied && siblingDiscountAmount > 0
-              ? siblingDiscountAmount
-              : null,
-          siblingDiscountApplied: input.siblingDiscountApplied ?? false,
-          siblingDiscountStatus,
-          registrationStatus,
-          participants: {
-            create: participantsWithPriceOptions.map((participant) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-              const { priceOptionId, ...participantData } = participant;
-              return {
-                ...participantData,
-                customFields: (participantData.customFields ||
-                  {}) as Prisma.InputJsonValue,
-                siblingGroupId: participant.siblingGroupId || null,
-              };
-            }),
-          },
-        },
-        include: {
-          participants: true,
-          course: {
-            select: {
-              title: true,
-              startDate: true,
-              endDate: true,
+      // Capacity check and insert run in one SERIALIZABLE transaction so two
+      // concurrent registrations cannot both take the last seat.
+      const { registration, registrationStatus } = await runSerializable(
+        ctx.db,
+        async (tx) => {
+          const currentParticipantsCount = await countConfirmedParticipants(
+            tx,
+            input.courseId,
+          );
+
+          const newParticipants = participants.length;
+          const totalAfterRegistration =
+            currentParticipantsCount + newParticipants;
+          const maxParticipants = computeCourseCapacity(course);
+          const availableSpots = maxParticipants - currentParticipantsCount;
+
+          let status: RegistrationStatus = RegistrationStatus.CONFIRMED;
+
+          if (totalAfterRegistration > maxParticipants) {
+            if (!course.allowWaitingList) {
+              if (availableSpots > 0 && availableSpots < newParticipants) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer oder kontaktieren Sie uns.`,
+                });
+              }
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: "Course is full and waiting list is not available",
+              });
+            }
+            status = RegistrationStatus.WAITLIST;
+          }
+
+          // Per-price-tier limits are enforced here too (they previously were
+          // only checked on registration updates, not on creation).
+          if (status === RegistrationStatus.CONFIRMED) {
+            const additionsByLabel: Record<string, number> = {};
+            for (const participant of participantsWithPriceOptions) {
+              additionsByLabel[participant.priceOption] =
+                (additionsByLabel[participant.priceOption] ?? 0) + 1;
+            }
+            await assertPriceTierCapacity(
+              tx,
+              input.courseId,
+              course.priceOptions,
+              additionsByLabel,
+            );
+          }
+
+          const created = await tx.courseRegistration.create({
+            data: {
+              ...registrationData,
+              ...(resolvedPaymentMethod != null
+                ? { paymentMethod: resolvedPaymentMethod }
+                : {}),
+              totalPrice, // Use server-calculated price (after discount if applied)
+              originalTotalPrice:
+                input.siblingDiscountApplied && siblingDiscountAmount > 0
+                  ? originalTotalPrice
+                  : null,
+              siblingDiscountAmount:
+                input.siblingDiscountApplied && siblingDiscountAmount > 0
+                  ? siblingDiscountAmount
+                  : null,
+              siblingDiscountApplied: input.siblingDiscountApplied ?? false,
+              siblingDiscountStatus,
+              registrationStatus: status,
+              participants: {
+                create: participantsWithPriceOptions.map((participant) => {
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  const { priceOptionId, ...participantData } = participant;
+                  return {
+                    ...participantData,
+                    customFields: (participantData.customFields ||
+                      {}) as Prisma.InputJsonValue,
+                    siblingGroupId: participant.siblingGroupId || null,
+                  };
+                }),
+              },
             },
-          },
+            include: {
+              participants: true,
+              course: {
+                select: {
+                  title: true,
+                  startDate: true,
+                  endDate: true,
+                },
+              },
+            },
+          });
+
+          return { registration: created, registrationStatus: status };
         },
-      });
+      );
 
       const emailService = await getEmailService();
       if (emailService.isEmailConfigured()) {
@@ -414,10 +420,38 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
+      // In-app notification for the course team (creator + organizers).
+      try {
+        const organizers = await ctx.db.courseCollaborator.findMany({
+          where: {
+            courseId: input.courseId,
+            role: CourseCollaboratorRole.ORGANIZER,
+          },
+          select: { userId: true },
+        });
+        const recipients = new Set<string>(organizers.map((o) => o.userId));
+        if (course.createdById) recipients.add(course.createdById);
+        if (ctx.session?.user) recipients.delete(ctx.session.user.id);
+
+        const isWaitlisted = registrationStatus === RegistrationStatus.WAITLIST;
+        for (const userId of recipients) {
+          await createNotification(ctx.db, userId, {
+            type: "registration.new",
+            title: isWaitlisted
+              ? `Neue Anmeldung (Warteliste): ${course.title}`
+              : `Neue Anmeldung: ${course.title}`,
+            body: `${registration.registrantFirstName} ${registration.registrantLastName} — ${registration.participants.length} ${registration.participants.length === 1 ? "Teilnehmer" : "Teilnehmer"}`,
+            url: `/dashboard/courses/${input.courseId}/participants/${registration.id}`,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to notify course team:", error);
+      }
+
       return registration;
     }),
 
-  getById: publicProcedure
+  getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const registration = await ctx.db.courseRegistration.findUnique({
@@ -436,6 +470,8 @@ export const registrationsRouter = createTRPCRouter({
               maxParticipants: true,
               allowWaitingList: true,
               allowSiblingDiscount: true,
+              createdById: true,
+              collaborators: collaboratorsForViewer(ctx.session.user.id),
               priceOptions: {
                 select: {
                   id: true,
@@ -465,7 +501,36 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      return registration;
+      // A registration record contains the registrant's contact and billing
+      // data plus participants' birth dates — only the registrant themselves
+      // or course staff may read it.
+      const isOwner = registration.registrantEmail === ctx.session.user.email;
+      const isCreator = registration.course.createdById === ctx.session.user.id;
+      const teamMember = viewerIsCourseTeamMember(
+        registration.course.collaborators,
+      );
+      const canManageRegistrations =
+        isOwner || isCreator || teamMember
+          ? false
+          : await userHasPermission(
+              ctx.session.user.id,
+              PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+              ctx.permissionCache,
+            );
+
+      if (!isOwner && !isCreator && !teamMember && !canManageRegistrations) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      const {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        course: { createdById, collaborators, ...course },
+        ...rest
+      } = registration;
+      return { ...rest, course };
     }),
 
   canManageRegistration: protectedProcedure
@@ -497,6 +562,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const collaboratorRows = registration.course.collaborators;
       const teamMember = viewerIsCourseTeamMember(collaboratorRows);
@@ -505,13 +571,15 @@ export const registrationsRouter = createTRPCRouter({
       const canView = isOwner || isStaff;
       const now = new Date();
       const courseStart = new Date(registration.course.startDate);
-      const deadline = registration.course.registrationDeadline
-        ? new Date(registration.course.registrationDeadline)
-        : null;
       const isCancelled =
         registration.registrationStatus === RegistrationStatus.CANCELLED;
       const ownerCanEditByTime =
-        courseStart > now && (!deadline || deadline > now) && !isCancelled;
+        courseStart > now &&
+        !isRegistrationDeadlinePassed(
+          registration.course.registrationDeadline,
+          now,
+        ) &&
+        !isCancelled;
       const canEdit =
         canView &&
         (isCancelled ? false : isStaff ? true : isOwner && ownerCanEditByTime);
@@ -519,6 +587,96 @@ export const registrationsRouter = createTRPCRouter({
 
       return { canView, canEdit, canCancel, isStaff };
     }),
+
+  /**
+   * Cross-course registration overview for administrators: every
+   * registration, filterable by registrant, status, payment, and course —
+   * the "who owes money / who registered" view that per-course participant
+   * pages can't answer.
+   */
+  getAllAdmin: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(25),
+        search: z.string().max(200).optional(),
+        registrationStatus: z.nativeEnum(RegistrationStatus).optional(),
+        paymentStatus: z.nativeEnum(PaymentStatus).optional(),
+        courseId: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const search = input.search?.trim();
+      const where: Prisma.CourseRegistrationWhereInput = {
+        ...(input.registrationStatus && {
+          registrationStatus: input.registrationStatus,
+        }),
+        ...(input.paymentStatus && { paymentStatus: input.paymentStatus }),
+        ...(input.courseId && { courseId: input.courseId }),
+        ...(search && {
+          OR: [
+            { registrantEmail: { contains: search, mode: "insensitive" } },
+            { registrantFirstName: { contains: search, mode: "insensitive" } },
+            { registrantLastName: { contains: search, mode: "insensitive" } },
+            { invoiceId: { contains: search, mode: "insensitive" } },
+            {
+              participants: {
+                some: {
+                  OR: [
+                    { firstName: { contains: search, mode: "insensitive" } },
+                    { lastName: { contains: search, mode: "insensitive" } },
+                  ],
+                },
+              },
+            },
+          ],
+        }),
+      };
+
+      const [registrations, total] = await Promise.all([
+        ctx.db.courseRegistration.findMany({
+          where,
+          select: {
+            id: true,
+            registrantFirstName: true,
+            registrantLastName: true,
+            registrantEmail: true,
+            registrationStatus: true,
+            paymentStatus: true,
+            paymentMethod: true,
+            totalPrice: true,
+            invoiceId: true,
+            createdAt: true,
+            course: {
+              select: { id: true, title: true, startDate: true },
+            },
+            _count: { select: { participants: true } },
+          },
+          orderBy: { createdAt: "desc" },
+          skip: (input.page - 1) * input.limit,
+          take: input.limit,
+        }),
+        ctx.db.courseRegistration.count({ where }),
+      ]);
+
+      return {
+        registrations,
+        total,
+        pages: Math.ceil(total / input.limit),
+      };
+    }),
+
+  /** Courses that have at least one registration — for the admin filter. */
+  getCoursesWithRegistrations: permissionProcedure(
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+  ).query(async ({ ctx }) => {
+    return ctx.db.course.findMany({
+      where: { registrations: { some: {} } },
+      select: { id: true, title: true, startDate: true },
+      orderBy: { startDate: "desc" },
+      take: 200,
+    });
+  }),
 
   getMyActiveRegistrationForCourse: protectedProcedure
     .input(z.object({ courseId: z.string() }))
@@ -685,6 +843,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const teamMember = viewerIsCourseTeamMember(
         registration.course.collaborators,
@@ -708,11 +867,12 @@ export const registrationsRouter = createTRPCRouter({
       if (!isStaff) {
         const now = new Date();
         const courseStart = new Date(registration.course.startDate);
-        const deadline = registration.course.registrationDeadline
-          ? new Date(registration.course.registrationDeadline)
-          : null;
         const ownerCanEditByTime =
-          courseStart > now && (!deadline || deadline > now);
+          courseStart > now &&
+          !isRegistrationDeadlinePassed(
+            registration.course.registrationDeadline,
+            now,
+          );
         if (!ownerCanEditByTime) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -738,7 +898,9 @@ export const registrationsRouter = createTRPCRouter({
       });
 
       let originalTotalPrice = 0;
-      const participantsWithPriceOptions = [];
+      const participantsWithPriceOptions: Array<
+        (typeof participants)[number] & { priceOption: string }
+      > = [];
 
       for (const participant of participants) {
         const priceOption = course.priceOptions.find(
@@ -760,46 +922,26 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      originalTotalPrice = roundMoney(originalTotalPrice);
       let totalPrice = originalTotalPrice;
       let siblingDiscountAmount = 0;
       let siblingDiscountStatus = registration.siblingDiscountStatus;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        const siblingGroups = new Map<string, typeof participants>();
-        for (const participant of participants) {
-          if (participant.siblingGroupId) {
-            if (!siblingGroups.has(participant.siblingGroupId)) {
-              siblingGroups.set(participant.siblingGroupId, []);
-            }
-            siblingGroups.get(participant.siblingGroupId)?.push(participant);
-          }
-        }
-
-        for (const [, groupParticipants] of siblingGroups) {
-          if (groupParticipants.length > 1) {
-            // Only apply discount to participants under 18
-            const eligibleParticipants = groupParticipants.filter(
-              (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-            );
-            if (eligibleParticipants.length > 1) {
-              // Apply discount to all eligible participants except the first one
-              for (let i = 1; i < eligibleParticipants.length; i++) {
-                const participant = eligibleParticipants[i];
-                if (participant) {
-                  const priceOption = course.priceOptions.find(
-                    (p) => p.id === participant.priceOptionId,
-                  );
-                  if (priceOption) {
-                    siblingDiscountAmount += priceOption.price * 0.2;
-                  }
-                }
-              }
-            }
-          }
-        }
+        const { totalDiscount } = computeSiblingDiscounts(
+          participantsWithPriceOptions.map((p) => ({
+            birthDate: p.birthDate,
+            siblingGroupId: p.siblingGroupId,
+            price:
+              course.priceOptions.find((po) => po.id === p.priceOptionId)
+                ?.price ?? 0,
+          })),
+          course.startDate,
+        );
+        siblingDiscountAmount = totalDiscount;
 
         if (siblingDiscountAmount > 0) {
-          totalPrice = originalTotalPrice - siblingDiscountAmount;
+          totalPrice = roundMoney(originalTotalPrice - siblingDiscountAmount);
           if (siblingDiscountStatus === "NONE") {
             siblingDiscountStatus = SiblingDiscountStatus.PENDING;
           }
@@ -814,139 +956,120 @@ export const registrationsRouter = createTRPCRouter({
         originalTotalPrice = 0;
       }
 
-      const currentParticipantsExcludingThis = await ctx.db.participant.count({
-        where: {
-          registration: {
-            courseId: course.id,
-            registrationStatus: RegistrationStatus.CONFIRMED,
-            id: { not: id },
-          },
-        },
-      });
+      // Capacity checks and the delete-and-rewrite of participants run in one
+      // SERIALIZABLE transaction: no overbooking through concurrent edits, and
+      // no half-rewritten participant list if anything fails midway.
+      const updatedRegistration = await runSerializable(ctx.db, async (tx) => {
+        const currentParticipantsExcludingThis =
+          await countConfirmedParticipants(tx, course.id, id);
 
-      const newTotalParticipants =
-        currentParticipantsExcludingThis + participants.length;
-      const maxParticipants = course.maxParticipants ?? Infinity;
+        const newTotalParticipants =
+          currentParticipantsExcludingThis + participants.length;
+        const maxParticipants = computeCourseCapacity(course);
 
-      if (newTotalParticipants > maxParticipants) {
-        if (!course.allowWaitingList) {
-          const availableSpots =
-            maxParticipants - currentParticipantsExcludingThis;
-          if (availableSpots > 0 && availableSpots < participants.length) {
+        if (newTotalParticipants > maxParticipants) {
+          if (!course.allowWaitingList) {
+            const availableSpots =
+              maxParticipants - currentParticipantsExcludingThis;
+            if (availableSpots > 0 && availableSpots < participants.length) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${participants.length} ${participants.length === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer.`,
+              });
+            }
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${participants.length} ${participants.length === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer.`,
+              message: "Cannot add more participants - course is full",
             });
           }
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Cannot add more participants - course is full",
-          });
         }
-      }
 
-      const priceOptionCounts: Record<string, number> = {};
-      for (const participant of participantsWithPriceOptions) {
-        if (participant.priceOption) {
-          priceOptionCounts[participant.priceOption] =
-            (priceOptionCounts[participant.priceOption] ?? 0) + 1;
+        const priceOptionCounts: Record<string, number> = {};
+        for (const participant of participantsWithPriceOptions) {
+          if (participant.priceOption) {
+            priceOptionCounts[participant.priceOption] =
+              (priceOptionCounts[participant.priceOption] ?? 0) + 1;
+          }
         }
-      }
-
-      for (const [optionLabel, count] of Object.entries(priceOptionCounts)) {
-        const priceOption = course.priceOptions.find(
-          (p) => p.label === optionLabel,
+        await assertPriceTierCapacity(
+          tx,
+          course.id,
+          course.priceOptions,
+          priceOptionCounts,
+          id,
         );
-        if (priceOption?.maxParticipants) {
-          const currentCount = await ctx.db.participant.count({
-            where: {
-              priceOption: optionLabel,
-              registration: {
-                courseId: course.id,
-                registrationStatus: RegistrationStatus.CONFIRMED,
-                id: { not: id },
+
+        const existingParticipantIds = participants
+          .filter((p) => p.id)
+          .map((p) => p.id!);
+
+        await tx.participant.deleteMany({
+          where: {
+            registrationId: id,
+            id: { notIn: existingParticipantIds },
+          },
+        });
+
+        for (const participant of participantsWithPriceOptions) {
+          const {
+            id: participantId,
+            siblingGroupId,
+            ...participantData
+          } = participant;
+
+          const prismaData = {
+            firstName: participantData.firstName,
+            lastName: participantData.lastName,
+            birthDate: participantData.birthDate,
+            city: participantData.city,
+            instrument: participantData.instrument ?? null,
+            priceOption: participantData.priceOption ?? null,
+            customFields: (participantData.customFields ??
+              {}) as Prisma.InputJsonValue,
+            siblingGroupId: siblingGroupId ?? null,
+          };
+
+          if (participantId) {
+            await tx.participant.update({
+              where: { id: participantId },
+              data: prismaData,
+            });
+          } else {
+            await tx.participant.create({
+              data: {
+                ...prismaData,
+                registrationId: id,
+              },
+            });
+          }
+        }
+
+        return tx.courseRegistration.update({
+          where: { id },
+          data: {
+            ...registrationData,
+            totalPrice, // Use server-calculated price
+            siblingDiscountApplied:
+              input.siblingDiscountApplied ??
+              registration.siblingDiscountApplied,
+            siblingDiscountStatus,
+            originalTotalPrice:
+              siblingDiscountAmount > 0 ? originalTotalPrice : null,
+            siblingDiscountAmount:
+              siblingDiscountAmount > 0 ? siblingDiscountAmount : null,
+          },
+          include: {
+            participants: true,
+            course: {
+              select: {
+                id: true,
+                title: true,
+                startDate: true,
+                endDate: true,
               },
             },
-          });
-
-          if (currentCount + count > priceOption.maxParticipants) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Price option "${optionLabel}" is full`,
-            });
-          }
-        }
-      }
-
-      const existingParticipantIds = participants
-        .filter((p) => p.id)
-        .map((p) => p.id!);
-
-      await ctx.db.participant.deleteMany({
-        where: {
-          registrationId: id,
-          id: { notIn: existingParticipantIds },
-        },
-      });
-
-      for (const participant of participantsWithPriceOptions) {
-        const {
-          id: participantId,
-          siblingGroupId,
-          ...participantData
-        } = participant;
-
-        const prismaData = {
-          firstName: participantData.firstName,
-          lastName: participantData.lastName,
-          birthDate: participantData.birthDate,
-          city: participantData.city,
-          instrument: participantData.instrument ?? null,
-          priceOption: participantData.priceOption ?? null,
-          customFields: (participantData.customFields ??
-            {}) as Prisma.InputJsonValue,
-          siblingGroupId: siblingGroupId ?? null,
-        };
-
-        if (participantId) {
-          await ctx.db.participant.update({
-            where: { id: participantId },
-            data: prismaData,
-          });
-        } else {
-          await ctx.db.participant.create({
-            data: {
-              ...prismaData,
-              registrationId: id,
-            },
-          });
-        }
-      }
-
-      const updatedRegistration = await ctx.db.courseRegistration.update({
-        where: { id },
-        data: {
-          ...registrationData,
-          totalPrice, // Use server-calculated price
-          siblingDiscountApplied:
-            input.siblingDiscountApplied ?? registration.siblingDiscountApplied,
-          siblingDiscountStatus,
-          originalTotalPrice:
-            siblingDiscountAmount > 0 ? originalTotalPrice : null,
-          siblingDiscountAmount:
-            siblingDiscountAmount > 0 ? siblingDiscountAmount : null,
-        },
-        include: {
-          participants: true,
-          course: {
-            select: {
-              id: true,
-              title: true,
-              startDate: true,
-              endDate: true,
-            },
           },
-        },
+        });
       });
 
       return updatedRegistration;
@@ -986,6 +1109,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const isAdmin = canManageRegistrations;
       const teamMember = viewerIsCourseTeamMember(
@@ -1004,22 +1128,50 @@ export const registrationsRouter = createTRPCRouter({
       const isNowConfirmed =
         input.registrationStatus === RegistrationStatus.CONFIRMED;
 
-      const updatedRegistration = await ctx.db.courseRegistration.update({
-        where: { id: input.id },
-        data: {
-          registrationStatus: input.registrationStatus,
-          notes: input.notes,
-        },
-        include: {
-          participants: true,
-          course: {
+      const updatedRegistration = await runSerializable(ctx.db, async (tx) => {
+        // Promoting to CONFIRMED consumes seats — re-check capacity first.
+        if (isNowConfirmed && previousStatus !== RegistrationStatus.CONFIRMED) {
+          const course = await tx.course.findUniqueOrThrow({
+            where: { id: registration.courseId },
             select: {
-              title: true,
-              startDate: true,
-              endDate: true,
+              maxParticipants: true,
+              priceOptions: {
+                select: { label: true, maxParticipants: true },
+              },
+            },
+          });
+          const currentCount = await countConfirmedParticipants(
+            tx,
+            registration.courseId,
+            registration.id,
+          );
+          const capacity = computeCourseCapacity(course);
+          if (currentCount + registration.participants.length > capacity) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "Der Kurs ist bereits voll — die Anmeldung kann nicht bestätigt werden.",
+            });
+          }
+        }
+
+        return tx.courseRegistration.update({
+          where: { id: input.id },
+          data: {
+            registrationStatus: input.registrationStatus,
+            notes: input.notes,
+          },
+          include: {
+            participants: true,
+            course: {
+              select: {
+                title: true,
+                startDate: true,
+                endDate: true,
+              },
             },
           },
-        },
+        });
       });
 
       const emailService = await getEmailService();
@@ -1040,6 +1192,30 @@ export const registrationsRouter = createTRPCRouter({
           console.error("Failed to send confirmation email:", error);
         }
       }
+
+      // Demoting a confirmed registration frees seats for the waitlist.
+      if (
+        previousStatus === RegistrationStatus.CONFIRMED &&
+        input.registrationStatus !== RegistrationStatus.CONFIRMED
+      ) {
+        const promoted = await promoteFromWaitlist(
+          ctx.db,
+          registration.courseId,
+        );
+        await sendPromotionEmails(promoted);
+      }
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.status",
+        entityType: "registration",
+        entityId: input.id,
+        details: {
+          registrationStatus: input.registrationStatus,
+          previousStatus,
+        },
+      });
 
       return updatedRegistration;
     }),
@@ -1080,6 +1256,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const isAdmin = canManageRegistrations;
       const teamMember = viewerIsCourseTeamMember(
@@ -1096,6 +1273,7 @@ export const registrationsRouter = createTRPCRouter({
       const hasInvoicesManage = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.INVOICES_MANAGE,
+        ctx.permissionCache,
       );
       if (!hasInvoicesManage && input.paymentStatus !== PaymentStatus.PAID) {
         throw new TRPCError({
@@ -1105,31 +1283,46 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const invoiceData =
-        input.invoiceGenerated !== undefined
-          ? input.invoiceGenerated
-            ? {
-                invoiceGenerated: true,
-                ...(registration.invoiceGenerated && registration.invoiceId
-                  ? {}
-                  : {
-                      invoiceDate: new Date(),
-                      invoiceId: `RE-${input.id.slice(0, 8).toUpperCase()}`,
-                    }),
-              }
-            : {
-                invoiceGenerated: false,
-                invoiceDate: null,
-                invoiceId: null,
-              }
-          : {};
-
-      return await ctx.db.courseRegistration.update({
-        where: { id: input.id },
-        data: {
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.payment_status",
+        entityType: "registration",
+        entityId: input.id,
+        details: {
           paymentStatus: input.paymentStatus,
-          ...invoiceData,
+          previousPaymentStatus: registration.paymentStatus,
+          invoiceGenerated: input.invoiceGenerated ?? null,
         },
+      });
+
+      return await ctx.db.$transaction(async (tx) => {
+        const invoiceData =
+          input.invoiceGenerated !== undefined
+            ? input.invoiceGenerated
+              ? {
+                  invoiceGenerated: true,
+                  ...(registration.invoiceGenerated && registration.invoiceId
+                    ? {}
+                    : {
+                        invoiceDate: new Date(),
+                        invoiceId: await nextInvoiceId(tx),
+                      }),
+                }
+              : {
+                  invoiceGenerated: false,
+                  invoiceDate: null,
+                  invoiceId: null,
+                }
+            : {};
+
+        return tx.courseRegistration.update({
+          where: { id: input.id },
+          data: {
+            paymentStatus: input.paymentStatus,
+            ...invoiceData,
+          },
+        });
       });
     }),
 
@@ -1160,6 +1353,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const teamMember = viewerIsCourseTeamMember(course.collaborators);
       if (!teamMember && !isCreator && !canManageRegistrations) {
@@ -1186,18 +1380,18 @@ export const registrationsRouter = createTRPCRouter({
         (r) => !r.invoiceGenerated || !r.invoiceId,
       );
       if (toUpdate.length > 0) {
-        await ctx.db.$transaction(
-          toUpdate.map((r) =>
-            ctx.db.courseRegistration.update({
+        await ctx.db.$transaction(async (tx) => {
+          for (const r of toUpdate) {
+            await tx.courseRegistration.update({
               where: { id: r.id },
               data: {
                 invoiceGenerated: true,
                 invoiceDate: now,
-                invoiceId: `RE-${r.id.slice(0, 8).toUpperCase()}`,
+                invoiceId: await nextInvoiceId(tx),
               },
-            }),
-          ),
-        );
+            });
+          }
+        });
       }
       return {
         updated: toUpdate.length,
@@ -1205,84 +1399,56 @@ export const registrationsRouter = createTRPCRouter({
       };
     }),
 
-  cancel: publicProcedure
+  // Cancellation requires a session: every UI path (own registrations,
+  // dashboard) is login-gated, and an anonymous branch keyed only on the
+  // registrant e-mail would let anyone with a leaked registration id cancel
+  // it (the e-mail used to be readable from the same record).
+  cancel: protectedProcedure
     .input(
       z.object({
         id: z.string(),
-        email: z.email().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      let registration;
-
-      if (ctx.session) {
-        const session = ctx.session;
-        registration = await ctx.db.courseRegistration.findUnique({
-          where: { id: input.id },
-          include: {
-            participants: true,
-            course: {
-              select: {
-                title: true,
-                startDate: true,
-                endDate: true,
-                createdById: true,
-                collaborators: collaboratorsForViewer(session.user.id),
-              },
+      const session = ctx.session;
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.id },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+              createdById: true,
+              collaborators: collaboratorsForViewer(session.user.id),
             },
           },
+        },
+      });
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
         });
-        if (!registration) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Registration not found",
-          });
-        }
-        const isOwner = registration.registrantEmail === session.user.email;
-        const isCreator = registration.course.createdById === session.user.id;
-        const canManageRegistrations = await userHasPermission(
-          session.user.id,
-          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        );
-        const teamMember = viewerIsCourseTeamMember(
-          registration.course.collaborators,
-        );
-        const canCancelAsStaff =
-          teamMember || isCreator || canManageRegistrations;
-        if (!isOwner && !canCancelAsStaff) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Cannot cancel registration of another user",
-          });
-        }
-      } else {
-        registration = await ctx.db.courseRegistration.findUnique({
-          where: { id: input.id },
-          include: {
-            participants: true,
-            course: {
-              select: {
-                title: true,
-                startDate: true,
-                endDate: true,
-              },
-            },
-          },
+      }
+      const isOwner = registration.registrantEmail === session.user.email;
+      const isCreator = registration.course.createdById === session.user.id;
+      const canManageRegistrations = await userHasPermission(
+        session.user.id,
+        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
+      );
+      const teamMember = viewerIsCourseTeamMember(
+        registration.course.collaborators,
+      );
+      const canCancelAsStaff =
+        teamMember || isCreator || canManageRegistrations;
+      if (!isOwner && !canCancelAsStaff) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Cannot cancel registration of another user",
         });
-
-        if (!registration) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Registration not found",
-          });
-        }
-
-        if (registration.registrantEmail !== input.email) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Email does not match registration",
-          });
-        }
       }
 
       const wasAlreadyCancelled =
@@ -1323,14 +1489,38 @@ export const registrationsRouter = createTRPCRouter({
         }
       }
 
+      // A cancellation frees seats — offer them to the waitlist (FIFO).
+      if (!wasAlreadyCancelled) {
+        const promoted = await promoteFromWaitlist(
+          ctx.db,
+          registration.courseId,
+        );
+        await sendPromotionEmails(promoted);
+      }
+
       return updated;
     }),
 
   delete: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.courseRegistration.delete({
+      const deleted = await ctx.db.courseRegistration.delete({
         where: { id: input.id },
+        select: { courseId: true, registrationStatus: true },
+      });
+
+      if (deleted.registrationStatus === RegistrationStatus.CONFIRMED) {
+        const promoted = await promoteFromWaitlist(ctx.db, deleted.courseId);
+        await sendPromotionEmails(promoted);
+      }
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.delete",
+        entityType: "registration",
+        entityId: input.id,
+        details: { courseId: deleted.courseId },
       });
 
       return { success: true };
@@ -1343,7 +1533,7 @@ export const registrationsRouter = createTRPCRouter({
         where: { id: input.courseId },
         include: {
           collaborators: collaboratorsForViewer(ctx.session.user.id),
-          priceOptions: { select: { maxParticipants: true } },
+          priceOptions: { select: { label: true, maxParticipants: true } },
         },
       });
 
@@ -1358,6 +1548,7 @@ export const registrationsRouter = createTRPCRouter({
       const canManageRegistrations = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        ctx.permissionCache,
       );
       const isAdmin = canManageRegistrations;
       const teamMember = viewerIsCourseTeamMember(course.collaborators);
@@ -1386,13 +1577,7 @@ export const registrationsRouter = createTRPCRouter({
         (r) => r.registrationStatus === RegistrationStatus.CANCELLED,
       );
 
-      const maxParticipants = Math.min(
-        course.maxParticipants || Infinity,
-        course.priceOptions.reduce(
-          (sum, p) => sum + (p.maxParticipants || Infinity),
-          0,
-        ),
-      );
+      const maxParticipants = computeCourseCapacity(course);
 
       const totalParticipants = confirmed.reduce(
         (sum, r) => sum + r.participants.length,
@@ -1450,11 +1635,15 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      // Approving the discount must not change the registration status: a
+      // waitlisted registration stays waitlisted (promotion goes through
+      // updateStatus, which re-checks capacity) and a cancelled one stays
+      // cancelled. The previous behavior force-set CONFIRMED here, which
+      // could overbook a full course.
       const updated = await ctx.db.courseRegistration.update({
         where: { id: input.registrationId },
         data: {
           siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
-          registrationStatus: RegistrationStatus.CONFIRMED,
         },
         include: {
           participants: true,

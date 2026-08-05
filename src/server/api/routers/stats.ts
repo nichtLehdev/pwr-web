@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { resolveUserPermissions } from "../helpers/permissions";
+import { resolveUserPermissionsCached } from "../helpers/permissions";
 
 const statsProcedure = permissionProcedure(PERMISSIONS.STATS_VIEW);
 
@@ -22,13 +22,16 @@ export const statsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       if (input.consent === "none") return { ok: true };
+      // The attributed user id always comes from the session — a
+      // caller-supplied id would let anyone forge analytics rows for another
+      // user (which also end up in that user's GDPR export).
       await ctx.db.pageView.create({
         data: {
           path: input.path,
           section: input.section ?? null,
           userId:
-            input.consent === "anonymous_and_user" && input.userId
-              ? input.userId
+            input.consent === "anonymous_and_user" && ctx.session?.user
+              ? ctx.session.user.id
               : null,
         },
       });
@@ -120,9 +123,22 @@ export const statsRouter = createTRPCRouter({
           select: { createdAt: true },
           orderBy: { createdAt: "asc" },
         }),
+        // Bounded: per-day details only ever need the last 30 days, and the
+        // per-path breakdown needs older rows only for pathPeriod "overall".
+        // A hard take-cap keeps this from degrading forever as the table
+        // grows (newest rows win).
         ctx.db.pageView.findMany({
-          where: { ...where, userId: { not: null } },
-          include: {
+          where: {
+            ...where,
+            userId: { not: null },
+            ...(pathPeriod === "overall"
+              ? {}
+              : { createdAt: { gte: thirtyDaysAgo } }),
+          },
+          select: {
+            path: true,
+            userId: true,
+            createdAt: true,
             user: {
               select: {
                 id: true,
@@ -134,6 +150,8 @@ export const statsRouter = createTRPCRouter({
               },
             },
           },
+          orderBy: { createdAt: "desc" },
+          take: 100_000,
         }),
       ]);
 
@@ -375,6 +393,9 @@ export const statsRouter = createTRPCRouter({
           },
         },
         orderBy: { createdAt: "desc" },
+        // Hard cap so this endpoint cannot degrade without bound as the
+        // table grows; newest rows win.
+        take: 100_000,
       });
 
       const SEP = "\x00";
@@ -439,7 +460,10 @@ export const statsRouter = createTRPCRouter({
    * Check whether the current user is allowed to view stats (for UI redirect).
    */
   canViewStats: protectedProcedure.query(async ({ ctx }) => {
-    const perms = await resolveUserPermissions(ctx.session.user.id);
+    const perms = await resolveUserPermissionsCached(
+      ctx.session.user.id,
+      ctx.permissionCache,
+    );
     return perms.has(PERMISSIONS.STATS_VIEW);
   }),
 });

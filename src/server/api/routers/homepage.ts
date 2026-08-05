@@ -32,6 +32,7 @@ export const homepageRouter = createTRPCRouter({
     const canManageHomepage = await userHasPermission(
       ctx.session.user.id,
       PERMISSIONS.HOMEPAGE_MANAGE,
+      ctx.permissionCache,
     );
 
     if (!canManageHomepage) {
@@ -70,6 +71,7 @@ export const homepageRouter = createTRPCRouter({
       const canManageHomepage = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
 
       if (!canManageHomepage) {
@@ -134,6 +136,7 @@ export const homepageRouter = createTRPCRouter({
       const canManageHomepage = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
 
       if (!canManageHomepage) {
@@ -212,6 +215,7 @@ export const homepageRouter = createTRPCRouter({
       const canManageHomepage = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
 
       if (!canManageHomepage) {
@@ -257,6 +261,7 @@ export const homepageRouter = createTRPCRouter({
       const canManageHomepage = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
 
       if (!canManageHomepage) {
