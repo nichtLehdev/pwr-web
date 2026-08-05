@@ -137,7 +137,10 @@ export default function CourseCard({
             {registrationOpen && !isExternal && !spotsAvailable.isFull && (
               <div className="text-primary flex items-center gap-2 font-semibold">
                 <CheckIcon className="h-4 w-4 shrink-0" />
-                {formatAvailableSlots(spotsAvailable.availableSlots)}
+                {formatAvailableSlots(
+                  spotsAvailable.availableSlots,
+                  spotsAvailable.totalCapacity,
+                )}
               </div>
             )}
           </div>

@@ -261,7 +261,12 @@ function SmallOpenRegistrationCard({
             <Users className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="min-w-0 leading-snug">
               {course.availableSlots != null && course.availableSlots > 0 ? (
-                <>{formatAvailableSlots(course.availableSlots)}</>
+                <>
+                  {formatAvailableSlots(
+                    course.availableSlots,
+                    course.registrationTotalCapacity,
+                  )}
+                </>
               ) : (
                 "Keine Plätze mehr frei"
               )}
@@ -507,7 +512,12 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
             <Users className="mt-0.5 h-4 w-4 shrink-0" />
             <span className="min-w-0 leading-snug">
               {course.availableSlots != null && course.availableSlots > 0 ? (
-                <>{formatAvailableSlots(course.availableSlots)}</>
+                <>
+                  {formatAvailableSlots(
+                    course.availableSlots,
+                    course.registrationTotalCapacity,
+                  )}
+                </>
               ) : (
                 "Keine Plätze mehr frei"
               )}
