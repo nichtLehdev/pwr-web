@@ -84,19 +84,27 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
     }
   }
 
+  // No course-level limit and no fully-limited tier set means the course is
+  // genuinely unlimited (previously this reported capacity 0 / "full").
+  const isUnlimited =
+    course.maxParticipants == null &&
+    (priceOptionsWithoutLimits.length > 0 || course.priceOptions.length === 0);
+
   let totalCapacity: number;
   if (course.maxParticipants != null) {
     totalCapacity = course.maxParticipants;
-  } else if (priceOptionsWithLimits.length > 0) {
-    totalCapacity = limitedCapacitySum;
+  } else if (isUnlimited) {
+    totalCapacity = Infinity;
   } else {
-    totalCapacity = 0;
+    totalCapacity = limitedCapacitySum;
   }
 
   const overallRemaining =
     course.maxParticipants != null
       ? Math.max(0, course.maxParticipants - confirmedParticipants)
-      : Math.max(0, sumPerOptionRemaining);
+      : isUnlimited
+        ? Infinity
+        : Math.max(0, sumPerOptionRemaining);
 
   const hasPerOptionBreakdown =
     priceOptionsWithLimits.length > 0 || priceOptionsWithoutLimits.length > 0;
