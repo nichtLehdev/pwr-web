@@ -5,31 +5,18 @@ import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import {
+  getVisibleNavGroups,
+  type DashboardNavContext,
+} from "@/app/_components/dashboard/dashboard-nav-items";
 import Link from "next/link";
 import {
   Calendar,
-  GraduationCap,
   FileText,
-  Clock,
-  Map,
-  Users,
-  User,
-  Music,
-  MapPin,
   Settings,
   Home,
   Info,
   HelpCircle,
-  BadgeCheck,
-  Heart,
-  ImageIcon,
-  Download,
-  BookOpen,
-  Mail,
-  Layout,
-  BarChart3,
-  Shield,
   ArrowRight,
 } from "lucide-react";
 
@@ -55,44 +42,12 @@ export default function DashboardPage() {
   const { hasDashboardAccess, hasPermission, hasAnyPermission } =
     usePermissions();
 
-  const canManageMedia = hasAnyPermission([
-    PERMISSIONS.MEDIA_VIEW,
-    PERMISSIONS.MEDIA_UPLOAD,
-    PERMISSIONS.MEDIA_EDIT,
-    PERMISSIONS.MEDIA_DELETE,
-    PERMISSIONS.MEDIA_APPROVE,
-  ]);
-  const canManageDownloads = hasAnyPermission([
-    PERMISSIONS.DOWNLOADS_VIEW,
-    PERMISSIONS.DOWNLOADS_UPLOAD,
-    PERMISSIONS.DOWNLOADS_EDIT,
-    PERMISSIONS.DOWNLOADS_DELETE,
-    PERMISSIONS.DOWNLOADS_APPROVE,
-  ]);
-  const canExportImport = hasAnyPermission([
-    PERMISSIONS.DATA_EXPORT,
-    PERMISSIONS.DATA_IMPORT,
-  ]);
-  const showOrganizationSection = hasAnyPermission([
-    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
-    PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
-    PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
-    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
-  ]);
-  const showPeopleSection = hasAnyPermission([
-    PERMISSIONS.USERS_MANAGE,
-    PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
-    PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
-    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
-    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
-    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
-  ]);
-  const showMediaSection =
-    hasPermission(PERMISSIONS.HOMEPAGE_MANAGE) ||
-    canManageMedia ||
-    canManageDownloads ||
-    hasPermission(PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE) ||
-    hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
+  const navContext: DashboardNavContext = {
+    hasPermission,
+    hasAnyPermission,
+    canViewStats: canViewStats ?? false,
+    canManagePermissions: canManagePermissions ?? false,
+  };
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -147,310 +102,40 @@ export default function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-12">
           {/* Main Content */}
           <div className="lg:col-span-12">
-            {/* Content Management */}
-            <section className="mb-8">
-              <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                  <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                    Inhalte
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Verwalte Veranstaltungen, Kurse, Beiträge und mehr
-                  </p>
-                </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    <DashboardCard
-                      title="Termine"
-                      description="Veranstaltungen verwalten"
-                      icon={<Calendar className="h-5 w-5" />}
-                      href="/dashboard/events"
-                    />
-                    <DashboardCard
-                      title="Kurse"
-                      description="Kurse & Anmeldungen"
-                      icon={<GraduationCap className="h-5 w-5" />}
-                      href="/dashboard/courses"
-                    />
-                    <DashboardCard
-                      title="Beiträge"
-                      description="News & Artikel"
-                      icon={<FileText className="h-5 w-5" />}
-                      href="/dashboard/posts"
-                    />
-                    <DashboardCard
-                      title="Geschichte"
-                      description="Historische Ereignisse"
-                      icon={<Clock className="h-5 w-5" />}
-                      href="/dashboard/history-timeline"
-                    />
-                    {hasPermission(
-                      PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-                    ) && (
-                      <DashboardCard
-                        title="Anmeldungen"
-                        description="Alle Kursanmeldungen"
-                        icon={<Users className="h-5 w-5" />}
-                        href="/dashboard/registrations"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Organization - Users with manage permissions */}
-            {showOrganizationSection && (
-              <section className="mb-8">
+            {/* Permission-filtered sections from the shared nav model */}
+            {getVisibleNavGroups(navContext).map((group) => (
+              <section key={group.title} className="mb-8">
                 <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
                   <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                     <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                      Organisation
+                      {group.title}
                     </h2>
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Bezirke, Ensembles, Auswahlchöre und Veranstaltungsorte
+                      {group.description}
                     </p>
                   </div>
                   <div className="p-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
-                      ) && (
+                    <div
+                      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${
+                        group.cardColumns === 3
+                          ? "lg:grid-cols-3"
+                          : "lg:grid-cols-4"
+                      }`}
+                    >
+                      {group.items.map((item) => (
                         <DashboardCard
-                          title="Bezirke"
-                          description="Bezirke & Regionen"
-                          icon={<Map className="h-5 w-5" />}
-                          href="/dashboard/bezirke"
+                          key={item.href}
+                          title={item.title}
+                          description={item.description}
+                          icon={<item.icon className="h-5 w-5" />}
+                          href={item.href}
                         />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_ENSEMBLES,
-                      ) && (
-                        <DashboardCard
-                          title="Ensembles"
-                          description="Bläsergruppen"
-                          icon={<Users className="h-5 w-5" />}
-                          href="/dashboard/ensembles"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
-                      ) && (
-                        <DashboardCard
-                          title="Auswahlchöre"
-                          description="Auswahlchöre verwalten"
-                          icon={<Music className="h-5 w-5" />}
-                          href="/dashboard/auswahlchoere"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
-                      ) && (
-                        <DashboardCard
-                          title="Veranstaltungsorte"
-                          description="Locations verwalten"
-                          icon={<MapPin className="h-5 w-5" />}
-                          href="/dashboard/locations"
-                        />
-                      )}
+                      ))}
                     </div>
                   </div>
                 </div>
               </section>
-            )}
-
-            {/* People - Users with manage permissions */}
-            {showPeopleSection && (
-              <section className="mb-8">
-                <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                    <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                      Personen & Gremien
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Benutzer, Vorstand, Team und weitere Gremien verwalten
-                    </p>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {hasPermission(PERMISSIONS.USERS_MANAGE) && (
-                        <DashboardCard
-                          title="Benutzer"
-                          description="Benutzerkonten verwalten"
-                          icon={<User className="h-5 w-5" />}
-                          href="/dashboard/users"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_VORSTAND,
-                      ) && (
-                        <DashboardCard
-                          title="Vorstand"
-                          description="Vorstandsmitglieder"
-                          icon={<Users className="h-5 w-5" />}
-                          href="/dashboard/vorstand"
-                        />
-                      )}
-                      {hasPermission(PERMISSIONS.ORGANIZATION_MANAGE_TEAM) && (
-                        <DashboardCard
-                          title="Team"
-                          description="Teammitglieder"
-                          icon={<Users className="h-5 w-5" />}
-                          href="/dashboard/team"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
-                      ) && (
-                        <DashboardCard
-                          title="Posaunenrat"
-                          description="Posaunenratsmitglieder"
-                          icon={<BadgeCheck className="h-5 w-5" />}
-                          href="/dashboard/posaunenrat"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
-                      ) && (
-                        <DashboardCard
-                          title="Förderverein"
-                          description="Fördervereins-Mitglieder"
-                          icon={<Heart className="h-5 w-5" />}
-                          href="/dashboard/foerderverein"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
-                      ) && (
-                        <DashboardCard
-                          title="Posaunenwarte"
-                          description="LPW & RPW verwalten"
-                          icon={<Music className="h-5 w-5" />}
-                          href="/dashboard/posaunenwarte"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* Media & Resources - Users with manage permissions */}
-            {showMediaSection && (
-              <section className="mb-8">
-                <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                    <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                      Medien & Ressourcen
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Medien, Downloads, Bläserhefte und Newsletter
-                    </p>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                      {hasPermission(PERMISSIONS.HOMEPAGE_MANAGE) && (
-                        <DashboardCard
-                          title="Homepage"
-                          description="Homepage Bildkarussell"
-                          icon={<Layout className="h-5 w-5" />}
-                          href="/dashboard/homepage"
-                        />
-                      )}
-                      {canManageMedia && (
-                        <DashboardCard
-                          title="Medien"
-                          description="Bilder & Dateien"
-                          icon={<ImageIcon className="h-5 w-5" />}
-                          href="/dashboard/media"
-                        />
-                      )}
-                      {canManageDownloads && (
-                        <DashboardCard
-                          title="Downloads"
-                          description="Downloadbare Dateien"
-                          icon={<Download className="h-5 w-5" />}
-                          href="/dashboard/downloads"
-                        />
-                      )}
-                      {hasPermission(
-                        PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
-                      ) && (
-                        <DashboardCard
-                          title="Bläserhefte"
-                          description="Notenhefte verwalten"
-                          icon={<BookOpen className="h-5 w-5" />}
-                          href="/dashboard/blaeserhefte"
-                        />
-                      )}
-                      {hasPermission(PERMISSIONS.NEWSLETTER_MANAGE) && (
-                        <DashboardCard
-                          title="Newsletter"
-                          description="Abonnenten verwalten"
-                          icon={<Mail className="h-5 w-5" />}
-                          href="/dashboard/newsletter"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* System & Verwaltung - Stats & Permissions */}
-            {(canManagePermissions ||
-              canExportImport ||
-              canViewStats ||
-              hasPermission(PERMISSIONS.AUDIT_VIEW)) && (
-              <section className="mb-8">
-                <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white shadow-sm">
-                  <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-                    <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
-                      System & Verwaltung
-                    </h2>
-                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                      Statistiken, Berechtigungen und Datenverwaltung
-                    </p>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {canExportImport && (
-                        <DashboardCard
-                          title="Export & Import"
-                          description="Daten exportieren und importieren"
-                          icon={<Download className="h-5 w-5" />}
-                          href="/dashboard/export-import"
-                        />
-                      )}
-                      {canViewStats && (
-                        <DashboardCard
-                          title="Statistik"
-                          description="Anonyme Seitenaufrufe"
-                          icon={<BarChart3 className="h-5 w-5" />}
-                          href="/dashboard/stats"
-                        />
-                      )}
-                      {canManagePermissions && (
-                        <DashboardCard
-                          title="Berechtigungen"
-                          description="Rollen & Berechtigungen verwalten"
-                          icon={<Shield className="h-5 w-5" />}
-                          href="/dashboard/permissions"
-                        />
-                      )}
-                      {hasPermission(PERMISSIONS.AUDIT_VIEW) && (
-                        <DashboardCard
-                          title="Audit-Log"
-                          description="Sicherheitsrelevante Aktionen"
-                          icon={<Shield className="h-5 w-5" />}
-                          href="/dashboard/audit"
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
+            ))}
 
             {/* Quick Links */}
             <section>
