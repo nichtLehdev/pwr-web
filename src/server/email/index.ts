@@ -13,6 +13,7 @@ import {
   ContentReviewResult,
   type ReviewedContentType,
 } from "./templates/content-review-result";
+import { ContactMessage } from "./templates/contact-message";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
 
 export async function sendVerificationEmail(
@@ -316,6 +317,33 @@ export async function sendContentReviewResultEmail(params: {
     subject: params.approved
       ? `${typeLabel} veröffentlicht: ${params.title} – Posaunenwerk Rheinland`
       : `${typeLabel} abgelehnt: ${params.title} – Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendContactMessageEmail(params: {
+  to: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subjectLabel: string;
+  message: string;
+}) {
+  const html = await render(
+    ContactMessage({
+      name: params.name,
+      email: params.email,
+      phone: params.phone,
+      subjectLabel: params.subjectLabel,
+      message: params.message,
+    }),
+  );
+
+  return sendEmail({
+    to: params.to,
+    // Reply-To lets the office answer the sender directly from their client.
+    replyTo: params.email,
+    subject: `Kontaktformular: ${params.subjectLabel} – ${params.name}`,
     html,
   });
 }
