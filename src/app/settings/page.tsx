@@ -181,7 +181,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
-      router.push("/login");
+      router.push("/login?redirect=%2Fsettings");
     }
   }, [session, sessionLoading, router]);
 

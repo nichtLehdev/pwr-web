@@ -53,6 +53,7 @@ export default function CourseRegistrationForm({
   );
   const [showParticipantLibrary, setShowParticipantLibrary] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
     registrantFirstName: currentUser?.firstName || "",
@@ -277,6 +278,7 @@ export default function CourseRegistrationForm({
   const canProceed = validateStep(currentStep);
 
   const handleSubmit = async () => {
+    setSubmitError("");
     registrationMutation.mutate(
       {
         courseId: course.id,
@@ -347,9 +349,16 @@ export default function CourseRegistrationForm({
           onSuccess();
         },
         onError: (error) => {
-          toast.error(
-            "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.",
-          );
+          // Surface the real cause (course filled up, deadline passed,
+          // duplicate registration) — a generic "try again" message hides
+          // errors that retrying can never fix. Zod issues serialize as a
+          // JSON array; keep the generic text for those.
+          const message =
+            error.message && !error.message.trim().startsWith("[")
+              ? error.message
+              : "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.";
+          setSubmitError(message);
+          toast.error(message);
           console.error("Registration error:", error);
         },
       },
@@ -401,6 +410,16 @@ export default function CourseRegistrationForm({
           setTermsAccepted={setTermsAccepted}
           isWaitlist={isWaitlist}
         />
+      )}
+      {currentStep === 3 && submitError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20"
+        >
+          <p className="text-sm text-red-800 dark:text-red-300">
+            {submitError}
+          </p>
+        </div>
       )}
     </>
   );

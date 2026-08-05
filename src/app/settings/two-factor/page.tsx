@@ -78,7 +78,7 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
   }
 
   if (!session?.user) {
-    router.push("/login");
+    router.push("/login?redirect=%2Fsettings%2Ftwo-factor");
     return null;
   }
 

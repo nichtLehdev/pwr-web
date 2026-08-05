@@ -92,7 +92,7 @@ export default function MyRegistrationsPage() {
   );
 
   if (!sessionLoading && !session?.user) {
-    router.push("/login");
+    router.push("/login?redirect=%2Fregistrations");
     return null;
   }
 
@@ -515,16 +515,33 @@ export default function MyRegistrationsPage() {
             <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-semibold">
               Keine Anmeldungen gefunden
             </h3>
-            <p className="mb-6 text-gray-600 dark:text-gray-400">
-              Du hast dich noch nicht für einen Kurs angemeldet.
-            </p>
-            <Link
-              href="/termine"
-              className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-            >
-              Kurse entdecken
-              <ChevronRight className="h-5 w-5" />
-            </Link>
+            {statusFilter !== undefined ? (
+              <>
+                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                  Für diesen Filter gibt es keine Anmeldungen.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter(undefined)}
+                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+                >
+                  Filter zurücksetzen
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mb-6 text-gray-600 dark:text-gray-400">
+                  Du hast dich noch nicht für einen Kurs angemeldet.
+                </p>
+                <Link
+                  href="/termine"
+                  className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold text-white transition-colors"
+                >
+                  Kurse entdecken
+                  <ChevronRight className="h-5 w-5" />
+                </Link>
+              </>
+            )}
           </div>
         )}
 
