@@ -166,7 +166,13 @@ export const postsRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+          // Sort by the date the UI displays (publishedAt), not createdAt —
+          // otherwise early-drafted, late-published posts sink below older ones.
+          orderBy: [
+            { pinned: "desc" },
+            { publishedAt: { sort: "desc", nulls: "last" } },
+            { createdAt: "desc" },
+          ],
         }),
         ctx.db.post.count({ where }),
       ]);
