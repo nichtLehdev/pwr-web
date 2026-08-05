@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { useSession } from "@/lib/auth";
 import { twoFactor } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -13,6 +14,7 @@ import {
   CheckCircle,
   AlertTriangle,
   Download,
+  Copy,
 } from "lucide-react";
 
 export default function TwoFactorPage() {
@@ -21,18 +23,32 @@ export default function TwoFactorPage() {
   const toast = useToast();
   const utils = api.useUtils();
 
-  const [twoFactorData, setTwoFactorData] = useState({
-    password: "",
-    totpCode: "",
-    backupCode: "",
-  });
+  // Aktivieren
+  const [enablePassword, setEnablePassword] = useState("");
+  const [enableError, setEnableError] = useState("");
   const [isEnabling2FA, setIsEnabling2FA] = useState(false);
+
+  // Deaktivieren
+  const [disablePassword, setDisablePassword] = useState("");
+  const [disableError, setDisableError] = useState("");
   const [isDisabling2FA, setIsDisabling2FA] = useState(false);
+
+  // Neue Backup-Codes generieren
+  const [backupPassword, setBackupPassword] = useState("");
+  const [backupError, setBackupError] = useState("");
+  const [isGeneratingCodes, setIsGeneratingCodes] = useState(false);
+
+  // Verifizieren
+  const [totpCode, setTotpCode] = useState("");
+  const [verifyError, setVerifyError] = useState("");
   const [isVerifying2FA, setIsVerifying2FA] = useState(false);
-  const [twoFactorError, setTwoFactorError] = useState("");
+
   const [twoFactorQRCode, setTwoFactorQRCode] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrError, setQrError] = useState(false);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const [backupCodesAcknowledged, setBackupCodesAcknowledged] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -41,6 +57,48 @@ export default function TwoFactorPage() {
 
   const twoFactorEnabled =
     (profile as { twoFactorEnabled?: boolean })?.twoFactorEnabled ?? false;
+
+  const totpSecret = twoFactorQRCode
+    ? twoFactorQRCode.split("secret=")[1]?.split("&")[0] || ""
+    : "";
+
+  // QR-Code lokal generieren, statt einen externen Dienst zu verwenden
+  useEffect(() => {
+    if (!twoFactorQRCode) {
+      setQrDataUrl(null);
+      setQrError(false);
+      return;
+    }
+
+    let cancelled = false;
+    QRCode.toDataURL(twoFactorQRCode, { width: 200, margin: 2 })
+      .then((url) => {
+        if (!cancelled) {
+          setQrDataUrl(url);
+          setQrError(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQrDataUrl(null);
+          setQrError(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [twoFactorQRCode]);
+
+  const copySecretToClipboard = async () => {
+    if (!totpSecret) return;
+    try {
+      await navigator.clipboard.writeText(totpSecret);
+      toast.success("Code in die Zwischenablage kopiert");
+    } catch {
+      toast.error("Kopieren fehlgeschlagen. Bitte kopiere den Code manuell.");
+    }
+  };
 
   const downloadBackupCodes = () => {
     if (backupCodes.length === 0) return;
@@ -142,21 +200,16 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     id="disable2FAPassword"
                     name="disable2FAPassword"
                     type="password"
-                    value={twoFactorData.password}
-                    onChange={(e) =>
-                      setTwoFactorData((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
+                    value={disablePassword}
+                    onChange={(e) => setDisablePassword(e.target.value)}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
                 </div>
 
-                {twoFactorError && (
+                {disableError && (
                   <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
                     <p className="text-sm text-red-800 dark:text-red-300">
-                      {twoFactorError}
+                      {disableError}
                     </p>
                   </div>
                 )}
@@ -164,10 +217,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                 <button
                   type="button"
                   onClick={async () => {
-                    setTwoFactorError("");
+                    setDisableError("");
 
-                    if (!twoFactorData.password) {
-                      setTwoFactorError(
+                    if (!disablePassword) {
+                      setDisableError(
                         "Bitte gib dein Passwort ein, um 2FA zu deaktivieren",
                       );
                       return;
@@ -177,25 +230,21 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
 
                     try {
                       const result = await twoFactor.disable({
-                        password: twoFactorData.password,
+                        password: disablePassword,
                       });
 
                       if (result.error) {
-                        setTwoFactorError(
+                        setDisableError(
                           result.error.message ||
                             "Fehler beim Deaktivieren von 2FA",
                         );
                       } else {
                         toast.success("2FA erfolgreich deaktiviert");
-                        setTwoFactorData({
-                          password: "",
-                          totpCode: "",
-                          backupCode: "",
-                        });
+                        setDisablePassword("");
                         void utils.users.getMyProfile.invalidate();
                       }
                     } catch (error) {
-                      setTwoFactorError(
+                      setDisableError(
                         error instanceof Error
                           ? error.message
                           : "Fehler beim Deaktivieren von 2FA",
@@ -232,13 +281,8 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     id="generateBackupCodesPassword"
                     name="generateBackupCodesPassword"
                     type="password"
-                    value={twoFactorData.password}
-                    onChange={(e) =>
-                      setTwoFactorData((prev) => ({
-                        ...prev,
-                        password: e.target.value,
-                      }))
-                    }
+                    value={backupPassword}
+                    onChange={(e) => setBackupPassword(e.target.value)}
                     className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                   />
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -247,10 +291,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                   </p>
                 </div>
 
-                {twoFactorError && (
+                {backupError && (
                   <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
                     <p className="text-sm text-red-800 dark:text-red-300">
-                      {twoFactorError}
+                      {backupError}
                     </p>
                   </div>
                 )}
@@ -258,41 +302,49 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                 <button
                   type="button"
                   onClick={async () => {
-                    setTwoFactorError("");
+                    setBackupError("");
 
-                    if (!twoFactorData.password) {
-                      setTwoFactorError(
+                    if (!backupPassword) {
+                      setBackupError(
                         "Bitte gib dein Passwort ein, um Backup-Codes anzuzeigen",
                       );
                       return;
                     }
 
+                    setIsGeneratingCodes(true);
+
                     try {
                       const result = await twoFactor.generateBackupCodes({
-                        password: twoFactorData.password,
+                        password: backupPassword,
                       });
 
                       if (result.error) {
-                        setTwoFactorError(
+                        setBackupError(
                           result.error.message ||
                             "Fehler beim Generieren der Backup-Codes",
                         );
                       } else if (result.data?.backupCodes) {
                         setBackupCodes(result.data.backupCodes);
                         setShowBackupCodes(true);
+                        setBackupPassword("");
                         toast.success("Neue Backup-Codes generiert");
                       }
                     } catch (error) {
-                      setTwoFactorError(
+                      setBackupError(
                         error instanceof Error
                           ? error.message
                           : "Fehler beim Generieren der Backup-Codes",
                       );
+                    } finally {
+                      setIsGeneratingCodes(false);
                     }
                   }}
+                  disabled={isGeneratingCodes}
                   className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
                 >
-                  Neue Backup-Codes generieren
+                  {isGeneratingCodes
+                    ? "Wird generiert..."
+                    : "Neue Backup-Codes generieren"}
                 </button>
 
                 {showBackupCodes && backupCodes.length > 0 && (
@@ -360,9 +412,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     2FA aktivieren
                   </h2>
                   <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                    Gib dein aktuelles Passwort ein, um 2FA zu aktivieren. Du
-                    erhältst dann einen QR-Code, den du mit deiner
-                    Authenticator-App scannen kannst.
+                    Gib dein aktuelles Passwort ein, um die Einrichtung zu
+                    starten. Du erhältst dann einen QR-Code, den du mit deiner
+                    Authenticator-App scannen kannst. 2FA ist erst aktiv,
+                    nachdem du die Einrichtung mit einem Code bestätigt hast.
                   </p>
 
                   <div>
@@ -376,21 +429,16 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                       id="enable2FAPassword"
                       name="enable2FAPassword"
                       type="password"
-                      value={twoFactorData.password}
-                      onChange={(e) =>
-                        setTwoFactorData((prev) => ({
-                          ...prev,
-                          password: e.target.value,
-                        }))
-                      }
+                      value={enablePassword}
+                      onChange={(e) => setEnablePassword(e.target.value)}
                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 shadow-sm focus:ring-1 focus:outline-none"
                     />
                   </div>
 
-                  {twoFactorError && (
+                  {enableError && (
                     <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
                       <p className="text-sm text-red-800 dark:text-red-300">
-                        {twoFactorError}
+                        {enableError}
                       </p>
                     </div>
                   )}
@@ -398,10 +446,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                   <button
                     type="button"
                     onClick={async () => {
-                      setTwoFactorError("");
+                      setEnableError("");
 
-                      if (!twoFactorData.password) {
-                        setTwoFactorError("Bitte gib dein Passwort ein");
+                      if (!enablePassword) {
+                        setEnableError("Bitte gib dein Passwort ein");
                         return;
                       }
 
@@ -409,11 +457,11 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
 
                       try {
                         const result = await twoFactor.enable({
-                          password: twoFactorData.password,
+                          password: enablePassword,
                         });
 
                         if (result.error) {
-                          setTwoFactorError(
+                          setEnableError(
                             result.error.message ||
                               "Fehler beim Aktivieren von 2FA",
                           );
@@ -423,12 +471,13 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                             setBackupCodes(result.data.backupCodes);
                             setShowBackupCodes(true);
                           }
-                          toast.success(
-                            "2FA aktiviert. Bitte scanne den QR-Code und verifiziere den Code.",
+                          setBackupCodesAcknowledged(false);
+                          toast.info(
+                            "Scanne den QR-Code und bestätige mit einem Code, um die Einrichtung abzuschließen.",
                           );
                         }
                       } catch (error) {
-                        setTwoFactorError(
+                        setEnableError(
                           error instanceof Error
                             ? error.message
                             : "Fehler beim Aktivieren von 2FA",
@@ -440,7 +489,9 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     disabled={isEnabling2FA}
                     className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
                   >
-                    {isEnabling2FA ? "Wird aktiviert..." : "2FA aktivieren"}
+                    {isEnabling2FA
+                      ? "Wird vorbereitet..."
+                      : "Einrichtung starten"}
                   </button>
                 </div>
               ) : (
@@ -456,30 +507,120 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                         Authy, Microsoft Authenticator)
                       </p>
                       <div className="flex justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(twoFactorQRCode)}`}
-                          alt="2FA QR Code"
-                          className="rounded border-2 border-gray-300"
-                        />
+                        {qrDataUrl ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={qrDataUrl}
+                            alt="2FA QR Code"
+                            className="rounded border-2 border-gray-300"
+                          />
+                        ) : qrError ? (
+                          <div className="rounded-md border-l-4 border-amber-500 bg-amber-50 p-3 dark:border-amber-400 dark:bg-amber-900/20">
+                            <p className="text-sm text-amber-800 dark:text-amber-300">
+                              Der QR-Code konnte nicht erstellt werden. Bitte
+                              gib den Code unten manuell in deine
+                              Authenticator-App ein.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="flex h-[200px] w-[200px] items-center justify-center rounded border-2 border-gray-300">
+                            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+                          </div>
+                        )}
                       </div>
-                      <p className="mt-3 text-xs text-blue-700 dark:text-blue-400">
-                        Oder gib diesen Code manuell ein:{" "}
-                        <code className="rounded bg-white px-2 py-1 font-mono text-xs dark:bg-gray-800">
-                          {twoFactorQRCode.split("secret=")[1]?.split("&")[0] ||
-                            ""}
-                        </code>
-                      </p>
+                      <div className="mt-3">
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                          Oder gib diesen Code manuell ein:
+                        </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <code className="rounded bg-white px-2 py-1 font-mono text-xs break-all dark:bg-gray-800">
+                            {totpSecret}
+                          </code>
+                          <button
+                            type="button"
+                            onClick={copySecretToClipboard}
+                            title="Code kopieren"
+                            className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex shrink-0 items-center gap-1 rounded-lg border border-blue-300 bg-white px-2 py-1 text-xs font-medium transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                            Kopieren
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
+                  {showBackupCodes && backupCodes.length > 0 && (
+                    <div>
+                      <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
+                        Backup-Codes speichern
+                      </h2>
+                      <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                        <div className="mb-3 flex items-start gap-2">
+                          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                              <strong>Schritt 2:</strong> Speichere diese
+                              Backup-Codes sicher!
+                            </p>
+                            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                              Diese Codes können verwendet werden, um auf dein
+                              Konto zuzugreifen, falls du dein
+                              Authenticator-Gerät verlierst. Jeder Code kann nur
+                              einmal verwendet werden. Sie werden dir nur einmal
+                              angezeigt.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mb-3 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={downloadBackupCodes}
+                            className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                          >
+                            <Download className="h-4 w-4" />
+                            Codes herunterladen
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 font-mono text-sm">
+                          {backupCodes.map((code, index) => (
+                            <div
+                              key={index}
+                              className="rounded bg-white px-2 py-1 text-center dark:bg-gray-800"
+                            >
+                              {code}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex items-start gap-3 border-t border-amber-200 pt-3 dark:border-amber-800">
+                          <input
+                            id="backupCodesAcknowledged"
+                            type="checkbox"
+                            checked={backupCodesAcknowledged}
+                            onChange={(e) =>
+                              setBackupCodesAcknowledged(e.target.checked)
+                            }
+                            className="focus:ring-primary text-primary mt-0.5 h-4 w-4 rounded border-gray-300 focus:ring-2"
+                          />
+                          <label
+                            htmlFor="backupCodesAcknowledged"
+                            className="cursor-pointer text-sm font-medium text-amber-800 dark:text-amber-300"
+                          >
+                            Ich habe meine Backup-Codes gespeichert
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-semibold">
                       Code verifizieren
                     </h2>
                     <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                      Gib den 6-stelligen Code aus deiner Authenticator-App ein,
-                      um die Einrichtung abzuschließen.
+                      <strong>Schritt 3:</strong> Gib den 6-stelligen Code aus
+                      deiner Authenticator-App ein, um die Einrichtung
+                      abzuschließen. Erst danach ist 2FA aktiv.
                     </p>
 
                     <div>
@@ -496,14 +637,11 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                         inputMode="numeric"
                         pattern="[0-9]{6}"
                         maxLength={6}
-                        value={twoFactorData.totpCode}
+                        value={totpCode}
                         onChange={(e) =>
-                          setTwoFactorData((prev) => ({
-                            ...prev,
-                            totpCode: e.target.value
-                              .replace(/\D/g, "")
-                              .slice(0, 6),
-                          }))
+                          setTotpCode(
+                            e.target.value.replace(/\D/g, "").slice(0, 6),
+                          )
                         }
                         placeholder="123456"
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-center font-mono text-lg shadow-sm focus:ring-1 focus:outline-none"
@@ -511,10 +649,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                       />
                     </div>
 
-                    {twoFactorError && (
+                    {verifyError && (
                       <div className="mt-3 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20">
                         <p className="text-sm text-red-800 dark:text-red-300">
-                          {twoFactorError}
+                          {verifyError}
                         </p>
                       </div>
                     )}
@@ -522,10 +660,10 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                     <button
                       type="button"
                       onClick={async () => {
-                        setTwoFactorError("");
+                        setVerifyError("");
 
-                        if (twoFactorData.totpCode.length !== 6) {
-                          setTwoFactorError(
+                        if (totpCode.length !== 6) {
+                          setVerifyError(
                             "Bitte gib einen 6-stelligen Code ein",
                           );
                           return;
@@ -535,26 +673,24 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
 
                         try {
                           const result = await twoFactor.verifyTotp({
-                            code: twoFactorData.totpCode,
+                            code: totpCode,
                           });
 
                           if (result.error) {
-                            setTwoFactorError(
+                            setVerifyError(
                               result.error.message ||
                                 "Ungültiger Code. Bitte versuche es erneut.",
                             );
                           } else {
                             toast.success("2FA erfolgreich aktiviert!");
-                            setTwoFactorData({
-                              password: "",
-                              totpCode: "",
-                              backupCode: "",
-                            });
+                            setEnablePassword("");
+                            setTotpCode("");
                             setTwoFactorQRCode(null);
+                            setBackupCodesAcknowledged(false);
                             void utils.users.getMyProfile.invalidate();
                           }
                         } catch (error) {
-                          setTwoFactorError(
+                          setVerifyError(
                             error instanceof Error
                               ? error.message
                               : "Fehler bei der Verifizierung",
@@ -564,7 +700,11 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                         }
                       }}
                       disabled={
-                        isVerifying2FA || twoFactorData.totpCode.length !== 6
+                        isVerifying2FA ||
+                        totpCode.length !== 6 ||
+                        (showBackupCodes &&
+                          backupCodes.length > 0 &&
+                          !backupCodesAcknowledged)
                       }
                       className="bg-primary hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary mt-4 w-full rounded-lg px-4 py-2 font-semibold text-white shadow-lg transition-colors disabled:opacity-50"
                     >
@@ -572,46 +712,15 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                         ? "Wird verifiziert..."
                         : "Code verifizieren"}
                     </button>
+                    {showBackupCodes &&
+                      backupCodes.length > 0 &&
+                      !backupCodesAcknowledged && (
+                        <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+                          Bitte bestätige zuerst, dass du deine Backup-Codes
+                          gespeichert hast.
+                        </p>
+                      )}
                   </div>
-
-                  {showBackupCodes && backupCodes.length > 0 && (
-                    <div className="rounded-md border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
-                      <div className="mb-3 flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
-                            Wichtig: Speichere diese Backup-Codes sicher!
-                          </p>
-                          <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
-                            Diese Codes können verwendet werden, um auf dein
-                            Konto zuzugreifen, falls du dein Authenticator-Gerät
-                            verlierst. Jeder Code kann nur einmal verwendet
-                            werden.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mb-3 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={downloadBackupCodes}
-                          className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-amber-100 dark:border-amber-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                        >
-                          <Download className="h-4 w-4" />
-                          Codes herunterladen
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 font-mono text-sm">
-                        {backupCodes.map((code, index) => (
-                          <div
-                            key={index}
-                            className="rounded bg-white px-2 py-1 text-center dark:bg-gray-800"
-                          >
-                            {code}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </div>
