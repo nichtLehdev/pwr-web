@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { join } from "path";
+import { resolve, sep } from "path";
 import { unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -7,6 +7,32 @@ import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
+import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
+
+// Stored url/path values must be exactly what /api/upload produces:
+// /api/uploads/<folder>/<sanitized filename>. Anything else (absolute paths,
+// dot segments, other folders) is rejected — these values are later used to
+// derive filesystem paths for deletion.
+const UPLOAD_PATH_PATTERN =
+  /^\/api\/uploads\/(profiles|downloads|media)\/[a-zA-Z0-9-_]+\.[a-z0-9]+$/;
+
+const uploadPathSchema = z
+  .string()
+  .max(500)
+  .regex(UPLOAD_PATH_PATTERN, "Invalid upload path");
+
+/**
+ * Resolve a stored `/api/uploads/...` path to its on-disk location, refusing
+ * anything that escapes the uploads directory. Returns null for paths that
+ * are not managed uploads (e.g. external URLs).
+ */
+function resolveUploadFsPath(storedPath: string): string | null {
+  if (!storedPath.startsWith("/api/uploads/")) return null;
+  const relativePath = storedPath.replace("/api/uploads/", "");
+  const fullPath = resolve(UPLOADS_ROOT, relativePath);
+  if (!fullPath.startsWith(UPLOADS_ROOT + sep)) return null;
+  return fullPath;
+}
 
 export const mediaRouter = createTRPCRouter({
   getById: publicProcedure
@@ -58,10 +84,12 @@ export const mediaRouter = createTRPCRouter({
       const canApproveMedia = await userHasPermission(
         userId,
         PERMISSIONS.MEDIA_APPROVE,
+        ctx.permissionCache,
       );
       const canUploadMedia = await userHasPermission(
         userId,
         PERMISSIONS.MEDIA_UPLOAD,
+        ctx.permissionCache,
       );
 
       const where: Prisma.MediaWhereInput = {
@@ -162,8 +190,8 @@ export const mediaRouter = createTRPCRouter({
       z.object({
         name: z.string().max(255),
         filename: z.string().max(255),
-        url: z.string().max(500),
-        path: z.string().max(500),
+        url: uploadPathSchema,
+        path: uploadPathSchema,
         mimeType: z.string().max(100),
         size: z.number().min(0).max(100000000),
         extension: z.string().max(10),
@@ -185,6 +213,7 @@ export const mediaRouter = createTRPCRouter({
       const canApproveMedia = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.MEDIA_APPROVE,
+        ctx.permissionCache,
       );
 
       const media = await ctx.db.media.create({
@@ -235,10 +264,12 @@ export const mediaRouter = createTRPCRouter({
         (await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.MEDIA_EDIT,
+          ctx.permissionCache,
         )) ||
         (await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.MEDIA_APPROVE,
+          ctx.permissionCache,
         ));
       const canEdit =
         media.uploadedById === ctx.session.user.id || canEditMedia;
@@ -260,8 +291,8 @@ export const mediaRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        url: z.string().max(500),
-        path: z.string().max(500),
+        url: uploadPathSchema,
+        path: uploadPathSchema,
         filename: z.string().max(255),
         size: z.number().min(0).max(100000000),
         mimeType: z.string().max(100),
@@ -287,10 +318,12 @@ export const mediaRouter = createTRPCRouter({
         (await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.MEDIA_EDIT,
+          ctx.permissionCache,
         )) ||
         (await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.MEDIA_APPROVE,
+          ctx.permissionCache,
         ));
       const canEdit =
         media.uploadedById === ctx.session.user.id || canEditMedia;
@@ -302,9 +335,8 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      if (media.path.startsWith("/api/uploads/")) {
-        const relativePath = media.path.replace("/api/uploads/", "");
-        const fullPath = join(process.cwd(), "public", "uploads", relativePath);
+      const fullPath = resolveUploadFsPath(media.path);
+      if (fullPath) {
         try {
           await unlink(fullPath);
         } catch (err) {
@@ -347,6 +379,7 @@ export const mediaRouter = createTRPCRouter({
       const canDeleteMedia = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.MEDIA_DELETE,
+        ctx.permissionCache,
       );
       const canDelete =
         media.uploadedById === ctx.session.user.id || canDeleteMedia;
