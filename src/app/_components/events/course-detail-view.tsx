@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -16,7 +14,6 @@ import { formatAvailableSlots } from "@/lib/format-available-slots";
 import PublicPage from "../general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
-import { CourseExistingRegistrationOptions } from "./course-existing-registration-options";
 import {
   Clock,
   Calendar,
@@ -77,8 +74,6 @@ export default function CourseDetailView({
   course,
   spots,
 }: CourseDetailViewProps) {
-  const [showRegistrationOptions, setShowRegistrationOptions] = useState(false);
-  const router = useRouter();
   const { data: session } = useSession();
   const { data: userProfile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
@@ -154,16 +149,6 @@ export default function CourseDetailView({
   const anmeldenHref = isExternal
     ? (course.externalRegistrationUrl ?? `/termine/course/${course.id}`)
     : `/termine/course/${course.id}/anmelden`;
-
-  const handleEditExisting = () => {
-    setShowRegistrationOptions(false);
-    router.push(`/registrations/${existingRegistration?.id}/edit`);
-  };
-
-  const handleCreateNew = () => {
-    setShowRegistrationOptions(false);
-    router.push(anmeldenHref);
-  };
 
   const locationLine =
     course.location &&
@@ -636,25 +621,28 @@ export default function CourseDetailView({
                         Zur Anmeldung
                         <ExternalLink className="h-4 w-4 shrink-0" />
                       </a>
-                    ) : existingRegistration ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowRegistrationOptions(true)}
-                        className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
-                      >
-                        {spots.isFull && course.allowWaitingList
-                          ? "Auf Warteliste setzen"
-                          : "Jetzt anmelden"}
-                      </button>
                     ) : (
-                      <Link
-                        href={anmeldenHref}
-                        className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
-                      >
-                        {spots.isFull && course.allowWaitingList
-                          ? "Auf Warteliste setzen"
-                          : "Jetzt anmelden"}
-                      </Link>
+                      <>
+                        <Link
+                          href={anmeldenHref}
+                          className="bg-primary hover:bg-primary-dark mb-3 block w-full rounded-lg px-6 py-3 text-center font-bold text-white transition-colors"
+                        >
+                          {spots.isFull && course.allowWaitingList
+                            ? "Auf Warteliste setzen"
+                            : "Jetzt anmelden"}
+                        </Link>
+                        {existingRegistration && (
+                          <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                            Du hast bereits eine Anmeldung für diesen Kurs.{" "}
+                            <Link
+                              href={`/registrations/${existingRegistration.id}/edit`}
+                              className="text-primary font-medium hover:underline"
+                            >
+                              Anmeldung bearbeiten
+                            </Link>
+                          </p>
+                        )}
+                      </>
                     )}
 
                     {registrationDeadline && !isDeadlinePassed && (
@@ -795,16 +783,6 @@ export default function CourseDetailView({
             </div>
           </div>
         </section>
-
-        {/* Registration Options Modal */}
-        {showRegistrationOptions && existingRegistration && (
-          <CourseExistingRegistrationOptions
-            participantCount={existingRegistration.participants.length}
-            onEditExisting={handleEditExisting}
-            onCreateAdditional={handleCreateNew}
-            onCancel={() => setShowRegistrationOptions(false)}
-          />
-        )}
       </div>
     </PublicPage>
   );
