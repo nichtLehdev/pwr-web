@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { DashboardPage } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -26,9 +28,9 @@ export default function EditBlaeserheftPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageMaterials } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageMaterials = hasPermission(
+    PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
   );
 
   const { data: heft, isLoading: heftLoading } =
@@ -126,13 +128,14 @@ export default function EditBlaeserheftPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageMaterials &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageMaterials, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageMaterials, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

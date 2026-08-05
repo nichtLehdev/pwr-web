@@ -6,6 +6,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -29,9 +31,9 @@ export default function DashboardBlaeserheftePage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageMaterials } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageMaterials = hasPermission(
+    PERMISSIONS.DOWNLOADS_MANAGE_BLAESERHEFTE,
   );
 
   const {
@@ -63,13 +65,14 @@ export default function DashboardBlaeserheftePage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageMaterials &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageMaterials, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageMaterials, router]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Bläserheft wirklich löschen?")) {

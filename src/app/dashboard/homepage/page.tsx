@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Plus, Edit, Trash2, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
@@ -27,10 +29,8 @@ export default function DashboardHomepagePage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageHomepage } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageHomepage = hasPermission(PERMISSIONS.HOMEPAGE_MANAGE);
 
   const utils = api.useUtils();
 
@@ -104,13 +104,14 @@ export default function DashboardHomepagePage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageHomepage &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/");
     }
-  }, [profile, profileLoading, canManageHomepage]);
+  }, [profile, profileLoading, permissionsLoading, canManageHomepage]);
 
   const handleAdd = () => {
     if (!selectedMediaId) {

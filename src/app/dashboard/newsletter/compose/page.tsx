@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import { useToast } from "@/app/_components/ui/toast";
@@ -33,10 +35,9 @@ export default function DashboardNewsletterComposePage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageNewsletter } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
+  const canSendNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_SEND);
 
   const { data: statistics } = api.newsletter.getStatistics.useQuery(
     undefined,
@@ -88,13 +89,14 @@ export default function DashboardNewsletterComposePage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageNewsletter &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManageNewsletter]);
+  }, [profile, profileLoading, permissionsLoading, canManageNewsletter]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -232,14 +234,16 @@ export default function DashboardNewsletterComposePage() {
               <div className="flex gap-4">
                 <button
                   onClick={handleSendTest}
-                  disabled={sendNewsletter.isPending || !testEmail}
+                  disabled={
+                    sendNewsletter.isPending || !testEmail || !canSendNewsletter
+                  }
                   className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Test senden
                 </button>
                 <button
                   onClick={handleSend}
-                  disabled={sendNewsletter.isPending}
+                  disabled={sendNewsletter.isPending || !canSendNewsletter}
                   className="bg-primary hover:bg-primary/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sendNewsletter.isPending

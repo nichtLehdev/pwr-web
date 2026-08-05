@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import {
@@ -36,9 +38,9 @@ export default function EditAuswahlchorPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageAuswahlchoere } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageAuswahlchoere = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
   );
 
   const { data: auswahlchor, isLoading: auswahlchorLoading } =
@@ -133,13 +135,20 @@ export default function EditAuswahlchorPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageAuswahlchoere &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageAuswahlchoere,
+    router,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
