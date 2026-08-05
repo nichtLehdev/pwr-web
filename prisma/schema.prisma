@@ -70,6 +70,7 @@ model User {
   courseRegistrations CourseRegistration[]
   savedParticipants   SavedParticipant[]   @relation("SavedParticipants")
   pageViews           PageView[]           @relation("PageViewUser")
+  notifications       Notification[]       @relation("UserNotifications")
 
   displayUsername String?
 
@@ -438,6 +439,8 @@ model Event {
   @@index([status])
   @@index([category])
   @@index([bezirkId])
+  @@index([status, eventDate])
+  @@index([createdById])
 }
 
 model EventPriceOption {
@@ -448,6 +451,8 @@ model EventPriceOption {
   price       Float
   label       String
   description String?
+
+  @@index([eventId])
 }
 
 model EventDownload {
@@ -535,6 +540,8 @@ model Course {
   @@index([startDate])
   @@index([courseType])
   @@index([bezirkId])
+  @@index([status, endDate])
+  @@index([createdById])
 }
 
 model CourseCollaborator {
@@ -576,6 +583,8 @@ model CoursePriceOption {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([courseId])
 }
 
 model CourseCustomField {
@@ -589,6 +598,8 @@ model CourseCustomField {
   isRequired Boolean         @default(false)
   helpText   String?
   sortOrder  Int             @default(0)
+
+  @@index([courseId])
 }
 
 model CourseRegistration {
@@ -629,7 +640,7 @@ model CourseRegistration {
 
   // Invoice
   invoiceGenerated Boolean   @default(false)
-  invoiceId        String?
+  invoiceId        String?   @unique
   invoiceDate      DateTime?
 
   // Relations
@@ -644,6 +655,15 @@ model CourseRegistration {
   @@index([paymentStatus])
   @@index([registrationStatus])
   @@index([siblingDiscountStatus])
+  @@index([courseId, registrationStatus])
+  @@index([registrantId])
+}
+
+/// Continuous invoice numbering per year (§14 UStG requires an unbroken
+/// sequence). Incremented atomically inside the invoice-issuing transaction.
+model InvoiceCounter {
+  year  Int @id
+  value Int @default(0)
 }
 
 model Participant {
@@ -662,6 +682,9 @@ model Participant {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([registrationId])
+  @@index([priceOption])
 }
 
 model SavedParticipant {
@@ -748,6 +771,8 @@ model Post {
   @@index([category])
   @@index([bezirkId])
   @@index([status])
+  @@index([status, pinned, createdAt])
+  @@index([createdById])
 }
 
 model Ensemble {
@@ -1073,6 +1098,7 @@ model Download {
   @@index([category])
   @@index([status])
   @@index([uploadedById])
+  @@index([fileUrl])
 }
 
 model Blaeserheft {
@@ -1175,6 +1201,7 @@ model Media {
   @@index([folder])
   @@index([uploadedById])
   @@index([status])
+  @@index([url])
 }
 
 model NewsletterSubscriber {
@@ -1219,5 +1246,62 @@ model PageView {
   @@index([section])
   @@index([createdAt])
   @@index([userId])
+  @@index([createdAt, path])
+  @@index([userId, createdAt])
   @@map("page_view")
+}
+
+/// Storage for better-auth's built-in rate limiter (rateLimit.storage =
+/// "database"), so login/reset throttling survives restarts and works
+/// across multiple instances.
+model RateLimit {
+  id          String  @id
+  key         String?
+  count       Int?
+  lastRequest BigInt?
+
+  @@index([key])
+  @@map("rateLimit")
+}
+
+/// Immutable record of security-relevant actions: who changed what, when.
+/// Written fire-and-forget by logAudit(); never updated or deleted by the app.
+model AuditLog {
+  id         String   @id @default(uuid())
+  /// Acting user; kept as plain id (no FK) so log entries survive user deletion.
+  actorId    String?
+  actorEmail String?
+  action     String // e.g. "role.assign", "registration.payment_status", "user.delete"
+  entityType String // e.g. "user", "course", "registration", "role"
+  entityId   String?
+  /// Human-readable summary and/or structured before/after values.
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@map("audit_log")
+}
+
+/// In-app notifications shown in the header bell. One row per recipient.
+model Notification {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// e.g. "review.approved", "review.rejected", "review.submitted", "registration.new"
+  type  String
+  title String
+  body  String?
+  /// Internal path to open when clicked, e.g. "/dashboard/posts/123"
+  url   String?
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notification")
 }
