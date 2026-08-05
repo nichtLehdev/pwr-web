@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
-import { safeInternalPath } from "@/lib/safe-redirect";
+import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
 import {
   Button,
   Input,
@@ -19,9 +19,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectTo = safeInternalPath(
-    searchParams.get("redirect") ?? searchParams.get("callbackUrl"),
-  );
+  const requestedRedirect =
+    searchParams.get("redirect") ?? searchParams.get("callbackUrl");
 
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -79,18 +78,16 @@ function LoginForm() {
         return;
       }
 
+      // Warm both caches so the dashboard guard doesn't re-fetch, and so
+      // the redirect decision knows about dashboard access.
       const profile = await utils.users.getMyProfile.fetch();
-
+      let hasDashboardAccess = false;
       if (profile?.id) {
         const permissions = await utils.permissions.getMyPermissions.fetch();
-
-        if (permissions && permissions.length > 0) {
-          router.push("/dashboard");
-          return;
-        }
+        hasDashboardAccess = !!permissions && permissions.length > 0;
       }
 
-      router.push(redirectTo);
+      router.push(resolvePostLoginTarget(requestedRedirect, hasDashboardAccess));
     } catch {
       setError("Ungültige Anmeldedaten");
     } finally {
