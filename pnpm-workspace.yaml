@@ -9,3 +9,14 @@ allowBuilds:
 publicHoistPattern:
   - '*eslint*'
   - '*prettier*'
+
+# Force patched versions of transitive dependencies with known vulnerabilities
+overrides:
+  'hono@<4.12.25': '>=4.12.25'
+  'fast-uri@<3.1.5': '>=3.1.5'
+  'sharp@<0.35.0': '>=0.35.0'
+  # Stay on undici 7.x: jsdom requires undici's internal lib/handler layout,
+  # which was reorganized in v8. 7.29.0 is the patched version.
+  'undici@>=7.0.0 <7.29.0': '~7.29.0'
+  'ws@<8.19.1': '>=8.19.1'
+  'postcss@<8.5.18': '>=8.5.18'
