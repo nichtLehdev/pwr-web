@@ -30,6 +30,8 @@ export const env = createEnv({
     SMTP_USER: z.string().email().optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_FROM: z.string().email().optional(),
+    /** Recipient for messages from the public contact form. */
+    CONTACT_EMAIL: z.string().email().optional(),
     /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
     CRON_SECRET: z.string().min(16).optional(),
   },
@@ -60,6 +62,7 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_FROM: process.env.SMTP_FROM,
+    CONTACT_EMAIL: process.env.CONTACT_EMAIL,
     CRON_SECRET: process.env.CRON_SECRET,
   },
   /**
