@@ -119,4 +119,22 @@ describe("formatAvailableSlots", () => {
     expect(formatAvailableSlots(100)).toBe("Plätze verfügbar");
     expect(formatAvailableSlots(Infinity)).toBe("Plätze verfügbar");
   });
+
+  it("scales the urgency threshold with course size (20%, capped at 10)", () => {
+    // 100-person course: threshold stays 10
+    expect(formatAvailableSlots(10, 100)).toBe("Noch 10 Plätze frei");
+    expect(formatAvailableSlots(11, 100)).toBe("Plätze verfügbar");
+    // 50-person course: 20% = 10
+    expect(formatAvailableSlots(10, 50)).toBe("Noch 10 Plätze frei");
+    expect(formatAvailableSlots(11, 50)).toBe("Plätze verfügbar");
+    // 8-person workshop: 20% of 8 → 2, no longer leaks counts from day one
+    expect(formatAvailableSlots(3, 8)).toBe("Plätze verfügbar");
+    expect(formatAvailableSlots(2, 8)).toBe("Noch 2 Plätze frei");
+    expect(formatAvailableSlots(1, 8)).toBe("Noch 1 Platz frei");
+    // tiny course: threshold never drops below 1
+    expect(formatAvailableSlots(1, 3)).toBe("Noch 1 Platz frei");
+    // unknown / unlimited capacity falls back to the fixed threshold
+    expect(formatAvailableSlots(5, null)).toBe("Noch 5 Plätze frei");
+    expect(formatAvailableSlots(5, Infinity)).toBe("Noch 5 Plätze frei");
+  });
 });

@@ -169,12 +169,16 @@ export default function CourseDetailView({
     course.location &&
     [course.location.name, course.location.city].filter(Boolean).join(", ");
 
+  // Deadline beats seat count: a course you can no longer register for must
+  // not advertise "Plätze verfügbar" in the hero.
   const capacityMeta =
     isPast || isExternal
       ? null
-      : spots.isFull && course.allowWaitingList
-        ? "Warteliste"
-        : formatAvailableSlots(spots.availableSlots);
+      : isDeadlinePassed
+        ? "Anmeldung geschlossen"
+        : spots.isFull && course.allowWaitingList
+          ? "Warteliste"
+          : formatAvailableSlots(spots.availableSlots, spots.totalCapacity);
 
   const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
 
@@ -614,7 +618,10 @@ export default function CourseDetailView({
                     ) : (
                       <div className="mb-4">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {formatAvailableSlots(spots.availableSlots)}
+                          {formatAvailableSlots(
+                            spots.availableSlots,
+                            spots.totalCapacity,
+                          )}
                         </p>
                       </div>
                     )}
