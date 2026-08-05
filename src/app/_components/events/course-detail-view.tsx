@@ -632,15 +632,13 @@ export default function CourseDetailView({
                             : "Jetzt anmelden"}
                         </Link>
                         {existingRegistration && (
-                          <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-                            Du hast bereits eine Anmeldung für diesen Kurs.{" "}
-                            <Link
-                              href={`/registrations/${existingRegistration.id}/edit`}
-                              className="text-primary font-medium hover:underline"
-                            >
-                              Anmeldung bearbeiten
-                            </Link>
-                          </p>
+                          <Link
+                            href={`/registrations/${existingRegistration.id}/edit`}
+                            className="border-primary text-primary hover:bg-primary/10 mb-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-6 py-2.5 text-center font-semibold transition-colors"
+                          >
+                            <EditIcon className="h-5 w-5" aria-hidden />
+                            Bestehende Anmeldung bearbeiten
+                          </Link>
                         )}
                       </>
                     )}
