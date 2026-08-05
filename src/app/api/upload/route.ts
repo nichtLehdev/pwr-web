@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/server/better-auth";
+import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
+
+const ALLOWED_FOLDERS = ["profiles", "downloads", "media"] as const;
+type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
+
+function isAllowedFolder(folder: string): folder is UploadFolder {
+  return (ALLOWED_FOLDERS as readonly string[]).includes(folder);
+}
 
 const validTypesByFolder: Record<string, string[]> = {
   profiles: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
@@ -29,6 +37,7 @@ const maxSizeByFolder: Record<string, number> = {
 
 const magicBytes: Record<string, number[][]> = {
   "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/jpg": [[0xff, 0xd8, 0xff]],
   "image/png": [[0x89, 0x50, 0x4e, 0x47]],
   "image/gif": [
     [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
@@ -36,6 +45,18 @@ const magicBytes: Record<string, number[][]> = {
   ],
   "image/webp": [[0x52, 0x49, 0x46, 0x46]],
   "application/pdf": [[0x25, 0x50, 0x44, 0x46]],
+  // Legacy Office formats are OLE compound files
+  "application/msword": [[0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]],
+  "application/vnd.ms-excel": [
+    [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1],
+  ],
+  // Modern Office formats are ZIP containers
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+    [0x50, 0x4b, 0x03, 0x04],
+  ],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    [0x50, 0x4b, 0x03, 0x04],
+  ],
   "application/zip": [
     [0x50, 0x4b, 0x03, 0x04],
     [0x50, 0x4b, 0x05, 0x06],
@@ -50,43 +71,50 @@ const magicBytes: Record<string, number[][]> = {
     [0xff, 0xf2],
     [0x49, 0x44, 0x33],
   ],
+  "audio/mp3": [
+    [0xff, 0xfb],
+    [0xff, 0xf3],
+    [0xff, 0xf2],
+    [0x49, 0x44, 0x33],
+  ],
   "audio/wav": [[0x52, 0x49, 0x46, 0x46]],
   "audio/ogg": [[0x4f, 0x67, 0x67, 0x53]],
 };
 
 function validateMagicBytes(buffer: Buffer, claimedType: string): boolean {
   const signatures = magicBytes[claimedType];
-  if (!signatures) return true;
+  // Fail closed: a type we can't verify is a type we don't accept
+  if (!signatures) return false;
   return signatures.some((sig) =>
     sig.every((byte, i) => buffer.length > i && buffer[i] === byte),
   );
 }
 
-function getExtension(filename: string, mimeType: string): string {
-  const fromFilename = filename.split(".").pop()?.toLowerCase();
-  if (fromFilename) return fromFilename;
+// The stored extension must come from the validated MIME type, never from the
+// client-supplied filename — otherwise a file validated as image/jpeg can be
+// stored (and later served) as .svg or .html.
+const mimeToExt: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "application/pdf": "pdf",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "docx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/zip": "zip",
+  "application/x-zip-compressed": "zip",
+  "audio/mpeg": "mp3",
+  "audio/mp3": "mp3",
+  "audio/wav": "wav",
+  "audio/ogg": "ogg",
+};
 
-  const mimeToExt: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/jpg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-    "application/pdf": "pdf",
-    "application/msword": "doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-      "docx",
-    "application/vnd.ms-excel": "xls",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-    "application/zip": "zip",
-    "application/x-zip-compressed": "zip",
-    "audio/mpeg": "mp3",
-    "audio/mp3": "mp3",
-    "audio/wav": "wav",
-    "audio/ogg": "ogg",
-  };
-
-  return mimeToExt[mimeType] || "bin";
+function getExtension(mimeType: string): string | null {
+  return mimeToExt[mimeType] ?? null;
 }
 
 export async function POST(request: Request) {
@@ -105,6 +133,10 @@ export async function POST(request: Request) {
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    }
+
+    if (!isAllowedFolder(folder)) {
+      return NextResponse.json({ error: "Invalid folder" }, { status: 400 });
     }
 
     const validTypes =
@@ -143,7 +175,13 @@ export async function POST(request: Request) {
 
     const timestamp = Date.now();
     const userId = session.user.id;
-    const extension = getExtension(file.name, file.type);
+    const extension = getExtension(file.type);
+    if (!extension) {
+      return NextResponse.json(
+        { error: `Unsupported file type: ${file.type}` },
+        { status: 400 },
+      );
+    }
 
     const baseName = file.name
       .replace(/\.[^/.]+$/, "")
@@ -152,7 +190,7 @@ export async function POST(request: Request) {
 
     const filename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
-    const uploadDir = join(process.cwd(), "public", "uploads", folder);
+    const uploadDir = join(UPLOADS_ROOT, folder);
     await mkdir(uploadDir, { recursive: true });
 
     const filePath = join(uploadDir, filename);

@@ -38,6 +38,11 @@ ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 RUN pnpm build
 
+# Drop devDependencies before the runner copies node_modules — the runtime
+# entrypoints (next, prisma migrate, tsx for seeds) are all regular
+# dependencies, so the image doesn't need typescript/eslint/tailwind etc.
+RUN pnpm prune --prod
+
 # ================================
 # Production stage
 # ================================
@@ -54,7 +59,11 @@ WORKDIR /app
 # copied in, not the /app directory entry itself.
 RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 --ingroup nodejs nextjs \
-  && chown nextjs:nodejs /app
+  && chown nextjs:nodejs /app \
+  # Uploads volume mount point (outside public/ so access goes through the
+  # authorizing /api/uploads route)
+  && mkdir -p /app/uploads \
+  && chown nextjs:nodejs /app/uploads
 
 # Set production environment
 ENV NODE_ENV=production
