@@ -87,7 +87,9 @@ function LoginForm() {
         hasDashboardAccess = !!permissions && permissions.length > 0;
       }
 
-      router.push(resolvePostLoginTarget(requestedRedirect, hasDashboardAccess));
+      router.push(
+        resolvePostLoginTarget(requestedRedirect, hasDashboardAccess),
+      );
     } catch {
       setError("Ungültige Anmeldedaten");
     } finally {

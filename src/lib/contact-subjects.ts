@@ -14,6 +14,7 @@ export const CONTACT_SUBJECTS = {
 
 export type ContactSubject = keyof typeof CONTACT_SUBJECTS;
 
-export const CONTACT_SUBJECT_KEYS = Object.keys(
-  CONTACT_SUBJECTS,
-) as [ContactSubject, ...ContactSubject[]];
+export const CONTACT_SUBJECT_KEYS = Object.keys(CONTACT_SUBJECTS) as [
+  ContactSubject,
+  ...ContactSubject[],
+];
