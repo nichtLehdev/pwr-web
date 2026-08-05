@@ -4,8 +4,11 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
+import { useToast } from "@/app/_components/ui/toast";
 import { Mail } from "lucide-react";
 
 export default function DashboardNewsletterSubscribersPage() {
@@ -22,10 +25,8 @@ export default function DashboardNewsletterSubscribersPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageNewsletter } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
 
   const { data: subscribersData, isLoading: subscribersLoading } =
     api.newsletter.getSubscribers.useQuery(
@@ -47,9 +48,19 @@ export default function DashboardNewsletterSubscribersPage() {
     },
   );
 
+  const utils = api.useUtils();
+  const toast = useToast();
+
   const deleteSubscriber = api.newsletter.deleteSubscriber.useMutation({
+    // Invalidate instead of reloading the page — a full reload threw away
+    // the current search text, filter and page on every single delete.
     onSuccess: () => {
-      window.location.reload();
+      toast.success("Abonnent gelöscht");
+      void utils.newsletter.getSubscribers.invalidate();
+      void utils.newsletter.getStatistics.invalidate();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Fehler beim Löschen des Abonnenten");
     },
   });
 
@@ -64,13 +75,14 @@ export default function DashboardNewsletterSubscribersPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageNewsletter &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManageNewsletter]);
+  }, [profile, profileLoading, permissionsLoading, canManageNewsletter]);
 
   if (isPending || profileLoading) {
     return (
