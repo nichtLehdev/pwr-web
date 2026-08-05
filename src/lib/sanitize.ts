@@ -1,5 +1,13 @@
 import DOMPurify from "isomorphic-dompurify";
 
+// Force safe rel on links: user-authored content may set target="_blank",
+// and without noopener the target page gets a handle on our window.
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A" && node.getAttribute("href")) {
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
 export function sanitizeHtml(dirty: string): string {
   return DOMPurify.sanitize(dirty, {
     USE_PROFILES: { html: true },
@@ -47,7 +55,8 @@ export function sanitizeHtml(dirty: string): string {
       "width",
       "height",
       "class",
-      "style",
+      // no "style": inline CSS enables overlay/redressing tricks that
+      // DOMPurify's script filtering doesn't cover
       "colspan",
       "rowspan",
     ],

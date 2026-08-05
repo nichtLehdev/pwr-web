@@ -1,8 +1,13 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  rateLimitedPublicProcedure,
+} from "../trpc";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
+import { logAudit } from "../helpers/audit";
 // UserRole enum removed - using permissions system instead
 
 /**
@@ -14,9 +19,12 @@ import { permissionProcedure } from "../middleware/permissions";
 
 export const usersRouter = createTRPCRouter({
   /**
-   * Get user by ID (public profile view)
+   * Get user by ID — full record including contact data, so this is
+   * restricted to users with the users.view permission (dashboard user
+   * detail/edit pages). Public pages use organization.* procedures, which
+   * select only public profile fields.
    */
-  getById: publicProcedure
+  getById: permissionProcedure(PERMISSIONS.USERS_VIEW)
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
@@ -68,41 +76,6 @@ export const usersRouter = createTRPCRouter({
       return user;
     }),
 
-  /**
-   * Get user by username (public profile view)
-   */
-  getByUsername: publicProcedure
-    .input(z.object({ username: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { username: input.username },
-        include: {
-          profileImage: true,
-          bezirk: true,
-          teamMember: true,
-          posaunenratMember: true,
-          vorstandMember: true,
-          foerdervereinMember: true,
-          posaunenwart: {
-            include: {
-              responsibilities: {
-                include: { bezirk: true },
-              },
-            },
-          },
-        },
-      });
-
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "User not found",
-        });
-      }
-
-      return user;
-    }),
-
   search: protectedProcedure
     .input(
       z.object({
@@ -132,45 +105,6 @@ export const usersRouter = createTRPCRouter({
           },
         },
         take: input.limit,
-        orderBy: { displayName: "asc" },
-      });
-
-      return users;
-    }),
-
-  /**
-   * Get all users with specific membership
-   */
-  getWithMembership: publicProcedure
-    .input(
-      z.object({
-        membershipType: z.enum([
-          "team",
-          "vorstand",
-          "posaunenrat",
-          "foerderverein",
-        ]),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const whereClause =
-        input.membershipType === "team"
-          ? { teamMember: { isNot: null } }
-          : input.membershipType === "vorstand"
-            ? { vorstandMember: { isNot: null } }
-            : input.membershipType === "posaunenrat"
-              ? { posaunenratMember: { isNot: null } }
-              : { foerdervereinMember: { isNot: null } };
-
-      const users = await ctx.db.user.findMany({
-        where: whereClause,
-        include: {
-          profileImage: true,
-          teamMember: input.membershipType === "team",
-          vorstandMember: input.membershipType === "vorstand",
-          posaunenratMember: input.membershipType === "posaunenrat",
-          foerdervereinMember: input.membershipType === "foerderverein",
-        },
         orderBy: { displayName: "asc" },
       });
 
@@ -663,6 +597,15 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "user.delete",
+        entityType: "user",
+        entityId: input.id,
+        details: { targetEmail: user.email },
+      });
+
       await ctx.db.user.delete({
         where: { id: input.id },
       });
@@ -737,7 +680,10 @@ export const usersRouter = createTRPCRouter({
   /**
    * Check if username is available
    */
-  checkUsername: publicProcedure
+  checkUsername: rateLimitedPublicProcedure("users.checkUsername", {
+    maxRequests: 30,
+    windowMs: 60 * 1000,
+  })
     .input(z.object({ username: z.string().min(3).max(30) }))
     .query(async ({ ctx, input }) => {
       const existing = await ctx.db.user.findUnique({
@@ -750,25 +696,12 @@ export const usersRouter = createTRPCRouter({
     }),
 
   /**
-   * Get email from username for login
-   */
-  getEmailByUsername: publicProcedure
-    .input(z.object({ username: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { username: input.username },
-        select: { email: true },
-      });
-
-      return {
-        email: user?.email ?? null,
-      };
-    }),
-
-  /**
    * Check if email is available
    */
-  checkEmail: publicProcedure
+  checkEmail: rateLimitedPublicProcedure("users.checkEmail", {
+    maxRequests: 30,
+    windowMs: 60 * 1000,
+  })
     .input(
       z.object({
         email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
@@ -833,6 +766,7 @@ export const usersRouter = createTRPCRouter({
         return await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.USERS_MANAGE,
+          ctx.permissionCache,
         );
       })();
 
@@ -843,6 +777,15 @@ export const usersRouter = createTRPCRouter({
           message: "You can only export your own data",
         });
       }
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "user.data_export",
+        entityType: "user",
+        entityId: targetUserId,
+        details: { self: targetUserId === ctx.session.user.id },
+      });
 
       const user = await ctx.db.user.findUnique({
         where: { id: targetUserId },
@@ -1163,6 +1106,14 @@ export const usersRouter = createTRPCRouter({
       // Finally delete the user
       await ctx.db.user.delete({
         where: { id: user.id },
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "user.delete_own_account",
+        entityType: "user",
+        entityId: user.id,
       });
 
       return { success: true };

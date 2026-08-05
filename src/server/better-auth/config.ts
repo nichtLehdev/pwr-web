@@ -5,7 +5,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { env } from "@/env";
 import { db } from "@/server/db";
-import { sendVerificationEmail, isEmailConfigured } from "@/server/email";
+import { isEmailConfigured } from "@/server/email";
 
 const getBaseUrl = () => {
   return (
@@ -21,44 +21,27 @@ const normalizeOrigin = (origin: string): string => {
   return origin.trim().replace(/\/+$/, "");
 };
 
-const addProtocolVariants = (url: string): string[] => {
-  const normalized = normalizeOrigin(url);
-  const variants: string[] = [normalized];
+const isProduction = process.env.NODE_ENV === "production";
 
-  if (normalized.startsWith("http://")) {
-    variants.push(normalized.replace("http://", "https://"));
-  } else if (normalized.startsWith("https://")) {
-    variants.push(normalized.replace("https://", "http://"));
-  }
-
-  return variants;
-};
-
+// Origins are trusted exactly as configured — no automatic http:// variants
+// (those weaken the CSRF origin check), and dev/LAN origins only outside
+// production builds.
 const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
-  ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").flatMap(
-      addProtocolVariants,
-    )
+  ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map(normalizeOrigin)
   : [];
 
-const baseUrlVariants = addProtocolVariants(baseUrl);
-const nextPublicAppUrlVariants =
-  process.env.NEXT_PUBLIC_APP_URL && process.env.NEXT_PUBLIC_APP_URL !== baseUrl
-    ? addProtocolVariants(process.env.NEXT_PUBLIC_APP_URL)
-    : [];
+const devOrigins = isProduction ? [] : ["http://localhost:3000"];
 
-const allOrigins = [
-  ...baseUrlVariants,
-  ...nextPublicAppUrlVariants,
+const trustedOrigins = [
+  normalizeOrigin(baseUrl),
+  ...(process.env.NEXT_PUBLIC_APP_URL
+    ? [normalizeOrigin(process.env.NEXT_PUBLIC_APP_URL)]
+    : []),
   ...additionalOrigins,
-  "http://localhost:3000",
-  "https://localhost:3000",
-  "http://192.168.4.136:3000",
-  "http://192.168.6.244:3000",
+  ...devOrigins,
 ]
   .filter(Boolean) // Remove null/empty strings
   .filter((origin, index, self) => self.indexOf(origin) === index); // Remove duplicates
-
-const trustedOrigins = allOrigins;
 
 export const auth = betterAuth({
   baseURL: baseUrl,
@@ -75,28 +58,20 @@ export const auth = betterAuth({
       user: { email: string; name?: string | null };
       url: string;
     }) => {
-      console.log("[Better Auth] sendResetPassword called for:", user.email);
-      console.log("[Better Auth] Reset URL:", url);
-
       if (!isEmailConfigured()) {
         console.error("[Better Auth] Email service is not configured");
         throw new Error("Email service is not configured");
       }
 
+      // Never log the reset URL or token — container logs must not contain
+      // credentials-equivalent secrets.
       let resetUrl = url;
       try {
         const urlObj = new URL(url, baseUrl);
         const token = urlObj.searchParams.get("token");
 
-        console.log("[Better Auth] Original URL from Better Auth:", url);
-        console.log(
-          "[Better Auth] Extracted token:",
-          token ? `${token.substring(0, 20)}...` : "NOT FOUND",
-        );
-
         if (token) {
           resetUrl = `${baseUrl}/reset-password?token=${token}${user.email ? `&email=${encodeURIComponent(user.email)}` : ""}`;
-          console.log("[Better Auth] Created reset URL:", resetUrl);
         } else {
           console.warn(
             "[Better Auth] No token found in reset URL, using original URL",
@@ -108,9 +83,6 @@ export const auth = betterAuth({
         resetUrl = url;
       }
 
-      console.log("[Better Auth] Sending password reset email to:", user.email);
-      console.log("[Better Auth] Using reset URL:", resetUrl);
-
       try {
         const { sendPasswordResetEmail } = await import("@/server/email");
         await sendPasswordResetEmail(
@@ -118,7 +90,6 @@ export const auth = betterAuth({
           resetUrl,
           user.name || undefined,
         );
-        console.log("[Better Auth] Password reset email sent successfully");
       } catch (emailError) {
         console.error(
           "[Better Auth] Error sending password reset email:",
@@ -128,38 +99,18 @@ export const auth = betterAuth({
       }
     },
   },
-  email: {
-    sendVerificationEmail: async ({
-      user,
-      url,
-    }: {
-      user: { email: string; name?: string | null };
-      url: string;
-    }) => {
-      if (!isEmailConfigured()) {
-        throw new Error("Email service is not configured");
-      }
-
-      let verificationUrl = url;
-      try {
-        const urlObj = new URL(url, baseUrl);
-        const token = urlObj.searchParams.get("token");
-
-        verificationUrl = token
-          ? `${baseUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`
-          : url; // Fallback to original URL if token not found
-      } catch {
-        verificationUrl = url;
-      }
-
-      await sendVerificationEmail(
-        user.email,
-        verificationUrl,
-        user.name || undefined,
-      );
-    },
-  },
+  // NOTE: e-mail verification is handled by the custom
+  // /api/auth/send-verification + /api/auth/verify-email-custom flow.
+  // (A previous `email: { sendVerificationEmail }` block here used a key
+  // better-auth does not recognize and was silently ignored.)
   trustedOrigins,
+  // Persist rate-limit counters in Postgres (rateLimit table) so login /
+  // reset throttling survives restarts and works across instances.
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    modelName: "rateLimit",
+  },
   appName: "Posaunenwerk Rheinland",
   plugins: [
     username(),
@@ -181,11 +132,13 @@ export const auth = betterAuth({
       image: "profileImageId",
     },
     additionalFields: {
+      // Only fields the client passes at sign-up may be client-writable.
+      // Everything else is `input: false` so the better-auth endpoints
+      // (sign-up body, POST /api/auth/update-user) cannot set them — all
+      // legitimate profile/admin updates go through the tRPC users router.
+      // In particular bezirkId/districtRoleName gate course-edit access and
+      // must never be self-assignable.
       username: {
-        type: "string",
-        required: false,
-      },
-      displayName: {
         type: "string",
         required: false,
       },
@@ -197,51 +150,72 @@ export const auth = betterAuth({
         type: "string",
         required: false,
       },
+      displayName: {
+        type: "string",
+        required: false,
+        input: false,
+      },
       phone: {
         type: "string",
         required: false,
+        input: false,
       },
       street: {
         type: "string",
         required: false,
+        input: false,
       },
       zipCode: {
         type: "string",
         required: false,
+        input: false,
       },
       city: {
         type: "string",
         required: false,
+        input: false,
       },
       birthDate: {
         type: "date",
         required: false,
+        input: false,
       },
       profileImageId: {
         type: "string",
         required: false,
+        input: false,
       },
       districtRoleName: {
         type: "string",
         required: false,
+        input: false,
       },
       bezirkId: {
         type: "string",
         required: false,
+        input: false,
       },
       bio: {
         type: "string",
         required: false,
+        input: false,
       },
       preferences: {
         type: "string", // JSON fields are stored as strings
         required: false,
+        input: false,
       },
       lastLoginAt: {
         type: "date",
         required: false,
+        input: false,
       },
     },
+  },
+  advanced: {
+    // Behind TLS termination a misconfigured BETTER_AUTH_URL (http://…) would
+    // otherwise produce non-Secure session cookies in production.
+    useSecureCookies: isProduction,
   },
   databaseHooks: {
     session: {

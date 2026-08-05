@@ -7,10 +7,9 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    BETTER_AUTH_SECRET:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    // Required in every environment: without it better-auth falls back to a
+    // known default secret and unsubscribe-token signing throws.
+    BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_GITHUB_CLIENT_ID: z.string(),
     BETTER_AUTH_GITHUB_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),

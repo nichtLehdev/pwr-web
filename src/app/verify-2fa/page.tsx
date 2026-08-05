@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { safeInternalPath } from "@/lib/safe-redirect";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import { Shield, ArrowLeft } from "lucide-react";
@@ -16,7 +17,7 @@ function Verify2FAContent() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = safeInternalPath(searchParams.get("redirect"));
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();

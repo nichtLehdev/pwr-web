@@ -1,8 +1,16 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@/server/better-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // The issue list is fetched with the server's GitHub token — if the repo
+  // is private, serving it unauthenticated would leak the whole tracker.
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_REPO = process.env.GITHUB_REPO; // e.g. 'lehdev/posaunenwerk'
 

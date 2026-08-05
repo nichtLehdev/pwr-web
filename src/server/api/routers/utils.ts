@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  publicProcedure,
+  rateLimitedPublicProcedure,
+} from "../trpc";
 import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
@@ -264,7 +268,12 @@ export const locationsRouter = createTRPCRouter({
       return locations;
     }),
 
-  geocode: publicProcedure
+  // Public geocoding proxies to Nominatim — throttle so we can't be used
+  // as a request amplifier (and get the deployment banned there).
+  geocode: rateLimitedPublicProcedure("utils.geocode", {
+    maxRequests: 10,
+    windowMs: 60 * 1000,
+  })
     .input(
       z.object({
         street: z.string().optional(),
@@ -278,7 +287,10 @@ export const locationsRouter = createTRPCRouter({
 });
 
 export const newsletterRouter = createTRPCRouter({
-  subscribe: publicProcedure
+  subscribe: rateLimitedPublicProcedure("newsletter.subscribe", {
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000,
+  })
     .input(
       z.object({
         email: z.string().email(),
@@ -314,28 +326,10 @@ export const newsletterRouter = createTRPCRouter({
       });
     }),
 
-  unsubscribe: publicProcedure
-    .input(z.object({ email: z.string().email() }))
-    .mutation(async ({ ctx, input }) => {
-      const subscriber = await ctx.db.newsletterSubscriber.findUnique({
-        where: { email: input.email },
-      });
-
-      if (!subscriber) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Email not found",
-        });
-      }
-
-      return await ctx.db.newsletterSubscriber.update({
-        where: { email: input.email },
-        data: {
-          isActive: false,
-          unsubscribedAt: new Date(),
-        },
-      });
-    }),
+  // NOTE: unsubscribing goes exclusively through POST
+  // /api/newsletter/unsubscribe, which verifies the signed token from the
+  // newsletter link. A token-less tRPC variant used to exist here and let
+  // anyone unsubscribe arbitrary addresses.
 
   getSubscribers: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE)
     .input(
@@ -456,28 +450,38 @@ export const newsletterRouter = createTRPCRouter({
       let successCount = 0;
       let errorCount = 0;
 
-      for (const subscriber of subscribers) {
-        try {
-          const emailHtml = generateNewsletterHtml({
-            content: htmlContent,
-            unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}&token=${createUnsubscribeToken(subscriber.email)}`,
-            subscriberName: subscriber.name || undefined,
-          });
+      // Send in bounded-concurrency batches: a strictly sequential loop over
+      // hundreds of subscribers at SMTP latency runs into request timeouts,
+      // while unbounded Promise.all would hammer the SMTP server.
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
+        const batch = subscribers.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map((subscriber) => {
+            const emailHtml = generateNewsletterHtml({
+              content: htmlContent,
+              unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}&token=${createUnsubscribeToken(subscriber.email)}`,
+              subscriberName: subscriber.name || undefined,
+            });
 
-          await sendEmail({
-            to: subscriber.email,
-            subject: input.subject,
-            html: emailHtml,
-          });
-
-          successCount++;
-        } catch (error) {
-          console.error(
-            `Failed to send newsletter to ${subscriber.email}:`,
-            error,
-          );
-          errorCount++;
-        }
+            return sendEmail({
+              to: subscriber.email,
+              subject: input.subject,
+              html: emailHtml,
+            });
+          }),
+        );
+        results.forEach((result, index) => {
+          if (result.status === "fulfilled") {
+            successCount++;
+          } else {
+            console.error(
+              `Failed to send newsletter to ${batch[index]?.email}:`,
+              result.reason,
+            );
+            errorCount++;
+          }
+        });
       }
 
       return {
