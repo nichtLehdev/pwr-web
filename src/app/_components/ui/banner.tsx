@@ -78,7 +78,11 @@ function useBannerHeight(
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setBannerHeight(entry.contentRect.height);
+        // Border-Box: enthält das Safe-Area-Padding (Notch), contentRect nicht.
+        setBannerHeight(
+          entry.borderBoxSize?.[0]?.blockSize ??
+            (entry.target as HTMLElement).offsetHeight,
+        );
       }
     });
 
@@ -142,7 +146,7 @@ export function AnnouncementBanner({
   return (
     <div
       ref={bannerRef}
-      className={`fixed top-0 right-0 left-0 z-60 overflow-hidden transition-transform duration-200 ease-out ${variantStyles[variant]}`}
+      className={`fixed top-0 right-0 left-0 z-60 overflow-hidden pt-[env(safe-area-inset-top,0px)] transition-transform duration-200 ease-out ${variantStyles[variant]}`}
       style={{ transform: `translateX(${translateX}px)` }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

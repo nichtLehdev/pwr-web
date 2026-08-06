@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
+import { GAMES } from "@/app/spiele/_lib/games";
 
 export type SearchResultType =
   | "post"
@@ -626,6 +627,30 @@ const staticPages = [
       "posaunenratwahl",
     ],
   },
+  {
+    id: "page-spiele",
+    title: "Spiele & Übungen",
+    description:
+      "Kleine interaktive Übungen zum Mitmachen — ohne Anmeldung, direkt im Browser",
+    url: "/spiele",
+    keywords: [
+      "spiele",
+      "übungen",
+      "lernen",
+      "training",
+      "quiz",
+      "interaktiv",
+      "musiktheorie",
+    ],
+  },
+  // Einzelspiele aus der zentralen Registry — bleibt automatisch aktuell.
+  ...GAMES.map((game) => ({
+    id: `page-spiele-${game.slug}`,
+    title: game.cardTitle,
+    description: game.cardDescription,
+    url: `/spiele/${game.slug}`,
+    keywords: ["spiel", "übung", ...game.searchKeywords],
+  })),
 ];
 
 /**
