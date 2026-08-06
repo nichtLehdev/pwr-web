@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "../styles/globals.css";
 import { AppChrome } from "./_components/general/app-chrome";
@@ -9,6 +9,7 @@ import { ToastProvider, Toaster } from "./_components/ui/toast";
 import { BannerProvider } from "./_components/ui/banner-context";
 import { PageViewTracker } from "./_components/stats/page-view-tracker";
 import { TrackingConsentProvider } from "./_components/stats/tracking-consent-context";
+import { ServiceWorkerRegistration } from "./_components/pwa/service-worker-registration";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,17 +17,39 @@ export const metadata: Metadata = {
   title: "Posaunenwerk Rheinland",
   description:
     "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
-  icons: [
-    {
-      url: "/android-chrome-192x192.png",
-      sizes: "192x192",
-      type: "image/png",
-    },
-    {
-      url: "/android-chrome-512x512.png",
-      sizes: "512x512",
-      type: "image/png",
-    },
+  icons: {
+    icon: [
+      {
+        url: "/android-chrome-192x192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/android-chrome-512x512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "Posaunenwerk",
+    statusBarStyle: "default",
+  },
+};
+
+/**
+ * `viewportFit: "cover"` aktiviert `env(safe-area-inset-*)` auf iOS —
+ * Spiele-Dock, Kopfleisten und Navigation reservieren damit Notch/Home-Bereich.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1419" },
   ],
 };
 
@@ -66,6 +89,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <ServiceWorkerRegistration />
         <ThemeProvider>
           <ToastProvider>
             <TRPCReactProvider>

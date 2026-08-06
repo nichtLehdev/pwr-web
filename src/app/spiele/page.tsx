@@ -1,6 +1,10 @@
 import PublicPage from "@/app/_components/general/public-page";
 import ParticipationCard from "@/app/_components/general/participation-card";
 import { Info } from "lucide-react";
+import { GAMES, UPCOMING_GAMES } from "./_lib/games";
+import { InstallHintCard } from "./_components/install-hint-card";
+import { OfflineReadyCard } from "./_components/offline-ready-card";
+import { StatsSyncRunner } from "./_components/stats-sync-runner";
 
 export default function SpielePage() {
   return (
@@ -33,45 +37,33 @@ export default function SpielePage() {
                 Schwierigkeitsstufen werden später angepasst.
               </p>
             </div>
+            <InstallHintCard />
+            <OfflineReadyCard />
+            <StatsSyncRunner />
             <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Angebote
             </h2>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <ParticipationCard
-                title="Rhythmus-Training"
-                description="Rhythmus lesen und mit Tippen wiedergeben — mit Metronom und Auswertung"
-                icon="music"
-                href="/spiele/rhythmus"
-                color="district-6"
-              />
-              <ParticipationCard
-                title="Noten lesen"
-                description="Einzelne Noten im Schlüssel erkennen — Instrument, Modus und Schwierigkeit wählbar"
-                icon="music"
-                href="/spiele/noten-lesen"
-                color="district-6"
-              />
-              <ParticipationCard
-                title="Griffe"
-                description="Noten lesen und die passenden Ventile oder Zugpositionen wählen — mit Sofort-Feedback"
-                icon="music"
-                href="/spiele/griffe"
-                color="district-6"
-              />
-              <ParticipationCard
-                title="Notenwaage"
-                description="Notenwerte auf der rechten Seite ergänzen, bis die Waage mit links genau ausgeglichen ist"
-                icon="music"
-                href="/spiele/notenwaage"
-                color="district-6"
-              />
-              <ParticipationCard
-                title="Choräle-Raten"
-                description="Erkenne den Choral anhand der ersten Takte der Melodie in den Noten"
-                icon="music"
-                color="district-6"
-                comingSoon
-              />
+              {GAMES.map((game) => (
+                <ParticipationCard
+                  key={game.slug}
+                  title={game.cardTitle}
+                  description={game.cardDescription}
+                  icon="music"
+                  href={`/spiele/${game.slug}`}
+                  color="district-6"
+                />
+              ))}
+              {UPCOMING_GAMES.map((game) => (
+                <ParticipationCard
+                  key={game.cardTitle}
+                  title={game.cardTitle}
+                  description={game.cardDescription}
+                  icon="music"
+                  color="district-6"
+                  comingSoon
+                />
+              ))}
             </div>
           </div>
         </div>

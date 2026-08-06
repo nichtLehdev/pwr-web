@@ -79,8 +79,36 @@ model User {
   customRoles     UserRoleAssignment[]
   userPermissions UserPermission[]
 
+  gameResults GameResult[] @relation("UserGameResults")
+
   @@index([bezirkId])
   @@map("user")
+}
+
+/**
+ * Ein abgeschlossenes Spielergebnis (Spiele unter /spiele).
+ * Event-Zeilen statt Aggregaten: Bestwerte und spätere Leaderboards werden per
+ * groupBy berechnet; (userId, clientId) macht den Offline-Sync idempotent —
+ * die Outbox darf denselben Batch beliebig oft erneut senden.
+ */
+model GameResult {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("UserGameResults", fields: [userId], references: [id], onDelete: Cascade)
+  game       String // GameId-Slug, im Router gegen die Registry validiert
+  score      Int
+  maxScore   Int?
+  streak     Int?
+  durationMs Int?
+  meta       Json?
+  playedAt   DateTime
+  clientId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, clientId])
+  @@index([userId, game])
+  @@index([game, score])
+  @@map("game_result")
 }
 
 // --------- Permission System Models ---------
