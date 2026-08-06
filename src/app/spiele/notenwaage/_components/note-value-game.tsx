@@ -1,33 +1,57 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Music, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { createPuzzle, totalUnits, unitsLabel } from "../_lib/puzzle-generator";
+import {
+  createPuzzle,
+  puzzleSignature,
+  totalUnits,
+} from "../_lib/puzzle-generator";
+import { unitsToBeatLabel } from "../_lib/beat-label";
 import {
   DIFFICULTY_LABELS,
   DIFFICULTY_VALUES,
   NOTE_VALUES,
+  STORAGE_DIFFICULTY_KEY,
   type DifficultyId,
   type NoteValueId,
   type Puzzle,
 } from "../_lib/types";
 import { ScaleSVG } from "./scale-svg";
-import { NotePan } from "./note-pan";
+import { NotePan, type PanEntry } from "./note-pan";
 import { NotePalette } from "./note-palette";
 import { NoteWaageResultView } from "./result-view";
 
 type Phase = "setup" | "play" | "result";
 const ROUND_LEN = 10;
+const SUCCESS_ADVANCE_MS = 1600;
+
+// Stabile Schlüssel für Einträge in der rechten Schale: beim Entfernen einer
+// Note bleiben alle anderen NoteGlyphs gemountet (kein VexFlow-Re-Render).
+let nextEntryUid = 1;
+
+function readStoredDifficulty(): DifficultyId | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_DIFFICULTY_KEY);
+    return raw === "beginner" || raw === "intermediate" || raw === "advanced"
+      ? raw
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 export function NoteValueGame() {
   const [difficulty, setDifficulty] = useState<DifficultyId>("beginner");
   const [phase, setPhase] = useState<Phase>("setup");
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [right, setRight] = useState<NoteValueId[]>([]);
+  const [right, setRight] = useState<PanEntry[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [flashBalanced, setFlashBalanced] = useState(false);
+  const [pendingAdvance, setPendingAdvance] = useState(false);
 
   const [roundIdx, setRoundIdx] = useState(0);
   const [score, setScore] = useState(0);
@@ -35,78 +59,145 @@ export function NoteValueGame() {
   const [firstTryStreak, setFirstTryStreak] = useState(0);
   const [bestFirstTry, setBestFirstTry] = useState(0);
 
+  const advanceTimer = useRef<number | null>(null);
+  const lastSignature = useRef<string | null>(null);
+
+  // Gespeicherte Schwierigkeit erst nach dem Mount lesen (SSR-sicher).
+  useEffect(() => {
+    const stored = readStoredDifficulty();
+    if (stored) setDifficulty(stored);
+  }, []);
+
+  const clearAdvance = useCallback(() => {
+    if (advanceTimer.current != null) {
+      window.clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+    setPendingAdvance(false);
+  }, []);
+
+  // Laufender Auto-Advance-Timer darf den Unmount nicht überleben.
+  useEffect(
+    () => () => {
+      if (advanceTimer.current != null)
+        window.clearTimeout(advanceTimer.current);
+    },
+    [],
+  );
+
+  const selectDifficulty = useCallback((id: DifficultyId) => {
+    setDifficulty(id);
+    try {
+      localStorage.setItem(STORAGE_DIFFICULTY_KEY, id);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const leftUnits = useMemo(
     () => (puzzle ? totalUnits(puzzle.left) : 0),
     [puzzle],
   );
-  const rightUnits = useMemo(() => totalUnits(right), [right]);
+  const rightUnits = useMemo(() => totalUnits(right.map((e) => e.id)), [right]);
   const diffUnits = rightUnits - leftUnits;
 
+  const leftEntries = useMemo<PanEntry[]>(
+    () => (puzzle ? puzzle.left.map((id, i) => ({ uid: `L${i}`, id })) : []),
+    [puzzle],
+  );
+
+  // Direkt aufeinanderfolgende identische Aufgaben (begrenzt) neu würfeln.
+  const rollPuzzle = useCallback(() => {
+    let p = createPuzzle(difficulty);
+    for (let i = 0; i < 8; i++) {
+      if (puzzleSignature(p) !== lastSignature.current) break;
+      p = createPuzzle(difficulty);
+    }
+    lastSignature.current = puzzleSignature(p);
+    return p;
+  }, [difficulty]);
+
   const startGame = useCallback(() => {
+    clearAdvance();
     setRoundIdx(0);
     setScore(0);
     setSolved(0);
     setFirstTryStreak(0);
     setBestFirstTry(0);
     setPhase("play");
-    const p = createPuzzle(difficulty);
-    setPuzzle(p);
+    setPuzzle(rollPuzzle());
     setRight([]);
     setAttempts(0);
     setFeedback(null);
     setFlashBalanced(false);
-  }, [difficulty]);
+  }, [clearAdvance, rollPuzzle]);
 
   const nextPuzzle = useCallback(() => {
+    clearAdvance();
     const next = roundIdx + 1;
     if (next >= ROUND_LEN) {
       setPhase("result");
       return;
     }
     setRoundIdx(next);
-    const p = createPuzzle(difficulty);
-    setPuzzle(p);
+    setPuzzle(rollPuzzle());
     setRight([]);
     setAttempts(0);
     setFeedback(null);
     setFlashBalanced(false);
-  }, [difficulty, roundIdx]);
+  }, [clearAdvance, roundIdx, rollPuzzle]);
 
   const addNote = useCallback(
     (id: NoteValueId) => {
-      setRight((prev) => {
-        if (!puzzle) return prev;
-        if (prev.length >= puzzle.rightCount) return prev;
-        return [...prev, id];
-      });
+      if (!puzzle || pendingAdvance) return;
+      if (right.length >= puzzle.rightCount) {
+        setFeedback("Deine Seite ist voll — entferne zuerst ein Symbol.");
+        return;
+      }
+      setRight((prev) =>
+        prev.length >= puzzle.rightCount
+          ? prev
+          : [...prev, { uid: nextEntryUid++, id }],
+      );
     },
-    [puzzle],
+    [pendingAdvance, puzzle, right.length],
   );
 
-  const removeLastOf = useCallback((id: NoteValueId) => {
-    setRight((prev) => {
-      const idx = [...prev].reverse().findIndex((n) => n === id);
-      if (idx < 0) return prev;
-      const real = prev.length - 1 - idx;
-      return prev.filter((_, i) => i !== real);
-    });
-  }, []);
+  const removeLastOf = useCallback(
+    (id: NoteValueId) => {
+      if (pendingAdvance) return;
+      setRight((prev) => {
+        const idx = [...prev].reverse().findIndex((e) => e.id === id);
+        if (idx < 0) return prev;
+        const real = prev.length - 1 - idx;
+        return prev.filter((_, i) => i !== real);
+      });
+    },
+    [pendingAdvance],
+  );
 
-  const removeAt = useCallback((idx: number) => {
-    setRight((prev) => prev.filter((_, i) => i !== idx));
-  }, []);
+  const removeAt = useCallback(
+    (idx: number) => {
+      if (pendingAdvance) return;
+      setRight((prev) => prev.filter((_, i) => i !== idx));
+    },
+    [pendingAdvance],
+  );
 
   const submit = useCallback(() => {
-    if (!puzzle) return;
+    if (!puzzle || pendingAdvance) return;
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
     const requiredRests = puzzle.requiredRests;
-    const selectedRests = right.filter((id) => NOTE_VALUES[id].isRest).length;
-    const selectedNotes = right.length - selectedRests;
+    const rightIds = right.map((e) => e.id);
+    const selectedRests = rightIds.filter(
+      (id) => NOTE_VALUES[id].isRest,
+    ).length;
+    const selectedNotes = rightIds.length - selectedRests;
     const requiredNotes =
       requiredRests == null ? null : puzzle.rightCount - requiredRests;
 
-    if (right.length === puzzle.rightCount && rightUnits === leftUnits) {
+    if (rightIds.length === puzzle.rightCount && rightUnits === leftUnits) {
       if (requiredRests != null && selectedRests !== requiredRests) {
         setFirstTryStreak(0);
         setFeedback(
@@ -140,14 +231,18 @@ export function NoteValueGame() {
         setFirstTryStreak(0);
       }
       setFeedback(`Richtig! +${gained} Punkte`);
-      setTimeout(nextPuzzle, 700);
+      setPendingAdvance(true);
+      advanceTimer.current = window.setTimeout(() => {
+        advanceTimer.current = null;
+        nextPuzzle();
+      }, SUCCESS_ADVANCE_MS);
       return;
     }
-    if (right.length !== puzzle.rightCount) {
+    if (rightIds.length !== puzzle.rightCount) {
       setFirstTryStreak(0);
       setFeedback(
-        right.length < puzzle.rightCount
-          ? `Noch ${puzzle.rightCount - right.length} Note(n) ergänzen`
+        rightIds.length < puzzle.rightCount
+          ? `Noch ${puzzle.rightCount - rightIds.length} Note(n) ergänzen`
           : `Zu viele Noten gewählt`,
       );
       return;
@@ -157,15 +252,29 @@ export function NoteValueGame() {
     setFirstTryStreak(0);
     setFeedback(
       diff > 0
-        ? `${unitsLabel(abs)} Schläge zu viel`
-        : `${unitsLabel(abs)} Schläge zu wenig`,
+        ? `${unitsToBeatLabel(abs)} zu viel`
+        : `${unitsToBeatLabel(abs)} zu wenig`,
     );
-  }, [attempts, leftUnits, nextPuzzle, puzzle, right, rightUnits]);
+  }, [
+    attempts,
+    leftUnits,
+    nextPuzzle,
+    pendingAdvance,
+    puzzle,
+    right,
+    rightUnits,
+  ]);
 
   const skip = useCallback(() => {
+    if (pendingAdvance) return;
     setFirstTryStreak(0);
     nextPuzzle();
-  }, [nextPuzzle]);
+  }, [nextPuzzle, pendingAdvance]);
+
+  const goToSetup = useCallback(() => {
+    clearAdvance();
+    setPhase("setup");
+  }, [clearAdvance]);
 
   const palette = useMemo(
     () =>
@@ -183,7 +292,7 @@ export function NoteValueGame() {
         total={ROUND_LEN}
         bestStreak={bestFirstTry}
         onRetry={startGame}
-        onSetup={() => setPhase("setup")}
+        onSetup={goToSetup}
       />
     );
   }
@@ -210,7 +319,7 @@ export function NoteValueGame() {
               <button
                 key={id}
                 type="button"
-                onClick={() => setDifficulty(id)}
+                onClick={() => selectDifficulty(id)}
                 className={cn(
                   "rounded-sm border p-3 text-center transition",
                   difficulty === id
@@ -241,6 +350,8 @@ export function NoteValueGame() {
 
   if (!puzzle) return null;
 
+  const openSlots = Math.max(0, puzzle.rightCount - right.length);
+
   return (
     <div className="mx-auto flex h-full min-h-0 w-full max-w-5xl flex-col gap-2 overflow-hidden md:h-[calc(100dvh-7.5rem)] md:max-h-[900px] md:gap-3">
       <div className="flex items-center justify-between">
@@ -249,7 +360,7 @@ export function NoteValueGame() {
         </p>
         <button
           type="button"
-          onClick={() => setPhase("setup")}
+          onClick={goToSetup}
           className="border-dark-border text-dark dark:text-dark-text inline-flex items-center gap-1.5 rounded-sm border px-2 py-1 text-[11px] font-bold md:gap-2 md:text-xs"
         >
           <Settings2 className="h-4 w-4" aria-hidden />
@@ -269,16 +380,22 @@ export function NoteValueGame() {
       )}
 
       <div className="h-[30%] min-h-[130px] shrink-0 md:h-[40%] md:min-h-[185px]">
-        <ScaleSVG diffUnits={diffUnits} balancedFlash={flashBalanced} />
+        <ScaleSVG
+          diffUnits={diffUnits}
+          balancedFlash={flashBalanced}
+          openSlots={openSlots}
+        />
       </div>
 
       <div className="grid min-h-[74px] shrink-0 grid-cols-2 gap-1.5 md:min-h-[110px] md:gap-2">
-        <NotePan notes={puzzle.left} />
+        <NotePan title="Vorgegeben" notes={leftEntries} />
         <NotePan
+          title="Deine Seite"
           notes={right}
-          editable
+          editable={!pendingAdvance}
           onRemoveAt={removeAt}
-          headerHint={`Noch ${Math.max(0, puzzle.rightCount - right.length)} Symbol(e)`}
+          slotCount={puzzle.rightCount}
+          headerHint={`Noch ${openSlots} Symbol(e)`}
         />
       </div>
 
@@ -288,16 +405,33 @@ export function NoteValueGame() {
             ids={palette}
             onAdd={addNote}
             onRemoveLastOf={removeLastOf}
-            showDescriptions={difficulty === "beginner"}
+            disabled={pendingAdvance}
           />
         </div>
-        {feedback && (
-          <p className="text-dark dark:text-dark-text-secondary border-dark-border/40 dark:bg-dark-background/50 shrink-0 rounded-sm border bg-white/60 px-2.5 py-1.5 text-xs md:px-3 md:py-2 md:text-sm">
-            {feedback}
-          </p>
-        )}
-        <p className="text-dark dark:text-dark-text-muted hidden text-center text-[11px] font-semibold md:block">
-          Tipp: lang drücken im Palette-Feld entfernt die zuletzt hinzugefügte
+        <div
+          role="status"
+          aria-live="polite"
+          className={cn(
+            "shrink-0 text-xs md:text-sm",
+            feedback
+              ? "border-dark-border/40 dark:bg-dark-background/50 rounded-sm border bg-white/60 px-2.5 py-1.5 md:px-3 md:py-2"
+              : "sr-only",
+          )}
+        >
+          {feedback && (
+            <p className="text-dark dark:text-dark-text-secondary">
+              {feedback}
+            </p>
+          )}
+          {pendingAdvance && (
+            <p className="text-primary dark:text-primary-light mt-0.5 font-black">
+              Beide Seiten wiegen {unitsToBeatLabel(leftUnits)}
+            </p>
+          )}
+        </div>
+        <p className="text-dark dark:text-dark-text-muted shrink-0 text-center text-[11px] font-semibold">
+          Tipp: Tippe ein Symbol in deiner Schale an, um es zu entfernen —
+          langes Drücken auf ein Palette-Feld entfernt die zuletzt gelegte
           gleiche Note.
         </p>
       </div>
@@ -306,14 +440,16 @@ export function NoteValueGame() {
         <button
           type="button"
           onClick={submit}
-          className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark rounded-sm py-2.5 text-sm font-black text-white md:py-3 md:text-base"
+          disabled={pendingAdvance}
+          className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark rounded-sm py-2.5 text-sm font-black text-white disabled:opacity-60 md:py-3 md:text-base"
         >
           Fertig
         </button>
         <button
           type="button"
           onClick={skip}
-          className="border-dark-border text-dark dark:text-dark-text rounded-sm border py-2.5 text-sm font-bold md:py-3 md:text-base"
+          disabled={pendingAdvance}
+          className="border-dark-border text-dark dark:text-dark-text rounded-sm border py-2.5 text-sm font-bold disabled:opacity-60 md:py-3 md:text-base"
         >
           Überspringen
         </button>

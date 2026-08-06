@@ -5,14 +5,23 @@ import type {
   TimeSignature,
 } from "./types";
 import {
-  getNotationTickInfo,
-  logRhythmDesiredForDebug,
-  rhythmIsWellFormed,
-} from "./rhythm-validation";
+  barLengthInUnits,
+  pulseInfoForTimeSignature,
+  rhythmIsWellFormedArithmetic,
+  barsFillTimeSignature,
+} from "./rhythm-arithmetic";
+import type { RhythmLogOutcome } from "./rhythm-validation";
 
 const MAX_TRIES = 100;
-/** Neu generieren, bis Notation + Millisekunden zur Taktart passen. */
+/** Neu generieren, bis Ticksumme + Millisekunden zur Taktart passen. */
 const MAX_RHYTHM_GENERATION_ATTEMPTS = 80;
+/** Takt neu würfeln, wenn zu wenige Onsets (nur Pausen bzw. Einzelnote bei „Leicht“). */
+const MAX_BAR_ONSET_TRIES = 40;
+/** Neu würfeln, wenn die Figur identisch zur vorherigen ist. */
+const MAX_REPEAT_REROLLS = 8;
+
+/** Zuletzt ausgegebene Figur — für die Wiederholungs-Vermeidung. */
+let lastRhythmSignature: string | null = null;
 
 function quarterMs(bpm: number): number {
   return 60000 / bpm;
@@ -20,11 +29,6 @@ function quarterMs(bpm: number): number {
 
 function sixteenthMs(bpm: number): number {
   return quarterMs(bpm) / 4;
-}
-
-/** Sixteenth-note units in one bar. */
-export function barLengthInUnits(ts: TimeSignature): number {
-  return (ts.numerator * 16) / ts.denominator;
 }
 
 function randomPick<T>(items: T[]): T {
@@ -143,6 +147,22 @@ function fallbackBarChunks(barUnits: number): Chunk[] {
   return out;
 }
 
+/** Sicherer Takt mit garantiert vielen Onsets: nur Noten (Viertel/Achtel/Sechzehntel). */
+function guaranteedOnsetBarChunks(barUnits: number): Chunk[] {
+  const out: Chunk[] = [];
+  let remaining = barUnits;
+  const sizes = [4, 2, 1] as const;
+  for (const size of sizes) {
+    while (remaining >= size) {
+      const vex = unitsToVexDuration(size);
+      if (!vex) break;
+      out.push({ kind: "simple", units: size, vex });
+      remaining -= size;
+    }
+  }
+  return out;
+}
+
 function generateBarChunks(difficulty: Difficulty, ts: TimeSignature): Chunk[] {
   const barUnits = barLengthInUnits(ts);
   for (let t = 0; t < MAX_TRIES; t++) {
@@ -200,6 +220,53 @@ function chunksToEvents(
   return { events, nextTupletGroupId: tupletId };
 }
 
+function countOnsets(events: RhythmEvent[]): number {
+  return events.filter((e) => !e.isRest).length;
+}
+
+/** „Leicht“: eine einzelne Ganze wäre eine Ein-Tipp-Runde — mindestens 2 Onsets. */
+function minOnsetsPerBar(difficulty: Difficulty): number {
+  return difficulty === "beginner" ? 2 : 1;
+}
+
+/**
+ * Ein Takt mit garantierter Mindestzahl an Onsets: erst neu würfeln,
+ * zur Not Pausen in Noten umwandeln, letzter Ausweg ist der sichere Takt.
+ */
+function generateBarEvents(
+  difficulty: Difficulty,
+  ts: TimeSignature,
+  bpm: number,
+  startTupletGroupId: number,
+): { events: RhythmEvent[]; nextTupletGroupId: number } {
+  const minOnsets = minOnsetsPerBar(difficulty);
+
+  for (let t = 0; t < MAX_BAR_ONSET_TRIES; t++) {
+    const chunks = generateBarChunks(difficulty, ts);
+    const built = chunksToEvents(chunks, bpm, startTupletGroupId);
+    if (countOnsets(built.events) >= minOnsets) return built;
+
+    // Pausen zu Noten drehen, wenn genug Events da sind (Figur bleibt gültig).
+    const rests = built.events.filter((e) => e.isRest);
+    if (built.events.length >= minOnsets && rests.length > 0) {
+      for (const e of built.events) {
+        if (countOnsets(built.events) >= minOnsets) break;
+        if (e.isRest) {
+          e.isRest = false;
+          e.key = "c/4";
+        }
+      }
+      if (countOnsets(built.events) >= minOnsets) return built;
+    }
+  }
+
+  return chunksToEvents(
+    guaranteedOnsetBarChunks(barLengthInUnits(ts)),
+    bpm,
+    startTupletGroupId,
+  );
+}
+
 function pickTimeSignature(difficulty: Difficulty): TimeSignature {
   if (difficulty === "beginner") {
     return { numerator: 4, denominator: 4 };
@@ -233,6 +300,19 @@ function emergencyRhythm(bpm: number): GeneratedRhythm {
   };
 }
 
+/** Figur-Fingerabdruck für die Wiederholungs-Vermeidung (Dauern + Pausen). */
+function rhythmSignature(rhythm: GeneratedRhythm): string {
+  const eventSig = rhythm.events
+    .map(
+      (e) =>
+        `${e.noteValue}${e.isRest ? "r" : ""}${
+          e.tupletGroupId !== undefined ? "t" : ""
+        }`,
+    )
+    .join(",");
+  return `${rhythm.timeSignature.numerator}/${rhythm.timeSignature.denominator}|${rhythm.bars}|${eventSig}`;
+}
+
 function tryGenerateRhythmOnce(
   difficulty: Difficulty,
   bpm: number,
@@ -248,9 +328,9 @@ function tryGenerateRhythmOnce(
     if (b > 0) {
       barStartEventIndices.push(allEvents.length);
     }
-    const chunks = generateBarChunks(difficulty, timeSignature);
-    const { events, nextTupletGroupId } = chunksToEvents(
-      chunks,
+    const { events, nextTupletGroupId } = generateBarEvents(
+      difficulty,
+      timeSignature,
       bpm,
       tupletCounter,
     );
@@ -266,35 +346,62 @@ function tryGenerateRhythmOnce(
   };
 }
 
+/**
+ * Debug-Log nur im Dev-Server: lazy geladen, damit `rhythm-validation`
+ * (und damit VexFlow) nicht ins eager Route-Bundle wandert.
+ */
+function logRhythmForDebugDev(
+  rhythm: GeneratedRhythm,
+  bpm: number,
+  meta: {
+    outcome: RhythmLogOutcome;
+    attempt?: number;
+    difficulty?: string;
+    rejectReason?: "ticks" | "duration" | "build";
+  },
+): void {
+  if (process.env.NODE_ENV !== "development") return;
+  void import("./rhythm-validation")
+    .then((m) => m.logRhythmDesiredForDebug(rhythm, bpm, meta))
+    .catch(() => undefined);
+}
+
 export function generateRhythm(
   difficulty: Difficulty,
   bpm: number,
 ): GeneratedRhythm {
+  let repeatRerolls = 0;
   for (let a = 0; a < MAX_RHYTHM_GENERATION_ATTEMPTS; a++) {
     const rhythm = tryGenerateRhythmOnce(difficulty, bpm);
-    if (rhythmIsWellFormed(rhythm, bpm)) {
-      logRhythmDesiredForDebug(rhythm, bpm, {
-        outcome: "accepted",
+    if (!rhythmIsWellFormedArithmetic(rhythm, bpm)) {
+      logRhythmForDebugDev(rhythm, bpm, {
+        outcome: "rejected",
         attempt: a + 1,
         difficulty,
+        rejectReason: barsFillTimeSignature(rhythm) ? "duration" : "ticks",
       });
-      return rhythm;
+      continue;
     }
-    const tickInfo = getNotationTickInfo(rhythm);
-    const rejectReason: "ticks" | "duration" | "build" = !tickInfo
-      ? "build"
-      : !tickInfo.ok
-        ? "ticks"
-        : "duration";
-    logRhythmDesiredForDebug(rhythm, bpm, {
-      outcome: "rejected",
+    // Gleiche Figur wie zuletzt? Begrenzt neu würfeln für mehr Abwechslung.
+    const signature = rhythmSignature(rhythm);
+    if (
+      signature === lastRhythmSignature &&
+      repeatRerolls < MAX_REPEAT_REROLLS
+    ) {
+      repeatRerolls++;
+      continue;
+    }
+    lastRhythmSignature = signature;
+    logRhythmForDebugDev(rhythm, bpm, {
+      outcome: "accepted",
       attempt: a + 1,
       difficulty,
-      rejectReason,
     });
+    return rhythm;
   }
   const fallback = emergencyRhythm(bpm);
-  logRhythmDesiredForDebug(fallback, bpm, {
+  lastRhythmSignature = rhythmSignature(fallback);
+  logRhythmForDebugDev(fallback, bpm, {
     outcome: "emergency",
     difficulty,
   });
@@ -302,21 +409,22 @@ export function generateRhythm(
 }
 
 /**
- * Einzählen: ein Takt in Viertel(n) — Länge abhängig von Taktart und Schwierigkeit
- * (kurz für Einsteiger, bis zu einem Takt für Fortgeschrittene).
+ * Einzählen: ein Takt im Metronom-Puls — Länge abhängig von Taktart und
+ * Schwierigkeit (kurz für Einsteiger, bis zu einem Takt für Fortgeschrittene).
+ * Bei x/8-Taktarten ist der Puls die punktierte Viertel (6/8 → „1, 2“).
  */
 export function countInBeatsForRhythm(
   timeSignature: TimeSignature,
   difficulty: Difficulty,
 ): number {
-  const n = timeSignature.numerator;
+  const { beatsPerBar } = pulseInfoForTimeSignature(timeSignature);
   if (difficulty === "beginner") {
-    return Math.min(4, Math.max(1, n));
+    return Math.min(4, Math.max(1, beatsPerBar));
   }
   if (difficulty === "intermediate") {
-    return Math.min(6, Math.max(1, n));
+    return Math.min(6, Math.max(1, beatsPerBar));
   }
-  return Math.min(8, Math.max(1, n));
+  return Math.min(8, Math.max(1, beatsPerBar));
 }
 
 export function getExpectedOnsetTimesMs(events: RhythmEvent[]): number[] {

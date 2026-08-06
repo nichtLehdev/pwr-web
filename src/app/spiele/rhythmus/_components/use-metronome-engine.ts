@@ -22,6 +22,9 @@ function clickBuffer(ctx: AudioContext): AudioBuffer {
   return buf;
 }
 
+/** Geplante Quelle + Gain — für hartes Stoppen bei `cancelScheduled`. */
+type ScheduledNodes = { src: AudioScheduledSourceNode; gain: GainNode };
+
 /** Short “note” tone: triangle + quick envelope (no external samples). */
 function schedulePitchedTone(
   ctx: AudioContext,
@@ -30,7 +33,7 @@ function schedulePitchedTone(
   durationSec: number,
   peakGain: number,
   destination: AudioNode,
-): void {
+): ScheduledNodes {
   const osc = ctx.createOscillator();
   osc.type = "triangle";
   osc.frequency.value = frequencyHz;
@@ -55,6 +58,8 @@ function schedulePitchedTone(
 
   osc.start(startAt);
   osc.stop(startAt + durationSec + 0.02);
+
+  return { src: osc, gain: g };
 }
 
 /** Tap feedback: very short attack so sound lines up with key/pointer (preview tones keep softer ramp). */
@@ -91,7 +96,8 @@ export interface MetronomeEngine {
   ensureAudio: () => Promise<AudioContext>;
   getContext: () => AudioContext | null;
   nowCtx: () => number;
-  scheduleClick: (atCtxTime: number, accent?: boolean) => void;
+  /** `volume` überschreibt die Standard-Lautstärke (z. B. leiser Vorschau-Klick). */
+  scheduleClick: (atCtxTime: number, accent?: boolean, volume?: number) => void;
   schedulePreview: (
     events: RhythmEvent[],
     startCtxTime: number,
@@ -113,7 +119,15 @@ export interface MetronomeEngine {
 export function useMetronomeEngine(): MetronomeEngine {
   const ctxRef = useRef<AudioContext | null>(null);
   const noiseBufRef = useRef<AudioBuffer | null>(null);
-  const scheduledRef = useRef<AudioNode[]>([]);
+  const scheduledRef = useRef<ScheduledNodes[]>([]);
+
+  /** Merken + nach Ende selbst austragen, damit die Liste nicht wächst. */
+  const registerScheduled = useCallback((entry: ScheduledNodes) => {
+    scheduledRef.current.push(entry);
+    entry.src.addEventListener("ended", () => {
+      scheduledRef.current = scheduledRef.current.filter((e) => e !== entry);
+    });
+  }, []);
 
   const ensureAudio = useCallback(async () => {
     const Ctx =
@@ -143,22 +157,25 @@ export function useMetronomeEngine(): MetronomeEngine {
     return ctxRef.current?.currentTime ?? 0;
   }, []);
 
-  const scheduleClick = useCallback((atCtxTime: number, accent = false) => {
-    const ctx = ctxRef.current;
-    const buf = noiseBufRef.current;
-    if (!ctx || !buf) return;
+  const scheduleClick = useCallback(
+    (atCtxTime: number, accent = false, volume?: number) => {
+      const ctx = ctxRef.current;
+      const buf = noiseBufRef.current;
+      if (!ctx || !buf) return;
 
-    const gain = ctx.createGain();
-    gain.gain.value = accent ? 0.55 : 0.38;
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(gain);
-    gain.connect(ctx.destination);
+      const gain = ctx.createGain();
+      gain.gain.value = volume ?? (accent ? 0.55 : 0.38);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      gain.connect(ctx.destination);
 
-    const t = Math.max(atCtxTime, ctx.currentTime + 0.02);
-    src.start(t);
-    scheduledRef.current.push(gain);
-  }, []);
+      const t = Math.max(atCtxTime, ctx.currentTime + 0.02);
+      src.start(t);
+      registerScheduled({ src, gain });
+    },
+    [registerScheduled],
+  );
 
   const schedulePreview = useCallback(
     (
@@ -178,10 +195,12 @@ export function useMetronomeEngine(): MetronomeEngine {
         const noteSec = durationMs / 1000;
         const dur = Math.min(0.42, Math.max(0.08, noteSec * 0.55));
         const peak = Math.min(0.22, 0.12 + Math.min(noteSec * 0.08, 0.1));
-        schedulePitchedTone(ctx, t, hz, dur, peak, ctx.destination);
+        registerScheduled(
+          schedulePitchedTone(ctx, t, hz, dur, peak, ctx.destination),
+        );
       }
     },
-    [],
+    [registerScheduled],
   );
 
   const playTapPitchForOffset = useCallback(
@@ -204,6 +223,21 @@ export function useMetronomeEngine(): MetronomeEngine {
   }, []);
 
   const cancelScheduled = useCallback(() => {
+    // Geplante Quellen wirklich stoppen — sonst stapeln sich Vorschauen
+    // („Nochmal anhören“) und Töne bluten in den Einzähler.
+    for (const { src, gain } of scheduledRef.current) {
+      try {
+        src.stop();
+      } catch {
+        /* schon gestoppt/nie gestartet */
+      }
+      try {
+        src.disconnect();
+        gain.disconnect();
+      } catch {
+        /* noop */
+      }
+    }
     scheduledRef.current = [];
   }, []);
 
