@@ -72,6 +72,7 @@ model User {
   pageViews           PageView[]           @relation("PageViewUser")
   notifications       Notification[]       @relation("UserNotifications")
   gameNoteSets        GameNoteSet[]        @relation("GameNoteSetCreator")
+  customFieldTemplates CourseCustomFieldTemplate[] @relation("CustomFieldTemplateCreator")
 
   displayUsername String?
 
@@ -637,6 +638,28 @@ model CourseCustomField {
   sortOrder  Int             @default(0)
 
   @@index([courseId])
+}
+
+/// Global library of reusable registration field definitions. Shared across all
+/// dashboard users; adding a library field to a course copies it into
+/// CourseCustomField, so later template edits never affect existing courses.
+model CourseCustomFieldTemplate {
+  id String @id @default(uuid())
+
+  fieldName  String          @unique
+  fieldType  CustomFieldType
+  options    Json? // JSON for select options (same shape as CourseCustomField)
+  isRequired Boolean         @default(false)
+  helpText   String?
+
+  createdById String?
+  createdBy   User?   @relation("CustomFieldTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+  @@map("course_custom_field_template")
 }
 
 model CourseRegistration {
