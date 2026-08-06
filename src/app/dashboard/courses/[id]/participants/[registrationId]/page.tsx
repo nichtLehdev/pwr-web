@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import {
@@ -91,12 +92,7 @@ function getCustomFieldValue(
 ): string {
   if (!participant.customFields) return "–";
   const fields = participant.customFields as Record<string, unknown>;
-  const value = fields[fieldName];
-  if (value === null || value === undefined) return "–";
-  if (typeof value === "boolean") {
-    return value ? "Ja" : "Nein";
-  }
-  return String(value);
+  return formatCustomFieldValueForDisplay(fields[fieldName]);
 }
 
 export default function RegistrationDetailPage() {

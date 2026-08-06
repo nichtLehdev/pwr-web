@@ -17,4 +17,9 @@ export {
 } from "./dashboard-form-section-layout";
 
 export { CourseFormEditMetaBar } from "./course-form-edit-meta-bar";
+export {
+  CourseCustomFieldsEditor,
+  customFieldTypeLabels,
+  type CourseCustomFieldDraft,
+} from "./course-custom-fields-editor";
 export { DashboardSectionedFormLayout } from "./dashboard-sectioned-form-layout";

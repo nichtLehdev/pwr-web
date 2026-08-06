@@ -72,6 +72,7 @@ model User {
   pageViews           PageView[]           @relation("PageViewUser")
   notifications       Notification[]       @relation("UserNotifications")
   gameNoteSets        GameNoteSet[]        @relation("GameNoteSetCreator")
+  customFieldTemplates CourseCustomFieldTemplate[] @relation("CustomFieldTemplateCreator")
 
   displayUsername String?
 
@@ -297,6 +298,12 @@ enum CustomFieldType {
   SELECT
   CHECKBOX
   TEXTAREA
+  DATE
+  YEAR
+  TIME
+  MULTISELECT
+  PHONE
+  EMAIL
 }
 
 /**
@@ -637,6 +644,32 @@ model CourseCustomField {
   sortOrder  Int             @default(0)
 
   @@index([courseId])
+}
+
+/// Global library of reusable registration field definitions. Adding a library
+/// field to a course copies it into CourseCustomField, so later template edits
+/// never affect existing courses. Templates start private to their creator and
+/// become visible to everyone (isGlobal) once a course containing the field is
+/// approved.
+model CourseCustomFieldTemplate {
+  id String @id @default(uuid())
+
+  fieldName  String
+  fieldType  CustomFieldType
+  options    Json? // JSON for select options (same shape as CourseCustomField)
+  isRequired Boolean         @default(false)
+  helpText   String?
+  isGlobal   Boolean         @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("CustomFieldTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+  @@index([fieldName])
+  @@map("course_custom_field_template")
 }
 
 model CourseRegistration {
