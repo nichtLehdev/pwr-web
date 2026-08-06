@@ -41,7 +41,10 @@ export default function DashboardNewsletterComposePage() {
   // A reload or mis-click used to throw away the whole newsletter text.
   // The data object must be referentially stable, otherwise the save effect
   // fires on every render and clobbers the stored draft before restore runs.
-  const autosaveData = useMemo(() => ({ subject, content }), [subject, content]);
+  const autosaveData = useMemo(
+    () => ({ subject, content }),
+    [subject, content],
+  );
   const { restore, clear } = useAutosave("newsletter-compose", autosaveData);
   const hasUnsavedChanges = Boolean(subject.trim() || content.trim());
 
