@@ -38,24 +38,24 @@ model User {
   preferences Json?
 
   // Relations
-  accounts                      Account[]
-  sessions                      Session[]
-  twoFactor                     TwoFactor?                   @relation("UserTwoFactor")
-  bezirk                        Bezirk?                      @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
-  uploadedMedia                 Media[]                      @relation("MediaUploadedBy")
-  uploadedDownloads             Download[]                   @relation("DownloadUploadedBy")
-  posaunenwart                  Posaunenwart?                 @relation("PosaunenwartUser")
-  createdEvents                 Event[]                      @relation("EventCreator")
-  createdCourses                Course[]                     @relation("CourseCreator")
-  createdPosts                  Post[]                       @relation("PostCreator")
-  authoredPosts                 Post[]                       @relation("PostAuthor")
-  reviewedEvents                Event[]                      @relation("EventReviewer")
-  reviewedCourses               Course[]                     @relation("CourseReviewer")
-  reviewedPosts                 Post[]                       @relation("PostReviewer")
-  courseCollaborations          CourseCollaborator[]
-  conductedEnsembles            Ensemble[]                   @relation("EnsembleConductor")
-  representedEnsembles          Ensemble[]                   @relation("EnsembleRepresentative")
-  conductedAuswahlChors         AuswahlChor[]                @relation("AuswahlChorConductor")
+  accounts              Account[]
+  sessions              Session[]
+  twoFactor             TwoFactor?           @relation("UserTwoFactor")
+  bezirk                Bezirk?              @relation("BezirkUsers", fields: [bezirkId], references: [id], onDelete: SetNull)
+  uploadedMedia         Media[]              @relation("MediaUploadedBy")
+  uploadedDownloads     Download[]           @relation("DownloadUploadedBy")
+  posaunenwart          Posaunenwart?        @relation("PosaunenwartUser")
+  createdEvents         Event[]              @relation("EventCreator")
+  createdCourses        Course[]             @relation("CourseCreator")
+  createdPosts          Post[]               @relation("PostCreator")
+  authoredPosts         Post[]               @relation("PostAuthor")
+  reviewedEvents        Event[]              @relation("EventReviewer")
+  reviewedCourses       Course[]             @relation("CourseReviewer")
+  reviewedPosts         Post[]               @relation("PostReviewer")
+  courseCollaborations  CourseCollaborator[]
+  conductedEnsembles    Ensemble[]           @relation("EnsembleConductor")
+  representedEnsembles  Ensemble[]           @relation("EnsembleRepresentative")
+  conductedAuswahlChors AuswahlChor[]        @relation("AuswahlChorConductor")
 
   // Organization membership relations
   teamMember          TeamMember?          @relation("TeamMemberUser")
@@ -63,7 +63,7 @@ model User {
   vorstandMember      VorstandMember?      @relation("VorstandMemberUser")
   foerdervereinMember FoerdervereinMember? @relation("FoerdervereinMemberUser")
 
-  lastLoginAt         DateTime?
+  lastLoginAt DateTime?
 
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
@@ -71,6 +71,7 @@ model User {
   savedParticipants   SavedParticipant[]   @relation("SavedParticipants")
   pageViews           PageView[]           @relation("PageViewUser")
   notifications       Notification[]       @relation("UserNotifications")
+  gameNoteSets        GameNoteSet[]        @relation("GameNoteSetCreator")
 
   displayUsername String?
 
@@ -120,9 +121,9 @@ model Role {
  * Permissions are hardcoded in the codebase (see src/lib/permissions.ts)
  */
 model RolePermission {
-  id           String @id @default(uuid())
-  roleId       String
-  role         Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id            String @id @default(uuid())
+  roleId        String
+  role          Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permissionKey String // e.g., "events.create", "posts.approve", "users.manage"
 
   createdAt DateTime @default(now())
@@ -159,9 +160,9 @@ model UserRoleAssignment {
  * Permissions are hardcoded in the codebase (see src/lib/permissions.ts)
  */
 model UserPermission {
-  id           String @id @default(uuid())
-  userId       String
-  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String @id @default(uuid())
+  userId        String
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   permissionKey String // e.g., "events.create", "posts.approve", "users.manage"
 
   // Optional: grant or deny (useful for denying permissions inherited from roles)
@@ -270,7 +271,9 @@ enum CustomFieldType {
   TEXTAREA
 }
 
-/** Kurs-Team: Organizer bearbeitet den Kurs; Team sieht Teilnehmer (ohne volle Bearbeitung). */
+/**
+ * Kurs-Team: Organizer bearbeitet den Kurs; Team sieht Teilnehmer (ohne volle Bearbeitung).
+ */
 enum CourseCollaboratorRole {
   ORGANIZER
   STAFF
@@ -492,22 +495,28 @@ model Course {
   bezirkId       String?
 
   // Registration
-  registrationOpen     Boolean   @default(false)
-  registrationOpensAt  DateTime? // When registrations become available (details visible before this)
-  registrationDeadline DateTime?
-  /** When set, registration happens on an external provider website instead of this platform. */
-  externalProviderName    String?
-  externalRegistrationUrl String?
-  /** When the post-deadline overview e-mail was sent to creator/organizers. */
+  registrationOpen             Boolean   @default(false)
+  registrationOpensAt          DateTime? // When registrations become available (details visible before this)
+  registrationDeadline         DateTime?
+  /**
+   * When set, registration happens on an external provider website instead of this platform.
+   */
+  externalProviderName         String?
+  externalRegistrationUrl      String?
+  /**
+   * When the post-deadline overview e-mail was sent to creator/organizers.
+   */
   registrationClosedNotifiedAt DateTime?
-  maxParticipants      Int? // optional hard cap
-  allowWaitingList     Boolean   @default(false)
+  maxParticipants              Int? // optional hard cap
+  allowWaitingList             Boolean   @default(false)
 
   // Pricing
-  isFree               Boolean @default(false)
-  priceInfo            String?
-  allowSiblingDiscount Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
-  /** Welche Zahlungsweisen Teilnehmer bei kostenpflichtigen Kursen nutzen dürfen (mindestens eine, wenn nicht kostenlos). */
+  isFree                Boolean @default(false)
+  priceInfo             String?
+  allowSiblingDiscount  Boolean @default(false) // Förderverein sibling discount (20% for siblings after first)
+  /**
+   * Welche Zahlungsweisen Teilnehmer bei kostenpflichtigen Kursen nutzen dürfen (mindestens eine, wenn nicht kostenlos).
+   */
   paymentCashAllowed    Boolean @default(true)
   paymentInvoiceAllowed Boolean @default(true)
 
@@ -523,10 +532,10 @@ model Course {
   // Relations
   collaborators    CourseCollaborator[]
   guestTeamMembers CourseGuestTeamMember[]
-  bezirk           Bezirk?              @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
-  priceOptions  CoursePriceOption[] // Each can have their own maxParticipants
-  customFields  CourseCustomField[]
-  registrations CourseRegistration[]
+  bezirk           Bezirk?                 @relation(fields: [bezirkId], references: [id], onDelete: SetNull)
+  priceOptions     CoursePriceOption[] // Each can have their own maxParticipants
+  customFields     CourseCustomField[]
+  registrations    CourseRegistration[]
 
   // Meta
   createdById String?
@@ -627,10 +636,12 @@ model CourseRegistration {
 
   // Payment & Status
   totalPrice         Float
-  paymentStatus      PaymentStatus      @default(PENDING)
-  /** Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist. */
+  paymentStatus      PaymentStatus        @default(PENDING)
+  /**
+   * Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist.
+   */
   paymentMethod      CoursePaymentMethod?
-  registrationStatus RegistrationStatus @default(CONFIRMED)
+  registrationStatus RegistrationStatus   @default(CONFIRMED)
 
   // Sibling Discount
   siblingDiscountApplied Boolean               @default(false)
@@ -888,12 +899,12 @@ model Bezirk {
   shortName String // "Unterer Niederrhein"
 
   // Relations
-  users                         User[]                       @relation("BezirkUsers")
-  events                        Event[] // Events in this district
-  courses                       Course[] // Courses in this district
-  posts                         Post[] // Posts for this district
-  ensembles                     Ensemble[]
-  posaunenwartResponsibilities  PosaunenwartResponsibility[]
+  users                        User[]                       @relation("BezirkUsers")
+  events                       Event[] // Events in this district
+  courses                      Course[] // Courses in this district
+  posts                        Post[] // Posts for this district
+  ensembles                    Ensemble[]
+  posaunenwartResponsibilities PosaunenwartResponsibility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -905,16 +916,16 @@ model Posaunenwart {
   id String @id @default(uuid())
 
   // Optional link to User (like VorstandMember)
-  userId  String?   @unique
-  user    User?     @relation("PosaunenwartUser", fields: [userId], references: [id], onDelete: SetNull)
+  userId String? @unique
+  user   User?   @relation("PosaunenwartUser", fields: [userId], references: [id], onDelete: SetNull)
 
   // Fallback fields when no user linked
-  name    String?
-  email   String?
-  phone   String?
+  name  String?
+  email String?
+  phone String?
 
   roleType  PosaunenwartRoleType
-  sortOrder Int                   @default(0)
+  sortOrder Int                  @default(0)
 
   imageId String? @unique
   image   Media?  @relation("PosaunenwartImage", fields: [imageId], references: [id], onDelete: SetNull)
@@ -1184,8 +1195,8 @@ model Media {
   vorstandMemberImages    VorstandMember[]       @relation("VorstandMemberImage")
   posaunenratMemberImages PosaunenratMember[]    @relation("PosaunenratMemberImage")
   foerdervereinMemberImgs FoerdervereinMember[]  @relation("FoerdervereinMemberImage")
-  posaunenwartImages     Posaunenwart[]         @relation("PosaunenwartImage")
-  historyEventImages     HistoryEvent[]         @relation("HistoryEventImage")
+  posaunenwartImages      Posaunenwart[]         @relation("PosaunenwartImage")
+  historyEventImages      HistoryEvent[]         @relation("HistoryEventImage")
   blaeserheftImages       Blaeserheft[]          @relation("BlaeserheftImage")
   courseImages            Course[]               @relation("CourseImage")
   homepageCarouselItems   HomepageCarouselItem[] @relation("HomepageCarouselMedia")
@@ -1304,4 +1315,36 @@ model Notification {
   @@index([userId, readAt])
   @@index([userId, createdAt])
   @@map("notification")
+}
+
+/// Public library of user-created note sets for the games under /spiele.
+/// A set is a named list of spelled written pitches in one clef; each game
+/// decides itself whether/how it can play the set (e.g. Griffe checks
+/// fingering coverage per instrument).
+model GameNoteSet {
+  id       String @id @default(uuid())
+  /// Short URL-safe code used for deep links (?set=...), e.g. "k3f7x9q2".
+  publicId String @unique
+
+  name        String
+  description String?
+  /// "treble" | "bass" | "alto" | "tenor"
+  clef        String
+  /// Array of written pitches: { letter: "C".."H", alter: -1|0|1, octave: number }
+  pitches     Json
+
+  creatorId String?
+  creator   User?   @relation("GameNoteSetCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  /// Incremented when a set is activated in a game (rough popularity signal).
+  timesUsed Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clef])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([timesUsed])
+  @@map("game_note_set")
 }
