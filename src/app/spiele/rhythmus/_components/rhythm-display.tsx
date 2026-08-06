@@ -18,6 +18,7 @@ import VexFlow, {
 import type { StemmableNote } from "vexflow";
 import { useCallback, useEffect, useRef } from "react";
 import type { RhythmEvent, TimeSignature } from "../_lib/types";
+import type { OnsetVerdict } from "../_lib/scoring";
 import { staveNoteFromRhythmEvent } from "../_lib/vex-stave-note";
 
 let fontsReady: Promise<void> | null = null;
@@ -35,14 +36,37 @@ export interface RhythmDisplayProps {
   bars: number;
   /** Wo Takte wechseln (Index der ersten Note des neuen Takts); für Taktstriche. */
   barStartEventIndices?: number[];
+  /**
+   * Optional (Ergebnis-Phase): Urteil je Event-Index — färbt Notenköpfe
+   * grün/gelb/rot. Pausen bleiben `undefined`; ohne Prop ändert sich nichts.
+   */
+  eventVerdicts?: (OnsetVerdict | undefined)[];
 }
 
 function timeSigString(ts: TimeSignature): string {
   return `${ts.numerator}/${ts.denominator}`;
 }
 
-function styleNote(sn: StaveNote, dark: boolean): void {
-  const stroke = dark ? "#e4e6eb" : "#171717";
+/** Urteil → Notenfarbe (getrennt für Hell/Dunkel wegen Kontrast). */
+function verdictColor(verdict: OnsetVerdict, dark: boolean): string {
+  switch (verdict) {
+    case "good":
+      return dark ? "#34d399" : "#059669";
+    case "ok":
+      return dark ? "#fbbf24" : "#b45309";
+    case "off":
+    case "missed":
+      return dark ? "#f87171" : "#dc2626";
+  }
+}
+
+function styleNote(sn: StaveNote, dark: boolean, verdict?: OnsetVerdict): void {
+  const stroke =
+    verdict !== undefined
+      ? verdictColor(verdict, dark)
+      : dark
+        ? "#e4e6eb"
+        : "#171717";
   /** Pausen: nur Gesamtstil — setKeyStyle(0) trifft oft nur den Kopf, Achtel-/Sechzehntelpausen haben zusätzlich Stem/Flag-Pfade. */
   if (sn.isRest()) {
     sn.setStyle({ fillStyle: stroke, strokeStyle: stroke });
@@ -57,6 +81,7 @@ export function RhythmDisplay({
   timeSignature,
   bars,
   barStartEventIndices = [],
+  eventVerdicts,
 }: RhythmDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
@@ -114,7 +139,7 @@ export function RhythmDisplay({
             while (idx < events.length && events[idx]?.tupletGroupId === gid) {
               const e = events[idx]!;
               const sn = staveNoteFromRhythmEvent(e);
-              styleNote(sn, dark);
+              styleNote(sn, dark, eventVerdicts?.[idx]);
               group.push(sn);
               stemmables.push(sn);
               idx++;
@@ -127,7 +152,7 @@ export function RhythmDisplay({
             );
           } else {
             const sn = staveNoteFromRhythmEvent(ev);
-            styleNote(sn, dark);
+            styleNote(sn, dark, eventVerdicts?.[idx]);
             stemmables.push(sn);
             idx++;
           }
@@ -225,7 +250,7 @@ export function RhythmDisplay({
         Metrics.clear();
       }
     }
-  }, [barStartEventIndices, bars, dark, events, timeSignature]);
+  }, [barStartEventIndices, bars, dark, events, eventVerdicts, timeSignature]);
 
   useEffect(() => {
     void draw();
@@ -234,9 +259,24 @@ export function RhythmDisplay({
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(() => void draw());
+    /** Entprellt + nur bei Breitenänderung — mobile URL-Bar ändert nur die Höhe. */
+    let lastWidth = el.clientWidth;
+    let timer: number | null = null;
+    const ro = new ResizeObserver(() => {
+      const width = el.clientWidth;
+      if (width === lastWidth) return;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        lastWidth = el.clientWidth;
+        void draw();
+      }, 100);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      if (timer !== null) window.clearTimeout(timer);
+      ro.disconnect();
+    };
   }, [draw]);
 
   return (

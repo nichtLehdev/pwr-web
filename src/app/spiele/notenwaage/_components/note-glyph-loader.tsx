@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import dynamic from "next/dynamic";
 import type { NoteValueId } from "../_lib/types";
 
@@ -13,6 +14,10 @@ const NoteGlyphInner = dynamic(
   },
 );
 
-export function NoteGlyph(props: { id: NoteValueId; className?: string }) {
+// memo: gleiche Props → kein erneutes (teures) VexFlow-Rendering.
+export const NoteGlyph = memo(function NoteGlyph(props: {
+  id: NoteValueId;
+  className?: string;
+}) {
   return <NoteGlyphInner {...props} />;
-}
+});

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
@@ -8,16 +8,21 @@ type TapDockPortalProps = {
   children: React.ReactNode;
 };
 
+/** SSR-sicher: auf dem Server useEffect (kein Layout), im Browser useLayoutEffect. */
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 /**
  * Mobile: Dock an document.body (kein Clipping durch overflow-Container / Flex).
- * Vor useEffect: gleiches Markup wie Desktop-Flow → Hydration stabil.
+ * Layout-Entscheidung vor dem ersten Paint (useLayoutEffect), sonst springt
+ * das Dock auf dem Handy sichtbar vom Desktop- ins Mobile-Layout.
  */
 export function TapDockPortal({ children }: TapDockPortalProps) {
   const [layout, setLayout] = useState<"pending" | "mobile" | "desktop">(
     "pending",
   );
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
     const sync = () => setLayout(mq.matches ? "mobile" : "desktop");
     sync();

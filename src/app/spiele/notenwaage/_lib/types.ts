@@ -107,6 +107,8 @@ export const DIFFICULTY_VALUES: Record<DifficultyId, NoteValueId[]> = {
   ],
 };
 
+export const STORAGE_DIFFICULTY_KEY = "pwr-notenwaage-difficulty";
+
 export type Puzzle = {
   targetUnits: number;
   left: NoteValueId[];
