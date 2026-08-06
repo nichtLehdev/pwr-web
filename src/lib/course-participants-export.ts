@@ -3,6 +3,7 @@ import {
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
+import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 
 export const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -38,14 +39,7 @@ export function getCustomFieldValue(
     return "–";
   }
 
-  const value = fields[fieldName];
-  if (value === undefined || value === null || value === "") {
-    return "–";
-  }
-  if (typeof value === "boolean") {
-    return value ? "Ja" : "Nein";
-  }
-  return String(value);
+  return formatCustomFieldValueForDisplay(fields[fieldName]);
 }
 
 type ExportParticipant = {

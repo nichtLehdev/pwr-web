@@ -10,6 +10,7 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { promoteCustomFieldTemplatesForCourses } from "../helpers/custom-field-templates";
 import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
@@ -1142,6 +1143,10 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      if (updated.status === ContentStatus.APPROVED) {
+        await promoteCustomFieldTemplatesForCourses(ctx.db, [updated.id]);
+      }
+
       return updated;
     }),
 
@@ -1237,6 +1242,8 @@ export const coursesRouter = createTRPCRouter({
         approved: true,
         reviewNotes: input.reviewNotes,
       });
+
+      await promoteCustomFieldTemplatesForCourses(ctx.db, [approved.id]);
 
       return approved;
     }),
@@ -1822,6 +1829,10 @@ export const coursesRouter = createTRPCRouter({
         where: { id: { in: canUpdateIds } },
         data: updateData,
       });
+
+      if (input.status === ContentStatus.APPROVED) {
+        await promoteCustomFieldTemplatesForCourses(ctx.db, canUpdateIds);
+      }
 
       return { success: true, updatedCount: canUpdateIds.length };
     }),

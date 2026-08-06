@@ -13,16 +13,25 @@ import {
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { getErrorMessage } from "@/lib/utils";
-import { parseSelectOptionValues } from "@/lib/course-custom-fields";
+import {
+  customFieldTypeNeedsOptions,
+  parseSelectOptionValues,
+} from "@/lib/course-custom-fields";
 import { Select } from "@/app/_components/ui";
 import { CustomFieldType } from "~/generated/prisma/enums";
 
 export const customFieldTypeLabels: Record<CustomFieldType, string> = {
   TEXT: "Text",
-  NUMBER: "Zahl",
-  SELECT: "Auswahl",
-  CHECKBOX: "Checkbox",
   TEXTAREA: "Mehrzeiliger Text",
+  NUMBER: "Zahl",
+  DATE: "Datum",
+  YEAR: "Jahr",
+  TIME: "Uhrzeit",
+  PHONE: "Telefonnummer",
+  EMAIL: "E-Mail-Adresse",
+  SELECT: "Auswahl",
+  MULTISELECT: "Mehrfachauswahl",
+  CHECKBOX: "Checkbox",
 };
 
 export interface CourseCustomFieldDraft {
@@ -78,7 +87,11 @@ export function CourseCustomFieldsEditor({
 
   const createTemplate = api.customFieldTemplates.create.useMutation({
     onSuccess: (template) => {
-      toast.success(`"${template.fieldName}" in der Bibliothek gespeichert`);
+      toast.success(
+        template.isGlobal
+          ? `"${template.fieldName}" in der Bibliothek gespeichert`
+          : `"${template.fieldName}" gespeichert – für andere sichtbar, sobald ein Kurs mit diesem Feld freigegeben ist`,
+      );
       void utils.customFieldTemplates.getAll.invalidate();
     },
     onError: (err) => toast.error(getErrorMessage(err)),
@@ -178,7 +191,7 @@ export function CourseCustomFieldsEditor({
       return;
     }
     if (
-      field.fieldType === CustomFieldType.SELECT &&
+      customFieldTypeNeedsOptions(field.fieldType) &&
       parseSelectOptionValues(field.options).length === 0
     ) {
       toast.error("Bitte zuerst Auswahloptionen eingeben");
@@ -224,8 +237,9 @@ export function CourseCustomFieldsEditor({
                 Feld-Bibliothek
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Von allen geteilte Felder – beim Hinzufügen wird eine Kopie in
-                den Kurs übernommen.
+                Beim Hinzufügen wird eine Kopie in den Kurs übernommen. Eigene
+                Felder sind erst für alle sichtbar, sobald ein Kurs mit dem Feld
+                freigegeben wurde.
               </p>
             </div>
             <button
@@ -264,10 +278,18 @@ export function CourseCustomFieldsEditor({
                         {template.isRequired ? (
                           <span className="text-red-500"> *</span>
                         ) : null}
+                        {!template.isGlobal ? (
+                          <span
+                            className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:bg-gray-700 dark:text-gray-300"
+                            title="Nur für dich sichtbar, bis ein Kurs mit diesem Feld freigegeben wurde"
+                          >
+                            Privat
+                          </span>
+                        ) : null}
                       </p>
                       <p className="truncate text-xs text-gray-500 dark:text-gray-400">
                         {customFieldTypeLabels[template.fieldType]}
-                        {template.fieldType === CustomFieldType.SELECT
+                        {customFieldTypeNeedsOptions(template.fieldType)
                           ? `: ${parseSelectOptionValues(template.options).join(", ")}`
                           : template.helpText
                             ? ` – ${template.helpText}`
@@ -420,7 +442,7 @@ export function CourseCustomFieldsEditor({
                     </Select>
                   </div>
 
-                  {field.fieldType === CustomFieldType.SELECT && (
+                  {customFieldTypeNeedsOptions(field.fieldType) && (
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
                         Auswahloptionen (kommagetrennt)

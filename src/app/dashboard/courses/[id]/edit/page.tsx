@@ -15,9 +15,9 @@ import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseType,
   ContentStatus,
-  CustomFieldType,
   CourseCollaboratorRole,
 } from "~/generated/prisma/enums";
+import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import {
   Lock,
   AlertTriangle,
@@ -943,10 +943,9 @@ export default function EditCoursePage() {
               id: id.startsWith("new-") ? undefined : id,
               fieldName: fieldName.trim(),
               fieldType,
-              options:
-                fieldType === CustomFieldType.SELECT
-                  ? options.trim()
-                  : undefined,
+              options: customFieldTypeNeedsOptions(fieldType)
+                ? options.trim()
+                : undefined,
               isRequired,
               helpText: helpText.trim() || undefined,
               sortOrder,

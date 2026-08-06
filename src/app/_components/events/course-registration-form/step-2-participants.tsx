@@ -11,12 +11,11 @@ import {
   Link2Off,
 } from "lucide-react";
 import type { RouterOutputs } from "@/trpc/react";
-import { Input, Label, Textarea, Select } from "@/app/_components/ui";
 import type { RegistrationData, CourseWithRelations } from "./types";
 import { getParticipantDisplayName, calculateDiscountAmount } from "./utils";
 import { ParticipantLibraryPopup } from "./participant-library-popup";
+import { ParticipantCustomFields } from "./participant-custom-fields";
 import type { User } from "~/generated/prisma/client";
-import { parseSelectOptionValues } from "@/lib/course-custom-fields";
 import { ParticipantPriceOptionField } from "./participant-price-option-field";
 
 interface Step2ParticipantsProps {
@@ -586,191 +585,23 @@ export function Step2Participants({
                     ) : null}
 
                     {/* Custom Fields */}
-                    {course.customFields?.map((field) => {
-                      return (
-                        <div key={field.fieldName} className="md:col-span-2">
-                          <Label
-                            className="mb-1 text-xs sm:text-sm"
-                            required={field.isRequired}
-                          >
-                            {field.fieldName}
-                          </Label>
-                          {field.fieldType === "SELECT" &&
-                          parseSelectOptionValues(field.options).length > 0 ? (
-                            <Select
-                              value={
-                                (participant.customFields &&
-                                typeof participant.customFields === "object" &&
-                                field.fieldName in participant.customFields
-                                  ? String(
-                                      (
-                                        participant.customFields as Record<
-                                          string,
-                                          any
-                                        >
-                                      )[field.fieldName] ?? "",
-                                    )
-                                  : "") || ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              className={`text-sm sm:text-base ${
-                                field.isRequired &&
-                                missingFields[index]?.includes(
-                                  `customField:${field.fieldName}`,
-                                )
-                                  ? "border-red-500 dark:border-red-500"
-                                  : ""
-                              }`}
-                            >
-                              <option value="">Bitte wählen</option>
-                              {parseSelectOptionValues(field.options).map(
-                                (opt: string) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ),
-                              )}
-                            </Select>
-                          ) : field.fieldType === "CHECKBOX" ? (
-                            <label
-                              className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm sm:text-base ${
-                                field.isRequired &&
-                                missingFields[index]?.includes(
-                                  `customField:${field.fieldName}`,
-                                )
-                                  ? "border-red-500 dark:border-red-500"
-                                  : "dark:border-dark-border border-gray-300"
-                              } ${
-                                isInGroup
-                                  ? "bg-green-50 dark:bg-green-900/20"
-                                  : "dark:bg-dark-background bg-white"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="text-primary focus:ring-primary mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300"
-                                checked={(() => {
-                                  const v =
-                                    participant.customFields &&
-                                    typeof participant.customFields ===
-                                      "object" &&
-                                    participant.customFields !== null
-                                      ? (
-                                          participant.customFields as Record<
-                                            string,
-                                            any
-                                          >
-                                        )[field.fieldName]
-                                      : undefined;
-                                  return v === true || v === "true";
-                                })()}
-                                onChange={(e) =>
-                                  updateParticipant(index, "customFields", {
-                                    ...(typeof participant.customFields ===
-                                      "object" &&
-                                    participant.customFields !== null
-                                      ? participant.customFields
-                                      : {}),
-                                    [field.fieldName]: e.target.checked,
-                                  })
-                                }
-                              />
-                              <span className="text-dark dark:text-dark-text leading-snug">
-                                {field.helpText?.trim()
-                                  ? field.helpText
-                                  : "Ja, trifft zu"}
-                              </span>
-                            </label>
-                          ) : field.fieldType === "TEXTAREA" ? (
-                            <Textarea
-                              value={
-                                typeof participant.customFields === "object" &&
-                                participant.customFields !== null &&
-                                field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              rows={3}
-                              className={`text-sm sm:text-base ${
-                                field.isRequired &&
-                                missingFields[index]?.includes(
-                                  `customField:${field.fieldName}`,
-                                )
-                                  ? "border-red-500 dark:border-red-500"
-                                  : ""
-                              }`}
-                              placeholder={field.helpText ? field.helpText : ""}
-                            />
-                          ) : (
-                            <Input
-                              type={
-                                field.fieldType === "NUMBER" ? "number" : "text"
-                              }
-                              value={
-                                typeof participant.customFields === "object" &&
-                                participant.customFields !== null &&
-                                field.fieldName in participant.customFields
-                                  ? (
-                                      participant.customFields as Record<
-                                        string,
-                                        any
-                                      >
-                                    )[field.fieldName]
-                                  : ""
-                              }
-                              onChange={(e) =>
-                                updateParticipant(index, "customFields", {
-                                  ...(typeof participant.customFields ===
-                                    "object" &&
-                                  participant.customFields !== null
-                                    ? participant.customFields
-                                    : {}),
-                                  [field.fieldName]: e.target.value,
-                                })
-                              }
-                              className={`text-sm sm:text-base ${
-                                field.isRequired &&
-                                missingFields[index]?.includes(
-                                  `customField:${field.fieldName}`,
-                                )
-                                  ? "border-red-500 dark:border-red-500"
-                                  : ""
-                              }`}
-                              placeholder={field.helpText ? field.helpText : ""}
-                            />
-                          )}
-                          {field.helpText && (
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              {field.helpText}
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })}
+                    <ParticipantCustomFields
+                      fields={course.customFields ?? []}
+                      customFields={participant.customFields}
+                      onChange={(next) =>
+                        updateParticipant(index, "customFields", next)
+                      }
+                      invalidFieldNames={(missingFields[index] ?? [])
+                        .filter((m) => m.startsWith("customField:"))
+                        .map((m) => m.slice("customField:".length))}
+                      labelClassName="mb-1 text-xs sm:text-sm"
+                      inputClassName="text-sm sm:text-base"
+                      choiceContainerClassName={
+                        isInGroup
+                          ? "bg-green-50 dark:bg-green-900/20"
+                          : "dark:bg-dark-background bg-white"
+                      }
+                    />
                   </div>
 
                   {/* Sibling Grouping */}

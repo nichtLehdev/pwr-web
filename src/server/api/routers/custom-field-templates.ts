@@ -8,7 +8,11 @@ import {
 import { PERMISSIONS } from "@/lib/permissions";
 import { CustomFieldType } from "~/generated/prisma/enums";
 import { Prisma } from "~/generated/prisma/client";
-import { parseSelectOptionValues } from "@/lib/course-custom-fields";
+import {
+  customFieldTypeNeedsOptions,
+  parseSelectOptionValues,
+} from "@/lib/course-custom-fields";
+import { hasApprovedCourseWithField } from "../helpers/custom-field-templates";
 
 const templateInputSchema = z
   .object({
@@ -20,7 +24,7 @@ const templateInputSchema = z
   })
   .refine(
     (data) =>
-      data.fieldType !== CustomFieldType.SELECT ||
+      !customFieldTypeNeedsOptions(data.fieldType) ||
       parseSelectOptionValues(data.options ?? "").length > 0,
     {
       message: "Auswahlfelder benötigen mindestens eine Option",
@@ -29,13 +33,17 @@ const templateInputSchema = z
   );
 
 /**
- * Global library of reusable registration fields. Every dashboard user shares
- * the same library; adding a template to a course copies its values, so
- * template changes never touch existing courses.
+ * Library of reusable registration fields. Templates start private to their
+ * creator and become visible to everyone once a course containing the field is
+ * approved (see promoteCustomFieldTemplatesForCourses). Adding a template to a
+ * course copies its values, so template changes never touch existing courses.
  */
 export const customFieldTemplatesRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     return await ctx.db.courseCustomFieldTemplate.findMany({
+      where: {
+        OR: [{ isGlobal: true }, { createdById: ctx.session.user.id }],
+      },
       orderBy: { fieldName: "asc" },
       include: {
         createdBy: { select: { id: true, displayName: true, username: true } },
@@ -46,8 +54,13 @@ export const customFieldTemplatesRouter = createTRPCRouter({
   create: protectedProcedure
     .input(templateInputSchema)
     .mutation(async ({ ctx, input }) => {
+      // Same-named private templates of other users are fine; only globally
+      // visible entries and the user's own must stay unique.
       const existing = await ctx.db.courseCustomFieldTemplate.findFirst({
-        where: { fieldName: { equals: input.fieldName, mode: "insensitive" } },
+        where: {
+          fieldName: { equals: input.fieldName, mode: "insensitive" },
+          OR: [{ isGlobal: true }, { createdById: ctx.session.user.id }],
+        },
       });
       if (existing) {
         throw new TRPCError({
@@ -56,6 +69,13 @@ export const customFieldTemplatesRouter = createTRPCRouter({
         });
       }
 
+      const isGlobal = await hasApprovedCourseWithField(
+        ctx.db,
+        ctx.session.user.id,
+        input.fieldName,
+        input.fieldType,
+      );
+
       return await ctx.db.courseCustomFieldTemplate.create({
         data: {
           fieldName: input.fieldName,
@@ -63,6 +83,7 @@ export const customFieldTemplatesRouter = createTRPCRouter({
           options: input.options ?? undefined,
           isRequired: input.isRequired,
           helpText: input.helpText?.trim() ? input.helpText.trim() : null,
+          isGlobal,
           createdById: ctx.session.user.id,
         },
       });
@@ -83,6 +104,7 @@ export const customFieldTemplatesRouter = createTRPCRouter({
         where: {
           id: { not: input.id },
           fieldName: { equals: input.fieldName, mode: "insensitive" },
+          OR: [{ isGlobal: true }, { createdById: ctx.session.user.id }],
         },
       });
       if (clash) {

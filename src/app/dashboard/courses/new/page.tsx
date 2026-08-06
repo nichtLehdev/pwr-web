@@ -20,6 +20,7 @@ import {
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
+import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import { useToast } from "@/app/_components/ui/toast";
 import { CourseType } from "~/generated/prisma/enums";
 import { Lock, Trash2, ImageIcon } from "lucide-react";
@@ -513,7 +514,9 @@ export default function NewCoursePage() {
             }) => ({
               fieldName: fieldName.trim(),
               fieldType,
-              options: fieldType === "SELECT" ? options.trim() : undefined,
+              options: customFieldTypeNeedsOptions(fieldType)
+                ? options.trim()
+                : undefined,
               isRequired,
               helpText: helpText.trim() || undefined,
               sortOrder,

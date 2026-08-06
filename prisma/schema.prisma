@@ -298,6 +298,12 @@ enum CustomFieldType {
   SELECT
   CHECKBOX
   TEXTAREA
+  DATE
+  YEAR
+  TIME
+  MULTISELECT
+  PHONE
+  EMAIL
 }
 
 /**
@@ -640,17 +646,20 @@ model CourseCustomField {
   @@index([courseId])
 }
 
-/// Global library of reusable registration field definitions. Shared across all
-/// dashboard users; adding a library field to a course copies it into
-/// CourseCustomField, so later template edits never affect existing courses.
+/// Global library of reusable registration field definitions. Adding a library
+/// field to a course copies it into CourseCustomField, so later template edits
+/// never affect existing courses. Templates start private to their creator and
+/// become visible to everyone (isGlobal) once a course containing the field is
+/// approved.
 model CourseCustomFieldTemplate {
   id String @id @default(uuid())
 
-  fieldName  String          @unique
+  fieldName  String
   fieldType  CustomFieldType
   options    Json? // JSON for select options (same shape as CourseCustomField)
   isRequired Boolean         @default(false)
   helpText   String?
+  isGlobal   Boolean         @default(false)
 
   createdById String?
   createdBy   User?   @relation("CustomFieldTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
@@ -659,6 +668,7 @@ model CourseCustomFieldTemplate {
   updatedAt DateTime @updatedAt
 
   @@index([createdById])
+  @@index([fieldName])
   @@map("course_custom_field_template")
 }
 
