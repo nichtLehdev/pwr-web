@@ -2,12 +2,12 @@ import type {
   ClefKind,
   GermanLetter,
   WrittenPitch,
-} from "../noten-lesen/_lib/types";
-import { pitchKey } from "../noten-lesen/_lib/ranges";
+} from "../(spiel)/noten-lesen/_lib/types";
+import { pitchKey } from "../(spiel)/noten-lesen/_lib/ranges";
 import {
   answerLabelForPitch,
   writtenPitchToMidi,
-} from "../noten-lesen/_lib/pitch";
+} from "../(spiel)/noten-lesen/_lib/pitch";
 
 /**
  * Gemeinsames Client-Modell für Notensets aus der öffentlichen Bibliothek.

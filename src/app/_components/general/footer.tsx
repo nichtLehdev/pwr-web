@@ -24,6 +24,7 @@ export default function Footer() {
       { label: "Aktuelles", href: "/aktuelles" },
       { label: "Materialien", href: "/materialien" },
       { label: "Rheinisches Blechblatt", href: "/materialien/blechblatt" },
+      { label: "Spiele & Übungen", href: "/spiele" },
     ],
     legal: [
       { label: "Impressum", href: "/impressum" },
@@ -33,7 +34,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-dark dark:bg-dark-background-secondary text-white">
+    <footer className="bg-dark dark:bg-dark-background-secondary pb-[env(safe-area-inset-bottom,0px)] text-white">
       {/* Main Footer Content */}
       <div className="container py-12 md:py-16">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:gap-12 lg:grid-cols-4">

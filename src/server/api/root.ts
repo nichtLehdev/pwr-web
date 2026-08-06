@@ -21,6 +21,7 @@ import { auditRouter } from "./routers/audit";
 import { notificationsRouter } from "./routers/notifications";
 import { contactRouter } from "./routers/contact";
 import { noteSetsRouter } from "./routers/note-sets";
+import { gamesRouter } from "./routers/games";
 
 /**
  * This is the primary router for your server.
@@ -50,6 +51,7 @@ export const appRouter = createTRPCRouter({
   notifications: notificationsRouter,
   contact: contactRouter,
   noteSets: noteSetsRouter,
+  games: gamesRouter,
 });
 
 export type AppRouter = typeof appRouter;
