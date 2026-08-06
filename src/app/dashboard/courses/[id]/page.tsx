@@ -13,10 +13,11 @@ import {
   ContentStatus,
   CourseCollaboratorRole,
   CourseType,
-  CustomFieldType,
   RegistrationStatus,
   PaymentStatus,
 } from "~/generated/prisma/enums";
+import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
+import { customFieldTypeLabels } from "@/app/_components/dashboard";
 import {
   ArrowRightIcon,
   Edit,
@@ -82,14 +83,6 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
   PENDING: "Ausstehend",
   PAID: "Bezahlt",
   REFUNDED: "Erstattet",
-};
-
-const customFieldTypeLabels: Record<CustomFieldType, string> = {
-  TEXT: "Text",
-  NUMBER: "Zahl",
-  SELECT: "Auswahl",
-  CHECKBOX: "Checkbox",
-  TEXTAREA: "Mehrzeiliger Text",
 };
 
 // Dashboard access is now controlled by permissions
@@ -817,7 +810,7 @@ export default function CourseDetailPage() {
                             {customFieldTypeLabels[field.fieldType]}
                           </span>
                         </div>
-                        {field.fieldType === CustomFieldType.SELECT &&
+                        {customFieldTypeNeedsOptions(field.fieldType) &&
                           field.options && (
                             <div className="mt-2 flex flex-wrap gap-1">
                               <span className="text-xs text-gray-500 dark:text-gray-400">
