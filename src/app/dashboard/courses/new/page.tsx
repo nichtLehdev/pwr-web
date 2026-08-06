@@ -15,19 +15,14 @@ import {
   DashboardFormMediaSplit,
   DashboardFormZoneHeader,
   DashboardFormBlock,
+  CourseCustomFieldsEditor,
+  type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import { CourseType, CustomFieldType } from "~/generated/prisma/enums";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  Lock,
-  Trash2,
-  TrashIcon,
-  ImageIcon,
-} from "lucide-react";
+import { CourseType } from "~/generated/prisma/enums";
+import { Lock, Trash2, ImageIcon } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
@@ -46,14 +41,6 @@ const courseTypeLabels: Record<CourseType, string> = {
   OTHER: "Sonstiges",
 };
 
-const customFieldTypeLabels: Record<CustomFieldType, string> = {
-  TEXT: "Text",
-  NUMBER: "Zahl",
-  SELECT: "Auswahl",
-  CHECKBOX: "Checkbox",
-  TEXTAREA: "Mehrzeiliger Text",
-};
-
 const NEW_COURSE_NAV_ITEMS: DashboardSectionNavItem[] = [
   { href: "#kurs-form-inhalt", label: "Inhalt" },
   { href: "#kurs-form-termin", label: "Termin & Ort" },
@@ -70,16 +57,6 @@ interface PriceOption {
   label: string;
   description: string;
   maxParticipants?: number;
-}
-
-interface CustomField {
-  id: string;
-  fieldName: string;
-  fieldType: CustomFieldType;
-  options: string;
-  isRequired: boolean;
-  helpText: string;
-  sortOrder: number;
 }
 
 export default function NewCoursePage() {
@@ -153,7 +130,9 @@ export default function NewCoursePage() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
 
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [customFields, setCustomFields] = useState<CourseCustomFieldDraft[]>(
+    [],
+  );
 
   const [submitAsDraft, setSubmitAsDraft] = useState(false);
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
@@ -392,54 +371,6 @@ export default function NewCoursePage() {
 
   const removePriceOption = (id: string) => {
     setPriceOptions(priceOptions.filter((opt) => opt.id !== id));
-  };
-
-  const addCustomField = () => {
-    setCustomFields([
-      ...customFields,
-      {
-        id: `new-${Date.now()}`,
-        fieldName: "",
-        fieldType: "TEXT",
-        options: "",
-        isRequired: false,
-        helpText: "",
-        sortOrder: customFields.length,
-      },
-    ]);
-  };
-
-  const updateCustomField = (
-    id: string,
-    field: keyof CustomField,
-    value: string | boolean | number | CustomFieldType,
-  ) => {
-    setCustomFields(
-      customFields.map((cf) => (cf.id === id ? { ...cf, [field]: value } : cf)),
-    );
-  };
-
-  const removeCustomField = (id: string) => {
-    setCustomFields(customFields.filter((cf) => cf.id !== id));
-  };
-
-  const moveCustomField = (id: string, direction: "up" | "down") => {
-    const index = customFields.findIndex((cf) => cf.id === id);
-    if (
-      (direction === "up" && index === 0) ||
-      (direction === "down" && index === customFields.length - 1)
-    ) {
-      return;
-    }
-
-    const newFields = [...customFields];
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    [newFields[index], newFields[newIndex]] = [
-      newFields[newIndex]!,
-      newFields[index]!,
-    ];
-
-    setCustomFields(newFields.map((cf, i) => ({ ...cf, sortOrder: i })));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1511,168 +1442,10 @@ export default function NewCoursePage() {
                   title="Zusätzliche Anmeldefelder"
                   description="Felder, die direkt beim Ausfüllen der Anmeldung abgefragt werden."
                 >
-                  <div className="-mt-2 mb-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={addCustomField}
-                      className="text-primary hover:text-primary/80 text-sm font-medium"
-                    >
-                      + Feld hinzufügen
-                    </button>
-                  </div>
-
-                  {customFields.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Keine zusätzlichen Felder definiert.
-                    </p>
-                  ) : (
-                    <div className="space-y-4">
-                      {customFields.map((field, index) => (
-                        <div
-                          key={field.id}
-                          className="dark:border-dark-border rounded-lg border border-gray-200 p-4"
-                        >
-                          <div className="mb-3 flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                              Feld {index + 1}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => moveCustomField(field.id, "up")}
-                                disabled={index === 0}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                              >
-                                <ArrowUpIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  moveCustomField(field.id, "down")
-                                }
-                                disabled={index === customFields.length - 1}
-                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
-                              >
-                                <ArrowDownIcon className="h-4 w-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeCustomField(field.id)}
-                                className="p-1 text-gray-400 hover:text-red-500"
-                              >
-                                <TrashIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Feldname *
-                              </label>
-                              <input
-                                type="text"
-                                value={field.fieldName}
-                                onChange={(e) =>
-                                  updateCustomField(
-                                    field.id,
-                                    "fieldName",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="z.B. Ernährungsbesonderheiten"
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                              />
-                            </div>
-                            <div>
-                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Feldtyp
-                              </label>
-                              <Select
-                                value={field.fieldType}
-                                onChange={(e) =>
-                                  updateCustomField(
-                                    field.id,
-                                    "fieldType",
-                                    e.target.value as CustomFieldType,
-                                  )
-                                }
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                              >
-                                {Object.entries(customFieldTypeLabels).map(
-                                  ([value, label]) => (
-                                    <option key={value} value={value}>
-                                      {label}
-                                    </option>
-                                  ),
-                                )}
-                              </Select>
-                            </div>
-
-                            {field.fieldType === "SELECT" && (
-                              <div className="sm:col-span-2">
-                                <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                  Auswahloptionen (kommagetrennt)
-                                </label>
-                                <input
-                                  type="text"
-                                  value={field.options}
-                                  onChange={(e) =>
-                                    updateCustomField(
-                                      field.id,
-                                      "options",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="z.B. Option 1, Option 2, Option 3"
-                                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                                />
-                              </div>
-                            )}
-
-                            <div className="sm:col-span-2">
-                              <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
-                                Hilfetext
-                              </label>
-                              <input
-                                type="text"
-                                value={field.helpText}
-                                onChange={(e) =>
-                                  updateCustomField(
-                                    field.id,
-                                    "helpText",
-                                    e.target.value,
-                                  )
-                                }
-                                placeholder="z.B. Bitte gib eventuelle Allergien an"
-                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="flex cursor-pointer items-center gap-2">
-                                <input
-                                  type="checkbox"
-                                  checked={field.isRequired}
-                                  onChange={(e) =>
-                                    updateCustomField(
-                                      field.id,
-                                      "isRequired",
-                                      e.target.checked,
-                                    )
-                                  }
-                                  className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                                />
-                                <span className="dark:text-dark-text text-sm text-gray-700">
-                                  Pflichtfeld
-                                </span>
-                              </label>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <CourseCustomFieldsEditor
+                    fields={customFields}
+                    onChange={setCustomFields}
+                  />
                 </DashboardFormBlock>
               ) : null}
             </div>
