@@ -169,4 +169,8 @@ export const GAME_MODE_LABELS: Record<
   },
 };
 
+/** Alter Key (nur noch Migrationsquelle) — Instrument als roher String. */
 export const STORAGE_INSTRUMENT_KEY = "pwr-noten-lesen-instrument";
+
+/** Neuer Key: ein JSON-Blob mit Instrument, Schwierigkeit und Modus. */
+export const STORAGE_SETTINGS_KEY = "pwr-noten-lesen-settings";

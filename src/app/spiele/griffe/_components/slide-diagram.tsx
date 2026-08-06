@@ -1,15 +1,26 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { formatSlideLabel } from "../_lib/fingering-lookup";
 import type { DiagramFlash } from "./diagram-flash";
 import { diagramShellClass } from "./diagram-flash";
+
+/** Auflösung nach falscher Antwort: richtig UND Spieler-Eingabe zeigen. */
+export type SlideReveal = {
+  /** Korrektes Token (z. B. `2+`, `*1`) — grün markiert. */
+  correct: string;
+  /** Spieler-Token — rot markiert („“ bei Timeout). */
+  player: string;
+};
 
 export type SlideDiagramProps = {
   position: number | null;
   register: "high" | "neutral" | "low";
   quart: boolean;
-  /** Auflösung: korrekte Kombination hervorheben (Token wie `2+`, `2-`, `*1`). */
-  forcedToken?: string | null;
+  /** Auflösung: richtige Position grün, Spieler-Position rot. */
+  reveal?: SlideReveal | null;
+  /** Quartventil-Umschalter anzeigen (nur Fortgeschritten sinnvoll). */
+  showQuart?: boolean;
   onChange: (next: {
     position: number;
     register: "high" | "neutral" | "low";
@@ -23,7 +34,7 @@ export type SlideDiagramProps = {
 const POSITIONS = [1, 2, 3, 4, 5, 6, 7] as const;
 
 function parseToken(token: string | null): {
-  position: string | null;
+  position: number | null;
   register: "high" | "neutral" | "low";
   quart: boolean;
 } {
@@ -35,7 +46,7 @@ function parseToken(token: string | null): {
   const rest = quart ? t.slice(1) : t;
   const m = rest.match(/^([1-7])([+-])?$/);
   if (!m) return { position: null, register: "neutral", quart: false };
-  const position = m[1] ?? null;
+  const position = m[1] ? Number(m[1]) : null;
   const sign = m[2];
   let register: "high" | "neutral" | "low" = "neutral";
   if (sign === "+") register = "high";
@@ -59,20 +70,28 @@ export function SlideDiagram({
   position,
   register,
   quart,
-  forcedToken = null,
+  reveal = null,
+  showQuart = true,
   onChange,
   disabled = false,
   flash = "none",
   className,
 }: SlideDiagramProps) {
-  const forced = forcedToken ? parseToken(forcedToken) : null;
-  const forcedPos = forced?.position ? Number(forced.position) : null;
-  const forcedReg = forced?.register ?? null;
-  const forcedQuart = forced?.quart ?? null;
+  const revealing = reveal != null;
+  const correctParsed = revealing ? parseToken(reveal.correct) : null;
+  const playerParsed = revealing ? parseToken(reveal.player) : null;
+  const correctPos = correctParsed?.position ?? null;
+  const playerPos = playerParsed?.position ?? null;
 
-  const effectivePos = forcedPos ?? position;
-  const effectiveReg = forcedReg ?? register;
-  const effectiveQuart = forcedQuart ?? quart;
+  const locked = disabled || revealing;
+
+  const registerButtonClass = (active: boolean) =>
+    cn(
+      "min-h-[44px] rounded-sm border px-3 py-2 text-sm font-bold transition",
+      active
+        ? "border-primary bg-primary text-white"
+        : "border-dark-border text-dark dark:text-dark-text",
+    );
 
   return (
     <div
@@ -90,64 +109,50 @@ export function SlideDiagram({
         <div className="mb-3 flex flex-wrap items-center justify-center gap-2">
           <button
             type="button"
-            disabled={disabled || forcedToken != null}
+            disabled={locked}
+            aria-pressed={register === "high"}
             onClick={() => {
-              if (effectivePos == null) return;
+              if (position == null) return;
               onChange({
-                position: effectivePos,
-                register: effectiveReg === "high" ? "neutral" : "high",
-                quart: effectiveQuart,
+                position,
+                register: register === "high" ? "neutral" : "high",
+                quart,
               });
             }}
-            className={cn(
-              "rounded-sm border px-3 py-2 text-sm font-bold transition",
-              effectiveReg === "high"
-                ? "border-primary bg-primary text-white"
-                : "border-dark-border text-dark dark:text-dark-text",
-            )}
+            className={registerButtonClass(register === "high")}
           >
             Hoch
           </button>
           <button
             type="button"
-            disabled={disabled || forcedToken != null}
+            disabled={locked}
+            aria-pressed={register === "low"}
             onClick={() => {
-              if (effectivePos == null) return;
+              if (position == null) return;
               onChange({
-                position: effectivePos,
-                register: effectiveReg === "low" ? "neutral" : "low",
-                quart: effectiveQuart,
+                position,
+                register: register === "low" ? "neutral" : "low",
+                quart,
               });
             }}
-            className={cn(
-              "rounded-sm border px-3 py-2 text-sm font-bold transition",
-              effectiveReg === "low"
-                ? "border-primary bg-primary text-white"
-                : "border-dark-border text-dark dark:text-dark-text",
-            )}
+            className={registerButtonClass(register === "low")}
           >
             Tief
           </button>
-          <button
-            type="button"
-            disabled={disabled || forcedToken != null}
-            onClick={() => {
-              if (effectivePos == null) return;
-              onChange({
-                position: effectivePos,
-                register: effectiveReg,
-                quart: !effectiveQuart,
-              });
-            }}
-            className={cn(
-              "rounded-sm border px-3 py-2 text-sm font-bold transition",
-              effectiveQuart
-                ? "border-primary bg-primary text-white"
-                : "border-dark-border text-dark dark:text-dark-text",
-            )}
-          >
-            Quartventil
-          </button>
+          {showQuart && (
+            <button
+              type="button"
+              disabled={locked}
+              aria-pressed={quart}
+              onClick={() => {
+                if (position == null) return;
+                onChange({ position, register, quart: !quart });
+              }}
+              className={registerButtonClass(quart)}
+            >
+              Quartventil
+            </button>
+          )}
         </div>
 
         <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 rounded-sm border bg-white/60 px-4 py-4">
@@ -156,7 +161,7 @@ export function SlideDiagram({
               Zugposition
             </span>
             <span className="text-dark dark:text-dark-text text-sm font-black tabular-nums">
-              {effectivePos ?? "—"}
+              {position ?? "—"}
             </span>
           </div>
 
@@ -165,38 +170,64 @@ export function SlideDiagram({
             min={1}
             max={7}
             step={1}
-            value={effectivePos ?? 1}
-            disabled={disabled || forcedToken != null}
+            value={position ?? 1}
+            disabled={locked}
             onChange={(e) => {
               const next = Number(e.target.value);
-              onChange({
-                position: next,
-                register: effectiveReg,
-                quart: effectiveQuart,
-              });
+              onChange({ position: next, register, quart });
             }}
             className={cn(
               "mt-3 w-full",
               "accent-primary",
               "h-2 cursor-pointer",
-              (disabled || forcedToken != null) && "opacity-70",
+              locked && "opacity-70",
             )}
             aria-label="Zugposition 1 bis 7"
           />
 
-          <div className="mt-2 flex justify-between px-1">
-            {POSITIONS.map((p) => (
-              <span
-                key={p}
-                className={cn(
-                  "text-dark dark:text-dark-text-muted text-xs font-bold tabular-nums",
-                  effectivePos === p && "text-primary dark:text-primary-light",
-                )}
-              >
-                {p}
-              </span>
-            ))}
+          <div className="mt-2 flex justify-between gap-1">
+            {POSITIONS.map((pos) => {
+              const isCurrent = position === pos;
+              const isRevealCorrect = revealing && correctPos === pos;
+              const isRevealPlayerWrong =
+                revealing && playerPos === pos && correctPos !== pos;
+              return (
+                <button
+                  key={pos}
+                  type="button"
+                  disabled={locked}
+                  aria-pressed={isCurrent}
+                  aria-label={`Zugposition ${pos}`}
+                  onClick={() => onChange({ position: pos, register, quart })}
+                  className={cn(
+                    "min-h-[44px] flex-1 rounded-sm border text-sm font-bold tabular-nums transition",
+                    isRevealCorrect
+                      ? "border-emerald-600 bg-emerald-500 text-white dark:border-emerald-400"
+                      : isRevealPlayerWrong
+                        ? "border-rose-500 bg-transparent text-rose-600 dark:border-rose-400 dark:text-rose-300"
+                        : isCurrent
+                          ? "border-primary bg-primary text-white"
+                          : "text-dark hover:border-primary/40 dark:text-dark-text-muted border-transparent",
+                  )}
+                >
+                  {pos}
+                </button>
+              );
+            })}
           </div>
+
+          {revealing && (
+            <p className="text-dark dark:text-dark-text-muted mt-3 text-center text-xs font-bold">
+              <span className="text-emerald-700 dark:text-emerald-300">
+                Richtig: {formatSlideLabel(reveal.correct)}
+              </span>
+              {" · "}
+              <span className="text-rose-600 dark:text-rose-300">
+                Deine Antwort:{" "}
+                {reveal.player ? formatSlideLabel(reveal.player) : "—"}
+              </span>
+            </p>
+          )}
         </div>
       </div>
     </div>

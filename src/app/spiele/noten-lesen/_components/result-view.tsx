@@ -8,10 +8,18 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+export type MissedNote = {
+  label: string;
+  /** Deutsche Positionsbeschreibung (Linie/Zwischenraum/Hilfslinie). */
+  description: string;
+};
+
 export type NoteReadingResult = {
   correct: number;
   total: number;
   bestStreakRound: number;
+  /** Im Quiz verpasste Noten (dedupliziert), zum Nachschauen. */
+  missed?: MissedNote[];
 };
 
 function cheer(percent: number): string {
@@ -60,6 +68,27 @@ export function NoteReadingResultView({
           {result.bestStreakRound}
         </p>
       </div>
+
+      {result.missed && result.missed.length > 0 && (
+        <div className="border-dark-border/50 dark:border-dark-border dark:bg-dark-surface/50 mx-auto w-full max-w-xl rounded-sm border bg-white/60 p-4 text-left">
+          <p className="text-dark dark:text-dark-text text-sm font-black">
+            Diese Noten nochmal anschauen:
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {result.missed.map((m) => (
+              <li
+                key={`${m.label}|${m.description}`}
+                className="text-dark dark:text-dark-text-secondary text-sm leading-snug"
+              >
+                <span className="text-dark dark:text-dark-text font-black">
+                  {m.label}
+                </span>{" "}
+                — {m.description}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
         <button
