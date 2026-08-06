@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dices,
   Music,
@@ -16,18 +16,28 @@ import {
   generateRhythm,
   totalRhythmDurationMs,
 } from "../_lib/rhythm-generator";
+import {
+  pulseInfoForTimeSignature,
+  pulseMsForTimeSignature,
+} from "../_lib/rhythm-arithmetic";
+import { describeRhythmGerman } from "../_lib/rhythm-describe";
 import type { GeneratedRhythm } from "../_lib/types";
 import {
   hapticsCountdownBeat,
   hapticsMetronomeBeat,
   hapticsPlayingStart,
 } from "../_lib/haptics";
-import { scoreTaps, type ScoreResult } from "../_lib/scoring";
+import {
+  scoreTaps,
+  type OnsetVerdict,
+  type ScoreResult,
+} from "../_lib/scoring";
 import { useMetronomeEngine } from "./use-metronome-engine";
 import { RhythmDisplayLoader } from "./rhythm-display-loader";
 import { TapDockPortal } from "./tap-dock-portal";
 import { TapButton } from "./tap-button";
 import { ResultView } from "./result-view";
+import { BeatPulse, type BeatPulseTiming } from "./beat-pulse";
 
 type GamePhase = "idle" | "preview" | "countdown" | "playing" | "result";
 
@@ -58,7 +68,7 @@ const DIFFICULTY_CARDS: {
   {
     id: "beginner",
     title: "Leicht",
-    hint: "Viertel im 4/4 — super zum Reinkommen",
+    hint: "Viertel, Halbe & Ganze im 4/4 — super zum Reinkommen",
     icon: Sparkles,
   },
   {
@@ -81,14 +91,21 @@ export function RhythmGame() {
   const [difficulty, setDifficulty] = useState<Difficulty>("beginner");
   const [bpm, setBpm] = useState(96);
   const [rhythm, setRhythm] = useState<GeneratedRhythm | null>(null);
-  const [countLabel, setCountLabel] = useState(0);
+  /** −1 = noch keine Ziffer; „1“ erscheint erst synchron zum ersten Klick. */
+  const [countLabel, setCountLabel] = useState(-1);
   /** Länge des Einzählers (1…N) für Anzeige & Overlay. */
   const [countInBeats, setCountInBeats] = useState(4);
   /** Nach Einplanen des Einzählers: Tippfläche aktiv; Rhythmus-Nullpunkt wird zur ersten Audio-Sync-Runde verfeinert. */
   const [tapAllowed, setTapAllowed] = useState(false);
   const [score, setScore] = useState<ScoreResult | null>(null);
+  /** Schon einmal angehört? Steuert „Anhören“ vs. „Nochmal anhören“. */
+  const [previewHeard, setPreviewHeard] = useState(false);
+  /** Kurzer Hinweis nach Unterbrechung (Tab in den Hintergrund o. Ä.). */
+  const [interruptNotice, setInterruptNotice] = useState<string | null>(null);
 
   const tapsRef = useRef<number[]>([]);
+  /** Timing für die Puls-Anzeige — per Ref, damit das Spielen re-renderfrei bleibt. */
+  const beatTimingRef = useRef<BeatPulseTiming | null>(null);
   const timersRef = useRef<number[]>([]);
   const difficultyRef = useRef(difficulty);
   /** Einmaliges Setzen von playingStartMs beim Öffnen der Tippphase. */
@@ -99,10 +116,15 @@ export function RhythmGame() {
   const losWaitRafRef = useRef<number | null>(null);
   const playingStartMsRef = useRef(0);
   const rhythmRef = useRef<GeneratedRhythm | null>(null);
+  const phaseRef = useRef<GamePhase>(phase);
   const bpmRef = useRef(bpm);
   useEffect(() => {
     bpmRef.current = bpm;
   }, [bpm]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   useEffect(() => {
     difficultyRef.current = difficulty;
@@ -147,6 +169,9 @@ export function RhythmGame() {
     setPhase("preview");
     setScore(null);
     setTapAllowed(false);
+    setPreviewHeard(false);
+    setInterruptNotice(null);
+    beatTimingRef.current = null;
     tapsRef.current = [];
   }, [difficulty]);
 
@@ -157,9 +182,26 @@ export function RhythmGame() {
   const playPreview = useCallback(async () => {
     const r = rhythmRef.current;
     if (!r) return;
+    setPreviewHeard(true);
+    setInterruptNotice(null);
     const ctx = await engine.ensureAudio();
     engine.cancelScheduled();
     const start = ctx.currentTime + 0.12;
+
+    // Leiser Metronom-Klick unter der Vorschau: so hört man die Dauern gegen den Puls.
+    const totalMs = totalRhythmDurationMs(r.events);
+    const pulseMs = pulseMsForTimeSignature(r.timeSignature, bpmRef.current);
+    const { beatsPerBar } = pulseInfoForTimeSignature(r.timeSignature);
+    let k = 0;
+    while (k * pulseMs < totalMs) {
+      engine.scheduleClick(
+        start + (k * pulseMs) / 1000,
+        false,
+        k % beatsPerBar === 0 ? 0.2 : 0.13,
+      );
+      k++;
+    }
+
     engine.schedulePreview(r.events, start, 0);
   }, [engine]);
 
@@ -175,23 +217,28 @@ export function RhythmGame() {
     );
     setCountInBeats(countIn);
     setTapAllowed(false);
+    setInterruptNotice(null);
     tapGateOpenedRef.current = false;
     countInLabelsActiveRef.current = true;
     setPhase("countdown");
-    setCountLabel(0);
+    setCountLabel(-1);
+    /** Auch ein Retry desselben Rhythmus startet mit leerer Tipp-Liste. */
+    tapsRef.current = [];
 
     const ctx = await engine.ensureAudio();
     engine.cancelScheduled();
 
-    const beatMs = 60000 / bpmRef.current;
+    /** Puls statt stur Viertel: bei x/8 ist der Schlag die punktierte Viertel. */
+    const beatMs = pulseMsForTimeSignature(r.timeSignature, bpmRef.current);
     const beatSec = beatMs / 1000;
+    const { beatsPerBar } = pulseInfoForTimeSignature(r.timeSignature);
 
     // Ein Anker: ctx-Zeit und performance.now() in einem Rutsch — sonst liegen
     // setTimeout (ab Registrierung) und scheduleClick (Audio) auseinander.
     const ctxAtAnchor = ctx.currentTime;
     const wallAnchor = performance.now();
     const firstClickCtx = ctxAtAnchor + 0.12;
-    /** Erster Rhythmus-Schlag (t=0): eine Viertel nach dem letzten Einzählschlag. */
+    /** Erster Rhythmus-Schlag (t=0): ein Puls-Schlag nach dem letzten Einzählschlag. */
     const rhythmStartCtx = firstClickCtx + countIn * beatSec;
     /** Tippfläche ab erstem Einzählschlag (nicht erst bei t=0 der Figur). */
     const tapEnabledCtx = firstClickCtx;
@@ -230,6 +277,15 @@ export function RhythmGame() {
 
     const totalMs = totalRhythmDurationMs(r.events);
 
+    /** Puls-Anzeige: läuft ab erstem Einzählschlag bis zum Figurende. */
+    const pulseStartMs = wallAnchor + msToFirstClick + heardLatencyMs;
+    beatTimingRef.current = {
+      startMs: pulseStartMs,
+      beatMs,
+      beatsPerBar,
+      endMs: pulseStartMs + countIn * beatMs + totalMs,
+    };
+
     const scheduleMetronomeHaptics = (
       playingStartWallMs: number,
       metronomeLeadMs: number,
@@ -266,7 +322,7 @@ export function RhythmGame() {
           countInLabelsActiveRef.current = false;
           hapticsPlayingStart();
           setPhase("playing");
-          scheduleMetronomeHaptics(playingStartMsRef.current, 20);
+          scheduleMetronomeHaptics(playingStartMsRef.current, 0);
           const endTid = window.setTimeout(() => {
             const currentRhythm = rhythmRef.current;
             if (!currentRhythm) return;
@@ -313,16 +369,17 @@ export function RhythmGame() {
       hapticsPlayingStart();
       setPhase("playing");
 
-      const metronomeAnchorCtx = rhythmStartCtx + 0.02;
-      scheduleMetronomeHaptics(
-        playingStartMsRef.current,
-        (metronomeAnchorCtx - rhythmStartCtx) * 1000,
-      );
+      /** Klicks exakt auf dem Scoring-Raster (t=0 + k·Puls) — kein +20-ms-Versatz. */
+      scheduleMetronomeHaptics(playingStartMsRef.current, 0);
 
       let k = 0;
       // Nur Schläge innerhalb der Rhythmusdauer — kein Extra-Klick nach Takt-/Figurenende.
       while (k * beatMs < totalMs) {
-        engine.scheduleClick(metronomeAnchorCtx + k * beatSec, false);
+        // Taktanfänge (Schlag 1) akzentuieren — Orientierung wie beim Einzählen.
+        engine.scheduleClick(
+          rhythmStartCtx + k * beatSec,
+          k % beatsPerBar === 0,
+        );
         k++;
       }
 
@@ -349,17 +406,71 @@ export function RhythmGame() {
 
   const handleRetry = useCallback(() => {
     clearTimers();
+    beatTimingRef.current = null;
     setScore(null);
     setTapAllowed(false);
     setPhase("idle");
     setRhythm(null);
   }, [clearTimers]);
 
+  /** Gleicher Rhythmus nochmal: zurück zur Vorschau, Tipp-Liste wird im Countdown geleert. */
+  const handleRepeat = useCallback(() => {
+    clearTimers();
+    engine.cancelScheduled();
+    beatTimingRef.current = null;
+    setScore(null);
+    setTapAllowed(false);
+    setPhase("preview");
+  }, [clearTimers, engine]);
+
   const handleNext = useCallback(() => {
     clearTimers();
     setTapAllowed(false);
     startNewRhythm();
   }, [clearTimers, startNewRhythm]);
+
+  /** Tab/App in den Hintergrund während Einzählen/Spielen: sauber abbrechen. */
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "hidden") return;
+      const p = phaseRef.current;
+      if (p !== "countdown" && p !== "playing") return;
+      clearTimers();
+      engine.cancelScheduled();
+      countInLabelsActiveRef.current = false;
+      tapsRef.current = [];
+      beatTimingRef.current = null;
+      setTapAllowed(false);
+      setScore(null);
+      setInterruptNotice("Unterbrochen — starte den Versuch neu.");
+      setPhase("preview");
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [clearTimers, engine]);
+
+  /** Screenreader-Text zur Figur (das Notenbild selbst ist aria-hidden). */
+  const rhythmDescription = useMemo(
+    () => (rhythm ? describeRhythmGerman(rhythm) : null),
+    [rhythm],
+  );
+
+  /** Urteil je Event-Index (Pausen: undefined) für farbige Notenköpfe im Ergebnis. */
+  const eventVerdicts = useMemo(() => {
+    if (!rhythm || !score) return undefined;
+    const verdicts: (OnsetVerdict | undefined)[] = [];
+    let onsetIdx = 0;
+    for (const e of rhythm.events) {
+      if (e.isRest) {
+        verdicts.push(undefined);
+      } else {
+        verdicts.push(score.onsetVerdicts[onsetIdx]);
+        onsetIdx++;
+      }
+    }
+    return verdicts;
+  }, [rhythm, score]);
 
   const step = gameStepIndex(phase);
   const stepLabels = ["Setup", "Anhören", "Mitspielen", "Ergebnis"];
@@ -512,9 +623,19 @@ export function RhythmGame() {
           >
             <div className="text-center">
               {phase === "preview" && (
-                <p className="text-dark dark:text-dark-text font-bold md:text-lg">
-                  Zuerst anhören — oder gleich mitspielen
-                </p>
+                <>
+                  <p className="text-dark dark:text-dark-text font-bold md:text-lg">
+                    Zuerst anhören — oder gleich mitspielen
+                  </p>
+                  {interruptNotice && (
+                    <p
+                      className="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-300"
+                      role="status"
+                    >
+                      {interruptNotice}
+                    </p>
+                  )}
+                </>
               )}
               {phase === "countdown" && (
                 <p className="text-dark dark:text-dark-text font-bold md:text-lg">
@@ -526,6 +647,9 @@ export function RhythmGame() {
                   Jetzt im Takt bleiben!
                 </p>
               )}
+              {(phase === "countdown" || phase === "playing") && (
+                <BeatPulse timingRef={beatTimingRef} />
+              )}
             </div>
 
             <div className="relative shrink-0">
@@ -535,23 +659,37 @@ export function RhythmGame() {
                 bars={rhythm.bars}
                 barStartEventIndices={rhythm.barStartEventIndices}
               />
+              {rhythmDescription && (
+                <p className="sr-only">{rhythmDescription}</p>
+              )}
               {phase === "countdown" && (
                 <div
                   className={cn(
+                    /* Leichtes Overlay ohne Blur: Noten bleiben zum Vorauslesen sichtbar. */
                     "pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-sm",
                     countInBeats > 1 && countLabel < countInBeats - 1
-                      ? "bg-background/75 dark:bg-dark-background/80 backdrop-blur-[1px]"
+                      ? "bg-background/40 dark:bg-dark-background/40"
                       : "bg-transparent",
                   )}
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  <p
-                    key={countLabel}
-                    className="rhythm-count-pop text-primary text-6xl font-black tabular-nums md:text-8xl"
-                  >
-                    {countLabel + 1}
-                  </p>
+                  {countLabel >= 0 ? (
+                    <p
+                      key={countLabel}
+                      className="rhythm-count-pop text-primary text-6xl font-black tabular-nums md:text-8xl"
+                    >
+                      {countLabel + 1}
+                    </p>
+                  ) : (
+                    /* Platzhalter, bis die „1“ synchron zum ersten Klick erscheint. */
+                    <p
+                      className="text-primary text-6xl font-black tabular-nums opacity-0 md:text-8xl"
+                      aria-hidden="true"
+                    >
+                      1
+                    </p>
+                  )}
                   <span className="text-dark dark:text-dark-text mt-2 text-sm font-bold opacity-90">
                     mitzählen
                   </span>
@@ -566,7 +704,7 @@ export function RhythmGame() {
                   className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background flex-1 rounded-sm border px-4 py-4 text-base font-bold transition-colors"
                   onClick={() => void playPreview()}
                 >
-                  Nochmal anhören
+                  {previewHeard ? "Nochmal anhören" : "Anhören"}
                 </button>
                 <button
                   type="button"
@@ -587,8 +725,10 @@ export function RhythmGame() {
                   phase === "playing" || (phase === "countdown" && tapAllowed)
                     ? "Tipp-tipp!"
                     : phase === "countdown"
-                      ? "Gleich …"
-                      : "Hier tippen"
+                      ? /* Nur kurz sichtbar, bis das Audio steht und die Tippfläche öffnet. */
+                        "Gleich …"
+                      : /* In der Vorschau ist die Fläche gesperrt — nicht „tappbar“ aussehen lassen. */
+                        "Erst anhören"
                 }
                 onTap={(t) => {
                   const wall = engine.adjustTapTimeForOutputLatency(t);
@@ -613,10 +753,13 @@ export function RhythmGame() {
             timeSignature={rhythm.timeSignature}
             bars={rhythm.bars}
             barStartEventIndices={rhythm.barStartEventIndices}
+            eventVerdicts={eventVerdicts}
           />
+          {rhythmDescription && <p className="sr-only">{rhythmDescription}</p>}
           <ResultView
             result={score}
             onRetry={handleRetry}
+            onRepeat={handleRepeat}
             onNext={handleNext}
           />
         </div>

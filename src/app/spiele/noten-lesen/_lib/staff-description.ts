@@ -27,32 +27,42 @@ function clefNameDe(clef: ClefKind): string {
   }
 }
 
+/**
+ * Deutsche Positionsbeschreibung: Linien/Zwischenräume im System,
+ * darüber/darunter mit konkreter Hilfslinien-Angabe.
+ * Slot 0 = unterste Linie, 8 = oberste Linie; negativ = unterhalb.
+ */
 export function describeWrittenNote(p: WrittenPitch, clef: ClefKind): string {
   const slot = staffHalfLineIndex(p, clef);
-  const pos = lineOrSpaceGerman(slot);
   const clefDe = clefNameDe(clef);
 
-  if (clef === "treble") {
-    if (slot >= 0 && slot <= 8) {
-      if (pos.kind === "Linie") {
-        return `${clefDe}: ${pos.n}. Linie von unten (im Notensystem ohne Hilfslinien).`;
-      }
-      return `${clefDe}: ${pos.n}. Zwischenraum von unten.`;
-    }
-    if (slot < 0) {
-      return `${clefDe}: unter dem System — Hilfslinien zeigen die Tonhöhe.`;
-    }
-    return `${clefDe}: über dem System — Hilfslinien zeigen die Tonhöhe.`;
-  }
-
   if (slot >= 0 && slot <= 8) {
+    const pos = lineOrSpaceGerman(slot);
     if (pos.kind === "Linie") {
       return `${clefDe}: ${pos.n}. Linie von unten (im Notensystem ohne Hilfslinien).`;
     }
     return `${clefDe}: ${pos.n}. Zwischenraum von unten.`;
   }
+
   if (slot < 0) {
-    return `${clefDe}: unter dem System — mit Hilfslinien.`;
+    if (slot === -1) {
+      return `${clefDe}: direkt unter dem System (unter der 1. Linie, ohne Hilfslinie).`;
+    }
+    if (slot % 2 === 0) {
+      const n = -slot / 2;
+      return `${clefDe}: auf der ${n}. Hilfslinie unterhalb des Systems.`;
+    }
+    const n = (-slot - 1) / 2;
+    return `${clefDe}: unter der ${n}. Hilfslinie unterhalb des Systems.`;
   }
-  return `${clefDe}: über dem System — mit Hilfslinien.`;
+
+  if (slot === 9) {
+    return `${clefDe}: direkt über dem System (über der 5. Linie, ohne Hilfslinie).`;
+  }
+  if (slot % 2 === 0) {
+    const n = (slot - 8) / 2;
+    return `${clefDe}: auf der ${n}. Hilfslinie oberhalb des Systems.`;
+  }
+  const n = (slot - 9) / 2;
+  return `${clefDe}: über der ${n}. Hilfslinie oberhalb des Systems.`;
 }

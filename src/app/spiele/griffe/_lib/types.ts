@@ -7,6 +7,16 @@ export type GriffeInstrumentId =
 
 export type GriffeDifficultyId = "beginner" | "intermediate" | "advanced";
 
+/**
+ * Auswahl im Setup: feste Stufen oder „Eigenes Set" aus der öffentlichen
+ * Notenset-Bibliothek. Die Grifftabellen-Funktionen kennen weiterhin nur
+ * die festen Stufen — Custom bewertet wie Fortgeschritten (alle Varianten).
+ */
+export type GriffeDifficultyChoice = GriffeDifficultyId | "custom";
+
+/** Persistierte Referenz auf das aktive Notenset (Details per publicId laden). */
+export type StoredCustomSetRef = { publicId: string; name: string };
+
 export type GriffeInstrumentConfig = {
   id: GriffeInstrumentId;
   label: string;
@@ -19,11 +29,11 @@ export type GriffeInstrumentConfig = {
 export const GRIFFE_INSTRUMENTS: GriffeInstrumentConfig[] = [
   {
     id: "trumpet_c",
-    label: "Trompete in C",
-    shortLabel: "Tr. C",
+    label: "Trompete in B — C-Stimme",
+    shortLabel: "Tr. C-St.",
     inputKind: "valves3",
     description:
-      "Konzertschrift: was du siehst, ist der klingende Ton; die Griffe sind die der B‑Trompete (Stimmton = Konzert + 2 Halbtöne).",
+      "Konzertnotation (Posaunenchor-C-Stimme): was du siehst, ist der klingende Ton — gegriffen auf der B‑Trompete (Stimmton = Konzert + 2 Halbtöne).",
   },
   {
     id: "trumpet_bb",
@@ -49,11 +59,11 @@ export const GRIFFE_DIFFICULTY_LABELS: Record<
 > = {
   beginner: {
     title: "Anfänger",
-    hint: "Erste Töne, nur Standard-Griffe",
+    hint: "Erste Töne rund um B-Dur, nur Standard-Griffe",
   },
   intermediate: {
     title: "Mittel",
-    hint: "Voller Anfänger-Umfang (ohne Vorzeichen), Standard-Griffe",
+    hint: "Erweiterter Tonumfang (B-Dur-orientiert), Standard-Griffe",
   },
   advanced: {
     title: "Fortgeschritten",
@@ -67,7 +77,7 @@ export const GRIFFE_MODE_LABELS: Record<
 > = {
   learn: {
     title: "Lernen",
-    hint: "Immer Griff anzeigen, kein Timer",
+    hint: "Griff und Erklärung bleiben stehen — weiter im eigenen Tempo, kein Timer",
   },
   quiz: {
     title: "Quiz",
@@ -79,4 +89,8 @@ export const GRIFFE_MODE_LABELS: Record<
   },
 };
 
+/** Alt (nur noch Migration): einzelner Instrument-Key aus früheren Versionen. */
 export const STORAGE_GRIFFE_INSTRUMENT_KEY = "pwr-griffe-instrument";
+
+/** Neu: Instrument + Schwierigkeit + Modus als ein JSON-Blob. */
+export const STORAGE_GRIFFE_SETTINGS_KEY = "pwr-griffe-settings";

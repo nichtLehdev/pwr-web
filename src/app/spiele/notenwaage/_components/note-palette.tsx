@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { NOTE_VALUES, type NoteValueId } from "../_lib/types";
-import { unitsLabel } from "../_lib/puzzle-generator";
+import { unitsToBeatLabel } from "../_lib/beat-label";
 import { NoteGlyph } from "./note-glyph-loader";
 
 type Props = {
@@ -22,9 +22,22 @@ export function NotePalette({
   showDescriptions = true,
 }: Props) {
   const pressTimer = useRef<number | null>(null);
+  // Nach ausgelöstem Long-Press darf der folgende Click die Note nicht
+  // gleich wieder hinzufügen — der Click wird einmalig verschluckt.
+  const longPressFired = useRef(false);
+
+  const clearPressTimer = () => {
+    if (pressTimer.current != null) window.clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
 
   return (
-    <div className="grid grid-cols-5 gap-1.5 md:grid-cols-5 md:gap-2">
+    <div
+      className={cn(
+        "grid gap-1.5 md:gap-2",
+        ids.length <= 6 ? "grid-cols-3" : "grid-cols-5",
+      )}
+    >
       {ids.map((id) => {
         const def = NOTE_VALUES[id];
         return (
@@ -32,26 +45,28 @@ export function NotePalette({
             key={id}
             type="button"
             disabled={disabled}
-            onClick={() => onAdd(id)}
+            aria-label={def.label}
+            onClick={() => {
+              if (longPressFired.current) {
+                longPressFired.current = false;
+                return;
+              }
+              onAdd(id);
+            }}
             onPointerDown={() => {
               if (disabled) return;
-              pressTimer.current = window.setTimeout(
-                () => onRemoveLastOf(id),
-                420,
-              );
+              longPressFired.current = false;
+              pressTimer.current = window.setTimeout(() => {
+                longPressFired.current = true;
+                onRemoveLastOf(id);
+              }, 420);
             }}
-            onPointerUp={() => {
-              if (pressTimer.current != null)
-                window.clearTimeout(pressTimer.current);
-              pressTimer.current = null;
-            }}
-            onPointerLeave={() => {
-              if (pressTimer.current != null)
-                window.clearTimeout(pressTimer.current);
-              pressTimer.current = null;
-            }}
+            onPointerUp={clearPressTimer}
+            onPointerLeave={clearPressTimer}
+            onPointerCancel={clearPressTimer}
+            onContextMenu={(e) => e.preventDefault()}
             className={cn(
-              "border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/60 flex min-h-[56px] flex-col items-center justify-center rounded-sm border bg-white/80 p-1.5 transition active:scale-[0.98] md:min-h-[64px] md:p-2",
+              "border-dark-border/60 dark:border-dark-border dark:bg-dark-surface/60 flex min-h-[56px] touch-manipulation flex-col items-center justify-center rounded-sm border bg-white/80 p-1.5 transition select-none motion-safe:active:scale-[0.98] md:min-h-[64px] md:p-2",
               !disabled && "hover:border-primary/50",
               disabled && "opacity-60",
             )}
@@ -63,7 +78,7 @@ export function NotePalette({
                   {def.label}
                 </span>
                 <span className="text-dark dark:text-dark-text-muted text-[9px] font-semibold md:text-[10px]">
-                  {unitsLabel(def.units)} Schläge
+                  {unitsToBeatLabel(def.units)}
                 </span>
               </>
             )}

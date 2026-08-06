@@ -1,4 +1,9 @@
-import type { DifficultyId, InstrumentId, WrittenPitch } from "./types";
+import type {
+  ClefKind,
+  DifficultyId,
+  InstrumentId,
+  WrittenPitch,
+} from "./types";
 import { writtenPitchToMidi } from "./pitch";
 
 /** Enharmonisch zu den Flachschreibweisen (Des, Es, …): Cis, Dis, Fis, Gis, Ais. */
@@ -42,11 +47,10 @@ const hornIntermediateLo: WrittenPitch = { letter: "F", octave: 3, alter: 0 };
 const hornIntermediateHi: WrittenPitch = { letter: "A", octave: 5, alter: 0 };
 
 /**
- * Fortgeschritten: chromatisch geschrieben bis tief **Ges2** (MIDI 42).
- * Bei Griffen/„Trompete in C“ (Konzert = Stimmton − 2) ist das der Bereich
- * bis **Konzert-E2** als tiefster üblicher Ton.
+ * Fortgeschritten: chromatisch geschrieben bis tief **Fis3/Ges3** (MIDI 54) —
+ * der tiefste reguläre geschriebene Trompetenton (ohne Pedaltöne).
  */
-const TRUMPET_ADV_LO_MIDI = 42; // Geschriebenes Ges2 → Konzert E2 bei −2
+const TRUMPET_ADV_LO_MIDI = 54; // Geschriebenes Fis3/Ges3 — tiefster regulärer Ton
 const TRUMPET_ADV_HI_MIDI = 86; // D6
 
 /** Horn in F: chromatisch geschrieben, etwas mehr Tiefe als Trompete, hoher Kantilene-Bereich. */
@@ -87,12 +91,37 @@ const tenorLearnIntermediateHi: WrittenPitch = {
   alter: 0,
 };
 
-const BASS_ADV_LO_MIDI = 34; // H1 / tiefer noch möglich — praktischer Tuba-Umfang
+const BASS_ADV_LO_MIDI = 34; // Deutsches B1 (internationales B♭1) — praktischer Tuba-Umfang
 const BASS_ADV_HI_MIDI = 77; // F5
 
 /** Experte: Union aus Bass- und Violinschlüssel-Fortgeschritten-Umfang (geschrieben). */
 const EXPERT_LO_MIDI = Math.min(BASS_ADV_LO_MIDI, TRUMPET_ADV_LO_MIDI);
 const EXPERT_HI_MIDI = Math.max(BASS_ADV_HI_MIDI, TRUMPET_ADV_HI_MIDI);
+
+/**
+ * Experte/Hardcore: pro Schlüssel geklemmter Umfang, damit keine Note weiter
+ * als ca. 3–4 Hilfslinien vom System entfernt erscheint (z. B. kein B1 im
+ * Violinschlüssel). Der Schlüssel wird zuerst gezogen, dann der Ton aus
+ * diesem Pool.
+ */
+export const EXPERT_CLEF_MIDI_BOUNDS: Record<
+  ClefKind,
+  { lo: number; hi: number }
+> = {
+  treble: { lo: 50, hi: 86 },
+  bass: { lo: 34, hi: 71 },
+  alto: { lo: 46, hi: 76 },
+  tenor: { lo: 43, hi: 74 },
+};
+
+/** Chromatischer Experten-/Hardcore-Pool, auf den Schlüssel geklemmt. */
+export function expertPoolForClef(clef: ClefKind): WrittenPitch[] {
+  const { lo, hi } = EXPERT_CLEF_MIDI_BOUNDS[clef];
+  return chromaticBetween(
+    Math.max(lo, EXPERT_LO_MIDI),
+    Math.min(hi, EXPERT_HI_MIDI),
+  );
+}
 
 function stepUp(
   letter: WrittenPitch["letter"],
