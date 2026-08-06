@@ -239,10 +239,33 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 <p className="text-sm">
                   Keine Ergebnisse für &quot;{query}&quot;
                 </p>
+                <button
+                  onClick={() =>
+                    handleResultClick(
+                      `/suche?q=${encodeURIComponent(debouncedQuery)}`,
+                    )
+                  }
+                  className="text-primary mt-3 text-sm font-medium hover:underline"
+                >
+                  Auf der Suchseite suchen
+                </button>
               </div>
             </div>
           ) : (
             <div className="py-2">
+              {/* Link to the full results page */}
+              <button
+                onClick={() =>
+                  handleResultClick(
+                    `/suche?q=${encodeURIComponent(debouncedQuery)}`,
+                  )
+                }
+                className="text-primary hover:bg-primary/5 flex w-full items-center gap-2 px-4 py-2 text-sm font-medium"
+              >
+                <Search className="h-4 w-4" />
+                Alle Ergebnisse für &quot;{debouncedQuery}&quot; anzeigen
+              </button>
+
               {/* Pages Section - always first */}
               {(data?.results.filter((r) => r.type === "page").length ?? 0) >
                 0 && (

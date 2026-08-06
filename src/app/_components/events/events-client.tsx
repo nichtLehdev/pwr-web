@@ -223,6 +223,12 @@ export default function EventsClient({
     return applyFilters(futureItems);
   }, [futureItems, applyFilters]);
 
+  // The calendar honors the active filters too, but keeps past items so
+  // earlier months don't render empty when browsing back.
+  const calendarItems = useMemo(() => {
+    return applyFilters(allItems);
+  }, [allItems, applyFilters]);
+
   const sortedItems = useMemo(() => {
     return [...filteredItems].sort((a, b) => {
       const dateA = new Date(a.type === "event" ? a.eventDate : a.startDate);
@@ -754,12 +760,12 @@ export default function EventsClient({
               <>
                 {/* Mobile Calendar */}
                 <div className="lg:hidden">
-                  <CalendarView items={allItems} />
+                  <CalendarView items={calendarItems} />
                 </div>
 
                 {/* Desktop Calendar */}
                 <div className="hidden lg:block">
-                  <DesktopCalendarView items={allItems} />
+                  <DesktopCalendarView items={calendarItems} />
                 </div>
               </>
             )}

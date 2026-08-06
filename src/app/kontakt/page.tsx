@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
-import { ContactSubjectSelect } from "@/app/_components/forms/contact-subject-select";
+import { ContactForm } from "@/app/_components/forms/contact-form";
 import { api } from "@/trpc/server";
 import PublicPage from "../_components/general/public-page";
 import {
@@ -17,7 +17,6 @@ import {
   Music,
   Users,
   Map,
-  Send,
 } from "lucide-react";
 
 export default async function KontaktPage() {
@@ -372,123 +371,7 @@ export default async function KontaktPage() {
                 melden uns zeitnah bei Ihnen.
               </p>
 
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="name"
-                      className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                    >
-                      Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      required
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2"
-                      placeholder="Max Mustermann"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                    >
-                      E-Mail *
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2"
-                      placeholder="max@example.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                    >
-                      Telefon (optional)
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2"
-                      placeholder="+49 123 456789"
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="subject"
-                      className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                    >
-                      Betreff *
-                    </label>
-                    <ContactSubjectSelect className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2" />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="message"
-                    className="text-dark dark:text-dark-text mb-2 block text-sm font-semibold"
-                  >
-                    Ihre Nachricht *
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={6}
-                    className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full resize-y rounded-lg border border-gray-300 px-4 py-2 transition-all outline-none focus:border-transparent focus:ring-2"
-                    placeholder="Beschreiben Sie Ihr Anliegen..."
-                  />
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="privacy"
-                    name="privacy"
-                    required
-                    className="text-primary focus:ring-primary dark:border-dark-border mt-1 h-4 w-4 rounded border-gray-300"
-                  />
-                  <label
-                    htmlFor="privacy"
-                    className="text-sm text-gray-600 dark:text-gray-400"
-                  >
-                    Ich habe die{" "}
-                    <Link
-                      href="/datenschutz"
-                      className="text-primary hover:underline"
-                    >
-                      Datenschutzerklärung
-                    </Link>{" "}
-                    zur Kenntnis genommen. Ich stimme zu, dass meine Angaben zur
-                    Kontaktaufnahme und für Rückfragen gespeichert werden. *
-                  </label>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    className="bg-primary hover:bg-primary-dark inline-flex items-center rounded-lg px-8 py-3 font-semibold text-white transition-colors"
-                  >
-                    Nachricht senden
-                    <Send className="ml-2 h-5 w-5" />
-                  </button>
-                  <p className="mt-3 text-xs text-gray-500">* Pflichtfelder</p>
-                </div>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>

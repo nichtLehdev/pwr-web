@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   StaffDisplay,
   type StaffFlash,
-} from "../../noten-lesen/_components/staff-display";
+} from "../../noten-lesen/_components/staff-display-loader";
 import { ScoreBar } from "../../noten-lesen/_components/score-bar";
 import type { GameModeId } from "../../noten-lesen/_lib/types";
 import {

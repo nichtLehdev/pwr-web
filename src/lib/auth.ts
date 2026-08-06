@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { inferAdditionalFields } from "better-auth/client/plugins";
-import { twoFactorClient } from "better-auth/client/plugins";
+import { twoFactorClient, usernameClient } from "better-auth/client/plugins";
 import type { auth } from "@/server/better-auth/config";
 
 function getBaseUrl() {
@@ -21,6 +21,7 @@ export const {
   baseURL: getBaseUrl(),
   plugins: [
     inferAdditionalFields<typeof auth>(),
+    usernameClient(),
     twoFactorClient({
       onTwoFactorRedirect() {
         const redirectTo =

@@ -26,7 +26,11 @@ export const materialsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       const canApproveDownloads = userId
-        ? await userHasPermission(userId, PERMISSIONS.DOWNLOADS_APPROVE)
+        ? await userHasPermission(
+            userId,
+            PERMISSIONS.DOWNLOADS_APPROVE,
+            ctx.permissionCache,
+          )
         : false;
 
       const where: Prisma.DownloadWhereInput = {
@@ -49,6 +53,7 @@ export const materialsRouter = createTRPCRouter({
           const canUploadDownloads = await userHasPermission(
             userId,
             PERMISSIONS.DOWNLOADS_UPLOAD,
+            ctx.permissionCache,
           );
           if (canUploadDownloads) {
             // Can see approved + own pending
@@ -119,6 +124,25 @@ export const materialsRouter = createTRPCRouter({
         });
       }
 
+      // Pending/rejected downloads are only visible to their uploader or
+      // users who can manage downloads (mirrors the list-endpoint rules).
+      if (download.status !== ContentStatus.APPROVED) {
+        const userId = ctx.session?.user?.id;
+        const canManage = userId
+          ? await userHasPermission(
+              userId,
+              PERMISSIONS.DOWNLOADS_APPROVE,
+              ctx.permissionCache,
+            )
+          : false;
+        if (!userId || (download.uploadedById !== userId && !canManage)) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Download not found",
+          });
+        }
+      }
+
       return download;
     }),
 
@@ -173,6 +197,7 @@ export const materialsRouter = createTRPCRouter({
       const canApproveDownloads = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.DOWNLOADS_APPROVE,
+        ctx.permissionCache,
       );
 
       return await ctx.db.download.create({

@@ -83,7 +83,9 @@ export function Step2Participants({
         {
           firstName: "",
           lastName: "",
-          birthDate: new Date(),
+          // Empty like the other fields — pre-filling "today" instantly
+          // failed validation before the user typed anything.
+          birthDate: "" as any,
           city: "",
           instrument: "",
           priceOptionId: firstPriceOption.id,

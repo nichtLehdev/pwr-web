@@ -75,6 +75,11 @@ export default function SettingsPage() {
   });
   const [preferences, setPreferences] =
     useState<UserPreferences>(defaultPreferences);
+  const [savedState, setSavedState] = useState<{
+    formData: typeof formData;
+    preferences: UserPreferences;
+  } | null>(null);
+  const [pendingTab, setPendingTab] = useState<SettingsTab | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [birthdateError, setBirthdateError] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<{
@@ -115,6 +120,14 @@ export default function SettingsPage() {
     },
   });
 
+  const saveThemePreference = api.users.updateProfile.useMutation({
+    onError: (err) => {
+      toast.error(
+        getErrorMessage(err, "Fehler beim Speichern des Design-Themes"),
+      );
+    },
+  });
+
   const { data: savedParticipants, isLoading: savedParticipantsLoading } =
     api.savedParticipants.getAll.useQuery(undefined, {
       enabled: !!session?.user,
@@ -140,7 +153,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (profile && !hasInitializedRef.current) {
-      setFormData({
+      const initialFormData = {
         firstName: profile.firstName || "",
         lastName: profile.lastName || "",
         displayName: profile.displayName || "",
@@ -155,25 +168,31 @@ export default function SettingsPage() {
           ? new Date(profile.birthDate).toISOString().split("T")[0]!
           : "",
         profileImageId: profile.profileImageId || null,
-      });
+      };
+      setFormData(initialFormData);
 
+      let initialPreferences: UserPreferences;
       if (profile.preferences) {
         try {
           const parsed =
             typeof profile.preferences === "string"
               ? JSON.parse(profile.preferences)
               : profile.preferences;
-          const newPreferences = { ...defaultPreferences, ...parsed };
-          setPreferences(newPreferences);
-          if (newPreferences.theme) {
-            setCurrentTheme(newPreferences.theme);
+          initialPreferences = { ...defaultPreferences, ...parsed };
+          if (initialPreferences.theme) {
+            setCurrentTheme(initialPreferences.theme);
           }
         } catch {
-          setPreferences(defaultPreferences);
+          initialPreferences = defaultPreferences;
         }
       } else {
-        setPreferences({ ...defaultPreferences, theme: currentTheme });
+        initialPreferences = { ...defaultPreferences, theme: currentTheme };
       }
+      setPreferences(initialPreferences);
+      setSavedState({
+        formData: initialFormData,
+        preferences: initialPreferences,
+      });
       hasInitializedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +200,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!sessionLoading && !session?.user) {
-      router.push("/login");
+      router.push("/login?redirect=%2Fsettings");
     }
   }, [session, sessionLoading, router]);
 
@@ -263,9 +282,46 @@ export default function SettingsPage() {
         profileImageId: formData.profileImageId || undefined,
         preferences: JSON.stringify(preferences),
       });
+      setSavedState({
+        formData: { ...formData },
+        preferences: { ...preferences },
+      });
+    } catch {
+      // Fehler wird bereits über die onError-Toast-Meldung angezeigt
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const hasUnsavedChanges =
+    savedState !== null &&
+    (JSON.stringify(formData) !== JSON.stringify(savedState.formData) ||
+      JSON.stringify(preferences) !== JSON.stringify(savedState.preferences));
+
+  const handleTabSelect = (tab: SettingsTab) => {
+    if (tab === activeTab) return;
+    if (hasUnsavedChanges) {
+      setPendingTab(tab);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  const handleThemeSelect = (newTheme: "light" | "dark" | "system") => {
+    setPreferences((prev) => ({ ...prev, theme: newTheme }));
+    setCurrentTheme(newTheme);
+    // Theme sofort speichern, damit die Auswahl nicht verloren geht
+    saveThemePreference.mutate({
+      preferences: JSON.stringify({
+        ...(savedState?.preferences ?? preferences),
+        theme: newTheme,
+      }),
+    });
+    setSavedState((prev) =>
+      prev
+        ? { ...prev, preferences: { ...prev.preferences, theme: newTheme } }
+        : prev,
+    );
   };
 
   if (sessionLoading || profileLoading) {
@@ -316,7 +372,7 @@ export default function SettingsPage() {
                     <li key={tab.id}>
                       <button
                         type="button"
-                        onClick={() => setActiveTab(tab.id)}
+                        onClick={() => handleTabSelect(tab.id)}
                         className={`flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
                           activeTab === tab.id
                             ? "bg-primary text-white"
@@ -868,6 +924,20 @@ export default function SettingsPage() {
                           </div>
                         )}
                       </div>
+
+                      {/* Save Button */}
+                      <div className="flex justify-end border-t border-gray-200 pt-4 dark:border-gray-700">
+                        <button
+                          type="submit"
+                          disabled={isLoading || updateProfile.isPending}
+                          className="bg-primary hover:bg-primary-dark inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-semibold text-white shadow-lg transition-colors disabled:opacity-50 sm:w-auto"
+                        >
+                          <Save className="h-4 w-4" />
+                          {isLoading || updateProfile.isPending
+                            ? "Speichert..."
+                            : "Änderungen speichern"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -935,19 +1005,12 @@ export default function SettingsPage() {
                         <Label>Design-Theme</Label>
                         <p className="mt-1 mb-3 text-xs text-gray-500 dark:text-gray-400">
                           Wähle dein bevorzugtes Design-Theme für die Website.
+                          Die Auswahl wird sofort gespeichert.
                         </p>
                         <div className="grid grid-cols-3 gap-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              const newTheme: "light" | "dark" | "system" =
-                                "light";
-                              setPreferences((prev) => ({
-                                ...prev,
-                                theme: newTheme,
-                              }));
-                              setCurrentTheme(newTheme);
-                            }}
+                            onClick={() => handleThemeSelect("light")}
                             className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                               preferences.theme === "light" ||
                               (!preferences.theme && currentTheme === "light")
@@ -960,15 +1023,7 @@ export default function SettingsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              const newTheme: "light" | "dark" | "system" =
-                                "dark";
-                              setPreferences((prev) => ({
-                                ...prev,
-                                theme: newTheme,
-                              }));
-                              setCurrentTheme(newTheme);
-                            }}
+                            onClick={() => handleThemeSelect("dark")}
                             className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                               preferences.theme === "dark" ||
                               (!preferences.theme && currentTheme === "dark")
@@ -981,15 +1036,7 @@ export default function SettingsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              const newTheme: "light" | "dark" | "system" =
-                                "system";
-                              setPreferences((prev) => ({
-                                ...prev,
-                                theme: newTheme,
-                              }));
-                              setCurrentTheme(newTheme);
-                            }}
+                            onClick={() => handleThemeSelect("system")}
                             className={`flex flex-col items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                               preferences.theme === "system" ||
                               (!preferences.theme && currentTheme === "system")
@@ -1210,6 +1257,54 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Unsaved Changes Modal */}
+        {pendingTab !== null && (
+          <ScrollableModal onBackdropClick={() => setPendingTab(null)}>
+            <ScrollableModalCard maxW="md">
+              <ScrollableModalBody>
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <div>
+                    <h3 className="text-dark dark:text-dark-text text-lg font-bold">
+                      Ungespeicherte Änderungen
+                    </h3>
+                    <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                      Du hast ungespeicherte Änderungen. Wenn du den Tab
+                      wechselst, ohne zu speichern, gehen deine Änderungen
+                      verloren.
+                    </p>
+                  </div>
+                </div>
+              </ScrollableModalBody>
+              <ScrollableModalFooter>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPendingTab(null)}
+                    className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    Abbrechen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (savedState) {
+                        setFormData({ ...savedState.formData });
+                        setPreferences({ ...savedState.preferences });
+                      }
+                      setActiveTab(pendingTab);
+                      setPendingTab(null);
+                    }}
+                    className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                  >
+                    Änderungen verwerfen
+                  </button>
+                </div>
+              </ScrollableModalFooter>
+            </ScrollableModalCard>
+          </ScrollableModal>
+        )}
 
         {/* Delete Account Modal */}
         {showDeleteAccountModal && (

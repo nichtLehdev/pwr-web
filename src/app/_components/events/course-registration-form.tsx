@@ -17,6 +17,12 @@ import { Step1RegistrantInfo } from "./course-registration-form/step-1-registran
 import { Step2Participants } from "./course-registration-form/step-2-participants";
 import { Step3Summary } from "./course-registration-form/step-3-summary";
 import { validateStep as validateStepUtil } from "./course-registration-form/utils";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 export default function CourseRegistrationForm({
   course,
@@ -53,6 +59,8 @@ export default function CourseRegistrationForm({
   );
   const [showParticipantLibrary, setShowParticipantLibrary] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
     registrantFirstName: currentUser?.firstName || "",
@@ -118,11 +126,31 @@ export default function CourseRegistrationForm({
     return () => window.removeEventListener("resize", updateHeaderHeight);
   }, [currentStep]);
 
+  // Escape/Abbrechen with entered participants (or past step 1) asks first —
+  // it used to silently discard everything, even on the summary step.
+  const hasUnsavedWork =
+    currentStep > 1 || registrationData.participants.length > 0;
+
+  const requestClose = () => {
+    if (hasUnsavedWork) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (showParticipantLibrary) {
           setShowParticipantLibrary(false);
+        } else if (showDiscardConfirm) {
+          setShowDiscardConfirm(false);
+        } else if (
+          currentStep > 1 ||
+          registrationData.participants.length > 0
+        ) {
+          setShowDiscardConfirm(true);
         } else {
           onClose();
         }
@@ -130,7 +158,13 @@ export default function CourseRegistrationForm({
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [onClose, showParticipantLibrary]);
+  }, [
+    onClose,
+    showParticipantLibrary,
+    showDiscardConfirm,
+    currentStep,
+    registrationData.participants.length,
+  ]);
 
   useEffect(() => {
     if (currentStep === 2) {
@@ -277,6 +311,7 @@ export default function CourseRegistrationForm({
   const canProceed = validateStep(currentStep);
 
   const handleSubmit = async () => {
+    setSubmitError("");
     registrationMutation.mutate(
       {
         courseId: course.id,
@@ -347,9 +382,16 @@ export default function CourseRegistrationForm({
           onSuccess();
         },
         onError: (error) => {
-          toast.error(
-            "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.",
-          );
+          // Surface the real cause (course filled up, deadline passed,
+          // duplicate registration) — a generic "try again" message hides
+          // errors that retrying can never fix. Zod issues serialize as a
+          // JSON array; keep the generic text for those.
+          const message =
+            error.message && !error.message.trim().startsWith("[")
+              ? error.message
+              : "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.";
+          setSubmitError(message);
+          toast.error(message);
           console.error("Registration error:", error);
         },
       },
@@ -357,6 +399,46 @@ export default function CourseRegistrationForm({
   };
 
   const isModal = variant === "modal";
+
+  const discardConfirm = showDiscardConfirm ? (
+    <ScrollableModal>
+      <ScrollableModalCard maxW="md">
+        <ScrollableModalBody>
+          <h3 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
+            Anmeldung verwerfen?
+          </h3>
+          <p className="mb-2 text-gray-600 dark:text-gray-400">
+            Ihre bisherigen Eingaben
+            {registrationData.participants.length > 0
+              ? ` (${registrationData.participants.length} Teilnehmer)`
+              : ""}{" "}
+            gehen dabei verloren.
+          </p>
+        </ScrollableModalBody>
+        <ScrollableModalFooter>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setShowDiscardConfirm(false)}
+              className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              Weiter ausfüllen
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowDiscardConfirm(false);
+                onClose();
+              }}
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Verwerfen
+            </button>
+          </div>
+        </ScrollableModalFooter>
+      </ScrollableModalCard>
+    </ScrollableModal>
+  ) : null;
 
   const stepsMeta = [
     { num: 1 as const, label: "Anmelder" },
@@ -401,6 +483,16 @@ export default function CourseRegistrationForm({
           setTermsAccepted={setTermsAccepted}
           isWaitlist={isWaitlist}
         />
+      )}
+      {currentStep === 3 && submitError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-md border-l-4 border-red-500 bg-red-50 p-3 dark:border-red-400 dark:bg-red-900/20"
+        >
+          <p className="text-sm text-red-800 dark:text-red-300">
+            {submitError}
+          </p>
+        </div>
       )}
     </>
   );
@@ -472,7 +564,7 @@ export default function CourseRegistrationForm({
               </div>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={requestClose}
                 className="rounded-lg p-2 transition-colors hover:bg-white/20"
               >
                 <X className="h-6 w-6" />
@@ -513,6 +605,7 @@ export default function CourseRegistrationForm({
             {footerButtons}
           </div>
         </div>
+        {discardConfirm}
       </div>
     );
   }
@@ -537,7 +630,7 @@ export default function CourseRegistrationForm({
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background self-start rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 sm:mt-1"
             >
               Abbrechen
@@ -594,6 +687,7 @@ export default function CourseRegistrationForm({
           {footerButtons}
         </div>
       </div>
+      {discardConfirm}
     </div>
   );
 }

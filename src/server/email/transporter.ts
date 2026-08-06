@@ -1,9 +1,12 @@
 import nodemailer from "nodemailer";
 import { env } from "@/env";
 
+let warnedNotConfigured = false;
+
 const isSmtpConfigured = () => {
   const configured = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
-  if (!configured) {
+  if (!configured && !warnedNotConfigured) {
+    warnedNotConfigured = true;
     console.warn("[Email] SMTP not configured. Missing:", {
       SMTP_HOST: !!env.SMTP_HOST,
       SMTP_USER: !!env.SMTP_USER,
@@ -28,17 +31,13 @@ export const transporter = isSmtpConfigured()
           pass: env.SMTP_PASSWORD!,
         },
         tls: {
-          rejectUnauthorized: process.env.NODE_ENV === "production",
+          // TLS certificate validation stays on everywhere — a staging or
+          // dev deployment MITM'd on SMTP leaks real credentials. Set
+          // SMTP_ALLOW_INVALID_CERT=true explicitly for a local mailcatcher
+          // with a self-signed certificate.
+          rejectUnauthorized: process.env.SMTP_ALLOW_INVALID_CERT !== "true",
         },
       };
-
-      console.log("[Email] SMTP transporter configured:", {
-        host: config.host,
-        port: config.port,
-        secure: config.secure,
-        user: config.auth.user,
-        passwordSet: !!config.auth.pass,
-      });
 
       return nodemailer.createTransport(config);
     })()

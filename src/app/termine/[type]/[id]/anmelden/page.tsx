@@ -3,6 +3,7 @@ import { api } from "@/trpc/server";
 import CourseRegistrationPage from "@/app/_components/events/course-registration-page";
 import type { RouterOutputs } from "@/trpc/react";
 import { isExternalCourse } from "@/lib/course-external";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 
 type Course = NonNullable<RouterOutputs["courses"]["getById"]>;
 type Spots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -17,8 +18,10 @@ function canRegisterForCourse(course: Course, spots: Spots): boolean {
     ? new Date(course.registrationOpensAt)
     : null;
   const isPast = endDate < now;
-  const isDeadlinePassed =
-    registrationDeadline !== null && registrationDeadline < now;
+  const isDeadlinePassed = isRegistrationDeadlinePassed(
+    registrationDeadline,
+    now,
+  );
   const isRegistrationNotOpenYet =
     registrationOpensAt !== null && registrationOpensAt > now;
 

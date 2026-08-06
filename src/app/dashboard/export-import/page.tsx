@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import ExportImportSection from "@/app/_components/dashboard/export-import-section";
 
@@ -15,12 +17,11 @@ export default function ExportImportPage() {
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
-  const { data: canManagePermissions } = api.permissions.canManage.useQuery(
-    undefined,
-    {
-      enabled: !!session?.user && !!profile,
-    },
-  );
+  const { hasAnyPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManagePermissions = hasAnyPermission([
+    PERMISSIONS.DATA_EXPORT,
+    PERMISSIONS.DATA_IMPORT,
+  ]);
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -33,13 +34,14 @@ export default function ExportImportPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManagePermissions &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManagePermissions]);
+  }, [profile, profileLoading, permissionsLoading, canManagePermissions]);
 
   if (isPending || profileLoading) {
     return (

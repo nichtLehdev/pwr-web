@@ -6,6 +6,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeftIcon, UserIcon } from "lucide-react";
@@ -55,9 +57,9 @@ export default function DashboardPosaunenwarteEditPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   );
 
   const { data: member, isLoading: memberLoading } =
@@ -214,13 +216,20 @@ export default function DashboardPosaunenwarteEditPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   if (isPending || profileLoading || memberLoading || bezirkeLoading) {
     return (
@@ -362,6 +371,10 @@ export default function DashboardPosaunenwarteEditPage() {
                 }
                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
               />
+              <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
+                Pfeiltasten ändern.
+              </p>
             </div>
           </div>
         </section>

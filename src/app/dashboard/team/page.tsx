@@ -6,10 +6,20 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { EditIcon, Plus, TrashIcon, UsersIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EditIcon,
+  Plus,
+  TrashIcon,
+  UsersIcon,
+} from "lucide-react";
+import { computeReorderUpdates } from "@/lib/reorder";
 
 const CONTACT_TYPE_LABELS: Record<string, string> = {
   GESCHAEFTSSTELLE: "Geschäftsstelle",
@@ -22,15 +32,16 @@ export default function DashboardTeamPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
   );
 
   const {
@@ -38,6 +49,8 @@ export default function DashboardTeamPage() {
     isLoading: membersLoading,
     refetch,
   } = api.organization.getTeam.useQuery();
+
+  const reorderMutation = api.organization.updateTeamMember.useMutation();
 
   const deleteMutation = api.organization.deleteTeamMember.useMutation({
     onSuccess: () => {
@@ -62,13 +75,20 @@ export default function DashboardTeamPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   const handleDelete = async (id: string) => {
     if (!confirm("Möchtest du dieses Teammitglied wirklich löschen?")) {
@@ -76,6 +96,29 @@ export default function DashboardTeamPage() {
     }
     setDeletingId(id);
     deleteMutation.mutate({ id });
+  };
+
+  const handleMove = async (index: number, direction: "up" | "down") => {
+    if (!teamMembers || isReordering) return;
+    const updates = computeReorderUpdates(teamMembers, index, direction);
+    if (!updates) return;
+    setIsReordering(true);
+    try {
+      for (const update of updates) {
+        await reorderMutation.mutateAsync({
+          id: update.id,
+          sortOrder: update.sortOrder,
+        });
+      }
+      await refetch();
+    } catch (error) {
+      toast.error(
+        "Fehler beim Ändern der Reihenfolge: " +
+          (error instanceof Error ? error.message : "Unbekannter Fehler"),
+      );
+    } finally {
+      setIsReordering(false);
+    }
   };
 
   if (isPending || profileLoading || membersLoading) {
@@ -151,7 +194,7 @@ export default function DashboardTeamPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {teamMembers.map((member) => {
+                {teamMembers.map((member, index) => {
                   const displayName = member.user?.displayName || "Unbekannt";
                   const displayEmail = member.user?.email || "-";
                   const imageUrl = member.user?.profileImage?.url;
@@ -236,6 +279,26 @@ export default function DashboardTeamPage() {
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => void handleMove(index, "up")}
+                            disabled={index === 0 || isReordering}
+                            aria-label="Nach oben"
+                            title="Nach oben"
+                            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                          >
+                            <ChevronUpIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => void handleMove(index, "down")}
+                            disabled={
+                              index === teamMembers.length - 1 || isReordering
+                            }
+                            aria-label="Nach unten"
+                            title="Nach unten"
+                            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                          >
+                            <ChevronDownIcon className="h-4 w-4" />
+                          </button>
                           <Link
                             href={`/dashboard/team/${member.id}/edit`}
                             className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"

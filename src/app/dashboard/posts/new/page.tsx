@@ -16,7 +16,7 @@ import {
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
-import RichTextEditor from "@/app/_components/editor/rich-text-editor";
+import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
 import { useToast } from "@/app/_components/ui/toast";

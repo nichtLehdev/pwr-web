@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Edit, UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
@@ -22,9 +24,9 @@ export default function LocationDetailPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageLocations } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageLocations = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
   );
 
   const { data: location, isLoading: locationLoading } =
@@ -44,13 +46,14 @@ export default function LocationDetailPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageLocations &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageLocations, router]);
 
   if (sessionLoading || profileLoading || locationLoading) {
     return (

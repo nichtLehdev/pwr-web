@@ -50,6 +50,8 @@ yarn-error.log*
 # uploads
 /public/uploads/*
 !/public/uploads/.gitkeep
+/uploads/*
+!/uploads/.gitkeep
 
 # seed data (contains public/production data)
 /prisma/seed-data/*

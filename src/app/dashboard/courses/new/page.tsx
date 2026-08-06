@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { parseDeadlineEndOfDay } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import {
@@ -499,7 +500,7 @@ export default function NewCoursePage() {
         return;
       }
       if (hasRegistrationDeadline && registrationDeadline) {
-        const dl = new Date(registrationDeadline);
+        const dl = parseDeadlineEndOfDay(registrationDeadline);
         if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
           setError(
             "Der geplante Anmeldungsbeginn darf nicht nach dem Anmeldeschluss liegen.",
@@ -598,7 +599,7 @@ export default function NewCoursePage() {
       endDate: new Date(`${endDate}T${endTime}`),
       registrationDeadline:
         hasRegistrationDeadline && registrationDeadline
-          ? new Date(registrationDeadline)
+          ? parseDeadlineEndOfDay(registrationDeadline)
           : undefined,
       registrationOpensAt:
         scheduledRegistrationOpens && registrationOpensAt

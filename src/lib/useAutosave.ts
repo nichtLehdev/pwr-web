@@ -17,12 +17,17 @@ export function useAutosave<T>(key: string, data: T, enabled = true) {
   useEffect(() => {
     if (!enabled) return;
 
+    const currentData = JSON.stringify(data);
+
     if (isInitialMount.current) {
       isInitialMount.current = false;
+      // Remember the initial state instead of just skipping: StrictMode
+      // re-runs effects in dev, and the second run used to write the empty
+      // initial state — clobbering a stored draft before restore() ran.
+      lastSavedRef.current = currentData;
       return;
     }
 
-    const currentData = JSON.stringify(data);
     if (currentData === lastSavedRef.current) return;
 
     try {

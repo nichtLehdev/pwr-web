@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import MediaCredit from "@/app/_components/general/media-credit";
@@ -78,7 +78,7 @@ export default function HeroCarousel({
               index === currentIndex ? "opacity-100" : "opacity-0"
             }`}
           >
-            <Image
+            <ImageWithFallback
               src={item.media.url}
               alt={item.media.alt || item.media.name}
               fill

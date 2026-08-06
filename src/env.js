@@ -7,10 +7,9 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    BETTER_AUTH_SECRET:
-      process.env.NODE_ENV === "production"
-        ? z.string()
-        : z.string().optional(),
+    // Required in every environment: without it better-auth falls back to a
+    // known default secret and unsubscribe-token signing throws.
+    BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_GITHUB_CLIENT_ID: z.string(),
     BETTER_AUTH_GITHUB_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
@@ -31,6 +30,8 @@ export const env = createEnv({
     SMTP_USER: z.string().email().optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_FROM: z.string().email().optional(),
+    /** Recipient for messages from the public contact form. */
+    CONTACT_EMAIL: z.string().email().optional(),
     /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
     CRON_SECRET: z.string().min(16).optional(),
   },
@@ -61,6 +62,7 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_FROM: process.env.SMTP_FROM,
+    CONTACT_EMAIL: process.env.CONTACT_EMAIL,
     CRON_SECRET: process.env.CRON_SECRET,
   },
   /**

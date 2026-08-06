@@ -9,6 +9,7 @@ import { signOut, useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import ThemeToggle from "./theme-toggle";
+import NotificationBell from "./notification-bell";
 import SearchModal from "./search-modal";
 import { useBanner } from "../ui/banner-context";
 import { useRouter } from "next/navigation";
@@ -275,10 +276,9 @@ export default function Navigation() {
                 aria-label="Suchen"
               >
                 <Search className="h-5 w-5" />
-                <kbd className="dark:border-dark-border hidden rounded border border-gray-300 px-1.5 py-0.5 text-xs text-gray-400 xl:inline">
-                  ⌘K
-                </kbd>
               </button>
+
+              {session?.user && <NotificationBell />}
 
               {session?.user ? (
                 <div className="relative">
@@ -357,6 +357,7 @@ export default function Navigation() {
           {/* Mobile Menu Button - nur auf Mobile */}
           <div className="flex items-center gap-2 lg:hidden">
             <ThemeToggle />
+            {session?.user && <NotificationBell />}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="text-dark dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-md p-2 hover:bg-gray-100"

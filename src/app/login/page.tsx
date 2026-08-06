@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/trpc/react";
 import { signIn } from "@/lib/auth";
+import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
 import {
   Button,
   Input,
@@ -18,8 +19,8 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectTo =
-    searchParams.get("redirect") ?? searchParams.get("callbackUrl") ?? "/";
+  const requestedRedirect =
+    searchParams.get("redirect") ?? searchParams.get("callbackUrl");
 
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -37,33 +38,20 @@ function LoginForm() {
 
     try {
       const isEmail = emailOrUsername.includes("@");
-      let loginEmail = emailOrUsername;
 
-      if (!isEmail) {
-        try {
-          const result = await utils.users.getEmailByUsername.fetch({
+      // Username sign-in goes through better-auth's username plugin directly —
+      // the client must never be able to resolve username → e-mail address.
+      const signInResult = isEmail
+        ? await signIn.email({
+            email: emailOrUsername,
+            password,
+            rememberMe,
+          })
+        : await signIn.username({
             username: emailOrUsername,
+            password,
+            rememberMe,
           });
-
-          if (!result.email) {
-            setError("Benutzername nicht gefunden");
-            setIsLoading(false);
-            return;
-          }
-
-          loginEmail = result.email;
-        } catch {
-          setError("Benutzername nicht gefunden");
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      const signInResult = await signIn.email({
-        email: loginEmail,
-        password,
-        rememberMe,
-      });
 
       if (signInResult.error) {
         const errorMessage = (
@@ -75,9 +63,13 @@ function LoginForm() {
           errorMessage.includes("email verification") ||
           errorMessage.includes("verify your email")
         ) {
-          setLoginEmail(loginEmail);
+          if (isEmail) {
+            setLoginEmail(emailOrUsername);
+          }
           setError(
-            "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte überprüfe dein E-Mail-Postfach und klicke auf den Verifizierungslink.",
+            isEmail
+              ? "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte überprüfe dein E-Mail-Postfach und klicke auf den Verifizierungslink."
+              : "Deine E-Mail-Adresse wurde noch nicht verifiziert. Bitte melde dich mit deiner E-Mail-Adresse an, um die Verifizierungs-E-Mail erneut zu senden.",
           );
         } else {
           setError("Ungültige Anmeldedaten");
@@ -86,18 +78,18 @@ function LoginForm() {
         return;
       }
 
+      // Warm both caches so the dashboard guard doesn't re-fetch, and so
+      // the redirect decision knows about dashboard access.
       const profile = await utils.users.getMyProfile.fetch();
-
+      let hasDashboardAccess = false;
       if (profile?.id) {
         const permissions = await utils.permissions.getMyPermissions.fetch();
-
-        if (permissions && permissions.length > 0) {
-          router.push("/dashboard");
-          return;
-        }
+        hasDashboardAccess = !!permissions && permissions.length > 0;
       }
 
-      router.push(redirectTo);
+      router.push(
+        resolvePostLoginTarget(requestedRedirect, hasDashboardAccess),
+      );
     } catch {
       setError("Ungültige Anmeldedaten");
     } finally {

@@ -472,7 +472,7 @@ export default function BezirkePage() {
                                 <Image
                                   src={
                                     obmann.profileImage?.url ||
-                                    "images/placeholder-profile.png"
+                                    "/images/profile-placeholder.jpg"
                                   }
                                   alt={
                                     obmann.profileImage?.alt ||

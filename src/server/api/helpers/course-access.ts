@@ -2,7 +2,10 @@ import {
   CourseCollaboratorRole,
   type PrismaClient,
 } from "~/generated/prisma/client";
-import { userHasPermission } from "./permissions";
+import {
+  resolveUserPermissionsCached,
+  type PermissionCache,
+} from "./permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 
 /** Volle Kursbearbeitung (Formular, keine Teamverwaltung-Stufe). Kein reines STAFF-Teammitglied. */
@@ -14,27 +17,26 @@ export async function userCanEditCourseRecord(
     createdById: string | null;
     bezirkId: string | null;
   },
+  permissionCache?: PermissionCache,
 ): Promise<boolean> {
   if (course.createdById === userId) return true;
 
-  const canEditGlobally = await userHasPermission(
-    userId,
-    PERMISSIONS.COURSES_EDIT,
-  );
-  if (canEditGlobally) return true;
+  const [perms, organizer, userBezirk] = await Promise.all([
+    resolveUserPermissionsCached(userId, permissionCache),
+    db.courseCollaborator.findUnique({
+      where: {
+        courseId_userId: { courseId: course.id, userId },
+      },
+      select: { role: true },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: { bezirkId: true },
+    }),
+  ]);
 
-  const organizer = await db.courseCollaborator.findUnique({
-    where: {
-      courseId_userId: { courseId: course.id, userId },
-    },
-    select: { role: true },
-  });
+  if (perms.has(PERMISSIONS.COURSES_EDIT)) return true;
   if (organizer?.role === CourseCollaboratorRole.ORGANIZER) return true;
-
-  const userBezirk = await db.user.findUnique({
-    where: { id: userId },
-    select: { bezirkId: true },
-  });
   if (
     userBezirk?.bezirkId &&
     course.bezirkId &&
@@ -55,30 +57,31 @@ export async function userCanManageCourseTeam(
     createdById: string | null;
     bezirkId: string | null;
   },
+  permissionCache?: PermissionCache,
 ): Promise<boolean> {
   if (course.createdById === userId) return true;
 
-  const canEdit = await userHasPermission(userId, PERMISSIONS.COURSES_EDIT);
-  if (canEdit) return true;
+  const [perms, organizer, userBezirk] = await Promise.all([
+    resolveUserPermissionsCached(userId, permissionCache),
+    db.courseCollaborator.findUnique({
+      where: {
+        courseId_userId: { courseId: course.id, userId },
+      },
+      select: { role: true },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: { bezirkId: true },
+    }),
+  ]);
 
-  const canApprove = await userHasPermission(
-    userId,
-    PERMISSIONS.COURSES_APPROVE,
-  );
-  if (canApprove) return true;
-
-  const organizer = await db.courseCollaborator.findUnique({
-    where: {
-      courseId_userId: { courseId: course.id, userId },
-    },
-    select: { role: true },
-  });
+  if (
+    perms.has(PERMISSIONS.COURSES_EDIT) ||
+    perms.has(PERMISSIONS.COURSES_APPROVE)
+  ) {
+    return true;
+  }
   if (organizer?.role === CourseCollaboratorRole.ORGANIZER) return true;
-
-  const userBezirk = await db.user.findUnique({
-    where: { id: userId },
-    select: { bezirkId: true },
-  });
   if (
     userBezirk?.bezirkId &&
     course.bezirkId &&

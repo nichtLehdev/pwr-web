@@ -7,6 +7,8 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { FoerdervereinRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
@@ -35,9 +37,9 @@ export default function NewFoerdervereinPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
   );
 
   const { data: users } = api.users.list.useQuery(
@@ -114,13 +116,20 @@ export default function NewFoerdervereinPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -387,6 +396,10 @@ export default function NewFoerdervereinPage() {
                   onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)}
                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                 />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Tipp: Die Reihenfolge lässt sich auch direkt in der Liste per
+                  Pfeiltasten ändern.
+                </p>
               </div>
             </div>
 
