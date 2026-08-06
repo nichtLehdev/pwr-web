@@ -11,12 +11,9 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const standalone = isStandaloneGamePath(pathname);
 
+  // Vollbild-Spiele bringen ihre eigene Hülle mit (GameShell im (spiel)-Layout).
   if (standalone) {
-    return (
-      <div className="to-background dark:from-dark-background dark:to-dark-background relative flex min-h-[100svh] min-h-dvh flex-col overflow-x-hidden bg-gradient-to-b from-amber-50/95 via-sky-50/35 dark:via-amber-950/25">
-        {children}
-      </div>
-    );
+    return <>{children}</>;
   }
 
   return (

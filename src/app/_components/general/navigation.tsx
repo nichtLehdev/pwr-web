@@ -171,7 +171,12 @@ export default function Navigation() {
   return (
     <nav
       className="dark:bg-dark-surface dark:shadow-dark-border fixed right-0 left-0 z-50 w-full bg-white shadow-md transition-[top] duration-200"
-      style={{ top: bannerHeight }}
+      style={{
+        top: bannerHeight,
+        // Ohne Banner ist die Nav das oberste Element — sie reserviert die Notch-Fläche.
+        paddingTop:
+          bannerHeight === 0 ? "env(safe-area-inset-top, 0px)" : undefined,
+      }}
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between lg:h-20">
@@ -375,8 +380,13 @@ export default function Navigation() {
         {/* Mobile Menu - slide down */}
         {mobileMenuOpen && (
           <div
-            className="dark:border-dark-border dark:bg-dark-surface fixed inset-x-0 bottom-0 overflow-y-auto border-t border-gray-200 bg-white py-4 lg:hidden"
-            style={{ top: bannerHeight + 64 }}
+            className="dark:border-dark-border dark:bg-dark-surface fixed inset-x-0 bottom-0 overflow-y-auto border-t border-gray-200 bg-white pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] lg:hidden"
+            style={{
+              top:
+                bannerHeight === 0
+                  ? "calc(64px + env(safe-area-inset-top, 0px))"
+                  : bannerHeight + 64,
+            }}
           >
             <div className="flex flex-col space-y-1 px-4">
               {navLinks.map((link) => (

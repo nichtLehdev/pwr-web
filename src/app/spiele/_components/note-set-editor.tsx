@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
-import type { ClefKind, WrittenPitch } from "../noten-lesen/_lib/types";
+import type { ClefKind, WrittenPitch } from "../(spiel)/noten-lesen/_lib/types";
 import {
   CLEF_LABELS,
   NOTE_SET_CLEFS,
@@ -49,7 +49,7 @@ const OCTAVE_NAMES: Record<number, string> = {
 /** Chip-Optik wie die aktiven Kacheln der Spiele; min. 44 px Touch-Ziel. */
 function pitchChipClass(active: boolean): string {
   return cn(
-    "min-h-11 min-w-11 rounded-sm border px-2.5 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
+    "min-h-11 min-w-11 rounded-lg border px-2.5 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
     "text-dark dark:text-dark-text",
     active
       ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
@@ -59,7 +59,7 @@ function pitchChipClass(active: boolean): string {
 
 function clefChipClass(active: boolean): string {
   return cn(
-    "rounded-sm border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
+    "rounded-lg border px-3 py-2 text-sm font-bold transition-colors active:scale-[0.99]",
     "text-dark dark:text-dark-text",
     active
       ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
@@ -68,7 +68,7 @@ function clefChipClass(active: boolean): string {
 }
 
 const QUICK_ACTION_CLASS =
-  "text-dark dark:text-dark-text-muted border-dark-border/50 dark:border-dark-border hover:border-primary/40 dark:hover:border-primary/35 rounded-sm border px-2 py-1 text-xs font-bold transition-colors";
+  "text-dark dark:text-dark-text-muted border-dark-border/50 dark:border-dark-border hover:border-primary/40 dark:hover:border-primary/35 rounded-lg border px-2 py-1 text-xs font-bold transition-colors";
 
 /** tRPC-Fehlercode defensiv auslesen (ohne any). */
 function trpcErrorCode(err: unknown): string | null {
@@ -240,7 +240,7 @@ export function NoteSetEditor({
             onChange={(e) => setName(e.target.value)}
             maxLength={60}
             placeholder="z. B. Anfängertöne Tenorhorn"
-            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-sm border bg-white px-3 py-2.5 text-sm outline-none"
+            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none"
           />
           <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
             3–60 Zeichen
@@ -262,7 +262,7 @@ export function NoteSetEditor({
             maxLength={300}
             rows={2}
             placeholder="Wofür ist das Set gedacht?"
-            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-sm border bg-white px-3 py-2.5 text-sm outline-none"
+            className="border-dark-border/50 dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none"
           />
           <p className="text-dark dark:text-dark-text-muted mt-1 text-xs">
             {trimmedDescription.length}/300 Zeichen
@@ -332,7 +332,7 @@ export function NoteSetEditor({
             {octaveSections.map(({ octave, pitches }) => (
               <section
                 key={octave}
-                className="border-dark-border/50 dark:border-dark-border rounded-sm border p-3"
+                className="border-dark-border/50 dark:border-dark-border rounded-lg border p-3"
               >
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
                   <p className="text-dark dark:text-dark-text text-sm font-bold">
@@ -411,7 +411,7 @@ export function NoteSetEditor({
               type="button"
               onClick={onCancel}
               disabled={saving}
-              className="border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 rounded-sm border px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
+              className="border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 rounded-lg border px-4 py-2.5 text-sm font-bold transition-colors disabled:opacity-50"
             >
               Abbrechen
             </button>
@@ -419,7 +419,7 @@ export function NoteSetEditor({
               type="button"
               onClick={() => void handleSave()}
               disabled={blockReason != null || saving}
-              className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark inline-flex items-center gap-2 rounded-sm px-4 py-2.5 text-sm font-black text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-primary hover:bg-primary-light dark:hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving && (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />

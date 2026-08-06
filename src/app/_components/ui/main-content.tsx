@@ -34,7 +34,10 @@ export function MainContent({ children }: MainContentProps) {
   const { bannerHeight } = useBanner();
   const navHeightPx = useCanonicalNavBarHeightPx();
 
-  const paddingTop = `calc(${bannerHeight}px + ${navHeightPx}px)`;
+  // Ohne Banner reserviert die Nav zusätzlich die Notch-Fläche (safe-area-inset-top).
+  const safeAreaTop =
+    bannerHeight === 0 ? " + env(safe-area-inset-top, 0px)" : "";
+  const paddingTop = `calc(${bannerHeight}px + ${navHeightPx}px${safeAreaTop})`;
 
   return (
     <main
