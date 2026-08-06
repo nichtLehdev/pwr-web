@@ -1,11 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { randomBytes } from "crypto";
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 /**
  * Öffentliche Bibliothek von Notensets für die Spiele unter /spiele.
@@ -106,7 +102,10 @@ export const noteSetsRouter = createTRPCRouter({
         select: setListSelect,
       });
       if (!set) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Set nicht gefunden" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Set nicht gefunden",
+        });
       }
       return set;
     }),
