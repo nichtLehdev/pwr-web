@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { randomBytes } from "crypto";
+import { randomInt } from "crypto";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 /**
@@ -43,9 +43,9 @@ const descriptionSchema = z.string().trim().max(300).optional();
 /** URL-sicherer Kurzcode für Deep-Links (?set=...). */
 function generatePublicId(): string {
   const alphabet = "abcdefghjkmnpqrstuvwxyz23456789"; // ohne i/l/o/0/1
-  const bytes = randomBytes(8);
   let out = "";
-  for (const b of bytes) out += alphabet[b % alphabet.length];
+  // randomInt zieht per Rejection-Sampling — gleichverteilt, kein Modulo-Bias.
+  for (let i = 0; i < 8; i++) out += alphabet[randomInt(alphabet.length)];
   return out;
 }
 
