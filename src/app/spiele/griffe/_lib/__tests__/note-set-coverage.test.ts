@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import type { WrittenPitch } from "../../../noten-lesen/_lib/types";
 import {
   MIN_COVERED_PITCHES,
