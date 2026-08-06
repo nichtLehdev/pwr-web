@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { getDistrictColor } from "@/lib/district-color";
 import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
@@ -44,46 +44,21 @@ export default function PostCard({
       >
         {/* Beitragsbild */}
         <div className="relative h-48 w-full overflow-hidden bg-gray-200 dark:bg-gray-700">
-          {image ? (
-            <Image
-              src={image}
-              alt={title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              style={{
-                objectPosition:
-                  imagePositionX !== null &&
-                  imagePositionX !== undefined &&
-                  imagePositionY !== null &&
-                  imagePositionY !== undefined
-                    ? `${imagePositionX}% ${imagePositionY}%`
-                    : undefined,
-              }}
-            />
-          ) : (
-            <div className="relative flex h-full items-center justify-center bg-gray-800 px-4 dark:bg-gray-100">
-              <Image
-                src="/images/logo-horizontal-dark.svg"
-                alt="Posaunenwerk Rheinland"
-                width={200}
-                height={56}
-                className="h-auto w-auto max-w-[80%] dark:hidden"
-                unoptimized
-              />
-              <Image
-                src="/images/logo-horizontal.svg"
-                alt="Posaunenwerk Rheinland"
-                width={200}
-                height={56}
-                className="hidden h-auto w-auto max-w-[80%] dark:block"
-                style={{
-                  mixBlendMode: "multiply",
-                  filter: "brightness(1.1)",
-                }}
-                unoptimized
-              />
-            </div>
-          )}
+          <ImageWithFallback
+            src={image}
+            alt={title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            style={{
+              objectPosition:
+                imagePositionX !== null &&
+                imagePositionX !== undefined &&
+                imagePositionY !== null &&
+                imagePositionY !== undefined
+                  ? `${imagePositionX}% ${imagePositionY}%`
+                  : undefined,
+            }}
+          />
         </div>
 
         <div className="flex grow flex-col p-6">

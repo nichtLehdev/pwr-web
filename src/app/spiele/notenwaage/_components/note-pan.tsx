@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import type { NoteValueId } from "../_lib/types";
-import { NoteGlyph } from "./note-glyph";
+import { NoteGlyph } from "./note-glyph-loader";
 
 type Props = {
   notes: NoteValueId[];

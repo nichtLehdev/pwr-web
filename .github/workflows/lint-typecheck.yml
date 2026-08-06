@@ -63,5 +63,10 @@ jobs:
       - name: Run TypeScript type check
         run: pnpm typecheck
 
+      - name: Run unit tests
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+
       - name: Check formatting
         run: pnpm format:check

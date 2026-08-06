@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
+import { formatAvailableSlots } from "@/lib/format-available-slots";
 import Link from "next/link";
 import {
   useCallback,
@@ -103,7 +105,7 @@ function isRegistrationCurrentlyOpen(course: CourseListItem): boolean {
     return false;
   }
 
-  if (deadline && deadline < now) {
+  if (isRegistrationDeadlinePassed(deadline, now)) {
     return false;
   }
 
@@ -112,10 +114,7 @@ function isRegistrationCurrentlyOpen(course: CourseListItem): boolean {
 
 /** Large banner: only courses whose registration window has ended (deadline in the past). */
 function hasRegistrationDeadlinePassed(course: CourseListItem): boolean {
-  if (!course.registrationDeadline) {
-    return false;
-  }
-  return new Date(course.registrationDeadline).getTime() < Date.now();
+  return isRegistrationDeadlinePassed(course.registrationDeadline);
 }
 
 /** Save-the-date: upcoming course whose registration is not open yet (and deadline has not passed). */
@@ -263,8 +262,10 @@ function SmallOpenRegistrationCard({
             <span className="min-w-0 leading-snug">
               {course.availableSlots != null && course.availableSlots > 0 ? (
                 <>
-                  Noch {course.availableSlots}{" "}
-                  {course.availableSlots === 1 ? "Platz" : "Plätze"} frei
+                  {formatAvailableSlots(
+                    course.availableSlots,
+                    course.registrationTotalCapacity,
+                  )}
                 </>
               ) : (
                 "Keine Plätze mehr frei"
@@ -512,8 +513,10 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
             <span className="min-w-0 leading-snug">
               {course.availableSlots != null && course.availableSlots > 0 ? (
                 <>
-                  Noch {course.availableSlots}{" "}
-                  {course.availableSlots === 1 ? "Platz" : "Plätze"} frei
+                  {formatAvailableSlots(
+                    course.availableSlots,
+                    course.registrationTotalCapacity,
+                  )}
                 </>
               ) : (
                 "Keine Plätze mehr frei"

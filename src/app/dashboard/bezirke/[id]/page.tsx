@@ -6,6 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { MusicIcon, PencilIcon, ArrowLeftIcon, UserIcon } from "lucide-react";
 
@@ -21,9 +23,9 @@ export default function BezirkDetailPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageBezirke } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageBezirke = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
   );
 
   const { data: bezirk, isLoading: bezirkLoading } =
@@ -48,13 +50,14 @@ export default function BezirkDetailPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageBezirke &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageBezirke, router]);
 
   if (sessionLoading || profileLoading || bezirkLoading) {
     return (

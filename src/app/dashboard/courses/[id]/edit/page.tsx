@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { parseDeadlineEndOfDay, toLocalDateInputValue } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { cn, getErrorMessage } from "@/lib/utils";
@@ -345,12 +346,10 @@ export default function EditCoursePage() {
         motto: course.motto || "",
         description: course.description || "",
         courseType: course.courseType || CourseType.LEHRGANG,
-        startDate: start.toISOString().split("T")[0] || "",
-        endDate: end.toISOString().split("T")[0] || "",
+        startDate: toLocalDateInputValue(start),
+        endDate: toLocalDateInputValue(end),
         registrationDeadline: course.registrationDeadline
-          ? (new Date(course.registrationDeadline)
-              .toISOString()
-              .split("T")[0] ?? "")
+          ? toLocalDateInputValue(new Date(course.registrationDeadline))
           : "",
         hasRegistrationDeadline: Boolean(course.registrationDeadline),
         registrationOpensAt: course.registrationOpensAt
@@ -486,7 +485,7 @@ export default function EditCoursePage() {
         setDescription(course.description);
 
         const start = new Date(course.startDate);
-        setStartDate(start.toISOString().split("T")[0] || "");
+        setStartDate(toLocalDateInputValue(start));
         setStartTime(
           start.toLocaleTimeString("de-DE", {
             hour: "2-digit",
@@ -495,7 +494,7 @@ export default function EditCoursePage() {
           }),
         );
         const end = new Date(course.endDate);
-        setEndDate(end.toISOString().split("T")[0] || "");
+        setEndDate(toLocalDateInputValue(end));
         setEndTime(
           end.toLocaleTimeString("de-DE", {
             hour: "2-digit",
@@ -531,7 +530,7 @@ export default function EditCoursePage() {
         }
         if (course.registrationDeadline) {
           const deadline = new Date(course.registrationDeadline);
-          setRegistrationDeadline(deadline.toISOString().split("T")[0] || "");
+          setRegistrationDeadline(toLocalDateInputValue(deadline));
           setHasRegistrationDeadline(true);
         } else {
           setRegistrationDeadline("");
@@ -951,7 +950,7 @@ export default function EditCoursePage() {
         return;
       }
       if (hasRegistrationDeadline && registrationDeadline) {
-        const dl = new Date(registrationDeadline);
+        const dl = parseDeadlineEndOfDay(registrationDeadline);
         if (!Number.isNaN(dl.getTime()) && opensDt > dl) {
           setError(
             "Der geplante Anmeldungsbeginn darf nicht nach dem Anmeldeschluss liegen.",
@@ -1040,7 +1039,7 @@ export default function EditCoursePage() {
           : null,
       registrationDeadline:
         hasRegistrationDeadline && registrationDeadline
-          ? new Date(registrationDeadline)
+          ? parseDeadlineEndOfDay(registrationDeadline)
           : null,
       externalProviderName: isExternalProvider
         ? externalProviderName.trim() || null

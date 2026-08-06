@@ -169,7 +169,9 @@ services:
     expose:
       - "3000"
     volumes:
-      - uploads_data:/app/public/uploads
+      # Mounted outside public/ so file access always goes through the
+      # authorizing /api/uploads route (public/ would be served directly).
+      - uploads_data:/app/uploads
     environment:
       # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}

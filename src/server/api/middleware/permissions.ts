@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure } from "../trpc";
 import {
-  resolveUserPermissions,
+  resolveUserPermissionsCached,
   type PermissionKey,
 } from "../helpers/permissions";
 
@@ -9,10 +9,7 @@ function getOrResolvePermissions(
   ctx: { permissionCache: Map<string, Promise<Set<PermissionKey>>> },
   userId: string,
 ): Promise<Set<PermissionKey>> {
-  if (!ctx.permissionCache.has(userId)) {
-    ctx.permissionCache.set(userId, resolveUserPermissions(userId));
-  }
-  return ctx.permissionCache.get(userId)!;
+  return resolveUserPermissionsCached(userId, ctx.permissionCache);
 }
 
 export function permissionProcedure(permission: PermissionKey) {

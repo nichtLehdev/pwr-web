@@ -4,6 +4,10 @@ import { marked } from "marked";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import {
+  notifyCreatorOfReviewResult,
+  notifySubmittedForReview,
+} from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 
@@ -30,15 +34,6 @@ async function addContentHtml<T extends { content: string }>(
     ...post,
     contentHtml: await markdownToHtml(post.content),
   };
-}
-
-/**
- * Adds contentHtml field to an array of posts.
- */
-async function addContentHtmlToMany<T extends { content: string }>(
-  posts: T[],
-): Promise<(T & { contentHtml: string })[]> {
-  return await Promise.all(posts.map(addContentHtml));
 }
 
 const MEDIA_URL_PATTERN = /\/api\/uploads\/(?:media|profiles)\/[^\s"'<>)\]]+/;
@@ -171,12 +166,21 @@ export const postsRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+          // Sort by the date the UI displays (publishedAt), not createdAt —
+          // otherwise early-drafted, late-published posts sink below older ones.
+          orderBy: [
+            { pinned: "desc" },
+            { publishedAt: { sort: "desc", nulls: "last" } },
+            { createdAt: "desc" },
+          ],
         }),
         ctx.db.post.count({ where }),
       ]);
 
-      const posts = await addContentHtmlToMany(rawPosts);
+      // No markdown->HTML conversion for lists: only detail views (getById)
+      // render contentHtml; parsing every full article per list request was
+      // pure overhead.
+      const posts = rawPosts;
 
       return {
         posts,
@@ -237,10 +241,12 @@ export const postsRouter = createTRPCRouter({
         const canViewPost = await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.POSTS_VIEW,
+          ctx.permissionCache,
         );
         const canApprovePost = await userHasPermission(
           ctx.session.user.id,
           PERMISSIONS.POSTS_APPROVE,
+          ctx.permissionCache,
         );
         const user = await ctx.db.user.findUnique({
           where: { id: ctx.session.user.id },
@@ -381,7 +387,10 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      const posts = await addContentHtmlToMany(rawPosts);
+      // No markdown->HTML conversion for lists: only detail views (getById)
+      // render contentHtml; parsing every full article per list request was
+      // pure overhead.
+      const posts = rawPosts;
 
       return {
         posts,
@@ -398,13 +407,13 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      // PENDING is the review marker itself — a separate pendingReview
+      // column never existed in the schema.
       const where: {
         status: ContentStatus;
-        pendingReview: boolean;
         bezirkId?: string;
       } = {
         status: ContentStatus.PENDING,
-        pendingReview: true,
       };
 
       // Check if user can only approve for their district
@@ -415,6 +424,7 @@ export const postsRouter = createTRPCRouter({
       const canApproveAll = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.POSTS_APPROVE,
+        ctx.permissionCache,
       );
       // If user can't approve all but has a district, limit to their district
       if (!canApproveAll && user?.bezirkId) {
@@ -436,7 +446,10 @@ export const postsRouter = createTRPCRouter({
         ctx.db.post.count({ where }),
       ]);
 
-      const posts = await addContentHtmlToMany(rawPosts);
+      // No markdown->HTML conversion for lists: only detail views (getById)
+      // render contentHtml; parsing every full article per list request was
+      // pure overhead.
+      const posts = rawPosts;
 
       return {
         posts,
@@ -466,6 +479,7 @@ export const postsRouter = createTRPCRouter({
       const canPinPosts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
       if (input.pinned && !canPinPosts) {
         throw new TRPCError({
@@ -477,6 +491,7 @@ export const postsRouter = createTRPCRouter({
       const canApprovePosts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.POSTS_APPROVE,
+        ctx.permissionCache,
       );
       if (input.status === ContentStatus.APPROVED && !canApprovePosts) {
         throw new TRPCError({
@@ -499,6 +514,16 @@ export const postsRouter = createTRPCRouter({
           bezirk: true,
         },
       });
+
+      if (post.status === ContentStatus.PENDING) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "post",
+          contentId: post.id,
+          title: post.title,
+          actorId: ctx.session.user.id,
+        });
+      }
 
       return post;
     }),
@@ -539,6 +564,7 @@ export const postsRouter = createTRPCRouter({
       const canEditPost = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.POSTS_EDIT,
+        ctx.permissionCache,
       );
       const canEdit = post.createdById === ctx.session.user.id || canEditPost;
 
@@ -552,6 +578,7 @@ export const postsRouter = createTRPCRouter({
       const canPinPosts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
+        ctx.permissionCache,
       );
       if (updateData.pinned !== undefined && !canPinPosts) {
         throw new TRPCError({
@@ -563,6 +590,7 @@ export const postsRouter = createTRPCRouter({
       const canApprovePosts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.POSTS_APPROVE,
+        ctx.permissionCache,
       );
       if (updateData.status === ContentStatus.APPROVED && !canApprovePosts) {
         throw new TRPCError({
@@ -605,7 +633,7 @@ export const postsRouter = createTRPCRouter({
         finalData.authorName = updateData.authorName;
       }
 
-      return await ctx.db.post.update({
+      const updated = await ctx.db.post.update({
         where: { id },
         data: finalData,
         include: {
@@ -613,6 +641,21 @@ export const postsRouter = createTRPCRouter({
           bezirk: true,
         },
       });
+
+      if (
+        updateData.status === ContentStatus.PENDING &&
+        post.status !== ContentStatus.PENDING
+      ) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "post",
+          contentId: updated.id,
+          title: updated.title,
+          actorId: ctx.session.user.id,
+        });
+      }
+
+      return updated;
     }),
 
   delete: protectedProcedure
@@ -633,6 +676,7 @@ export const postsRouter = createTRPCRouter({
       const canDeletePost = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.POSTS_DELETE,
+        ctx.permissionCache,
       );
       const canDelete =
         post.createdById === ctx.session.user.id || canDeletePost;
@@ -731,7 +775,7 @@ export const postsRouter = createTRPCRouter({
         }
       }
 
-      return await ctx.db.post.update({
+      const approved = await ctx.db.post.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.APPROVED,
@@ -741,6 +785,19 @@ export const postsRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "post",
+        contentId: approved.id,
+        title: approved.title,
+        createdById: approved.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: true,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return approved;
     }),
 
   reject: permissionProcedure(PERMISSIONS.POSTS_APPROVE)
@@ -751,7 +808,7 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.post.update({
+      const rejected = await ctx.db.post.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.REJECTED,
@@ -760,6 +817,19 @@ export const postsRouter = createTRPCRouter({
           reviewNotes: input.reviewNotes,
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "post",
+        contentId: rejected.id,
+        title: rejected.title,
+        createdById: rejected.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: false,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return rejected;
     }),
 
   getDashboardPosts: protectedProcedure
@@ -780,10 +850,12 @@ export const postsRouter = createTRPCRouter({
       const canApproveAll = await userHasPermission(
         userId,
         PERMISSIONS.POSTS_APPROVE,
+        ctx.permissionCache,
       );
       const canApproveOwn = await userHasPermission(
         userId,
         PERMISSIONS.POSTS_CREATE,
+        ctx.permissionCache,
       );
 
       let where: Record<string, unknown> = {};
@@ -865,6 +937,7 @@ export const postsRouter = createTRPCRouter({
       const canDeleteAny = await userHasPermission(
         userId,
         PERMISSIONS.POSTS_DELETE,
+        ctx.permissionCache,
       );
 
       const posts = await ctx.db.post.findMany({
@@ -972,6 +1045,7 @@ export const postsRouter = createTRPCRouter({
       const canApprove = await userHasPermission(
         userId,
         PERMISSIONS.POSTS_APPROVE,
+        ctx.permissionCache,
       );
 
       const posts = await ctx.db.post.findMany({

@@ -4,6 +4,8 @@ import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { Mail, Users } from "lucide-react";
@@ -17,10 +19,8 @@ export default function DashboardNewsletterPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageNewsletter } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
-  );
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
 
   const { data: statistics } = api.newsletter.getStatistics.useQuery(
     undefined,
@@ -40,13 +40,14 @@ export default function DashboardNewsletterPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageNewsletter &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       redirect("/dashboard");
     }
-  }, [profile, profileLoading, canManageNewsletter]);
+  }, [profile, profileLoading, permissionsLoading, canManageNewsletter]);
 
   if (isPending || profileLoading) {
     return (

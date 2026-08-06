@@ -60,7 +60,7 @@ export default async function VorstandPage() {
                       <Image
                         src={
                           member.user.profileImage?.url ||
-                          "/images/placeholder-profile.png"
+                          "/images/profile-placeholder.jpg"
                         }
                         alt={
                           member.user.profileImage?.alt ||
@@ -113,7 +113,7 @@ export default async function VorstandPage() {
                     <div className={`h-64 ${member.color} relative`}>
                       <Image
                         src={
-                          member.image?.url || "/images/placeholder-profile.png"
+                          member.image?.url || "/images/profile-placeholder.jpg"
                         }
                         alt={
                           member.image?.alt ||

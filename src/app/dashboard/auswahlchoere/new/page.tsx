@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
@@ -44,9 +46,9 @@ export default function NewAuswahlchorPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageAuswahlchoere } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageAuswahlchoere = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
   );
 
   const { data: usersData } = api.users.list.useQuery(
@@ -107,13 +109,20 @@ export default function NewAuswahlchorPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageAuswahlchoere &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageAuswahlchoere,
+    router,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

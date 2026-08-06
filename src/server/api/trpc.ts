@@ -14,6 +14,7 @@ import { ZodError } from "zod";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import type { PermissionKey } from "@/lib/permissions";
+import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 
 /**
  * 1. CONTEXT
@@ -111,6 +112,28 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Public procedure with per-client rate limiting. Use for anonymous
+ * endpoints that send e-mail, hit external services, or allow enumeration
+ * (registration create, newsletter subscribe, availability checks, search).
+ */
+export function rateLimitedPublicProcedure(
+  name: string,
+  options: { maxRequests: number; windowMs: number },
+) {
+  return publicProcedure.use(async ({ ctx, next }) => {
+    const key = `trpc:${name}:${clientKeyFromHeaders(ctx.headers)}`;
+    const result = rateLimit(key, options);
+    if (!result.success) {
+      throw new TRPCError({
+        code: "TOO_MANY_REQUESTS",
+        message: "Zu viele Anfragen. Bitte versuche es später erneut.",
+      });
+    }
+    return next();
+  });
+}
 
 /**
  * Protected (authenticated) procedure

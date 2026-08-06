@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import JSZip from "jszip";
 import QRCode from "qrcode";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { computeSiblingDiscounts } from "@/lib/sibling-discount";
 
 export interface InvoiceParticipant {
   firstName: string;
@@ -315,58 +315,29 @@ export async function createInvoicePdf(
   y += 10;
   doc.setFont("helvetica", "normal");
 
-  const participantDiscounts = new Map<string, number>();
-
+  // Same shared discount computation as registration create/update — with
+  // age evaluated at course start — so the printed line items always agree
+  // with the stored totalPrice.
+  let discountPerParticipant: number[] = registration.participants.map(() => 0);
   if (
     registration.siblingDiscountApplied &&
+    registration.siblingDiscountStatus !== "REJECTED" &&
     registration.participants.some((p) => p.siblingGroupId)
   ) {
-    const siblingGroups = new Map<
-      string | null,
-      typeof registration.participants
-    >();
-    registration.participants.forEach((participant) => {
-      const groupId = participant.siblingGroupId ?? null;
-      if (!siblingGroups.has(groupId)) {
-        siblingGroups.set(groupId, []);
-      }
-      siblingGroups.get(groupId)?.push(participant);
-    });
-
-    siblingGroups.forEach((groupParticipants, groupId) => {
-      if (groupId && groupParticipants.length > 1) {
-        // Only apply discount to participants under 18
-        const eligibleParticipants = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-
-        if (eligibleParticipants.length > 1) {
-          const sortedGroup = [...eligibleParticipants].sort((a, b) => {
-            const nameA = `${a.firstName} ${a.lastName}`;
-            const nameB = `${b.firstName} ${b.lastName}`;
-            return nameA.localeCompare(nameB);
-          });
-
-          // Apply discount to all eligible participants except the first one
-          for (let i = 1; i < sortedGroup.length; i++) {
-            const participant = sortedGroup[i];
-            if (!participant) continue;
-
-            const priceOption = course.priceOptions?.find(
-              (p) => p.label === participant.priceOption,
-            );
-            const price = priceOption?.price ?? 0;
-            const discount = price * 0.2;
-
-            const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
-            participantDiscounts.set(participantKey, discount);
-          }
-        }
-      }
-    });
+    const result = computeSiblingDiscounts(
+      registration.participants.map((participant) => ({
+        birthDate: participant.birthDate,
+        siblingGroupId: participant.siblingGroupId,
+        price:
+          course.priceOptions?.find((p) => p.label === participant.priceOption)
+            ?.price ?? 0,
+      })),
+      course.startDate ? new Date(course.startDate) : new Date(),
+    );
+    discountPerParticipant = result.discountPerParticipant;
   }
 
-  registration.participants.forEach((participant) => {
+  registration.participants.forEach((participant, participantIndex) => {
     checkPageBreak();
 
     const priceOption = course.priceOptions?.find(
@@ -374,8 +345,7 @@ export async function createInvoicePdf(
     );
     const price = priceOption?.price ?? 0;
 
-    const participantKey = `${participant.firstName}|${participant.lastName}|${participant.priceOption}`;
-    const participantDiscount = participantDiscounts.get(participantKey) ?? 0;
+    const participantDiscount = discountPerParticipant[participantIndex] ?? 0;
 
     doc.text(`${participant.firstName} ${participant.lastName}`, margin + 2, y);
     doc.text(participant.priceOption || "-", margin + 80, y);

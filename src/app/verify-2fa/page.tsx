@@ -2,6 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
+import { api } from "@/trpc/react";
 import Link from "next/link";
 import { useToast } from "@/app/_components/ui/toast";
 import { Shield, ArrowLeft } from "lucide-react";
@@ -16,7 +18,23 @@ function Verify2FAContent() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
-  const redirectTo = searchParams.get("redirect") || "/";
+  const utils = api.useUtils();
+
+  // Same routing rule as the password login and the OAuth callback: an
+  // explicit redirect target wins, dashboard only as permission fallback.
+  const finishLogin = async () => {
+    toast.success("Erfolgreich verifiziert!");
+    let hasDashboardAccess = false;
+    try {
+      const permissions = await utils.permissions.getMyPermissions.fetch();
+      hasDashboardAccess = !!permissions && permissions.length > 0;
+    } catch {
+      // No permissions readable — treat as a regular user.
+    }
+    router.push(
+      resolvePostLoginTarget(searchParams.get("redirect"), hasDashboardAccess),
+    );
+  };
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +60,7 @@ function Verify2FAContent() {
               "Ungültiger Backup-Code. Bitte versuche es erneut.",
           );
         } else {
-          toast.success("Erfolgreich verifiziert!");
-          router.push(redirectTo);
+          await finishLogin();
         }
       } catch (error) {
         setError(
@@ -74,8 +91,7 @@ function Verify2FAContent() {
               "Ungültiger Code. Bitte versuche es erneut.",
           );
         } else {
-          toast.success("Erfolgreich verifiziert!");
-          router.push(redirectTo);
+          await finishLogin();
         }
       } catch (error) {
         setError(

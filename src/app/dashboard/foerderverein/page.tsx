@@ -6,12 +6,21 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { EditIcon, PlusIcon, UsersIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  EditIcon,
+  PlusIcon,
+  UsersIcon,
+} from "lucide-react";
 import { TrashIcon, UserIcon } from "lucide-react";
 import { CheckIcon } from "lucide-react";
+import { computeReorderUpdates } from "@/lib/reorder";
 
 const FOERDERVEREIN_ROLE_LABELS: Record<string, string> = {
   VORSITZENDER: "Vorsitzender",
@@ -28,15 +37,16 @@ export default function DashboardFoerdervereinPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isReordering, setIsReordering] = useState(false);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
 
-  const { data: canManageOrganization } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageOrganization = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_FOERDERVEREIN,
   );
 
   const {
@@ -44,6 +54,9 @@ export default function DashboardFoerdervereinPage() {
     isLoading: membersLoading,
     refetch,
   } = api.organization.getFoerderverein.useQuery();
+
+  const reorderMutation =
+    api.organization.updateFoerdervereinMember.useMutation();
 
   const deleteMutation = api.organization.deleteFoerdervereinMember.useMutation(
     {
@@ -70,13 +83,20 @@ export default function DashboardFoerdervereinPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageOrganization &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageOrganization, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageOrganization,
+    router,
+  ]);
 
   const handleDelete = async (id: string) => {
     if (
@@ -86,6 +106,29 @@ export default function DashboardFoerdervereinPage() {
     }
     setDeletingId(id);
     deleteMutation.mutate({ id });
+  };
+
+  const handleMove = async (index: number, direction: "up" | "down") => {
+    if (!members || isReordering) return;
+    const updates = computeReorderUpdates(members, index, direction);
+    if (!updates) return;
+    setIsReordering(true);
+    try {
+      for (const update of updates) {
+        await reorderMutation.mutateAsync({
+          id: update.id,
+          sortOrder: update.sortOrder,
+        });
+      }
+      await refetch();
+    } catch (error) {
+      toast.error(
+        "Fehler beim Ändern der Reihenfolge: " +
+          (error instanceof Error ? error.message : "Unbekannter Fehler"),
+      );
+    } finally {
+      setIsReordering(false);
+    }
   };
 
   if (isPending || profileLoading || membersLoading) {
@@ -161,7 +204,7 @@ export default function DashboardFoerdervereinPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {members.map((member) => {
+                {members.map((member, index) => {
                   const displayName =
                     member.user?.displayName || member.name || "Unbekannt";
                   const displayEmail =
@@ -242,6 +285,26 @@ export default function DashboardFoerdervereinPage() {
                       </td>
                       <td className="px-6 py-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => void handleMove(index, "up")}
+                            disabled={index === 0 || isReordering}
+                            aria-label="Nach oben"
+                            title="Nach oben"
+                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                          >
+                            <ChevronUpIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => void handleMove(index, "down")}
+                            disabled={
+                              index === members.length - 1 || isReordering
+                            }
+                            aria-label="Nach unten"
+                            title="Nach unten"
+                            className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-gray-800"
+                          >
+                            <ChevronDownIcon className="h-4 w-4" />
+                          </button>
                           <Link
                             href={`/dashboard/foerderverein/${member.id}/edit`}
                             className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"

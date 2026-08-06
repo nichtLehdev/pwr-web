@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import {
@@ -32,9 +34,9 @@ export default function NewLocationPage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageLocations } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageLocations = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS,
   );
 
   const [name, setName] = useState("");
@@ -73,13 +75,14 @@ export default function NewLocationPage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageLocations &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageLocations, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageLocations, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

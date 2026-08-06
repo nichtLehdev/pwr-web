@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/trpc/react";
 import { useSession } from "@/lib/auth";
 import { usePermissions } from "@/lib/use-permissions";
+import { resolvePostLoginTarget } from "@/lib/post-login-redirect";
 
 export default function LoginCallbackPage() {
   const router = useRouter();
@@ -27,13 +28,8 @@ export default function LoginCallbackPage() {
 
     const storedRedirect = sessionStorage.getItem("loginRedirect");
     sessionStorage.removeItem("loginRedirect");
-    const redirectTo = storedRedirect ?? "/";
 
-    if (hasDashboardAccess) {
-      router.push("/dashboard");
-    } else {
-      router.push(redirectTo);
-    }
+    router.push(resolvePostLoginTarget(storedRedirect, hasDashboardAccess));
   }, [
     session,
     profile,

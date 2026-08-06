@@ -105,6 +105,9 @@ export const PERMISSIONS = {
   // Permissions Management (meta-permission)
   PERMISSIONS_MANAGE: "permissions.manage",
 
+  // Audit Log
+  AUDIT_VIEW: "audit.view",
+
   // Organization History
   ORGANIZATION_MANAGE_HISTORY: "organization.manage_history",
 
@@ -533,6 +536,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Berechtigungen verwalten",
     description: "Berechtigung zum Verwalten von Berechtigungen und Rollen",
     category: "permissions",
+  },
+  {
+    key: PERMISSIONS.AUDIT_VIEW,
+    name: "Audit-Log einsehen",
+    description:
+      "Berechtigung zum Einsehen des Audit-Logs (sicherheitsrelevante Aktionen)",
+    category: "system",
   },
 
   // Organization History

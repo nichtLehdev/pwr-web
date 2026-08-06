@@ -12,6 +12,7 @@ export interface EmailOptions {
   html: string;
   text?: string;
   from?: string;
+  replyTo?: string;
   attachments?: EmailAttachment[];
 }
 
@@ -29,6 +30,7 @@ export async function sendEmail(options: EmailOptions) {
     to: options.to,
     subject: options.subject,
     html: options.html,
+    ...(options.replyTo && { replyTo: options.replyTo }),
     ...(options.text && { text: options.text }),
     ...(options.attachments?.length && {
       attachments: options.attachments.map((a) => ({

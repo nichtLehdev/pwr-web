@@ -112,6 +112,10 @@ export default function RegistrationDetailPage() {
   const [paymentStatusDraft, setPaymentStatusDraft] = useState<
     (typeof PaymentStatus)[keyof typeof PaymentStatus] | null
   >(null);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [statusDraft, setStatusDraft] = useState<
+    (typeof RegistrationStatus)[keyof typeof RegistrationStatus] | null
+  >(null);
 
   const { data: profile } = api.users.getMyProfile.useQuery(undefined, {
     enabled: !!session?.user,
@@ -189,6 +193,25 @@ export default function RegistrationDetailPage() {
         );
       },
     });
+
+  const updateStatusMutation = api.registrations.updateStatus.useMutation({
+    onSuccess: (updated) => {
+      setEditingStatus(false);
+      setStatusDraft(null);
+      toast.success(
+        updated.registrationStatus === RegistrationStatus.CONFIRMED
+          ? "Anmeldung bestätigt"
+          : "Anmeldestatus aktualisiert",
+      );
+      void utils.registrations.getById.invalidate({ id: registrationId });
+      void utils.courses.getRegistrations.invalidate({ courseId });
+    },
+    onError: (error) => {
+      toast.error(
+        error.message || "Fehler beim Aktualisieren des Anmeldestatus",
+      );
+    },
+  });
 
   const { hasPermission } = usePermissions();
 
@@ -329,11 +352,94 @@ export default function RegistrationDetailPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
-            >
-              {registrationStatusLabels[registration.registrationStatus]}
-            </span>
+            {canEdit && editingStatus ? (
+              <div className="flex items-center gap-2">
+                <Select
+                  value={statusDraft ?? registration.registrationStatus}
+                  onChange={(e) =>
+                    setStatusDraft(
+                      e.target
+                        .value as (typeof RegistrationStatus)[keyof typeof RegistrationStatus],
+                    )
+                  }
+                  className="dark:bg-dark-background-secondary dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium focus:ring-1 focus:outline-none"
+                >
+                  <option value={RegistrationStatus.CONFIRMED}>
+                    {registrationStatusLabels[RegistrationStatus.CONFIRMED]}
+                  </option>
+                  <option value={RegistrationStatus.WAITLIST}>
+                    {registrationStatusLabels[RegistrationStatus.WAITLIST]}
+                  </option>
+                  <option value={RegistrationStatus.CANCELLED}>
+                    {registrationStatusLabels[RegistrationStatus.CANCELLED]}
+                  </option>
+                </Select>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateStatusMutation.mutate({
+                      id: registrationId,
+                      registrationStatus:
+                        statusDraft ?? registration.registrationStatus,
+                    })
+                  }
+                  disabled={updateStatusMutation.isPending}
+                  className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                >
+                  {updateStatusMutation.isPending ? "Speichert…" : "Speichern"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingStatus(false);
+                    setStatusDraft(null);
+                  }}
+                  disabled={updateStatusMutation.isPending}
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
+                >
+                  {registrationStatusLabels[registration.registrationStatus]}
+                </span>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => setEditingStatus(true)}
+                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    aria-label="Anmeldestatus bearbeiten"
+                  >
+                    <PencilIcon className="h-3.5 w-3.5" />
+                    Status
+                  </button>
+                )}
+                {canEdit &&
+                  registration.registrationStatus ===
+                    RegistrationStatus.WAITLIST && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateStatusMutation.mutate({
+                          id: registrationId,
+                          registrationStatus: RegistrationStatus.CONFIRMED,
+                        })
+                      }
+                      disabled={updateStatusMutation.isPending}
+                      className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    >
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      {updateStatusMutation.isPending
+                        ? "Bestätigt…"
+                        : "Von Warteliste bestätigen"}
+                    </button>
+                  )}
+              </div>
+            )}
             <span
               className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
             >

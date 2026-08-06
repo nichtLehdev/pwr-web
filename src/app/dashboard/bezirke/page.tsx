@@ -6,6 +6,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
 import {
@@ -30,9 +32,9 @@ export default function DashboardBezirkePage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageBezirke } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageBezirke = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
   );
 
   const {
@@ -64,13 +66,14 @@ export default function DashboardBezirkePage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageBezirke &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageBezirke, router]);
+  }, [profile, profileLoading, permissionsLoading, canManageBezirke, router]);
 
   const handleDelete = async (id: string) => {
     if (

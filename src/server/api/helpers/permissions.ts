@@ -148,25 +148,48 @@ export async function batchResolveRolePermissions(
   return result;
 }
 
+/** Per-request memo of resolved permission sets, keyed by user id. */
+export type PermissionCache = Map<string, Promise<Set<PermissionKey>>>;
+
+/**
+ * Resolve permissions through the per-request cache when one is available.
+ * Resolution costs several queries (user + role hierarchy), so every caller
+ * inside a tRPC procedure should pass `ctx.permissionCache`.
+ */
+export function resolveUserPermissionsCached(
+  userId: string,
+  cache?: PermissionCache,
+): Promise<Set<PermissionKey>> {
+  if (!cache) return resolveUserPermissions(userId);
+  let cached = cache.get(userId);
+  if (!cached) {
+    cached = resolveUserPermissions(userId);
+    cache.set(userId, cached);
+  }
+  return cached;
+}
+
 /**
  * Check if a user has a specific permission.
- * Thin wrapper around resolveUserPermissions.
+ * Pass `ctx.permissionCache` so repeated checks in one request resolve once.
  */
 export async function userHasPermission(
   userId: string,
   permissionKey: PermissionKey,
+  cache?: PermissionCache,
 ): Promise<boolean> {
-  const perms = await resolveUserPermissions(userId);
+  const perms = await resolveUserPermissionsCached(userId, cache);
   return perms.has(permissionKey);
 }
 
 /**
  * Get all permission keys a user has.
- * Thin wrapper around resolveUserPermissions.
+ * Pass `ctx.permissionCache` so repeated checks in one request resolve once.
  */
 export async function getUserPermissions(
   userId: string,
+  cache?: PermissionCache,
 ): Promise<PermissionKey[]> {
-  const perms = await resolveUserPermissions(userId);
+  const perms = await resolveUserPermissionsCached(userId, cache);
   return Array.from(perms);
 }

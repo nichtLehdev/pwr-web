@@ -189,7 +189,10 @@ export default async function StrukturGeschichtePage() {
       </section>
 
       {/* Geschichte */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
+      <section
+        id="geschichte"
+        className="bg-background dark:bg-dark-background scroll-mt-24 py-12 md:py-16 lg:py-20"
+      >
         <div className="container">
           <div className="mx-auto max-w-5xl">
             <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">

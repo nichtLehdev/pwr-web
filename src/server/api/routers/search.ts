@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
 
 export type SearchResultType =
@@ -664,7 +664,10 @@ function searchStaticPages(query: string, limit: number): SearchResult[] {
 }
 
 export const searchRouter = createTRPCRouter({
-  global: publicProcedure
+  global: rateLimitedPublicProcedure("search.global", {
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+  })
     .input(
       z.object({
         query: z.string().min(2),

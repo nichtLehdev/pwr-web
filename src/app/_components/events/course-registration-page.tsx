@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Calendar, MapPin, Users, Wallet } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
+import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import type { RouterOutputs } from "@/trpc/react";
@@ -177,7 +178,7 @@ export default function CourseRegistrationPage({
           <Users className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
           {isWaitlist
             ? "Warteliste"
-            : `${spots.availableSlots} / ${course.maxParticipants} frei`}
+            : formatAvailableSlots(spots.availableSlots, spots.totalCapacity)}
         </span>
         {!course.isFree && acceptedPaymentMethods ? (
           <>

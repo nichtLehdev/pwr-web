@@ -8,6 +8,10 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import {
+  notifyCreatorOfReviewResult,
+  notifySubmittedForReview,
+} from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 
@@ -145,10 +149,12 @@ export const eventsRouter = createTRPCRouter({
           (await userHasPermission(
             ctx.session.user.id,
             PERMISSIONS.EVENTS_VIEW,
+            ctx.permissionCache,
           )) ||
           (await userHasPermission(
             ctx.session.user.id,
             PERMISSIONS.EVENTS_APPROVE,
+            ctx.permissionCache,
           ));
 
         if (!canView) {
@@ -223,10 +229,12 @@ export const eventsRouter = createTRPCRouter({
       const canApproveAll = await userHasPermission(
         userId,
         PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
       );
       const canApproveOwn = await userHasPermission(
         userId,
         PERMISSIONS.EVENTS_CREATE,
+        ctx.permissionCache,
       );
 
       let where: Prisma.EventWhereInput = {};
@@ -319,13 +327,13 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      // PENDING is the review marker itself — a separate pendingReview
+      // column never existed in the schema.
       const where: {
         status: ContentStatus;
-        pendingReview: boolean;
         bezirkId?: string;
       } = {
         status: ContentStatus.PENDING,
-        pendingReview: true,
       };
 
       // Check if user can only approve for their district
@@ -336,6 +344,7 @@ export const eventsRouter = createTRPCRouter({
       const canApproveAll = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
       );
       // If user can't approve all but has a district, limit to their district
       if (!canApproveAll && user?.bezirkId) {
@@ -438,6 +447,16 @@ export const eventsRouter = createTRPCRouter({
         },
       });
 
+      if (event.status === ContentStatus.PENDING) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "event",
+          contentId: event.id,
+          title: event.title,
+          actorId: ctx.session.user.id,
+        });
+      }
+
       return event;
     }),
 
@@ -484,7 +503,7 @@ export const eventsRouter = createTRPCRouter({
 
       const event = await ctx.db.event.findUnique({
         where: { id },
-        select: { createdById: true },
+        select: { createdById: true, status: true },
       });
 
       if (!event) {
@@ -497,6 +516,7 @@ export const eventsRouter = createTRPCRouter({
       const canEditCourse = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.EVENTS_EDIT,
+        ctx.permissionCache,
       );
       const canEdit =
         event.createdById === ctx.session.user.id || canEditCourse;
@@ -538,7 +558,7 @@ export const eventsRouter = createTRPCRouter({
         }
       }
 
-      return await ctx.db.event.update({
+      const updated = await ctx.db.event.update({
         where: { id },
         data: updateData,
         include: {
@@ -552,6 +572,21 @@ export const eventsRouter = createTRPCRouter({
           },
         },
       });
+
+      if (
+        updateData.status === ContentStatus.PENDING &&
+        event.status !== ContentStatus.PENDING
+      ) {
+        await notifySubmittedForReview({
+          db: ctx.db,
+          contentType: "event",
+          contentId: updated.id,
+          title: updated.title,
+          actorId: ctx.session.user.id,
+        });
+      }
+
+      return updated;
     }),
 
   delete: protectedProcedure
@@ -572,6 +607,7 @@ export const eventsRouter = createTRPCRouter({
       const canDeleteEvent = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.EVENTS_DELETE,
+        ctx.permissionCache,
       );
       const canDelete =
         event.createdById === ctx.session.user.id || canDeleteEvent;
@@ -629,6 +665,7 @@ export const eventsRouter = createTRPCRouter({
       const canApproveAllEvents = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
       );
       // If user can't approve all but has a district, check district match
       if (
@@ -665,7 +702,7 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
-      return await ctx.db.event.update({
+      const approved = await ctx.db.event.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.APPROVED,
@@ -675,6 +712,19 @@ export const eventsRouter = createTRPCRouter({
           publishedAt: new Date(),
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "event",
+        contentId: approved.id,
+        title: approved.title,
+        createdById: approved.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: true,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return approved;
     }),
 
   reject: permissionProcedure(PERMISSIONS.EVENTS_APPROVE)
@@ -685,7 +735,7 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.event.update({
+      const rejected = await ctx.db.event.update({
         where: { id: input.id },
         data: {
           status: ContentStatus.REJECTED,
@@ -694,6 +744,19 @@ export const eventsRouter = createTRPCRouter({
           reviewNotes: input.reviewNotes,
         },
       });
+
+      await notifyCreatorOfReviewResult({
+        db: ctx.db,
+        contentType: "event",
+        contentId: rejected.id,
+        title: rejected.title,
+        createdById: rejected.createdById,
+        reviewerId: ctx.session.user.id,
+        approved: false,
+        reviewNotes: input.reviewNotes,
+      });
+
+      return rejected;
     }),
 
   bulkDelete: protectedProcedure
@@ -703,6 +766,7 @@ export const eventsRouter = createTRPCRouter({
       const canDeleteAny = await userHasPermission(
         userId,
         PERMISSIONS.EVENTS_DELETE,
+        ctx.permissionCache,
       );
 
       const events = await ctx.db.event.findMany({
@@ -735,6 +799,7 @@ export const eventsRouter = createTRPCRouter({
       const canEditAny = await userHasPermission(
         userId,
         PERMISSIONS.EVENTS_EDIT,
+        ctx.permissionCache,
       );
 
       const events = await ctx.db.event.findMany({
@@ -907,6 +972,7 @@ export const eventsRouter = createTRPCRouter({
       const canApprove = await userHasPermission(
         userId,
         PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
       );
 
       const events = await ctx.db.event.findMany({

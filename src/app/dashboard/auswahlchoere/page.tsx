@@ -6,6 +6,8 @@ import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
+import { usePermissions } from "@/lib/use-permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
@@ -37,9 +39,9 @@ export default function DashboardAuswahlchoerePage() {
       enabled: !!session?.user,
     });
 
-  const { data: canManageAuswahlchoere } = api.permissions.canManage.useQuery(
-    undefined,
-    { enabled: !!session?.user },
+  const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+  const canManageAuswahlchoere = hasPermission(
+    PERMISSIONS.ORGANIZATION_MANAGE_AUSWAHLCHOERE,
   );
 
   const {
@@ -75,13 +77,20 @@ export default function DashboardAuswahlchoerePage() {
     if (
       !profileLoading &&
       profile &&
+      !permissionsLoading &&
       !canManageAuswahlchoere &&
       !hasRedirected.current
     ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [profile, profileLoading, canManageAuswahlchoere, router]);
+  }, [
+    profile,
+    profileLoading,
+    permissionsLoading,
+    canManageAuswahlchoere,
+    router,
+  ]);
 
   const handleDelete = async (id: string, name: string) => {
     if (
