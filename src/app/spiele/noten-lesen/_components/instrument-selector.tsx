@@ -20,9 +20,19 @@ export type InstrumentSelectorProps = {
   instrument: InstrumentId;
   mode: GameModeId;
   difficulty: DifficultyId;
+  /** Aktives eigenes Notenset (Custom-Schwierigkeit) — sonst null. */
+  customSet: { name: string; noteCount: number } | null;
+  /** Persistiertes/verlinktes Set wird noch aufgelöst („Lädt …“-Kachel). */
+  customPending: { name: string | null } | null;
+  /** Einzeiliger Hinweis unter der Set-Kachel (z. B. „Set gibt es nicht mehr“). */
+  customNotice: string | null;
   onInstrument: (id: InstrumentId) => void;
   onMode: (m: GameModeId) => void;
   onDifficulty: (d: DifficultyId) => void;
+  /** Notenset-Bibliothek öffnen (Kachel bzw. „Ändern“). */
+  onOpenLibrary: () => void;
+  /** Eigenes Set entfernen → zurück zur zuletzt gewählten Preset-Stufe. */
+  onRemoveCustomSet: () => void;
 };
 
 function difficultyButtonClass(active: boolean): string {
@@ -34,14 +44,25 @@ function difficultyButtonClass(active: boolean): string {
   );
 }
 
+const SMALL_ACTION_BUTTON_CLASS =
+  "border-dark-border/50 dark:border-dark-border text-dark dark:text-dark-text hover:border-primary/40 dark:hover:border-primary/35 rounded-sm border px-3 py-1.5 text-xs font-bold transition-colors active:scale-[0.99]";
+
 export function InstrumentSelector({
   instrument,
   mode,
   difficulty,
+  customSet,
+  customPending,
+  customNotice,
   onInstrument,
   onMode,
   onDifficulty,
+  onOpenLibrary,
+  onRemoveCustomSet,
 }: InstrumentSelectorProps) {
+  /* Eigenes Set aktiv (oder wird gerade aufgelöst) → die Preset-Kacheln
+   * sind abgewählt und das Instrument spielt keine Rolle. */
+  const customActive = customSet != null || customPending != null;
   const hideInstrument = hidesInstrumentForDifficulty(difficulty);
   const [extraOpen, setExtraOpen] = useState(() =>
     isExtraSectionDifficulty(difficulty),
@@ -64,7 +85,10 @@ export function InstrumentSelector({
                   onDifficulty(id);
                   setExtraOpen(false);
                 }}
-                className={difficultyButtonClass(difficulty === id)}
+                aria-pressed={!customActive && difficulty === id}
+                className={difficultyButtonClass(
+                  !customActive && difficulty === id,
+                )}
               >
                 <span className="text-dark dark:text-dark-text font-bold">
                   {d.title}
@@ -93,14 +117,16 @@ export function InstrumentSelector({
               aria-hidden
             />
           </button>
-          {!extraOpen && isExtraSectionDifficulty(difficulty) && (
-            <p className="text-dark dark:text-dark-text-muted border-dark-border/40 dark:border-dark-border/60 border-t px-3 py-2 text-center text-xs">
-              Gewählt:{" "}
-              <span className="text-dark dark:text-dark-text font-bold">
-                {DIFFICULTY_LABELS[difficulty].title}
-              </span>
-            </p>
-          )}
+          {!extraOpen &&
+            !customActive &&
+            isExtraSectionDifficulty(difficulty) && (
+              <p className="text-dark dark:text-dark-text-muted border-dark-border/40 dark:border-dark-border/60 border-t px-3 py-2 text-center text-xs">
+                Gewählt:{" "}
+                <span className="text-dark dark:text-dark-text font-bold">
+                  {DIFFICULTY_LABELS[difficulty].title}
+                </span>
+              </p>
+            )}
           {extraOpen && (
             <div className="border-dark-border/40 dark:border-dark-border/60 space-y-2 border-t p-3">
               <p className="text-dark dark:text-dark-text-muted text-center text-[11px] leading-snug">
@@ -118,7 +144,10 @@ export function InstrumentSelector({
                         onDifficulty(id);
                         setExtraOpen(true);
                       }}
-                      className={difficultyButtonClass(difficulty === id)}
+                      aria-pressed={!customActive && difficulty === id}
+                      className={difficultyButtonClass(
+                        !customActive && difficulty === id,
+                      )}
                     >
                       <span className="text-dark dark:text-dark-text font-bold">
                         {d.title}
@@ -131,6 +160,75 @@ export function InstrumentSelector({
                 })}
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Eigenes Set aus der öffentlichen Bibliothek als „Custom“-Stufe. */}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={onOpenLibrary}
+            disabled={customPending != null}
+            aria-pressed={customActive}
+            className={cn(
+              difficultyButtonClass(customActive),
+              "block w-full disabled:opacity-60",
+            )}
+          >
+            {customSet ? (
+              <>
+                <span className="text-dark dark:text-dark-text font-bold">
+                  {customSet.name}
+                </span>
+                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
+                  Eigenes Set ·{" "}
+                  {customSet.noteCount === 1
+                    ? "1 Note"
+                    : `${customSet.noteCount} Noten`}
+                </p>
+              </>
+            ) : customPending ? (
+              <>
+                <span className="text-dark dark:text-dark-text font-bold">
+                  {customPending.name ?? "Eigenes Set"}
+                </span>
+                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
+                  Lädt …
+                </p>
+              </>
+            ) : (
+              <>
+                <span className="text-dark dark:text-dark-text font-bold">
+                  Eigenes Set …
+                </span>
+                <p className="text-dark dark:text-dark-text-muted mt-1 text-xs leading-snug">
+                  Notenset aus der öffentlichen Bibliothek wählen
+                </p>
+              </>
+            )}
+          </button>
+          {customSet && (
+            <div className="mt-2 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenLibrary}
+                className={SMALL_ACTION_BUTTON_CLASS}
+              >
+                Ändern
+              </button>
+              <button
+                type="button"
+                onClick={onRemoveCustomSet}
+                className={SMALL_ACTION_BUTTON_CLASS}
+              >
+                Entfernen
+              </button>
+            </div>
+          )}
+          {customNotice && (
+            <p className="mt-2 text-center text-xs font-bold text-amber-700 dark:text-amber-300">
+              {customNotice}
+            </p>
           )}
         </div>
       </div>
@@ -147,6 +245,7 @@ export function InstrumentSelector({
                 key={id}
                 type="button"
                 onClick={() => onMode(id)}
+                aria-pressed={mode === id}
                 className={cn(
                   "rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:p-4",
                   mode === id
@@ -166,34 +265,46 @@ export function InstrumentSelector({
         </div>
       </div>
 
-      {!hideInstrument && (
+      {customActive ? (
         <div>
           <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
             Instrument
           </p>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
-            {INSTRUMENTS.map((ins) => (
-              <button
-                key={ins.id}
-                type="button"
-                onClick={() => onInstrument(ins.id)}
-                className={cn(
-                  "flex flex-col items-center gap-1 rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:p-3.5",
-                  instrument === ins.id
-                    ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
-                    : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35 bg-transparent",
-                )}
-              >
-                <span className="text-dark dark:text-dark-text leading-tight font-bold">
-                  {ins.label}
-                </span>
-                <span className="text-dark dark:text-dark-text-muted text-[11px] leading-snug">
-                  {ins.description}
-                </span>
-              </button>
-            ))}
-          </div>
+          <p className="text-dark dark:text-dark-text-muted text-center text-xs leading-snug">
+            Schlüssel und Töne kommen aus dem Set.
+          </p>
         </div>
+      ) : (
+        !hideInstrument && (
+          <div>
+            <p className="text-dark dark:text-dark-text mb-2 text-center text-sm font-bold">
+              Instrument
+            </p>
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+              {INSTRUMENTS.map((ins) => (
+                <button
+                  key={ins.id}
+                  type="button"
+                  onClick={() => onInstrument(ins.id)}
+                  aria-pressed={instrument === ins.id}
+                  className={cn(
+                    "flex flex-col items-center gap-1 rounded-sm border p-3 text-center transition-colors active:scale-[0.99] md:p-3.5",
+                    instrument === ins.id
+                      ? "border-primary bg-amber-50/90 dark:bg-amber-950/30"
+                      : "border-dark-border/50 hover:border-primary/40 dark:border-dark-border dark:hover:border-primary/35 bg-transparent",
+                  )}
+                >
+                  <span className="text-dark dark:text-dark-text leading-tight font-bold">
+                    {ins.label}
+                  </span>
+                  <span className="text-dark dark:text-dark-text-muted text-[11px] leading-snug">
+                    {ins.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
       )}
     </div>
   );

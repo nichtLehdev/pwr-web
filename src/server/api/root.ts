@@ -20,6 +20,7 @@ import { permissionsRouter } from "./routers/permissions";
 import { auditRouter } from "./routers/audit";
 import { notificationsRouter } from "./routers/notifications";
 import { contactRouter } from "./routers/contact";
+import { noteSetsRouter } from "./routers/note-sets";
 
 /**
  * This is the primary router for your server.
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   audit: auditRouter,
   notifications: notificationsRouter,
   contact: contactRouter,
+  noteSets: noteSetsRouter,
 });
 
 export type AppRouter = typeof appRouter;

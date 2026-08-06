@@ -9,6 +9,9 @@ import {
 import { cn } from "@/lib/utils";
 
 export type GriffeMissedRow = {
+  /** Stabiler Schlüssel (pitchKey) — Label allein wäre nicht eindeutig. */
+  key: string;
+  /** Anzeigename inkl. Oktave (z. B. „D4“), sonst kollidieren D4 und D5. */
   label: string;
   count: number;
 };
@@ -79,7 +82,7 @@ export function GriffeResultView({
           <ul className="text-dark dark:text-dark-text-secondary space-y-1.5 text-sm">
             {topMissed.map((row) => (
               <li
-                key={row.label}
+                key={row.key}
                 className="border-dark-border/30 dark:border-dark-border/40 flex justify-between gap-3 border-b pb-1 last:border-0"
               >
                 <span className="font-semibold">{row.label}</span>

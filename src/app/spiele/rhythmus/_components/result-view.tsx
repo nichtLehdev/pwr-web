@@ -13,6 +13,8 @@ import type { ScoreResult } from "../_lib/scoring";
 export interface ResultViewProps {
   result: ScoreResult;
   onRetry: () => void;
+  /** Gleicher Rhythmus, zurück zur Vorschau. */
+  onRepeat: () => void;
   onNext: () => void;
 }
 
@@ -25,9 +27,35 @@ function cheerLine(percent: number): { line: string; icon: LucideIcon } {
   return { line: "Nächstes Mal wird’s noch besser!", icon: Music };
 }
 
-export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
+/** „Meist zu früh/zu spät“ aus dem vorzeichenbehafteten Median. */
+function timingBiasLine(medianSignedDeltaMs: number | null): string | null {
+  if (medianSignedDeltaMs === null) return null;
+  if (Math.abs(medianSignedDeltaMs) <= 15) {
+    return "Dein Timing war insgesamt sehr genau.";
+  }
+  return medianSignedDeltaMs < 0
+    ? "Du warst meist etwas zu früh."
+    : "Du warst meist etwas zu spät.";
+}
+
+/** Δ-Farbe an der echten Toleranz: grün ≤ ½ Toleranz, gelb ≤ Toleranz, sonst rot. */
+function deltaColorClass(deltaMs: number | null, toleranceMs: number): string {
+  if (deltaMs === null) return "text-red-600 dark:text-red-400";
+  const abs = Math.abs(deltaMs);
+  if (abs <= toleranceMs * 0.5) return "text-emerald-600 dark:text-emerald-400";
+  if (abs <= toleranceMs) return "text-amber-700 dark:text-amber-300";
+  return "text-red-600 dark:text-red-400";
+}
+
+export function ResultView({
+  result,
+  onRetry,
+  onRepeat,
+  onNext,
+}: ResultViewProps) {
   const cheer = cheerLine(result.percent);
   const CheerIcon = cheer.icon;
+  const biasLine = timingBiasLine(result.medianSignedDeltaMs);
 
   return (
     <div className="dark:border-dark-border/80 space-y-5 border-t border-gray-200/90 pt-5 md:space-y-6 md:pt-6">
@@ -58,7 +86,12 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
         </p>
         {result.medianAbsDeltaMs !== null && (
           <p className="text-dark dark:text-dark-text-muted mt-2 text-xs">
-            Im Schnitt {Math.round(result.medianAbsDeltaMs)} ms daneben
+            Typische Abweichung: {Math.round(result.medianAbsDeltaMs)} ms
+          </p>
+        )}
+        {biasLine && (
+          <p className="text-dark dark:text-dark-text-secondary mt-1 text-xs">
+            {biasLine}
           </p>
         )}
       </div>
@@ -98,13 +131,7 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
                     {b.tappedMs !== null ? Math.round(b.tappedMs) : "—"}
                   </td>
                   <td
-                    className={
-                      b.deltaMs === null
-                        ? "text-red-600 dark:text-red-400"
-                        : Math.abs(b.deltaMs) < 40
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-amber-700 dark:text-amber-300"
-                    }
+                    className={deltaColorClass(b.deltaMs, result.toleranceMs)}
                   >
                     {b.deltaMs !== null
                       ? `${b.deltaMs > 0 ? "+" : ""}${Math.round(b.deltaMs)}`
@@ -124,6 +151,13 @@ export function ResultView({ result, onRetry, onNext }: ResultViewProps) {
           className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background dark:bg-dark-surface flex-1 rounded-sm border bg-white px-4 py-4 text-base font-bold transition"
         >
           Von vorn
+        </button>
+        <button
+          type="button"
+          onClick={onRepeat}
+          className="border-dark-border text-dark hover:bg-background-secondary dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background dark:bg-dark-surface flex-1 rounded-sm border bg-white px-4 py-4 text-base font-bold transition"
+        >
+          Nochmal diesen Rhythmus
         </button>
         <button
           type="button"

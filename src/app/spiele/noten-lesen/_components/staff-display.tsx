@@ -22,11 +22,25 @@ import { writtenPitchToVexNoteKeyAndAccidental } from "../_lib/vex-pitch-key";
 
 let fontsReady: Promise<void> | null = null;
 
+/** Maximale Systembreite — eine einzelne Note braucht keine volle 5xl-Breite. */
+const MAX_STAVE_WIDTH = 480;
+
+/** ResizeObserver-Neuzeichnen entprellen (Layout-Jitter, Scrollbars, …). */
+const REDRAW_DEBOUNCE_MS = 100;
+
 function ensureVexFlowFonts(): Promise<void> {
   if (!fontsReady) {
     fontsReady = VexFlow.loadFonts("Bravura", "Academico");
   }
   return fontsReady;
+}
+
+/**
+ * Vorab aufrufen (z. B. in der Setup-Phase), damit die erste Frage nicht auf
+ * Chunk- und Font-Laden warten muss.
+ */
+export function preloadStaffFonts(): Promise<void> {
+  return ensureVexFlowFonts();
 }
 
 function styleNoteAndAccidentals(sn: StaveNote, dark: boolean): void {
@@ -83,6 +97,12 @@ export type StaffDisplayProps = {
   staffAccidentalLayout: StaffAccidentalLayout;
   flash?: StaffFlash;
   className?: string;
+  /**
+   * Optionales Label statt des Standard-Labels (das den Tonnamen nennt).
+   * Beim Noten-Lesen würde der Standard die Antwort verraten — dort wird die
+   * Positionsbeschreibung übergeben. Griffe nutzt weiter den Standard.
+   */
+  ariaLabel?: string;
 };
 
 export function StaffDisplay({
@@ -91,6 +111,7 @@ export function StaffDisplay({
   staffAccidentalLayout,
   flash = "none",
   className,
+  ariaLabel,
 }: StaffDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { resolvedTheme } = useTheme();
@@ -128,11 +149,13 @@ export function StaffDisplay({
       const marginX = compact ? 8 : 14;
       const staveY = compact ? 28 : 34;
       const baseInner = containerW - marginX * 2;
-      const staveWidth = Math.max(160, baseInner);
+      /* Breite deckeln: über volle Containerbreite entstehen sonst ~700 px
+       * leere Notenlinien. Gedeckelt und zentriert (rein visuell). */
+      const staveWidth = Math.min(MAX_STAVE_WIDTH, Math.max(160, baseInner));
 
       el.innerHTML = "";
 
-      const svgWidth = staveWidth + marginX * 2;
+      const svgWidth = containerW;
       const renderer = new Renderer(el, RendererBackends.SVG);
       renderer.resize(svgWidth, height);
       const ctx = renderer.getContext();
@@ -145,7 +168,8 @@ export function StaffDisplay({
             : clef === "alto"
               ? "alto"
               : "tenor";
-      const stave = new Stave(marginX, staveY, staveWidth).addClef(clefId);
+      const staveX = marginX + Math.max(0, (baseInner - staveWidth) / 2);
+      const stave = new Stave(staveX, staveY, staveWidth).addClef(clefId);
 
       if (staffAccidentalLayout.kind === "keySignature") {
         stave.addKeySignature(staffAccidentalLayout.keySpec);
@@ -215,9 +239,23 @@ export function StaffDisplay({
   useEffect(() => {
     const el = containerRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(() => void draw());
+    let lastWidth = Math.round(el.clientWidth);
+    let timer: number | null = null;
+    const ro = new ResizeObserver(() => {
+      const width = Math.round(el.clientWidth);
+      if (width === lastWidth) return;
+      lastWidth = width;
+      if (timer != null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        void draw();
+      }, REDRAW_DEBOUNCE_MS);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      if (timer != null) window.clearTimeout(timer);
+    };
   }, [draw]);
 
   return (
@@ -237,7 +275,9 @@ export function StaffDisplay({
         ref={containerRef}
         className="min-h-[200px] w-full max-w-full p-2 pb-3 md:min-h-[240px] md:p-3"
         role="img"
-        aria-label={`Notensystem, ganze Note ${answerLabelForPitch(pitch)}`}
+        aria-label={
+          ariaLabel ?? `Notensystem, ganze Note ${answerLabelForPitch(pitch)}`
+        }
       />
     </div>
   );

@@ -5,10 +5,24 @@ import { cn } from "@/lib/utils";
 type Props = {
   diffUnits: number;
   balancedFlash?: boolean;
+  /** Anzahl noch unbelegter Felder rechts — Gleichgewicht allein reicht nicht. */
+  openSlots?: number;
 };
 
-export function ScaleSVG({ diffUnits, balancedFlash = false }: Props) {
+export function ScaleSVG({
+  diffUnits,
+  balancedFlash = false,
+  openSlots = 0,
+}: Props) {
   const tilt = Math.max(-16, Math.min(16, diffUnits / 2.4));
+  const balanced = Math.abs(diffUnits) < 0.01;
+  const status = balanced
+    ? openSlots > 0
+      ? `Im Gleichgewicht — noch ${openSlots} ${openSlots === 1 ? "Feld" : "Felder"} frei`
+      : "Waage im Gleichgewicht"
+    : diffUnits > 0
+      ? "Rechts ist schwerer"
+      : "Links ist schwerer";
 
   return (
     <div
@@ -40,9 +54,7 @@ export function ScaleSVG({ diffUnits, balancedFlash = false }: Props) {
 
         <g
           transform={`rotate(${tilt} 300 120)`}
-          style={{
-            transition: "transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
+          className="motion-safe:[transition:transform_300ms_cubic-bezier(0.22,1,0.36,1)]"
         >
           <line
             x1="120"
@@ -110,12 +122,12 @@ export function ScaleSVG({ diffUnits, balancedFlash = false }: Props) {
         </g>
       </svg>
       <div className="pointer-events-none absolute inset-x-0 bottom-2 text-center">
-        <span className="text-dark dark:text-dark-text-secondary text-xs font-bold">
-          {Math.abs(diffUnits) < 0.01
-            ? "Waage im Gleichgewicht"
-            : diffUnits > 0
-              ? "Rechts ist schwerer"
-              : "Links ist schwerer"}
+        <span
+          role="status"
+          aria-live="polite"
+          className="text-dark dark:text-dark-text-secondary text-xs font-bold"
+        >
+          {status}
         </span>
       </div>
     </div>
