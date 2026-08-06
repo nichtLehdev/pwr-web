@@ -15,61 +15,47 @@ export function writtenPitchToMidi(p: WrittenPitch): number {
   return (p.octave + 1) * 12 + PC[p.letter] + p.alter;
 }
 
-function stepUpLetter(
-  letter: GermanLetter,
-  octave: number,
-): [GermanLetter, number] {
-  switch (letter) {
-    case "E":
-      return ["F", octave];
-    case "F":
-      return ["G", octave];
-    case "G":
-      return ["A", octave];
-    case "A":
-      return ["H", octave];
-    case "H":
-      return ["C", octave + 1];
-    case "C":
-      return ["D", octave];
-    case "D":
-      return ["E", octave];
-  }
+/** Diatonischer Buchstaben-Index (C=0 … H=6) für vorzeichenlose Stufenrechnung. */
+const LETTER_DIATONIC_INDEX: Record<GermanLetter, number> = {
+  C: 0,
+  D: 1,
+  E: 2,
+  F: 3,
+  G: 4,
+  A: 5,
+  H: 6,
+};
+
+/** Absoluter diatonischer Wert (Buchstabe + 7 × Oktave), Vorzeichen egal. */
+function diatonicValue(letter: GermanLetter, octave: number): number {
+  return LETTER_DIATONIC_INDEX[letter] + 7 * octave;
 }
 
 /**
  * Half-line index from bottom staff line (diatonic steps from bottom-line pitch).
- * Treble: E4; Bass: G2; Alto: F3 (Vex alto, C auf Linie 2); Tenor: A3 (Vex tenor, C auf Linie 1).
+ * Signiert: negative Werte für Töne unterhalb der untersten Linie.
+ * Anker = Tonhöhe der untersten Linie (VexFlow):
+ * Treble: E4; Bass: G2; Alto: F3 (C4 auf Linie 3); Tenor: D3 (C4 auf Linie 4).
  */
 export function staffHalfLineIndex(p: WrittenPitch, clef: ClefKind): number {
-  const { letter, octave } = p;
   let anchor: [GermanLetter, number];
-  let max: number;
   switch (clef) {
     case "treble":
       anchor = ["E", 4];
-      max = 80;
       break;
     case "bass":
       anchor = ["G", 2];
-      max = 100;
       break;
     case "alto":
       anchor = ["F", 3];
-      max = 100;
       break;
     case "tenor":
-      anchor = ["A", 3];
-      max = 100;
+      anchor = ["D", 3];
       break;
   }
-  let [l, o] = anchor;
-  let idx = 0;
-  while ((l !== letter || o !== octave) && idx < max) {
-    [l, o] = stepUpLetter(l, o);
-    idx++;
-  }
-  return idx;
+  return (
+    diatonicValue(p.letter, p.octave) - diatonicValue(anchor[0], anchor[1])
+  );
 }
 
 /** Distance between staff positions (same accidental base line/space). */
