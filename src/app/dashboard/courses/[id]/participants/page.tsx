@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
+import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
@@ -94,14 +95,7 @@ function getCustomFieldValue(
     return "–";
   }
 
-  const value = fields[fieldName];
-  if (value === undefined || value === null || value === "") {
-    return "–";
-  }
-  if (typeof value === "boolean") {
-    return value ? "Ja" : "Nein";
-  }
-  return String(value);
+  return formatCustomFieldValueForDisplay(fields[fieldName]);
 }
 
 export default function CourseParticipantsPage() {
