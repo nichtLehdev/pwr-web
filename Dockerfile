@@ -92,6 +92,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/db.ts ./src/server/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/permissions.ts ./src/lib/
 
+# Trigger script for the mStudio cron job (mittwald), see the script header
+COPY --chown=nextjs:nodejs scripts/trigger-registration-closed.mjs ./scripts/
+
 # Switch to non-root user
 USER nextjs
 
