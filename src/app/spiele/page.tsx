@@ -5,6 +5,14 @@ import { GAMES, UPCOMING_GAMES } from "./_lib/games";
 import { InstallHintCard } from "./_components/install-hint-card";
 import { OfflineReadyCard } from "./_components/offline-ready-card";
 import { StatsSyncRunner } from "./_components/stats-sync-runner";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Spiele & Übungen",
+  description:
+    "Interaktive Übungen des Posaunenwerks Rheinland: Noten lesen, Griffe, Rhythmus und Notenwaage — kostenlos im Browser trainieren.",
+  path: "/spiele",
+});
 
 export default function SpielePage() {
   return (

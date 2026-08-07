@@ -49,6 +49,17 @@ Dieses Skript:
   pnpm prisma generate
   ```
 
+### 2b. Slug-Backfill (einmalig nach dem Slug-Deployment)
+- [ ] **Nach `migrate deploy` einmalig ausführen**:
+  ```bash
+  pnpm backfill:slugs
+  ```
+  Die Migration `20260808000051_add_post_and_ensemble_slug` legt die Spalte
+  nur an — gefüllt wird sie von diesem Skript. Ohne den Backfill bleibt die
+  Seite voll funktionsfähig (Detailseiten fallen auf die UUID zurück), aber
+  die sprechenden URLs fehlen. Das Skript überspringt Zeilen, die schon einen
+  Slug haben, und ist damit gefahrlos wiederholbar.
+
 ### 3. Wichtige Änderungen seit letztem Deployment
 
 #### Permission-System Refactoring

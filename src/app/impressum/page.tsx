@@ -1,12 +1,14 @@
 import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Impressum | Posaunenwerk Rheinland",
+export const metadata = buildPageMetadata({
+  title: "Impressum",
   description:
     "Impressum und rechtliche Informationen des Posaunenwerks Rheinland",
-};
+  path: "/impressum",
+});
 
 export default function ImpressumPage() {
   return (

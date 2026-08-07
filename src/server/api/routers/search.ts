@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
 import { GAMES } from "@/app/spiele/_lib/games";
+import { postPath } from "@/lib/slug";
 
 export type SearchResultType =
   | "post"
@@ -714,6 +715,7 @@ export const searchRouter = createTRPCRouter({
         },
         select: {
           id: true,
+          slug: true,
           title: true,
           excerpt: true,
           publishedAt: true,
@@ -842,7 +844,7 @@ export const searchRouter = createTRPCRouter({
           type: "post",
           title: post.title,
           description: post.excerpt,
-          url: `/aktuelles/${post.id}`,
+          url: postPath(post),
           imageUrl: post.coverImage?.url ?? null,
           date: post.publishedAt,
           category: post.category,

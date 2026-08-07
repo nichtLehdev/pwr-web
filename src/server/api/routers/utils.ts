@@ -14,6 +14,7 @@ import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
+import { postPath } from "@/lib/slug";
 
 marked.use({
   gfm: true,
@@ -537,7 +538,7 @@ export const newsletterRouter = createTRPCRouter({
           for (const post of recentPosts) {
             const postUrl = `${getBaseUrl(
               ctx.headers ? { headers: ctx.headers } : undefined,
-            )}/aktuelles/${post.id}`;
+            )}${postPath(post)}`;
             const imageMarkdown = post.coverImage
               ? `![${post.coverImage.alt || post.title}](${post.coverImage.url})\n\n`
               : "";

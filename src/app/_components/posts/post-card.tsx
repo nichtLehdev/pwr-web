@@ -3,9 +3,12 @@ import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
 import { getDistrictColor } from "@/lib/district-color";
 import { extractPlainTextFromMarkdown } from "@/lib/utils";
 import { ArrowRightIcon, PinIcon } from "lucide-react";
+import { postPath } from "@/lib/slug";
 
 interface PostCardProps {
   id: string;
+  /** Absent only for rows created before the slug backfill ran. */
+  slug?: string | null;
   title: string;
   excerpt: string;
   date: Date;
@@ -20,6 +23,7 @@ interface PostCardProps {
 
 export default function PostCard({
   id,
+  slug,
   title,
   excerpt,
   date,
@@ -37,7 +41,7 @@ export default function PostCard({
     excerpt || (content ? extractPlainTextFromMarkdown(content) : "");
 
   return (
-    <Link href={`/aktuelles/${id}`} className="group block h-full">
+    <Link href={postPath({ id, slug })} className="group block h-full">
       <article
         className="dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 bg-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
         style={{ borderLeftColor: districtColor || "transparent" }}
