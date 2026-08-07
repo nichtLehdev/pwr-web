@@ -126,16 +126,6 @@ jobs:
           docker images | grep posaunenwerk || exit 1
           echo "Docker image built successfully"
 
-      - name: Build Cron Docker image (no push)
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./scripts/Dockerfile.cron
-          push: false
-          tags: posaunenwerk-cron:ci-test
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
       - name: Build Backup Docker image (no push)
         uses: docker/build-push-action@v7
         with:
