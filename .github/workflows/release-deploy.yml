@@ -5,12 +5,12 @@
 #
 #   build-and-push:     builds Docker images and pushes them to GHCR with
 #                       semver tags; "latest" is only applied to full releases
-#   deploy-current:     old server (pwr.lehdev.de) via SSH — receives every
+#   deploy-next:        old server (pwr.lehdev.de) via SSH — receives every
 #                       release AND every pre-release (bleeding edge)
 #   deploy-production:  mittwald container stack via deploy-container-action —
 #                       full releases only
 #
-# GitHub environments used: "current" (old server SSH secrets) and
+# GitHub environments used: "next" (old server SSH secrets) and
 # "production" (mittwald API token, stack id, app secrets — see deploy/stack.yaml
 # for the full list of values the stack file expects).
 # =============================================================================
@@ -139,15 +139,15 @@ jobs:
   # ===========================================================================
   # Deploy to Old Server (every release and pre-release)
   # ===========================================================================
-  deploy-current:
-    name: Deploy to Old Server (current)
+  deploy-next:
+    name: Deploy to Old Server (next)
     runs-on: ubuntu-latest
     needs: build-and-push
 
     permissions:
       contents: read
     environment:
-      name: current
+      name: next
       url: https://pwr.lehdev.de
 
     steps:
