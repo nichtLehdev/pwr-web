@@ -3,7 +3,6 @@ import { username } from "better-auth/plugins/username";
 import { twoFactor } from "better-auth/plugins";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
-import { env } from "@/env";
 import { db } from "@/server/db";
 import { isEmailConfigured } from "@/server/email";
 
