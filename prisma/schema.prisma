@@ -265,6 +265,11 @@ model TwoFactor {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Account lockout counters required by better-auth >= 1.6.25 — the plugin
+  // updates these on every sign-in verification (even successful ones).
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
   @@map("twoFactor")
 }
 
