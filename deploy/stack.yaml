@@ -1,52 +1,4 @@
-# =============================================================================
-# Posaunenwerk mittwald Container Stack
-# =============================================================================
-#
-# Deployed via mittwald/deploy-container-action (see release-deploy workflow).
-# This file is the SINGLE SOURCE OF TRUTH for the stack: any manual change
-# made in mStudio that is not reflected here is overwritten on the next deploy.
-#
-# The whole file is rendered as a Go template before parsing (comments
-# included — never write literal double curly braces in comments!). The
-# .Env.NAME placeholders below are substituted from the deploy job's
-# `env:` block; EVERY one of them must be defined there:
-#
-#   RELEASE_VERSION       image tag, e.g. "1.4.2" — no leading "v"
-#                         (matches the semver tags from docker/metadata-action)
-#   POSTGRES_PASSWORD     database password
-#   APP_URL               public URL, e.g. https://pwr.lehdev.de
-#                         (used for NEXT_PUBLIC_APP_URL and BETTER_AUTH_URL)
-#   BETTER_AUTH_SECRET
-#   SMTP_HOST / SMTP_PORT / SMTP_SECURE / SMTP_USER / SMTP_PASSWORD / SMTP_FROM
-#   CRON_SECRET
-#
-# Differences from docker-compose.prod.yml (mittwald stacks have no
-# depends_on, healthchecks, profiles, or one-shot services):
-#
-#   - db-migrate is folded into the app service's command: it waits for the
-#     database, runs `prisma migrate deploy`, then starts Next.js.
-#   - post-migration-setup and db-seed are manual one-shots; run them by
-#     exec-ing into the app container:
-#       node node_modules/tsx/dist/cli.mjs prisma/post-migration-setup.ts
-#       node node_modules/tsx/dist/cli.mjs prisma/seed.ts
-#   - There is no cron sidecar here (the old server keeps its
-#     registration-closed-cron compose service): on mittwald the
-#     registration-closed e-mails are triggered by an mStudio cron job
-#     (a separate resource, NOT overwritten by deploys) targeting service
-#     "app" with:
-#       command:  node /app/scripts/trigger-registration-closed.mjs
-#       schedule: 0 */6 * * *
-#   - Public exposure is handled by a mittwald ingress (domain -> app:3000),
-#     configured once in mStudio, not in this file.
-#   - Deploy with skip_recreation: "posaunenwerk-db" so the database is not
-#     restarted on every release.
-#
-# =============================================================================
-
 services:
-  # ===========================================================================
-  # PostgreSQL Database
-  # ===========================================================================
   posaunenwerk-db:
     image: "postgres:16-alpine"
     description: "PostgreSQL database"
@@ -59,17 +11,11 @@ services:
     volumes:
       - "postgres_data:/var/lib/postgresql/data"
 
-  # ===========================================================================
-  # Next.js Application (runs migrations before starting, replaces db-migrate)
-  # ===========================================================================
   app:
     image: "ghcr.io/nichtlehdev/pwr-web:{{ .Env.RELEASE_VERSION }}"
     description: "Posaunenwerk Next.js app"
     ports:
       - "3000/tcp"
-    # Wait for the database and apply migrations, then start Next.js.
-    # Invoke prisma/next directly via node_modules (not pnpm) to avoid pnpm
-    # 11's runDepsStatusCheck — same reasoning as in docker-compose.prod.yml.
     command:
       - "sh"
       - "-c"
@@ -83,44 +29,22 @@ services:
         done;
         exec node node_modules/next/dist/bin/next start
     volumes:
-      # Mounted outside public/ so file access always goes through the
-      # authorizing /api/uploads route (public/ would be served directly).
       - "uploads_data:/app/uploads"
     envs:
-      # Database
       DATABASE_URL: "postgresql://postgres:{{ .Env.POSTGRES_PASSWORD }}@posaunenwerk-db:5432/posaunenwerk"
-
-      # Application
       NODE_ENV: "production"
       NEXT_TELEMETRY_DISABLED: "1"
-
-      # Public URLs
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
-
-      # Better Auth
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"
       BETTER_AUTH_URL: "{{ .Env.APP_URL }}"
-
-      # GITHUB_TOKEN/GITHUB_REPO are deliberately NOT set: the feedback
-      # page is beta-only and redirects to /kontakt without them.
-
-      # SMTP
       SMTP_HOST: "{{ .Env.SMTP_HOST }}"
       SMTP_PORT: "{{ .Env.SMTP_PORT }}"
       SMTP_SECURE: "{{ .Env.SMTP_SECURE }}"
       SMTP_USER: "{{ .Env.SMTP_USER }}"
       SMTP_PASSWORD: "{{ .Env.SMTP_PASSWORD }}"
       SMTP_FROM: "{{ .Env.SMTP_FROM }}"
-
-      # Cron API secret: used by the mStudio cron job (via
-      # scripts/trigger-registration-closed.mjs) and manual triggering.
-      # REGISTRATION_CLOSED_CRON_SCHEDULE is deliberately NOT set here —
-      # the in-app scheduler stays off; mStudio cron drives the job.
       CRON_SECRET: "{{ .Env.CRON_SECRET }}"
 
-  # ===========================================================================
-  # Database Backup Service (scheduled backups)
-  # ===========================================================================
   db-backup:
     image: "ghcr.io/nichtlehdev/pwr-backup:{{ .Env.RELEASE_VERSION }}"
     description: "Scheduled PostgreSQL backups"
