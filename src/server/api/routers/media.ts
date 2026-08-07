@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { resolve, sep } from "path";
 import { unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -7,7 +6,7 @@ import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
-import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
+import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 
 // Stored url/path values must be exactly what /api/upload produces:
 // /api/uploads/<folder>/<sanitized filename>. Anything else (absolute paths,
@@ -20,19 +19,6 @@ const uploadPathSchema = z
   .string()
   .max(500)
   .regex(UPLOAD_PATH_PATTERN, "Invalid upload path");
-
-/**
- * Resolve a stored `/api/uploads/...` path to its on-disk location, refusing
- * anything that escapes the uploads directory. Returns null for paths that
- * are not managed uploads (e.g. external URLs).
- */
-function resolveUploadFsPath(storedPath: string): string | null {
-  if (!storedPath.startsWith("/api/uploads/")) return null;
-  const relativePath = storedPath.replace("/api/uploads/", "");
-  const fullPath = resolve(UPLOADS_ROOT, relativePath);
-  if (!fullPath.startsWith(UPLOADS_ROOT + sep)) return null;
-  return fullPath;
-}
 
 export const mediaRouter = createTRPCRouter({
   getById: publicProcedure
@@ -338,7 +324,7 @@ export const mediaRouter = createTRPCRouter({
       const fullPath = resolveUploadFsPath(media.path);
       if (fullPath) {
         try {
-          await unlink(fullPath);
+          await unlink(/* turbopackIgnore: true */ fullPath);
         } catch (err) {
           console.warn("Could not delete old media file:", fullPath, err);
         }

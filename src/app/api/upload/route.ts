@@ -190,11 +190,11 @@ export async function POST(request: Request) {
 
     const filename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
-    const uploadDir = join(UPLOADS_ROOT, folder);
-    await mkdir(uploadDir, { recursive: true });
+    const uploadDir = join(/* turbopackIgnore: true */ UPLOADS_ROOT, folder);
+    await mkdir(/* turbopackIgnore: true */ uploadDir, { recursive: true });
 
     const filePath = join(uploadDir, filename);
-    await writeFile(filePath, buffer);
+    await writeFile(/* turbopackIgnore: true */ filePath, buffer);
 
     const url = `/api/uploads/${folder}/${filename}`;
     const path = url; // path is the same as url for uploaded files

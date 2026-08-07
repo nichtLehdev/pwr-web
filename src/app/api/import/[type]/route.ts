@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { extractImportZip } from "@/server/utils/export-import";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 import {
   ContentStatus,
   PostCategory,
@@ -95,10 +96,13 @@ export async function POST(
           .substring(0, 50);
         const newFilename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
-        const uploadDir = join(process.cwd(), "public", "uploads", "media");
-        await mkdir(uploadDir, { recursive: true });
+        const uploadDir = join(
+          /* turbopackIgnore: true */ UPLOADS_ROOT,
+          "media",
+        );
+        await mkdir(/* turbopackIgnore: true */ uploadDir, { recursive: true });
         const filePath = join(uploadDir, newFilename);
-        await writeFile(filePath, fileBuffer);
+        await writeFile(/* turbopackIgnore: true */ filePath, fileBuffer);
 
         const url = `/api/uploads/media/${newFilename}`;
 
