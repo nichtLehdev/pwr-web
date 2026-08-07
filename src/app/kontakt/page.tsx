@@ -19,6 +19,14 @@ import {
   Users,
   Map,
 } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Kontakt",
+  description:
+    "Kontakt zum Evangelischen Posaunenwerk im Rheinland — Geschäftsstelle in Vallendar, Ansprechpartner und Kontaktformular.",
+  path: "/kontakt",
+});
 
 export default async function KontaktPage() {
   const geschaeftsstelle = await api.organization.getTeamByContactType({

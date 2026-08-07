@@ -3,6 +3,14 @@ import Image from "next/image";
 import PublicPage from "@/app/_components/general/public-page";
 import { api } from "@/trpc/server";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Literatur & CDs",
+  description:
+    "Noten, Bläserhefte, Literaturempfehlungen und CDs des Posaunenwerks Rheinland für Posaunenchöre und Jungbläser.",
+  path: "/materialien/literatur",
+});
 
 export default async function LiteraturPage() {
   const blaesherhefte = await api.materials.getBlaserhefte();

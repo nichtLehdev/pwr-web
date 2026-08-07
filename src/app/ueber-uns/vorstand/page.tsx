@@ -13,6 +13,14 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { CheckIcon, PhoneIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Vorstand",
+  description:
+    "Der Vorstand des Posaunenwerks Rheinland: Mitglieder, Ämter und Kontaktmöglichkeiten.",
+  path: "/ueber-uns/vorstand",
+});
 
 export default async function VorstandPage() {
   const vorstandMembers = await api.organization.getVorstand();

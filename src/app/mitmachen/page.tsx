@@ -15,6 +15,14 @@ import {
   Zap,
   Download,
 } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Mitmachen",
+  description:
+    "Einstiegsmöglichkeiten ins Posaunenwerk Rheinland: Chor finden, Jungbläserarbeit, Aus- und Weiterbildung sowie ehrenamtliches Engagement.",
+  path: "/mitmachen",
+});
 
 export default function MitmachenPage() {
   const participationOptions: {

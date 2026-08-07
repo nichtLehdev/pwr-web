@@ -11,6 +11,14 @@ import {
   Music2Icon,
   MusicIcon,
 } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Struktur & Geschichte",
+  description:
+    "Aufbau, Bezirke und Geschichte des Evangelischen Posaunenwerks in der Evangelischen Kirche im Rheinland.",
+  path: "/ueber-uns/struktur",
+});
 
 export default async function StrukturGeschichtePage() {
   const historyTimeline = await api.organization.getHistory({});

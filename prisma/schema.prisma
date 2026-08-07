@@ -807,7 +807,13 @@ model Location {
 }
 
 model Post {
-  id      String  @id @default(uuid())
+  id String @id @default(uuid())
+  /**
+   * URL identifier derived from the title. Nullable so the column could be
+   * added without downtime; the detail route still resolves plain UUIDs and
+   * redirects them here, so links shared before the backfill keep working.
+   */
+  slug    String? @unique
   title   String
   excerpt String?
   content String // Rich text/Markdown
@@ -853,7 +859,9 @@ model Post {
 }
 
 model Ensemble {
-  id          String  @id @default(uuid())
+  id String @id @default(uuid())
+  /** URL identifier derived from the name; see Post.slug. */
+  slug        String? @unique
   name        String
   description String?
 

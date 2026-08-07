@@ -11,6 +11,14 @@ import {
   PhoneIcon,
   SchoolIcon,
 } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Posaunenwarte",
+  description:
+    "Die Posaunenwarte im Rheinland: Ansprechpartner für Chöre, Lehrgänge und Bläserarbeit in den 13 Bezirken.",
+  path: "/ueber-uns/posaunenwarte",
+});
 
 export default async function PosaunenwartePage() {
   const posaunenwarte = await api.organization.getPosaunenwarte();

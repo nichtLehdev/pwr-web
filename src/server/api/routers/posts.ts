@@ -10,6 +10,8 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
+import { createPostSlug } from "../helpers/content-slug";
+import { isUuid } from "@/lib/slug";
 
 marked.use({
   gfm: true,
@@ -189,11 +191,15 @@ export const postsRouter = createTRPCRouter({
       };
     }),
 
+  /**
+   * Accepts either the UUID or the slug. Public links use the slug; the
+   * dashboard and links shared before slugs existed still pass a UUID.
+   */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const rawPost = await ctx.db.post.findUnique({
-        where: { id: input.id },
+      const rawPost = await ctx.db.post.findFirst({
+        where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           coverImage: true,
           bezirk: true,
@@ -503,6 +509,7 @@ export const postsRouter = createTRPCRouter({
       const post = await ctx.db.post.create({
         data: {
           ...input,
+          slug: await createPostSlug(ctx.db, input.title),
           createdById: ctx.session.user.id,
           publishedAt:
             input.status === ContentStatus.APPROVED ? new Date() : null,

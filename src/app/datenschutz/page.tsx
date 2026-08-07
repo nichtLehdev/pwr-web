@@ -1,12 +1,14 @@
 import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { ArrowRightIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Datenschutzerklärung | Posaunenwerk Rheinland",
+export const metadata = buildPageMetadata({
+  title: "Datenschutzerklärung",
   description:
     "Datenschutzerklärung und Informationen zum Umgang mit personenbezogenen Daten",
-};
+  path: "/datenschutz",
+});
 
 export default function DatenschutzPage() {
   return (

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { MailIcon, GiftIcon } from "lucide-react";
 import { UsersIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
 
 const sonderaktionen = [
   {
@@ -26,6 +27,13 @@ const sonderaktionen = [
     subtitle: "Verlosung am 12. Juli in Bonn während unseres Fördervereintags.",
   },
 ];
+
+export const metadata = buildPageMetadata({
+  title: "Förderverein",
+  description:
+    "Der Förderverein Rheinisches Posaunenwerk: Ziele, Mitgliedschaft und wie deine Unterstützung der Bläserarbeit im Rheinland zugutekommt.",
+  path: "/foerderverein",
+});
 
 export default async function FoerdervereinPage() {
   const foerdervereinMembers = await api.organization.getFoerderverein();
