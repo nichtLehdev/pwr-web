@@ -118,13 +118,6 @@ export const auth = betterAuth({
       issuer: "Posaunenwerk Rheinland",
     }),
   ],
-  socialProviders: {
-    github: {
-      clientId: env.BETTER_AUTH_GITHUB_CLIENT_ID,
-      clientSecret: env.BETTER_AUTH_GITHUB_CLIENT_SECRET,
-      redirectURI: `${baseUrl}/api/auth/callback/github`,
-    },
-  },
   user: {
     fields: {
       email: "email",

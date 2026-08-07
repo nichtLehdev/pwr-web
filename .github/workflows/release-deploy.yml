@@ -260,12 +260,6 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           APP_URL: ${{ vars.APP_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_GITHUB_CLIENT_ID: ${{ vars.BETTER_AUTH_GITHUB_CLIENT_ID }}
-          BETTER_AUTH_GITHUB_CLIENT_SECRET: ${{ secrets.BETTER_AUTH_GITHUB_CLIENT_SECRET }}
-          # Secret names must not start with GITHUB_, hence the FILE_STORAGE_
-          # prefix on the GitHub side; the stack file expects GITHUB_*.
-          GITHUB_REPO: ${{ vars.FILE_STORAGE_GITHUB_REPO }}
-          GITHUB_TOKEN: ${{ secrets.FILE_STORAGE_GITHUB_TOKEN }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PORT: ${{ vars.SMTP_PORT }}
           SMTP_SECURE: ${{ vars.SMTP_SECURE }}

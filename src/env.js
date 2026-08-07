@@ -10,14 +10,17 @@ export const env = createEnv({
     // Required in every environment: without it better-auth falls back to a
     // known default secret and unsubscribe-token signing throws.
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_GITHUB_CLIENT_ID: z.string(),
-    BETTER_AUTH_GITHUB_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    GITHUB_TOKEN: z.string(),
-    GITHUB_REPO: z.string(),
+    /**
+     * GitHub integration for the feedback page (feedback -> GitHub issues).
+     * Leave unset to disable the feedback page entirely — it then redirects
+     * to /kontakt (production behavior).
+     */
+    GITHUB_TOKEN: z.string().optional(),
+    GITHUB_REPO: z.string().optional(),
     SMTP_HOST: z.string().min(1).optional(),
     SMTP_PORT: z.coerce.number().default(587).optional(),
     SMTP_SECURE: z
@@ -49,9 +52,6 @@ export const env = createEnv({
    */
   runtimeEnv: {
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
-    BETTER_AUTH_GITHUB_CLIENT_ID: process.env.BETTER_AUTH_GITHUB_CLIENT_ID,
-    BETTER_AUTH_GITHUB_CLIENT_SECRET:
-      process.env.BETTER_AUTH_GITHUB_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,

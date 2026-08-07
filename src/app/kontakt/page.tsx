@@ -3,6 +3,7 @@ import Image from "next/image";
 import { SocialIcon } from "@/app/_components/ui/social-icon";
 import { ContactForm } from "@/app/_components/forms/contact-form";
 import { api } from "@/trpc/server";
+import { env } from "@/env";
 import PublicPage from "../_components/general/public-page";
 import {
   Building2,
@@ -258,13 +259,17 @@ export default async function KontaktPage() {
                       <li className="flex items-start gap-2">
                         <Check className="text-district-3 mt-0.5 h-4 w-4 shrink-0" />
                         Feedback und Verbesserungsvorschlägen
-                        <Link
-                          href="/feedback"
-                          className="bg-district-3/10 text-district-3 hover:bg-district-3/20 ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold transition-colors"
-                        >
-                          Feedback geben
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
+                        {/* Feedback page only exists where the GitHub
+                            integration is configured (beta) */}
+                        {env.GITHUB_TOKEN && env.GITHUB_REPO && (
+                          <Link
+                            href="/feedback"
+                            className="bg-district-3/10 text-district-3 hover:bg-district-3/20 ml-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold transition-colors"
+                          >
+                            Feedback geben
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        )}
                       </li>
                     </ul>
                   </div>
