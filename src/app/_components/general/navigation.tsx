@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,6 +26,7 @@ export default function Navigation() {
     null,
   );
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const router = useRouter();
@@ -75,6 +76,19 @@ export default function Navigation() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Close the user menu on any click outside it (same pattern as
+  // NotificationBell) — the nav dropdowns close on hover-out instead.
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handleClick = (event: MouseEvent) => {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [userMenuOpen]);
 
   const isActive = (href: string, dropdown?: Array<{ href: string }>) => {
     if (href === "/" && pathname === "/") return true;
@@ -286,7 +300,7 @@ export default function Navigation() {
               {session?.user && <NotificationBell />}
 
               {session?.user ? (
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="dark:hover:bg-dark-background-secondary flex items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-100"
