@@ -27,7 +27,6 @@ import UpcomingCoursesCarousel from "@/app/_components/homepage/upcoming-courses
  * server-rendered markup would be thrown away.
  */
 export default function HomepageClient({ startDate }: { startDate: Date }) {
-
   const { data: carouselItems, isLoading: isLoadingCarousel } =
     api.homepage.getCarouselItems.useQuery();
 
@@ -176,6 +175,7 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
                 <PostCard
                   key={post.id}
                   id={post.id}
+                  slug={post.slug}
                   title={post.title}
                   excerpt={post.excerpt || ""}
                   date={post.publishedAt || post.createdAt}

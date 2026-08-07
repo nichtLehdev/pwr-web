@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/trpc/server";
@@ -21,6 +21,7 @@ import {
 import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
 import { db } from "@/server/db";
 import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
+import { ensemblePath, isUuid } from "@/lib/slug";
 import JsonLd from "@/app/_components/seo/json-ld";
 import { breadcrumbSchema, musicGroupSchema } from "@/lib/structured-data";
 
@@ -74,10 +75,15 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-const getEnsembleForMetadata = cache(async (id: string) =>
+const getEnsembleForMetadata = cache(async (identifier: string) =>
   db.ensemble.findFirst({
-    where: { id, isActive: true },
+    where: {
+      ...(isUuid(identifier) ? { id: identifier } : { slug: identifier }),
+      isActive: true,
+    },
     select: {
+      id: true,
+      slug: true,
       name: true,
       description: true,
       image: { select: { url: true, width: true, height: true, alt: true } },
@@ -108,7 +114,7 @@ export async function generateMetadata({
   return buildPageMetadata({
     title: city ? `${ensemble.name} (${city})` : ensemble.name,
     description: plainTextExcerpt(ensemble.description) ?? fallback,
-    path: `/ensembles/${id}`,
+    path: ensemblePath(ensemble),
     image: ensemble.image,
   });
 }
@@ -120,6 +126,11 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
 
   if (!ensemble || !ensemble.isActive) {
     notFound();
+  }
+
+  // Old UUID links keep working but hand their ranking to the slug URL.
+  if (isUuid(id) && ensemble.slug) {
+    permanentRedirect(ensemblePath(ensemble));
   }
 
   const districtColor = ensemble.bezirk
@@ -234,7 +245,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
       <JsonLd
         data={[
           musicGroupSchema({
-            id: ensemble.id,
+            path: ensemblePath(ensemble),
             name: ensemble.name,
             description: plainTextExcerpt(ensemble.description, 300),
             imageUrl: ensemble.image?.url,

@@ -3,6 +3,7 @@ import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
+import { postPath } from "@/lib/slug";
 
 /**
  * Escapes XML special characters
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
     }
 
     const items = posts.map((post) => {
-      const postUrl = `${baseUrl}/aktuelles/${post.id}`;
+      const postUrl = `${baseUrl}${postPath(post)}`;
       const pubDate = post.publishedAt || post.createdAt;
       const description = markdownToPlainText(post.excerpt || post.content);
       const author =

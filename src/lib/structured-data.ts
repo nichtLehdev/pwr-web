@@ -105,7 +105,8 @@ function placeSchema(location: SchemaLocation): JsonLdNode {
 }
 
 export interface ArticleSchemaInput {
-  id: string;
+  /** Site-relative path — the slug form, matching the canonical. */
+  path: string;
   title: string;
   description?: string;
   imageUrl?: string | null;
@@ -115,7 +116,7 @@ export interface ArticleSchemaInput {
 }
 
 export function newsArticleSchema(post: ArticleSchemaInput): JsonLdNode {
-  const url = siteUrl(`/aktuelles/${post.id}`);
+  const url = siteUrl(post.path);
 
   return {
     "@context": "https://schema.org",
@@ -186,7 +187,8 @@ export function eventSchema(input: EventSchemaInput): JsonLdNode {
 }
 
 export interface MusicGroupSchemaInput {
-  id: string;
+  /** Site-relative path — the slug form, matching the canonical. */
+  path: string;
   name: string;
   description?: string;
   imageUrl?: string | null;
@@ -199,7 +201,7 @@ export function musicGroupSchema(input: MusicGroupSchemaInput): JsonLdNode {
     "@context": "https://schema.org",
     "@type": "MusicGroup",
     name: input.name,
-    url: siteUrl(`/ensembles/${input.id}`),
+    url: siteUrl(input.path),
     ...(input.description ? { description: input.description } : {}),
     ...(input.imageUrl ? { image: [siteUrl(input.imageUrl)] } : {}),
     genre: "Posaunenchor",
