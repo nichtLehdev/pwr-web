@@ -34,7 +34,7 @@ COPY . .
 ENV SKIP_ENV_VALIDATION=1
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_OPTIONS="--max-old-space-size=1024"
+ENV NODE_OPTIONS="--max-old-space-size=2048"
 
 RUN pnpm build
 
