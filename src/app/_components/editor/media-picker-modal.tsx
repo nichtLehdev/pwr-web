@@ -472,6 +472,11 @@ export default function MediaPickerModal({
                         alt={newImageAlt || pendingUpload.name}
                         fill
                         className="object-contain"
+                        // No media DB row exists yet, so the file is
+                        // session-gated — the image optimizer fetches
+                        // without cookies and would 404. Load it directly
+                        // from the browser instead.
+                        unoptimized
                       />
                     </div>
                     <div className="min-w-0 flex-1 space-y-4">
