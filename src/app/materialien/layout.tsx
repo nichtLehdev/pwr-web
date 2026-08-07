@@ -9,6 +9,10 @@ export const metadata = buildPageMetadata({
 });
 
 /** Metadata holder for the client-rendered page in this segment. */
-export default function MaterialienLayout({ children }: { children: ReactNode }) {
+export default function MaterialienLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return children;
 }

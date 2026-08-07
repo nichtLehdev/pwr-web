@@ -3,8 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
   title: "Newsletter abbestellen",
-  description:
-    "Newsletter des Posaunenwerks Rheinland abbestellen.",
+  description: "Newsletter des Posaunenwerks Rheinland abbestellen.",
   path: "/newsletter/unsubscribe",
   noIndex: true,
 });
@@ -14,6 +13,10 @@ export const metadata = buildPageMetadata({
  *
  * A transactional page reached from an e-mail link; nothing to rank.
  */
-export default function NewsletterUnsubscribeLayout({ children }: { children: ReactNode }) {
+export default function NewsletterUnsubscribeLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return children;
 }

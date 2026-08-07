@@ -48,15 +48,19 @@ describe("slugify", () => {
 
 describe("uniqueSlug", () => {
   it("returns the base slug when it is free", async () => {
-    await expect(uniqueSlug("konzert", async () => false, "beitrag")).resolves.toBe(
-      "konzert",
-    );
+    await expect(
+      uniqueSlug("konzert", async () => false, "beitrag"),
+    ).resolves.toBe("konzert");
   });
 
   it("appends a counter until it finds a free slug", async () => {
     const taken = new Set(["konzert", "konzert-2", "konzert-3"]);
     await expect(
-      uniqueSlug("konzert", async (candidate) => taken.has(candidate), "beitrag"),
+      uniqueSlug(
+        "konzert",
+        async (candidate) => taken.has(candidate),
+        "beitrag",
+      ),
     ).resolves.toBe("konzert-4");
   });
 
@@ -88,7 +92,10 @@ describe("ensembleSlugBase", () => {
       "posaunenchor-orsoy",
     );
     expect(
-      ensembleSlugBase("Posaunenchor des CVJM Styrum", "Mülheim an der Ruhr-Styrum"),
+      ensembleSlugBase(
+        "Posaunenchor des CVJM Styrum",
+        "Mülheim an der Ruhr-Styrum",
+      ),
     ).toBe("posaunenchor-des-cvjm-styrum");
   });
 

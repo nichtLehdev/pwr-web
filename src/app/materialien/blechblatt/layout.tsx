@@ -9,6 +9,10 @@ export const metadata = buildPageMetadata({
 });
 
 /** Metadata holder for the client-rendered page in this segment. */
-export default function BlechblattLayout({ children }: { children: ReactNode }) {
+export default function BlechblattLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return children;
 }

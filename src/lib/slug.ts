@@ -39,10 +39,9 @@ export function slugify(input: string): string {
   // Cut on a separator so the slug never ends mid-word.
   const cut = text.slice(0, MAX_SLUG_LENGTH);
   const lastDash = cut.lastIndexOf("-");
-  return (lastDash > MAX_SLUG_LENGTH / 2 ? cut.slice(0, lastDash) : cut).replace(
-    /-+$/,
-    "",
-  );
+  return (
+    lastDash > MAX_SLUG_LENGTH / 2 ? cut.slice(0, lastDash) : cut
+  ).replace(/-+$/, "");
 }
 
 /**
