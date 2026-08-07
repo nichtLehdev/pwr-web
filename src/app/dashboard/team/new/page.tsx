@@ -48,11 +48,6 @@ export default function NewTeamPage() {
     PERMISSIONS.ORGANIZATION_MANAGE_TEAM,
   );
 
-  const { data: users } = api.users.list.useQuery(
-    { page: 1, limit: 1000 },
-    { enabled: !!session?.user },
-  );
-
   const [userId, setUserId] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -83,14 +78,12 @@ export default function NewTeamPage() {
     setSocials(socials.filter((_, i) => i !== index));
   };
 
-  const filteredUsers = users?.users.filter((user) => {
-    if (!userSearch.trim()) return true;
-    const searchLower = userSearch.toLowerCase();
-    return (
-      user.displayName?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower)
-    );
-  });
+  // Server-side search (users.list caps limit at 100 and needs the
+  // USERS_MANAGE permission; users.search is the picker endpoint).
+  const { data: filteredUsers } = api.users.search.useQuery(
+    { query: userSearch.trim(), limit: 20 },
+    { enabled: !!session?.user && userSearch.trim().length >= 2 },
+  );
 
   const handleUserSelect = (user: {
     id: string;
@@ -276,7 +269,7 @@ export default function NewTeamPage() {
                     ))
                   ) : (
                     <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                      {userSearch
+                      {userSearch.trim().length >= 2
                         ? "Keine Benutzer gefunden"
                         : "Tippe, um Benutzer zu suchen"}
                     </div>
