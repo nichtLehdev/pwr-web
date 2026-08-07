@@ -12,6 +12,13 @@ const config = {
   crossOrigin: "anonymous",
   allowedDevOrigins: ["192.168.6.*"],
 
+  typescript: {
+    // The build's type pass skips test files (they are covered by the
+    // dedicated lint-typecheck CI job) — keeps the check inside the
+    // memory-capped Docker builder's 1 GB heap.
+    tsconfigPath: "tsconfig.build.json",
+  },
+
   images: {
     formats: ["image/avif", "image/webp"],
     // Uploaded assets are immutable (timestamped filenames), so optimized

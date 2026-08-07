@@ -1,5 +1,6 @@
 import { readFile, stat } from "fs/promises";
-import { join } from "path";
+import { resolve, sep } from "path";
+import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 import JSZip from "jszip";
 import type { Media } from "~/generated/prisma/client";
 
@@ -35,39 +36,56 @@ export function collectMediaFromEntities(
   return Array.from(mediaMap.values());
 }
 
+/** Static assets shipped with the app (e.g. /images/team/...) live in public/. */
+const PUBLIC_ROOT = resolve(
+  /* turbopackIgnore: true */ process.cwd(),
+  "public",
+);
+
+/**
+ * Resolve a stored media path to a file on disk.
+ *
+ * Managed uploads live under UPLOADS_ROOT — deliberately outside public/, so
+ * they are only reachable through the authorization checks in /api/uploads.
+ * Every other path is a static asset that ships in public/. Both resolutions
+ * are confined to their root, since Media.path is not validated on the
+ * media.importMedia route and must not be able to read arbitrary files.
+ */
+function resolveMediaFsPath(storedPath: string): string | null {
+  if (storedPath.startsWith("/api/uploads/")) {
+    return resolveUploadFsPath(storedPath);
+  }
+
+  const relativePath = storedPath.replace(/^\/+/, "");
+  const fullPath = resolve(
+    /* turbopackIgnore: true */ PUBLIC_ROOT,
+    relativePath,
+  );
+  if (!fullPath.startsWith(PUBLIC_ROOT + sep)) return null;
+  return fullPath;
+}
+
 /**
  * Reads a media file from disk
  */
 export async function readMediaFile(media: Media): Promise<Buffer | null> {
   try {
-    let filePath: string;
-
-    if (media.path.startsWith("/api/uploads/")) {
-      const relativePath = media.path.replace("/api/uploads/", "");
-      filePath = join(
-        /* turbopackIgnore: true */ process.cwd(),
-        "public",
-        "uploads",
-        relativePath,
+    const filePath = resolveMediaFsPath(media.path);
+    if (!filePath) {
+      console.warn(
+        `Media path outside the allowed roots: ${media.path} (media ID: ${media.id})`,
       );
-    } else if (media.path.startsWith("/")) {
-      filePath = join(
-        /* turbopackIgnore: true */ process.cwd(),
-        "public",
-        media.path,
-      );
-    } else {
-      filePath = media.path;
+      return null;
     }
 
     try {
-      await stat(filePath);
+      await stat(/* turbopackIgnore: true */ filePath);
     } catch {
       console.warn(`Media file not found: ${filePath} (media ID: ${media.id})`);
       return null;
     }
 
-    return await readFile(filePath);
+    return await readFile(/* turbopackIgnore: true */ filePath);
   } catch (error) {
     console.error(`Error reading media file ${media.id}:`, error);
     return null;
