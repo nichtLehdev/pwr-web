@@ -12,6 +12,7 @@
 import "dotenv/config";
 import { db } from "@/server/db";
 import { PERMISSIONS } from "@/lib/permissions";
+import { BEZIRKE } from "@/lib/bezirke";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.argv[2];
 
@@ -26,16 +27,21 @@ async function main() {
     const adminRole = await ensureSystemRolesExist();
     console.log("  ✅ System roles ready\n");
 
-    // Step 2: Assign admin role to admin user
+    // Step 2: Ensure the hardcoded districts exist
+    console.log("🗺️  Step 2: Ensuring Bezirke exist...");
+    await ensureBezirkeExist();
+    console.log("  ✅ Bezirke ready\n");
+
+    // Step 3: Assign admin role to admin user
     if (ADMIN_EMAIL) {
       console.log(
-        `🔐 Step 2: Assigning Administrator role to ${ADMIN_EMAIL}...`,
+        `🔐 Step 3: Assigning Administrator role to ${ADMIN_EMAIL}...`,
       );
       await assignAdminRole(ADMIN_EMAIL, adminRole.id);
       console.log("  ✅ Admin role assigned\n");
     } else {
       console.log(
-        "⚠️  Step 2: Skipping admin role assignment (no ADMIN_EMAIL provided)",
+        "⚠️  Step 3: Skipping admin role assignment (no ADMIN_EMAIL provided)",
       );
       console.log(
         "  💡 Set ADMIN_EMAIL environment variable or pass as argument\n",
@@ -207,6 +213,17 @@ async function ensureSystemRolesExist() {
   );
 
   return adminRole;
+}
+
+async function ensureBezirkeExist() {
+  for (const bezirk of BEZIRKE) {
+    await db.bezirk.upsert({
+      where: { number: bezirk.number },
+      update: { name: bezirk.name, shortName: bezirk.shortName },
+      create: { ...bezirk },
+    });
+  }
+  console.log(`  ✓ ${BEZIRKE.length} Bezirke ensured`);
 }
 
 async function assignAdminRole(email: string, adminRoleId: string) {
