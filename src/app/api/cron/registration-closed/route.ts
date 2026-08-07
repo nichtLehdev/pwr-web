@@ -18,9 +18,10 @@ function authorizeCron(request: NextRequest): boolean {
  * POST /api/cron/registration-closed
  *
  * Sends overview e-mails to course creators and ORGANIZER collaborators when
- * registrationDeadline has passed. Triggered by an mStudio cron job on
- * mittwald (scripts/trigger-registration-closed.mjs), by the in-app
- * scheduler when REGISTRATION_CLOSED_CRON_SCHEDULE is set, or manually.
+ * registrationDeadline has passed. In Docker, use the
+ * registration-closed-cron compose service (default: every 6 hours); on
+ * mittwald, an mStudio cron job triggers this route via
+ * scripts/trigger-registration-closed.mjs.
  *
  * Optional: ?courseId=<uuid> to process a single course (e.g. for testing).
  * Requires Authorization: Bearer <CRON_SECRET>.

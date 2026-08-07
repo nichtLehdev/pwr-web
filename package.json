@@ -58,7 +58,6 @@
     "lucide-react": "^0.575.0",
     "marked": "^17.0.2",
     "next": "16.2.11",
-    "node-cron": "^4.6.0",
     "nodemailer": "^9.0.1",
     "pg": "^8.20.0",
     "prisma": "^7.8.0",
