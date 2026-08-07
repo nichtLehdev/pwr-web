@@ -88,7 +88,10 @@ export async function GET(
       return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
 
-    const fullPath = resolve(UPLOADS_ROOT, filePath);
+    const fullPath = resolve(
+      /* turbopackIgnore: true */ UPLOADS_ROOT,
+      filePath,
+    );
     if (!fullPath.startsWith(UPLOADS_ROOT + sep)) {
       return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
@@ -100,12 +103,12 @@ export async function GET(
 
     let fileStats;
     try {
-      fileStats = await stat(fullPath);
+      fileStats = await stat(/* turbopackIgnore: true */ fullPath);
     } catch {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
     const mimeType = getMimeType(filePath);
-    const nodeStream = createReadStream(fullPath);
+    const nodeStream = createReadStream(/* turbopackIgnore: true */ fullPath);
     const webStream = new ReadableStream({
       start(controller) {
         nodeStream.on("data", (chunk: Buffer) => controller.enqueue(chunk));
