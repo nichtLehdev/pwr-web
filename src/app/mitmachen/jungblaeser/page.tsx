@@ -13,6 +13,14 @@ import {
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Jungbläserarbeit",
+  description:
+    "Jungbläserarbeit im Posaunenwerk Rheinland: Ausbildung, Lehrgänge und Angebote für Kinder und Jugendliche am Blechblasinstrument.",
+  path: "/mitmachen/jungblaeser",
+});
 
 export default function JungblaserPage() {
   const offerings = [

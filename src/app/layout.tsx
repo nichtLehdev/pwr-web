@@ -10,13 +10,45 @@ import { BannerProvider } from "./_components/ui/banner-context";
 import { PageViewTracker } from "./_components/stats/page-view-tracker";
 import { TrackingConsentProvider } from "./_components/stats/tracking-consent-context";
 import { ServiceWorkerRegistration } from "./_components/pwa/service-worker-registration";
+import JsonLd from "./_components/seo/json-ld";
+import { organizationSchema } from "@/lib/structured-data";
+import {
+  RSS_ALTERNATE,
+  SITE_DESCRIPTION,
+  SITE_LOCALE,
+  SITE_NAME,
+  siteUrl,
+} from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Posaunenwerk Rheinland",
-  description:
-    "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
+  // Makes every relative URL in child metadata (canonicals, og:image) absolute.
+  metadataBase: new URL(siteUrl()),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: SITE_LOCALE,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    url: siteUrl(),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  alternates: {
+    // No canonical here on purpose — child routes would inherit "/" and every
+    // page would declare itself a duplicate of the homepage.
+    types: RSS_ALTERNATE,
+  },
   icons: {
     icon: [
       {
@@ -89,6 +121,7 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
+        <JsonLd data={organizationSchema()} />
         <ServiceWorkerRegistration />
         <ThemeProvider>
           <ToastProvider>
