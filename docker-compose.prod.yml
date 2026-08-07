@@ -137,6 +137,24 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30} # Keep backups for 30 days
 
   # ===========================================================================
+  # Registration-closed e-mails (every 6h, calls app cron API)
+  # ===========================================================================
+  registration-closed-cron:
+    image: ghcr.io/nichtlehdev/pwr-cron:${APP_IMAGE_TAG:-latest}
+    container_name: posaunenwerk-registration-closed-cron
+    restart: unless-stopped
+    init: true
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - internal
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
+      APP_INTERNAL_URL: http://app:3000
+      REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
+
+  # ===========================================================================
   # Next.js Application
   # ===========================================================================
   app:
@@ -186,12 +204,8 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
 
-      # Cron API (manual triggering of /api/cron/* routes)
+      # Cron API (registration-closed overview e-mails)
       CRON_SECRET: ${CRON_SECRET:-}
-
-      # In-app schedule for registration-closed overview e-mails
-      # (scheduled via instrumentation.ts, no sidecar container)
-      REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
 
 networks:
   internal:

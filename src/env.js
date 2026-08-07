@@ -34,12 +34,6 @@ export const env = createEnv({
     CONTACT_EMAIL: z.string().email().optional(),
     /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
     CRON_SECRET: z.string().min(16).optional(),
-    /**
-     * In-app schedule for registration-closed overview e-mails. Unset =
-     * in-app scheduling disabled (e.g. on mittwald, where an mStudio cron
-     * job triggers the route instead).
-     */
-    REGISTRATION_CLOSED_CRON_SCHEDULE: z.string().optional(),
   },
 
   /**
@@ -70,8 +64,6 @@ export const env = createEnv({
     SMTP_FROM: process.env.SMTP_FROM,
     CONTACT_EMAIL: process.env.CONTACT_EMAIL,
     CRON_SECRET: process.env.CRON_SECRET,
-    REGISTRATION_CLOSED_CRON_SCHEDULE:
-      process.env.REGISTRATION_CLOSED_CRON_SCHEDULE,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

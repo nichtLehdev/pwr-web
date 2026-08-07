@@ -31,13 +31,13 @@
 #     exec-ing into the app container:
 #       node node_modules/tsx/dist/cli.mjs prisma/post-migration-setup.ts
 #       node node_modules/tsx/dist/cli.mjs prisma/seed.ts
-#   - There is no cron sidecar: registration-closed e-mails are triggered by
-#     an mStudio cron job (a separate resource, NOT overwritten by deploys)
-#     targeting service "app" with:
+#   - There is no cron sidecar here (the old server keeps its
+#     registration-closed-cron compose service): on mittwald the
+#     registration-closed e-mails are triggered by an mStudio cron job
+#     (a separate resource, NOT overwritten by deploys) targeting service
+#     "app" with:
 #       command:  node /app/scripts/trigger-registration-closed.mjs
 #       schedule: 0 */6 * * *
-#     The in-app fallback scheduler stays off because
-#     REGISTRATION_CLOSED_CRON_SCHEDULE is not set in this stack.
 #   - Public exposure is handled by a mittwald ingress (domain -> app:3000),
 #     configured once in mStudio, not in this file.
 #   - Deploy with skip_recreation: "posaunenwerk-db" so the database is not
