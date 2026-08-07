@@ -15,10 +15,6 @@
 #   APP_URL               public URL, e.g. https://pwr.lehdev.de
 #                         (used for NEXT_PUBLIC_APP_URL and BETTER_AUTH_URL)
 #   BETTER_AUTH_SECRET
-#   BETTER_AUTH_GITHUB_CLIENT_ID
-#   BETTER_AUTH_GITHUB_CLIENT_SECRET
-#   GITHUB_REPO           file-storage repo, e.g. "owner/repo"
-#   GITHUB_TOKEN          PAT for the file-storage repo
 #   SMTP_HOST / SMTP_PORT / SMTP_SECURE / SMTP_USER / SMTP_PASSWORD / SMTP_FROM
 #   CRON_SECRET
 #
@@ -102,12 +98,9 @@ services:
       # Better Auth
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"
       BETTER_AUTH_URL: "{{ .Env.APP_URL }}"
-      BETTER_AUTH_GITHUB_CLIENT_ID: "{{ .Env.BETTER_AUTH_GITHUB_CLIENT_ID }}"
-      BETTER_AUTH_GITHUB_CLIENT_SECRET: "{{ .Env.BETTER_AUTH_GITHUB_CLIENT_SECRET }}"
 
-      # GitHub file storage
-      GITHUB_REPO: "{{ .Env.GITHUB_REPO }}"
-      GITHUB_TOKEN: "{{ .Env.GITHUB_TOKEN }}"
+      # GITHUB_TOKEN/GITHUB_REPO are deliberately NOT set: the feedback
+      # page is beta-only and redirects to /kontakt without them.
 
       # SMTP
       SMTP_HOST: "{{ .Env.SMTP_HOST }}"
