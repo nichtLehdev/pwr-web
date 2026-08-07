@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import EventsClient from "../_components/events/events-client";
 import { getTerminePageData } from "@/lib/termine-page-data";
+import { buildPageMetadata } from "@/lib/seo";
 
 async function TermineBody() {
   const data = await getTerminePageData();
@@ -12,6 +13,13 @@ async function TermineBody() {
     />
   );
 }
+
+export const metadata = buildPageMetadata({
+  title: "Termine",
+  description:
+    "Konzerte, Gottesdienste, Rüstzeiten und Lehrgänge des Posaunenwerks Rheinland — filterbar nach Bezirk, Kategorie und Zeitraum.",
+  path: "/termine",
+});
 
 export default function TerminePage() {
   return (

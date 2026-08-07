@@ -4,6 +4,14 @@ import Image from "next/image";
 import { api } from "@/trpc/server";
 import ConcertCard from "@/app/_components/events/concert-card";
 import { Music, Calendar, Users, ChevronRight, User } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Auswahlchöre",
+  description:
+    "Die Auswahlchöre des Posaunenwerks Rheinland: Besetzung, Leitung, Probenarbeit und Wege zur Mitwirkung.",
+  path: "/ueber-uns/auswahlchoere",
+});
 
 export default async function AuswahlchoerePage() {
   const ensembles = (await api.auswahlchoere.getAll({})).auswahlchoere;

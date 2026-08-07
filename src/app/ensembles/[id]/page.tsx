@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +19,10 @@ import {
   NavigationIcon,
 } from "lucide-react";
 import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
+import { db } from "@/server/db";
+import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
+import JsonLd from "@/app/_components/seo/json-ld";
+import { breadcrumbSchema, musicGroupSchema } from "@/lib/structured-data";
 
 function EnsembleRoleContact({
   email,
@@ -66,6 +72,45 @@ function EnsembleRoleContact({
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+const getEnsembleForMetadata = cache(async (id: string) =>
+  db.ensemble.findFirst({
+    where: { id, isActive: true },
+    select: {
+      name: true,
+      description: true,
+      image: { select: { url: true, width: true, height: true, alt: true } },
+      location: { select: { name: true, city: true } },
+      bezirk: { select: { name: true } },
+    },
+  }),
+);
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const ensemble = await getEnsembleForMetadata(id);
+
+  if (!ensemble) {
+    return { title: "Posaunenchor", robots: { index: false, follow: false } };
+  }
+
+  // Town first: people search for "Posaunenchor <Ort>", not for the chor's
+  // own name.
+  const city = ensemble.location?.city;
+  const place = city ? ` in ${city}` : "";
+  const fallback = `Posaunenchor${place}${
+    ensemble.bezirk ? ` — ${ensemble.bezirk.name}` : ""
+  }. Proben, Kontakt und Termine beim ${SITE_NAME}.`;
+
+  return buildPageMetadata({
+    title: city ? `${ensemble.name} (${city})` : ensemble.name,
+    description: plainTextExcerpt(ensemble.description) ?? fallback,
+    path: `/ensembles/${id}`,
+    image: ensemble.image,
+  });
 }
 
 export default async function EnsembleDetailPage({ params }: PageProps) {
@@ -186,6 +231,27 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
         ) : undefined
       }
     >
+      <JsonLd
+        data={[
+          musicGroupSchema({
+            id: ensemble.id,
+            name: ensemble.name,
+            description: plainTextExcerpt(ensemble.description, 300),
+            imageUrl: ensemble.image?.url,
+            websiteUrl: ensemble.contactWebsite,
+            // Uses the coordinates resolved above, so chöre whose location row
+            // has not been backfilled yet still get a geo node.
+            location: ensemble.location
+              ? { ...ensemble.location, latitude, longitude }
+              : null,
+          }),
+          breadcrumbSchema([
+            { name: "Start", path: "/" },
+            { name: "Chor finden", path: "/mitmachen/chor-finden" },
+            { name: ensemble.name },
+          ]),
+        ]}
+      />
       {/* Content */}
       <section className="bg-background dark:bg-dark-background py-8 md:py-12 lg:py-16">
         <div className="container mx-auto max-w-5xl px-4">

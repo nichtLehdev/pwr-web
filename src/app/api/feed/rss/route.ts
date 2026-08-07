@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 /**
  * Escapes XML special characters
@@ -20,34 +21,6 @@ function escapeXml(unsafe: string): string {
  */
 function formatRssDate(date: Date): string {
   return date.toUTCString();
-}
-
-/**
- * Converts markdown to plain text for RSS description
- * Directly strips markdown syntax without converting to HTML first
- * This avoids all HTML sanitization issues since we never create HTML
- */
-function markdownToPlainText(markdown: string): string {
-  if (!markdown) return "";
-
-  let text = markdown.replace(/^#{1,6}\s+/gm, "");
-  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1");
-  text = text.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1");
-  text = text.replace(/\*\*([^*]+)\*\*/g, "$1");
-  text = text.replace(/\*([^*]+)\*/g, "$1");
-  text = text.replace(/~~([^~]+)~~/g, "$1");
-  text = text.replace(/`([^`]+)`/g, "$1");
-  text = text.replace(/```[\s\S]*?```/g, "");
-  text = text.replace(/^[\s]*[-*+]\s+/gm, "");
-  text = text.replace(/^\d+\.\s+/gm, "");
-  text = text.replace(/^>\s+/gm, "");
-  text = text.replace(/^---+/gm, "");
-  text = text.replace(/[<>]/g, "");
-
-  text = text.replace(/\n\s*\n\s*\n/g, "\n\n");
-  text = text.replace(/[ \t]+/g, " ");
-
-  return text.trim();
 }
 
 export async function GET(request: NextRequest) {

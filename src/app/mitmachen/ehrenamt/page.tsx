@@ -11,6 +11,14 @@ import {
   UsersIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Ehrenamtlich engagieren",
+  description:
+    "Ehrenamt im Posaunenwerk Rheinland: Aufgaben, Einsatzfelder und Wege, sich in der rheinischen Bläserarbeit einzubringen.",
+  path: "/mitmachen/ehrenamt",
+});
 
 export default function EhrenamtPage() {
   const opportunities = [

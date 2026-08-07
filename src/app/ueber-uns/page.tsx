@@ -8,6 +8,14 @@ import {
   MailIcon,
   PhoneIcon,
 } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Über uns",
+  description:
+    "Das Evangelische Posaunenwerk im Rheinland: Auftrag, Struktur, Gremien und die Menschen hinter der Bläserarbeit in der Evangelischen Kirche im Rheinland.",
+  path: "/ueber-uns",
+});
 
 export default function UeberUnsPage() {
   const sections = [

@@ -5,6 +5,14 @@ import PeopleCard from "@/app/_components/general/people-card";
 import { BuildingIcon, CheckIcon } from "lucide-react";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
 import { BanknoteIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Landesposaunenrat",
+  description:
+    "Der Landesposaunenrat des Posaunenwerks Rheinland — Mitglieder, Aufgaben und Zuständigkeiten des leitenden Gremiums der rheinischen Bläserarbeit.",
+  path: "/ueber-uns/posaunenrat",
+});
 
 export default async function PosaunenratPage() {
   const [bezirke, posaunenratResponse, vorstandResponse] = await Promise.all([

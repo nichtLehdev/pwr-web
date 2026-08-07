@@ -8,6 +8,14 @@ import {
 import { Globe2Icon, GiftIcon, MapPinIcon, MailIcon } from "lucide-react";
 import Link from "next/link";
 import { StarIcon } from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
+
+export const metadata = buildPageMetadata({
+  title: "Aus- und Weiterbildung",
+  description:
+    "Lehrgänge, Kurse und Qualifizierung für Bläserinnen, Bläser und Chorleitung im Posaunenwerk Rheinland.",
+  path: "/mitmachen/bildung",
+});
 
 export default function BildungPage() {
   const courseCategories = [
