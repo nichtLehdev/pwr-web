@@ -60,7 +60,8 @@ function styleNote(
   dark: boolean,
   verdict?: OnsetVerdict,
 ): void {
-  const stroke = verdict !== undefined ? verdictColor(verdict, dark) : baseColor;
+  const stroke =
+    verdict !== undefined ? verdictColor(verdict, dark) : baseColor;
   /** Pausen: nur Gesamtstil — setKeyStyle(0) trifft oft nur den Kopf, Achtel-/Sechzehntelpausen haben zusätzlich Stem/Flag-Pfade. */
   if (sn.isRest()) {
     sn.setStyle({ fillStyle: stroke, strokeStyle: stroke });
