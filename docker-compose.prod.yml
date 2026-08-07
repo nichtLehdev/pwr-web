@@ -10,6 +10,9 @@
 #   2. Set CRON_SECRET (and SMTP_*) in .env
 #   3. Run: docker compose -f docker-compose.prod.yml up -d
 #
+# APP_IMAGE_TAG pins the image version (default: latest). The release
+# workflow sets it to the exact release version so pre-releases deploy too.
+#
 # =============================================================================
 
 services:
@@ -43,7 +46,7 @@ services:
   # Database Migration (runs once on startup)
   # ===========================================================================
   db-migrate:
-    image: ghcr.io/nichtlehdev/pwr-web:latest
+    image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-migrate
     depends_on:
       posaunenwerk-db:
@@ -63,7 +66,7 @@ services:
   # Post-Migration Setup (run once after permission migrations)
   # ===========================================================================
   post-migration-setup:
-    image: ghcr.io/nichtlehdev/pwr-web:latest
+    image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-post-migration-setup
     profiles:
       - post-migration
@@ -86,7 +89,7 @@ services:
   # Database Seeding (optional, run manually)
   # ===========================================================================
   db-seed:
-    image: ghcr.io/nichtlehdev/pwr-web:latest
+    image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-seed
     profiles:
       - seed
@@ -112,7 +115,7 @@ services:
   # Database Backup Service (scheduled backups)
   # ===========================================================================
   db-backup:
-    image: ghcr.io/nichtlehdev/pwr-backup:latest
+    image: ghcr.io/nichtlehdev/pwr-backup:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-backup
     restart: unless-stopped
     init: true
@@ -134,28 +137,10 @@ services:
       BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30} # Keep backups for 30 days
 
   # ===========================================================================
-  # Registration-closed e-mails (every 6h, calls app cron API)
-  # ===========================================================================
-  registration-closed-cron:
-    image: ghcr.io/nichtlehdev/pwr-cron:latest
-    container_name: posaunenwerk-registration-closed-cron
-    restart: unless-stopped
-    init: true
-    depends_on:
-      app:
-        condition: service_started
-    networks:
-      - internal
-    environment:
-      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
-      APP_INTERNAL_URL: http://app:3000
-      REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
-
-  # ===========================================================================
   # Next.js Application
   # ===========================================================================
   app:
-    image: ghcr.io/nichtlehdev/pwr-web:latest
+    image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
     container_name: posaunenwerk-app
     restart: unless-stopped
     depends_on:
@@ -201,8 +186,12 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
 
-      # Cron API (registration-closed overview e-mails)
+      # Cron API (manual triggering of /api/cron/* routes)
       CRON_SECRET: ${CRON_SECRET:-}
+
+      # In-app schedule for registration-closed overview e-mails
+      # (scheduled via instrumentation.ts, no sidecar container)
+      REGISTRATION_CLOSED_CRON_SCHEDULE: ${REGISTRATION_CLOSED_CRON_SCHEDULE:-0 */6 * * *}
 
 networks:
   internal:

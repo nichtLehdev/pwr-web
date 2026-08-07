@@ -1,8 +1,18 @@
 # =============================================================================
 # Release & Deploy Workflow
 # =============================================================================
-# Triggers on published releases (excluding pre-releases)
-# Builds Docker image, pushes to GitHub Container Registry, and deploys to server
+# Triggers on every published release, INCLUDING pre-releases.
+#
+#   build-and-push:     builds Docker images and pushes them to GHCR with
+#                       semver tags; "latest" is only applied to full releases
+#   deploy-current:     old server (pwr.lehdev.de) via SSH — receives every
+#                       release AND every pre-release (bleeding edge)
+#   deploy-production:  mittwald container stack via deploy-container-action —
+#                       full releases only
+#
+# GitHub environments used: "current" (old server SSH secrets) and
+# "production" (mittwald API token, stack id, app secrets — see deploy/stack.yaml
+# for the full list of values the stack file expects).
 # =============================================================================
 
 name: Release & Deploy
@@ -13,7 +23,7 @@ on:
 
 # Prevent concurrent deployments
 concurrency:
-  group: production-deploy
+  group: release-deploy
   cancel-in-progress: false
 
 env:
@@ -21,23 +31,23 @@ env:
   # Hardcode lowercase image name (GitHub doesn't provide lowercase variables)
   IMAGE_NAME: nichtlehdev/pwr-web
   BACKUP_IMAGE_NAME: nichtlehdev/pwr-backup
-  CRON_IMAGE_NAME: nichtlehdev/pwr-cron
 
 jobs:
   # ===========================================================================
-  # Build and Push Docker Image
+  # Build and Push Docker Images (all releases, including pre-releases)
   # ===========================================================================
   build-and-push:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    # Skip pre-releases
-    if: ${{ !github.event.release.prerelease }}
 
     permissions:
       contents: read
       packages: write
 
     outputs:
+      # Clean semver version without leading "v" (e.g. 1.4.2 or 1.5.0-rc.1);
+      # used by the deploy jobs to pin the exact image tag.
+      version: ${{ steps.meta.outputs.version }}
       image-tag: ${{ steps.meta.outputs.tags }}
       image-digest: ${{ steps.build.outputs.digest }}
 
@@ -64,7 +74,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
 
       - name: Build and push Docker image
         id: build
@@ -88,7 +98,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
 
       - name: Build and push Backup Docker image
         id: build-backup
@@ -102,41 +112,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Extract metadata for Cron Docker image
-        id: meta-cron
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.CRON_IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest
-
-      - name: Build and push Cron Docker image
-        id: build-cron
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./scripts/Dockerfile.cron
-          push: true
-          tags: ${{ steps.meta-cron.outputs.tags }}
-          labels: ${{ steps.meta-cron.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   # ===========================================================================
-  # Deploy to Server
+  # Deploy to Old Server (every release and pre-release)
   # ===========================================================================
-  deploy:
-    name: Deploy to Server
+  deploy-current:
+    name: Deploy to Old Server (current)
     runs-on: ubuntu-latest
     needs: build-and-push
 
     permissions:
       contents: read
     environment:
-      name: production
+      name: current
       url: https://pwr.lehdev.de
 
     steps:
@@ -165,17 +152,21 @@ jobs:
             # Navigate to project directory
             cd ${{ secrets.SERVER_PROJECT_PATH }}
 
+            # Pin the exact release version for docker compose interpolation
+            # (pre-releases are never tagged "latest")
+            export APP_IMAGE_TAG=${{ needs.build-and-push.outputs.version }}
+
             # Login to GitHub Container Registry
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u nichtlehdev --password-stdin
 
-            # Pull the latest images
-            docker pull ghcr.io/nichtlehdev/pwr-web:latest
-            docker pull ghcr.io/nichtlehdev/pwr-backup:latest
-            docker pull ghcr.io/nichtlehdev/pwr-cron:latest
+            # Pull the release images
+            docker pull ghcr.io/nichtlehdev/pwr-web:$APP_IMAGE_TAG
+            docker pull ghcr.io/nichtlehdev/pwr-backup:$APP_IMAGE_TAG
 
-            # Update the running containers
+            # Update the running containers (remove-orphans cleans up the
+            # retired registration-closed-cron container)
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
             # Cleanup old images
             docker image prune -f
@@ -210,10 +201,63 @@ jobs:
               exit 1
             fi
 
-            if docker ps | grep -q posaunenwerk-registration-closed-cron; then
-              echo "✅ Registration-closed cron container is running"
-            else
-              echo "❌ Registration-closed cron container is not running"
-              docker logs posaunenwerk-registration-closed-cron --tail 50
-              exit 1
+  # ===========================================================================
+  # Deploy to mittwald (full releases only)
+  # ===========================================================================
+  deploy-production:
+    name: Deploy to mittwald (production)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ !github.event.release.prerelease }}
+
+    permissions:
+      contents: read
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Deploy stack to mittwald
+        uses: mittwald/deploy-container-action@v1
+        env:
+          # Every {{ .Env.* }} placeholder in deploy/stack.yaml must be
+          # defined here (see the stack file header for the full list).
+          RELEASE_VERSION: ${{ needs.build-and-push.outputs.version }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          APP_URL: ${{ vars.APP_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_GITHUB_CLIENT_ID: ${{ vars.BETTER_AUTH_GITHUB_CLIENT_ID }}
+          BETTER_AUTH_GITHUB_CLIENT_SECRET: ${{ secrets.BETTER_AUTH_GITHUB_CLIENT_SECRET }}
+          # Secret names must not start with GITHUB_, hence the FILE_STORAGE_
+          # prefix on the GitHub side; the stack file expects GITHUB_*.
+          GITHUB_REPO: ${{ vars.FILE_STORAGE_GITHUB_REPO }}
+          GITHUB_TOKEN: ${{ secrets.FILE_STORAGE_GITHUB_TOKEN }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_SECURE: ${{ vars.SMTP_SECURE }}
+          SMTP_USER: ${{ vars.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ vars.SMTP_FROM }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        with:
+          api_token: ${{ secrets.MITTWALD_API_TOKEN }}
+          stack_id: ${{ vars.MITTWALD_STACK_ID }}
+          stack_file: ${{ github.workspace }}/deploy/stack.yaml
+          skip_recreation: "posaunenwerk-db"
+
+      - name: Verify deployment
+        if: ${{ vars.APP_URL != '' }}
+        run: |
+          echo "Waiting for ${{ vars.APP_URL }} to respond..."
+          sleep 30
+          for i in $(seq 1 10); do
+            if curl -fsS -o /dev/null "${{ vars.APP_URL }}"; then
+              echo "✅ App is responding"
+              exit 0
             fi
+            sleep 10
+          done
+          echo "❌ App did not respond in time"
+          exit 1
