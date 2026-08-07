@@ -31,7 +31,7 @@ services:
     volumes:
       - "uploads_data:/app/uploads"
     envs:
-      DATABASE_URL: "postgresql://postgres:{{ .Env.POSTGRES_PASSWORD }}@posaunenwerk-db:5432/posaunenwerk"
+      DATABASE_URL: "postgresql://postgres:{{ urlquery .Env.POSTGRES_PASSWORD }}@posaunenwerk-db:5432/posaunenwerk"
       NODE_ENV: "production"
       NEXT_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
