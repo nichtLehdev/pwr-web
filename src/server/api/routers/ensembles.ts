@@ -5,6 +5,8 @@ import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { resolveRolePublicContact } from "@/lib/resolve-ensemble-contact";
 import { permissionProcedure } from "../middleware/permissions";
+import { createEnsembleSlug } from "../helpers/content-slug";
+import { isUuid } from "@/lib/slug";
 
 const linkedUserContactSelect = {
   id: true,
@@ -87,11 +89,12 @@ export const ensemblesRouter = createTRPCRouter({
       };
     }),
 
+  /** Accepts either the UUID or the slug; see posts.getById. */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const ensemble = await ctx.db.ensemble.findUnique({
-        where: { id: input.id },
+      const ensemble = await ctx.db.ensemble.findFirst({
+        where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           image: true,
           location: true,
@@ -212,9 +215,22 @@ export const ensemblesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { rehearsalSchedules, ...ensembleData } = input;
+
+      // The town disambiguates chöre that share a name, so the slug needs it —
+      // but create only receives a locationId.
+      const city = ensembleData.locationId
+        ? ((
+            await ctx.db.location.findUnique({
+              where: { id: ensembleData.locationId },
+              select: { city: true },
+            })
+          )?.city ?? null)
+        : null;
+
       const ensemble = await ctx.db.ensemble.create({
         data: {
           ...ensembleData,
+          slug: await createEnsembleSlug(ctx.db, input.name, city),
           rehearsalSchedules: rehearsalSchedules
             ? {
                 create: rehearsalSchedules,

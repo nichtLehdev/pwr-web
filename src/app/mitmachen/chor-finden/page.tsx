@@ -39,6 +39,7 @@ import {
   InfoIcon,
 } from "lucide-react";
 import { MailIcon } from "lucide-react";
+import { ensemblePath } from "@/lib/slug";
 
 function ChorFindenContent() {
   const searchParams = useSearchParams();
@@ -119,6 +120,7 @@ function ChorFindenContent() {
       )
       .map((choir) => ({
         id: choir.id,
+        slug: choir.slug,
         name: choir.name,
         bezirkNumber: choir.bezirk?.number,
         ...geoToBezirkeMapPoint(
@@ -944,7 +946,7 @@ function ChorFindenContent() {
                           ) : (
                             <a
                               key={marker.id}
-                              href={`/ensembles/${marker.id}`}
+                              href={ensemblePath(marker)}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (
@@ -1064,7 +1066,7 @@ function ChorFindenContent() {
                                 the marker is already directly clickable. */}
                             {isCoarsePointer && (
                               <Link
-                                href={`/ensembles/${marker.id}`}
+                                href={ensemblePath(marker)}
                                 onClick={(e) => e.stopPropagation()}
                                 className="text-primary-light mt-1 inline-block underline"
                               >
@@ -1094,7 +1096,7 @@ function ChorFindenContent() {
                             <div className="mb-4 flex items-start justify-between">
                               <div className="flex-1">
                                 <Link
-                                  href={`/ensembles/${choir.id}`}
+                                  href={ensemblePath(choir)}
                                   className="text-dark dark:text-dark-text hover:text-primary mb-2 block text-xl font-bold transition-colors"
                                 >
                                   {choir.name}

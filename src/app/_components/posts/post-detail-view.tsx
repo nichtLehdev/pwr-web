@@ -392,6 +392,7 @@ export default function PostDetailView({
                 <PostCard
                   key={relatedPost.id}
                   id={relatedPost.id}
+                  slug={relatedPost.slug}
                   category={relatedPost.category}
                   date={relatedPost.publishedAt || relatedPost.createdAt}
                   title={relatedPost.title}

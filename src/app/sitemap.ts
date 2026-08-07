@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { siteUrl } from "@/lib/seo";
+import { ensemblePath, postPath } from "@/lib/slug";
 
 /**
  * Regenerated hourly rather than pinned at build time — posts and events are
@@ -58,7 +59,7 @@ async function contentEntries(): Promise<MetadataRoute.Sitemap> {
   const [posts, events, courses, ensembles] = await Promise.all([
     db.post.findMany({
       where: { status: ContentStatus.APPROVED },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
     db.event.findMany({
       where: { status: ContentStatus.APPROVED, eventDate: { gte: cutoff } },
@@ -70,13 +71,13 @@ async function contentEntries(): Promise<MetadataRoute.Sitemap> {
     }),
     db.ensemble.findMany({
       where: { isActive: true },
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     }),
   ]);
 
   return [
     ...posts.map((post) => ({
-      url: siteUrl(`/aktuelles/${post.id}`),
+      url: siteUrl(postPath(post)),
       lastModified: post.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.7,
@@ -94,7 +95,7 @@ async function contentEntries(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
     ...ensembles.map((ensemble) => ({
-      url: siteUrl(`/ensembles/${ensemble.id}`),
+      url: siteUrl(ensemblePath(ensemble)),
       lastModified: ensemble.updatedAt,
       changeFrequency: "monthly" as const,
       priority: 0.6,

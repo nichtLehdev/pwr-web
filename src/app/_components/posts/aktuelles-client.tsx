@@ -312,6 +312,7 @@ export default function AktuellesClient() {
                     <PostCard
                       key={post.id}
                       id={post.id}
+                      slug={post.slug}
                       title={post.title}
                       excerpt={post.excerpt || ""}
                       date={post.publishedAt || post.createdAt}
@@ -341,6 +342,7 @@ export default function AktuellesClient() {
                     <PostCard
                       key={post.id}
                       id={post.id}
+                      slug={post.slug}
                       title={post.title}
                       excerpt={post.excerpt || ""}
                       date={post.publishedAt || post.createdAt}

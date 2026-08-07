@@ -23,6 +23,7 @@
     "seed:user": "tsx prisma/seed-user.ts",
     "seed:roles": "tsx prisma/seed-roles.ts",
     "backfill:geocode": "tsx prisma/backfill-geocode.ts",
+    "backfill:slugs": "tsx prisma/backfill-slugs.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },
