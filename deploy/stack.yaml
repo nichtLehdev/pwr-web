@@ -6,8 +6,10 @@
 # This file is the SINGLE SOURCE OF TRUTH for the stack: any manual change
 # made in mStudio that is not reflected here is overwritten on the next deploy.
 #
-# {{ .Env.* }} placeholders are substituted from the deploy job's `env:` block
-# before the file is parsed. EVERY placeholder below must be defined there:
+# The whole file is rendered as a Go template before parsing (comments
+# included — never write literal double curly braces in comments!). The
+# .Env.NAME placeholders below are substituted from the deploy job's
+# `env:` block; EVERY one of them must be defined there:
 #
 #   RELEASE_VERSION       image tag, e.g. "1.4.2" — no leading "v"
 #                         (matches the semver tags from docker/metadata-action)
