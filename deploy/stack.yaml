@@ -27,6 +27,7 @@ services:
         echo "Database not ready or migration failed, retrying ($i/30) in 5s...";
         sleep 5;
         done;
+        node node_modules/tsx/dist/cli.mjs prisma/post-migration-setup.ts || echo "Post-migration setup failed (non-fatal)";
         exec node node_modules/next/dist/bin/next start
     volumes:
       - "uploads_data:/app/uploads"
@@ -44,26 +45,10 @@ services:
       SMTP_PASSWORD: "{{ .Env.SMTP_PASSWORD }}"
       SMTP_FROM: "{{ .Env.SMTP_FROM }}"
       CRON_SECRET: "{{ .Env.CRON_SECRET }}"
-
-  db-backup:
-    image: "ghcr.io/nichtlehdev/pwr-backup:{{ .Env.RELEASE_VERSION }}"
-    description: "Scheduled PostgreSQL backups"
-    volumes:
-      - "backup_data:/backups"
-    envs:
-      POSTGRES_HOST: "posaunenwerk-db"
-      POSTGRES_PORT: "5432"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "{{ .Env.POSTGRES_PASSWORD }}"
-      POSTGRES_DB: "posaunenwerk"
-      BACKUP_DIR: "/backups"
-      BACKUP_SCHEDULE: "0 2 * * *"
-      BACKUP_RETENTION_DAYS: "30"
+      ADMIN_EMAIL: "{{ .Env.ADMIN_EMAIL }}"
 
 volumes:
   postgres_data:
     name: "posaunenwerk_postgres_data"
   uploads_data:
     name: "posaunenwerk_uploads_data"
-  backup_data:
-    name: "posaunenwerk_backup_data"
