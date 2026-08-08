@@ -87,11 +87,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 # Copy generated Prisma client
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
-# Copy tsconfig + minimal src needed for post-migration-setup.ts (runs with tsx in container)
+# Copy tsconfig + the minimal src needed by the prisma/*.ts scripts that run
+# with tsx in the container (post-migration-setup.ts, backfill-slugs.ts).
+# Anything a container-run script imports has to be listed here — the rest of
+# src/ is not in the runtime image.
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/db.ts ./src/server/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/permissions.ts ./src/lib/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/bezirke.ts ./src/lib/
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/slug.ts ./src/lib/
 
 # Trigger script for the mStudio cron job (mittwald), see the script header
 COPY --chown=nextjs:nodejs scripts/trigger-registration-closed.mjs ./scripts/
