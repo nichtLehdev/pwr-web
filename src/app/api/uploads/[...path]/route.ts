@@ -41,7 +41,9 @@ function getMimeType(filename: string): string {
  * - downloads: public+approved for everyone, otherwise session required
  * - media: public+approved for everyone, otherwise session required
  * - profiles: always public (avatars render on public pages)
- * Files without a database row fall back to requiring a session.
+ * Files without a database row fall back to requiring a session. That is what
+ * gates course-mail attachments: they travel inside the message itself, so
+ * recipients never need this route, and the link stays staff-only.
  */
 async function checkAccess(
   request: NextRequest,
