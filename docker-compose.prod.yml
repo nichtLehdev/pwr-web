@@ -86,6 +86,32 @@ services:
     restart: "no"
 
   # ===========================================================================
+  # Slug Backfill (fills Post.slug / Ensemble.slug after the slug migration)
+  #
+  # Idempotent: only rows whose slug is still NULL are touched, so running it
+  # again after new content has been created is harmless.
+  #   docker compose -f docker-compose.prod.yml --profile slug-backfill up
+  # ===========================================================================
+  slug-backfill:
+    image: ghcr.io/nichtlehdev/pwr-web:${APP_IMAGE_TAG:-latest}
+    container_name: posaunenwerk-slug-backfill
+    profiles:
+      - slug-backfill
+    depends_on:
+      posaunenwerk-db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    networks:
+      - internal
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
+      NODE_ENV: production
+      SKIP_ENV_VALIDATION: 1
+    command: ["node", "node_modules/tsx/dist/cli.mjs", "prisma/backfill-slugs.ts"]
+    restart: "no"
+
+  # ===========================================================================
   # Database Seeding (optional, run manually)
   # ===========================================================================
   db-seed:
