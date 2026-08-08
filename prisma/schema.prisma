@@ -53,6 +53,7 @@ model User {
   reviewedCourses       Course[]             @relation("CourseReviewer")
   reviewedPosts         Post[]               @relation("PostReviewer")
   courseCollaborations  CourseCollaborator[]
+  sentCourseMails       CourseMail[]         @relation("CourseMailSender")
   conductedEnsembles    Ensemble[]           @relation("EnsembleConductor")
   representedEnsembles  Ensemble[]           @relation("EnsembleRepresentative")
   conductedAuswahlChors AuswahlChor[]        @relation("AuswahlChorConductor")
@@ -576,6 +577,7 @@ model Course {
   priceOptions     CoursePriceOption[] // Each can have their own maxParticipants
   customFields     CourseCustomField[]
   registrations    CourseRegistration[]
+  mails            CourseMail[]
 
   // Meta
   createdById String?
@@ -734,6 +736,43 @@ model CourseRegistration {
   @@index([siblingDiscountStatus])
   @@index([courseId, registrationStatus])
   @@index([registrantId])
+}
+
+/// One e-mail an organizer sent to the registrants of a course, archived so
+/// the team can still answer "was the info mail sent, and what did it say?".
+/// Recipient addresses are deliberately not stored — only how many were
+/// reached, so the archive doesn't duplicate registrant data.
+model CourseMail {
+  id       String @id @default(uuid())
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  /// Sender is snapshotted as well: the entry stays readable after the user is deleted.
+  senderId    String?
+  sender      User?   @relation("CourseMailSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderName  String
+  senderEmail String
+  /// Where replies go. Defaults to the sender's address, editable when composing.
+  replyToEmail String
+
+  subject String
+  /// Markdown as produced by the dashboard editor; rendered to HTML per recipient.
+  body    String
+
+  /// Who it went to: { statuses: RegistrationStatus[], registrationIds: string[] }
+  recipientFilter Json
+  /// [{ filename, url, size }] — files attached to the outgoing mail.
+  attachments     Json?
+
+  recipientCount Int
+  sentCount      Int
+  failedCount    Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([courseId, createdAt])
+  @@index([senderId])
+  @@map("course_mail")
 }
 
 /// Continuous invoice numbering per year (§14 UStG requires an unbroken

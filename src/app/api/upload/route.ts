@@ -4,7 +4,12 @@ import { join } from "path";
 import { auth } from "@/server/better-auth";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 
-const ALLOWED_FOLDERS = ["profiles", "downloads", "media"] as const;
+const ALLOWED_FOLDERS = [
+  "profiles",
+  "downloads",
+  "media",
+  "course-mail",
+] as const;
 type UploadFolder = (typeof ALLOWED_FOLDERS)[number];
 
 function isAllowedFolder(folder: string): folder is UploadFolder {
@@ -27,12 +32,28 @@ const validTypesByFolder: Record<string, string[]> = {
     "audio/ogg",
   ],
   media: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
+  // Attachments for course mails. No audio: these travel inside the message,
+  // where a 30 MB recording would just bounce off the recipients' mailboxes.
+  "course-mail": [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+  ],
 };
 
 const maxSizeByFolder: Record<string, number> = {
   profiles: 5 * 1024 * 1024,
   downloads: 50 * 1024 * 1024,
   media: 10 * 1024 * 1024,
+  // Per file; the send mutation additionally caps the combined size, since
+  // mail servers reject the whole message once it grows past ~25 MB.
+  "course-mail": 10 * 1024 * 1024,
 };
 
 const magicBytes: Record<string, number[][]> = {

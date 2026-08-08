@@ -22,6 +22,7 @@ import {
   ArrowRightIcon,
   Edit,
   ExternalLink,
+  MailIcon,
   Trash2,
   UserIcon,
 } from "lucide-react";
@@ -141,6 +142,13 @@ export default function CourseDetailPage() {
         enabled: !!courseId && !!session?.user && activeTab === "participants",
       },
     );
+
+  const { data: canMailRegistrants } = api.courseMail.canSend.useQuery(
+    { courseId },
+    {
+      enabled: !!courseId && !!session?.user && activeTab === "participants",
+    },
+  );
 
   const approveMutation = api.courses.approve.useMutation({
     onSuccess: () => {
@@ -941,7 +949,16 @@ export default function CourseDetailPage() {
       {activeTab === "participants" && canViewParticipants && (
         <div className="space-y-6">
           {/* Link to full participants page */}
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            {canMailRegistrants && (
+              <Link
+                href={`/dashboard/courses/${courseId}/mail`}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <MailIcon className="h-4 w-4" />
+                Anmelder:innen anschreiben
+              </Link>
+            )}
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
