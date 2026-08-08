@@ -1,5 +1,5 @@
 import { render } from "@react-email/components";
-import { sendEmail } from "./send-email";
+import { sendEmail, type EmailAttachment } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { PasswordResetEmail } from "./templates/password-reset-email";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
@@ -14,6 +14,7 @@ import {
   type ReviewedContentType,
 } from "./templates/content-review-result";
 import { ContactMessage } from "./templates/contact-message";
+import { generateCourseMailHtml } from "./templates/course-mail-html";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
 
 export async function sendVerificationEmail(
@@ -346,6 +347,61 @@ export async function sendContactMessageEmail(params: {
     subject: `Kontaktformular: ${params.subjectLabel} – ${params.name}`,
     html,
   });
+}
+
+/**
+ * Mail from a course organizer to a registrant.
+ *
+ * The From header stays on our own noreply address — putting the organizer's
+ * address there would fail SPF/DKIM for their domain and land the mail in
+ * spam. Their name is carried in the display name and their address in
+ * Reply-To, so answers still reach them directly.
+ */
+export async function sendCourseMailToRegistrant(params: {
+  to: string;
+  recipientName?: string;
+  subject: string;
+  /** Already sanitized HTML. */
+  bodyHtml: string;
+  courseTitle: string;
+  courseStartDate: Date;
+  courseEndDate: Date;
+  senderName: string;
+  replyToEmail: string;
+  courseUrl?: string;
+  includeGreeting?: boolean;
+  attachments?: EmailAttachment[];
+}) {
+  const html = generateCourseMailHtml({
+    bodyHtml: params.bodyHtml,
+    courseTitle: params.courseTitle,
+    courseStartDate: params.courseStartDate,
+    courseEndDate: params.courseEndDate,
+    recipientName: params.recipientName,
+    senderName: params.senderName,
+    replyToEmail: params.replyToEmail,
+    courseUrl: params.courseUrl,
+    includeGreeting: params.includeGreeting,
+  });
+
+  return sendEmail({
+    to: params.to,
+    from: buildCourseMailFrom(params.senderName),
+    replyTo: params.replyToEmail,
+    subject: params.subject,
+    html,
+    attachments: params.attachments,
+  });
+}
+
+/** `"Anna Beispiel (Posaunenwerk Rheinland)" <noreply@…>` */
+function buildCourseMailFrom(senderName: string): string | undefined {
+  const address = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  if (!address) return undefined;
+  // Quotes and control characters in the display name would break the header.
+  const displayName = senderName.replace(/["\\\r\n]/g, " ").trim();
+  if (!displayName) return address;
+  return `"${displayName} (Posaunenwerk Rheinland)" <${address}>`;
 }
 
 export { sendEmail } from "./send-email";
