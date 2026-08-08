@@ -17,7 +17,12 @@ import {
   PaymentStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
-import { ArrowLeftIcon, DownloadIcon, SearchIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  MailIcon,
+  SearchIcon,
+} from "lucide-react";
 import { FileIcon, UserIcon } from "lucide-react";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
@@ -167,6 +172,13 @@ export default function CourseParticipantsPage() {
       { courseId, all: true },
       { enabled: !!courseId && !!session?.user },
     );
+
+  // Asked of the server rather than re-derived here: the mailing rule also
+  // covers Bezirk-wide access, which the client can't see.
+  const { data: canMailRegistrants } = api.courseMail.canSend.useQuery(
+    { courseId },
+    { enabled: !!courseId && !!session?.user },
+  );
 
   const toast = useToast();
   const utils = api.useUtils();
@@ -536,6 +548,16 @@ export default function CourseParticipantsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Mail all registrants */}
+            {canMailRegistrants && (
+              <Link
+                href={`/dashboard/courses/${courseId}/mail`}
+                className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+              >
+                <MailIcon className="h-4 w-4" />
+                Anschreiben
+              </Link>
+            )}
             {/* Export Button */}
             <div className="relative" ref={exportMenuRef}>
               <button
@@ -917,6 +939,15 @@ export default function CourseParticipantsPage() {
                         ? "Wird bestätigt..."
                         : `Von Warteliste bestätigen (${selectedWaitlisted})`}
                     </button>
+                    {canMailRegistrants && (
+                      <Link
+                        href={`/dashboard/courses/${courseId}/mail?registrationIds=${[...selectedIds].join(",")}`}
+                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                      >
+                        <MailIcon className="h-4 w-4" />
+                        Auswahl anschreiben ({selectedIds.size})
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={() => setSelectedIds(new Set())}

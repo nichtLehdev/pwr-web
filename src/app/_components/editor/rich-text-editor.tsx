@@ -54,6 +54,12 @@ interface RichTextEditorProps {
   onChange: (markdown: string) => void;
   placeholder?: string;
   className?: string;
+  /**
+   * Hands the TipTap instance to the caller once it exists, so surrounding UI
+   * can insert at the cursor (e.g. the placeholder chips in the course mail
+   * composer). Null while the editor is still initializing.
+   */
+  onEditorReady?: (editor: Editor | null) => void;
 }
 
 const turndownService = new TurndownService({
@@ -663,6 +669,7 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Schreiben Sie hier Ihren Text...",
   className = "",
+  onEditorReady,
 }: RichTextEditorProps) {
   const isInitialized = useRef(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
@@ -732,6 +739,10 @@ export default function RichTextEditor({
       onChange(markdown);
     },
   });
+
+  useEffect(() => {
+    onEditorReady?.(editor);
+  }, [editor, onEditorReady]);
 
   const handleImageSelect = useCallback(
     (url: string, alt: string) => {

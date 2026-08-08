@@ -3,6 +3,7 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { eventsRouter } from "./routers/events";
 import { coursesRouter } from "./routers/courses";
 import { registrationsRouter } from "./routers/registrations";
+import { courseMailRouter } from "./routers/course-mail";
 import { postsRouter } from "./routers/posts";
 import { ensemblesRouter } from "./routers/ensembles";
 import { auswahlchoereRouter } from "./routers/auswahlchoere";
@@ -34,6 +35,7 @@ export const appRouter = createTRPCRouter({
   events: eventsRouter,
   courses: coursesRouter,
   registrations: registrationsRouter,
+  courseMail: courseMailRouter,
   posts: postsRouter,
   ensembles: ensemblesRouter,
   auswahlchoere: auswahlchoereRouter,
