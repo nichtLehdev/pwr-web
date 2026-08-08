@@ -49,16 +49,31 @@ Dieses Skript:
   pnpm prisma generate
   ```
 
-### 2b. Slug-Backfill (einmalig nach dem Slug-Deployment)
-- [ ] **Nach `migrate deploy` einmalig ausführen**:
+### 2b. Slug-Backfill
+Die Migration `20260808000051_add_post_and_ensemble_slug` legt die Spalte nur
+an — gefüllt wird sie von `prisma/backfill-slugs.ts`. Ohne den Backfill bleibt
+die Seite voll funktionsfähig (Detailseiten fallen auf die UUID zurück), aber
+die sprechenden URLs fehlen. Das Skript fasst nur Zeilen an, deren Slug noch
+`NULL` ist, und ist damit gefahrlos wiederholbar.
+
+- [ ] **mittwald**: läuft automatisch — der Startbefehl in `deploy/stack.yaml`
+  ruft das Skript nach `migrate deploy` auf. Nichts zu tun.
+- [ ] **docker-compose (Vorabversion / alter Server)**:
   ```bash
-  pnpm backfill:slugs
+  docker compose -f docker-compose.prod.yml --profile slug-backfill up
   ```
-  Die Migration `20260808000051_add_post_and_ensemble_slug` legt die Spalte
-  nur an — gefüllt wird sie von diesem Skript. Ohne den Backfill bleibt die
-  Seite voll funktionsfähig (Detailseiten fallen auf die UUID zurück), aber
-  die sprechenden URLs fehlen. Das Skript überspringt Zeilen, die schon einen
-  Slug haben, und ist damit gefahrlos wiederholbar.
+- [ ] **Manuell in einem laufenden Container**:
+  ```bash
+  docker exec -it posaunenwerk-app node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts
+  ```
+  Kein `pnpm` im Image — `tsx` und `prisma` sind normale Dependencies und
+  werden direkt über `node node_modules/...` aufgerufen (siehe Dockerfile).
+- [ ] **Lokal**: `pnpm backfill:slugs`
+
+> Wichtig: Skripte unter `prisma/`, die im Container laufen, dürfen nur
+> `src/`-Dateien importieren, die das Dockerfile explizit ins Runner-Image
+> kopiert. Aktuell sind das `server/db.ts`, `lib/permissions.ts`,
+> `lib/bezirke.ts` und `lib/slug.ts`.
 
 ### 3. Wichtige Änderungen seit letztem Deployment
 

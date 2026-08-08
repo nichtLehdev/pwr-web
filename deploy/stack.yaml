@@ -28,6 +28,7 @@ services:
         sleep 5;
         done;
         node node_modules/tsx/dist/cli.mjs prisma/post-migration-setup.ts || echo "Post-migration setup failed (non-fatal)";
+        node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts || echo "Slug backfill failed (non-fatal)";
         exec node node_modules/next/dist/bin/next start
     volumes:
       - "uploads_data:/app/uploads"
