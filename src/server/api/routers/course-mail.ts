@@ -4,6 +4,7 @@ import { readFile } from "fs/promises";
 import { marked } from "marked";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
+  InvoiceStatus,
   RegistrationStatus,
   type PrismaClient,
 } from "~/generated/prisma/client";
@@ -67,6 +68,16 @@ type Recipient = {
   participantNames: string[];
   instruments: string[];
   totalPrice: number;
+};
+
+/** The published invoices addressed to one recipient, resolved on demand. */
+type RecipientInvoice = {
+  id: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  dueDate: Date | null;
+  pdfPath: string;
+  pdfFilename: string | null;
 };
 
 /**
@@ -149,6 +160,109 @@ const formatDate = (date: Date) =>
     year: "numeric",
   }).format(date);
 
+const formatAmount = (amount: number) =>
+  new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount);
+
+/**
+ * The invoices currently in force for the given registrations, keyed by
+ * registration id.
+ *
+ * Only PUBLISHED ones: a draft is not a document anybody may receive, and a
+ * cancelled one must not be mailed out again as if it still applied.
+ */
+async function loadPublishedInvoices(
+  db: PrismaClient,
+  courseId: string,
+  registrationIds: string[],
+): Promise<Map<string, RecipientInvoice[]>> {
+  if (registrationIds.length === 0) return new Map();
+
+  const invoices = await db.invoice.findMany({
+    where: {
+      courseId,
+      registrationId: { in: registrationIds },
+      status: InvoiceStatus.PUBLISHED,
+      pdfPath: { not: null },
+    },
+    orderBy: { publishedAt: "asc" },
+    select: {
+      id: true,
+      invoiceNumber: true,
+      totalAmount: true,
+      dueDate: true,
+      pdfPath: true,
+      pdfFilename: true,
+      registrationId: true,
+    },
+  });
+
+  const byRegistration = new Map<string, RecipientInvoice[]>();
+  for (const invoice of invoices) {
+    if (!invoice.registrationId || !invoice.pdfPath || !invoice.invoiceNumber) {
+      continue;
+    }
+    const list = byRegistration.get(invoice.registrationId) ?? [];
+    list.push({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      totalAmount: invoice.totalAmount,
+      dueDate: invoice.dueDate,
+      pdfPath: invoice.pdfPath,
+      pdfFilename: invoice.pdfFilename,
+    });
+    byRegistration.set(invoice.registrationId, list);
+  }
+  return byRegistration;
+}
+
+/**
+ * Read one recipient's invoice PDFs off disk, ready to attach.
+ *
+ * `budgetBytes` is what is left of the message's attachment allowance after the
+ * shared files. Anything past it is skipped and logged rather than thrown: the
+ * blast is already under way by then, and a message that arrives with one
+ * attachment missing beats one that never arrives at all.
+ */
+async function loadInvoiceAttachments(
+  invoices: RecipientInvoice[],
+  budgetBytes: number,
+) {
+  const attachments: { filename: string; content: Buffer }[] = [];
+  let used = 0;
+
+  for (const invoice of invoices) {
+    const fsPath = resolveUploadFsPath(invoice.pdfPath);
+    if (!fsPath) continue;
+    try {
+      const content = await readFile(/* turbopackIgnore: true */ fsPath);
+      if (used + content.byteLength > budgetBytes) {
+        console.error(
+          `[CourseMail] Skipped invoice ${invoice.invoiceNumber}: attachment budget exhausted`,
+        );
+        continue;
+      }
+      used += content.byteLength;
+      attachments.push({
+        filename: safeAttachmentName(
+          invoice.pdfFilename ?? `Rechnung_${invoice.invoiceNumber}.pdf`,
+        ),
+        content,
+      });
+    } catch (error) {
+      // A missing file must not silently drop the whole mail — the message
+      // still goes out, just without that attachment, and the log says why.
+      console.error(
+        `[CourseMail] Invoice PDF missing for ${invoice.invoiceNumber}:`,
+        error,
+      );
+    }
+  }
+  return attachments;
+}
+
 /** The values behind `{{…}}` for one recipient. Keys must be lowercase tokens. */
 function placeholderValuesFor(
   recipient: Recipient,
@@ -158,6 +272,7 @@ function placeholderValuesFor(
     endDate: Date;
     location: { name: string | null; city: string } | null;
   },
+  invoices: RecipientInvoice[] = [],
 ): PlaceholderValues {
   const address = [
     recipient.street,
@@ -186,10 +301,21 @@ function placeholderValuesFor(
     beginn: formatDate(course.startDate),
     ende: formatDate(course.endDate),
     kursort: courseLocation,
-    betrag: new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(recipient.totalPrice),
+    betrag: formatAmount(recipient.totalPrice),
+    // A person who registered twice gets both numbers, and the amount is the
+    // sum — same collapsing rule as the rest of this record.
+    rechnungsnummer: invoices
+      .map((invoice) => invoice.invoiceNumber)
+      .join(", "),
+    rechnungsbetrag: invoices.length
+      ? formatAmount(
+          invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0),
+        )
+      : "",
+    zahlungsziel: invoices
+      .map((invoice) => (invoice.dueDate ? formatDate(invoice.dueDate) : ""))
+      .filter(Boolean)
+      .join(", "),
   };
 }
 
@@ -385,6 +511,11 @@ export const courseMailRouter = createTRPCRouter({
         body: z.string().min(1),
         replyToEmail: z.string().email(),
         attachments: z.array(attachmentInput).max(10).default([]),
+        /**
+         * Attach each recipient's own published invoice(s) for this course.
+         * Recipients without one still receive the message, just without a PDF.
+         */
+        attachInvoices: z.boolean().default(false),
         /** Send only to this address for a final read-through. */
         testEmail: z.string().email().optional(),
         sendCopyToSender: z.boolean().default(true),
@@ -426,6 +557,13 @@ export const courseMailRouter = createTRPCRouter({
 
       const bodyHtml = await renderBody(input.body);
       const attachments = await loadAttachments(input.attachments);
+      /** What a recipient's own invoices may still add on top. */
+      const invoiceBudgetBytes =
+        MAX_TOTAL_ATTACHMENT_BYTES -
+        attachments.reduce(
+          (sum, attachment) => sum + attachment.content.byteLength,
+          0,
+        );
       const { sendCourseMailToRegistrant } = await import("@/server/email");
 
       const senderName = user.name?.trim() ?? "";
@@ -454,11 +592,30 @@ export const courseMailRouter = createTRPCRouter({
 
       const recipients = await resolveRecipients(ctx.db, input.courseId, input);
 
+      const invoicesByRegistration = input.attachInvoices
+        ? await loadPublishedInvoices(
+            ctx.db,
+            course.id,
+            recipients.flatMap((recipient) => recipient.registrationIds),
+          )
+        : new Map<string, RecipientInvoice[]>();
+
+      /** Every published invoice belonging to this recipient's registrations. */
+      const invoicesFor = (recipient: Recipient) =>
+        recipient.registrationIds.flatMap(
+          (registrationId) => invoicesByRegistration.get(registrationId) ?? [],
+        );
+
       if (input.testEmail) {
         // Fill the test with a real recipient's data where possible, so the
         // organizer sees the actual substitution rather than empty gaps.
-        const sample = recipients[0]
-          ? placeholderValuesFor(recipients[0], course)
+        const sampleRecipient = recipients[0];
+        const sample = sampleRecipient
+          ? placeholderValuesFor(
+              sampleRecipient,
+              course,
+              invoicesFor(sampleRecipient),
+            )
           : exampleValues();
         const personalized = personalize(sample);
         await sendCourseMailToRegistrant({
@@ -467,6 +624,15 @@ export const courseMailRouter = createTRPCRouter({
           to: input.testEmail,
           subject: `[TEST] ${personalized.subject}`,
           recipientName: sample.vorname || senderName || undefined,
+          attachments: sampleRecipient
+            ? [
+                ...attachments,
+                ...(await loadInvoiceAttachments(
+                  invoicesFor(sampleRecipient),
+                  invoiceBudgetBytes,
+                )),
+              ]
+            : attachments,
         });
         return { test: true, sentCount: 1, failedCount: 0, recipientCount: 1 };
       }
@@ -480,6 +646,8 @@ export const courseMailRouter = createTRPCRouter({
 
       let sentCount = 0;
       let failedCount = 0;
+      /** Invoices actually attached to a delivered message, for `mailedAt`. */
+      const mailedInvoiceIds = new Set<string>();
 
       // One message per recipient rather than a single BCC blast: it keeps
       // the greeting personal and avoids the spam scores a large BCC earns.
@@ -489,18 +657,34 @@ export const courseMailRouter = createTRPCRouter({
       for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
         const batch = recipients.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
-          batch.map((recipient) =>
-            sendCourseMailToRegistrant({
+          batch.map(async (recipient) => {
+            const recipientInvoices = invoicesFor(recipient);
+            return sendCourseMailToRegistrant({
               ...baseMail,
-              ...personalize(placeholderValuesFor(recipient, course)),
+              ...personalize(
+                placeholderValuesFor(recipient, course, recipientInvoices),
+              ),
               to: recipient.email,
               recipientName: recipient.firstName,
-            }),
-          ),
+              attachments: [
+                ...attachments,
+                ...(await loadInvoiceAttachments(
+                  recipientInvoices,
+                  invoiceBudgetBytes,
+                )),
+              ],
+            });
+          }),
         );
         results.forEach((result, index) => {
           if (result.status === "fulfilled") {
             sentCount++;
+            const recipient = batch[index];
+            if (recipient) {
+              for (const invoice of invoicesFor(recipient)) {
+                mailedInvoiceIds.add(invoice.id);
+              }
+            }
           } else {
             failedCount++;
             console.error(
@@ -516,7 +700,11 @@ export const courseMailRouter = createTRPCRouter({
           // Filled in for the first recipient, so the copy shows what was
           // actually delivered rather than raw placeholders.
           const copy = personalize(
-            placeholderValuesFor(recipients[0]!, course),
+            placeholderValuesFor(
+              recipients[0]!,
+              course,
+              invoicesFor(recipients[0]!),
+            ),
           );
           await sendCourseMailToRegistrant({
             ...baseMail,
@@ -551,6 +739,13 @@ export const courseMailRouter = createTRPCRouter({
         },
       });
 
+      if (mailedInvoiceIds.size > 0) {
+        await ctx.db.invoice.updateMany({
+          where: { id: { in: [...mailedInvoiceIds] } },
+          data: { mailedAt: new Date() },
+        });
+      }
+
       void logAudit(ctx.db, {
         actorId: user.id,
         actorEmail: user.email,
@@ -564,6 +759,7 @@ export const courseMailRouter = createTRPCRouter({
           sentCount,
           failedCount,
           attachmentCount: input.attachments.length,
+          invoicesAttached: mailedInvoiceIds.size,
         },
       });
 
@@ -572,6 +768,7 @@ export const courseMailRouter = createTRPCRouter({
         recipientCount: recipients.length,
         sentCount,
         failedCount,
+        invoicesAttached: mailedInvoiceIds.size,
       };
     }),
 });

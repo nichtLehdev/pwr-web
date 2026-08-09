@@ -4,6 +4,7 @@ import { eventsRouter } from "./routers/events";
 import { coursesRouter } from "./routers/courses";
 import { registrationsRouter } from "./routers/registrations";
 import { courseMailRouter } from "./routers/course-mail";
+import { invoicesRouter } from "./routers/invoices";
 import { postsRouter } from "./routers/posts";
 import { ensemblesRouter } from "./routers/ensembles";
 import { auswahlchoereRouter } from "./routers/auswahlchoere";
@@ -36,6 +37,7 @@ export const appRouter = createTRPCRouter({
   courses: coursesRouter,
   registrations: registrationsRouter,
   courseMail: courseMailRouter,
+  invoices: invoicesRouter,
   posts: postsRouter,
   ensembles: ensemblesRouter,
   auswahlchoere: auswahlchoereRouter,

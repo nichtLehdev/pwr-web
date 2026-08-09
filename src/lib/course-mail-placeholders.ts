@@ -44,6 +44,17 @@ export const COURSE_MAIL_PLACEHOLDERS: CourseMailPlaceholder[] = [
   { token: "ende", label: "Kursende", example: "05.10.2026" },
   { token: "kursort", label: "Kursort", example: "Haus Sonnenschein, Bonn" },
   { token: "betrag", label: "Gesamtbetrag", example: "120,00 €" },
+  {
+    token: "rechnungsnummer",
+    label: "Rechnungsnummer",
+    example: "RE-2026-00042",
+  },
+  { token: "rechnungsbetrag", label: "Rechnungsbetrag", example: "120,00 €" },
+  {
+    token: "zahlungsziel",
+    label: "Zahlungsziel",
+    example: "30.10.2026",
+  },
 ];
 
 const KNOWN_TOKENS = new Set(

@@ -79,6 +79,13 @@ export default function NewCoursePage() {
     "courses.approve" as PermissionKey,
   );
   const isHigherRole = hasApprovePermission;
+  const canEnableInvoicing = hasPermission(
+    "courses.enable_invoicing" as PermissionKey,
+  );
+  // The permission courses.create actually checks for this flag.
+  const canManageSiblingDiscount = hasPermission(
+    "courses.manage_registrations" as PermissionKey,
+  );
 
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
@@ -121,6 +128,7 @@ export default function NewCoursePage() {
   const [isFree, setIsFree] = useState(false);
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
+  const [invoicingEnabled, setInvoicingEnabled] = useState(false);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
@@ -164,6 +172,7 @@ export default function NewCoursePage() {
     isFree,
     paymentCashAllowed,
     paymentInvoiceAllowed,
+    invoicingEnabled,
     priceInfo,
     priceOptions,
     prerequisites,
@@ -232,6 +241,7 @@ export default function NewCoursePage() {
           setIsFree(saved.isFree ?? false);
           setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
           setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
+          setInvoicingEnabled(saved.invoicingEnabled ?? false);
           setPriceInfo(saved.priceInfo || "");
           setPriceOptions(saved.priceOptions || []);
           setPrerequisites(saved.prerequisites || "");
@@ -552,10 +562,14 @@ export default function NewCoursePage() {
       registrationOpen,
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
       allowSiblingDiscount:
-        isExternalProvider || !isHigherRole ? false : allowSiblingDiscount,
+        isExternalProvider || !canManageSiblingDiscount
+          ? false
+          : allowSiblingDiscount,
       isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled:
+        isExternalProvider || !canEnableInvoicing ? false : invoicingEnabled,
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
       prerequisites: prerequisites.trim() || undefined,
@@ -1414,7 +1428,7 @@ export default function NewCoursePage() {
                         </label>
                       </div>
 
-                      {isHigherRole ? (
+                      {canManageSiblingDiscount ? (
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
@@ -1527,6 +1541,31 @@ export default function NewCoursePage() {
                         />
                         <span className="dark:text-dark-text text-sm text-gray-700">
                           Überweisung nach Rechnung
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {!isFree && canEnableInvoicing && (
+                    <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
+                      <label className="flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={invoicingEnabled}
+                          onChange={(e) =>
+                            setInvoicingEnabled(e.target.checked)
+                          }
+                          className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                        />
+                        <span>
+                          <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                            Rechnungsstellung aktivieren
+                          </span>
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Erlaubt dem Kurs-Team, für diesen Kurs Rechnungen zu
+                            erstellen, zu bearbeiten und an die Anmelder:innen
+                            auszustellen.
+                          </span>
                         </span>
                       </label>
                     </div>

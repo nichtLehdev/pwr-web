@@ -10,6 +10,7 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { changesRestrictedFlag } from "../helpers/restricted-flag";
 import { promoteCustomFieldTemplatesForCourses } from "../helpers/custom-field-templates";
 import {
   notifyCreatorOfReviewResult,
@@ -546,6 +547,7 @@ export const coursesRouter = createTRPCRouter({
           isFree: z.boolean().default(false),
           paymentCashAllowed: z.boolean().default(true),
           paymentInvoiceAllowed: z.boolean().default(true),
+          invoicingEnabled: z.boolean().default(false),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -652,6 +654,19 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      const canEnableInvoicing = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_ENABLE_INVOICING,
+        ctx.permissionCache,
+      );
+      if (input.invoicingEnabled && !canEnableInvoicing) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Keine Berechtigung, die Rechnungsstellung für Kurse freizuschalten",
+        });
+      }
+
       const course = await ctx.db.course.create({
         data: {
           ...courseData,
@@ -664,6 +679,10 @@ export const coursesRouter = createTRPCRouter({
           allowSiblingDiscount: external
             ? false
             : input.allowSiblingDiscount && canManageDiscounts,
+          // Nothing to invoice when registration happens on someone else's site.
+          invoicingEnabled: external
+            ? false
+            : input.invoicingEnabled && canEnableInvoicing,
           isFree: external ? true : courseData.isFree,
           createdById: ctx.session.user.id,
           priceOptions:
@@ -724,6 +743,7 @@ export const coursesRouter = createTRPCRouter({
           isFree: z.boolean().optional(),
           paymentCashAllowed: z.boolean().optional(),
           paymentInvoiceAllowed: z.boolean().optional(),
+          invoicingEnabled: z.boolean().optional(),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -808,6 +828,8 @@ export const coursesRouter = createTRPCRouter({
           isFree: true,
           paymentCashAllowed: true,
           paymentInvoiceAllowed: true,
+          invoicingEnabled: true,
+          allowSiblingDiscount: true,
           startDate: true,
           registrationOpensAt: true,
           registrationDeadline: true,
@@ -992,11 +1014,38 @@ export const coursesRouter = createTRPCRouter({
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         ctx.permissionCache,
       );
-      if (input.allowSiblingDiscount !== undefined && !canManageDiscounts) {
+      if (
+        changesRestrictedFlag(
+          input.allowSiblingDiscount,
+          course.allowSiblingDiscount,
+        ) &&
+        !canManageDiscounts
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can modify sibling discount setting",
         });
+      }
+
+      if (input.invoicingEnabled !== undefined) {
+        if (
+          changesRestrictedFlag(
+            input.invoicingEnabled,
+            course.invoicingEnabled,
+          ) &&
+          !(await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_ENABLE_INVOICING,
+            ctx.permissionCache,
+          ))
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message:
+              "Keine Berechtigung, die Rechnungsstellung für Kurse zu ändern",
+          });
+        }
+        data.invoicingEnabled = mergedExternal ? false : input.invoicingEnabled;
       }
 
       if (priceOptions && !mergedExternal) {
