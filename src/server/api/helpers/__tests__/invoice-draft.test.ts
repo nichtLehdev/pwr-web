@@ -208,7 +208,7 @@ describe("lineItemsFromRegistration", () => {
     },
   ];
 
-  it("adds a discount line naming the siblings who earned it", () => {
+  it("adds a discount line naming the siblings it was granted for", () => {
     const items = lineItemsFromRegistration(
       registration({
         siblingDiscountApplied: true,
@@ -227,14 +227,14 @@ describe("lineItemsFromRegistration", () => {
       },
       {
         description: "Geschwisterkindrabatt (20 %)",
-        detail: "Clara Muster",
+        detail: "Ben Muster, Clara Muster",
         quantity: 1,
         unitPrice: -29,
       },
     ]);
   });
 
-  it("collapses equal discounts onto one line", () => {
+  it("keeps one line per discounted child instead of collapsing them", () => {
     const items = lineItemsFromRegistration(
       registration({
         siblingDiscountApplied: true,
@@ -257,12 +257,56 @@ describe("lineItemsFromRegistration", () => {
       course,
     );
 
-    expect(items[1]).toEqual({
-      description: "Geschwisterkindrabatt (20 %)",
-      detail: "Clara Muster, Dora Muster",
-      quantity: 2,
-      unitPrice: -29,
-    });
+    const discounts = items.filter((item) => item.unitPrice < 0);
+    expect(discounts).toEqual([
+      {
+        description: "Geschwisterkindrabatt (20 %)",
+        detail: "Ben Muster, Clara Muster, Dora Muster",
+        quantity: 1,
+        unitPrice: -29,
+      },
+      {
+        description: "Geschwisterkindrabatt (20 %)",
+        detail: "Ben Muster, Clara Muster, Dora Muster",
+        quantity: 1,
+        unitPrice: -29,
+      },
+    ]);
+  });
+
+  it("names each sibling group only on its own discount lines", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        siblingDiscountApplied: true,
+        siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
+        participants: [
+          participant("Ben", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(15),
+          }),
+          participant("Clara", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(12),
+          }),
+          participant("Emil", "Vollzahler", {
+            lastName: "Andere",
+            siblingGroupId: "group-2",
+            birthDate: bornYearsAgo(14),
+          }),
+          participant("Frida", "Vollzahler", {
+            lastName: "Andere",
+            siblingGroupId: "group-2",
+            birthDate: bornYearsAgo(10),
+          }),
+        ],
+      }),
+      course,
+    );
+
+    expect(items.filter((item) => item.unitPrice < 0).map((i) => i.detail)).toEqual([
+      "Ben Muster, Clara Muster",
+      "Emil Andere, Frida Andere",
+    ]);
   });
 
   it("keeps discounts of differing size apart", () => {
@@ -292,13 +336,13 @@ describe("lineItemsFromRegistration", () => {
     expect(discounts).toEqual([
       {
         description: "Geschwisterkindrabatt (20 %)",
-        detail: "Clara Muster",
+        detail: "Ben Muster, Clara Muster, Dora Muster",
         quantity: 1,
         unitPrice: -29,
       },
       {
         description: "Geschwisterkindrabatt (20 %)",
-        detail: "Dora Muster",
+        detail: "Ben Muster, Clara Muster, Dora Muster",
         quantity: 1,
         unitPrice: -19,
       },

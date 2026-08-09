@@ -141,26 +141,31 @@ export function lineItemsFromRegistration(
       course.startDate,
     );
 
-    // Collapsed by amount for the same reason: two siblings in the same
-    // category earn the same discount and belong on one line.
-    const byDiscount = new Map<number, string[]>();
+    // One line per discounted child, never collapsed: the discount is granted
+    // per child, and the sub-line names the siblings it was granted for, so
+    // each line explains itself on the printed invoice.
+    const groupNames = new Map<string, string[]>();
+    for (const participant of registration.participants) {
+      if (!participant.siblingGroupId) continue;
+      const names = groupNames.get(participant.siblingGroupId) ?? [];
+      names.push(participantName(participant));
+      groupNames.set(participant.siblingGroupId, names);
+    }
+
     discountPerParticipant.forEach((discount, index) => {
       if (discount <= 0) return;
       const participant = registration.participants[index];
       if (!participant) return;
-      const names = byDiscount.get(discount) ?? [];
-      names.push(participantName(participant));
-      byDiscount.set(discount, names);
-    });
-
-    for (const [discount, names] of byDiscount) {
+      const siblings = participant.siblingGroupId
+        ? (groupNames.get(participant.siblingGroupId) ?? [])
+        : [];
       items.push({
         description: "Geschwisterkindrabatt (20 %)",
-        detail: names.join(", "),
-        quantity: names.length,
+        detail: siblings.join(", ") || participantName(participant),
+        quantity: 1,
         unitPrice: -discount,
       });
-    }
+    });
   }
 
   return items;
