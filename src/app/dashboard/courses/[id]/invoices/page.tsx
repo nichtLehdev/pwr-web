@@ -151,9 +151,11 @@ export default function CourseInvoicesPage() {
       ]}
       actions={
         <>
+          {/* Redundant on phones: the breadcrumb above already links to the
+              course, so this only cost a second row of buttons. */}
           <Link
             href={`/dashboard/courses/${courseId}`}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text hidden items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:inline-flex dark:hover:bg-gray-700"
           >
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zum Kurs

@@ -129,7 +129,46 @@ export default function AuditLogPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Below md the five columns (the Details cell alone is max-w-md)
+                only reach the reader by horizontal scrolling, so each entry
+                becomes a stacked card instead. */}
+            <ul className="divide-y divide-gray-200 md:hidden dark:divide-gray-700">
+              {data.entries.map((entry) => (
+                <li key={entry.id} className="space-y-2 px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="dark:bg-dark-background inline-block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs break-all text-gray-800 dark:text-gray-200">
+                      {entry.action}
+                    </span>
+                    <time className="text-xs text-gray-500 tabular-nums dark:text-gray-400">
+                      {formatDateTime(entry.createdAt)}
+                    </time>
+                  </div>
+                  <p className="dark:text-dark-text text-sm break-all text-gray-900">
+                    {entry.actorEmail ?? entry.actorId ?? "System"}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {entry.entityType}
+                    {entry.entityId ? (
+                      <span className="block font-mono break-all text-gray-400 dark:text-gray-500">
+                        {entry.entityId}
+                      </span>
+                    ) : null}
+                  </p>
+                  {entry.details ? (
+                    <details>
+                      <summary className="text-primary cursor-pointer text-xs font-medium">
+                        Details
+                      </summary>
+                      <pre className="mt-1 font-mono text-xs break-all whitespace-pre-wrap text-gray-600 dark:text-gray-400">
+                        {JSON.stringify(entry.details, null, 1)}
+                      </pre>
+                    </details>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-800/60">
                   <tr>
@@ -185,7 +224,7 @@ export default function AuditLogPage() {
               </table>
             </div>
 
-            <div className="dark:border-dark-border flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm">
+            <div className="dark:border-dark-border flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-4 py-3 text-sm">
               <p className="text-gray-600 dark:text-gray-400">
                 {data.total} {data.total === 1 ? "Eintrag" : "Einträge"}
               </p>

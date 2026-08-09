@@ -23,4 +23,8 @@ export {
   type CourseCustomFieldDraft,
 } from "./course-custom-fields-editor";
 export { DashboardSectionedFormLayout } from "./dashboard-sectioned-form-layout";
+export {
+  DashboardOverflowMenu,
+  type DashboardOverflowItem,
+} from "./dashboard-overflow-menu";
 export { DraftRestorePrompt } from "./draft-restore-prompt";
