@@ -509,7 +509,7 @@ export default function CourseParticipantsPage() {
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
               <Link
                 href="/dashboard"
@@ -551,7 +551,7 @@ export default function CourseParticipantsPage() {
               {course.title}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Mail all registrants */}
             {canMailRegistrants && (
               <Link
@@ -621,10 +621,11 @@ export default function CourseParticipantsPage() {
                 </div>
               )}
             </div>
-            {/* Back Button */}
+            {/* Back Button — redundant on phones: the breadcrumb above already
+                links to the course, so this only cost a second row of buttons. */}
             <Link
               href={`/dashboard/courses/${courseId}`}
-              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text hidden items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:inline-flex dark:hover:bg-gray-700"
             >
               <ArrowLeftIcon className="h-4 w-4" />
               Zurück zum Kurs
@@ -679,7 +680,7 @@ export default function CourseParticipantsPage() {
         {/* View Mode Toggle & Filters */}
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <div className="dark:border-dark-border mb-4 flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <span className="dark:text-dark-text text-sm font-medium text-gray-700">
                 Ansicht:
               </span>

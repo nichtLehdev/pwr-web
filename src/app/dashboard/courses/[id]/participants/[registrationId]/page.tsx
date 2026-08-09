@@ -26,6 +26,7 @@ import {
   PencilIcon,
   CircleXIcon,
 } from "lucide-react";
+import { DashboardOverflowMenu } from "@/app/_components/dashboard";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
 import { COURSE_PAYMENT_METHOD_LABELS } from "@/lib/course-payment-methods";
 import {
@@ -291,7 +292,7 @@ export default function RegistrationDetailPage() {
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
               <Link
                 href="/dashboard"
@@ -407,7 +408,7 @@ export default function RegistrationDetailPage() {
                   <button
                     type="button"
                     onClick={() => setEditingStatus(true)}
-                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary hidden items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:inline-flex"
                     aria-label="Anmeldestatus bearbeiten"
                   >
                     <PencilIcon className="h-3.5 w-3.5" />
@@ -426,7 +427,7 @@ export default function RegistrationDetailPage() {
                         })
                       }
                       disabled={updateStatusMutation.isPending}
-                      className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      className="hidden items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:inline-flex"
                     >
                       <CheckCircle className="h-3.5 w-3.5" />
                       {updateStatusMutation.isPending
@@ -441,11 +442,17 @@ export default function RegistrationDetailPage() {
             >
               {paymentStatusLabels[registration.paymentStatus]}
             </span>
+            {/* Phones keep only the primary action; everything else moves into
+                the "…" menu, so the header stays one short row instead of three
+                stacked rows of buttons. From sm up the full row is shown. */}
             {(canEdit || canCancel) && (
-              <>
+              // `w-full` keeps the actions on their own row below sm so the
+              // status badges above them stay intact; `sm:contents` dissolves
+              // the wrapper again so the desktop row is unchanged.
+              <div className="flex w-full items-center gap-2 sm:contents">
                 <Link
                   href={`/dashboard/courses/${courseId}/participants`}
-                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary hidden rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 sm:inline-block"
                 >
                   Zurück zur Liste
                 </Link>
@@ -462,13 +469,60 @@ export default function RegistrationDetailPage() {
                   <button
                     type="button"
                     onClick={() => setCancelModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+                    className="hidden items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 sm:inline-flex dark:border-red-700 dark:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
                   >
                     <CircleXIcon className="h-4 w-4" />
                     Stornieren
                   </button>
                 )}
-              </>
+
+                <DashboardOverflowMenu
+                  className="ml-auto sm:hidden"
+                  items={[
+                    ...(canEdit && !editingStatus
+                      ? [
+                          {
+                            label: "Status ändern",
+                            icon: PencilIcon,
+                            onSelect: () => setEditingStatus(true),
+                          },
+                        ]
+                      : []),
+                    ...(canEdit &&
+                    registration.registrationStatus ===
+                      RegistrationStatus.WAITLIST
+                      ? [
+                          {
+                            label: "Von Warteliste bestätigen",
+                            icon: CheckCircle,
+                            disabled: updateStatusMutation.isPending,
+                            onSelect: () =>
+                              updateStatusMutation.mutate({
+                                id: registrationId,
+                                registrationStatus:
+                                  RegistrationStatus.CONFIRMED,
+                              }),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Zurück zur Liste",
+                      icon: UsersIcon,
+                      href: `/dashboard/courses/${courseId}/participants`,
+                    },
+                    ...(canCancel
+                      ? [
+                          {
+                            label: "Stornieren",
+                            icon: CircleXIcon,
+                            destructive: true,
+                            onSelect: () => setCancelModalOpen(true),
+                          },
+                        ]
+                      : []),
+                  ]}
+                />
+              </div>
             )}
           </div>
         </div>
