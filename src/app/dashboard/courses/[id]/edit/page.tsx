@@ -429,6 +429,12 @@ export default function EditCoursePage() {
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
   );
+  // The same permission courses.update checks. Gating the control on
+  // courses.approve instead used to hide it from people who were allowed to
+  // set it, and show a value they were not allowed to change.
+  const canManageSiblingDiscount = hasPermission(
+    "courses.manage_registrations" as PermissionKey,
+  );
   const userBezirkId = profile?.bezirkId ?? null;
 
   const canManageCourseTeamUi = useMemo(() => {
@@ -989,10 +995,16 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: isExternalProvider ? null : parseInt(maxParticipants),
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
-      allowSiblingDiscount:
-        isExternalProvider || !hasApprovePermission
-          ? false
-          : allowSiblingDiscount,
+      // Omitted entirely when the user may not change it: sending a hardcoded
+      // false would ask the server to switch the discount off behind their
+      // back. Turning the course external clears the flag server-side anyway.
+      ...(canManageSiblingDiscount
+        ? {
+            allowSiblingDiscount: isExternalProvider
+              ? false
+              : allowSiblingDiscount,
+          }
+        : {}),
       isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
@@ -1872,27 +1884,40 @@ export default function EditCoursePage() {
                       </>
                     ) : null}
 
-                    {/* Sibling Discount - Only for users with approve permission */}
-                    {hasApprovePermission && !isExternalProvider && (
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="allowSiblingDiscount"
-                          checked={allowSiblingDiscount}
-                          onChange={(e) =>
-                            setAllowSiblingDiscount(e.target.checked)
-                          }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                        />
-                        <label
-                          htmlFor="allowSiblingDiscount"
-                          className="dark:text-dark-text text-sm font-medium text-gray-700"
-                        >
-                          Geschwisterkindrabatt erlauben (20% auf die Gebühr
-                          jedes weiteren Geschwisterkindes ab dem zweiten Kind)
-                        </label>
-                      </div>
-                    )}
+                    {/* Sibling Discount - only for users who may change it */}
+                    {!isExternalProvider &&
+                      (canManageSiblingDiscount ? (
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="allowSiblingDiscount"
+                            checked={allowSiblingDiscount}
+                            onChange={(e) =>
+                              setAllowSiblingDiscount(e.target.checked)
+                            }
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor="allowSiblingDiscount"
+                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                          >
+                            Geschwisterkindrabatt erlauben (20% auf die Gebühr
+                            jedes weiteren Geschwisterkindes ab dem zweiten
+                            Kind)
+                          </label>
+                        </div>
+                      ) : (
+                        // Shown read-only rather than hidden: the setting
+                        // changes what registrants pay, so an organizer needs
+                        // to see it even when they cannot switch it.
+                        allowSiblingDiscount && (
+                          <p className="dark:text-dark-muted text-sm text-gray-500">
+                            Geschwisterkindrabatt ist für diesen Kurs aktiv. Nur
+                            Landesposaunenwarte und Administratoren können das
+                            ändern.
+                          </p>
+                        )
+                      ))}
                   </div>
                 </DashboardFormBlock>
 

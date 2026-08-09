@@ -82,6 +82,10 @@ export default function NewCoursePage() {
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
   );
+  // The permission courses.create actually checks for this flag.
+  const canManageSiblingDiscount = hasPermission(
+    "courses.manage_registrations" as PermissionKey,
+  );
 
   const [title, setTitle] = useState("");
   const [motto, setMotto] = useState("");
@@ -558,7 +562,9 @@ export default function NewCoursePage() {
       registrationOpen,
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
       allowSiblingDiscount:
-        isExternalProvider || !isHigherRole ? false : allowSiblingDiscount,
+        isExternalProvider || !canManageSiblingDiscount
+          ? false
+          : allowSiblingDiscount,
       isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
@@ -1422,7 +1428,7 @@ export default function NewCoursePage() {
                         </label>
                       </div>
 
-                      {isHigherRole ? (
+                      {canManageSiblingDiscount ? (
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
