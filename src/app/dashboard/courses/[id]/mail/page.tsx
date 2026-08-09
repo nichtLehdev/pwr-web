@@ -175,6 +175,11 @@ function CourseMailPageContent() {
       }
       clear();
       setSubject("");
+      // Der Editor übernimmt `content` nur beim ersten Befüllen — ohne das
+      // hier bliebe die versendete Nachricht sichtbar stehen, und die
+      // nächste Eingabe darin hätte sie als „ungespeicherte Änderung“
+      // zurückgeholt.
+      editor?.commands.clearContent();
       setBody("");
       setAttachments([]);
       void sentMails.refetch();
