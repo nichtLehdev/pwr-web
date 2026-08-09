@@ -51,10 +51,11 @@ export default function CourseInvoicesPage() {
       { enabled: !!courseId && canManage },
     );
 
-  const { data: registrations } = api.invoices.invoiceableRegistrations.useQuery(
-    { courseId },
-    { enabled: !!courseId && canManage && showPicker },
-  );
+  const { data: registrations } =
+    api.invoices.invoiceableRegistrations.useQuery(
+      { courseId },
+      { enabled: !!courseId && canManage && showPicker },
+    );
 
   const createDraft = api.invoices.createDraft.useMutation({
     onSuccess: (invoice) => {
@@ -84,7 +85,8 @@ export default function CourseInvoicesPage() {
     return {
       drafts: list.filter((i) => i.status === InvoiceStatus.DRAFT).length,
       published: list.filter((i) => i.status === InvoiceStatus.PUBLISHED),
-      cancelled: list.filter((i) => i.status === InvoiceStatus.CANCELLED).length,
+      cancelled: list.filter((i) => i.status === InvoiceStatus.CANCELLED)
+        .length,
     };
   }, [invoices]);
 
@@ -141,7 +143,10 @@ export default function CourseInvoicesPage() {
       breadcrumbs={[
         { label: "Dashboard", href: "/dashboard" },
         { label: "Kurse", href: "/dashboard/courses" },
-        { label: course?.title ?? "Kurs", href: `/dashboard/courses/${courseId}` },
+        {
+          label: course?.title ?? "Kurs",
+          href: `/dashboard/courses/${courseId}`,
+        },
         { label: "Rechnungen" },
       ]}
       actions={
@@ -177,7 +182,8 @@ export default function CourseInvoicesPage() {
           </p>
           <p className="mt-1 text-xs text-yellow-700 dark:text-yellow-300">
             Ein Landes-/Regionalposaunenwart oder Administrator kann sie in den
-            Kurseinstellungen aktivieren. Bestehende Rechnungen bleiben sichtbar.
+            Kurseinstellungen aktivieren. Bestehende Rechnungen bleiben
+            sichtbar.
           </p>
         </div>
       )}
@@ -221,9 +227,7 @@ export default function CourseInvoicesPage() {
               <button
                 type="button"
                 onClick={() =>
-                  setSelected(
-                    new Set(selectableRegistrations.map((r) => r.id)),
-                  )
+                  setSelected(new Set(selectableRegistrations.map((r) => r.id)))
                 }
                 className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700"
               >
@@ -276,8 +280,9 @@ export default function CourseInvoicesPage() {
                       </p>
                       <p className="dark:text-dark-muted truncate text-xs text-gray-500">
                         {registration.participants.length} Teilnehmer:in
-                        {registration.participants.length === 1 ? "" : "nen"} ·{" "}
-                        {formatEuro(registration.totalPrice)}
+                        {registration.participants.length === 1
+                          ? ""
+                          : "nen"} · {formatEuro(registration.totalPrice)}
                       </p>
                     </div>
                     {existing ? (
@@ -312,7 +317,9 @@ export default function CourseInvoicesPage() {
       {/* Invoice list */}
       <div className="dark:bg-dark-surface overflow-hidden rounded-lg bg-white shadow">
         {invoicesLoading ? (
-          <p className="dark:text-dark-muted p-6 text-sm text-gray-500">Lade…</p>
+          <p className="dark:text-dark-muted p-6 text-sm text-gray-500">
+            Lade…
+          </p>
         ) : (invoices?.length ?? 0) === 0 ? (
           <div className="p-10 text-center">
             <ReceiptTextIcon className="mx-auto h-10 w-10 text-gray-300" />

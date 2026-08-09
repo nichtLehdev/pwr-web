@@ -231,7 +231,10 @@ export async function renderInvoicePdf(
   doc.text(titleLines, margin, y);
   y += titleLines.length * 6;
 
-  const locationText = [invoice.course.locationName, invoice.course.locationCity]
+  const locationText = [
+    invoice.course.locationName,
+    invoice.course.locationCity,
+  ]
     .filter(Boolean)
     .join(", ");
   doc.setFontSize(10);
@@ -334,7 +337,10 @@ export async function renderInvoicePdf(
     if (item.detail?.trim()) {
       doc.setFontSize(9);
       doc.setTextColor(110);
-      const detailLines = doc.splitTextToSize(item.detail.trim(), descriptionWidth);
+      const detailLines = doc.splitTextToSize(
+        item.detail.trim(),
+        descriptionWidth,
+      );
       doc.text(detailLines, margin + 2, y);
       y += detailLines.length * 4.5;
       doc.setTextColor(0);
@@ -374,7 +380,10 @@ export async function renderInvoicePdf(
   const dueDateText = formatLongDate(invoice.dueDate);
   if (dueDateText) {
     const paymentText = `Wir bitten Sie, den Rechnungsbetrag bis zum ${dueDateText} auf das unten angegebene Konto zu überweisen. Bitte geben Sie als Verwendungszweck die Rechnungsnummer an.`;
-    const splitPayment = doc.splitTextToSize(paymentText, pageWidth - 2 * margin);
+    const splitPayment = doc.splitTextToSize(
+      paymentText,
+      pageWidth - 2 * margin,
+    );
     doc.text(splitPayment, margin, y);
     y += splitPayment.length * 5 + 3;
   }

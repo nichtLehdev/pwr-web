@@ -113,7 +113,9 @@ export function formatDate(value: Date | string | null | undefined): string {
   return date ? date.toLocaleDateString("de-DE") : "";
 }
 
-export function formatLongDate(value: Date | string | null | undefined): string {
+export function formatLongDate(
+  value: Date | string | null | undefined,
+): string {
   const date = toDate(value);
   return date
     ? date.toLocaleDateString("de-DE", {
@@ -131,13 +133,13 @@ export function recipientName(recipient: InvoiceRecipient): string {
 /** \u00e4\u2192ae, \u00df\u2192ss \u2026 \u2014 the German transliteration, not the bare letter. Stripping
  * the diacritic alone would turn "Gro\u00df" into "Gro". */
 const TRANSLITERATIONS: Record<string, string> = {
-  \u00e4: "ae",
-  \u00f6: "oe",
-  \u00fc: "ue",
-  \u00c4: "Ae",
-  \u00d6: "Oe",
-  \u00dc: "Ue",
-  \u00df: "ss",
+  ä: "ae",
+  ö: "oe",
+  ü: "ue",
+  Ä: "Ae",
+  Ö: "Oe",
+  Ü: "Ue",
+  ß: "ss",
 };
 
 /**
@@ -149,7 +151,10 @@ export function invoiceFilename(
   recipient: InvoiceRecipient,
 ): string {
   const name = (recipient.lastName ?? recipient.company ?? "")
-    .replace(/[\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df]/g, (char) => TRANSLITERATIONS[char] ?? char)
+    .replace(
+      /[\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df]/g,
+      (char) => TRANSLITERATIONS[char] ?? char,
+    )
     // Anything else accented (\u00e9, \u00e7, \u2026) loses just its diacritic.
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

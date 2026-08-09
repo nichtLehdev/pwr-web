@@ -645,7 +645,9 @@ export default function ViewRegistrationPage() {
                       {invoice.dueDate && (
                         <span className="block text-xs text-gray-600 dark:text-gray-400">
                           zahlbar bis{" "}
-                          {new Date(invoice.dueDate).toLocaleDateString("de-DE")}
+                          {new Date(invoice.dueDate).toLocaleDateString(
+                            "de-DE",
+                          )}
                         </span>
                       )}
                     </span>
