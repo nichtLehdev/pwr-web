@@ -20,6 +20,12 @@ import {
   Eye,
 } from "lucide-react";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 
 type Tab = "roles" | "users";
 
@@ -210,7 +216,7 @@ function RolesTab() {
       </div>
 
       {roles && roles.length > 0 ? (
-        <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow">
+        <div className="dark:bg-dark-surface dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200 bg-white shadow">
           <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
             <thead className="dark:bg-dark-surface bg-gray-50">
               <tr>
@@ -319,115 +325,123 @@ function RolesTab() {
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingId) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="dark:bg-dark-surface w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              {editingId
-                ? isEditingSystemRole
-                  ? "Berechtigungen bearbeiten"
-                  : "Rolle bearbeiten"
-                : "Neue Rolle"}
-            </h3>
-            <div className="space-y-4">
-              {(!isEditingSystemRole || !editingId) && (
-                <>
-                  <div>
-                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                      Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      placeholder="z.B. Content Manager"
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                      Beschreibung
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
-                      rows={3}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
-                    />
-                  </div>
-                </>
-              )}
-              {isEditingSystemRole && editingId && (
-                <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                  <p className="font-medium">Systemrolle: {formData.name}</p>
-                  <p className="mt-1 text-xs">
-                    Name und Beschreibung können nicht geändert werden.
-                    Berechtigungen können angepasst werden.
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
-                  Berechtigungen
-                </label>
-                <div className="dark:bg-dark-surface dark:border-dark-border max-h-64 overflow-y-auto rounded-lg border border-gray-200 p-4">
-                  {permissions && permissions.length > 0 ? (
-                    <div className="space-y-2">
-                      {permissions.map((perm) => (
-                        <label
-                          key={perm.key}
-                          className="dark:text-dark-text flex items-center gap-2 text-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.permissionKeys.includes(perm.key)}
-                            onChange={() => togglePermission(perm.key)}
-                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                          />
-                          <span className="font-medium">{perm.name}</span>
-                          <span className="text-gray-500">({perm.key})</span>
-                        </label>
-                      ))}
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h3 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
+                {editingId
+                  ? isEditingSystemRole
+                    ? "Berechtigungen bearbeiten"
+                    : "Rolle bearbeiten"
+                  : "Neue Rolle"}
+              </h3>
+              <div className="space-y-4">
+                {(!isEditingSystemRole || !editingId) && (
+                  <>
+                    <div>
+                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder="z.B. Content Manager"
+                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                      />
                     </div>
-                  ) : (
-                    <p className="dark:text-dark-muted text-sm text-gray-500">
-                      Keine Berechtigungen verfügbar
+                    <div>
+                      <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                        Beschreibung
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            description: e.target.value,
+                          })
+                        }
+                        rows={3}
+                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-1 focus:outline-none"
+                      />
+                    </div>
+                  </>
+                )}
+                {isEditingSystemRole && editingId && (
+                  <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                    <p className="font-medium">Systemrolle: {formData.name}</p>
+                    <p className="mt-1 text-xs">
+                      Name und Beschreibung können nicht geändert werden.
+                      Berechtigungen können angepasst werden.
                     </p>
-                  )}
+                  </div>
+                )}
+                <div>
+                  <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                    Berechtigungen
+                  </label>
+                  <div className="dark:bg-dark-surface dark:border-dark-border max-h-64 overflow-y-auto rounded-lg border border-gray-200 p-4">
+                    {permissions && permissions.length > 0 ? (
+                      <div className="space-y-2">
+                        {permissions.map((perm) => (
+                          <label
+                            key={perm.key}
+                            className="dark:text-dark-text flex flex-wrap items-center gap-x-2 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.permissionKeys.includes(
+                                perm.key,
+                              )}
+                              onChange={() => togglePermission(perm.key)}
+                              className="text-primary focus:ring-primary h-4 w-4 shrink-0 rounded border-gray-300"
+                            />
+                            <span className="font-medium">{perm.name}</span>
+                            <span className="break-all text-gray-500">
+                              ({perm.key})
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="dark:text-dark-muted text-sm text-gray-500">
+                        Keine Berechtigungen verfügbar
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setEditingId(null);
-                  setFormData({
-                    name: "",
-                    description: "",
-                    permissionKeys: [],
-                  });
-                }}
-                className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Abbrechen
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!editingId && !formData.name}
-                className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                Speichern
-              </button>
-            </div>
-          </div>
-        </div>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setEditingId(null);
+                    setFormData({
+                      name: "",
+                      description: "",
+                      permissionKeys: [],
+                    });
+                  }}
+                  className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={!editingId && !formData.name}
+                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  Speichern
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </div>
   );

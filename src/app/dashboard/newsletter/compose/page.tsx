@@ -222,7 +222,7 @@ export default function DashboardNewsletterComposePage() {
       <div className="container mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm">
-          <ol className="flex items-center gap-2">
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
               <Link
                 href="/dashboard"
