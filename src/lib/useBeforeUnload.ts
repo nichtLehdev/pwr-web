@@ -19,9 +19,31 @@ export function findClickedLink(
   return (element?.closest("a[href]") as HTMLAnchorElement | null) ?? null;
 }
 
+/** Links that never navigate away from the app and must not be intercepted. */
+export function isIgnoredHref(link: HTMLAnchorElement, href: string): boolean {
+  return (
+    href.startsWith("http") ||
+    href.startsWith("mailto:") ||
+    href.startsWith("tel:") ||
+    href.startsWith("#") ||
+    href === "javascript:void(0)" ||
+    link.hasAttribute("download") ||
+    link.target === "_blank"
+  );
+}
+
+/** How long an answer stays valid for the navigation it was given for. */
+const DECISION_TTL_MS = 1500;
+
 /**
  * Hook to show a warning before leaving the page if there are unsaved changes.
  * Works for both actual page unloads (beforeunload) and Next.js client-side navigation.
+ *
+ * Asks in the click phase only. An earlier version also asked on `pointerdown`
+ * and `mousedown`: the modal dialog swallowed the rest of the mouse gesture,
+ * so the browser never delivered the `click` that Next.js `<Link>` navigates
+ * on — confirming "leave" left you sitting on the page, with no way out other
+ * than a full reload.
  *
  * @param enabled - Whether to show the warning (typically based on form dirty state)
  * @param message - Optional custom message (browsers may ignore this)
@@ -32,26 +54,28 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
   const handlerRef = useRef<((e: BeforeUnloadEvent) => void) | undefined>(
     undefined,
   );
-  const linkMouseDownHandlerRef = useRef<((e: MouseEvent) => void) | undefined>(
-    undefined,
-  );
   const linkClickHandlerRef = useRef<((e: MouseEvent) => void) | undefined>(
     undefined,
   );
   const currentPathRef = useRef(pathname);
-  const blockedNavigationRef = useRef<string | null>(null);
-  /** The answer already given for the click currently in flight. */
-  const gestureDecisionRef = useRef<{ href: string; allowed: boolean } | null>(
-    null,
-  );
-  const gestureResetRef = useRef<number | undefined>(undefined);
+  /**
+   * The answer already given for the navigation in flight. A single click on a
+   * `<Link>` reaches us twice — once as the DOM event, then again as the
+   * `router.push` Next.js makes from its own click handler — and both must
+   * share one answer instead of stacking two dialogs.
+   *
+   * Only "leave" is remembered: a refusal stops the navigation right there, so
+   * there is nothing left to ask about, and the next click deserves a fresh
+   * question.
+   */
+  const allowedNavigationRef = useRef<string | null>(null);
+  const allowedResetRef = useRef<number | undefined>(undefined);
   const routerRef = useRef(router);
   const originalPushRef = useRef<typeof router.push | null>(null);
   const originalReplaceRef = useRef<typeof router.replace | null>(null);
 
   useEffect(() => {
     currentPathRef.current = pathname;
-    blockedNavigationRef.current = null;
   }, [pathname]);
 
   useEffect(() => {
@@ -59,19 +83,6 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
       if (handlerRef.current) {
         window.removeEventListener("beforeunload", handlerRef.current);
         handlerRef.current = undefined;
-      }
-      if (linkMouseDownHandlerRef.current) {
-        document.removeEventListener(
-          "mousedown",
-          linkMouseDownHandlerRef.current,
-          true,
-        );
-        document.removeEventListener(
-          "pointerdown",
-          linkMouseDownHandlerRef.current as unknown as EventListener,
-          true,
-        );
-        linkMouseDownHandlerRef.current = undefined;
       }
       if (linkClickHandlerRef.current) {
         document.removeEventListener(
@@ -81,7 +92,8 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
         );
         linkClickHandlerRef.current = undefined;
       }
-      gestureDecisionRef.current = null;
+      window.clearTimeout(allowedResetRef.current);
+      allowedNavigationRef.current = null;
       return;
     }
 
@@ -112,149 +124,56 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
       );
     };
 
-    /**
-     * Ask once per user gesture. A single click on a link reaches us three
-     * times — pointerdown, mousedown, then click — and prompting in each phase
-     * stacked three dialogs on top of each other for one click.
-     */
-    const showConfirmation = (href: string): boolean => {
-      const pending = gestureDecisionRef.current;
-      if (pending && pending.href === href) return pending.allowed;
+    /** Ask once per navigation, not once per handler that sees it. */
+    const mayLeave = (href: string): boolean => {
+      if (allowedNavigationRef.current === href) return true;
 
-      const allowed = askToLeave();
-      gestureDecisionRef.current = { href, allowed };
-      // Safety net: if no click follows (the pointer was dragged off the
-      // link), the decision must not leak into the next gesture.
-      window.clearTimeout(gestureResetRef.current);
-      gestureResetRef.current = window.setTimeout(() => {
-        gestureDecisionRef.current = null;
-      }, 1500);
-      return allowed;
-    };
+      if (!askToLeave()) return false;
 
-    const findLink = findClickedLink;
-
-    const linkMouseDownHandler = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-
-      const target = e.target as HTMLElement;
-      if (!target) return;
-
-      let link: HTMLAnchorElement | null = null;
-
-      if (e.composedPath) {
-        const path = e.composedPath();
-        for (const node of path) {
-          if (node instanceof HTMLElement) {
-            link = findLink(node);
-            if (link) break;
-          }
-        }
-      }
-
-      if (!link) {
-        link = findLink(target);
-      }
-
-      if (!link) return;
-
-      if (link.hasAttribute("data-skip-warning")) {
-        return;
-      }
-
-      const href = link.getAttribute("href");
-      if (!href) return;
-
-      if (
-        href.startsWith("http") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:") ||
-        href.startsWith("#") ||
-        href === "javascript:void(0)" ||
-        link.hasAttribute("download") ||
-        link.target === "_blank"
-      ) {
-        return;
-      }
-
-      if (shouldBlockNavigation(href)) {
-        if (!showConfirmation(href)) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          blockedNavigationRef.current = href;
-          const originalPointerEvents = link.style.pointerEvents;
-          link.style.pointerEvents = "none";
-          setTimeout(() => {
-            link.style.pointerEvents = originalPointerEvents;
-            blockedNavigationRef.current = null;
-          }, 200);
-          return false;
-        }
-        blockedNavigationRef.current = null;
-      }
+      allowedNavigationRef.current = href;
+      // Safety net: the answer must not leak into a later navigation if the
+      // click never reaches Next.js (the pointer was dragged off the link).
+      window.clearTimeout(allowedResetRef.current);
+      allowedResetRef.current = window.setTimeout(() => {
+        allowedNavigationRef.current = null;
+      }, DECISION_TTL_MS);
+      return true;
     };
 
     const linkClickHandler = (e: MouseEvent) => {
-      if (blockedNavigationRef.current) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        blockedNavigationRef.current = null;
-        return false;
-      }
+      // Modified clicks open a new tab and leave this page alone.
+      if (e.defaultPrevented || e.button !== 0) return;
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
 
-      const target = e.target as HTMLElement;
+      const target = e.target as HTMLElement | null;
       if (!target) return;
 
       let link: HTMLAnchorElement | null = null;
 
       if (e.composedPath) {
-        const path = e.composedPath();
-        for (const node of path) {
+        for (const node of e.composedPath()) {
           if (node instanceof HTMLElement) {
-            link = findLink(node);
+            link = findClickedLink(node);
             if (link) break;
           }
         }
       }
 
-      if (!link) {
-        link = findLink(target);
-      }
-
+      if (!link) link = findClickedLink(target);
       if (!link) return;
 
-      if (link.hasAttribute("data-skip-warning")) {
-        return;
-      }
+      if (link.hasAttribute("data-skip-warning")) return;
 
       const href = link.getAttribute("href");
       if (!href) return;
+      if (isIgnoredHref(link, href)) return;
 
-      if (
-        href.startsWith("http") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:") ||
-        href.startsWith("#") ||
-        href === "javascript:void(0)" ||
-        link.hasAttribute("download") ||
-        link.target === "_blank"
-      ) {
-        return;
-      }
+      if (!shouldBlockNavigation(href)) return;
 
-      if (shouldBlockNavigation(href)) {
-        const allowed = showConfirmation(href);
-        // click is the last phase of the gesture — the answer must not carry
-        // over to whatever the user clicks next.
-        gestureDecisionRef.current = null;
-        if (!allowed) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          return false;
-        }
+      if (!mayLeave(href)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
       }
     };
 
@@ -269,10 +188,8 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
         href: string,
         options?: Parameters<typeof router.push>[1],
       ) => {
-        if (shouldBlockNavigation(href)) {
-          if (!showConfirmation(href)) {
-            return Promise.resolve(false);
-          }
+        if (shouldBlockNavigation(href) && !mayLeave(href)) {
+          return Promise.resolve(false);
         }
         return originalPushRef.current!(href, options);
       }) as typeof router.push;
@@ -281,10 +198,8 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
         href: string,
         options?: Parameters<typeof router.replace>[1],
       ) => {
-        if (shouldBlockNavigation(href)) {
-          if (!showConfirmation(href)) {
-            return Promise.resolve(false);
-          }
+        if (shouldBlockNavigation(href) && !mayLeave(href)) {
+          return Promise.resolve(false);
         }
         return originalReplaceRef.current!(href, options);
       }) as typeof router.replace;
@@ -310,56 +225,13 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
     }
 
     handlerRef.current = beforeUnloadHandler;
-    linkMouseDownHandlerRef.current = linkMouseDownHandler;
     linkClickHandlerRef.current = linkClickHandler;
 
     // Document-level capture only. Registering the same handler on window as
     // well ran it twice for every event, since capture descends window →
     // document before reaching the target.
     window.addEventListener("beforeunload", beforeUnloadHandler);
-    document.addEventListener(
-      "pointerdown",
-      linkMouseDownHandler as unknown as EventListener,
-      true,
-    );
-    document.addEventListener("mousedown", linkMouseDownHandler, true);
     document.addEventListener("click", linkClickHandler, true);
-
-    const touchHandler = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target) return;
-
-      const link = target.closest("a[href]") as HTMLAnchorElement | null;
-      if (!link) return;
-
-      if (link.hasAttribute("data-skip-warning")) return;
-
-      const href = link.getAttribute("href");
-      if (!href) return;
-
-      if (
-        href.startsWith("http") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:") ||
-        href.startsWith("#") ||
-        href === "javascript:void(0)" ||
-        link.hasAttribute("download") ||
-        link.target === "_blank"
-      ) {
-        return;
-      }
-
-      if (shouldBlockNavigation(href)) {
-        if (!showConfirmation(href)) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
-          return false;
-        }
-      }
-    };
-
-    document.addEventListener("touchend", touchHandler, true);
 
     return () => {
       if (originalPushRef.current && originalReplaceRef.current) {
@@ -383,19 +255,11 @@ export function useBeforeUnload(enabled: boolean, message?: string) {
         }
       }
 
-      window.clearTimeout(gestureResetRef.current);
-      gestureDecisionRef.current = null;
+      window.clearTimeout(allowedResetRef.current);
+      allowedNavigationRef.current = null;
       window.removeEventListener("beforeunload", beforeUnloadHandler);
-      document.removeEventListener(
-        "pointerdown",
-        linkMouseDownHandler as unknown as EventListener,
-        true,
-      );
-      document.removeEventListener("mousedown", linkMouseDownHandler, true);
       document.removeEventListener("click", linkClickHandler, true);
-      document.removeEventListener("touchend", touchHandler, true);
       handlerRef.current = undefined;
-      linkMouseDownHandlerRef.current = undefined;
       linkClickHandlerRef.current = undefined;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

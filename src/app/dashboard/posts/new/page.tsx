@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, startTransition } from "react";
+import { useState, useEffect, useMemo, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +12,7 @@ import {
   DashboardFormZoneHeader,
   DashboardPage,
   DashboardSectionedFormLayout,
+  DraftRestorePrompt,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
@@ -86,53 +87,78 @@ export default function NewPostPage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasRestoredRef = useRef(false);
 
-  const formData = {
-    title,
-    excerpt,
-    content,
-    category,
-    bezirkId,
-    pinned,
-    coverImageId,
-    coverImagePositionX,
-    coverImagePositionY,
-    authorId,
-    authorName,
-    submitAsDraft,
-    submitAsApproved,
-  };
+  const formData = useMemo(
+    () => ({
+      title,
+      excerpt,
+      content,
+      category,
+      bezirkId,
+      pinned,
+      coverImageId,
+      coverImageUrl,
+      coverImagePositionX,
+      coverImagePositionY,
+      authorId,
+      authorName,
+      authorSearch,
+      submitAsDraft,
+      submitAsApproved,
+    }),
+    [
+      title,
+      excerpt,
+      content,
+      category,
+      bezirkId,
+      pinned,
+      coverImageId,
+      coverImageUrl,
+      coverImagePositionX,
+      coverImagePositionY,
+      authorId,
+      authorName,
+      authorSearch,
+      submitAsDraft,
+      submitAsApproved,
+    ],
+  );
 
-  const { restore, clear } = useAutosave("post-new", formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: "post-new",
+      data: formData,
+      userId: session?.user?.id,
+      ready: !sessionLoading && !profileLoading,
+    });
+
   const hasUnsavedChanges = Boolean(
     title.trim() || excerpt.trim() || content.trim(),
   );
   useBeforeUnload(hasUnsavedChanges && !isSubmitting);
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setExcerpt(saved.excerpt || "");
-          setContent(saved.content || "");
-          setCategory(saved.category || "MAGAZIN");
-          setBezirkId(saved.bezirkId || "");
-          setPinned(saved.pinned || false);
-          setCoverImageId(saved.coverImageId || null);
-          setCoverImagePositionX(saved.coverImagePositionX || null);
-          setCoverImagePositionY(saved.coverImagePositionY || null);
-          setAuthorId(saved.authorId || null);
-          setAuthorName(saved.authorName || "");
-          setSubmitAsDraft(saved.submitAsDraft || false);
-          setSubmitAsApproved(saved.submitAsApproved || false);
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, sessionLoading, profileLoading]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setExcerpt(saved.excerpt || "");
+      setContent(saved.content || "");
+      setCategory(saved.category || "MAGAZIN");
+      setBezirkId(saved.bezirkId || "");
+      setPinned(saved.pinned || false);
+      setCoverImageId(saved.coverImageId || null);
+      setCoverImageUrl(saved.coverImageUrl || null);
+      setCoverImagePositionX(saved.coverImagePositionX || null);
+      setCoverImagePositionY(saved.coverImagePositionY || null);
+      setAuthorId(saved.authorId || null);
+      setAuthorName(saved.authorName || "");
+      setAuthorSearch(saved.authorSearch || "");
+      setSubmitAsDraft(saved.submitAsDraft || false);
+      setSubmitAsApproved(saved.submitAsApproved || false);
+    });
+  };
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
   const { data: users } = api.users.list.useQuery(
@@ -270,6 +296,13 @@ export default function NewPostPage() {
       ]}
       maxWidth="7xl"
     >
+      <DraftRestorePrompt
+        draft={pendingDraft}
+        onRestore={handleRestoreDraft}
+        onDiscard={discardDraft}
+        storageFailed={storageFailed}
+      />
+
       {/* Error Message */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">

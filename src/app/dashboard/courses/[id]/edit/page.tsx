@@ -36,6 +36,7 @@ import {
   DashboardFormBlock,
   CourseFormEditMetaBar,
   CourseCustomFieldsEditor,
+  DraftRestorePrompt,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
@@ -154,7 +155,6 @@ export default function EditCoursePage() {
   const [originalCustomFields, setOriginalCustomFields] = useState<
     CustomField[]
   >([]);
-  const hasRestoredRef = useRef(false);
   const originalDataRef = useRef<{
     title: string;
     motto: string;
@@ -204,12 +204,15 @@ export default function EditCoursePage() {
       description,
       courseType,
       startDate,
+      startTime,
       endDate,
+      endTime,
       registrationDeadline,
       hasRegistrationDeadline,
       registrationOpensAt,
       scheduledRegistrationOpens,
       locationId,
+      locationSearch,
       bezirkId,
       isExternalProvider,
       externalProviderName,
@@ -227,6 +230,7 @@ export default function EditCoursePage() {
       prerequisites,
       whatToBring,
       imageId,
+      imageUrl,
       customFields,
       status,
     }),
@@ -236,12 +240,15 @@ export default function EditCoursePage() {
       description,
       courseType,
       startDate,
+      startTime,
       endDate,
+      endTime,
       registrationDeadline,
       hasRegistrationDeadline,
       registrationOpensAt,
       scheduledRegistrationOpens,
       locationId,
+      locationSearch,
       bezirkId,
       isExternalProvider,
       externalProviderName,
@@ -259,12 +266,19 @@ export default function EditCoursePage() {
       prerequisites,
       whatToBring,
       imageId,
+      imageUrl,
       customFields,
       status,
     ],
   );
 
-  const { restore, clear } = useAutosave(`course-${courseId}-edit`, formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: `course-${courseId}-edit`,
+      data: formData,
+      userId: session?.user?.id,
+      ready: isInitialized,
+    });
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -279,54 +293,52 @@ export default function EditCoursePage() {
 
   useBeforeUnload(Boolean(hasUnsavedChanges && !isSubmitting));
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !courseLoading && !course) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setMotto(saved.motto || "");
-          setDescription(saved.description || "");
-          setCourseType(saved.courseType || CourseType.LEHRGANG);
-          setStartDate(saved.startDate || "");
-          setEndDate(saved.endDate || "");
-          setRegistrationDeadline(saved.registrationDeadline || "");
-          setHasRegistrationDeadline(
-            saved.hasRegistrationDeadline ??
-              Boolean(saved.registrationDeadline),
-          );
-          const restoredScheduled =
-            saved.scheduledRegistrationOpens ??
-            Boolean(saved.registrationOpensAt);
-          setScheduledRegistrationOpens(restoredScheduled);
-          setRegistrationOpensAt(
-            restoredScheduled ? saved.registrationOpensAt || "" : "",
-          );
-          setLocationId(saved.locationId || "");
-          setBezirkId(saved.bezirkId || "");
-          setIsExternalProvider(saved.isExternalProvider || false);
-          setExternalProviderName(saved.externalProviderName || "");
-          setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
-          setMaxParticipants(saved.maxParticipants || "");
-          setRegistrationOpen(saved.registrationOpen || false);
-          setAllowWaitingList(saved.allowWaitingList || false);
-          setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
-          setIsFree(saved.isFree ?? true);
-          setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
-          setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
-          setInvoicingEnabled(saved.invoicingEnabled ?? false);
-          setPriceInfo(saved.priceInfo || "");
-          setPriceOptions(saved.priceOptions || []);
-          setPrerequisites(saved.prerequisites || "");
-          setWhatToBring(saved.whatToBring || "");
-          setImageId(saved.imageId || null);
-          setCustomFields(saved.customFields || []);
-          setStatus(saved.status || ContentStatus.DRAFT);
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, courseLoading, course]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setMotto(saved.motto || "");
+      setDescription(saved.description || "");
+      setCourseType(saved.courseType || CourseType.LEHRGANG);
+      setStartDate(saved.startDate || "");
+      setStartTime(saved.startTime || "09:00");
+      setEndDate(saved.endDate || "");
+      setEndTime(saved.endTime || "17:00");
+      setRegistrationDeadline(saved.registrationDeadline || "");
+      setHasRegistrationDeadline(
+        saved.hasRegistrationDeadline ?? Boolean(saved.registrationDeadline),
+      );
+      const restoredScheduled =
+        saved.scheduledRegistrationOpens ?? Boolean(saved.registrationOpensAt);
+      setScheduledRegistrationOpens(restoredScheduled);
+      setRegistrationOpensAt(
+        restoredScheduled ? saved.registrationOpensAt || "" : "",
+      );
+      setLocationId(saved.locationId || "");
+      setLocationSearch(saved.locationSearch || "");
+      setBezirkId(saved.bezirkId || "");
+      setIsExternalProvider(saved.isExternalProvider || false);
+      setExternalProviderName(saved.externalProviderName || "");
+      setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
+      setMaxParticipants(saved.maxParticipants || "");
+      setRegistrationOpen(saved.registrationOpen || false);
+      setAllowWaitingList(saved.allowWaitingList || false);
+      setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
+      setIsFree(saved.isFree ?? true);
+      setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
+      setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
+      setInvoicingEnabled(saved.invoicingEnabled ?? false);
+      setPriceInfo(saved.priceInfo || "");
+      setPriceOptions(saved.priceOptions || []);
+      setPrerequisites(saved.prerequisites || "");
+      setWhatToBring(saved.whatToBring || "");
+      setImageId(saved.imageId || null);
+      setImageUrl(saved.imageUrl || null);
+      setCustomFields(saved.customFields || []);
+      setStatus(saved.status || ContentStatus.DRAFT);
+    });
+  };
 
   useEffect(() => {
     if (course && isInitialized && !originalDataRef.current) {
@@ -1058,6 +1070,13 @@ export default function EditCoursePage() {
         ]}
         maxWidth="7xl"
       >
+        <DraftRestorePrompt
+          draft={pendingDraft}
+          onRestore={handleRestoreDraft}
+          onDiscard={discardDraft}
+          storageFailed={storageFailed}
+        />
+
         {/* Error */}
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
