@@ -23,6 +23,7 @@ export const PERMISSIONS = {
   COURSES_APPROVE: "courses.approve",
   COURSES_VIEW: "courses.view",
   COURSES_MANAGE_REGISTRATIONS: "courses.manage_registrations",
+  COURSES_ENABLE_INVOICING: "courses.enable_invoicing",
   REGISTRATIONS_MARK_PAID: "registrations.mark_paid",
 
   // Posts
@@ -206,6 +207,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     key: PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
     name: "Kursanmeldungen verwalten",
     description: "Berechtigung zum Verwalten von Kursanmeldungen",
+    category: "courses",
+  },
+  {
+    key: PERMISSIONS.COURSES_ENABLE_INVOICING,
+    name: "Rechnungsstellung für Kurse freischalten",
+    description:
+      "Berechtigung, beim Anlegen oder Bearbeiten eines Kurses festzulegen, ob für ihn Rechnungen erstellt werden dürfen",
     category: "courses",
   },
   {
@@ -436,13 +444,15 @@ export const PERMISSION_DEFINITIONS: Array<{
   {
     key: PERMISSIONS.INVOICES_GENERATE,
     name: "Rechnungen erstellen",
-    description: "Berechtigung zum Erstellen von Rechnungen",
+    description:
+      "Berechtigung, für beliebige Kurse Rechnungen zu erstellen, zu bearbeiten und zu veröffentlichen (Kurs-Organisatoren dürfen das für ihre eigenen Kurse ohnehin)",
     category: "invoices",
   },
   {
     key: PERMISSIONS.INVOICES_VIEW,
-    name: "Rechnungen ansehen",
-    description: "Berechtigung zum Ansehen von Rechnungen",
+    name: "Rechnungsarchiv ansehen",
+    description:
+      "Berechtigung zum Einsehen aller erstellten Rechnungen im Rechnungsarchiv",
     category: "invoices",
   },
   {

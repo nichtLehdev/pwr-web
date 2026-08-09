@@ -10,7 +10,6 @@ import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
-import { BulkInvoiceModal } from "./_components/BulkInvoiceModal";
 import {
   CourseCollaboratorRole,
   RegistrationStatus,
@@ -20,6 +19,7 @@ import {
 import {
   ArrowLeftIcon,
   DownloadIcon,
+  ReceiptTextIcon,
   MailIcon,
   SearchIcon,
 } from "lucide-react";
@@ -124,7 +124,6 @@ export default function CourseParticipantsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showExportMenu, setShowExportMenu] = useState(false);
-  const [showBulkInvoiceModal, setShowBulkInvoiceModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<null | "paid" | "confirm">(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -176,6 +175,11 @@ export default function CourseParticipantsPage() {
   // Asked of the server rather than re-derived here: the mailing rule also
   // covers Bezirk-wide access, which the client can't see.
   const { data: canMailRegistrants } = api.courseMail.canSend.useQuery(
+    { courseId },
+    { enabled: !!courseId && !!session?.user },
+  );
+
+  const { data: invoiceAccess } = api.invoices.canManageCourseInvoices.useQuery(
     { courseId },
     { enabled: !!courseId && !!session?.user },
   );
@@ -596,28 +600,17 @@ export default function CourseParticipantsPage() {
                     <DownloadIcon className="h-4 w-4 text-yellow-600" />
                     JSON (.json)
                   </button>
-                  {canCreateInvoices && (
+                  {canCreateInvoices && invoiceAccess?.canManage && (
                     <>
                       <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
-                      <button
-                        onClick={() => {
-                          setShowExportMenu(false);
-                          setShowBulkInvoiceModal(true);
-                        }}
-                        disabled={hasPendingDiscounts}
-                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
-                        title={
-                          hasPendingDiscounts
-                            ? "Rechnungen können nicht generiert werden, solange noch Geschwisterkindrabatte zur Prüfung ausstehen."
-                            : undefined
-                        }
+                      <Link
+                        href={`/dashboard/courses/${courseId}/invoices`}
+                        onClick={() => setShowExportMenu(false)}
+                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                       >
-                        <DownloadIcon
-                          className="h-4 w-4 text-blue-600"
-                          fill="none"
-                        />
-                        Alle Rechnungen (ZIP)
-                      </button>
+                        <ReceiptTextIcon className="h-4 w-4 text-blue-600" />
+                        Rechnungen verwalten
+                      </Link>
                       {hasPendingDiscounts && (
                         <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
                           ⚠️ Es gibt noch ausstehende Geschwisterkindrabatte
@@ -1159,15 +1152,6 @@ export default function CourseParticipantsPage() {
           </div>
         )}
       </div>
-
-      {/* Bulk Invoice Modal */}
-      <BulkInvoiceModal
-        isOpen={showBulkInvoiceModal}
-        onClose={() => setShowBulkInvoiceModal(false)}
-        courseId={courseId}
-        course={course}
-        registrations={filteredRegistrations}
-      />
     </main>
   );
 }

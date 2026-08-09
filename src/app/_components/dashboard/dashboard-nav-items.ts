@@ -14,6 +14,7 @@ import {
   Map,
   MapPin,
   Music,
+  ReceiptText,
   Shield,
   User,
   Users,
@@ -118,6 +119,13 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
         icon: Users,
         visible: (ctx) =>
           ctx.hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS),
+      },
+      {
+        title: "Rechnungen",
+        description: "Rechnungsarchiv aller Kurse",
+        href: "/dashboard/invoices",
+        icon: ReceiptText,
+        visible: (ctx) => ctx.hasPermission(PERMISSIONS.INVOICES_VIEW),
       },
     ],
   },

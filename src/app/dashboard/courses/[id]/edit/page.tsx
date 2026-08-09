@@ -135,6 +135,7 @@ export default function EditCoursePage() {
   const [isFree, setIsFree] = useState(true);
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
+  const [invoicingEnabled, setInvoicingEnabled] = useState(false);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -177,6 +178,7 @@ export default function EditCoursePage() {
     isFree: boolean;
     paymentCashAllowed: boolean;
     paymentInvoiceAllowed: boolean;
+    invoicingEnabled: boolean;
     priceInfo: string;
     priceOptions: PriceOption[];
     prerequisites: string;
@@ -219,6 +221,7 @@ export default function EditCoursePage() {
       isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -250,6 +253,7 @@ export default function EditCoursePage() {
       isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -310,6 +314,7 @@ export default function EditCoursePage() {
           setIsFree(saved.isFree ?? true);
           setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
           setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
+          setInvoicingEnabled(saved.invoicingEnabled ?? false);
           setPriceInfo(saved.priceInfo || "");
           setPriceOptions(saved.priceOptions || []);
           setPrerequisites(saved.prerequisites || "");
@@ -362,6 +367,7 @@ export default function EditCoursePage() {
         isFree: course.isFree ?? true,
         paymentCashAllowed: course.paymentCashAllowed ?? true,
         paymentInvoiceAllowed: course.paymentInvoiceAllowed ?? true,
+        invoicingEnabled: course.invoicingEnabled ?? false,
         priceInfo: course.priceInfo || "",
         priceOptions:
           course.priceOptions?.map((opt) => ({
@@ -420,6 +426,15 @@ export default function EditCoursePage() {
     hasPermission("courses.edit" as PermissionKey) ||
     hasPermission("courses.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
+  const canEnableInvoicing = hasPermission(
+    "courses.enable_invoicing" as PermissionKey,
+  );
+  // The same permission courses.update checks. Gating the control on
+  // courses.approve instead used to hide it from people who were allowed to
+  // set it, and show a value they were not allowed to change.
+  const canManageSiblingDiscount = hasPermission(
+    "courses.manage_registrations" as PermissionKey,
+  );
   const userBezirkId = profile?.bezirkId ?? null;
 
   const canManageCourseTeamUi = useMemo(() => {
@@ -532,6 +547,7 @@ export default function EditCoursePage() {
         setIsFree(course.isFree);
         setPaymentCashAllowed(course.paymentCashAllowed ?? true);
         setPaymentInvoiceAllowed(course.paymentInvoiceAllowed ?? true);
+        setInvoicingEnabled(course.invoicingEnabled ?? false);
         setPriceInfo(course.priceInfo || "");
         if (course.priceOptions && course.priceOptions.length > 0) {
           const options = course.priceOptions.map((opt) => ({
@@ -979,13 +995,20 @@ export default function EditCoursePage() {
         : null,
       maxParticipants: isExternalProvider ? null : parseInt(maxParticipants),
       allowWaitingList: isExternalProvider ? false : allowWaitingList,
-      allowSiblingDiscount:
-        isExternalProvider || !hasApprovePermission
-          ? false
-          : allowSiblingDiscount,
+      // Omitted entirely when the user may not change it: sending a hardcoded
+      // false would ask the server to switch the discount off behind their
+      // back. Turning the course external clears the flag server-side anyway.
+      ...(canManageSiblingDiscount
+        ? {
+            allowSiblingDiscount: isExternalProvider
+              ? false
+              : allowSiblingDiscount,
+          }
+        : {}),
       isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled: isExternalProvider ? false : invoicingEnabled,
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
@@ -1861,27 +1884,40 @@ export default function EditCoursePage() {
                       </>
                     ) : null}
 
-                    {/* Sibling Discount - Only for users with approve permission */}
-                    {hasApprovePermission && !isExternalProvider && (
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          id="allowSiblingDiscount"
-                          checked={allowSiblingDiscount}
-                          onChange={(e) =>
-                            setAllowSiblingDiscount(e.target.checked)
-                          }
-                          className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-                        />
-                        <label
-                          htmlFor="allowSiblingDiscount"
-                          className="dark:text-dark-text text-sm font-medium text-gray-700"
-                        >
-                          Geschwisterkindrabatt erlauben (20% auf die Gebühr
-                          jedes weiteren Geschwisterkindes ab dem zweiten Kind)
-                        </label>
-                      </div>
-                    )}
+                    {/* Sibling Discount - only for users who may change it */}
+                    {!isExternalProvider &&
+                      (canManageSiblingDiscount ? (
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            id="allowSiblingDiscount"
+                            checked={allowSiblingDiscount}
+                            onChange={(e) =>
+                              setAllowSiblingDiscount(e.target.checked)
+                            }
+                            className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+                          />
+                          <label
+                            htmlFor="allowSiblingDiscount"
+                            className="dark:text-dark-text text-sm font-medium text-gray-700"
+                          >
+                            Geschwisterkindrabatt erlauben (20% auf die Gebühr
+                            jedes weiteren Geschwisterkindes ab dem zweiten
+                            Kind)
+                          </label>
+                        </div>
+                      ) : (
+                        // Shown read-only rather than hidden: the setting
+                        // changes what registrants pay, so an organizer needs
+                        // to see it even when they cannot switch it.
+                        allowSiblingDiscount && (
+                          <p className="dark:text-dark-muted text-sm text-gray-500">
+                            Geschwisterkindrabatt ist für diesen Kurs aktiv. Nur
+                            Landesposaunenwarte und Administratoren können das
+                            ändern.
+                          </p>
+                        )
+                      ))}
                   </div>
                 </DashboardFormBlock>
 
@@ -2454,6 +2490,44 @@ export default function EditCoursePage() {
                             </span>
                           </label>
                         </div>
+
+                        {canEnableInvoicing ? (
+                          <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
+                            <label className="flex cursor-pointer items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={invoicingEnabled}
+                                onChange={(e) =>
+                                  setInvoicingEnabled(e.target.checked)
+                                }
+                                className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                              />
+                              <span>
+                                <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                                  Rechnungsstellung aktivieren
+                                </span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                  Erlaubt dem Kurs-Team, für diesen Kurs
+                                  Rechnungen zu erstellen, zu bearbeiten und an
+                                  die Anmelder:innen auszustellen.
+                                </span>
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          invoicingEnabled && (
+                            <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
+                              <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                                Rechnungsstellung ist für diesen Kurs
+                                freigeschaltet
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Nur Landes-/Regionalposaunenwarte und
+                                Administratoren können diese Einstellung ändern.
+                              </p>
+                            </div>
+                          )
+                        )}
 
                         <div>
                           <div className="mb-2 flex items-center justify-between">

@@ -41,6 +41,7 @@ function getMimeType(filename: string): string {
  * - downloads: public+approved for everyone, otherwise session required
  * - media: public+approved for everyone, otherwise session required
  * - profiles: always public (avatars render on public pages)
+ * - invoices: never served here (see below)
  * Files without a database row fall back to requiring a session. That is what
  * gates course-mail attachments: they travel inside the message itself, so
  * recipients never need this route, and the link stays staff-only.
@@ -53,6 +54,11 @@ async function checkAccess(
   const url = `/api/uploads/${filePath}`;
 
   if (folder === "profiles") return { allowed: true, isPublic: true };
+
+  // Invoice PDFs are named after their invoice number, which is a guessable
+  // running sequence — "any logged-in session" is nowhere near enough. They are
+  // served exclusively by /api/invoices/[id]/pdf, which checks who is asking.
+  if (folder === "invoices") return { allowed: false, isPublic: false };
 
   let publiclyVisible = false;
   if (folder === "downloads") {
