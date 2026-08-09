@@ -297,10 +297,9 @@ describe("lineItemsFromRegistration", () => {
       course,
     );
 
-    expect(items.filter((item) => item.unitPrice < 0).map((i) => i.detail)).toEqual([
-      "Ben Muster, Clara Muster",
-      "Emil Andere, Frida Andere",
-    ]);
+    expect(
+      items.filter((item) => item.unitPrice < 0).map((i) => i.detail),
+    ).toEqual(["Ben Muster, Clara Muster", "Emil Andere, Frida Andere"]);
   });
 
   it("keeps discounts of differing size apart", () => {

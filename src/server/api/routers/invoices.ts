@@ -8,7 +8,10 @@ import {
   type PrismaClient,
 } from "~/generated/prisma/client";
 import { PERMISSIONS } from "@/lib/permissions";
-import { userHasPermission, type PermissionCache } from "../helpers/permissions";
+import {
+  userHasPermission,
+  type PermissionCache,
+} from "../helpers/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { createNotification } from "../helpers/notifications";
@@ -57,7 +60,13 @@ const recipientInput = {
   recipientStreet: z.string().trim().max(200).nullish(),
   recipientZipCode: z.string().trim().max(20).nullish(),
   recipientCity: z.string().trim().max(100).nullish(),
-  recipientEmail: z.string().trim().email().max(200).nullish().or(z.literal("")),
+  recipientEmail: z
+    .string()
+    .trim()
+    .email()
+    .max(200)
+    .nullish()
+    .or(z.literal("")),
 };
 
 /** A drawn or uploaded signature image, kept out of the database on purpose. */
@@ -133,7 +142,12 @@ async function loadCourseForInvoicing(
     throw new TRPCError({ code: "NOT_FOUND", message: "Kurs nicht gefunden" });
   }
 
-  const access = await resolveInvoiceAccess(db, userId, course, permissionCache);
+  const access = await resolveInvoiceAccess(
+    db,
+    userId,
+    course,
+    permissionCache,
+  );
   if (!access.canManage) {
     throw new TRPCError({
       code: "FORBIDDEN",
@@ -391,7 +405,9 @@ export const invoicesRouter = createTRPCRouter({
           siblingDiscountStatus: true,
           participants: { select: { firstName: true, lastName: true } },
           invoices: {
-            where: { status: { in: [InvoiceStatus.DRAFT, InvoiceStatus.PUBLISHED] } },
+            where: {
+              status: { in: [InvoiceStatus.DRAFT, InvoiceStatus.PUBLISHED] },
+            },
             select: { id: true, status: true, invoiceNumber: true },
           },
         },
@@ -612,7 +628,8 @@ export const invoicesRouter = createTRPCRouter({
       if (lineItems.length === 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Eine Rechnung ohne Positionen kann nicht ausgestellt werden.",
+          message:
+            "Eine Rechnung ohne Positionen kann nicht ausgestellt werden.",
         });
       }
       if (!invoice.recipientLastName && !invoice.recipientCompany) {
@@ -630,7 +647,10 @@ export const invoicesRouter = createTRPCRouter({
         // sequence. The loser waits here and then matches zero rows.
         const claimed = await tx.invoice.updateMany({
           where: { id: invoice.id, status: InvoiceStatus.DRAFT },
-          data: { invoiceDate: now, dueDate: invoice.dueDate ?? defaultDueDate(now) },
+          data: {
+            invoiceDate: now,
+            dueDate: invoice.dueDate ?? defaultDueDate(now),
+          },
         });
         if (claimed.count === 0) {
           throw new TRPCError({
@@ -910,11 +930,17 @@ export const invoicesRouter = createTRPCRouter({
           ? {
               OR: [
                 { invoiceNumber: { contains: search, mode: "insensitive" } },
-                { recipientLastName: { contains: search, mode: "insensitive" } },
-                { recipientFirstName: { contains: search, mode: "insensitive" } },
+                {
+                  recipientLastName: { contains: search, mode: "insensitive" },
+                },
+                {
+                  recipientFirstName: { contains: search, mode: "insensitive" },
+                },
                 { recipientCompany: { contains: search, mode: "insensitive" } },
                 { recipientEmail: { contains: search, mode: "insensitive" } },
-                { course: { title: { contains: search, mode: "insensitive" } } },
+                {
+                  course: { title: { contains: search, mode: "insensitive" } },
+                },
               ],
             }
           : {}),
@@ -965,7 +991,9 @@ export const invoicesRouter = createTRPCRouter({
         orderBy: { startDate: "desc" },
       });
 
-      const counts = new Map(grouped.map((row) => [row.courseId, row._count._all]));
+      const counts = new Map(
+        grouped.map((row) => [row.courseId, row._count._all]),
+      );
       return courses.map((course) => ({
         ...course,
         invoiceCount: counts.get(course.id) ?? 0,

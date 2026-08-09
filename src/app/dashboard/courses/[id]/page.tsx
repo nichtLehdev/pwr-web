@@ -151,13 +151,12 @@ export default function CourseDetailPage() {
     },
   );
 
-  const { data: invoiceAccess } =
-    api.invoices.canManageCourseInvoices.useQuery(
-      { courseId },
-      {
-        enabled: !!courseId && !!session?.user && activeTab === "participants",
-      },
-    );
+  const { data: invoiceAccess } = api.invoices.canManageCourseInvoices.useQuery(
+    { courseId },
+    {
+      enabled: !!courseId && !!session?.user && activeTab === "participants",
+    },
+  );
 
   const approveMutation = api.courses.approve.useMutation({
     onSuccess: () => {

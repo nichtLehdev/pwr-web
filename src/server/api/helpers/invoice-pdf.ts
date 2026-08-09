@@ -52,7 +52,8 @@ export function parseLineItems(value: unknown): InvoiceLineItem[] {
     if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return [];
     return [
       {
-        description: typeof item.description === "string" ? item.description : "",
+        description:
+          typeof item.description === "string" ? item.description : "",
         detail: typeof item.detail === "string" ? item.detail : null,
         quantity,
         unitPrice,

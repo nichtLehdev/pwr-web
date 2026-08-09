@@ -92,7 +92,8 @@ export async function GET(
   }
 
   const filename =
-    invoice.pdfFilename ?? `Rechnung_${invoice.invoiceNumber ?? invoice.id}.pdf`;
+    invoice.pdfFilename ??
+    `Rechnung_${invoice.invoiceNumber ?? invoice.id}.pdf`;
 
   // A draft has no frozen document yet, so it is rendered on the fly for the
   // preview in the editor — watermarked "ENTWURF" by the renderer and never

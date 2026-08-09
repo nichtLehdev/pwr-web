@@ -304,7 +304,9 @@ function placeholderValuesFor(
     betrag: formatAmount(recipient.totalPrice),
     // A person who registered twice gets both numbers, and the amount is the
     // sum — same collapsing rule as the rest of this record.
-    rechnungsnummer: invoices.map((invoice) => invoice.invoiceNumber).join(", "),
+    rechnungsnummer: invoices
+      .map((invoice) => invoice.invoiceNumber)
+      .join(", "),
     rechnungsbetrag: invoices.length
       ? formatAmount(
           invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0),

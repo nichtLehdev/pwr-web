@@ -133,18 +133,16 @@ export default function InvoiceEditorPage() {
     setSignatureName(invoice.signatureName ?? "");
     setInternalNote(invoice.internalNote ?? "");
     setLines(
-      (Array.isArray(invoice.lineItems) ? invoice.lineItems : []).map(
-        (raw) => {
-          const item = raw as Partial<InvoiceLineItem>;
-          return {
-            key: nextKey(),
-            description: item.description ?? "",
-            detail: item.detail ?? "",
-            quantity: Number(item.quantity ?? 1),
-            unitPrice: Number(item.unitPrice ?? 0),
-          };
-        },
-      ),
+      (Array.isArray(invoice.lineItems) ? invoice.lineItems : []).map((raw) => {
+        const item = raw as Partial<InvoiceLineItem>;
+        return {
+          key: nextKey(),
+          description: item.description ?? "",
+          detail: item.detail ?? "",
+          quantity: Number(item.quantity ?? 1),
+          unitPrice: Number(item.unitPrice ?? 0),
+        };
+      }),
     );
     setIsDirty(false);
   }, [invoice]);
@@ -252,7 +250,8 @@ export default function InvoiceEditorPage() {
       setSignatureBase64(reader.result as string);
       setSignatureFileName(file.name);
     };
-    reader.onerror = () => toast.error("Die Datei konnte nicht gelesen werden.");
+    reader.onerror = () =>
+      toast.error("Die Datei konnte nicht gelesen werden.");
     reader.readAsDataURL(file);
   };
 
@@ -330,7 +329,10 @@ export default function InvoiceEditorPage() {
           label: invoice.course.title,
           href: `/dashboard/courses/${courseId}`,
         },
-        { label: "Rechnungen", href: `/dashboard/courses/${courseId}/invoices` },
+        {
+          label: "Rechnungen",
+          href: `/dashboard/courses/${courseId}/invoices`,
+        },
         { label: invoice.invoiceNumber ?? "Entwurf" },
       ]}
       maxWidth="4xl"
@@ -402,9 +404,7 @@ export default function InvoiceEditorPage() {
                 onClick={() => setPublishOpen(true)}
                 disabled={isDirty}
                 title={
-                  isDirty
-                    ? "Bitte zuerst die Änderungen speichern."
-                    : undefined
+                  isDirty ? "Bitte zuerst die Änderungen speichern." : undefined
                 }
                 className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
               >
@@ -576,7 +576,9 @@ export default function InvoiceEditorPage() {
             </div>
             <button
               type="button"
-              onClick={() => mutateLines((current) => [...current, emptyLine()])}
+              onClick={() =>
+                mutateLines((current) => [...current, emptyLine()])
+              }
               className="text-primary inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
             >
               <PlusIcon className="h-4 w-4" />

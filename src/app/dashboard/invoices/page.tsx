@@ -196,7 +196,9 @@ export default function InvoiceArchivePage() {
       {/* Table */}
       <div className="dark:bg-dark-surface overflow-hidden rounded-lg bg-white shadow">
         {isLoading ? (
-          <p className="dark:text-dark-muted p-6 text-sm text-gray-500">Lade…</p>
+          <p className="dark:text-dark-muted p-6 text-sm text-gray-500">
+            Lade…
+          </p>
         ) : (data?.invoices.length ?? 0) === 0 ? (
           <div className="p-10 text-center">
             <ReceiptTextIcon className="mx-auto h-10 w-10 text-gray-300" />
@@ -326,7 +328,9 @@ export default function InvoiceArchivePage() {
           <button
             type="button"
             onClick={() =>
-              setPage((current) => Math.min(data?.pages ?? current, current + 1))
+              setPage((current) =>
+                Math.min(data?.pages ?? current, current + 1),
+              )
             }
             disabled={page >= (data?.pages ?? 1)}
             className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
