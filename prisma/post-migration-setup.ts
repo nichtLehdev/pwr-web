@@ -142,6 +142,11 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.COURSES_CREATE,
     PERMISSIONS.COURSES_EDIT,
     PERMISSIONS.COURSES_VIEW,
+    // RPWs entscheiden für ihre eigenen Kurse, ob abgerechnet wird; das
+    // Erstellen der Rechnungen selbst läuft über die Kurs-Organisatorenrolle
+    // bzw. invoices.generate (LPW/Admin).
+    PERMISSIONS.COURSES_ENABLE_INVOICING,
+    PERMISSIONS.INVOICES_VIEW,
     PERMISSIONS.POSTS_CREATE,
     PERMISSIONS.POSTS_EDIT,
     PERMISSIONS.POSTS_VIEW,

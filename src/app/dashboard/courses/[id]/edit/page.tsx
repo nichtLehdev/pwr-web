@@ -135,6 +135,7 @@ export default function EditCoursePage() {
   const [isFree, setIsFree] = useState(true);
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
+  const [invoicingEnabled, setInvoicingEnabled] = useState(false);
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -177,6 +178,7 @@ export default function EditCoursePage() {
     isFree: boolean;
     paymentCashAllowed: boolean;
     paymentInvoiceAllowed: boolean;
+    invoicingEnabled: boolean;
     priceInfo: string;
     priceOptions: PriceOption[];
     prerequisites: string;
@@ -219,6 +221,7 @@ export default function EditCoursePage() {
       isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -250,6 +253,7 @@ export default function EditCoursePage() {
       isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -310,6 +314,7 @@ export default function EditCoursePage() {
           setIsFree(saved.isFree ?? true);
           setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
           setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
+          setInvoicingEnabled(saved.invoicingEnabled ?? false);
           setPriceInfo(saved.priceInfo || "");
           setPriceOptions(saved.priceOptions || []);
           setPrerequisites(saved.prerequisites || "");
@@ -362,6 +367,7 @@ export default function EditCoursePage() {
         isFree: course.isFree ?? true,
         paymentCashAllowed: course.paymentCashAllowed ?? true,
         paymentInvoiceAllowed: course.paymentInvoiceAllowed ?? true,
+        invoicingEnabled: course.invoicingEnabled ?? false,
         priceInfo: course.priceInfo || "",
         priceOptions:
           course.priceOptions?.map((opt) => ({
@@ -420,6 +426,9 @@ export default function EditCoursePage() {
     hasPermission("courses.edit" as PermissionKey) ||
     hasPermission("courses.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
+  const canEnableInvoicing = hasPermission(
+    "courses.enable_invoicing" as PermissionKey,
+  );
   const userBezirkId = profile?.bezirkId ?? null;
 
   const canManageCourseTeamUi = useMemo(() => {
@@ -532,6 +541,7 @@ export default function EditCoursePage() {
         setIsFree(course.isFree);
         setPaymentCashAllowed(course.paymentCashAllowed ?? true);
         setPaymentInvoiceAllowed(course.paymentInvoiceAllowed ?? true);
+        setInvoicingEnabled(course.invoicingEnabled ?? false);
         setPriceInfo(course.priceInfo || "");
         if (course.priceOptions && course.priceOptions.length > 0) {
           const options = course.priceOptions.map((opt) => ({
@@ -986,6 +996,7 @@ export default function EditCoursePage() {
       isFree: isExternalProvider ? true : isFree,
       paymentCashAllowed,
       paymentInvoiceAllowed,
+      invoicingEnabled: isExternalProvider ? false : invoicingEnabled,
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
@@ -2454,6 +2465,44 @@ export default function EditCoursePage() {
                             </span>
                           </label>
                         </div>
+
+                        {canEnableInvoicing ? (
+                          <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
+                            <label className="flex cursor-pointer items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={invoicingEnabled}
+                                onChange={(e) =>
+                                  setInvoicingEnabled(e.target.checked)
+                                }
+                                className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                              />
+                              <span>
+                                <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                                  Rechnungsstellung aktivieren
+                                </span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                  Erlaubt dem Kurs-Team, für diesen Kurs
+                                  Rechnungen zu erstellen, zu bearbeiten und an
+                                  die Anmelder:innen auszustellen.
+                                </span>
+                              </span>
+                            </label>
+                          </div>
+                        ) : (
+                          invoicingEnabled && (
+                            <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
+                              <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                                Rechnungsstellung ist für diesen Kurs
+                                freigeschaltet
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Nur Landes-/Regionalposaunenwarte und
+                                Administratoren können diese Einstellung ändern.
+                              </p>
+                            </div>
+                          )
+                        )}
 
                         <div>
                           <div className="mb-2 flex items-center justify-between">

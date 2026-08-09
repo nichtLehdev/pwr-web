@@ -83,6 +83,9 @@ model User {
 
   gameResults GameResult[] @relation("UserGameResults")
 
+  createdInvoices   Invoice[] @relation("InvoiceCreator")
+  publishedInvoices Invoice[] @relation("InvoicePublisher")
+
   @@index([bezirkId])
   @@map("user")
 }
@@ -325,6 +328,17 @@ enum CoursePaymentMethod {
   INVOICE // Überweisung nach Rechnung
 }
 
+/**
+ * Lebenszyklus einer Rechnung. DRAFT ist frei editierbar und trägt noch keine
+ * Rechnungsnummer; ab PUBLISHED ist das Dokument unveränderlich (§14 UStG) und
+ * wird nur noch per Storno + Neuausstellung korrigiert.
+ */
+enum InvoiceStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
 enum PostCategory {
   MAGAZIN // Magazine
   EVENT // Event
@@ -560,6 +574,12 @@ model Course {
    */
   paymentCashAllowed    Boolean @default(true)
   paymentInvoiceAllowed Boolean @default(true)
+  /**
+   * Ob für diesen Kurs überhaupt Rechnungen erstellt werden dürfen. Getrennt von
+   * paymentInvoiceAllowed (Wunsch-Zahlungsweise der Anmeldung) und nur mit
+   * courses.enable_invoicing setzbar.
+   */
+  invoicingEnabled      Boolean @default(false)
 
   // Additional Info
   prerequisites String?
@@ -578,6 +598,7 @@ model Course {
   customFields     CourseCustomField[]
   registrations    CourseRegistration[]
   mails            CourseMail[]
+  invoices         Invoice[]
 
   // Meta
   createdById String?
@@ -724,6 +745,7 @@ model CourseRegistration {
 
   // Relations
   participants Participant[]
+  invoices     Invoice[]
   registrant   User?         @relation(fields: [registrantId], references: [id], onDelete: SetNull)
 
   // Meta
@@ -780,6 +802,91 @@ model CourseMail {
 model InvoiceCounter {
   year  Int @id
   value Int @default(0)
+}
+
+/// Eine erstellte Rechnung zu einer Kursanmeldung.
+///
+/// Der Entwurf wird aus der Anmeldung vorbefüllt, ist danach aber ein
+/// eigenständiges Dokument: Empfänger und Positionen werden hier gespeichert
+/// und frei bearbeitet, damit Sonderfälle (Nachlass, bereits geleistete
+/// Anzahlung, Zuschuss) abgebildet werden können, ohne die Anmeldung zu
+/// verfälschen.
+///
+/// Ab `PUBLISHED` ist der Datensatz eingefroren: die Rechnungsnummer ist
+/// vergeben, das PDF liegt unter `pdfPath` und wird nie überschrieben.
+/// Korrekturen laufen über Storno (`CANCELLED`) plus Nachfolgerechnung, die
+/// über `replacesInvoiceId` auf die stornierte zurückzeigt.
+model Invoice {
+  id String @id @default(uuid())
+
+  /// Fortlaufende Nummer, erst beim Veröffentlichen vergeben (Entwürfe: null).
+  invoiceNumber String? @unique
+
+  courseId String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  /// Bleibt erhalten, wenn die Anmeldung gelöscht wird — die Rechnung ist
+  /// aufbewahrungspflichtig, die Empfängerdaten stehen ohnehin hier.
+  registrationId String?
+  registration   CourseRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  status InvoiceStatus @default(DRAFT)
+
+  // Rechnungsempfänger (Snapshot, editierbar)
+  recipientCompany   String?
+  recipientFirstName String?
+  recipientLastName  String?
+  recipientStreet    String?
+  recipientZipCode   String?
+  recipientCity      String?
+  recipientEmail     String?
+
+  /// Positionen: [{ description, detail, quantity, unitPrice }] — unitPrice darf
+  /// negativ sein (Rabatte, Anzahlungen).
+  lineItems Json
+  /// Summe der Positionen zum Zeitpunkt des letzten Speicherns.
+  totalAmount Float @default(0)
+
+  invoiceDate DateTime?
+  dueDate     DateTime?
+
+  introText     String?
+  closingText   String?
+  signatureName String?
+  /// Interne Notiz, erscheint nicht auf dem PDF.
+  internalNote  String?
+
+  // Storno-Kette
+  cancelledAt       DateTime?
+  cancelReason      String?
+  replacesInvoiceId String?   @unique
+  replaces          Invoice?  @relation("InvoiceSuccession", fields: [replacesInvoiceId], references: [id], onDelete: SetNull)
+  replacedBy        Invoice?  @relation("InvoiceSuccession")
+
+  /// Abgelegtes Dokument, z.B. "/api/uploads/invoices/RE-2026-00042.pdf".
+  pdfPath     String?
+  pdfFilename String?
+
+  publishedAt DateTime?
+  /// Wann die Anmelder:innen über die Rechnung benachrichtigt wurden.
+  notifiedAt  DateTime?
+  /// Wann die Rechnung zuletzt per Kursmail verschickt wurde.
+  mailedAt    DateTime?
+
+  createdById   String?
+  createdBy     User?   @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  publishedById String?
+  publishedBy   User?   @relation("InvoicePublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([courseId, status])
+  @@index([registrationId])
+  @@index([status, publishedAt])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("invoice")
 }
 
 model Participant {
