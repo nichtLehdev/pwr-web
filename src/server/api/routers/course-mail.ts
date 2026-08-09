@@ -440,6 +440,26 @@ async function renderBody(markdown: string): Promise<string> {
   return html;
 }
 
+/**
+ * The same message, filled in for one specific recipient.
+ *
+ * Shared by `send` and `preview` — the preview is worthless if it substitutes
+ * differently from the delivery.
+ *
+ * Substitution happens into the already-sanitized HTML, so values are escaped
+ * here: a registrant named "<b>" must not become markup.
+ */
+function personalizeMail(
+  subject: string,
+  bodyHtml: string,
+  values: PlaceholderValues,
+) {
+  return {
+    subject: applyPlaceholders(subject, values, { escapeHtml: false }),
+    bodyHtml: applyPlaceholders(bodyHtml, values, { escapeHtml: true }),
+  };
+}
+
 export const courseMailRouter = createTRPCRouter({
   /**
    * Whether the viewer may write to this course's registrants. The dashboard
@@ -477,11 +497,119 @@ export const courseMailRouter = createTRPCRouter({
 
       return {
         recipients: recipients.map((recipient) => ({
+          /** Addresses one merged recipient — what `preview` expects. */
+          id: recipient.registrationIds[0]!,
           email: recipient.email,
           name: `${recipient.firstName} ${recipient.lastName}`.trim(),
           registrationCount: recipient.registrationIds.length,
         })),
         count: recipients.length,
+      };
+    }),
+
+  /**
+   * The finished message as one registrant would receive it — same rendering,
+   * same substitution, same template as `send`, but nothing is sent.
+   *
+   * A mutation despite being read-only: queries travel as GET with the input
+   * in the URL, and a whole mail body does not fit there.
+   */
+  preview: protectedProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        subject: z.string().max(200),
+        body: z.string(),
+        replyToEmail: z.string().email(),
+        includeGreeting: z.boolean().default(true),
+        attachInvoices: z.boolean().default(false),
+        /** Whose data to fill in; the first recipient when omitted. */
+        registrationId: z.string().optional(),
+        ...recipientSelectionInput,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = ctx.session.user;
+      const course = await loadCourseForMailing(
+        ctx.db,
+        input.courseId,
+        user.id,
+        ctx.permissionCache,
+      );
+
+      const recipients = await resolveRecipients(ctx.db, input.courseId, input);
+      const recipient = input.registrationId
+        ? recipients.find((candidate) =>
+            candidate.registrationIds.includes(input.registrationId!),
+          )
+        : recipients[0];
+
+      // The recipient's own invoices, so {{rechnungsnummer}} and friends show
+      // what they would actually receive rather than blanks.
+      const invoices =
+        recipient && input.attachInvoices
+          ? [
+              ...(
+                await loadPublishedInvoices(
+                  ctx.db,
+                  course.id,
+                  recipient.registrationIds,
+                )
+              ).values(),
+            ].flat()
+          : [];
+
+      // No registrations yet (or a stale selection): show the message with the
+      // example values rather than a page full of empty gaps.
+      const values = recipient
+        ? placeholderValuesFor(recipient, course, invoices)
+        : exampleValues();
+
+      const bodyHtml = await renderBody(input.body);
+      const personalized = personalizeMail(input.subject, bodyHtml, values);
+
+      const senderName = user.name?.trim() ?? "";
+      const { generateCourseMailHtml } =
+        await import("@/server/email/templates/course-mail-html");
+
+      // Mirrors what sendCourseMailToRegistrant() builds — keep the two in step.
+      const html = generateCourseMailHtml({
+        bodyHtml: personalized.bodyHtml,
+        courseTitle: course.title,
+        courseStartDate: course.startDate,
+        courseEndDate: course.endDate,
+        recipientName: recipient ? recipient.firstName : values.vorname,
+        senderName: senderName || "Posaunenwerk Rheinland",
+        replyToEmail: input.replyToEmail,
+        courseUrl: `${getBaseUrl(ctx.headers ? { headers: ctx.headers } : undefined)}/termine/course/${course.id}`,
+        includeGreeting: input.includeGreeting,
+      });
+
+      return {
+        subject: personalized.subject,
+        html,
+        recipient: recipient
+          ? {
+              name: `${recipient.firstName} ${recipient.lastName}`.trim(),
+              email: recipient.email,
+            }
+          : null,
+        /** True when there was nobody to fill in and examples were used. */
+        usesExampleData: !recipient,
+        recipientCount: recipients.length,
+        /** Invoice PDFs this person would get on top of the shared files. */
+        invoiceAttachments: invoices.map(
+          (invoice) =>
+            invoice.pdfFilename ?? `Rechnung_${invoice.invoiceNumber}.pdf`,
+        ),
+        // Reported rather than refused: catching a typo is the point of a
+        // preview. `send` still rejects them.
+        unknownPlaceholders: [
+          ...new Set([
+            ...findUnknownPlaceholders(input.subject),
+            ...findUnknownPlaceholders(input.body),
+          ]),
+        ],
       };
     }),
 
@@ -580,15 +708,8 @@ export const courseMailRouter = createTRPCRouter({
         attachments,
       };
 
-      /** Same message, filled in for one specific recipient. */
-      const personalize = (values: PlaceholderValues) => ({
-        subject: applyPlaceholders(input.subject, values, {
-          escapeHtml: false,
-        }),
-        // Substituting into the already-sanitized HTML, so values are escaped
-        // here — a registrant named "<b>" must not become markup.
-        bodyHtml: applyPlaceholders(bodyHtml, values, { escapeHtml: true }),
-      });
+      const personalize = (values: PlaceholderValues) =>
+        personalizeMail(input.subject, bodyHtml, values);
 
       const recipients = await resolveRecipients(ctx.db, input.courseId, input);
 
