@@ -1,7 +1,7 @@
 "use client";
 import { Select } from "@/app/_components/ui";
 
-import { useState, useEffect, useRef, startTransition } from "react";
+import { useState, useEffect, useMemo, useRef, startTransition } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import {
   DashboardFormZoneHeader,
   DashboardPage,
   DashboardSectionedFormLayout,
+  DraftRestorePrompt,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { useAutosave } from "@/lib/useAutosave";
@@ -118,7 +119,8 @@ export default function EditPostPage() {
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasRestoredRef = useRef(false);
+  /** Erst wenn die Serverdaten in den Feldern stehen, darf der Autosave laufen. */
+  const [formInitialized, setFormInitialized] = useState(false);
   const originalDataRef = useRef<{
     title: string;
     excerpt: string;
@@ -134,22 +136,48 @@ export default function EditPostPage() {
     status: ContentStatus;
   } | null>(null);
 
-  const formData = {
-    title,
-    excerpt,
-    content,
-    category,
-    bezirkId,
-    pinned,
-    coverImageId,
-    coverImagePositionX,
-    coverImagePositionY,
-    authorId,
-    authorName,
-    status,
-  };
+  const formData = useMemo(
+    () => ({
+      title,
+      excerpt,
+      content,
+      category,
+      bezirkId,
+      pinned,
+      coverImageId,
+      coverImageUrl,
+      coverImagePositionX,
+      coverImagePositionY,
+      authorId,
+      authorName,
+      authorSearch,
+      status,
+    }),
+    [
+      title,
+      excerpt,
+      content,
+      category,
+      bezirkId,
+      pinned,
+      coverImageId,
+      coverImageUrl,
+      coverImagePositionX,
+      coverImagePositionY,
+      authorId,
+      authorName,
+      authorSearch,
+      status,
+    ],
+  );
 
-  const { restore, clear } = useAutosave(`post-${postId}-edit`, formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: `post-${postId}-edit`,
+      data: formData,
+      userId: session?.user?.id,
+      ready: formInitialized,
+    });
 
   const hasUnsavedChanges = originalDataRef.current
     ? JSON.stringify(formData) !== JSON.stringify(originalDataRef.current)
@@ -157,28 +185,26 @@ export default function EditPostPage() {
 
   useBeforeUnload(hasUnsavedChanges && !isSubmitting);
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !postLoading && !post) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setExcerpt(saved.excerpt || "");
-          setContent(saved.content || "");
-          setCategory(saved.category || "MAGAZIN");
-          setBezirkId(saved.bezirkId || "");
-          setPinned(saved.pinned || false);
-          setCoverImageId(saved.coverImageId || null);
-          setCoverImagePositionX(saved.coverImagePositionX || null);
-          setCoverImagePositionY(saved.coverImagePositionY || null);
-          setAuthorId(saved.authorId || null);
-          setAuthorName(saved.authorName || "");
-          setStatus(saved.status || "DRAFT");
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, postLoading, post]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setExcerpt(saved.excerpt || "");
+      setContent(saved.content || "");
+      setCategory(saved.category || "MAGAZIN");
+      setBezirkId(saved.bezirkId || "");
+      setPinned(saved.pinned || false);
+      setCoverImageId(saved.coverImageId || null);
+      setCoverImageUrl(saved.coverImageUrl || null);
+      setCoverImagePositionX(saved.coverImagePositionX || null);
+      setCoverImagePositionY(saved.coverImagePositionY || null);
+      setAuthorId(saved.authorId || null);
+      setAuthorName(saved.authorName || "");
+      setAuthorSearch(saved.authorSearch || "");
+      setStatus(saved.status || "DRAFT");
+    });
+  };
 
   useEffect(() => {
     if (post && initializedFromPost.current && !originalDataRef.current) {
@@ -253,6 +279,7 @@ export default function EditPostPage() {
         setAuthorSearch(post.authorName);
       }
       initializedFromPost.current = true;
+      setFormInitialized(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post?.id]);
@@ -400,6 +427,13 @@ export default function EditPostPage() {
         ]}
         maxWidth="7xl"
       >
+        <DraftRestorePrompt
+          draft={pendingDraft}
+          onRestore={handleRestoreDraft}
+          onDiscard={discardDraft}
+          storageFailed={storageFailed}
+        />
+
         {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">

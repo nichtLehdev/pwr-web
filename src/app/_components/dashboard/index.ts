@@ -23,3 +23,4 @@ export {
   type CourseCustomFieldDraft,
 } from "./course-custom-fields-editor";
 export { DashboardSectionedFormLayout } from "./dashboard-sectioned-form-layout";
+export { DraftRestorePrompt } from "./draft-restore-prompt";

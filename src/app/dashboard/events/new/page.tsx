@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Select } from "@/app/_components/ui";
-import { useState, useEffect, useRef, startTransition } from "react";
+import { useState, useEffect, useMemo, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +15,7 @@ import {
   DashboardFormMediaSplit,
   DashboardFormZoneHeader,
   DashboardFormBlock,
+  DraftRestorePrompt,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
@@ -128,73 +129,120 @@ export default function NewEventPage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasRestoredRef = useRef(false);
 
-  const formData = {
-    title,
-    motto,
-    description,
-    eventDate,
-    eventTime,
-    category,
-    bezirkId,
-    districtName,
-    locationId,
-    performingEnsembleType,
-    ensembleId,
-    auswahlChorId,
-    performingEnsembleName,
-    leitung,
-    openToParticipants,
-    participationInfo,
-    isFree,
-    priceInfo,
-    priceOptions,
-    coverImageId,
-    downloadIds,
-    submitAsDraft,
-    submitAsApproved,
-  };
+  const formData = useMemo(
+    () => ({
+      title,
+      motto,
+      description,
+      eventDate,
+      eventTime,
+      duration,
+      category,
+      bezirkId,
+      districtName,
+      locationId,
+      locationSearch,
+      performingEnsembleType,
+      ensembleId,
+      ensembleSearch,
+      auswahlChorId,
+      auswahlChorSearch,
+      performingEnsembleName,
+      leitung,
+      openToParticipants,
+      participationInfo,
+      isFree,
+      priceInfo,
+      priceOptions,
+      coverImageId,
+      coverImageUrl,
+      downloadIds,
+      selectedDownloads,
+      submitAsDraft,
+      submitAsApproved,
+    }),
+    [
+      title,
+      motto,
+      description,
+      eventDate,
+      eventTime,
+      duration,
+      category,
+      bezirkId,
+      districtName,
+      locationId,
+      locationSearch,
+      performingEnsembleType,
+      ensembleId,
+      ensembleSearch,
+      auswahlChorId,
+      auswahlChorSearch,
+      performingEnsembleName,
+      leitung,
+      openToParticipants,
+      participationInfo,
+      isFree,
+      priceInfo,
+      priceOptions,
+      coverImageId,
+      coverImageUrl,
+      downloadIds,
+      selectedDownloads,
+      submitAsDraft,
+      submitAsApproved,
+    ],
+  );
 
-  const { restore, clear } = useAutosave("event-new", formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: "event-new",
+      data: formData,
+      userId: session?.user?.id,
+      ready: !sessionLoading && !profileLoading,
+    });
+
   const hasUnsavedChanges = Boolean(
     title.trim() || description.trim() || eventDate,
   );
   useBeforeUnload(hasUnsavedChanges && !isSubmitting);
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setMotto(saved.motto || "");
-          setDescription(saved.description || "");
-          setEventDate(saved.eventDate || "");
-          setEventTime(saved.eventTime || "18:00");
-          setCategory(saved.category || "KONZERT");
-          setBezirkId(saved.bezirkId || "");
-          setDistrictName(saved.districtName || "");
-          setLocationId(saved.locationId || "");
-          setPerformingEnsembleType(saved.performingEnsembleType || null);
-          setEnsembleId(saved.ensembleId || "");
-          setAuswahlChorId(saved.auswahlChorId || "");
-          setPerformingEnsembleName(saved.performingEnsembleName || "");
-          setLeitung(saved.leitung || "");
-          setOpenToParticipants(saved.openToParticipants || false);
-          setParticipationInfo(saved.participationInfo || "");
-          setIsFree(saved.isFree ?? true);
-          setPriceInfo(saved.priceInfo || "");
-          setPriceOptions(saved.priceOptions || []);
-          setCoverImageId(saved.coverImageId || null);
-          setDownloadIds(saved.downloadIds || []);
-          setSubmitAsDraft(saved.submitAsDraft || false);
-          setSubmitAsApproved(saved.submitAsApproved || false);
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, sessionLoading, profileLoading]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setMotto(saved.motto || "");
+      setDescription(saved.description || "");
+      setEventDate(saved.eventDate || "");
+      setEventTime(saved.eventTime || "18:00");
+      setDuration(saved.duration ?? undefined);
+      setCategory(saved.category || "KONZERT");
+      setBezirkId(saved.bezirkId || "");
+      setDistrictName(saved.districtName || "");
+      setLocationId(saved.locationId || "");
+      setLocationSearch(saved.locationSearch || "");
+      setPerformingEnsembleType(saved.performingEnsembleType || null);
+      setEnsembleId(saved.ensembleId || "");
+      setEnsembleSearch(saved.ensembleSearch || "");
+      setAuswahlChorId(saved.auswahlChorId || "");
+      setAuswahlChorSearch(saved.auswahlChorSearch || "");
+      setPerformingEnsembleName(saved.performingEnsembleName || "");
+      setLeitung(saved.leitung || "");
+      setOpenToParticipants(saved.openToParticipants || false);
+      setParticipationInfo(saved.participationInfo || "");
+      setIsFree(saved.isFree ?? true);
+      setPriceInfo(saved.priceInfo || "");
+      setPriceOptions(saved.priceOptions || []);
+      setCoverImageId(saved.coverImageId || null);
+      setCoverImageUrl(saved.coverImageUrl || null);
+      setDownloadIds(saved.downloadIds || []);
+      setSelectedDownloads(saved.selectedDownloads || []);
+      setSubmitAsDraft(saved.submitAsDraft || false);
+      setSubmitAsApproved(saved.submitAsApproved || false);
+    });
+  };
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
@@ -433,6 +481,13 @@ export default function NewEventPage() {
       ]}
       maxWidth="7xl"
     >
+      <DraftRestorePrompt
+        draft={pendingDraft}
+        onRestore={handleRestoreDraft}
+        onDiscard={discardDraft}
+        storageFailed={storageFailed}
+      />
+
       {/* Error Message */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">

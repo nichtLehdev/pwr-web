@@ -23,6 +23,7 @@ import {
   DashboardFormMediaSplit,
   DashboardFormZoneHeader,
   DashboardFormBlock,
+  DraftRestorePrompt,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -148,7 +149,6 @@ export default function EditEventPage() {
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasRestoredRef = useRef(false);
   const originalDataRef = useRef<{
     title: string;
     motto: string;
@@ -187,14 +187,18 @@ export default function EditEventPage() {
       description,
       eventDate,
       eventTime,
+      duration,
       category,
       bezirkId,
       districtName,
       cancelled,
       locationId,
+      locationSearch,
       performingEnsembleType,
       ensembleId,
+      ensembleSearch,
       auswahlChorId,
+      auswahlChorSearch,
       performingEnsembleName,
       leitung,
       openToParticipants,
@@ -203,7 +207,9 @@ export default function EditEventPage() {
       priceInfo,
       priceOptions,
       coverImageId,
+      coverImageUrl,
       downloadIds,
+      selectedDownloads,
       status,
     }),
     [
@@ -212,14 +218,18 @@ export default function EditEventPage() {
       description,
       eventDate,
       eventTime,
+      duration,
       category,
       bezirkId,
       districtName,
       cancelled,
       locationId,
+      locationSearch,
       performingEnsembleType,
       ensembleId,
+      ensembleSearch,
       auswahlChorId,
+      auswahlChorSearch,
       performingEnsembleName,
       leitung,
       openToParticipants,
@@ -228,12 +238,20 @@ export default function EditEventPage() {
       priceInfo,
       priceOptions,
       coverImageId,
+      coverImageUrl,
       downloadIds,
+      selectedDownloads,
       status,
     ],
   );
 
-  const { restore, clear } = useAutosave(`event-${eventId}-edit`, formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: `event-${eventId}-edit`,
+      data: formData,
+      userId: session?.user?.id,
+      ready: isInitialized,
+    });
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -248,39 +266,41 @@ export default function EditEventPage() {
 
   useBeforeUnload(hasUnsavedChanges && !isSubmitting);
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !eventLoading && !event) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setMotto(saved.motto || "");
-          setDescription(saved.description || "");
-          setEventDate(saved.eventDate || "");
-          setEventTime(saved.eventTime || "18:00");
-          setCategory(saved.category || "KONZERT");
-          setBezirkId(saved.bezirkId || "");
-          setDistrictName(saved.districtName || "");
-          setCancelled(saved.cancelled || false);
-          setLocationId(saved.locationId || "");
-          setPerformingEnsembleType(saved.performingEnsembleType || null);
-          setEnsembleId(saved.ensembleId || "");
-          setAuswahlChorId(saved.auswahlChorId || "");
-          setPerformingEnsembleName(saved.performingEnsembleName || "");
-          setLeitung(saved.leitung || "");
-          setOpenToParticipants(saved.openToParticipants || false);
-          setParticipationInfo(saved.participationInfo || "");
-          setIsFree(saved.isFree ?? true);
-          setPriceInfo(saved.priceInfo || "");
-          setPriceOptions(saved.priceOptions || []);
-          setCoverImageId(saved.coverImageId || null);
-          setDownloadIds(saved.downloadIds || []);
-          setStatus(saved.status || "DRAFT");
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, eventLoading, event]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setMotto(saved.motto || "");
+      setDescription(saved.description || "");
+      setEventDate(saved.eventDate || "");
+      setEventTime(saved.eventTime || "18:00");
+      setDuration(saved.duration ?? undefined);
+      setCategory(saved.category || "KONZERT");
+      setBezirkId(saved.bezirkId || "");
+      setDistrictName(saved.districtName || "");
+      setCancelled(saved.cancelled || false);
+      setLocationId(saved.locationId || "");
+      setLocationSearch(saved.locationSearch || "");
+      setPerformingEnsembleType(saved.performingEnsembleType || null);
+      setEnsembleId(saved.ensembleId || "");
+      setEnsembleSearch(saved.ensembleSearch || "");
+      setAuswahlChorId(saved.auswahlChorId || "");
+      setAuswahlChorSearch(saved.auswahlChorSearch || "");
+      setPerformingEnsembleName(saved.performingEnsembleName || "");
+      setLeitung(saved.leitung || "");
+      setOpenToParticipants(saved.openToParticipants || false);
+      setParticipationInfo(saved.participationInfo || "");
+      setIsFree(saved.isFree ?? true);
+      setPriceInfo(saved.priceInfo || "");
+      setPriceOptions(saved.priceOptions || []);
+      setCoverImageId(saved.coverImageId || null);
+      setCoverImageUrl(saved.coverImageUrl || null);
+      setDownloadIds(saved.downloadIds || []);
+      setSelectedDownloads(saved.selectedDownloads || []);
+      setStatus(saved.status || "DRAFT");
+    });
+  };
 
   useEffect(() => {
     if (event && isInitialized && !originalDataRef.current) {
@@ -671,6 +691,13 @@ export default function EditEventPage() {
         ]}
         maxWidth="7xl"
       >
+        <DraftRestorePrompt
+          draft={pendingDraft}
+          onRestore={handleRestoreDraft}
+          onDiscard={discardDraft}
+          storageFailed={storageFailed}
+        />
+
         {/* Error Message */}
         {error && (
           <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700 dark:bg-red-900/20 dark:text-red-400">

@@ -8,6 +8,7 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
+import { DraftRestorePrompt } from "@/app/_components/dashboard";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import {
   ScrollableModal,
@@ -69,7 +70,6 @@ function CourseMailPageContent() {
   const { data: session, isPending: sessionLoading } = useSession();
   const toast = useToast();
   const hasRedirected = useRef(false);
-  const hasRestoredRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subjectInputRef = useRef<HTMLInputElement>(null);
 
@@ -138,11 +138,25 @@ function CourseMailPageContent() {
 
   const utils = api.useUtils();
 
-  const autosaveData = useMemo(() => ({ subject, body }), [subject, body]);
-  const { restore, clear } = useAutosave(
-    `course-mail-${courseId}`,
-    autosaveData,
+  const autosaveData = useMemo(
+    () => ({ subject, body, attachments }),
+    [subject, body, attachments],
   );
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: `course-mail-${courseId}`,
+      data: autosaveData,
+      userId: session?.user?.id,
+      ready: !sessionLoading && !profileLoading,
+    });
+
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    setSubject(saved.subject || "");
+    setBody(saved.body || "");
+    setAttachments(saved.attachments || []);
+  };
 
   const sendMail = api.courseMail.send.useMutation({
     onSuccess: (data) => {
@@ -177,19 +191,6 @@ function CourseMailPageContent() {
 
   const hasUnsavedChanges = Boolean(subject.trim() || body.trim());
   useBeforeUnload(hasUnsavedChanges && !sendMail.isPending);
-
-  useEffect(() => {
-    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
-      const saved = restore();
-      if (saved && (saved.subject || saved.body)) {
-        setSubject(saved.subject || "");
-        setBody(saved.body || "");
-        toast.info("Entwurf aus der letzten Sitzung wiederhergestellt.");
-      }
-      hasRestoredRef.current = true;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionLoading, profileLoading]);
 
   // Default the reply address to the sender's own once the profile arrives.
   useEffect(() => {
@@ -461,6 +462,13 @@ function CourseMailPageContent() {
             </Link>
           </div>
         )}
+
+        <DraftRestorePrompt
+          draft={pendingDraft}
+          onRestore={handleRestoreDraft}
+          onDiscard={discardDraft}
+          storageFailed={storageFailed}
+        />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Composer */}
