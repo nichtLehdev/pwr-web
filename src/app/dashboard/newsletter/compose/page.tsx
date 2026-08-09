@@ -11,6 +11,7 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import { useToast } from "@/app/_components/ui/toast";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
+import { DraftRestorePrompt } from "@/app/_components/dashboard";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -36,22 +37,35 @@ export default function DashboardNewsletterComposePage() {
   // flight so the "An X Abonnenten senden" button doesn't show a spinner
   // during a test send.
   const [sendMode, setSendMode] = useState<"test" | "all" | null>(null);
-  const hasRestoredRef = useRef(false);
 
   // A reload or mis-click used to throw away the whole newsletter text.
-  // The data object must be referentially stable, otherwise the save effect
-  // fires on every render and clobbers the stored draft before restore runs.
+  // The data object must be referentially stable, otherwise the save is
+  // rescheduled on every render.
   const autosaveData = useMemo(
     () => ({ subject, content }),
     [subject, content],
   );
-  const { restore, clear } = useAutosave("newsletter-compose", autosaveData);
   const hasUnsavedChanges = Boolean(subject.trim() || content.trim());
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
       enabled: !!session?.user,
     });
+
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: "newsletter-compose",
+      data: autosaveData,
+      userId: session?.user?.id,
+      ready: !isPending && !profileLoading,
+    });
+
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    setSubject(saved.subject || "");
+    setContent(saved.content || "");
+  };
 
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
@@ -101,19 +115,6 @@ export default function DashboardNewsletterComposePage() {
   });
 
   useBeforeUnload(hasUnsavedChanges && !sendNewsletter.isPending);
-
-  useEffect(() => {
-    if (!hasRestoredRef.current && !isPending && !profileLoading) {
-      const saved = restore();
-      if (saved && (saved.subject || saved.content)) {
-        setSubject(saved.subject || "");
-        setContent(saved.content || "");
-        toast.info("Entwurf aus der letzten Sitzung wiederhergestellt.");
-      }
-      hasRestoredRef.current = true;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPending, profileLoading]);
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -247,6 +248,13 @@ export default function DashboardNewsletterComposePage() {
             Erstelle und sende einen Newsletter an alle Abonnenten
           </p>
         </div>
+
+        <DraftRestorePrompt
+          draft={pendingDraft}
+          onRestore={handleRestoreDraft}
+          onDiscard={discardDraft}
+          storageFailed={storageFailed}
+        />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Main Editor */}

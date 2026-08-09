@@ -16,6 +16,7 @@ import {
   DashboardFormZoneHeader,
   DashboardFormBlock,
   CourseCustomFieldsEditor,
+  DraftRestorePrompt,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
@@ -147,43 +148,92 @@ export default function NewCoursePage() {
   const [submitAsApproved, setSubmitAsApproved] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasRestoredRef = useRef(false);
 
-  const formData = {
-    title,
-    motto,
-    description,
-    courseType,
-    startDate,
-    endDate,
-    registrationDeadline,
-    hasRegistrationDeadline,
-    registrationOpensAt,
-    scheduledRegistrationOpens,
-    locationId,
-    bezirkId,
-    isExternalProvider,
-    externalProviderName,
-    externalRegistrationUrl,
-    maxParticipants,
-    registrationOpen,
-    allowWaitingList,
-    allowSiblingDiscount,
-    isFree,
-    paymentCashAllowed,
-    paymentInvoiceAllowed,
-    invoicingEnabled,
-    priceInfo,
-    priceOptions,
-    prerequisites,
-    whatToBring,
-    imageId,
-    customFields,
-    submitAsDraft,
-    submitAsApproved,
-  };
+  const formData = useMemo(
+    () => ({
+      title,
+      motto,
+      description,
+      courseType,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      registrationDeadline,
+      hasRegistrationDeadline,
+      registrationOpensAt,
+      scheduledRegistrationOpens,
+      locationId,
+      locationSearch,
+      bezirkId,
+      isExternalProvider,
+      externalProviderName,
+      externalRegistrationUrl,
+      maxParticipants,
+      registrationOpen,
+      allowWaitingList,
+      allowSiblingDiscount,
+      isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
+      invoicingEnabled,
+      priceInfo,
+      priceOptions,
+      prerequisites,
+      whatToBring,
+      imageId,
+      imageUrl,
+      customFields,
+      submitAsDraft,
+      submitAsApproved,
+    }),
+    [
+      title,
+      motto,
+      description,
+      courseType,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      registrationDeadline,
+      hasRegistrationDeadline,
+      registrationOpensAt,
+      scheduledRegistrationOpens,
+      locationId,
+      locationSearch,
+      bezirkId,
+      isExternalProvider,
+      externalProviderName,
+      externalRegistrationUrl,
+      maxParticipants,
+      registrationOpen,
+      allowWaitingList,
+      allowSiblingDiscount,
+      isFree,
+      paymentCashAllowed,
+      paymentInvoiceAllowed,
+      invoicingEnabled,
+      priceInfo,
+      priceOptions,
+      prerequisites,
+      whatToBring,
+      imageId,
+      imageUrl,
+      customFields,
+      submitAsDraft,
+      submitAsApproved,
+    ],
+  );
 
-  const { restore, clear } = useAutosave("course-new", formData);
+  const { pendingDraft, restoreDraft, discardDraft, clear, storageFailed } =
+    useAutosave({
+      name: "course-new",
+      data: formData,
+      userId: session?.user?.id,
+      ready: !sessionLoading && !profileLoading,
+    });
+
   const hasUnsavedChanges = Boolean(
     title.trim() || description.trim() || startDate,
   );
@@ -206,55 +256,53 @@ export default function NewCoursePage() {
   const registrationFieldInputClass =
     "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none";
 
-  useEffect(() => {
-    if (!hasRestoredRef.current && !sessionLoading && !profileLoading) {
-      const saved = restore();
-      if (saved) {
-        startTransition(() => {
-          setTitle(saved.title || "");
-          setMotto(saved.motto || "");
-          setDescription(saved.description || "");
-          setCourseType(saved.courseType || "LEHRGANG");
-          setStartDate(saved.startDate || "");
-          setEndDate(saved.endDate || "");
-          setRegistrationDeadline(saved.registrationDeadline || "");
-          setHasRegistrationDeadline(
-            saved.hasRegistrationDeadline ??
-              Boolean(saved.registrationDeadline),
-          );
-          const restoredScheduled =
-            saved.scheduledRegistrationOpens ??
-            Boolean(saved.registrationOpensAt);
-          setScheduledRegistrationOpens(restoredScheduled);
-          setRegistrationOpensAt(
-            restoredScheduled ? saved.registrationOpensAt || "" : "",
-          );
-          setLocationId(saved.locationId || "");
-          setBezirkId(saved.bezirkId || "");
-          setIsExternalProvider(saved.isExternalProvider || false);
-          setExternalProviderName(saved.externalProviderName || "");
-          setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
-          setMaxParticipants(saved.maxParticipants || 20);
-          setRegistrationOpen(saved.registrationOpen || false);
-          setAllowWaitingList(saved.allowWaitingList || false);
-          setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
-          setIsFree(saved.isFree ?? false);
-          setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
-          setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
-          setInvoicingEnabled(saved.invoicingEnabled ?? false);
-          setPriceInfo(saved.priceInfo || "");
-          setPriceOptions(saved.priceOptions || []);
-          setPrerequisites(saved.prerequisites || "");
-          setWhatToBring(saved.whatToBring || "");
-          setImageId(saved.imageId || null);
-          setCustomFields(saved.customFields || []);
-          setSubmitAsDraft(saved.submitAsDraft || false);
-          setSubmitAsApproved(saved.submitAsApproved || false);
-        });
-      }
-      hasRestoredRef.current = true;
-    }
-  }, [restore, sessionLoading, profileLoading]);
+  const handleRestoreDraft = () => {
+    const saved = restoreDraft();
+    if (!saved) return;
+    startTransition(() => {
+      setTitle(saved.title || "");
+      setMotto(saved.motto || "");
+      setDescription(saved.description || "");
+      setCourseType(saved.courseType || "LEHRGANG");
+      setStartDate(saved.startDate || "");
+      setStartTime(saved.startTime || "09:00");
+      setEndDate(saved.endDate || "");
+      setEndTime(saved.endTime || "17:00");
+      setRegistrationDeadline(saved.registrationDeadline || "");
+      setHasRegistrationDeadline(
+        saved.hasRegistrationDeadline ?? Boolean(saved.registrationDeadline),
+      );
+      const restoredScheduled =
+        saved.scheduledRegistrationOpens ?? Boolean(saved.registrationOpensAt);
+      setScheduledRegistrationOpens(restoredScheduled);
+      setRegistrationOpensAt(
+        restoredScheduled ? saved.registrationOpensAt || "" : "",
+      );
+      setLocationId(saved.locationId || "");
+      setLocationSearch(saved.locationSearch || "");
+      setBezirkId(saved.bezirkId || "");
+      setIsExternalProvider(saved.isExternalProvider || false);
+      setExternalProviderName(saved.externalProviderName || "");
+      setExternalRegistrationUrl(saved.externalRegistrationUrl || "");
+      setMaxParticipants(saved.maxParticipants || 20);
+      setRegistrationOpen(saved.registrationOpen || false);
+      setAllowWaitingList(saved.allowWaitingList || false);
+      setAllowSiblingDiscount(saved.allowSiblingDiscount || false);
+      setIsFree(saved.isFree ?? false);
+      setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
+      setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
+      setInvoicingEnabled(saved.invoicingEnabled ?? false);
+      setPriceInfo(saved.priceInfo || "");
+      setPriceOptions(saved.priceOptions || []);
+      setPrerequisites(saved.prerequisites || "");
+      setWhatToBring(saved.whatToBring || "");
+      setImageId(saved.imageId || null);
+      setImageUrl(saved.imageUrl || null);
+      setCustomFields(saved.customFields || []);
+      setSubmitAsDraft(saved.submitAsDraft || false);
+      setSubmitAsApproved(saved.submitAsApproved || false);
+    });
+  };
 
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
@@ -533,8 +581,8 @@ export default function NewCoursePage() {
             }),
           );
 
-    clear();
-
+    // Der Entwurf wird erst in onSuccess verworfen — schlägt das Anlegen
+    // fehl, bleibt er als Sicherung erhalten.
     createCourseMutation.mutate({
       title: title.trim(),
       motto: motto.trim() || undefined,
@@ -602,6 +650,13 @@ export default function NewCoursePage() {
       ]}
       maxWidth="7xl"
     >
+      <DraftRestorePrompt
+        draft={pendingDraft}
+        onRestore={handleRestoreDraft}
+        onDiscard={discardDraft}
+        storageFailed={storageFailed}
+      />
+
       {/* Error Message */}
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
