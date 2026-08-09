@@ -58,6 +58,15 @@ function buildEpcQrPayload(
   ].join("\n");
 }
 
+/**
+ * Signatures arrive as PNG (drawn) or JPEG (uploaded). jsPDF does sniff the
+ * data URL itself, so this is not load-bearing — it just stops the addImage
+ * call from declaring a format its input contradicts.
+ */
+function imageFormat(dataUrl: string): "PNG" | "JPEG" {
+  return /^data:image\/jpe?g/i.test(dataUrl) ? "JPEG" : "PNG";
+}
+
 /** Diagonal "ENTWURF"/"STORNIERT" stamp so an unpublished copy can't pass as final. */
 function drawWatermark(doc: jsPDF, text: string) {
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -106,7 +115,14 @@ export async function renderInvoicePdf(
 
   if (options.logoBase64) {
     try {
-      doc.addImage(options.logoBase64, "PNG", margin, y - 5, 60, 25);
+      doc.addImage(
+        options.logoBase64,
+        imageFormat(options.logoBase64),
+        margin,
+        y - 5,
+        60,
+        25,
+      );
       y += 25;
     } catch {
       doc.setFontSize(16);
@@ -407,7 +423,14 @@ export async function renderInvoicePdf(
   if (options.signatureBase64) {
     try {
       checkPageBreak(30);
-      doc.addImage(options.signatureBase64, "PNG", margin, y, 40, 20);
+      doc.addImage(
+        options.signatureBase64,
+        imageFormat(options.signatureBase64),
+        margin,
+        y,
+        40,
+        20,
+      );
       y += 22;
     } catch {
       // Ignore image errors

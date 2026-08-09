@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
@@ -29,11 +29,19 @@ import {
   BanIcon,
   DownloadIcon,
   GripVerticalIcon,
+  PencilIcon,
   PlusIcon,
   SaveIcon,
   SendIcon,
   Trash2Icon,
+  UploadIcon,
+  XIcon,
 } from "lucide-react";
+
+type SignatureMode = "none" | "upload" | "draw";
+
+/** Mirrors the signature cap in the publish input on the server. */
+const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024;
 
 /** A line item plus a stable key, so React keeps inputs focused while editing. */
 type EditableLineItem = InvoiceLineItem & { key: string };
@@ -95,10 +103,14 @@ export default function InvoiceEditorPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [notifyRegistrant, setNotifyRegistrant] = useState(true);
-  // Only ever held in memory and handed to the publish call — the drawing is
+  // Only ever held in memory and handed to the publish call — the signature is
   // baked into the PDF, never stored as a reusable signature on its own.
   const [signatureBase64, setSignatureBase64] = useState<string | null>(null);
-  const [showSignaturePad, setShowSignaturePad] = useState(false);
+  const [signatureMode, setSignatureMode] = useState<SignatureMode>("none");
+  const [signatureFileName, setSignatureFileName] = useState<string | null>(
+    null,
+  );
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const canManage = invoice?.canManage ?? false;
   const isEditable = invoice?.status === InvoiceStatus.DRAFT && canManage;
@@ -154,6 +166,7 @@ export default function InvoiceEditorPage() {
   const publishInvoice = api.invoices.publish.useMutation({
     onSuccess: (published) => {
       setPublishOpen(false);
+      resetSignature();
       void utils.invoices.getById.invalidate({ id: invoiceId });
       void utils.invoices.listForCourse.invalidate({ courseId });
       toast.success(`Rechnung ${published.invoiceNumber} ausgestellt`);
@@ -211,6 +224,37 @@ export default function InvoiceEditorPage() {
       if (moved) next.splice(target, 0, moved);
       return next;
     });
+
+  const resetSignature = () => {
+    setSignatureBase64(null);
+    setSignatureFileName(null);
+    setSignatureMode("none");
+    if (signatureInputRef.current) signatureInputRef.current.value = "";
+  };
+
+  const handleSignatureUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte ein Bild hochladen (PNG, JPG, …).");
+      return;
+    }
+    if (file.size > MAX_SIGNATURE_BYTES) {
+      toast.error("Die Datei ist zu groß. Maximal 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSignatureBase64(reader.result as string);
+      setSignatureFileName(file.name);
+    };
+    reader.onerror = () => toast.error("Die Datei konnte nicht gelesen werden.");
+    reader.readAsDataURL(file);
+  };
 
   const handleSave = () => {
     if (lines.length === 0) {
@@ -799,29 +843,97 @@ export default function InvoiceEditorPage() {
                 <p className="dark:text-dark-muted mt-0.5 text-xs text-gray-500">
                   Wird nur in dieses PDF eingebettet und nicht gespeichert.
                 </p>
-                {showSignaturePad ? (
+                {signatureMode === "none" && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSignatureMode("upload")}
+                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      <UploadIcon className="h-5 w-5 text-gray-400" />
+                      <span className="dark:text-dark-text text-sm text-gray-600">
+                        Hochladen
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSignatureMode("draw")}
+                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                      <span className="dark:text-dark-text text-sm text-gray-600">
+                        Zeichnen
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {signatureMode === "upload" &&
+                  (signatureBase64 ? (
+                    <div className="dark:border-dark-border dark:bg-dark-background-secondary mt-2 flex items-center gap-3 rounded-md border border-gray-300 bg-gray-50 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={signatureBase64}
+                        alt="Vorschau der Unterschrift"
+                        className="h-10 max-w-[120px] object-contain"
+                      />
+                      <span className="dark:text-dark-text flex-1 truncate text-sm text-gray-600">
+                        {signatureFileName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={resetSignature}
+                        aria-label="Unterschrift entfernen"
+                        className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => signatureInputRef.current?.click()}
+                        className="dark:border-dark-border flex w-full flex-col items-center gap-1 rounded-md border-2 border-dashed border-gray-300 px-4 py-5 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10"
+                      >
+                        <UploadIcon className="h-6 w-6 text-gray-400" />
+                        <span className="dark:text-dark-text text-sm text-gray-600">
+                          Bild auswählen
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          PNG oder JPG, max. 2 MB
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetSignature}
+                        className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        ← Ohne Unterschrift
+                      </button>
+                    </div>
+                  ))}
+
+                {signatureMode === "draw" && (
                   <div className="mt-2">
                     <SignatureCanvas onSignatureChange={setSignatureBase64} />
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowSignaturePad(false);
-                        setSignatureBase64(null);
-                      }}
+                      onClick={resetSignature}
                       className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
                     >
                       ← Ohne Unterschrift
                     </button>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowSignaturePad(true)}
-                    className="text-primary mt-2 text-sm font-medium hover:underline"
-                  >
-                    Unterschrift zeichnen
-                  </button>
                 )}
+
+                <input
+                  ref={signatureInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleSignatureUpload}
+                  className="hidden"
+                />
               </div>
               <label className="mt-4 flex cursor-pointer items-start gap-3">
                 <input
@@ -843,7 +955,10 @@ export default function InvoiceEditorPage() {
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setPublishOpen(false)}
+                  onClick={() => {
+                    setPublishOpen(false);
+                    resetSignature();
+                  }}
                   disabled={publishInvoice.isPending}
                   className="dark:border-dark-border dark:text-dark-text flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
                 >
