@@ -460,7 +460,7 @@ export default function DashboardDownloadsPage() {
             </p>
           </div>
         ) : (
-          <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="dark:bg-dark-surface dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
             <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
               <thead className="dark:bg-dark-background-secondary bg-gray-50">
                 <tr>

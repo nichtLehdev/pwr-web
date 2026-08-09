@@ -61,24 +61,27 @@ export default function DashboardPage({
       >
         {/* Breadcrumb */}
         <nav className="mb-4 text-sm" aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2">
+          {/* Wraps instead of overflowing: deep trails (Kurs → Teilnehmer →
+              Anmeldung) blew past the viewport on phones, and `overflow-x: clip`
+              on <html> cut the trailing crumbs off with no way to scroll to them. */}
+          <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {finalBreadcrumbs.map((item, index) => {
               const isLast = index === finalBreadcrumbs.length - 1;
               return (
-                <li key={index} className="flex items-center gap-2">
+                <li key={index} className="flex min-w-0 items-center gap-2">
                   {index > 0 && (
                     <span className="dark:text-dark-muted text-gray-400">
                       /
                     </span>
                   )}
                   {isLast || !item.href ? (
-                    <span className="dark:text-dark-text text-dark">
+                    <span className="dark:text-dark-text text-dark truncate">
                       {item.label}
                     </span>
                   ) : (
                     <Link
                       href={item.href}
-                      className="dark:text-dark-muted dark:hover:text-primary hover:text-primary font-medium text-gray-600 underline underline-offset-2 transition-all"
+                      className="dark:text-dark-muted dark:hover:text-primary hover:text-primary truncate font-medium text-gray-600 underline underline-offset-2 transition-all"
                     >
                       {item.label}
                     </Link>
@@ -91,12 +94,15 @@ export default function DashboardPage({
 
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-dark dark:text-dark-text text-3xl font-bold">
+          {/* Long German compounds ("Berechtigungsverwaltung") are a single
+              unbreakable word wider than a 375px viewport — hyphenate them
+              (lang="de" on <html>) and step the size down below sm. */}
+          <div className="min-w-0">
+            <h1 className="text-dark dark:text-dark-text text-2xl font-bold break-words hyphens-auto sm:text-3xl">
               {title}
             </h1>
             {description && (
-              <p className="dark:text-dark-muted mt-2 text-gray-600">
+              <p className="dark:text-dark-muted mt-2 break-words hyphens-auto text-gray-600">
                 {description}
               </p>
             )}
