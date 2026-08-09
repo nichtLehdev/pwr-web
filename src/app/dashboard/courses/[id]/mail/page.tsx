@@ -13,6 +13,7 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import {
   ScrollableModal,
   ScrollableModalCard,
+  ScrollableModalHeader,
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
@@ -23,9 +24,11 @@ import {
   findUnknownPlaceholders,
 } from "@/lib/course-mail-placeholders";
 import {
+  AlertTriangleIcon,
   ArrowLeftIcon,
   BracesIcon,
   ClipboardCopyIcon,
+  EyeIcon,
   PaperclipIcon,
   Trash2Icon,
   UsersIcon,
@@ -91,6 +94,9 @@ function CourseMailPageContent() {
   const [isUploading, setIsUploading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  /** Whose data the preview is filled with; empty means "the first recipient". */
+  const [previewRecipientId, setPreviewRecipientId] = useState("");
   const [sendCopyToSender, setSendCopyToSender] = useState(true);
   const [attachInvoices, setAttachInvoices] = useState(false);
   const [includeGreeting, setIncludeGreeting] = useState(true);
@@ -191,6 +197,13 @@ function CourseMailPageContent() {
     onSettled: () => {
       setSendMode(null);
       setShowConfirm(false);
+    },
+  });
+
+  const previewMail = api.courseMail.preview.useMutation({
+    onError: (error) => {
+      toast.error(`Vorschau nicht möglich: ${error.message}`);
+      setShowPreview(false);
     },
   });
 
@@ -339,10 +352,16 @@ function CourseMailPageContent() {
     }
   };
 
-  const validate = (): string | null => {
+  const validateContent = (): string | null => {
     if (!subject.trim()) return "Bitte gib einen Betreff ein.";
     if (!body.trim()) return "Bitte schreibe eine Nachricht.";
     if (!replyToEmail.trim()) return "Bitte gib eine Antwort-Adresse an.";
+    return null;
+  };
+
+  const validate = (): string | null => {
+    const contentError = validateContent();
+    if (contentError) return contentError;
     if (unknownPlaceholders.length > 0) {
       return `Unbekannte Platzhalter: ${unknownPlaceholders
         .map((token) => `{{${token}}}`)
@@ -365,6 +384,41 @@ function CourseMailPageContent() {
       ? { registrationIds: selectedRegistrationIds }
       : {}),
   });
+
+  const runPreview = (registrationId: string) => {
+    previewMail.mutate({
+      courseId,
+      subject: subject.trim(),
+      body,
+      replyToEmail: replyToEmail.trim(),
+      includeGreeting,
+      attachInvoices,
+      statuses,
+      ...(registrationId ? { registrationId } : {}),
+      ...(selectedRegistrationIds.length
+        ? { registrationIds: selectedRegistrationIds }
+        : {}),
+    });
+  };
+
+  const handlePreview = () => {
+    // Deliberately not validate(): an unknown placeholder is exactly what the
+    // preview should show you, rather than refuse over.
+    const error = validateContent();
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    const first = recipientQuery.data?.recipients[0]?.id ?? "";
+    setPreviewRecipientId(first);
+    setShowPreview(true);
+    runPreview(first);
+  };
+
+  const handlePreviewRecipientChange = (registrationId: string) => {
+    setPreviewRecipientId(registrationId);
+    runPreview(registrationId);
+  };
 
   const handleTestSend = () => {
     const error = validate();
@@ -623,6 +677,16 @@ function CourseMailPageContent() {
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={isSending || isUploading}
+                  title="Zeigt die fertige E-Mail so, wie eine ausgewählte Person sie bekommt — ohne etwas zu versenden."
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                  Vorschau
+                </button>
+                <button
                   onClick={handleTestSend}
                   disabled={isSending || isUploading}
                   title="Sendet die Nachricht nur an dich — mit den echten Daten des ersten Empfängers, damit du die Platzhalter siehst."
@@ -817,6 +881,163 @@ function CourseMailPageContent() {
           </div>
         </div>
       </div>
+
+      {showPreview && (
+        <ScrollableModal onBackdropClick={() => setShowPreview(false)}>
+          <ScrollableModalCard maxW="4xl">
+            <ScrollableModalHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="dark:text-dark-text text-lg font-bold">
+                    Vorschau
+                  </h3>
+                  <p className="dark:text-dark-muted text-sm text-gray-600">
+                    So kommt die E-Mail an — es wird nichts versendet.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  Anzeigen für
+                </label>
+                <select
+                  value={previewRecipientId}
+                  onChange={(event) =>
+                    handlePreviewRecipientChange(event.target.value)
+                  }
+                  disabled={recipientCount === 0 || previewMail.isPending}
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
+                >
+                  {recipientCount === 0 && (
+                    <option value="">Keine Empfänger — Beispieldaten</option>
+                  )}
+                  {recipientQuery.data?.recipients.map((recipient) => (
+                    <option key={recipient.id} value={recipient.id}>
+                      {recipient.name} ({recipient.email})
+                      {recipient.registrationCount > 1
+                        ? ` · ${recipient.registrationCount} Anmeldungen`
+                        : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </ScrollableModalHeader>
+
+            <ScrollableModalBody>
+              {previewMail.isPending && (
+                <p className="dark:text-dark-muted py-8 text-center text-sm text-gray-500">
+                  Vorschau wird erstellt...
+                </p>
+              )}
+
+              {!previewMail.isPending && previewMail.data && (
+                <div className="space-y-4">
+                  {previewMail.data.unknownPlaceholders.length > 0 && (
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+                      <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                      <p className="text-sm text-amber-800 dark:text-amber-300">
+                        Unbekannte Platzhalter:{" "}
+                        {previewMail.data.unknownPlaceholders
+                          .map((token) => `{{${token}}}`)
+                          .join(", ")}
+                        . Sie bleiben so stehen, wie sie hier zu sehen sind —
+                        senden ist erst möglich, wenn sie korrigiert sind.
+                      </p>
+                    </div>
+                  )}
+
+                  {previewMail.data.usesExampleData && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                      Für diese Auswahl gibt es keine Anmeldungen — die
+                      Platzhalter sind mit Beispieldaten gefüllt.
+                    </div>
+                  )}
+
+                  <dl className="dark:border-dark-border dark:bg-dark-background space-y-1 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
+                    <div className="flex gap-2">
+                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                        An:
+                      </dt>
+                      <dd className="dark:text-dark-text text-gray-900">
+                        {previewMail.data.recipient
+                          ? `${previewMail.data.recipient.name} <${previewMail.data.recipient.email}>`
+                          : "Beispielempfänger"}
+                      </dd>
+                    </div>
+                    <div className="flex gap-2">
+                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                        Antwort an:
+                      </dt>
+                      <dd className="dark:text-dark-text text-gray-900">
+                        {replyToEmail}
+                      </dd>
+                    </div>
+                    <div className="flex gap-2">
+                      <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                        Betreff:
+                      </dt>
+                      <dd className="dark:text-dark-text font-medium text-gray-900">
+                        {previewMail.data.subject}
+                      </dd>
+                    </div>
+                    {(attachments.length > 0 ||
+                      previewMail.data.invoiceAttachments.length > 0) && (
+                      <div className="flex gap-2">
+                        <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                          Anhänge:
+                        </dt>
+                        <dd className="dark:text-dark-text text-gray-900">
+                          {[
+                            ...attachments.map(
+                              (attachment) => attachment.filename,
+                            ),
+                            // Per recipient — this person's own invoice(s).
+                            ...previewMail.data.invoiceAttachments,
+                          ].join(", ")}
+                        </dd>
+                      </div>
+                    )}
+                    {attachInvoices &&
+                      previewMail.data.recipient &&
+                      previewMail.data.invoiceAttachments.length === 0 && (
+                        <div className="flex gap-2">
+                          <dt className="dark:text-dark-muted shrink-0 text-gray-500">
+                            Rechnung:
+                          </dt>
+                          <dd className="dark:text-dark-text text-gray-900">
+                            Für diese Person gibt es keine veröffentlichte
+                            Rechnung — sie bekommt die Mail ohne Anhang.
+                          </dd>
+                        </div>
+                      )}
+                  </dl>
+
+                  {/* Sandboxed: the mail carries its own styles, and the body is
+                      author-provided HTML that has no business running scripts
+                      or reaching the dashboard around it. */}
+                  <iframe
+                    title="E-Mail-Vorschau"
+                    srcDoc={previewMail.data.html}
+                    sandbox=""
+                    className="dark:border-dark-border h-[60vh] w-full rounded-lg border border-gray-200 bg-white"
+                  />
+                </div>
+              )}
+            </ScrollableModalBody>
+
+            <ScrollableModalFooter>
+              <button
+                type="button"
+                onClick={() => setShowPreview(false)}
+                className="dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Schließen
+              </button>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
+      )}
 
       {showConfirm && (
         <ScrollableModal onBackdropClick={() => setShowConfirm(false)}>
