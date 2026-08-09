@@ -42,7 +42,6 @@ import {
   countConfirmedParticipants,
   runSerializable,
 } from "../helpers/course-capacity";
-import { nextInvoiceId } from "../helpers/invoice-number";
 import { logAudit } from "../helpers/audit";
 import { createNotification } from "../helpers/notifications";
 import {
@@ -1228,7 +1227,6 @@ export const registrationsRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         paymentStatus: z.enum(PaymentStatus),
-        invoiceGenerated: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1292,111 +1290,17 @@ export const registrationsRouter = createTRPCRouter({
         details: {
           paymentStatus: input.paymentStatus,
           previousPaymentStatus: registration.paymentStatus,
-          invoiceGenerated: input.invoiceGenerated ?? null,
         },
       });
 
-      return await ctx.db.$transaction(async (tx) => {
-        const invoiceData =
-          input.invoiceGenerated !== undefined
-            ? input.invoiceGenerated
-              ? {
-                  invoiceGenerated: true,
-                  ...(registration.invoiceGenerated && registration.invoiceId
-                    ? {}
-                    : {
-                        invoiceDate: new Date(),
-                        invoiceId: await nextInvoiceId(tx),
-                      }),
-                }
-              : {
-                  invoiceGenerated: false,
-                  invoiceDate: null,
-                  invoiceId: null,
-                }
-            : {};
-
-        return tx.courseRegistration.update({
-          where: { id: input.id },
-          data: {
-            paymentStatus: input.paymentStatus,
-            ...invoiceData,
-          },
-        });
+      // Invoice state lives on the Invoice model now — issuing or voiding a
+      // document is the invoice router's job, and this mutation must not draw
+      // a number of its own (that used to leave the registration pointing at a
+      // number with no invoice behind it).
+      return ctx.db.courseRegistration.update({
+        where: { id: input.id },
+        data: { paymentStatus: input.paymentStatus },
       });
-    }),
-
-  markRegistrationsInvoiceGenerated: permissionProcedure(
-    PERMISSIONS.INVOICES_MANAGE,
-  )
-    .input(
-      z.object({
-        courseId: z.string(),
-        registrationIds: z.array(z.string()).min(1),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const course = await ctx.db.course.findUnique({
-        where: { id: input.courseId },
-        include: {
-          createdBy: { select: { id: true } },
-          collaborators: collaboratorsForViewer(ctx.session.user.id),
-        },
-      });
-      if (!course) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Course not found",
-        });
-      }
-      const isCreator = course.createdBy?.id === ctx.session.user.id;
-      const canManageRegistrations = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        ctx.permissionCache,
-      );
-      const teamMember = viewerIsCourseTeamMember(course.collaborators);
-      if (!teamMember && !isCreator && !canManageRegistrations) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Insufficient permissions for this course",
-        });
-      }
-      const registrations = await ctx.db.courseRegistration.findMany({
-        where: {
-          id: { in: input.registrationIds },
-          courseId: input.courseId,
-        },
-        select: { id: true, invoiceGenerated: true, invoiceId: true },
-      });
-      if (registrations.length !== input.registrationIds.length) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Some registration IDs do not belong to this course",
-        });
-      }
-      const now = new Date();
-      const toUpdate = registrations.filter(
-        (r) => !r.invoiceGenerated || !r.invoiceId,
-      );
-      if (toUpdate.length > 0) {
-        await ctx.db.$transaction(async (tx) => {
-          for (const r of toUpdate) {
-            await tx.courseRegistration.update({
-              where: { id: r.id },
-              data: {
-                invoiceGenerated: true,
-                invoiceDate: now,
-                invoiceId: await nextInvoiceId(tx),
-              },
-            });
-          }
-        });
-      }
-      return {
-        updated: toUpdate.length,
-        skipped: registrations.length - toUpdate.length,
-      };
     }),
 
   // Cancellation requires a session: every UI path (own registrations,

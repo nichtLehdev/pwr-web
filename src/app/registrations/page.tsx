@@ -19,6 +19,7 @@ import {
   Edit,
   X,
   FileText,
+  Download,
   ChevronRight,
 } from "lucide-react";
 import {
@@ -89,6 +90,19 @@ export default function MyRegistrationsPage() {
     {
       enabled: !!session?.user,
     },
+  );
+
+  const { data: myInvoices } = api.invoices.myInvoices.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
+
+  // Newest first from the server, so the first hit per registration is the one
+  // currently in force (a storno's successor supersedes its predecessor).
+  const invoiceByRegistration = new Map(
+    (myInvoices ?? [])
+      .filter((invoice) => invoice.registrationId)
+      .reverse()
+      .map((invoice) => [invoice.registrationId!, invoice] as const),
   );
 
   if (!sessionLoading && !session?.user) {
@@ -423,14 +437,31 @@ export default function MyRegistrationsPage() {
                               {registration.totalPrice.toFixed(2)} €
                             </span>
                           </div>
-                          {registration.invoiceId && (
-                            <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                              Rechnungsnr.:{" "}
-                              <span className="font-mono">
-                                {registration.invoiceId}
-                              </span>
-                            </div>
-                          )}
+                          {(() => {
+                            const invoice = invoiceByRegistration.get(
+                              registration.id,
+                            );
+                            if (!invoice) return null;
+                            return (
+                              <div className="mt-3 flex flex-wrap items-center gap-3">
+                                <span className="text-xs text-gray-600 dark:text-gray-400">
+                                  Rechnungsnr.:{" "}
+                                  <span className="font-mono">
+                                    {invoice.invoiceNumber}
+                                  </span>
+                                </span>
+                                <a
+                                  href={`/api/invoices/${invoice.id}/pdf`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-primary inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                  Rechnung herunterladen
+                                </a>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Discount Rejected Actions */}

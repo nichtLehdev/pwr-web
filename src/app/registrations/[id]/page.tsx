@@ -13,6 +13,7 @@ import {
   BuildingIcon,
   CalendarIcon,
   CircleXIcon,
+  DownloadIcon,
   EditIcon,
   PencilIcon,
   UsersIcon,
@@ -41,6 +42,16 @@ export default function ViewRegistrationPage() {
       { id: registrationId },
       { enabled: !!registrationId },
     );
+
+  const { data: myInvoices } = api.invoices.myInvoices.useQuery(undefined, {
+    enabled: !!session?.user,
+  });
+
+  // All of them, not just the current one: an earlier invoice that was
+  // superseded still belongs in the recipient's own records.
+  const invoices = (myInvoices ?? []).filter(
+    (invoice) => invoice.registrationId === registrationId,
+  );
 
   const getParticipantDisplayName = (
     firstName: string,
@@ -615,6 +626,35 @@ export default function ViewRegistrationPage() {
                     </span>
                   </div>
                 )}
+              </div>
+            )}
+            {invoices.length > 0 && (
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-3 dark:border-gray-700">
+                {invoices.map((invoice) => (
+                  <a
+                    key={invoice.id}
+                    href={`/api/invoices/${invoice.id}/pdf`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <span className="text-dark dark:text-dark-text min-w-0">
+                      <span className="block font-medium">
+                        Rechnung {invoice.invoiceNumber}
+                      </span>
+                      {invoice.dueDate && (
+                        <span className="block text-xs text-gray-600 dark:text-gray-400">
+                          zahlbar bis{" "}
+                          {new Date(invoice.dueDate).toLocaleDateString("de-DE")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-primary inline-flex shrink-0 items-center gap-1.5 font-medium">
+                      <DownloadIcon className="h-4 w-4" />
+                      PDF
+                    </span>
+                  </a>
+                ))}
               </div>
             )}
           </div>

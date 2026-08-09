@@ -92,6 +92,7 @@ function CourseMailPageContent() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
   const [sendCopyToSender, setSendCopyToSender] = useState(true);
+  const [attachInvoices, setAttachInvoices] = useState(false);
   const [includeGreeting, setIncludeGreeting] = useState(true);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [lastFocused, setLastFocused] = useState<"subject" | "body">("body");
@@ -123,6 +124,11 @@ function CourseMailPageContent() {
         : {}),
     },
     { enabled: !!courseId && !!session?.user && canSend === true },
+  );
+
+  const { data: invoiceAccess } = api.invoices.canManageCourseInvoices.useQuery(
+    { courseId },
+    { enabled: !!courseId && !!session?.user },
   );
 
   const sentMails = api.courseMail.listSent.useQuery(
@@ -348,6 +354,7 @@ function CourseMailPageContent() {
     statuses,
     sendCopyToSender,
     includeGreeting,
+    attachInvoices,
     ...(selectedRegistrationIds.length
       ? { registrationIds: selectedRegistrationIds }
       : {}),
@@ -510,6 +517,34 @@ function CourseMailPageContent() {
                     .map((token) => `{{${token}}}`)
                     .join(", ")}
                   . Sie würden unverändert in der E-Mail landen.
+                </div>
+              )}
+
+              {/* Invoices */}
+              {(invoiceAccess?.canManage ?? false) && (
+                <div className="dark:border-dark-border mb-6 rounded-lg border border-gray-200 p-4">
+                  <label className="dark:text-dark-text flex cursor-pointer items-start gap-3 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={attachInvoices}
+                      onChange={(event) =>
+                        setAttachInvoices(event.target.checked)
+                      }
+                      className="text-primary focus:ring-primary mt-0.5 rounded border-gray-300"
+                    />
+                    <span>
+                      <span className="block font-medium">
+                        Rechnung anhängen
+                      </span>
+                      <span className="dark:text-dark-muted block text-xs text-gray-500">
+                        Jede:r Empfänger:in bekommt die eigene ausgestellte
+                        Rechnung als PDF. Wer keine hat, erhält die Nachricht
+                        ohne Anhang. Nutze dazu die Platzhalter
+                        {" {{rechnungsnummer}}"}, {"{{rechnungsbetrag}}"} und
+                        {" {{zahlungsziel}}"}.
+                      </span>
+                    </span>
+                  </label>
                 </div>
               )}
 
