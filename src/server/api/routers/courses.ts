@@ -10,6 +10,7 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { changesRestrictedFlag } from "../helpers/restricted-flag";
 import { promoteCustomFieldTemplatesForCourses } from "../helpers/custom-field-templates";
 import {
   notifyCreatorOfReviewResult,
@@ -828,6 +829,7 @@ export const coursesRouter = createTRPCRouter({
           paymentCashAllowed: true,
           paymentInvoiceAllowed: true,
           invoicingEnabled: true,
+          allowSiblingDiscount: true,
           startDate: true,
           registrationOpensAt: true,
           registrationDeadline: true,
@@ -1012,7 +1014,13 @@ export const coursesRouter = createTRPCRouter({
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
         ctx.permissionCache,
       );
-      if (input.allowSiblingDiscount !== undefined && !canManageDiscounts) {
+      if (
+        changesRestrictedFlag(
+          input.allowSiblingDiscount,
+          course.allowSiblingDiscount,
+        ) &&
+        !canManageDiscounts
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only LPW and Admin can modify sibling discount setting",
@@ -1020,11 +1028,11 @@ export const coursesRouter = createTRPCRouter({
       }
 
       if (input.invoicingEnabled !== undefined) {
-        // The edit form submits every field, so "sent unchanged" must not be an
-        // error — only an actual flip of the flag needs the permission.
-        const wantsChange = input.invoicingEnabled !== course.invoicingEnabled;
         if (
-          wantsChange &&
+          changesRestrictedFlag(
+            input.invoicingEnabled,
+            course.invoicingEnabled,
+          ) &&
           !(await userHasPermission(
             ctx.session.user.id,
             PERMISSIONS.COURSES_ENABLE_INVOICING,
