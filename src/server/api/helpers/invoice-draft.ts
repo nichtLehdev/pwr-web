@@ -79,11 +79,22 @@ export function recipientFromRegistration(
   };
 }
 
+/** Label for participants whose price category no longer exists on the course. */
+const UNCATEGORIZED_LABEL = "Teilnahme";
+
+const participantName = (participant: { firstName: string; lastName: string }) =>
+  `${participant.firstName} ${participant.lastName}`.trim();
+
 /**
- * One line per participant, plus one negative line per granted sibling
- * discount. Uses the same shared discount computation as registration
- * create/update — with age evaluated at course start — so the prefilled total
- * matches the total the registrant was quoted.
+ * One line per price category — the category is the position, the participants
+ * booked into it are the sub-line — plus one negative line per distinct sibling
+ * discount.
+ *
+ * Grouping this way is how an invoice normally reads ("2 × Vollzahler"), and it
+ * keeps a course with a dozen participants down to a handful of lines. Uses the
+ * same shared discount computation as registration create/update — with age
+ * evaluated at course start — so the prefilled total matches the total the
+ * registrant was quoted.
  */
 export function lineItemsFromRegistration(
   registration: RegistrationForDraft,
@@ -92,12 +103,26 @@ export function lineItemsFromRegistration(
   const priceFor = (label: string | null) =>
     course.priceOptions.find((option) => option.label === label)?.price ?? 0;
 
-  const items: InvoiceLineItem[] = registration.participants.map(
-    (participant) => ({
-      description: `${participant.firstName} ${participant.lastName}`.trim(),
-      detail: participant.priceOption,
-      quantity: 1,
+  // Insertion-ordered, so the categories appear in the order they were booked
+  // rather than in some hash order.
+  const byCategory = new Map<string, { unitPrice: number; names: string[] }>();
+  for (const participant of registration.participants) {
+    const label = participant.priceOption?.trim() ?? "";
+    const key = label || UNCATEGORIZED_LABEL;
+    const group = byCategory.get(key) ?? {
       unitPrice: priceFor(participant.priceOption),
+      names: [],
+    };
+    group.names.push(participantName(participant));
+    byCategory.set(key, group);
+  }
+
+  const items: InvoiceLineItem[] = [...byCategory].map(
+    ([label, { unitPrice, names }]) => ({
+      description: label,
+      detail: names.join(", "),
+      quantity: names.length,
+      unitPrice,
     }),
   );
 
@@ -116,18 +141,26 @@ export function lineItemsFromRegistration(
       course.startDate,
     );
 
+    // Collapsed by amount for the same reason: two siblings in the same
+    // category earn the same discount and belong on one line.
+    const byDiscount = new Map<number, string[]>();
     discountPerParticipant.forEach((discount, index) => {
       if (discount <= 0) return;
       const participant = registration.participants[index];
+      if (!participant) return;
+      const names = byDiscount.get(discount) ?? [];
+      names.push(participantName(participant));
+      byDiscount.set(discount, names);
+    });
+
+    for (const [discount, names] of byDiscount) {
       items.push({
         description: "Geschwisterkindrabatt (20 %)",
-        detail: participant
-          ? `${participant.firstName} ${participant.lastName}`.trim()
-          : null,
-        quantity: 1,
+        detail: names.join(", "),
+        quantity: names.length,
         unitPrice: -discount,
       });
-    });
+    }
   }
 
   return items;

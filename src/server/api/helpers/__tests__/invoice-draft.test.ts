@@ -109,34 +109,86 @@ describe("recipientFromRegistration", () => {
 });
 
 describe("lineItemsFromRegistration", () => {
-  it("creates one line per participant, labelled with the price option", () => {
+  const participant = (
+    firstName: string,
+    priceOption: string | null,
+    overrides: Partial<RegistrationForDraft["participants"][number]> = {},
+  ): RegistrationForDraft["participants"][number] => ({
+    firstName,
+    lastName: "Muster",
+    priceOption,
+    siblingGroupId: null,
+    birthDate: bornYearsAgo(12),
+    ...overrides,
+  });
+
+  it("makes the price category the position and the participants its sub-line", () => {
     const items = lineItemsFromRegistration(registration(), course);
     expect(items).toEqual([
       {
-        description: "Ben Muster",
-        detail: "Vollzahler",
+        description: "Vollzahler",
+        detail: "Ben Muster",
         quantity: 1,
         unitPrice: 145,
       },
     ]);
   });
 
-  it("prices an unknown or missing price option at zero rather than guessing", () => {
+  it("collapses participants of the same category onto one line", () => {
     const items = lineItemsFromRegistration(
       registration({
         participants: [
-          {
-            firstName: "Ben",
-            lastName: "Muster",
-            priceOption: null,
-            siblingGroupId: null,
-            birthDate: bornYearsAgo(12),
-          },
+          participant("Ben", "Vollzahler"),
+          participant("Clara", "Vollzahler"),
+          participant("Dora", "Ermäßigt"),
         ],
       }),
       course,
     );
-    expect(items[0]?.unitPrice).toBe(0);
+
+    expect(items).toEqual([
+      {
+        description: "Vollzahler",
+        detail: "Ben Muster, Clara Muster",
+        quantity: 2,
+        unitPrice: 145,
+      },
+      {
+        description: "Ermäßigt",
+        detail: "Dora Muster",
+        quantity: 1,
+        unitPrice: 95,
+      },
+    ]);
+  });
+
+  it("keeps the categories in the order they were booked", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        participants: [
+          participant("Dora", "Ermäßigt"),
+          participant("Ben", "Vollzahler"),
+        ],
+      }),
+      course,
+    );
+    expect(items.map((item) => item.description)).toEqual([
+      "Ermäßigt",
+      "Vollzahler",
+    ]);
+  });
+
+  it("prices an unknown or missing price option at zero rather than guessing", () => {
+    const items = lineItemsFromRegistration(
+      registration({ participants: [participant("Ben", null)] }),
+      course,
+    );
+    expect(items[0]).toEqual({
+      description: "Teilnahme",
+      detail: "Ben Muster",
+      quantity: 1,
+      unitPrice: 0,
+    });
   });
 
   const siblings = (): RegistrationForDraft["participants"] => [
@@ -156,7 +208,7 @@ describe("lineItemsFromRegistration", () => {
     },
   ];
 
-  it("adds a discount line for each granted sibling discount", () => {
+  it("adds a discount line naming the siblings who earned it", () => {
     const items = lineItemsFromRegistration(
       registration({
         siblingDiscountApplied: true,
@@ -166,13 +218,91 @@ describe("lineItemsFromRegistration", () => {
       course,
     );
 
-    expect(items).toHaveLength(3);
-    expect(items[2]).toEqual({
+    expect(items).toEqual([
+      {
+        description: "Vollzahler",
+        detail: "Ben Muster, Clara Muster",
+        quantity: 2,
+        unitPrice: 145,
+      },
+      {
+        description: "Geschwisterkindrabatt (20 %)",
+        detail: "Clara Muster",
+        quantity: 1,
+        unitPrice: -29,
+      },
+    ]);
+  });
+
+  it("collapses equal discounts onto one line", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        siblingDiscountApplied: true,
+        siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
+        participants: [
+          participant("Ben", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(15),
+          }),
+          participant("Clara", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(12),
+          }),
+          participant("Dora", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(9),
+          }),
+        ],
+      }),
+      course,
+    );
+
+    expect(items[1]).toEqual({
       description: "Geschwisterkindrabatt (20 %)",
-      detail: "Clara Muster",
-      quantity: 1,
+      detail: "Clara Muster, Dora Muster",
+      quantity: 2,
       unitPrice: -29,
     });
+  });
+
+  it("keeps discounts of differing size apart", () => {
+    const items = lineItemsFromRegistration(
+      registration({
+        siblingDiscountApplied: true,
+        siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
+        participants: [
+          participant("Ben", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(15),
+          }),
+          participant("Clara", "Vollzahler", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(12),
+          }),
+          participant("Dora", "Ermäßigt", {
+            siblingGroupId: "group-1",
+            birthDate: bornYearsAgo(9),
+          }),
+        ],
+      }),
+      course,
+    );
+
+    const discounts = items.filter((item) => item.unitPrice < 0);
+    expect(discounts).toEqual([
+      {
+        description: "Geschwisterkindrabatt (20 %)",
+        detail: "Clara Muster",
+        quantity: 1,
+        unitPrice: -29,
+      },
+      {
+        description: "Geschwisterkindrabatt (20 %)",
+        detail: "Dora Muster",
+        quantity: 1,
+        unitPrice: -19,
+      },
+    ]);
   });
 
   it("omits the discount once it has been rejected", () => {
@@ -184,7 +314,7 @@ describe("lineItemsFromRegistration", () => {
       }),
       course,
     );
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(1);
   });
 
   it("omits the discount when it was never applied", () => {
@@ -192,7 +322,7 @@ describe("lineItemsFromRegistration", () => {
       registration({ participants: siblings() }),
       course,
     );
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(1);
   });
 });
 
