@@ -113,6 +113,8 @@ export async function renderInvoicePdf(
     }
   };
 
+  const LOGO_HEIGHT = 25;
+  let logoDrawn = false;
   if (options.logoBase64) {
     try {
       doc.addImage(
@@ -121,17 +123,15 @@ export async function renderInvoicePdf(
         margin,
         y - 5,
         60,
-        25,
+        LOGO_HEIGHT,
       );
-      y += 25;
+      logoDrawn = true;
+      y += LOGO_HEIGHT;
     } catch {
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(88, 89, 91);
-      doc.text(org.name, margin, y, { maxWidth: 110 });
-      y += 10;
+      // Fall through to the text header below.
     }
-  } else {
+  }
+  if (!logoDrawn) {
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(88, 89, 91);
@@ -139,56 +139,36 @@ export async function renderInvoicePdf(
     y += 10;
   }
 
+  // Sits level with the middle of the logo rather than at the page top, so the
+  // two halves of the letterhead read as one row.
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
-  doc.text("Rechnung", rightEdge, 20, { align: "right" });
-
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Nr: ${invoiceNumber}`, rightEdge, 27, { align: "right" });
-  doc.text(`Datum: ${formatDate(invoice.invoiceDate ?? new Date())}`, rightEdge, 33, {
+  doc.text("Rechnung", rightEdge, logoDrawn ? 15 + LOGO_HEIGHT / 2 + 2 : 20, {
     align: "right",
   });
 
   y += 5;
-  doc.setFontSize(9);
-  doc.setTextColor(100);
-  doc.text(org.name, margin, y);
-  y += 4;
-  doc.text(org.address, margin, y);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(120);
+  doc.text(`${org.name} · ${org.address}`, margin, y);
   y += 4;
   doc.text(org.contact, margin, y);
   doc.setTextColor(0);
 
-  y += 10;
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text(invoice.course.title, margin, y, { maxWidth: pageWidth - 2 * margin });
+  // Recipient on the left, invoice metadata on the right. The two share one
+  // band so the upper half of the page isn't a tall column of text against an
+  // empty right margin — and it puts number, date and deadline where a reader
+  // (and a bookkeeper's eye) looks for them.
+  y += 11;
+  const bandTop = y;
+  const infoLabelX = 112;
 
-  y += 7;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-
-  const startDate = formatDate(invoice.course.startDate);
-  if (startDate) {
-    const endDate = formatDate(invoice.course.endDate);
-    doc.text(`Zeitraum: ${startDate}${endDate ? ` - ${endDate}` : ""}`, margin, y);
-    y += 5;
-  }
-
-  const locationText = [invoice.course.locationName, invoice.course.locationCity]
-    .filter(Boolean)
-    .join(", ");
-  if (locationText) {
-    doc.text(`Ort: ${locationText}`, margin, y);
-    y += 5;
-  }
-
-  y += 7;
   doc.setFont("helvetica", "bold");
   doc.text("Rechnungsempfänger:", margin, y);
-  y += 6;
+  let leftY = y + 6;
   doc.setFont("helvetica", "normal");
 
   const addressLines = [
@@ -202,8 +182,64 @@ export async function renderInvoicePdf(
     invoice.recipient.email,
   ].filter((line): line is string => Boolean(line && line.trim()));
 
+  const addressWidth = infoLabelX - margin - 6;
   for (const line of addressLines) {
-    doc.text(line, margin, y);
+    const wrapped = doc.splitTextToSize(line, addressWidth);
+    doc.text(wrapped, margin, leftY);
+    leftY += wrapped.length * 5;
+  }
+
+  const courseStart = formatDate(invoice.course.startDate);
+  const courseEnd = formatDate(invoice.course.endDate);
+  const infoRows: [string, string][] = [
+    ["Rechnungsnummer", invoiceNumber],
+    ["Rechnungsdatum", formatDate(invoice.invoiceDate ?? new Date())],
+  ];
+  const dueDateShort = formatDate(invoice.dueDate);
+  if (dueDateShort) infoRows.push(["Zahlbar bis", dueDateShort]);
+  if (courseStart) {
+    infoRows.push([
+      "Kurszeitraum",
+      courseEnd && courseEnd !== courseStart
+        ? `${courseStart} – ${courseEnd}`
+        : courseStart,
+    ]);
+  }
+
+  let infoY = bandTop;
+  for (const [label, value] of infoRows) {
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text(label, infoLabelX, infoY);
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+    doc.text(value, rightEdge, infoY, { align: "right" });
+    infoY += 5.5;
+  }
+
+  y = Math.max(leftY, infoY);
+
+  // Subject line, DIN-5008 style: what this invoice is for, full width.
+  y += 6;
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0);
+  const titleLines = doc.splitTextToSize(
+    invoice.course.title,
+    pageWidth - 2 * margin,
+  );
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 6;
+
+  const locationText = [invoice.course.locationName, invoice.course.locationCity]
+    .filter(Boolean)
+    .join(", ");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  if (locationText) {
+    doc.setTextColor(90);
+    doc.text(locationText, margin, y);
+    doc.setTextColor(0);
     y += 5;
   }
 
