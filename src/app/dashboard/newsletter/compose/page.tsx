@@ -8,6 +8,7 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
+import type { Editor } from "@tiptap/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
@@ -37,6 +38,7 @@ export default function DashboardNewsletterComposePage() {
   // flight so the "An X Abonnenten senden" button doesn't show a spinner
   // during a test send.
   const [sendMode, setSendMode] = useState<"test" | "all" | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
 
   // A reload or mis-click used to throw away the whole newsletter text.
   // The data object must be referentially stable, otherwise the save is
@@ -102,6 +104,10 @@ export default function DashboardNewsletterComposePage() {
         );
         clear();
         setSubject("");
+        // Der Editor übernimmt `content` nur beim ersten Befüllen — ohne das
+        // hier bliebe der versendete Newsletter sichtbar stehen und käme bei
+        // der nächsten Eingabe als „ungespeicherte Änderung“ zurück.
+        editor?.commands.clearContent();
         setContent("");
         setTestEmail("");
       }
@@ -280,6 +286,7 @@ export default function DashboardNewsletterComposePage() {
                 <RichTextEditor
                   content={content}
                   onChange={setContent}
+                  onEditorReady={setEditor}
                   placeholder="Schreibe hier deinen Newsletter..."
                 />
                 <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
