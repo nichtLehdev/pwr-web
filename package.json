@@ -75,7 +75,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/eslintrc": "^3.3.6",
     "@jest/globals": "^30.4.1",
     "@next/eslint-plugin-next": "^16.2.3",
     "@tailwindcss/postcss": "^4.3.2",
@@ -88,15 +88,15 @@
     "@types/react-dom": "^19.2.4",
     "@types/turndown": "^5.0.6",
     "baseline-browser-mapping": "^2.9.19",
-    "eslint": "^10.6.0",
+    "eslint": "^10.8.0",
     "eslint-plugin-react-hooks": "^7.0.1",
     "jest": "^30.4.2",
     "postcss": "^8.5.26",
-    "prettier": "^3.9.4",
-    "prettier-plugin-tailwindcss": "^0.8.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.62.1"
+    "typescript-eslint": "^8.67.0"
   },
   "ct3aMetadata": {
     "initVersion": "7.40.0"
