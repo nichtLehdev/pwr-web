@@ -5,21 +5,29 @@ import type { RegistrationData } from "./types";
 interface Step1RegistrantInfoProps {
   registrationData: RegistrationData;
   setRegistrationData: React.Dispatch<React.SetStateAction<RegistrationData>>;
+  /**
+   * Team members recording a registration on someone's behalf often only have
+   * a name and an e-mail, so phone and address are optional for them.
+   */
+  staffMode?: boolean;
 }
 
 export function Step1RegistrantInfo({
   registrationData,
   setRegistrationData,
+  staffMode = false,
 }: Step1RegistrantInfoProps) {
+  const contactRequiredMark = staffMode ? "" : " *";
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
-          Ihre Kontaktdaten
+          {staffMode ? "Kontaktdaten des Anmelders" : "Ihre Kontaktdaten"}
         </h3>
         <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-          Als Anmelder erhalten Sie die Bestätigung und alle weiteren
-          Informationen per E-Mail.
+          {staffMode
+            ? "Der Anmelder erhält Bestätigung und weitere Informationen an diese E-Mail-Adresse. Adresse und Telefon können nachgetragen werden, für Rechnungen sind sie nötig."
+            : "Als Anmelder erhalten Sie die Bestätigung und alle weiteren Informationen per E-Mail."}
         </p>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -84,7 +92,7 @@ export function Step1RegistrantInfo({
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Telefon *
+              Telefon{contactRequiredMark}
             </label>
             <input
               type="tel"
@@ -96,14 +104,14 @@ export function Step1RegistrantInfo({
                 })
               }
               maxLength={50}
-              required
+              required={!staffMode}
               className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
               placeholder="0211 123456"
             />
           </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Straße und Hausnummer *
+              Straße und Hausnummer{contactRequiredMark}
             </label>
             <input
               type="text"
@@ -117,12 +125,12 @@ export function Step1RegistrantInfo({
               maxLength={200}
               className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
               placeholder="Musterstraße 1"
-              required={!registrationData.useSeparateBilling}
+              required={!staffMode && !registrationData.useSeparateBilling}
             />
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              PLZ *
+              PLZ{contactRequiredMark}
             </label>
             <input
               type="text"
@@ -136,12 +144,12 @@ export function Step1RegistrantInfo({
               maxLength={20}
               className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
               placeholder="12345"
-              required={!registrationData.useSeparateBilling}
+              required={!staffMode && !registrationData.useSeparateBilling}
             />
           </div>
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Ort *
+              Ort{contactRequiredMark}
             </label>
             <input
               type="text"
@@ -155,7 +163,7 @@ export function Step1RegistrantInfo({
               maxLength={100}
               className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
               placeholder="Düsseldorf"
-              required={!registrationData.useSeparateBilling}
+              required={!staffMode && !registrationData.useSeparateBilling}
             />
           </div>
         </div>
