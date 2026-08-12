@@ -146,6 +146,12 @@ export function validateStep(
   course: CourseWithRelations,
   validationErrors: Record<number, string>,
   termsAccepted?: boolean,
+  /**
+   * The course team often only has a name and an e-mail when it records a
+   * registration from a phone call or a paper form, so phone and address stay
+   * optional there instead of forcing invented values.
+   */
+  staffMode = false,
 ): boolean {
   switch (step) {
     case 1:
@@ -163,12 +169,16 @@ export function validateStep(
         registrantFirstName &&
         registrantLastName &&
         registrantEmail &&
-        registrantPhone
+        (staffMode || registrantPhone)
       );
 
       if (registrationData.useSeparateBilling) {
         const { billingStreet, billingZipCode, billingCity } = registrationData;
         return basicValid && !!(billingStreet && billingZipCode && billingCity);
+      }
+
+      if (staffMode) {
+        return basicValid;
       }
 
       return (

@@ -3,7 +3,12 @@
 import Link from "next/link";
 import type { Dispatch, SetStateAction } from "react";
 import { FileText, ExternalLink, Wallet } from "lucide-react";
-import type { RegistrationData, CourseWithRelations } from "./types";
+import type {
+  RegistrationData,
+  CourseWithRelations,
+  StaffRegistrationOptions,
+} from "./types";
+import { StaffOptions } from "./staff-options";
 import {
   calculateTotalPrice,
   calculateOriginalPrice,
@@ -24,6 +29,15 @@ interface Step3SummaryProps {
   termsAccepted: boolean;
   setTermsAccepted: (accepted: boolean) => void;
   isWaitlist: boolean;
+  /** Set when the course team records the registration itself. */
+  staff?: {
+    options: StaffRegistrationOptions;
+    setOptions: Dispatch<SetStateAction<StaffRegistrationOptions>>;
+    /** Not enough free seats for the participants entered here. */
+    seatsShort: boolean;
+    /** What the selected status actually becomes on the server. */
+    resolvedStatus: "CONFIRMED" | "WAITLIST";
+  };
 }
 
 export function Step3Summary({
@@ -33,6 +47,7 @@ export function Step3Summary({
   termsAccepted,
   setTermsAccepted,
   isWaitlist,
+  staff,
 }: Step3SummaryProps) {
   return (
     <div className="space-y-6">
@@ -273,43 +288,71 @@ export function Step3Summary({
         </div>
       )}
 
-      {/* Terms */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            required
-            className="text-primary focus:ring-primary mt-1 h-4 w-4"
+      {staff ? (
+        <>
+          <StaffOptions
+            course={course}
+            options={staff.options}
+            setOptions={staff.setOptions}
+            seatsShort={staff.seatsShort}
+            resolvedStatus={staff.resolvedStatus}
           />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Ich akzeptiere die{" "}
-            <Link
-              href="/impressum"
-              className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Allgemeinen Geschäftsbedingungen
-              <ExternalLink className="h-3 w-3" />
-            </Link>{" "}
-            und die{" "}
-            <Link
-              href="/datenschutz"
-              className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Datenschutzerklärung
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-            .
-          </span>
-        </label>
-      </div>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+            <label className="flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                required
+                className="text-primary focus:ring-primary mt-1 h-4 w-4"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Der Anmelder hat dieser Anmeldung zugestimmt (z. B. per E-Mail,
+                telefonisch oder auf einem Papierformular) und die
+                Teilnahmebedingungen zur Kenntnis genommen.
+              </span>
+            </label>
+          </div>
+        </>
+      ) : (
+        /* Terms */
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              required
+              className="text-primary focus:ring-primary mt-1 h-4 w-4"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Ich akzeptiere die{" "}
+              <Link
+                href="/impressum"
+                className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Allgemeinen Geschäftsbedingungen
+                <ExternalLink className="h-3 w-3" />
+              </Link>{" "}
+              und die{" "}
+              <Link
+                href="/datenschutz"
+                className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Datenschutzerklärung
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+              .
+            </span>
+          </label>
+        </div>
+      )}
 
-      {isWaitlist && (
+      {isWaitlist && !staff && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
           <p className="text-sm text-orange-800 dark:text-orange-300">
             <strong>Hinweis:</strong> Der Kurs ist bereits ausgebucht. Sie

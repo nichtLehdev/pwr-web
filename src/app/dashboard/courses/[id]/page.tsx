@@ -23,6 +23,7 @@ import {
   Edit,
   ExternalLink,
   MailIcon,
+  PlusIcon,
   ReceiptTextIcon,
   Trash2,
   UserIcon,
@@ -126,6 +127,9 @@ export default function CourseDetailPage() {
     "courses.approve" as PermissionKey,
     "courses.manage" as PermissionKey,
   ]);
+  const hasManageRegistrationsPermission = hasPermission(
+    "courses.manage_registrations" as PermissionKey,
+  );
 
   const {
     data: course,
@@ -248,6 +252,11 @@ export default function CourseDetailPage() {
   const canReview = isReviewer && course.status === ContentStatus.PENDING;
   const canViewParticipants =
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
+  // Registrations the team received by mail, phone or on paper are entered by
+  // hand — the public form is closed once the deadline passes.
+  const canAddRegistrations =
+    !isExternalCourse(course) &&
+    (isOwner || hasCourseTeamAccess || hasManageRegistrationsPermission);
 
   const startDate = new Date(course.startDate);
   const endDate = new Date(course.endDate);
@@ -976,6 +985,15 @@ export default function CourseDetailPage() {
                 Rechnungen
               </Link>
             )}
+            {canAddRegistrations && (
+              <Link
+                href={`/dashboard/courses/${courseId}/participants/new`}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Anmeldung hinzufügen
+              </Link>
+            )}
             <Link
               href={`/dashboard/courses/${courseId}/participants`}
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
@@ -1052,8 +1070,13 @@ export default function CourseDetailPage() {
                     <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <h3 className="dark:text-dark-text font-medium text-gray-900">
-                          {registration.registrantFirstName}{" "}
-                          {registration.registrantLastName}
+                          <Link
+                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                            className="hover:text-primary transition-colors"
+                          >
+                            {registration.registrantFirstName}{" "}
+                            {registration.registrantLastName}
+                          </Link>
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {registration.registrantEmail}
