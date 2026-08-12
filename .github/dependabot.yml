@@ -61,6 +61,13 @@ updates:
     ignore:
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
+      # typescript-eslint hard-throws on any TS >= 7 (unconditional version guard,
+      # no flag or env var to opt out), so a TS 7 bump breaks `pnpm lint` entirely.
+      # Upstream is targeting TS >= 7.1 and skipping 7.0:
+      # https://github.com/typescript-eslint/typescript-eslint/issues/10940
+      # Drop this entry once typescript-eslint ships TS 7.1 support.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
