@@ -7,7 +7,7 @@ import { DashboardPage } from "@/app/_components/dashboard";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { PaymentStatus, RegistrationStatus } from "~/generated/prisma/enums";
-import { SearchIcon, UsersIcon } from "lucide-react";
+import { PencilIcon, SearchIcon, UsersIcon } from "lucide-react";
 
 const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -237,9 +237,10 @@ export default function AdminRegistrationsPage() {
                       "Betrag",
                       "Rechnung",
                       "Datum",
-                    ].map((header) => (
+                      "",
+                    ].map((header, index) => (
                       <th
-                        key={header}
+                        key={header || `actions-${index}`}
                         className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
                       >
                         {header}
@@ -305,6 +306,20 @@ export default function AdminRegistrationsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                         {formatDate(registration.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
+                        {registration.registrationStatus !==
+                          RegistrationStatus.CANCELLED && (
+                          <Link
+                            href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
+                              "/dashboard/registrations",
+                            )}`}
+                            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                          >
+                            <PencilIcon className="h-3.5 w-3.5" />
+                            Bearbeiten
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))}
