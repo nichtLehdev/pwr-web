@@ -12,6 +12,7 @@ import type {
   RegistrationData,
   Step,
   CourseRegistrationFormProps,
+  StaffRegistrationOptions,
 } from "./course-registration-form/types";
 import { Step1RegistrantInfo } from "./course-registration-form/step-1-registrant-info";
 import { Step2Participants } from "./course-registration-form/step-2-participants";
@@ -31,9 +32,16 @@ export default function CourseRegistrationForm({
   isWaitlist,
   currentUser,
   variant = "modal",
+  staffMode = false,
+  availableSlots,
 }: CourseRegistrationFormProps) {
   const toast = useToast();
   const registrationMutation = api.registrations.create.useMutation();
+  const staffRegistrationMutation =
+    api.registrations.createByStaff.useMutation();
+  const submitMutation = staffMode
+    ? staffRegistrationMutation
+    : registrationMutation;
   const savedParticipantsQuery = api.savedParticipants.getAll.useQuery(
     undefined,
     { enabled: !!currentUser },
@@ -61,6 +69,12 @@ export default function CourseRegistrationForm({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [staffOptions, setStaffOptions] = useState<StaffRegistrationOptions>({
+    registrationStatus: "AUTO",
+    markAsPaid: false,
+    sendConfirmationEmail: true,
+    allowOverbooking: false,
+  });
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
     registrantFirstName: currentUser?.firstName || "",
@@ -305,97 +319,147 @@ export default function CourseRegistrationForm({
       course,
       validationErrors,
       termsAccepted,
+      staffMode,
     );
   };
 
   const canProceed = validateStep(currentStep);
 
+  // Seats short for what has been entered — the point at which the staff
+  // mutation requires an explicit overbooking consent. Falls back to the
+  // course-is-full flag when the free-seat count was not passed in.
+  const staffSeatsShort =
+    availableSlots != null && Number.isFinite(availableSlots)
+      ? registrationData.participants.length > availableSlots
+      : isWaitlist;
+
+  // Mirrors the server: "AUTO" only becomes a waiting-list entry when the
+  // course actually offers one, otherwise it confirms.
+  const staffResolvedStatus =
+    staffOptions.registrationStatus !== "AUTO"
+      ? staffOptions.registrationStatus
+      : staffSeatsShort && course.allowWaitingList
+        ? "WAITLIST"
+        : "CONFIRMED";
+
+  // Same rule the staff mutation enforces server-side: confirming beyond the
+  // capacity needs the acknowledgement.
+  const blockedByFull =
+    staffMode &&
+    staffSeatsShort &&
+    staffResolvedStatus === "CONFIRMED" &&
+    !staffOptions.allowOverbooking;
+
   const handleSubmit = async () => {
     setSubmitError("");
-    registrationMutation.mutate(
-      {
-        courseId: course.id,
-        registrantFirstName:
-          registrationData.registrantFirstName || currentUser?.firstName || "",
-        registrantLastName:
-          registrationData.registrantLastName || currentUser?.lastName || "",
-        registrantEmail:
-          registrationData.registrantEmail || currentUser?.email || "",
+
+    const payload = {
+      courseId: course.id,
+      registrantFirstName:
+        registrationData.registrantFirstName || currentUser?.firstName || "",
+      registrantLastName:
+        registrationData.registrantLastName || currentUser?.lastName || "",
+      registrantEmail:
+        registrationData.registrantEmail || currentUser?.email || "",
+      // Sent only when filled: the empty string fails the phone-format
+      // check, and staff entries may legitimately have no phone number.
+      ...((registrationData.registrantPhone || currentUser?.phone) && {
         registrantPhone:
-          registrationData.registrantPhone || currentUser?.phone || "",
-        ...(registrationData.registrantStreet && {
-          registrantStreet: registrationData.registrantStreet,
+          registrationData.registrantPhone || currentUser?.phone || undefined,
+      }),
+      ...(registrationData.registrantStreet && {
+        registrantStreet: registrationData.registrantStreet,
+      }),
+      ...(registrationData.registrantZipCode && {
+        registrantZipCode: registrationData.registrantZipCode,
+      }),
+      ...(registrationData.registrantCity && {
+        registrantCity: registrationData.registrantCity,
+      }),
+      ...(registrationData.useSeparateBilling !== undefined && {
+        useSeparateBilling: registrationData.useSeparateBilling,
+      }),
+      ...(registrationData.billingCompany && {
+        billingCompany: registrationData.billingCompany,
+      }),
+      ...(registrationData.billingFirstName && {
+        billingFirstName: registrationData.billingFirstName,
+      }),
+      ...(registrationData.billingLastName && {
+        billingLastName: registrationData.billingLastName,
+      }),
+      ...(registrationData.billingStreet && {
+        billingStreet: registrationData.billingStreet,
+      }),
+      ...(registrationData.billingZipCode && {
+        billingZipCode: registrationData.billingZipCode,
+      }),
+      ...(registrationData.billingCity && {
+        billingCity: registrationData.billingCity,
+      }),
+      ...(registrationData.billingEmail && {
+        billingEmail: registrationData.billingEmail,
+      }),
+      participants: registrationData.participants.map((p) => ({
+        firstName: p.firstName,
+        lastName: p.lastName,
+        birthDate: p.birthDate,
+        city: p.city,
+        ...(p.instrument && { instrument: p.instrument }),
+        priceOptionId: p.priceOptionId,
+        ...(p.customFields && { customFields: p.customFields }),
+        ...(p.siblingGroupId && { siblingGroupId: p.siblingGroupId }),
+      })),
+      siblingDiscountApplied: registrationData.siblingDiscountApplied,
+      ...(!course.isFree &&
+        registrationData.paymentMethod && {
+          paymentMethod: registrationData.paymentMethod,
         }),
-        ...(registrationData.registrantZipCode && {
-          registrantZipCode: registrationData.registrantZipCode,
-        }),
-        ...(registrationData.registrantCity && {
-          registrantCity: registrationData.registrantCity,
-        }),
-        ...(registrationData.useSeparateBilling !== undefined && {
-          useSeparateBilling: registrationData.useSeparateBilling,
-        }),
-        ...(registrationData.billingCompany && {
-          billingCompany: registrationData.billingCompany,
-        }),
-        ...(registrationData.billingFirstName && {
-          billingFirstName: registrationData.billingFirstName,
-        }),
-        ...(registrationData.billingLastName && {
-          billingLastName: registrationData.billingLastName,
-        }),
-        ...(registrationData.billingStreet && {
-          billingStreet: registrationData.billingStreet,
-        }),
-        ...(registrationData.billingZipCode && {
-          billingZipCode: registrationData.billingZipCode,
-        }),
-        ...(registrationData.billingCity && {
-          billingCity: registrationData.billingCity,
-        }),
-        ...(registrationData.billingEmail && {
-          billingEmail: registrationData.billingEmail,
-        }),
-        participants: registrationData.participants.map((p) => ({
-          firstName: p.firstName,
-          lastName: p.lastName,
-          birthDate: p.birthDate,
-          city: p.city,
-          ...(p.instrument && { instrument: p.instrument }),
-          priceOptionId: p.priceOptionId,
-          ...(p.customFields && { customFields: p.customFields }),
-          ...(p.siblingGroupId && { siblingGroupId: p.siblingGroupId }),
-        })),
-        siblingDiscountApplied: registrationData.siblingDiscountApplied,
-        ...(!course.isFree &&
-          registrationData.paymentMethod && {
-            paymentMethod: registrationData.paymentMethod,
-          }),
-      },
-      {
-        onSuccess: () => {
-          toast.success(
-            isWaitlist
+    };
+
+    const handlers = {
+      onSuccess: () => {
+        toast.success(
+          staffMode
+            ? "Die Anmeldung wurde erfasst."
+            : isWaitlist
               ? "Sie wurden auf die Warteliste gesetzt."
               : "Ihre Anmeldung war erfolgreich.",
-          );
-          onSuccess();
-        },
-        onError: (error) => {
-          // Surface the real cause (course filled up, deadline passed,
-          // duplicate registration) — a generic "try again" message hides
-          // errors that retrying can never fix. Zod issues serialize as a
-          // JSON array; keep the generic text for those.
-          const message =
-            error.message && !error.message.trim().startsWith("[")
-              ? error.message
-              : "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.";
-          setSubmitError(message);
-          toast.error(message);
-          console.error("Registration error:", error);
-        },
+        );
+        onSuccess();
       },
-    );
+      onError: (error: { message: string }) => {
+        // Surface the real cause (course filled up, deadline passed,
+        // duplicate registration) — a generic "try again" message hides
+        // errors that retrying can never fix. Zod issues serialize as a
+        // JSON array; keep the generic text for those.
+        const message =
+          error.message && !error.message.trim().startsWith("[")
+            ? error.message
+            : "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.";
+        setSubmitError(message);
+        toast.error(message);
+        console.error("Registration error:", error);
+      },
+    };
+
+    if (staffMode) {
+      staffRegistrationMutation.mutate(
+        {
+          ...payload,
+          ...(staffOptions.registrationStatus !== "AUTO" && {
+            registrationStatus: staffOptions.registrationStatus,
+          }),
+          paymentStatus: staffOptions.markAsPaid ? "PAID" : "PENDING",
+          allowOverbooking: staffOptions.allowOverbooking,
+          sendConfirmationEmail: staffOptions.sendConfirmationEmail,
+        },
+        handlers,
+      );
+      return;
+    }
+
+    registrationMutation.mutate(payload, handlers);
   };
 
   const isModal = variant === "modal";
@@ -452,6 +516,7 @@ export default function CourseRegistrationForm({
         <Step1RegistrantInfo
           registrationData={registrationData}
           setRegistrationData={setRegistrationData}
+          staffMode={staffMode}
         />
       )}
       {currentStep === 2 && (
@@ -482,6 +547,16 @@ export default function CourseRegistrationForm({
           termsAccepted={termsAccepted}
           setTermsAccepted={setTermsAccepted}
           isWaitlist={isWaitlist}
+          staff={
+            staffMode
+              ? {
+                  options: staffOptions,
+                  setOptions: setStaffOptions,
+                  seatsShort: staffSeatsShort,
+                  resolvedStatus: staffResolvedStatus,
+                }
+              : undefined
+          }
         />
       )}
       {currentStep === 3 && submitError && (
@@ -533,12 +608,16 @@ export default function CourseRegistrationForm({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={registrationMutation.isPending || !termsAccepted}
+          disabled={submitMutation.isPending || !termsAccepted || blockedByFull}
           className="order-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
-          {registrationMutation.isPending
-            ? "Wird gesendet..."
-            : "Verbindlich anmelden"}
+          {submitMutation.isPending
+            ? staffMode
+              ? "Wird erfasst..."
+              : "Wird gesendet..."
+            : staffMode
+              ? "Anmeldung erfassen"
+              : "Verbindlich anmelden"}
         </button>
       )}
     </>
@@ -558,7 +637,11 @@ export default function CourseRegistrationForm({
             <div className="mb-4 flex items-start justify-between">
               <div className="min-w-0 flex-1">
                 <h2 className="mb-1 text-2xl font-bold">
-                  {isWaitlist ? "Warteliste" : "Anmeldung"}
+                  {staffMode
+                    ? "Anmeldung erfassen"
+                    : isWaitlist
+                      ? "Warteliste"
+                      : "Anmeldung"}
                 </h2>
                 <p className="truncate text-sm opacity-90">{course.title}</p>
               </div>
@@ -621,11 +704,16 @@ export default function CourseRegistrationForm({
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-dark dark:text-dark-text text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
-                {isWaitlist ? "Warteliste" : "Anmeldung"}
+                {staffMode
+                  ? "Anmeldung erfassen"
+                  : isWaitlist
+                    ? "Warteliste"
+                    : "Anmeldung"}
               </p>
               <p className="text-dark dark:text-dark-text mt-1 max-w-xl text-sm text-gray-600 dark:text-gray-400">
-                Bitte alle Schritte vollständig ausfüllen. Ihre Daten werden nur
-                für diese Anmeldung verwendet.
+                {staffMode
+                  ? "Anmeldung im Namen des Anmelders erfassen — Anmeldeschluss und Anmeldestatus des Kurses werden dabei nicht geprüft. Adresse und Telefon sind optional, für Rechnungen aber nötig."
+                  : "Bitte alle Schritte vollständig ausfüllen. Ihre Daten werden nur für diese Anmeldung verwendet."}
               </p>
             </div>
             <button

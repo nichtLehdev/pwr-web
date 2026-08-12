@@ -8,7 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
-import type { PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseCollaboratorRole,
@@ -19,6 +19,8 @@ import {
 import {
   ArrowLeftIcon,
   DownloadIcon,
+  PencilIcon,
+  PlusIcon,
   ReceiptTextIcon,
   MailIcon,
   SearchIcon,
@@ -103,6 +105,16 @@ function getCustomFieldValue(
   return formatCustomFieldValueForDisplay(fields[fieldName]);
 }
 
+function formatBirthDate(birthDate: Date | string | null | undefined): string {
+  if (!birthDate) return "–";
+  return new Date(birthDate).toLocaleDateString("de-DE");
+}
+
+function formatBirthYear(birthDate: Date | string | null | undefined): string {
+  if (!birthDate) return "–";
+  return String(new Date(birthDate).getFullYear());
+}
+
 export default function CourseParticipantsPage() {
   const router = useRouter();
   const params = useParams();
@@ -159,6 +171,9 @@ export default function CourseParticipantsPage() {
     "courses.approve" as PermissionKey,
     "courses.manage" as PermissionKey,
   ]);
+  const hasManageRegistrationsPermission = hasPermission(
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+  );
 
   const { data: course, isLoading: courseLoading } =
     api.courses.getById.useQuery(
@@ -285,6 +300,11 @@ export default function CourseParticipantsPage() {
     isOwner || hasViewParticipantsPermission || hasCourseTeamAccess;
 
   const canCreateInvoices = hasApprovePermission || hasCourseTeamAccess;
+  // Same rule as registrations.createByStaff / updateMyRegistration server-side:
+  // the course team and registration managers may add and edit registrations
+  // regardless of the public deadline.
+  const canManageRegistrations =
+    isOwner || hasCourseTeamAccess || hasManageRegistrationsPermission;
 
   if (!canViewParticipants) {
     return (
@@ -429,6 +449,7 @@ export default function CourseParticipantsPage() {
         return {
           vorname: participant.firstName,
           nachname: participant.lastName,
+          geburtsdatum: formatBirthDate(participant.birthDate),
           ort: participant.city || "",
           instrument: participant.instrument || "",
           preiskategorie: participant.priceOption || "",
@@ -552,6 +573,16 @@ export default function CourseParticipantsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {/* Add a registration the team received outside the public form */}
+            {canManageRegistrations && (
+              <Link
+                href={`/dashboard/courses/${courseId}/participants/new`}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Anmeldung hinzufügen
+              </Link>
+            )}
             {/* Mail all registrants */}
             {canMailRegistrants && (
               <Link
@@ -816,6 +847,9 @@ export default function CourseParticipantsPage() {
                       Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                      Geburtsjahr
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                       Ort
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -850,7 +884,16 @@ export default function CourseParticipantsPage() {
                         className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
                       >
                         <td className="dark:text-dark-text px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                          {participant.firstName} {participant.lastName}
+                          <Link
+                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                            className="hover:text-primary transition-colors"
+                            title="Zur Anmeldung"
+                          >
+                            {participant.firstName} {participant.lastName}
+                          </Link>
+                        </td>
+                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {formatBirthYear(participant.birthDate)}
                         </td>
                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                           {participant.city || "–"}
@@ -886,8 +929,13 @@ export default function CourseParticipantsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {registration.registrantFirstName}{" "}
-                          {registration.registrantLastName}
+                          <Link
+                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                            className="hover:text-primary transition-colors"
+                          >
+                            {registration.registrantFirstName}{" "}
+                            {registration.registrantLastName}
+                          </Link>
                         </td>
                       </tr>
                     )),
@@ -998,6 +1046,25 @@ export default function CourseParticipantsPage() {
                         </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
+                          className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          Details
+                        </Link>
+                        {canManageRegistrations &&
+                          registration.registrationStatus !==
+                            RegistrationStatus.CANCELLED && (
+                            <Link
+                              href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
+                                `/dashboard/courses/${courseId}/participants`,
+                              )}`}
+                              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <PencilIcon className="h-3.5 w-3.5" />
+                              Bearbeiten
+                            </Link>
+                          )}
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
                         >
@@ -1038,6 +1105,9 @@ export default function CourseParticipantsPage() {
                                 Name
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
+                                Geburtsjahr
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
                                 Ort
                               </th>
                               <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
@@ -1063,6 +1133,9 @@ export default function CourseParticipantsPage() {
                               <tr key={participant.id}>
                                 <td className="dark:text-dark-text px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900">
                                   {participant.firstName} {participant.lastName}
+                                </td>
+                                <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                  {formatBirthYear(participant.birthDate)}
                                 </td>
                                 <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                                   {participant.city || "–"}
