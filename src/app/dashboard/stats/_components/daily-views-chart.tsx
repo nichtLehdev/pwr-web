@@ -8,6 +8,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
+  type TooltipPayload,
 } from "recharts";
 
 const CHART_GRID_STROKE_LIGHT = "#e5e7eb";
@@ -129,13 +130,14 @@ function ChartDayTooltipContent({
   isDark,
 }: {
   active?: boolean;
-  payload?: readonly { value: number; name: string }[];
+  payload?: TooltipPayload;
   label?: string;
   dayVisitorDetails?: Record<string, VisitorDetails>;
   isDark?: boolean;
 }) {
   if (!active || !payload?.length || label == null) return null;
-  const value = payload[0]?.value ?? 0;
+  const rawValue = payload[0]?.value;
+  const value = typeof rawValue === "number" ? rawValue : Number(rawValue ?? 0);
   const details = dayVisitorDetails?.[label];
   const hasDetails =
     details && (details.topVisitors.length > 0 || details.otherViews > 0);
