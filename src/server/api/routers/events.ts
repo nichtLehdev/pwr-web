@@ -14,6 +14,8 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
+import { createEventSlug, updateEventSlug } from "../helpers/content-slug";
+import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 
 export const eventsRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -86,11 +88,15 @@ export const eventsRouter = createTRPCRouter({
       };
     }),
 
+  /**
+   * Accepts either the UUID or the slug. Public links use the slug; the
+   * dashboard and links shared before slugs existed still pass a UUID.
+   */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const event = await ctx.db.event.findUnique({
-        where: { id: input.id },
+      const event = await ctx.db.event.findFirst({
+        where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           coverImage: true,
           location: true,
@@ -384,6 +390,8 @@ export const eventsRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string().min(1).max(200),
+        /** Empty means "derive it from the title"; see createEventSlug. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
         description: z.string().max(5000).optional(),
         coverImageId: z.string().optional(),
@@ -416,11 +424,22 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { priceOptions, downloadIds, ...eventData } = input;
+      const {
+        priceOptions,
+        downloadIds,
+        slug: requestedSlug,
+        ...eventData
+      } = input;
 
       const event = await ctx.db.event.create({
         data: {
           ...eventData,
+          slug: await createEventSlug(
+            ctx.db,
+            input.title,
+            input.eventDate,
+            requestedSlug,
+          ),
           createdById: ctx.session.user.id,
           priceOptions: priceOptions
             ? {
@@ -465,6 +484,8 @@ export const eventsRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         title: z.string().min(1).max(200).optional(),
+        /** Only sent when the author deliberately renamed it; empty = leave as is. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         motto: z.string().max(500).optional(),
         description: z.string().max(5000).optional(),
         coverImageId: z.string().optional().nullable(),
@@ -499,7 +520,13 @@ export const eventsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, priceOptions, downloadIds, ...updateData } = input;
+      const {
+        id,
+        priceOptions,
+        downloadIds,
+        slug: requestedSlug,
+        ...updateData
+      } = input;
 
       const event = await ctx.db.event.findUnique({
         where: { id },
@@ -560,7 +587,13 @@ export const eventsRouter = createTRPCRouter({
 
       const updated = await ctx.db.event.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...updateData,
+          // A blank field is "keep the current slug", not "clear it".
+          ...(requestedSlug?.trim()
+            ? { slug: await updateEventSlug(ctx.db, id, requestedSlug) }
+            : {}),
+        },
         include: {
           coverImage: true,
           location: true,

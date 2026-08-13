@@ -554,6 +554,7 @@ export default function DashboardEventsList({}: DashboardEventsListProps) {
               )}
               <DashboardEventCard
                 id={event.id}
+                slug={event.slug}
                 title={event.title}
                 date={new Date(event.eventDate)}
                 location={event.location?.city ?? ""}

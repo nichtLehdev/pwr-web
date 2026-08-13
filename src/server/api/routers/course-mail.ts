@@ -14,6 +14,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAudit } from "../helpers/audit";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { coursePath } from "@/lib/slug";
 import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 import { rateLimit } from "@/server/utils/rate-limit";
 import type { PermissionCache } from "../helpers/permissions";
@@ -330,6 +331,7 @@ async function loadCourseForMailing(
     where: { id: courseId },
     select: {
       id: true,
+      slug: true,
       title: true,
       startDate: true,
       endDate: true,
@@ -581,7 +583,7 @@ export const courseMailRouter = createTRPCRouter({
         recipientName: recipient ? recipient.firstName : values.vorname,
         senderName: senderName || "Posaunenwerk Rheinland",
         replyToEmail: input.replyToEmail,
-        courseUrl: `${getBaseUrl(ctx.headers ? { headers: ctx.headers } : undefined)}/termine/course/${course.id}`,
+        courseUrl: `${getBaseUrl(ctx.headers ? { headers: ctx.headers } : undefined)}${coursePath(course)}`,
         includeGreeting: input.includeGreeting,
       });
 
@@ -695,7 +697,7 @@ export const courseMailRouter = createTRPCRouter({
       const { sendCourseMailToRegistrant } = await import("@/server/email");
 
       const senderName = user.name?.trim() ?? "";
-      const courseUrl = `${getBaseUrl(ctx.headers ? { headers: ctx.headers } : undefined)}/termine/course/${course.id}`;
+      const courseUrl = `${getBaseUrl(ctx.headers ? { headers: ctx.headers } : undefined)}${coursePath(course)}`;
 
       const baseMail = {
         courseTitle: course.title,

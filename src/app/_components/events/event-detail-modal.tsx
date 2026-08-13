@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { CalendarItem } from "@/lib/types/calendar";
+import { coursePath, eventPath } from "@/lib/slug";
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -320,7 +321,9 @@ export default function EventDetailModal({
         <ScrollableModalFooter>
           <div className="flex gap-3">
             <Link
-              href={`/termine/${event.type}/${event.id}`}
+              href={
+                event.type === "course" ? coursePath(event) : eventPath(event)
+              }
               className="bg-primary hover:bg-primary-dark flex-1 rounded-lg px-6 py-3 text-center font-semibold text-white transition-colors"
               onClick={onClose}
             >

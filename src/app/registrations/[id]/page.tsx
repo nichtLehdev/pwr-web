@@ -7,6 +7,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
+import { coursePath } from "@/lib/slug";
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -314,7 +315,7 @@ export default function ViewRegistrationPage() {
           </div>
           <div className="mt-4">
             <Link
-              href={`/termine/${registration.course.id}`}
+              href={coursePath(registration.course)}
               className="text-primary hover:text-primary-dark inline-flex items-center gap-1 text-sm font-medium transition-colors"
             >
               Zur Kursseite

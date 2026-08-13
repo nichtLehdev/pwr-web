@@ -14,7 +14,7 @@ import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
-import { postPath } from "@/lib/slug";
+import { eventPath, postPath } from "@/lib/slug";
 
 marked.use({
   gfm: true,
@@ -575,7 +575,7 @@ export const newsletterRouter = createTRPCRouter({
           for (const event of upcomingEvents) {
             const eventUrl = `${getBaseUrl(
               ctx.headers ? { headers: ctx.headers } : undefined,
-            )}/termine/event/${event.id}`;
+            )}${eventPath(event)}`;
             const eventDate = new Date(event.eventDate);
             const formattedDate = eventDate.toLocaleDateString("de-DE", {
               weekday: "long",

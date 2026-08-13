@@ -435,7 +435,9 @@ enum ContentStatus {
 // --------- Models ---------
 
 model Event {
-  id          String  @id @default(uuid())
+  id String @id @default(uuid())
+  /** URL identifier derived from the title and year; see Post.slug. */
+  slug        String? @unique
   title       String
   motto       String?
   description String?
@@ -528,7 +530,9 @@ model EventDownload {
 }
 
 model Course {
-  id          String  @id @default(uuid())
+  id String @id @default(uuid())
+  /** URL identifier derived from the title and year; see Post.slug. */
+  slug        String? @unique
   title       String
   motto       String?
   description String

@@ -10,8 +10,8 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
-import { createPostSlug } from "../helpers/content-slug";
-import { isUuid } from "@/lib/slug";
+import { createPostSlug, updatePostSlug } from "../helpers/content-slug";
+import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 
 marked.use({
   gfm: true,
@@ -468,6 +468,8 @@ export const postsRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string().min(1).max(200),
+        /** Empty means "derive it from the title"; see createPostSlug. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         excerpt: z.string().max(500).optional(),
         content: z.string().min(1).max(50000),
         coverImageId: z.string().optional(),
@@ -509,7 +511,7 @@ export const postsRouter = createTRPCRouter({
       const post = await ctx.db.post.create({
         data: {
           ...input,
-          slug: await createPostSlug(ctx.db, input.title),
+          slug: await createPostSlug(ctx.db, input.title, input.slug),
           createdById: ctx.session.user.id,
           publishedAt:
             input.status === ContentStatus.APPROVED ? new Date() : null,
@@ -540,6 +542,8 @@ export const postsRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         title: z.string().min(1).max(200).optional(),
+        /** Only sent when the author deliberately renamed it; empty = leave as is. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         excerpt: z.string().max(500).optional(),
         content: z.string().max(50000).optional(),
         coverImageId: z.string().optional().nullable(),
@@ -554,7 +558,7 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, slug: requestedSlug, ...updateData } = input;
 
       const post = await ctx.db.post.findUnique({
         where: { id },
@@ -624,6 +628,11 @@ export const postsRouter = createTRPCRouter({
       }
 
       const finalData: Record<string, unknown> = { ...updateData };
+
+      // A blank field is "keep the current slug", not "clear it".
+      if (requestedSlug?.trim()) {
+        finalData.slug = await updatePostSlug(ctx.db, id, requestedSlug);
+      }
       if (
         updateData.status === ContentStatus.APPROVED &&
         post.status !== ContentStatus.APPROVED
