@@ -59,6 +59,7 @@ model User {
   conductedAuswahlChors AuswahlChor[]        @relation("AuswahlChorConductor")
 
   // Organization membership relations
+  bezirkPersons       BezirkPerson[]       @relation("BezirkPersonUser")
   teamMember          TeamMember?          @relation("TeamMemberUser")
   posaunenratMember   PosaunenratMember?   @relation("PosaunenratMemberUser")
   vorstandMember      VorstandMember?      @relation("VorstandMemberUser")
@@ -66,13 +67,13 @@ model User {
 
   lastLoginAt DateTime?
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  courseRegistrations CourseRegistration[]
-  savedParticipants   SavedParticipant[]   @relation("SavedParticipants")
-  pageViews           PageView[]           @relation("PageViewUser")
-  notifications       Notification[]       @relation("UserNotifications")
-  gameNoteSets        GameNoteSet[]        @relation("GameNoteSetCreator")
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  courseRegistrations  CourseRegistration[]
+  savedParticipants    SavedParticipant[]          @relation("SavedParticipants")
+  pageViews            PageView[]                  @relation("PageViewUser")
+  notifications        Notification[]              @relation("UserNotifications")
+  gameNoteSets         GameNoteSet[]               @relation("GameNoteSetCreator")
   customFieldTemplates CourseCustomFieldTemplate[] @relation("CustomFieldTemplateCreator")
 
   displayUsername String?
@@ -435,8 +436,10 @@ enum ContentStatus {
 // --------- Models ---------
 
 model Event {
-  id String @id @default(uuid())
-  /** URL identifier derived from the title and year; see Post.slug. */
+  id          String  @id @default(uuid())
+  /**
+   * URL identifier derived from the title and year; see Post.slug.
+   */
   slug        String? @unique
   title       String
   motto       String?
@@ -530,8 +533,10 @@ model EventDownload {
 }
 
 model Course {
-  id String @id @default(uuid())
-  /** URL identifier derived from the title and year; see Post.slug. */
+  id          String  @id @default(uuid())
+  /**
+   * URL identifier derived from the title and year; see Post.slug.
+   */
   slug        String? @unique
   title       String
   motto       String?
@@ -774,10 +779,10 @@ model CourseMail {
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   /// Sender is snapshotted as well: the entry stays readable after the user is deleted.
-  senderId    String?
-  sender      User?   @relation("CourseMailSender", fields: [senderId], references: [id], onDelete: SetNull)
-  senderName  String
-  senderEmail String
+  senderId     String?
+  sender       User?   @relation("CourseMailSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderName   String
+  senderEmail  String
   /// Where replies go. Defaults to the sender's address, editable when composing.
   replyToEmail String
 
@@ -847,7 +852,7 @@ model Invoice {
 
   /// Positionen: [{ description, detail, quantity, unitPrice }] — unitPrice darf
   /// negativ sein (Rabatte, Anzahlungen).
-  lineItems Json
+  lineItems   Json
   /// Summe der Positionen zum Zeitpunkt des letzten Speicherns.
   totalAmount Float @default(0)
 
@@ -957,7 +962,7 @@ model Location {
 }
 
 model Post {
-  id String @id @default(uuid())
+  id      String  @id @default(uuid())
   /**
    * URL identifier derived from the title. Nullable so the column could be
    * added without downtime; the detail route still resolves plain UUIDs and
@@ -1009,8 +1014,10 @@ model Post {
 }
 
 model Ensemble {
-  id String @id @default(uuid())
-  /** URL identifier derived from the name; see Post.slug. */
+  id          String  @id @default(uuid())
+  /**
+   * URL identifier derived from the name; see Post.slug.
+   */
   slug        String? @unique
   name        String
   description String?
@@ -1124,6 +1131,7 @@ model Bezirk {
 
   // Relations
   users                        User[]                       @relation("BezirkUsers")
+  people                       BezirkPerson[] // Obleute & Stellvertretung shown publicly
   events                       Event[] // Events in this district
   courses                      Course[] // Courses in this district
   posts                        Post[] // Posts for this district
@@ -1136,6 +1144,46 @@ model Bezirk {
   @@index([number])
 }
 
+/**
+ * Ein öffentlich gelistetes Bezirksamt (Obmann/Obfrau, Stellvertretung).
+ * Die Person kann, muss aber kein Benutzerkonto haben: ohne userId zählen die
+ * eigenen Felder, mit userId überschreiben gesetzte Felder die Nutzerdaten.
+ */
+model BezirkPerson {
+  id String @id @default(uuid())
+
+  bezirkId String
+  bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
+
+  // Optional link to a User account
+  userId String?
+  user   User?   @relation("BezirkPersonUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  // Custom person details
+  name    String?
+  email   String?
+  phone   String?
+  street  String?
+  zipCode String?
+  city    String?
+  bio     String? @db.Text
+
+  imageId String?
+  image   Media?  @relation("BezirkPersonImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Role label as shown publicly, e.g. "Bezirksobmann", "Stell. Bezirksobfrau"
+  roleName  String
+  sortOrder Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([bezirkId, userId])
+  @@index([bezirkId])
+  @@index([userId])
+  @@index([sortOrder])
+}
+
 model Posaunenwart {
   id String @id @default(uuid())
 
@@ -1143,10 +1191,13 @@ model Posaunenwart {
   userId String? @unique
   user   User?   @relation("PosaunenwartUser", fields: [userId], references: [id], onDelete: SetNull)
 
-  // Fallback fields when no user linked
-  name  String?
-  email String?
-  phone String?
+  // Custom person details. Used as-is when no user is linked, and as an
+  // override for the linked user's data when both are present.
+  name      String?
+  email     String?
+  phone     String?
+  bio       String? @db.Text
+  roleLabel String? // Badge text, e.g. "Landesposaunenwart"; falls back to roleType
 
   roleType  PosaunenwartRoleType
   sortOrder Int                  @default(0)
@@ -1186,16 +1237,26 @@ model PosaunenwartResponsibility {
 model TeamMember {
   id String @id @default(uuid())
 
-  // Team-specific info (name, email, phone, image come from User)
+  // Custom person details. Used as-is when no user is linked, and as an
+  // override for the linked user's data when both are present.
+  name  String?
+  email String?
+  phone String?
+  bio   String? @db.Text
+
+  imageId String? @unique
+  image   Media?  @relation("TeamMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  // Team-specific info
   role             String? // "Landesposaunenwart", "Geschäftsführer", etc.
   responsibilities Json? // JSON array of responsibilities
   socials          Json? // JSON array of social links
   contactType      ContactType?
   sortOrder        Int          @default(0)
 
-  // Required link to User (all team members must have accounts)
-  userId String @unique
-  user   User   @relation("TeamMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+  // Optional link to User (team members do not need an account)
+  userId String? @unique
+  user   User?   @relation("TeamMemberUser", fields: [userId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1232,9 +1293,12 @@ model VorstandMember {
 model PosaunenratMember {
   id String @id @default(uuid())
 
-  // These fields are ONLY used if there's no linked user
+  // Custom person details. Used as-is when no user is linked, and as an
+  // override for the linked user's data when both are present.
   name    String?
   email   String?
+  phone   String?
+  bio     String? @db.Text
   imageId String?
   image   Media?  @relation("PosaunenratMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
 
@@ -1256,10 +1320,12 @@ model PosaunenratMember {
 model FoerdervereinMember {
   id String @id @default(uuid())
 
-  // Fields only if not linked to user
+  // Custom person details. Used as-is when no user is linked, and as an
+  // override for the linked user's data when both are present.
   name    String?
   email   String?
   phone   String?
+  city    String?
   imageId String?
   image   Media?  @relation("FoerdervereinMemberImage", fields: [imageId], references: [id], onDelete: SetNull)
 
@@ -1416,6 +1482,8 @@ model Media {
   postsCover              Post[]                 @relation("PostCoverImage")
   ensembleImages          Ensemble[]             @relation("EnsembleImage")
   auswahlChorImages       AuswahlChor[]          @relation("AuswahlChorImage")
+  teamMemberImages        TeamMember[]           @relation("TeamMemberImage")
+  bezirkPersonImages      BezirkPerson[]         @relation("BezirkPersonImage")
   vorstandMemberImages    VorstandMember[]       @relation("VorstandMemberImage")
   posaunenratMemberImages PosaunenratMember[]    @relation("PosaunenratMemberImage")
   foerdervereinMemberImgs FoerdervereinMember[]  @relation("FoerdervereinMemberImage")

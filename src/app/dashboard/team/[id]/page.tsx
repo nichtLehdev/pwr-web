@@ -118,10 +118,10 @@ export default function TeamDetailPage() {
     );
   }
 
-  const displayName = member.user?.displayName || "Unbekannt";
-  const displayEmail = member.user?.email || "-";
-  const displayBio = member.user?.bio || null;
-  const imageUrl = member.user?.profileImage?.url;
+  const displayName = member.person.name || "Unbekannt";
+  const displayEmail = member.person.email || "-";
+  const displayBio = member.person.bio || null;
+  const imageUrl = member.person.image?.url;
 
   return (
     <DashboardPage
@@ -207,17 +207,33 @@ export default function TeamDetailPage() {
                 )}
               </dd>
             </div>
+            {member.person.phone && (
+              <div>
+                <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                  Telefon
+                </dt>
+                <dd className="dark:text-dark-text mt-1 text-gray-900">
+                  {member.person.phone}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                 Verknüpfter Benutzer
               </dt>
               <dd className="dark:text-dark-text mt-1 text-gray-900">
-                <Link
-                  href={`/dashboard/users/${member.userId}`}
-                  className="text-primary hover:underline"
-                >
-                  Benutzer anzeigen
-                </Link>
+                {member.userId ? (
+                  <Link
+                    href={`/dashboard/users/${member.userId}`}
+                    className="text-primary hover:underline"
+                  >
+                    Benutzer anzeigen
+                  </Link>
+                ) : (
+                  <span className="dark:text-dark-muted text-gray-500">
+                    Kein Benutzerkonto verknüpft
+                  </span>
+                )}
               </dd>
             </div>
           </dl>

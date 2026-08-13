@@ -9,10 +9,15 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { PosaunenwartRoleType } from "~/generated/prisma/enums";
-import { XIcon } from "lucide-react";
 
 const ROLE_OPTIONS: { value: PosaunenwartRoleType; label: string }[] = [
   { value: PosaunenwartRoleType.LPW, label: "Landesposaunenwart (LPW)" },
@@ -35,48 +40,17 @@ export default function NewPosaunenwartPage() {
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENWARTE,
   );
 
-  const { data: users } = api.users.list.useQuery(
-    { page: 1, limit: 100 },
-    { enabled: !!session?.user },
-  );
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [person, setPerson] = useState<PersonDetails>(emptyPersonDetails());
+  const [roleLabel, setRoleLabel] = useState("");
   const [roleType, setRoleType] = useState<PosaunenwartRoleType>(
     PosaunenwartRoleType.RPW,
   );
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userSearch, setUserSearch] = useState("");
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [userLabel, setUserLabel] = useState("");
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const filteredUsers = users?.users.filter((user) => {
-    if (!userSearch.trim()) return true;
-    const searchLower = userSearch.toLowerCase();
-    return (
-      user.displayName?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const handleUserSelect = (user: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  }) => {
-    setUserId(user.id);
-    setUserSearch(user.displayName || user.email);
-    setShowUserDropdown(false);
-  };
-
-  const handleClearUser = () => {
-    setUserId(null);
-    setUserSearch("");
-  };
 
   const utils = api.useUtils();
 
@@ -124,7 +98,7 @@ export default function NewPosaunenwartPage() {
     setError("");
     setIsSubmitting(true);
 
-    if (!userId && !name.trim()) {
+    if (!userId && !person.name.trim()) {
       setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
       setIsSubmitting(false);
       return;
@@ -132,9 +106,12 @@ export default function NewPosaunenwartPage() {
 
     createMutation.mutate({
       userId: userId || undefined,
-      name: name.trim() || undefined,
-      email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
+      name: person.name.trim() || undefined,
+      email: person.email.trim() || undefined,
+      phone: person.phone.trim() || undefined,
+      bio: person.bio.trim() || undefined,
+      imageId: person.imageId || undefined,
+      roleLabel: roleLabel.trim() || undefined,
       roleType,
       sortOrder,
     });
@@ -195,6 +172,23 @@ export default function NewPosaunenwartPage() {
           </div>
           <div className="mt-4">
             <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+              Bezeichnung
+            </label>
+            <input
+              type="text"
+              value={roleLabel}
+              onChange={(e) => setRoleLabel(e.target.value)}
+              placeholder="z.B. Landesposaunenwart"
+              maxLength={100}
+              className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
+            />
+            <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+              Erscheint als Badge auf der öffentlichen Seite. Leer lassen für
+              die Standardbezeichnung der gewählten Art.
+            </p>
+          </div>
+          <div className="mt-4">
+            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
               Reihenfolge
             </label>
             <input
@@ -210,132 +204,27 @@ export default function NewPosaunenwartPage() {
           </div>
         </section>
 
-        {/* User link (optional) */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Benutzer verknüpfen (optional)
-          </h2>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-            Ein bestehendes Benutzerkonto verknüpfen. Name, E-Mail und
-            Profilbild werden dann vom Benutzer übernommen.
-          </p>
-          <div className="relative">
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Benutzer suchen
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  if (!e.target.value) setUserId(null);
-                }}
-                onFocus={() => setShowUserDropdown(true)}
-                placeholder="Name oder E-Mail eingeben..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 focus:ring-1 focus:outline-none"
-              />
-              {userId && (
-                <button
-                  type="button"
-                  onClick={handleClearUser}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            {showUserDropdown && (
-              <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                {filteredUsers && filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => handleUserSelect(user)}
-                      className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <span className="dark:text-dark-text font-medium text-gray-900">
-                        {user.displayName || user.email}
-                      </span>
-                      {user.displayName && (
-                        <span className="text-gray-500 dark:text-gray-400">
-                          {" "}
-                          – {user.email}
-                        </span>
-                      )}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                    {userSearch
-                      ? "Keine Benutzer gefunden"
-                      : "Tippe, um Benutzer zu suchen"}
-                  </div>
-                )}
-              </div>
-            )}
-            {userId && (
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                ✓ Benutzer verknüpft
-              </p>
-            )}
-          </div>
-        </section>
+        <UserLinkField
+          userId={userId}
+          userLabel={userLabel}
+          onSelect={(user) => {
+            setUserId(user.id);
+            setUserLabel(user.displayName ?? user.email);
+          }}
+          onClear={() => {
+            setUserId(null);
+            setUserLabel("");
+          }}
+          description="Optional: Verknüpfe diesen Posaunenwart mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen."
+        />
 
-        {/* Manual contact (when no user) */}
-        {!userId && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Kontaktdaten
-            </h2>
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Diese Felder werden nur verwendet, wenn kein Benutzer verknüpft
-              ist.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Vollständiger Name"
-                  maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="email@example.com"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Telefon
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+49 123 456789"
-                  maxLength={50}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                />
-              </div>
-            </div>
-          </section>
-        )}
+        <PersonDetailsFields
+          value={person}
+          onChange={(patch) =>
+            setPerson((current) => ({ ...current, ...patch }))
+          }
+          hasLinkedUser={!!userId}
+        />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Link

@@ -112,10 +112,10 @@ export default function VorstandDetailPage() {
     );
   }
 
-  const displayName = member.user?.displayName || member.name || "Unbekannt";
-  const displayEmail = member.user?.email || member.email || "-";
-  const displayBio = member.user?.bio || member.description || null;
-  const imageUrl = member.image?.url || member.user?.profileImage?.url;
+  const displayName = member.person.name || "Unbekannt";
+  const displayEmail = member.person.email || "-";
+  const displayBio = member.description || member.person.bio || null;
+  const imageUrl = member.person.image?.url;
 
   return (
     <DashboardPage
@@ -208,7 +208,7 @@ export default function VorstandDetailPage() {
                 Telefon
               </dt>
               <dd className="dark:text-dark-text mt-1 text-gray-900">
-                {member.phone || "-"}
+                {member.person.phone || "-"}
               </dd>
             </div>
           </dl>

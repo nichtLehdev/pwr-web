@@ -10,26 +10,27 @@ import {
   FoerdervereinRole,
   PosaunenwartRoleType,
 } from "~/generated/prisma/client";
+import {
+  personUserSelect,
+  posaunenwartInclude,
+  bezirkPersonInclude,
+  toBezirkPerson,
+  toPosaunenwart,
+  teamMemberInclude,
+  toTeamMember,
+  withPerson,
+  parseResponsibilities,
+  parseSocials,
+} from "../helpers/people";
 
 export const organizationRouter = createTRPCRouter({
   getPosaunenrat: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.posaunenratMember.findMany({
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-          },
-        },
-      },
+      include: { image: true, user: { select: personUserSelect } },
       orderBy: { sortOrder: "asc" },
     });
 
-    return members;
+    return members.map(withPerson);
   }),
 
   getPosaunenratByRole: publicProcedure
@@ -48,40 +49,20 @@ export const organizationRouter = createTRPCRouter({
 
       const members = await ctx.db.posaunenratMember.findMany({
         where,
-        include: {
-          image: true,
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-        },
+        include: { image: true, user: { select: personUserSelect } },
         orderBy: { sortOrder: "asc" },
       });
 
-      return members;
+      return members.map(withPerson);
     }),
 
   getPosaunenratGrouped: publicProcedure.query(async ({ ctx }) => {
-    const members = await ctx.db.posaunenratMember.findMany({
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-          },
-        },
-      },
-      orderBy: { sortOrder: "asc" },
-    });
+    const members = (
+      await ctx.db.posaunenratMember.findMany({
+        include: { image: true, user: { select: personUserSelect } },
+        orderBy: { sortOrder: "asc" },
+      })
+    ).map(withPerson);
 
     const grouped = {
       landeskirchenmusikdirektor: members.filter(
@@ -101,18 +82,7 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const member = await ctx.db.posaunenratMember.findUnique({
         where: { id: input.id },
-        include: {
-          image: true,
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
 
       if (!member) {
@@ -122,7 +92,7 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      return member;
+      return withPerson(member);
     }),
 
   createPosaunenratMember: permissionProcedure(
@@ -130,8 +100,10 @@ export const organizationRouter = createTRPCRouter({
   )
     .input(
       z.object({
-        name: z.string().optional(),
-        email: z.string().email().optional(),
+        name: z.string().max(100).optional(),
+        email: z.email().optional(),
+        phone: z.string().max(50).optional(),
+        bio: z.string().max(2000).optional(),
         imageId: z.string().optional(),
         role: z.enum(PosaunenratRole),
         sortOrder: z.number().default(0),
@@ -139,13 +111,24 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return await ctx.db.posaunenratMember.create({
+      if (input.userId) {
+        const existing = await ctx.db.posaunenratMember.findUnique({
+          where: { userId: input.userId },
+        });
+        if (existing) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Dieser Benutzer ist bereits im Posaunenrat angelegt.",
+          });
+        }
+      }
+
+      const member = await ctx.db.posaunenratMember.create({
         data: input,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   updatePosaunenratMember: permissionProcedure(
@@ -154,8 +137,10 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional(),
-        email: z.email().optional(),
+        name: z.string().max(100).optional().nullable(),
+        email: z.email().optional().nullable(),
+        phone: z.string().max(50).optional().nullable(),
+        bio: z.string().max(2000).optional().nullable(),
         imageId: z.string().optional().nullable(),
         role: z.enum(PosaunenratRole).optional(),
         sortOrder: z.number().optional(),
@@ -165,14 +150,13 @@ export const organizationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      return await ctx.db.posaunenratMember.update({
+      const member = await ctx.db.posaunenratMember.update({
         where: { id },
         data: updateData,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   deletePosaunenratMember: permissionProcedure(
@@ -189,31 +173,11 @@ export const organizationRouter = createTRPCRouter({
 
   getTeam: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.teamMember.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-            districtRoleName: true,
-          },
-        },
-      },
+      include: teamMemberInclude,
       orderBy: { sortOrder: "asc" },
     });
 
-    return members.map((member) => ({
-      ...member,
-      user: member.user,
-      responsibilities: member.responsibilities
-        ? (member.responsibilities as string[])
-        : [],
-      socials: member.socials
-        ? (member.socials as { type: string; url: string; label?: string }[])
-        : [],
-    }));
+    return members.map(toTeamMember);
   }),
 
   getTeamByContactType: publicProcedure
@@ -221,71 +185,39 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const members = await ctx.db.teamMember.findMany({
         where: { contactType: input.contactType },
-        include: {
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-              districtRoleName: true,
-            },
-          },
-        },
+        include: teamMemberInclude,
         orderBy: { sortOrder: "asc" },
       });
 
-      return members.map((member) => ({
-        ...member,
-        user: member.user,
-        responsibilities: member.responsibilities
-          ? (member.responsibilities as string[])
-          : [],
-        socials: member.socials
-          ? (member.socials as { type: string; url: string; label?: string }[])
-          : [],
-      }));
+      return members.map(toTeamMember);
     }),
 
   getTeamGrouped: publicProcedure.query(async ({ ctx }) => {
-    const members = await ctx.db.teamMember.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-            districtRoleName: true,
-          },
-        },
-      },
-      orderBy: { sortOrder: "asc" },
-    });
-
-    const geschaeftsstelle = members
-      .filter((m) => m.contactType === "GESCHAEFTSSTELLE")
-      .map((m) => ({ ...m, user: m.user }));
-    const internetTeam = members
-      .filter((m) => m.contactType === "INTERNET_TEAM")
-      .map((m) => ({ ...m, user: m.user }));
-    const other = members
-      .filter((m) => !m.contactType)
-      .map((m) => ({ ...m, user: m.user }));
+    const members = (
+      await ctx.db.teamMember.findMany({
+        include: teamMemberInclude,
+        orderBy: { sortOrder: "asc" },
+      })
+    ).map(toTeamMember);
 
     return {
-      geschaeftsstelle,
-      internetTeam,
-      other,
+      geschaeftsstelle: members.filter(
+        (m) => m.contactType === "GESCHAEFTSSTELLE",
+      ),
+      internetTeam: members.filter((m) => m.contactType === "INTERNET_TEAM"),
+      other: members.filter((m) => !m.contactType),
     };
   }),
 
   createTeamMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_TEAM)
     .input(
       z.object({
-        userId: z.string(),
+        userId: z.string().optional(),
+        name: z.string().max(100).optional(),
+        email: z.email().optional(),
+        phone: z.string().max(50).optional(),
+        bio: z.string().max(2000).optional(),
+        imageId: z.string().optional(),
         role: z.string().max(100).optional(),
         responsibilities: z.string().max(1000).optional(),
         socials: z.string().max(500).optional(),
@@ -294,55 +226,56 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db.teamMember.findUnique({
-        where: { userId: input.userId },
-      });
-
-      if (existing) {
+      if (!input.userId && !input.name?.trim()) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "User already has a team member record",
+          message: "Bitte einen Benutzer verknüpfen oder einen Namen eingeben.",
         });
       }
 
-      const responsibilities = input.responsibilities
-        ? input.responsibilities
-            .split("\n")
-            .map((r) => r.trim())
-            .filter((r) => r.length > 0)
-        : undefined;
+      if (input.userId) {
+        const existing = await ctx.db.teamMember.findUnique({
+          where: { userId: input.userId },
+        });
 
-      const socials = input.socials ? JSON.parse(input.socials) : undefined;
+        if (existing) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "User already has a team member record",
+          });
+        }
+      }
 
       const member = await ctx.db.teamMember.create({
         data: {
           userId: input.userId,
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+          bio: input.bio,
+          imageId: input.imageId,
           role: input.role,
-          responsibilities,
-          socials,
+          responsibilities: parseResponsibilities(input.responsibilities),
+          socials: parseSocials(input.socials),
           contactType: input.contactType,
           sortOrder: input.sortOrder,
         },
-        include: {
-          user: true,
-        },
+        include: teamMemberInclude,
       });
 
-      return {
-        ...member,
-        responsibilities: member.responsibilities
-          ? (member.responsibilities as string[])
-          : [],
-        socials: member.socials
-          ? (member.socials as { type: string; url: string; label?: string }[])
-          : [],
-      };
+      return toTeamMember(member);
     }),
 
   updateTeamMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_TEAM)
     .input(
       z.object({
         id: z.string(),
+        userId: z.string().optional().nullable(),
+        name: z.string().max(100).optional().nullable(),
+        email: z.email().optional().nullable(),
+        phone: z.string().max(50).optional().nullable(),
+        bio: z.string().max(2000).optional().nullable(),
+        imageId: z.string().optional().nullable(),
         role: z.string().max(100).optional(),
         responsibilities: z.string().max(1000).optional(),
         socials: z.string().max(500).optional(),
@@ -358,36 +291,30 @@ export const organizationRouter = createTRPCRouter({
         ...rest
       } = input;
 
-      const responsibilities = responsibilitiesStr
-        ? responsibilitiesStr
-            .split("\n")
-            .map((r) => r.trim())
-            .filter((r) => r.length > 0)
-        : undefined;
+      if (input.userId) {
+        const existing = await ctx.db.teamMember.findUnique({
+          where: { userId: input.userId },
+        });
 
-      const socials = socialsStr ? JSON.parse(socialsStr) : undefined;
+        if (existing && existing.id !== id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "User already has a team member record",
+          });
+        }
+      }
 
       const member = await ctx.db.teamMember.update({
         where: { id },
         data: {
           ...rest,
-          responsibilities,
-          socials,
+          responsibilities: parseResponsibilities(responsibilitiesStr),
+          socials: parseSocials(socialsStr),
         },
-        include: {
-          user: true,
-        },
+        include: teamMemberInclude,
       });
 
-      return {
-        ...member,
-        responsibilities: member.responsibilities
-          ? (member.responsibilities as string[])
-          : [],
-        socials: member.socials
-          ? (member.socials as { type: string; url: string; label?: string }[])
-          : [],
-      };
+      return toTeamMember(member);
     }),
 
   getTeamMember: publicProcedure
@@ -395,18 +322,7 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const member = await ctx.db.teamMember.findUnique({
         where: { id: input.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-              districtRoleName: true,
-            },
-          },
-        },
+        include: teamMemberInclude,
       });
 
       if (!member) {
@@ -416,16 +332,7 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      return {
-        ...member,
-        user: member.user,
-        responsibilities: member.responsibilities
-          ? (member.responsibilities as string[])
-          : [],
-        socials: member.socials
-          ? (member.socials as { type: string; url: string; label?: string }[])
-          : [],
-      };
+      return toTeamMember(member);
     }),
 
   deleteTeamMember: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_TEAM)
@@ -440,48 +347,11 @@ export const organizationRouter = createTRPCRouter({
 
   getVorstand: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.vorstandMember.findMany({
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-            phone: true,
-            preferences: true,
-          },
-        },
-      },
+      include: { image: true, user: { select: personUserSelect } },
       orderBy: { sortOrder: "asc" },
     });
 
-    const { maskUserContact } = await import("@/lib/mask-user-contact");
-
-    return members.map((member) => {
-      const masked = member.user
-        ? maskUserContact(member.user)
-        : { phone: null };
-      return {
-        ...member,
-        user: member.user
-          ? {
-              ...member.user,
-              phone: masked.phone ?? undefined,
-              displayName:
-                member.user.displayName ||
-                `${member.user.firstName || ""} ${member.user.lastName || ""}`.trim(),
-              firstName: undefined,
-              lastName: undefined,
-              preferences: undefined,
-            }
-          : null,
-        image: member.image ? member.image : member.user?.profileImage || null,
-      };
-    });
+    return members.map(withPerson);
   }),
 
   getVorstandMember: publicProcedure
@@ -489,18 +359,7 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const member = await ctx.db.vorstandMember.findUnique({
         where: { id: input.id },
-        include: {
-          image: true,
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
 
       if (!member) {
@@ -510,7 +369,7 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      return member;
+      return withPerson(member);
     }),
 
   createVorstandMember: permissionProcedure(
@@ -520,11 +379,7 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        phone: z.string().max(50).optional(),
         position: z.string().min(1).max(100),
         description: z.string().max(1000).optional(),
         color: z.string().optional(),
@@ -534,6 +389,13 @@ export const organizationRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (!input.userId && !input.name?.trim()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bitte einen Benutzer verknüpfen oder einen Namen eingeben.",
+        });
+      }
+
       if (input.userId) {
         const existing = await ctx.db.vorstandMember.findUnique({
           where: { userId: input.userId },
@@ -547,13 +409,12 @@ export const organizationRouter = createTRPCRouter({
         }
       }
 
-      return await ctx.db.vorstandMember.create({
+      const member = await ctx.db.vorstandMember.create({
         data: input,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   updateVorstandMember: permissionProcedure(
@@ -562,16 +423,12 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().max(100).optional(),
-        email: z.email().optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        name: z.string().max(100).optional().nullable(),
+        email: z.email().optional().nullable(),
+        phone: z.string().max(50).optional().nullable(),
         position: z.string().max(100).optional(),
-        description: z.string().max(1000).optional(),
-        color: z.string().optional(),
+        description: z.string().max(1000).optional().nullable(),
+        color: z.string().optional().nullable(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
         imageId: z.string().optional().nullable(),
@@ -580,14 +437,26 @@ export const organizationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      return await ctx.db.vorstandMember.update({
+      if (input.userId) {
+        const existing = await ctx.db.vorstandMember.findUnique({
+          where: { userId: input.userId },
+        });
+
+        if (existing && existing.id !== id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "User already has a vorstand member record",
+          });
+        }
+      }
+
+      const member = await ctx.db.vorstandMember.update({
         where: { id },
         data: updateData,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   deleteVorstandMember: permissionProcedure(
@@ -604,34 +473,11 @@ export const organizationRouter = createTRPCRouter({
 
   getFoerderverein: publicProcedure.query(async ({ ctx }) => {
     const members = await ctx.db.foerdervereinMember.findMany({
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-            city: true,
-            preferences: true,
-          },
-        },
-      },
+      include: { image: true, user: { select: personUserSelect } },
       orderBy: { sortOrder: "asc" },
     });
 
-    const { maskUserContact } = await import("@/lib/mask-user-contact");
-    return members.map((member) => ({
-      ...member,
-      user: member.user
-        ? {
-            ...member.user,
-            city: maskUserContact(member.user).city ?? undefined,
-            preferences: undefined,
-          }
-        : null,
-    }));
+    return members.map(withPerson);
   }),
 
   getFoerdervereinBoard: publicProcedure.query(async ({ ctx }) => {
@@ -647,34 +493,11 @@ export const organizationRouter = createTRPCRouter({
           ],
         },
       },
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-            city: true,
-            preferences: true,
-          },
-        },
-      },
+      include: { image: true, user: { select: personUserSelect } },
       orderBy: { sortOrder: "asc" },
     });
 
-    const { maskUserContact } = await import("@/lib/mask-user-contact");
-    return members.map((member) => ({
-      ...member,
-      user: member.user
-        ? {
-            ...member.user,
-            city: maskUserContact(member.user).city ?? undefined,
-            preferences: undefined,
-          }
-        : null,
-    }));
+    return members.map(withPerson);
   }),
 
   getFoerdervereinByRole: publicProcedure
@@ -693,54 +516,33 @@ export const organizationRouter = createTRPCRouter({
 
       const members = await ctx.db.foerdervereinMember.findMany({
         where,
-        include: {
-          image: true,
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-        },
+        include: { image: true, user: { select: personUserSelect } },
         orderBy: { sortOrder: "asc" },
       });
 
-      return members;
+      return members.map(withPerson);
     }),
 
   getFoerdervereinGrouped: publicProcedure.query(async ({ ctx }) => {
-    const members = await ctx.db.foerdervereinMember.findMany({
-      include: {
-        image: true,
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            profileImage: true,
-            bio: true,
-          },
-        },
-      },
-      orderBy: { sortOrder: "asc" },
-    });
+    const members = (
+      await ctx.db.foerdervereinMember.findMany({
+        include: { image: true, user: { select: personUserSelect } },
+        orderBy: { sortOrder: "asc" },
+      })
+    ).map(withPerson);
 
-    const grouped = {
-      leadership: members.filter(
-        (m) =>
-          m.role === "VORSITZENDER" ||
-          m.role === "STELLVERTRETER" ||
-          m.role === "SCHATZMEISTER" ||
-          m.role === "SCHRIFTFUEHRER",
+    return {
+      vorstand: members.filter((m) =>
+        [
+          "VORSITZENDER",
+          "STELLVERTRETER",
+          "SCHATZMEISTER",
+          "SCHRIFTFUEHRER",
+        ].includes(m.role),
       ),
       beisitzer: members.filter((m) => m.role === "BEISITZER"),
       mitglieder: members.filter((m) => m.role === "MITGLIED"),
     };
-
-    return grouped;
   }),
 
   getFoerdervereinMember: publicProcedure
@@ -748,18 +550,7 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const member = await ctx.db.foerdervereinMember.findUnique({
         where: { id: input.id },
-        include: {
-          image: true,
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              profileImage: true,
-              bio: true,
-            },
-          },
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
 
       if (!member) {
@@ -769,7 +560,7 @@ export const organizationRouter = createTRPCRouter({
         });
       }
 
-      return member;
+      return withPerson(member);
     }),
 
   createFoerdervereinMember: permissionProcedure(
@@ -777,14 +568,11 @@ export const organizationRouter = createTRPCRouter({
   )
     .input(
       z.object({
-        name: z.string().optional(),
+        name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
-        position: z.string().optional(),
+        phone: z.string().max(50).optional(),
+        city: z.string().max(100).optional(),
+        position: z.string().max(100).optional(),
         role: z.enum(FoerdervereinRole).default("MITGLIED"),
         memberSince: z
           .date()
@@ -792,13 +580,20 @@ export const organizationRouter = createTRPCRouter({
             message: "Datum kann nicht in der Zukunft liegen",
           })
           .optional(),
-        description: z.string().optional(),
+        description: z.string().max(1000).optional(),
         sortOrder: z.number().default(0),
         userId: z.string().optional(),
         imageId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (!input.userId && !input.name?.trim()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bitte einen Benutzer verknüpfen oder einen Namen eingeben.",
+        });
+      }
+
       if (input.userId) {
         const existing = await ctx.db.foerdervereinMember.findUnique({
           where: { userId: input.userId },
@@ -812,13 +607,12 @@ export const organizationRouter = createTRPCRouter({
         }
       }
 
-      return await ctx.db.foerdervereinMember.create({
+      const member = await ctx.db.foerdervereinMember.create({
         data: input,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   updateFoerdervereinMember: permissionProcedure(
@@ -827,15 +621,11 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        name: z.string().optional().nullable(),
+        name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\\s./0-9]*$/)
-          .optional()
-          .nullable(),
-        position: z.string().optional().nullable(),
+        phone: z.string().max(50).optional().nullable(),
+        city: z.string().max(100).optional().nullable(),
+        position: z.string().max(100).optional().nullable(),
         role: z.enum(FoerdervereinRole).optional(),
         memberSince: z
           .date()
@@ -844,7 +634,7 @@ export const organizationRouter = createTRPCRouter({
           })
           .optional()
           .nullable(),
-        description: z.string().optional().nullable(),
+        description: z.string().max(1000).optional().nullable(),
         sortOrder: z.number().optional(),
         userId: z.string().optional().nullable(),
         imageId: z.string().optional().nullable(),
@@ -853,14 +643,26 @@ export const organizationRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { id, ...updateData } = input;
 
-      return await ctx.db.foerdervereinMember.update({
+      if (input.userId) {
+        const existing = await ctx.db.foerdervereinMember.findUnique({
+          where: { userId: input.userId },
+        });
+
+        if (existing && existing.id !== id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "User already has a förderverein member record",
+          });
+        }
+      }
+
+      const member = await ctx.db.foerdervereinMember.update({
         where: { id },
         data: updateData,
-        include: {
-          image: true,
-          user: true,
-        },
+        include: { image: true, user: { select: personUserSelect } },
       });
+
+      return withPerson(member);
     }),
 
   deleteFoerdervereinMember: permissionProcedure(
@@ -880,25 +682,7 @@ export const organizationRouter = createTRPCRouter({
    */
   getPosaunenwarte: publicProcedure.query(async ({ ctx }) => {
     const list = await ctx.db.posaunenwart.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-            phone: true,
-            preferences: true,
-            districtRoleName: true,
-            bio: true,
-            profileImage: true,
-          },
-        },
-        image: true,
-        responsibilities: {
-          include: { bezirk: true },
-          orderBy: { bezirk: { number: "asc" } },
-        },
-      },
+      include: posaunenwartInclude,
       orderBy: [
         { roleType: "asc" },
         { sortOrder: "asc" },
@@ -906,33 +690,7 @@ export const organizationRouter = createTRPCRouter({
       ],
     });
 
-    const { maskUserContact } = await import("@/lib/mask-user-contact");
-
-    return list.map((p) => {
-      const name = p.user?.displayName ?? p.name ?? null;
-      const email = p.user?.email ?? p.email ?? "";
-      const masked = p.user ? maskUserContact(p.user) : { phone: null };
-      return {
-        id: p.id,
-        name,
-        email,
-        role: p.roleType,
-        phone: p.user ? (masked.phone ?? null) : (p.phone ?? null),
-        districtRoleName: p.user?.districtRoleName ?? null,
-        bio: p.user?.bio ?? null,
-        profileImage: p.image ?? p.user?.profileImage ?? null,
-        userId: p.userId,
-        sortOrder: p.sortOrder,
-        bezirke: p.responsibilities.map((r) => ({
-          id: r.bezirk.id,
-          number: r.bezirk.number,
-          name: r.bezirk.name,
-          shortName: r.bezirk.shortName,
-          notes: r.notes,
-          priority: r.priority,
-        })),
-      };
-    });
+    return list.map(toPosaunenwart);
   }),
 
   /**
@@ -943,25 +701,7 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const pw = await ctx.db.posaunenwart.findUnique({
         where: { id: input.id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              displayName: true,
-              email: true,
-              phone: true,
-              preferences: true,
-              districtRoleName: true,
-              bio: true,
-              profileImage: true,
-            },
-          },
-          image: true,
-          responsibilities: {
-            include: { bezirk: true },
-            orderBy: { bezirk: { number: "asc" } },
-          },
-        },
+        include: posaunenwartInclude,
       });
       if (!pw) {
         throw new TRPCError({
@@ -969,34 +709,17 @@ export const organizationRouter = createTRPCRouter({
           message: "Posaunenwart nicht gefunden",
         });
       }
-      const { maskUserContact } = await import("@/lib/mask-user-contact");
-      const masked = pw.user ? maskUserContact(pw.user) : { phone: null };
-      const name = pw.user?.displayName ?? pw.name ?? null;
-      const email = pw.user?.email ?? pw.email ?? "";
+
       return {
-        id: pw.id,
-        name,
-        email,
-        role: pw.roleType,
-        phone: pw.user ? (masked.phone ?? null) : (pw.phone ?? null),
-        districtRoleName: pw.user?.districtRoleName ?? null,
-        bio: pw.user?.bio ?? null,
-        profileImage: pw.image ?? pw.user?.profileImage ?? null,
-        userId: pw.userId,
-        sortOrder: pw.sortOrder,
+        ...toPosaunenwart(pw),
         imageId: pw.imageId,
         imageUrl: pw.image?.url ?? null,
+        // Rohwerte für das Formular: was am Datensatz steht, nicht das Ergebnis
+        // der Auflösung gegen den verknüpften Benutzer.
         storedName: pw.name,
         storedEmail: pw.email,
         storedPhone: pw.phone,
-        bezirke: pw.responsibilities.map((r) => ({
-          id: r.bezirk.id,
-          number: r.bezirk.number,
-          name: r.bezirk.name,
-          shortName: r.bezirk.shortName,
-          notes: r.notes,
-          priority: r.priority,
-        })),
+        storedBio: pw.bio,
       };
     }),
 
@@ -1012,47 +735,11 @@ export const organizationRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const list = await ctx.db.posaunenwart.findMany({
         where: { roleType: input.role },
-        include: {
-          user: {
-            select: {
-              displayName: true,
-              email: true,
-              phone: true,
-              districtRoleName: true,
-              bio: true,
-              profileImage: true,
-            },
-          },
-          image: true,
-          responsibilities: {
-            include: { bezirk: true },
-            orderBy: { bezirk: { number: "asc" } },
-          },
-        },
+        include: posaunenwartInclude,
         orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       });
 
-      return list.map((p) => {
-        const name = p.user?.displayName ?? p.name ?? null;
-        const email = p.user?.email ?? p.email ?? "";
-        return {
-          id: p.id,
-          name,
-          email,
-          role: p.roleType,
-          phone: p.user?.phone ?? p.phone ?? null,
-          districtRoleName: p.user?.districtRoleName ?? null,
-          bio: p.user?.bio ?? null,
-          profileImage: p.image ?? p.user?.profileImage ?? null,
-          bezirke: p.responsibilities.map((r) => ({
-            id: r.bezirk.id,
-            number: r.bezirk.number,
-            name: r.bezirk.name,
-            shortName: r.bezirk.shortName,
-            notes: r.notes,
-          })),
-        };
-      });
+      return list.map(toPosaunenwart);
     }),
 
   /**
@@ -1089,35 +776,16 @@ export const organizationRouter = createTRPCRouter({
       const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
         {
           where: { bezirkId: bezirk.id },
-          include: {
-            posaunenwart: {
-              include: {
-                user: { include: { profileImage: true } },
-                image: true,
-              },
-            },
-          },
+          include: { posaunenwart: { include: posaunenwartInclude } },
           orderBy: { priority: "asc" },
         },
       );
 
-      const posaunenwarte = responsibilities.map((r) => {
-        const p = r.posaunenwart;
-        const name = p.user?.displayName ?? p.name ?? null;
-        const email = p.user?.email ?? p.email ?? "";
-        return {
-          id: p.id,
-          name,
-          email,
-          role: p.roleType,
-          phone: p.user?.phone ?? p.phone ?? null,
-          districtRoleName: p.user?.districtRoleName ?? null,
-          bio: p.user?.bio ?? null,
-          profileImage: p.image ?? p.user?.profileImage ?? null,
-          notes: r.notes,
-          priority: r.priority,
-        };
-      });
+      const posaunenwarte = responsibilities.map((r) => ({
+        ...toPosaunenwart(r.posaunenwart),
+        notes: r.notes,
+        priority: r.priority,
+      }));
 
       return { bezirk, posaunenwarte };
     }),
@@ -1146,34 +814,20 @@ export const organizationRouter = createTRPCRouter({
       const responsibilities = await ctx.db.posaunenwartResponsibility.findMany(
         {
           where: { bezirkId: bezirk.id },
-          include: {
-            posaunenwart: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    displayName: true,
-                    email: true,
-                    districtRoleName: true,
-                    profileImage: { select: { url: true, alt: true } },
-                  },
-                },
-              },
-            },
-          },
+          include: { posaunenwart: { include: posaunenwartInclude } },
           orderBy: { priority: "asc" },
         },
       );
 
       const toContact = (r: (typeof responsibilities)[0]) => {
-        const p = r.posaunenwart;
+        const pw = toPosaunenwart(r.posaunenwart);
         return {
-          id: p.user?.id ?? p.id,
-          displayName: p.user?.displayName ?? p.name ?? null,
-          email: p.user?.email ?? p.email ?? null,
-          districtRoleName: p.user?.districtRoleName ?? null,
-          profileImage: p.user?.profileImage
-            ? { url: p.user.profileImage.url, alt: p.user.profileImage.alt }
+          id: pw.userId ?? pw.id,
+          displayName: pw.name,
+          email: pw.email,
+          districtRoleName: pw.districtRoleName,
+          profileImage: pw.profileImage
+            ? { url: pw.profileImage.url, alt: pw.profileImage.alt }
             : null,
         };
       };
@@ -1187,19 +841,16 @@ export const organizationRouter = createTRPCRouter({
       const lpw = lpwResp ? toContact(lpwResp) : undefined;
       const rpw = rpwResp ? toContact(rpwResp) : undefined;
 
-      const obmann = await ctx.db.user.findFirst({
-        where: {
-          bezirkId: bezirk.id,
-          districtRoleName: { not: null },
-        },
-        select: {
-          id: true,
-          displayName: true,
-          email: true,
-          districtRoleName: true,
-          profileImage: { select: { url: true, alt: true } },
-        },
+      // Obleute liegen als BezirkPerson vor (mit oder ohne Benutzerkonto).
+      const obleute = await ctx.db.bezirkPerson.findMany({
+        where: { bezirkId: bezirk.id },
+        include: bezirkPersonInclude,
+        orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
       });
+      const obmannRecord = obleute.find(
+        (o) => !o.roleName.toLowerCase().includes("stell"),
+      );
+      const obmann = obmannRecord ? toBezirkPerson(obmannRecord) : null;
 
       return {
         bezirk: {
@@ -1209,7 +860,17 @@ export const organizationRouter = createTRPCRouter({
         },
         lpw,
         rpw,
-        obmann,
+        obmann: obmann
+          ? {
+              id: obmann.userId ?? obmann.id,
+              displayName: obmann.name,
+              email: obmann.email,
+              districtRoleName: obmann.roleName,
+              profileImage: obmann.image
+                ? { url: obmann.image.url, alt: obmann.image.alt }
+                : null,
+            }
+          : null,
       };
     }),
 
@@ -1218,47 +879,23 @@ export const organizationRouter = createTRPCRouter({
    */
   getPosaunenwarteHierarchy: publicProcedure.query(async ({ ctx }) => {
     const list = await ctx.db.posaunenwart.findMany({
-      include: {
-        user: {
-          select: {
-            displayName: true,
-            email: true,
-            phone: true,
-            districtRoleName: true,
-            bio: true,
-            profileImage: true,
-          },
-        },
-        image: true,
-        responsibilities: {
-          include: { bezirk: true },
-          orderBy: { bezirk: { number: "asc" } },
-        },
-      },
+      include: posaunenwartInclude,
       orderBy: [{ roleType: "asc" }, { sortOrder: "asc" }],
     });
 
-    const toItem = (p: (typeof list)[0]) => ({
-      id: p.id,
-      name: p.user?.displayName ?? p.name ?? null,
-      email: p.user?.email ?? p.email ?? null,
-      phone: p.user?.phone ?? p.phone ?? null,
-      districtRoleName: p.user?.districtRoleName ?? null,
-      bio: p.user?.bio ?? null,
-      profileImage: p.image ?? p.user?.profileImage ?? null,
-      bezirke: p.responsibilities.map((r) => r.bezirk),
-    });
+    const byName = (a: { name: string | null }, b: { name: string | null }) =>
+      (a.name ?? "").localeCompare(b.name ?? "");
 
-    const lpw = list
-      .filter((p) => p.roleType === "LPW")
-      .map(toItem)
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-    const rpw = list
-      .filter((p) => p.roleType === "RPW")
-      .map(toItem)
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-
-    return { lpw, rpw };
+    return {
+      lpw: list
+        .filter((p) => p.roleType === "LPW")
+        .map(toPosaunenwart)
+        .sort(byName),
+      rpw: list
+        .filter((p) => p.roleType === "RPW")
+        .map(toPosaunenwart)
+        .sort(byName),
+    };
   }),
 
   /**
@@ -1298,15 +935,24 @@ export const organizationRouter = createTRPCRouter({
     .input(
       z.object({
         userId: z.string().optional(),
-        name: z.string().optional(),
-        email: z.string().email().optional(),
-        phone: z.string().optional(),
-        roleType: z.nativeEnum(PosaunenwartRoleType),
+        name: z.string().max(100).optional(),
+        email: z.email().optional(),
+        phone: z.string().max(50).optional(),
+        bio: z.string().max(2000).optional(),
+        roleLabel: z.string().max(100).optional(),
+        roleType: z.enum(PosaunenwartRoleType),
         sortOrder: z.number().default(0),
         imageId: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (!input.userId && !input.name?.trim()) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bitte einen Benutzer verknüpfen oder einen Namen eingeben.",
+        });
+      }
+
       if (input.userId) {
         const existing = await ctx.db.posaunenwart.findUnique({
           where: { userId: input.userId },
@@ -1318,22 +964,13 @@ export const organizationRouter = createTRPCRouter({
           });
         }
       }
-      return await ctx.db.posaunenwart.create({
-        data: {
-          userId: input.userId,
-          name: input.name,
-          email: input.email,
-          phone: input.phone,
-          roleType: input.roleType,
-          sortOrder: input.sortOrder,
-          imageId: input.imageId,
-        },
-        include: {
-          user: true,
-          image: true,
-          responsibilities: { include: { bezirk: true } },
-        },
+
+      const pw = await ctx.db.posaunenwart.create({
+        data: input,
+        include: posaunenwartInclude,
       });
+
+      return toPosaunenwart(pw);
     }),
 
   updatePosaunenwart: permissionProcedure(
@@ -1343,25 +980,38 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         userId: z.string().optional().nullable(),
-        name: z.string().optional(),
-        email: z.string().email().optional().nullable(),
-        phone: z.string().optional().nullable(),
-        roleType: z.nativeEnum(PosaunenwartRoleType).optional(),
+        name: z.string().max(100).optional().nullable(),
+        email: z.email().optional().nullable(),
+        phone: z.string().max(50).optional().nullable(),
+        bio: z.string().max(2000).optional().nullable(),
+        roleLabel: z.string().max(100).optional().nullable(),
+        roleType: z.enum(PosaunenwartRoleType).optional(),
         sortOrder: z.number().optional(),
         imageId: z.string().optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      return await ctx.db.posaunenwart.update({
+
+      if (input.userId) {
+        const existing = await ctx.db.posaunenwart.findUnique({
+          where: { userId: input.userId },
+        });
+        if (existing && existing.id !== id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Dieser Benutzer ist bereits als Posaunenwart angelegt.",
+          });
+        }
+      }
+
+      const pw = await ctx.db.posaunenwart.update({
         where: { id },
         data,
-        include: {
-          user: true,
-          image: true,
-          responsibilities: { include: { bezirk: true } },
-        },
+        include: posaunenwartInclude,
       });
+
+      return toPosaunenwart(pw);
     }),
 
   deletePosaunenwart: permissionProcedure(
