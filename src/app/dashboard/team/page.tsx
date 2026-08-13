@@ -195,9 +195,9 @@ export default function DashboardTeamPage() {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {teamMembers.map((member, index) => {
-                  const displayName = member.user?.displayName || "Unbekannt";
-                  const displayEmail = member.user?.email || "-";
-                  const imageUrl = member.user?.profileImage?.url;
+                  const displayName = member.person.name || "Unbekannt";
+                  const displayEmail = member.person.email || "-";
+                  const imageUrl = member.person.image?.url;
 
                   return (
                     <tr
@@ -229,6 +229,11 @@ export default function DashboardTeamPage() {
                             >
                               {displayName}
                             </Link>
+                            {!member.userId && (
+                              <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                                ohne Konto
+                              </span>
+                            )}
                             <p className="dark:text-dark-muted text-sm text-gray-500">
                               {displayEmail}
                             </p>

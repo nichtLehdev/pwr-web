@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { useSession } from "@/lib/auth";
-import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
@@ -17,15 +15,12 @@ import {
   MusicIcon,
   EyeIcon,
   PencilIcon,
-  TrashIcon,
 } from "lucide-react";
 
 export default function DashboardBezirkePage() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const toast = useToast();
   const hasRedirected = useRef(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -37,23 +32,8 @@ export default function DashboardBezirkePage() {
     PERMISSIONS.ORGANIZATION_MANAGE_BEZIRKE,
   );
 
-  const {
-    data: bezirke,
-    isLoading: bezirkeLoading,
-    refetch,
-  } = api.bezirke.getAll.useQuery();
-
-  const deleteMutation = api.bezirke.delete.useMutation({
-    onSuccess: () => {
-      void refetch();
-      setDeletingId(null);
-      toast.success("Bezirk erfolgreich gelöscht");
-    },
-    onError: (error) => {
-      setDeletingId(null);
-      toast.error("Fehler beim Löschen: " + error.message);
-    },
-  });
+  const { data: bezirke, isLoading: bezirkeLoading } =
+    api.bezirke.getAll.useQuery();
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -74,18 +54,6 @@ export default function DashboardBezirkePage() {
       router.push("/dashboard");
     }
   }, [profile, profileLoading, permissionsLoading, canManageBezirke, router]);
-
-  const handleDelete = async (id: string) => {
-    if (
-      !confirm(
-        "Möchtest du diesen Bezirk wirklich löschen? Alle zugehörigen Verknüpfungen werden entfernt.",
-      )
-    ) {
-      return;
-    }
-    setDeletingId(id);
-    deleteMutation.mutate({ id });
-  };
 
   if (isPending || profileLoading || bezirkeLoading) {
     return (
@@ -175,18 +143,16 @@ export default function DashboardBezirkePage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
-                        {bezirk.users && bezirk.users.length > 0 ? (
-                          bezirk.users.slice(0, 2).map((user) => (
+                        {bezirk.obleute.length > 0 ? (
+                          bezirk.obleute.slice(0, 2).map((person) => (
                             <span
-                              key={user.id}
+                              key={person.id}
                               className="dark:text-dark-muted text-sm text-gray-600"
                             >
-                              {user.displayName}
-                              {user.districtRoleName && (
-                                <span className="ml-1 text-xs text-gray-400">
-                                  ({user.districtRoleName})
-                                </span>
-                              )}
+                              {person.name}
+                              <span className="ml-1 text-xs text-gray-400">
+                                ({person.roleName})
+                              </span>
                             </span>
                           ))
                         ) : (
@@ -194,9 +160,9 @@ export default function DashboardBezirkePage() {
                             Keine Obleute zugewiesen
                           </span>
                         )}
-                        {bezirk.users && bezirk.users.length > 2 && (
+                        {bezirk.obleute.length > 2 && (
                           <span className="text-xs text-gray-400">
-                            +{bezirk.users.length - 2} weitere
+                            +{bezirk.obleute.length - 2} weitere
                           </span>
                         )}
                       </div>
@@ -261,22 +227,10 @@ export default function DashboardBezirkePage() {
                         <Link
                           href={`/dashboard/bezirke/${bezirk.id}/edit`}
                           className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                          title="Bearbeiten"
+                          title="Obleute bearbeiten"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </Link>
-                        <button
-                          onClick={() => handleDelete(bezirk.id)}
-                          disabled={deletingId === bezirk.id}
-                          className="rounded p-1.5 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                          title="Löschen"
-                        >
-                          {deletingId === bezirk.id ? (
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-                          ) : (
-                            <TrashIcon className="h-4 w-4" />
-                          )}
-                        </button>
                       </div>
                     </td>
                   </tr>

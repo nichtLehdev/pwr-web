@@ -61,109 +61,57 @@ export default async function VorstandPage() {
 
           <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {vorstandMembers.map((member, index) => (
-              <div key={index}>
-                {member.user && (
-                  <article className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl">
-                    <div className={`h-64 ${member.color} relative`}>
-                      <Image
-                        src={
-                          member.user.profileImage?.url ||
-                          "/images/profile-placeholder.jpg"
-                        }
-                        alt={
-                          member.user.profileImage?.alt ||
-                          member.user.displayName ||
-                          "Vorstandsmitglied"
-                        }
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+              <article
+                key={index}
+                className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+              >
+                <div className={`h-64 ${member.color} relative`}>
+                  <Image
+                    src={
+                      member.person.image?.url ||
+                      "/images/profile-placeholder.jpg"
+                    }
+                    alt={
+                      member.person.image?.alt ||
+                      member.person.name ||
+                      "Vorstandsmitglied"
+                    }
+                    fill
+                    className="object-cover"
+                  />
+                </div>
 
-                    {/* Content */}
-                    <div className="flex flex-1 flex-col p-6">
-                      <h3 className="text-dark mb-1 text-2xl font-bold">
-                        {member.user.displayName}
-                      </h3>
-                      <p className="text-primary mb-3 text-sm font-semibold">
-                        {member.position}
-                      </p>
-                      {/* Kontakt Info */}
-                      <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
-                        <Link
-                          href={`mailto:${member.user.email}`}
-                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <MailIcon className="mr-2 h-4 w-4 shrink-0" />
-                          E-Mail senden
-                        </Link>
-                        {(member.user.phone || member.phone) && (
-                          <Link
-                            href={`tel:${(
-                              (member.user?.phone || member.phone) ??
-                              ""
-                            ).replace(/[^0-9+]/g, "")}`}
-                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                          >
-                            <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
-                            {member.user.phone || member.phone}
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                )}
-                {!member.user && (
-                  <article
-                    key={index}
-                    className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
-                  >
-                    <div className={`h-64 ${member.color} relative`}>
-                      <Image
-                        src={
-                          member.image?.url || "/images/profile-placeholder.jpg"
-                        }
-                        alt={
-                          member.image?.alt ||
-                          member.name ||
-                          "Vorstandsmitglied"
-                        }
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-1 flex-col p-6">
-                      <h3 className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
-                        {member.name}
-                      </h3>
-                      <p className="text-primary mb-3 text-sm font-semibold">
-                        {member.position}
-                      </p>
-                      {/* Kontakt Info */}
-                      <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
-                        <Link
-                          href={`mailto:${member.email}`}
-                          className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                        >
-                          <MailIcon className="mr-2 h-4 w-4 shrink-0" />
-                          E-Mail senden
-                        </Link>
-                        {member.phone && (
-                          <Link
-                            href={`tel:${member.phone.replace(/[^0-9+]/g, "")}`}
-                            className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                          >
-                            <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
-                            {member.phone}
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                )}
-              </div>
+                {/* Content */}
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
+                    {member.person.name}
+                  </h3>
+                  <p className="text-primary mb-3 text-sm font-semibold">
+                    {member.position}
+                  </p>
+                  {/* Kontakt Info */}
+                  <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
+                    {member.person.email && (
+                      <Link
+                        href={`mailto:${member.person.email}`}
+                        className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
+                      >
+                        <MailIcon className="mr-2 h-4 w-4 shrink-0" />
+                        E-Mail senden
+                      </Link>
+                    )}
+                    {member.person.phone && (
+                      <Link
+                        href={`tel:${member.person.phone.replace(/[^0-9+]/g, "")}`}
+                        className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
+                      >
+                        <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
+                        {member.person.phone}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
 

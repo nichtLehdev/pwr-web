@@ -24,15 +24,13 @@ export default async function PosaunenratPage() {
   const posaunenratMembers = posaunenratResponse || [];
   const vorstandMembers = vorstandResponse || [];
 
-  const obleute = bezirke.flatMap((bezirk) => {
-    return [
-      ...bezirk.users.map((obleute) => ({
-        ...obleute,
-        districtNumber: bezirk.number,
-        districtName: bezirk.shortName,
-      })),
-    ];
-  });
+  const obleute = bezirke.flatMap((bezirk) =>
+    bezirk.obleute.map((person) => ({
+      ...person,
+      districtNumber: bezirk.number,
+      districtName: bezirk.shortName,
+    })),
+  );
 
   const sachverstaendige = posaunenratMembers.filter(
     (m) => m.role === "SACHVERSTAENDIGE" || m.role === "SACHVERSTAENDIGER",
@@ -100,8 +98,8 @@ export default async function PosaunenratPage() {
                   {vorstandMembers.map((member, index) => (
                     <PeopleCard
                       key={index}
-                      image={member.image ?? undefined}
-                      name={(member.name || member.user?.displayName) ?? ""}
+                      image={member.person.image ?? undefined}
+                      name={member.person.name ?? ""}
                       subtitle={member.position}
                     />
                   ))}
@@ -127,9 +125,9 @@ export default async function PosaunenratPage() {
                   {obleute.map((member, index) => (
                     <PeopleCard
                       key={index}
-                      image={member.profileImage ?? undefined}
-                      name={member.displayName}
-                      subtitle={`${member.districtRoleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
+                      image={member.image ?? undefined}
+                      name={member.name ?? ""}
+                      subtitle={`${member.roleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
                     />
                   ))}
                 </div>
@@ -153,8 +151,8 @@ export default async function PosaunenratPage() {
                     Landeskirchenmusikdirektor
                   </h3>
                   <PeopleCard
-                    image={lkmd.image ?? undefined}
-                    name={lkmd.name || lkmd.user?.displayName || "Unbekannt"}
+                    image={lkmd.person.image ?? undefined}
+                    name={lkmd.person.name ?? "Unbekannt"}
                     subtitle="Landeskirchenmusikdirektor"
                   />
                 </div>
@@ -173,7 +171,7 @@ export default async function PosaunenratPage() {
                       className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                     >
                       <p className="text-dark dark:text-dark-text text-center font-semibold">
-                        {member.name}
+                        {member.person.name}
                       </p>
                     </div>
                   ))}

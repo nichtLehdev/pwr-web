@@ -136,12 +136,12 @@ export default async function KontaktPage() {
                         className="dark:hover:bg-dark-background-secondary flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-gray-50"
                       >
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
-                          {member.user.profileImage ? (
+                          {member.person.image ? (
                             <Image
-                              src={member.user.profileImage.url}
+                              src={member.person.image.url}
                               alt={
-                                member.user.profileImage.alt ||
-                                member.user.displayName ||
+                                member.person.image.alt ||
+                                member.person.name ||
                                 "Profilbild"
                               }
                               fill
@@ -155,17 +155,17 @@ export default async function KontaktPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-dark dark:text-dark-text font-semibold">
-                            {member.user.displayName}
+                            {member.person.name}
                           </p>
                           <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
                             {member.role}
                           </p>
-                          {member.user.email && (
+                          {member.person.email && (
                             <a
-                              href={`mailto:${member.user.email}`}
+                              href={`mailto:${member.person.email}`}
                               className="text-primary text-xs hover:underline"
                             >
-                              {member.user.email}
+                              {member.person.email}
                             </a>
                           )}
                           {member.responsibilities &&
@@ -295,12 +295,12 @@ export default async function KontaktPage() {
                         className="dark:hover:bg-dark-background-secondary flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-gray-50"
                       >
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200">
-                          {member.user.profileImage ? (
+                          {member.person.image ? (
                             <Image
-                              src={member.user.profileImage.url}
+                              src={member.person.image.url}
                               alt={
-                                member.user.profileImage.alt ||
-                                member.user.displayName ||
+                                member.person.image.alt ||
+                                member.person.name ||
                                 "Profilbild"
                               }
                               fill
@@ -314,17 +314,17 @@ export default async function KontaktPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-dark dark:text-dark-text font-semibold">
-                            {member.user.displayName}
+                            {member.person.name}
                           </p>
                           <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">
                             {member.role}
                           </p>
-                          {member.user.email && (
+                          {member.person.email && (
                             <a
-                              href={`mailto:${member.user.email}`}
+                              href={`mailto:${member.person.email}`}
                               className="text-district-3 text-xs hover:underline"
                             >
-                              {member.user.email}
+                              {member.person.email}
                             </a>
                           )}
                           {member.responsibilities &&

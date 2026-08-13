@@ -127,10 +127,10 @@ export default function FoerdervereinDetailPage() {
     );
   }
 
-  const displayName = member.user?.displayName || member.name || "Unbekannt";
-  const displayEmail = member.user?.email || member.email || "-";
-  const displayBio = member.user?.bio || member.description || null;
-  const imageUrl = member.user?.profileImage?.url || member.image?.url;
+  const displayName = member.person.name || "Unbekannt";
+  const displayEmail = member.person.email || "-";
+  const displayBio = member.description || member.person.bio || null;
+  const imageUrl = member.person.image?.url;
 
   return (
     <DashboardPage
@@ -220,17 +220,17 @@ export default function FoerdervereinDetailPage() {
                 )}
               </dd>
             </div>
-            {member.phone && (
+            {member.person.phone && (
               <div>
                 <dt className="dark:text-dark-muted text-sm font-medium text-gray-500">
                   Telefon
                 </dt>
                 <dd className="dark:text-dark-text mt-1 text-gray-900">
                   <a
-                    href={`tel:${member.phone}`}
+                    href={`tel:${member.person.phone}`}
                     className="text-primary hover:underline"
                   >
-                    {member.phone}
+                    {member.person.phone}
                   </a>
                 </dd>
               </div>
