@@ -35,6 +35,8 @@ services:
     envs:
       DATABASE_URL: "postgresql://postgres:{{ urlquery .Env.POSTGRES_PASSWORD }}@posaunenwerk-db:5432/posaunenwerk"
       NODE_ENV: "production"
+      # Öffentliche Seite: blendet u. a. das Beta-Banner aus.
+      APP_ENV: "production"
       NEXT_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"

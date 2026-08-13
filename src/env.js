@@ -15,6 +15,15 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     /**
+     * Welches Deployment hier läuft. NODE_ENV taugt dafür nicht: dasselbe
+     * gebaute Image läuft mit NODE_ENV=production auf BEIDEN Servern
+     * (mittwald und Pre-Release). Nur "production" ist die öffentliche Seite,
+     * alles andere gilt als Vorab-Umgebung (z. B. Beta-Banner sichtbar).
+     */
+    APP_ENV: z
+      .enum(["development", "next", "production"])
+      .default("development"),
+    /**
      * GitHub integration for the feedback page (feedback -> GitHub issues).
      * Leave unset to disable the feedback page entirely — it then redirects
      * to /kontakt (production behavior).
@@ -54,6 +63,7 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    APP_ENV: process.env.APP_ENV,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     GITHUB_REPO: process.env.GITHUB_REPO,
     SMTP_HOST: process.env.SMTP_HOST,
