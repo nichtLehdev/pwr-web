@@ -28,6 +28,8 @@ import {
   userCanEditCourseRecord,
   userCanManageCourseTeam,
 } from "../helpers/course-access";
+import { createCourseSlug, updateCourseSlug } from "../helpers/content-slug";
+import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 
 /** Nested args for `Course.collaborators` on public course queries. */
 const courseCollaboratorsForPublic = {
@@ -150,11 +152,15 @@ export const coursesRouter = createTRPCRouter({
       };
     }),
 
+  /**
+   * Accepts either the UUID or the slug. Public links use the slug; the
+   * dashboard and links shared before slugs existed still pass a UUID.
+   */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const courseRaw = await ctx.db.course.findUnique({
-        where: { id: input.id },
+      const courseRaw = await ctx.db.course.findFirst({
+        where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           image: true,
           location: true,
@@ -528,6 +534,8 @@ export const coursesRouter = createTRPCRouter({
       z
         .object({
           title: z.string().min(1).max(200),
+          /** Empty means "derive it from the title"; see createCourseSlug. */
+          slug: z.string().max(MAX_SLUG_LENGTH).optional(),
           motto: z.string().max(500).optional(),
           description: z.string().min(1).max(10000),
           imageId: z.string().optional(),
@@ -670,6 +678,12 @@ export const coursesRouter = createTRPCRouter({
       const course = await ctx.db.course.create({
         data: {
           ...courseData,
+          slug: await createCourseSlug(
+            ctx.db,
+            input.title,
+            input.startDate,
+            input.slug,
+          ),
           externalProviderName: external
             ? input.externalProviderName?.trim() || null
             : null,
@@ -724,6 +738,8 @@ export const coursesRouter = createTRPCRouter({
         .object({
           id: z.string(),
           title: z.string().min(1).max(200).optional(),
+          /** Only sent when the author deliberately renamed it; empty = leave as is. */
+          slug: z.string().max(MAX_SLUG_LENGTH).optional(),
           motto: z.string().max(500).optional(),
           description: z.string().max(10000).optional(),
           imageId: z.string().optional().nullable(),
@@ -816,7 +832,14 @@ export const coursesRouter = createTRPCRouter({
         ),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, priceOptions, customFields, status, ...updateData } = input;
+      const {
+        id,
+        priceOptions,
+        customFields,
+        status,
+        slug: requestedSlug,
+        ...updateData
+      } = input;
 
       const course = await ctx.db.course.findUnique({
         where: { id },
@@ -941,6 +964,11 @@ export const coursesRouter = createTRPCRouter({
       );
 
       const data: Prisma.CourseUpdateInput = { ...updateData };
+
+      // A blank field is "keep the current slug", not "clear it".
+      if (requestedSlug?.trim()) {
+        data.slug = await updateCourseSlug(ctx.db, id, requestedSlug);
+      }
 
       if (updateData.externalRegistrationUrl !== undefined) {
         data.externalRegistrationUrl = mergedExternalUrl;
@@ -1329,11 +1357,12 @@ export const coursesRouter = createTRPCRouter({
       return rejected;
     }),
 
+  /** Same identifier rules as `getById` — the detail page passes it straight on. */
   getAvailableSlots: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const course = await ctx.db.course.findUnique({
-        where: { id: input.id },
+      const course = await ctx.db.course.findFirst({
+        where: isUuid(input.id) ? { id: input.id } : { slug: input.id },
         include: {
           priceOptions: true,
           _count: {

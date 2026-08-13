@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
+import { coursePath, eventPath } from "@/lib/slug";
 
 /**
  * Escapes special characters for iCal format
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
 
       icalEvents.push(
         ...events.map((event) => {
-          const eventUrl = `${baseUrl}/termine/event/${event.id}`;
+          const eventUrl = `${baseUrl}${eventPath(event)}`;
           const uid = generateEventUid(`event-${event.id}`, baseUrl);
           const dtstart = formatIcalDate(event.eventDate);
 
@@ -245,7 +246,7 @@ END:VEVENT`;
 
       icalEvents.push(
         ...courses.map((course) => {
-          const courseUrl = `${baseUrl}/termine/course/${course.id}`;
+          const courseUrl = `${baseUrl}${coursePath(course)}`;
           const uid = generateEventUid(`course-${course.id}`, baseUrl);
           const dtstart = formatIcalDate(course.startDate);
           const dtend = formatIcalDate(course.endDate);

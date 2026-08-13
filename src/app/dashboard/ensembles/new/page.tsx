@@ -8,7 +8,8 @@ import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
-import { DashboardPage } from "@/app/_components/dashboard";
+import { DashboardPage, SlugField } from "@/app/_components/dashboard";
+import { ensembleSlugBase } from "@/lib/slug";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
@@ -75,6 +76,16 @@ export default function NewEnsemblePage() {
   const [useCustomRepresentative, setUseCustomRepresentative] = useState(false);
 
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+
+  // Only a preview — when the field is left empty the server looks the town up
+  // itself, so a location missing from the filtered list costs nothing here.
+  const autoSlug = ensembleSlugBase(
+    name,
+    locationsData?.locations.find((location) => location.id === locationId)
+      ?.city,
+  );
+
   const [description, setDescription] = useState("");
   const [internalId, setInternalId] = useState("");
   const [bezirkId, setBezirkId] = useState("");
@@ -268,6 +279,7 @@ export default function NewEnsemblePage() {
 
     createMutation.mutate({
       name: name.trim(),
+      slug: slug.trim() || undefined,
       description: description.trim() || undefined,
       internalId: internalId.trim() || undefined,
       bezirkId: bezirkId || undefined,
@@ -351,6 +363,13 @@ export default function NewEnsemblePage() {
                     placeholder="z.B. Posaunenchor Musterstadt"
                   />
                 </div>
+
+                <SlugField
+                  value={slug}
+                  onChange={setSlug}
+                  autoSlug={autoSlug}
+                  basePath="/ensembles/"
+                />
 
                 {/* Internal ID (Chor-Nr from Posaunenwerk registry) */}
                 <div>

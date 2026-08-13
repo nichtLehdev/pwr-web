@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { api } from "@/trpc/server";
 import EventDetailView from "@/app/_components/events/event-detail-view";
 import CourseDetailView from "@/app/_components/events/course-detail-view";
@@ -9,6 +9,7 @@ import { ContentStatus } from "~/generated/prisma/client";
 import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
 import JsonLd from "@/app/_components/seo/json-ld";
 import { breadcrumbSchema, eventSchema } from "@/lib/structured-data";
+import { coursePath, eventPath, isUuid } from "@/lib/slug";
 
 interface PageProps {
   params: Promise<{ type: string; id: string }>;
@@ -27,10 +28,15 @@ const metadataLocationSelect = {
   select: { name: true, city: true },
 } as const;
 
-const getEventForMetadata = cache(async (id: string) =>
+const getEventForMetadata = cache(async (identifier: string) =>
   db.event.findFirst({
-    where: { id, status: ContentStatus.APPROVED },
+    where: {
+      ...(isUuid(identifier) ? { id: identifier } : { slug: identifier }),
+      status: ContentStatus.APPROVED,
+    },
     select: {
+      id: true,
+      slug: true,
       title: true,
       motto: true,
       description: true,
@@ -42,10 +48,15 @@ const getEventForMetadata = cache(async (id: string) =>
   }),
 );
 
-const getCourseForMetadata = cache(async (id: string) =>
+const getCourseForMetadata = cache(async (identifier: string) =>
   db.course.findFirst({
-    where: { id, status: ContentStatus.APPROVED },
+    where: {
+      ...(isUuid(identifier) ? { id: identifier } : { slug: identifier }),
+      status: ContentStatus.APPROVED,
+    },
     select: {
+      id: true,
+      slug: true,
       title: true,
       motto: true,
       description: true,
@@ -98,7 +109,9 @@ export async function generateMetadata({
         when,
         event.location,
       ),
-      path: `/termine/event/${id}`,
+      // Always the slug form, so a crawler that reached the UUID URL is
+      // pointed at the canonical one even before it follows the redirect.
+      path: eventPath(event),
       image: event.coverImage,
     });
   }
@@ -121,7 +134,7 @@ export async function generateMetadata({
         when,
         course.location,
       ),
-      path: `/termine/course/${id}`,
+      path: coursePath(course),
       image: course.image,
     });
   }
@@ -138,6 +151,11 @@ export default async function TerminDetailPage({ params }: PageProps) {
       notFound();
     }
 
+    // Old UUID links keep working but hand their ranking to the slug URL.
+    if (isUuid(id) && event.slug) {
+      permanentRedirect(eventPath(event));
+    }
+
     return (
       <>
         {event.status === ContentStatus.APPROVED && (
@@ -145,7 +163,7 @@ export default async function TerminDetailPage({ params }: PageProps) {
             data={[
               eventSchema({
                 type: event.category === "KONZERT" ? "MusicEvent" : "Event",
-                path: `/termine/event/${event.id}`,
+                path: eventPath(event),
                 name: event.title,
                 description: plainTextExcerpt(
                   event.description ?? event.motto,
@@ -184,6 +202,10 @@ export default async function TerminDetailPage({ params }: PageProps) {
       notFound();
     }
 
+    if (isUuid(id) && course.slug) {
+      permanentRedirect(coursePath(course));
+    }
+
     return (
       <>
         {course.status === ContentStatus.APPROVED && (
@@ -191,7 +213,7 @@ export default async function TerminDetailPage({ params }: PageProps) {
             data={[
               eventSchema({
                 type: "EducationEvent",
-                path: `/termine/course/${course.id}`,
+                path: coursePath(course),
                 name: course.title,
                 description: plainTextExcerpt(
                   course.description ?? course.motto,

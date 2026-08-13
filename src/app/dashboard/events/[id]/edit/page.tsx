@@ -12,22 +12,24 @@ import type { PermissionKey } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
-  EventCategory,
-  EventEnsembleType,
-  ContentStatus,
-} from "~/generated/prisma/enums";
-import { Trash2, AlertTriangle, ImageIcon, FileDown, X } from "lucide-react";
-import {
-  DashboardPage,
-  DashboardSectionedFormLayout,
+  DashboardFormBlock,
   DashboardFormMediaSplit,
   DashboardFormZoneHeader,
-  DashboardFormBlock,
+  DashboardPage,
+  DashboardSectionedFormLayout,
   DraftRestorePrompt,
+  SlugField,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
+import {
+  ContentStatus,
+  EventCategory,
+  EventEnsembleType,
+} from "~/generated/prisma/enums";
+import { Trash2, AlertTriangle, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
+import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
@@ -96,6 +98,7 @@ export default function EditEventPage() {
   );
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
@@ -183,6 +186,7 @@ export default function EditEventPage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       motto,
       description,
       eventDate,
@@ -214,6 +218,7 @@ export default function EditEventPage() {
     }),
     [
       title,
+      slug,
       motto,
       description,
       eventDate,
@@ -253,6 +258,16 @@ export default function EditEventPage() {
       ready: isInitialized,
     });
 
+  // Mirrors what createEventSlug derives on the server, so the preview is honest.
+  const autoSlug = useMemo(() => {
+    const parsed = eventDate
+      ? new Date(`${eventDate}T${eventTime || "00:00"}`)
+      : null;
+    return parsed && !Number.isNaN(parsed.getTime())
+      ? datedSlugBase(title, parsed)
+      : slugify(title);
+  }, [title, eventDate, eventTime]);
+
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
@@ -271,6 +286,7 @@ export default function EditEventPage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setMotto(saved.motto || "");
       setDescription(saved.description || "");
       setEventDate(saved.eventDate || "");
@@ -361,6 +377,7 @@ export default function EditEventPage() {
     if (event && !isInitialized) {
       startTransition(() => {
         setTitle(event.title);
+        setSlug(event.slug ?? "");
         setMotto(event.motto || "");
         setDescription(event.description || "");
         setCancelled(event.cancelled);
@@ -616,6 +633,7 @@ export default function EditEventPage() {
     updateEventMutation.mutate({
       id: eventId,
       title: title.trim(),
+      slug: slug.trim() || undefined,
       motto: motto.trim() || undefined,
       description: description.trim() || undefined,
       eventDate: dateTime,
@@ -737,6 +755,14 @@ export default function EditEventPage() {
                           required
                         />
                       </div>
+
+                      <SlugField
+                        value={slug}
+                        onChange={setSlug}
+                        autoSlug={autoSlug}
+                        basePath="/termine/event/"
+                        currentSlug={event?.slug}
+                      />
 
                       <div>
                         <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

@@ -114,9 +114,15 @@ export default function EnsembleMap({
 
   return (
     <div className="mt-4 space-y-2">
+      {/*
+        `isolate` keeps Leaflet's own z-indexes — panes at 400, controls at
+        800, the zoom corners at 1000 — inside their own stacking context.
+        Without it they share the root context and paint over the fixed
+        navigation, which sits at z-50.
+      */}
       <div
         ref={mapContainerRef}
-        className="dark:border-dark-border h-[300px] w-full overflow-hidden rounded-lg border border-gray-200"
+        className="dark:border-dark-border isolate h-[300px] w-full overflow-hidden rounded-lg border border-gray-200"
         style={{ minHeight: "300px" }}
       />
       <div className="dark:border-dark-border dark:bg-dark-background-secondary border-t border-gray-200 bg-gray-50 p-2 text-center">

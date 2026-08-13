@@ -17,10 +17,12 @@ import {
   DashboardFormBlock,
   CourseCustomFieldsEditor,
   DraftRestorePrompt,
+  SlugField,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
+import { datedSlugBase, slugify } from "@/lib/slug";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import { useToast } from "@/app/_components/ui/toast";
 import { CourseType } from "~/generated/prisma/enums";
@@ -89,6 +91,7 @@ export default function NewCoursePage() {
   );
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [courseType, setCourseType] = useState<CourseType>("LEHRGANG");
@@ -152,6 +155,7 @@ export default function NewCoursePage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       motto,
       description,
       courseType,
@@ -189,6 +193,7 @@ export default function NewCoursePage() {
     }),
     [
       title,
+      slug,
       motto,
       description,
       courseType,
@@ -234,6 +239,16 @@ export default function NewCoursePage() {
       ready: !sessionLoading && !profileLoading,
     });
 
+  // Mirrors what createCourseSlug derives on the server, so the preview is honest.
+  const autoSlug = useMemo(() => {
+    const parsed = startDate
+      ? new Date(`${startDate}T${startTime || "00:00"}`)
+      : null;
+    return parsed && !Number.isNaN(parsed.getTime())
+      ? datedSlugBase(title, parsed)
+      : slugify(title);
+  }, [title, startDate, startTime]);
+
   const hasUnsavedChanges = Boolean(
     title.trim() || description.trim() || startDate,
   );
@@ -261,6 +276,7 @@ export default function NewCoursePage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setMotto(saved.motto || "");
       setDescription(saved.description || "");
       setCourseType(saved.courseType || "LEHRGANG");
@@ -585,6 +601,7 @@ export default function NewCoursePage() {
     // fehl, bleibt er als Sicherung erhalten.
     createCourseMutation.mutate({
       title: title.trim(),
+      slug: slug.trim() || undefined,
       motto: motto.trim() || undefined,
       description: description.trim(),
       startDate: new Date(`${startDate}T${startTime}`),
@@ -699,6 +716,13 @@ export default function NewCoursePage() {
                           maxLength={200}
                         />
                       </div>
+
+                      <SlugField
+                        value={slug}
+                        onChange={setSlug}
+                        autoSlug={autoSlug}
+                        basePath="/termine/course/"
+                      />
 
                       <div>
                         <label

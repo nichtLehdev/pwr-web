@@ -117,6 +117,7 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
                   <EventCard
                     key={event.id}
                     id={event.id}
+                    slug={event.slug}
                     title={event.title}
                     date={event.eventDate}
                     duration={event.duration}

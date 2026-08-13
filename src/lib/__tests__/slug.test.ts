@@ -1,5 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
-import { ensembleSlugBase, isUuid, slugify, uniqueSlug } from "../slug";
+import {
+  datedSlugBase,
+  ensembleSlugBase,
+  isUuid,
+  normalizeSlugInput,
+  slugify,
+  slugProblem,
+  uniqueSlug,
+} from "../slug";
 
 describe("slugify", () => {
   it("lowercases and joins words with dashes", () => {
@@ -110,6 +118,88 @@ describe("ensembleSlugBase", () => {
     expect(ensembleSlugBase("Posaunenchor Neuweiler", null)).toBe(
       "posaunenchor-neuweiler",
     );
+  });
+});
+
+describe("datedSlugBase", () => {
+  it("appends the year of the Termin", () => {
+    expect(
+      datedSlugBase("Adventskonzert", new Date("2026-12-06T17:00:00Z")),
+    ).toBe("adventskonzert-2026");
+  });
+
+  it("does not repeat a year the title already states", () => {
+    expect(
+      datedSlugBase("Landesposaunentag 2026", new Date("2026-06-14T10:00:00Z")),
+    ).toBe("landesposaunentag-2026");
+  });
+
+  it("takes the year from German local time, not UTC", () => {
+    // 00:30 on 1.1.2027 in Berlin is still 31.12.2026 in UTC.
+    expect(
+      datedSlugBase("Neujahrsblasen", new Date("2026-12-31T23:30:00Z")),
+    ).toBe("neujahrsblasen-2027");
+  });
+
+  it("returns an empty string when the title yields nothing", () => {
+    // A bare year is a worse slug than the caller's fallback.
+    expect(datedSlugBase("???", new Date("2026-03-14T10:00:00Z"))).toBe("");
+  });
+});
+
+describe("slugProblem", () => {
+  it("accepts a well-formed slug", () => {
+    expect(slugProblem("adventskonzert-2026")).toBeNull();
+  });
+
+  it("rejects an empty slug", () => {
+    expect(slugProblem("")).toBe("empty");
+  });
+
+  it("rejects anything outside lowercase, digits and single dashes", () => {
+    expect(slugProblem("Adventskonzert")).toBe("format");
+    expect(slugProblem("advents konzert")).toBe("format");
+    expect(slugProblem("adventskonzert!")).toBe("format");
+    expect(slugProblem("jungbläser")).toBe("format");
+    expect(slugProblem("advents--konzert")).toBe("format");
+    expect(slugProblem("-adventskonzert")).toBe("format");
+    expect(slugProblem("adventskonzert-")).toBe("format");
+  });
+
+  it("rejects a slug longer than the cap", () => {
+    expect(slugProblem("a".repeat(81))).toBe("tooLong");
+  });
+
+  it("rejects a UUID, which the detail routes would resolve as an id", () => {
+    expect(slugProblem("a9a92252-aa4c-4543-98bd-e9b51d3cd984")).toBe(
+      "uuidLike",
+    );
+  });
+});
+
+describe("normalizeSlugInput", () => {
+  it("keeps a trailing dash so the next word can still be typed", () => {
+    expect(normalizeSlugInput("advents-")).toBe("advents-");
+  });
+
+  it("transliterates umlauts and turns spaces into dashes", () => {
+    expect(normalizeSlugInput("Jungbläser Lehrgang")).toBe(
+      "jungblaeser-lehrgang",
+    );
+  });
+
+  it("collapses repeated dashes and drops a leading one", () => {
+    expect(normalizeSlugInput("--advents---konzert")).toBe("advents-konzert");
+  });
+
+  it("drops characters a slug cannot carry", () => {
+    expect(normalizeSlugInput("advents/konzert!2026")).toBe(
+      "advents-konzert-2026",
+    );
+  });
+
+  it("caps the length", () => {
+    expect(normalizeSlugInput("a".repeat(200))).toHaveLength(80);
   });
 });
 

@@ -12,6 +12,7 @@ import type { RouterOutputs } from "@/trpc/react";
 import PublicPage from "@/app/_components/general/public-page";
 import CourseRegistrationForm from "@/app/_components/events/course-registration-form";
 import { CourseExistingRegistrationOptions } from "@/app/_components/events/course-existing-registration-options";
+import { coursePath } from "@/lib/slug";
 
 type Course = NonNullable<RouterOutputs["courses"]["getById"]>;
 type Spots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -82,7 +83,7 @@ export default function CourseRegistrationPage({
         | "district-13"
         | undefined);
 
-  const courseUrl = `/termine/course/${course.id}`;
+  const courseUrl = coursePath(course);
   const isWaitlist = spots.isFull && course.allowWaitingList;
 
   const showExistingOptionsModal =

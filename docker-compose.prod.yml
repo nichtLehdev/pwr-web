@@ -56,10 +56,22 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@posaunenwerk-db:5432/${POSTGRES_DB:-posaunenwerk}
       NODE_ENV: production
+      SKIP_ENV_VALIDATION: 1
     # Invoke prisma directly (not via pnpm) to avoid pnpm 11's
     # runDepsStatusCheck which tries to reinstall node_modules at startup.
+    #
+    # The slug backfill runs straight after the migration, mirroring the app
+    # start command in deploy/stack.yaml, so a deploy never leaves new rows
+    # without a slug. It is non-fatal on purpose: slugs are nullable and the
+    # detail routes fall back to the UUID, so a failure here must not stop
+    # `app` — which waits on this service — from coming up.
     command:
-      ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
+      - "sh"
+      - "-c"
+      - >-
+        node node_modules/prisma/build/index.js migrate deploy &&
+        { node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts ||
+        echo "Slug backfill failed (non-fatal)"; }
     restart: "no"
 
   # ===========================================================================
@@ -86,10 +98,13 @@ services:
     restart: "no"
 
   # ===========================================================================
-  # Slug Backfill (fills Post.slug / Ensemble.slug after the slug migration)
+  # Slug Backfill (fills Post/Ensemble/Event/Course slugs)
   #
-  # Idempotent: only rows whose slug is still NULL are touched, so running it
-  # again after new content has been created is harmless.
+  # Runs automatically as part of db-migrate; this profile is for re-running it
+  # on demand — imports and duplicates deliberately leave the slug NULL, so new
+  # rows can appear without one between deploys.
+  #
+  # Idempotent: only rows whose slug is still NULL are touched.
   #   docker compose -f docker-compose.prod.yml --profile slug-backfill up
   # ===========================================================================
   slug-backfill:

@@ -28,3 +28,4 @@ export {
   type DashboardOverflowItem,
 } from "./dashboard-overflow-menu";
 export { DraftRestorePrompt } from "./draft-restore-prompt";
+export { default as SlugField } from "./slug-field";

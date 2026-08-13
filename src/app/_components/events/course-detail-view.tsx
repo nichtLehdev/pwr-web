@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
 import { isExternalCourse } from "@/lib/course-external";
+import { coursePath, courseRegistrationPath } from "@/lib/slug";
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
 
@@ -147,8 +148,8 @@ export default function CourseDetailView({
   };
 
   const anmeldenHref = isExternal
-    ? (course.externalRegistrationUrl ?? `/termine/course/${course.id}`)
-    : `/termine/course/${course.id}/anmelden`;
+    ? (course.externalRegistrationUrl ?? coursePath(course))
+    : courseRegistrationPath(course);
 
   const locationLine =
     course.location &&

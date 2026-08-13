@@ -1,5 +1,5 @@
 /** Slug length cap — long enough to stay readable, short enough for a URL bar. */
-const MAX_SLUG_LENGTH = 80;
+export const MAX_SLUG_LENGTH = 80;
 
 /**
  * German umlauts are transliterated rather than stripped: NFD normalisation
@@ -102,6 +102,42 @@ export function ensembleSlugBase(
 }
 
 /**
+ * The year of a date as it falls in German local time.
+ *
+ * Pinned to Europe/Berlin rather than read off `getFullYear()`, which follows
+ * whatever timezone the server runs in — UTC in the container. A Neujahrsblasen
+ * at 00:30 on 1.1. is still 31.12. in UTC, and a slug reading
+ * `neujahrsblasen-2026` for a 2027 Termin is worse than no year at all.
+ */
+function berlinYear(date: Date): string {
+  return new Intl.DateTimeFormat("de-DE", {
+    year: "numeric",
+    timeZone: "Europe/Berlin",
+  }).format(date);
+}
+
+/**
+ * Slug base for a dated entry (event or course), appending the year unless the
+ * title already carries it.
+ *
+ * Termine repeat: "Adventskonzert" and "Jungbläserlehrgang" come round every
+ * year. Without the year the second one lands on `adventskonzert-2`, which
+ * tells a reader nothing — `adventskonzert-2026` tells them which one it is.
+ * Titles like "Landesposaunentag 2026" already state it, so the year is only
+ * added when it is not among the slug's tokens.
+ */
+export function datedSlugBase(title: string, date: Date): string {
+  const titleSlug = slugify(title);
+  // No title to build on — the caller's fallback is better than a bare year.
+  if (!titleSlug) return "";
+
+  const year = berlinYear(date);
+  if (titleSlug.split("-").includes(year)) return titleSlug;
+
+  return `${titleSlug}-${year}`;
+}
+
+/**
  * Public path for a post or ensemble, preferring the slug.
  *
  * Falls back to the UUID so a row created before `pnpm backfill:slugs` ran —
@@ -117,6 +153,74 @@ export function ensemblePath(ensemble: {
   slug?: string | null;
 }): string {
   return `/ensembles/${ensemble.slug ?? ensemble.id}`;
+}
+
+export function eventPath(event: { id: string; slug?: string | null }): string {
+  return `/termine/event/${event.slug ?? event.id}`;
+}
+
+export function coursePath(course: {
+  id: string;
+  slug?: string | null;
+}): string {
+  return `/termine/course/${course.slug ?? course.id}`;
+}
+
+/** Registration form for a course; same identifier rules as `coursePath`. */
+export function courseRegistrationPath(course: {
+  id: string;
+  slug?: string | null;
+}): string {
+  return `${coursePath(course)}/anmelden`;
+}
+
+/**
+ * What is wrong with a slug someone typed, or `null` when it is usable.
+ *
+ * Shared by the dashboard form and the tRPC procedures so the browser and the
+ * server never disagree about what counts as a valid slug.
+ */
+export type SlugProblem = "empty" | "tooLong" | "format" | "uuidLike";
+
+export function slugProblem(value: string): SlugProblem | null {
+  if (!value) return "empty";
+  if (value.length > MAX_SLUG_LENGTH) return "tooLong";
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) return "format";
+  // A UUID passes the pattern above, but the detail routes resolve anything
+  // UUID-shaped as an id — such a slug would address nothing.
+  if (isUuid(value)) return "uuidLike";
+  return null;
+}
+
+export const SLUG_PROBLEM_MESSAGES: Record<SlugProblem, string> = {
+  empty: "Bitte gib einen Slug ein.",
+  tooLong: `Der Slug darf höchstens ${MAX_SLUG_LENGTH} Zeichen lang sein.`,
+  format:
+    "Erlaubt sind nur Kleinbuchstaben, Ziffern und Bindestriche — keine Umlaute, Leerzeichen oder Sonderzeichen.",
+  uuidLike: "Der Slug darf nicht wie eine UUID aussehen.",
+};
+
+/**
+ * Cleans up a slug as it is being typed.
+ *
+ * Deliberately gentler than `slugify`: a trailing dash survives, because
+ * stripping it would make "advents-" impossible to extend to
+ * "advents-konzert" — the dash would vanish on every keystroke.
+ */
+export function normalizeSlugInput(value: string): string {
+  let text = value.toLowerCase();
+
+  for (const [pattern, replacement] of TRANSLITERATIONS) {
+    text = text.replace(pattern, replacement);
+  }
+
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+/, "")
+    .slice(0, MAX_SLUG_LENGTH);
 }
 
 /** UUIDs are the legacy identifier; both forms resolve on the detail routes. */

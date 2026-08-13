@@ -3,6 +3,7 @@ import React from "react";
 import type { RouterOutputs } from "@/trpc/react";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import { Calendar, MapPin } from "lucide-react";
+import { eventPath } from "@/lib/slug";
 
 type Event = RouterOutputs["events"]["getById"];
 type AuswahlChorEvent =
@@ -17,7 +18,7 @@ interface ConcertCardProps {
 
 const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
   return (
-    <Link href={`/termine/event/${concert.id}`}>
+    <Link href={eventPath(concert)}>
       <div
         key={i}
         className="dark:bg-dark-surface dark:hover:shadow-dark-border mb-4 rounded-md border-l-4 bg-white py-2 pl-4 transition-all hover:shadow-md"
