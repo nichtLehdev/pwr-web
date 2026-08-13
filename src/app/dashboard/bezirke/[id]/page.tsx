@@ -104,7 +104,7 @@ export default function BezirkDetailPage() {
           className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
         >
           <PencilIcon className="h-4 w-4" />
-          Bearbeiten
+          Obleute bearbeiten
         </Link>
       }
       maxWidth="7xl"
@@ -164,18 +164,18 @@ export default function BezirkDetailPage() {
         <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
           Bezirksobleute
         </h2>
-        {bezirk.users && bezirk.users.length > 0 ? (
+        {bezirk.obleute.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            {bezirk.users.map((user) => (
+            {bezirk.obleute.map((person) => (
               <div
-                key={user.id}
+                key={person.id}
                 className="dark:border-dark-border flex items-start gap-4 rounded-lg border border-gray-100 p-4"
               >
-                {user.profileImage?.url ? (
+                {person.image?.url ? (
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full">
                     <Image
-                      src={user.profileImage.url}
-                      alt={user.displayName || "Profilbild"}
+                      src={person.image.url}
+                      alt={person.name || "Profilbild"}
                       fill
                       className="object-cover"
                     />
@@ -187,21 +187,24 @@ export default function BezirkDetailPage() {
                 )}
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="dark:text-dark-text font-medium text-gray-900">
-                    {user.displayName}
+                    {person.name}
                   </p>
-                  {user.districtRoleName && (
+                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                    {person.roleName}
+                    {!person.userId && (
+                      <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                        ohne Benutzerkonto
+                      </span>
+                    )}
+                  </p>
+                  {person.email && (
                     <p className="dark:text-dark-muted text-sm text-gray-500">
-                      {user.districtRoleName}
+                      {person.email}
                     </p>
                   )}
-                  <p className="dark:text-dark-muted text-sm text-gray-500">
-                    {user.email}
-                  </p>
-                  {(user.street || user.zipCode || user.city) && (
+                  {person.address && (
                     <p className="dark:text-dark-muted mt-2 text-sm text-gray-500">
-                      {[user.street, user.zipCode, user.city]
-                        .filter(Boolean)
-                        .join(", ")}
+                      {person.address}
                     </p>
                   )}
                 </div>

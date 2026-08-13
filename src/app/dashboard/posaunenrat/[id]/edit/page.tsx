@@ -4,7 +4,6 @@ import { Select } from "@/app/_components/ui";
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
@@ -12,8 +11,13 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
-import { DashboardPage } from "@/app/_components/dashboard";
-import { XIcon } from "lucide-react";
+import {
+  DashboardPage,
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "@/app/_components/dashboard";
 
 const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
   { value: PosaunenratRole.VORSTAND, label: "Vorstand" },
@@ -49,59 +53,35 @@ export default function EditPosaunenratPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
-  const { data: users } = api.users.list.useQuery(
-    { page: 1, limit: 100 },
-    { enabled: !!session?.user },
-  );
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [person, setPerson] = useState<PersonDetails>(emptyPersonDetails());
   const [role, setRole] = useState<PosaunenratRole>(PosaunenratRole.VORSTAND);
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userSearch, setUserSearch] = useState("");
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [userLabel, setUserLabel] = useState("");
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (member) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setName(member.name || "");
-      setEmail(member.email || "");
+      /* eslint-disable react-hooks/set-state-in-effect */
+      // Rohwerte des Datensatzes: was hier steht, wird auch veröffentlicht.
+      setPerson({
+        name: member.name ?? "",
+        email: member.email ?? "",
+        phone: member.phone ?? "",
+        city: "",
+        bio: member.bio ?? "",
+        imageId: member.imageId,
+        imageUrl: member.image?.url ?? null,
+      });
       setRole(member.role as PosaunenratRole);
       setSortOrder(member.sortOrder || 0);
-      if (member.user) {
-        setUserId(member.user.id);
-        setUserSearch(member.user.displayName || member.user.email || "");
-      }
+      setUserId(member.userId);
+      setUserLabel(member.user?.displayName ?? member.user?.email ?? "");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [member]);
-
-  const filteredUsers = users?.users.filter((user) => {
-    if (!userSearch.trim()) return true;
-    const searchLower = userSearch.toLowerCase();
-    return (
-      user.displayName?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const handleUserSelect = (user: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  }) => {
-    setUserId(user.id);
-    setUserSearch(user.displayName || user.email);
-    setShowUserDropdown(false);
-  };
-
-  const handleClearUser = () => {
-    setUserId(null);
-    setUserSearch("");
-  };
 
   const utils = api.useUtils();
 
@@ -152,13 +132,22 @@ export default function EditPosaunenratPage() {
     setError("");
     setIsSubmitting(true);
 
+    if (!userId && !person.name.trim()) {
+      setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
+      setIsSubmitting(false);
+      return;
+    }
+
     updateMutation.mutate({
       id: memberId,
-      name: name.trim() || undefined,
-      email: email.trim() || undefined,
+      name: person.name.trim() || null,
+      email: person.email.trim() || null,
+      phone: person.phone.trim() || null,
+      bio: person.bio.trim() || null,
+      imageId: person.imageId,
       role,
       sortOrder,
-      userId: userId,
+      userId,
     });
   };
 
@@ -192,8 +181,7 @@ export default function EditPosaunenratPage() {
     );
   }
 
-  const displayName = member.user?.displayName || member.name || "Mitglied";
-  const imageUrl = member.user?.profileImage?.url || member.image?.url;
+  const displayName = member.person.name || "Mitglied";
 
   return (
     <DashboardPage
@@ -216,174 +204,27 @@ export default function EditPosaunenratPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Current User Info (if linked) */}
-        {member.user && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Aktuell verknüpfter Benutzer
-            </h2>
-            <div className="flex items-center gap-4">
-              {imageUrl ? (
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full">
-                  <Image
-                    src={imageUrl}
-                    alt={displayName}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="dark:bg-dark-background-secondary flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                  <span className="dark:text-dark-muted text-lg font-medium text-gray-500">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <div>
-                <p className="dark:text-dark-text font-medium text-gray-900">
-                  {member.user.displayName || "Unbekannt"}
-                </p>
-                <p className="dark:text-dark-muted text-sm text-gray-500">
-                  {member.user.email}
-                </p>
-              </div>
-              <Link
-                href={`/dashboard/users/${member.user.id}`}
-                className="text-primary ml-auto text-sm hover:underline"
-              >
-                Benutzer anzeigen →
-              </Link>
-            </div>
-          </section>
-        )}
+        <UserLinkField
+          userId={userId}
+          userLabel={userLabel}
+          onSelect={(user) => {
+            setUserId(user.id);
+            setUserLabel(user.displayName ?? user.email);
+          }}
+          onClear={() => {
+            setUserId(null);
+            setUserLabel("");
+          }}
+          description="Optional: Verknüpfe dieses Posaunenratsmitglied mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen."
+        />
 
-        {/* Manual Data (if not linked) */}
-        {!member.user && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Manuelle Daten
-            </h2>
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Diese Daten werden verwendet, wenn kein Benutzer verknüpft ist.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Max Mustermann"
-                  maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="max@example.de"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Optional User Link */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Benutzerverknüpfung (optional)
-          </h2>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-            Optional kann ein Benutzerkonto verknüpft werden. Dann werden Name,
-            E-Mail und Profilbild vom Benutzer übernommen.
-          </p>
-          <div className="relative">
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Benutzer suchen
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  if (!e.target.value) setUserId(null);
-                }}
-                onFocus={() => setShowUserDropdown(true)}
-                placeholder="Name oder E-Mail eingeben..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-              {userId && (
-                <button
-                  type="button"
-                  onClick={handleClearUser}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {/* User Dropdown */}
-            {showUserDropdown && (
-              <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                <div className="overflow-y-auto" style={{ maxHeight: "240px" }}>
-                  {filteredUsers && filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleUserSelect(user)}
-                        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <span className="dark:text-dark-text font-medium text-gray-900">
-                          {user.displayName || user.email}
-                        </span>
-                        {user.displayName && (
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {" "}
-                            – {user.email}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                      {userSearch
-                        ? "Keine Benutzer gefunden"
-                        : "Tippe, um Benutzer zu suchen"}
-                    </div>
-                  )}
-                </div>
-                {userId && (
-                  <button
-                    type="button"
-                    onClick={handleClearUser}
-                    className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                  >
-                    Verknüpfung entfernen
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Selected user indicator */}
-            {userId && (
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                ✓ Benutzer verknüpft
-              </p>
-            )}
-          </div>
-        </section>
+        <PersonDetailsFields
+          value={person}
+          onChange={(patch) =>
+            setPerson((current) => ({ ...current, ...patch }))
+          }
+          hasLinkedUser={!!userId}
+        />
 
         {/* Role & District */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
