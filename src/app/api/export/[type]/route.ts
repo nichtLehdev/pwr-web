@@ -276,6 +276,28 @@ export async function GET(
         break;
       }
 
+      case "history-events": {
+        const historyEvents = await db.historyEvent.findMany({
+          include: {
+            image: true,
+          },
+          orderBy: [{ year: "asc" }, { sortOrder: "asc" }],
+        });
+
+        jsonData = {
+          historyEvents: historyEvents.map((historyEvent) => ({
+            ...historyEvent,
+            imageUrl: historyEvent.image?.url,
+          })),
+          exportedAt: new Date().toISOString(),
+          count: historyEvents.length,
+        };
+
+        mediaFiles = historyEvents;
+        filename = `history-events-export-${date}.zip`;
+        break;
+      }
+
       case "courses": {
         const courses = await db.course.findMany({
           include: {

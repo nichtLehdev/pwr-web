@@ -13,7 +13,8 @@ type ContentType =
   | "ensembles"
   | "media"
   | "downloads"
-  | "blaeserhefte";
+  | "blaeserhefte"
+  | "history-events";
 
 export default function ExportImportSection() {
   const [selectedType, setSelectedType] = useState<ContentType | null>(null);
@@ -34,6 +35,7 @@ export default function ExportImportSection() {
     media: "Medien",
     downloads: "Downloads",
     blaeserhefte: "Bläserhefte",
+    "history-events": "Historie-Timeline",
   };
 
   const handleExport = async (type: ContentType) => {
@@ -126,7 +128,7 @@ export default function ExportImportSection() {
             Exportieren Sie Inhalte als ZIP-Datei (inkl. Medien-Dateien) für
             Backup oder Migration.
           </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {(
               [
                 "posts",
@@ -136,6 +138,7 @@ export default function ExportImportSection() {
                 "media",
                 "downloads",
                 "blaeserhefte",
+                "history-events",
               ] as ContentType[]
             ).map((type) => (
               <button
@@ -182,6 +185,7 @@ export default function ExportImportSection() {
                     "media",
                     "downloads",
                     "blaeserhefte",
+                    "history-events",
                   ] as ContentType[]
                 ).map((type) => (
                   <option key={type} value={type}>
