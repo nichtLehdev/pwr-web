@@ -50,19 +50,31 @@ Dieses Skript:
   ```
 
 ### 2b. Slug-Backfill
-Die Migration `20260808000051_add_post_and_ensemble_slug` legt die Spalte nur
-an — gefüllt wird sie von `prisma/backfill-slugs.ts`. Ohne den Backfill bleibt
-die Seite voll funktionsfähig (Detailseiten fallen auf die UUID zurück), aber
-die sprechenden URLs fehlen. Das Skript fasst nur Zeilen an, deren Slug noch
-`NULL` ist, und ist damit gefahrlos wiederholbar.
+Die Migrationen `20260808000051_add_post_and_ensemble_slug` (Beiträge, Chöre)
+und `20260813120000_add_event_and_course_slug` (Termine, Kurse) legen die
+Spalten nur an — gefüllt werden sie von `prisma/backfill-slugs.ts`. Ohne den
+Backfill bleibt die Seite voll funktionsfähig (Detailseiten fallen auf die
+UUID zurück), aber die sprechenden URLs fehlen. Das Skript fasst nur Zeilen
+an, deren Slug noch `NULL` ist, und ist damit gefahrlos wiederholbar.
 
-- [ ] **mittwald**: läuft automatisch — der Startbefehl in `deploy/stack.yaml`
-  ruft das Skript nach `migrate deploy` auf. Nichts zu tun.
-- [ ] **docker-compose (Vorabversion / alter Server)**:
+**In allen Deploy-Wegen läuft der Backfill automatisch nach `migrate deploy`.**
+Er ist bewusst „non-fatal": schlägt er fehl, startet die App trotzdem, weil
+die Slugs nullable sind und die Routen auf die UUID zurückfallen. Ein
+Fehlschlag steht im Log des jeweiligen Containers.
+
+- [ ] **mittwald**: automatisch im Startbefehl in `deploy/stack.yaml`.
+- [ ] **docker-compose (Vorabversion / alter Server)**: automatisch im
+  `db-migrate`-Service.
+- [ ] **Lokal**: automatisch in `pnpm db:migrate`.
+
+Manuell nachziehen — nötig, wenn zwischen zwei Deployments Zeilen ohne Slug
+entstanden sind (Import und Duplizieren lassen den Slug absichtlich `NULL`):
+
+- [ ] **docker-compose**:
   ```bash
   docker compose -f docker-compose.prod.yml --profile slug-backfill up
   ```
-- [ ] **Manuell in einem laufenden Container**:
+- [ ] **In einem laufenden Container**:
   ```bash
   docker exec -it posaunenwerk-app node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts
   ```
