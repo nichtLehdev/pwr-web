@@ -11,7 +11,8 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { DashboardPage } from "@/app/_components/dashboard";
+import { DashboardPage, SlugField } from "@/app/_components/dashboard";
+import { ensembleSlugBase } from "@/lib/slug";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 
 export default function EditEnsemblePage() {
@@ -73,6 +74,15 @@ export default function EditEnsemblePage() {
   const [useCustomRepresentative, setUseCustomRepresentative] = useState(false);
 
   const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+
+  // Only a preview — when the field is left empty the slug stays as it is.
+  const autoSlug = ensembleSlugBase(
+    name,
+    locationsData?.locations.find((location) => location.id === locationId)
+      ?.city ?? ensemble?.location?.city,
+  );
+
   const [description, setDescription] = useState("");
   const [internalId, setInternalId] = useState<string | null>("");
   const [bezirkId, setBezirkId] = useState<string | null>("");
@@ -128,6 +138,7 @@ export default function EditEnsemblePage() {
     if (ensemble && !initialized) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(ensemble.name);
+      setSlug(ensemble.slug ?? "");
       setDescription(ensemble.description ?? "");
       setBezirkId(ensemble.bezirkId);
       setImageId(ensemble.imageId);
@@ -320,6 +331,7 @@ export default function EditEnsemblePage() {
     updateMutation.mutate({
       id: ensembleId,
       name: name.trim(),
+      slug: slug.trim() || undefined,
       description: description.trim() || undefined,
       bezirkId: bezirkId || null,
       imageId: imageId || null,
@@ -438,6 +450,14 @@ export default function EditEnsemblePage() {
                   placeholder="z.B. Posaunenchor Musterstadt"
                 />
               </div>
+
+              <SlugField
+                value={slug}
+                onChange={setSlug}
+                autoSlug={autoSlug}
+                basePath="/ensembles/"
+                currentSlug={ensemble?.slug}
+              />
 
               {/* Internal ID (Chor-Nr from Posaunenwerk registry) */}
               <div>

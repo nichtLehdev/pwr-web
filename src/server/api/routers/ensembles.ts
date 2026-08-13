@@ -5,8 +5,11 @@ import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { resolveRolePublicContact } from "@/lib/resolve-ensemble-contact";
 import { permissionProcedure } from "../middleware/permissions";
-import { createEnsembleSlug } from "../helpers/content-slug";
-import { isUuid } from "@/lib/slug";
+import {
+  createEnsembleSlug,
+  updateEnsembleSlug,
+} from "../helpers/content-slug";
+import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 
 const linkedUserContactSelect = {
   id: true,
@@ -178,6 +181,8 @@ export const ensemblesRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1).max(200),
+        /** Empty means "derive it from the name and town"; see createEnsembleSlug. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         description: z.string().max(5000).optional(),
         internalId: z.string().max(50).optional(),
         bezirkId: z.string().optional(),
@@ -214,7 +219,11 @@ export const ensemblesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { rehearsalSchedules, ...ensembleData } = input;
+      const {
+        rehearsalSchedules,
+        slug: requestedSlug,
+        ...ensembleData
+      } = input;
 
       // The town disambiguates chöre that share a name, so the slug needs it —
       // but create only receives a locationId.
@@ -230,7 +239,12 @@ export const ensemblesRouter = createTRPCRouter({
       const ensemble = await ctx.db.ensemble.create({
         data: {
           ...ensembleData,
-          slug: await createEnsembleSlug(ctx.db, input.name, city),
+          slug: await createEnsembleSlug(
+            ctx.db,
+            input.name,
+            city,
+            requestedSlug,
+          ),
           rehearsalSchedules: rehearsalSchedules
             ? {
                 create: rehearsalSchedules,
@@ -255,6 +269,8 @@ export const ensemblesRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string().min(1).max(200).optional(),
+        /** Only sent when the author deliberately renamed it; empty = leave as is. */
+        slug: z.string().max(MAX_SLUG_LENGTH).optional(),
         description: z.string().max(5000).optional(),
         internalId: z.string().max(50).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
@@ -293,7 +309,12 @@ export const ensemblesRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, rehearsalSchedules, ...updateData } = input;
+      const {
+        id,
+        rehearsalSchedules,
+        slug: requestedSlug,
+        ...updateData
+      } = input;
 
       const ensemble = await ctx.db.ensemble.findUnique({
         where: { id },
@@ -334,6 +355,10 @@ export const ensemblesRouter = createTRPCRouter({
         where: { id },
         data: {
           ...updateData,
+          // A blank field is "keep the current slug", not "clear it".
+          ...(requestedSlug?.trim()
+            ? { slug: await updateEnsembleSlug(ctx.db, id, requestedSlug) }
+            : {}),
           ...(rehearsalSchedules !== undefined && {
             rehearsalSchedules: {
               create: rehearsalSchedules,

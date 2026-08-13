@@ -13,9 +13,11 @@ import {
   DashboardPage,
   DashboardSectionedFormLayout,
   DraftRestorePrompt,
+  SlugField,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
+import { slugify } from "@/lib/slug";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -61,6 +63,7 @@ export default function NewPostPage() {
   const userBezirkId = profile?.bezirkId ?? null;
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState<PostCategory>("MAGAZIN");
@@ -91,6 +94,7 @@ export default function NewPostPage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       excerpt,
       content,
       category,
@@ -108,6 +112,7 @@ export default function NewPostPage() {
     }),
     [
       title,
+      slug,
       excerpt,
       content,
       category,
@@ -143,6 +148,7 @@ export default function NewPostPage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setExcerpt(saved.excerpt || "");
       setContent(saved.content || "");
       setCategory(saved.category || "MAGAZIN");
@@ -255,6 +261,7 @@ export default function NewPostPage() {
 
     createPostMutation.mutate({
       title: title.trim(),
+      slug: slug.trim() || undefined,
       excerpt: excerpt.trim() || undefined,
       content: content.trim(),
       category,
@@ -338,6 +345,13 @@ export default function NewPostPage() {
                   required
                 />
               </div>
+
+              <SlugField
+                value={slug}
+                onChange={setSlug}
+                autoSlug={slugify(title)}
+                basePath="/aktuelles/"
+              />
 
               <div>
                 <Label>Kurzfassung</Label>

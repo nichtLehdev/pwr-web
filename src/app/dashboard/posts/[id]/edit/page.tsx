@@ -10,6 +10,7 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
+import { slugify } from "@/lib/slug";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -21,6 +22,7 @@ import {
   DashboardPage,
   DashboardSectionedFormLayout,
   DraftRestorePrompt,
+  SlugField,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { useAutosave } from "@/lib/useAutosave";
@@ -79,6 +81,7 @@ export default function EditPostPage() {
   );
 
   const [title, setTitle] = useState(post?.title ?? "");
+  const [slug, setSlug] = useState(post?.slug ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [content, setContent] = useState(post?.content ?? "");
   const [category, setCategory] = useState<PostCategory>(
@@ -139,6 +142,7 @@ export default function EditPostPage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       excerpt,
       content,
       category,
@@ -155,6 +159,7 @@ export default function EditPostPage() {
     }),
     [
       title,
+      slug,
       excerpt,
       content,
       category,
@@ -190,6 +195,7 @@ export default function EditPostPage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setExcerpt(saved.excerpt || "");
       setContent(saved.content || "");
       setCategory(saved.category || "MAGAZIN");
@@ -260,6 +266,7 @@ export default function EditPostPage() {
   useEffect(() => {
     if (post && !initializedFromPost.current) {
       setTitle(post.title || "");
+      setSlug(post.slug ?? "");
       setExcerpt(post.excerpt || "");
       setContent(post.content || "");
       setCategory(post.category || "MAGAZIN");
@@ -374,6 +381,7 @@ export default function EditPostPage() {
     updatePostMutation.mutate({
       id: postId,
       title: title.trim(),
+      slug: slug.trim() || undefined,
       excerpt: excerpt.trim() || undefined,
       content: content.trim(),
       category,
@@ -472,6 +480,14 @@ export default function EditPostPage() {
                     required
                   />
                 </div>
+
+                <SlugField
+                  value={slug}
+                  onChange={setSlug}
+                  autoSlug={slugify(title)}
+                  basePath="/aktuelles/"
+                  currentSlug={post?.slug}
+                />
 
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

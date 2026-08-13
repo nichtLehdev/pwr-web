@@ -361,6 +361,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
               <CompactEventCard
                 key={`today-${item.type}-${item.id}-${idx}`}
                 id={item.id}
+                slug={item.slug}
                 title={item.title}
                 date={item.type === "event" ? item.eventDate : item.startDate}
                 endDate={item.type === "course" ? item.endDate : undefined}
@@ -393,6 +394,7 @@ export default function CalendarView({ items }: CalendarViewProps) {
                 <CompactEventCard
                   key={`upcoming-${item.type}-${item.id}-${idx}`}
                   id={item.id}
+                  slug={item.slug}
                   title={item.title}
                   date={item.type === "event" ? item.eventDate : item.startDate}
                   endDate={item.type === "course" ? item.endDate : undefined}

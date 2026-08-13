@@ -742,6 +742,7 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             select: {
               id: true,
+              slug: true,
               title: true,
               isFree: true,
               startDate: true,

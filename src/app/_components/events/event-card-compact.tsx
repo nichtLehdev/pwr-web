@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { X, Users, Clock, MapPin, ChevronRight } from "lucide-react";
+import { coursePath, eventPath } from "@/lib/slug";
 
 interface CompactEventCardProps {
   id: string;
+  slug?: string | null;
   title: string;
   date: Date;
   endDate?: Date;
@@ -15,6 +17,7 @@ interface CompactEventCardProps {
 
 export default function CompactEventCard({
   id,
+  slug,
   title,
   date,
   endDate,
@@ -44,7 +47,9 @@ export default function CompactEventCard({
 
   return (
     <Link
-      href={`/termine/${type}/${id}`}
+      href={
+        type === "course" ? coursePath({ id, slug }) : eventPath({ id, slug })
+      }
       className={`flex items-center gap-3 rounded-lg border p-3 transition-all ${
         cancelled
           ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30"

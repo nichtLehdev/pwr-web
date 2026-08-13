@@ -37,10 +37,12 @@ import {
   CourseFormEditMetaBar,
   CourseCustomFieldsEditor,
   DraftRestorePrompt,
+  SlugField,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
+import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
 import {
@@ -102,6 +104,7 @@ export default function EditCoursePage() {
   const hasRedirected = useRef(false);
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -200,6 +203,7 @@ export default function EditCoursePage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       motto,
       description,
       courseType,
@@ -236,6 +240,7 @@ export default function EditCoursePage() {
     }),
     [
       title,
+      slug,
       motto,
       description,
       courseType,
@@ -280,6 +285,16 @@ export default function EditCoursePage() {
       ready: isInitialized,
     });
 
+  // Mirrors what createCourseSlug derives on the server, so the preview is honest.
+  const autoSlug = useMemo(() => {
+    const parsed = startDate
+      ? new Date(`${startDate}T${startTime || "00:00"}`)
+      : null;
+    return parsed && !Number.isNaN(parsed.getTime())
+      ? datedSlugBase(title, parsed)
+      : slugify(title);
+  }, [title, startDate, startTime]);
+
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
@@ -298,6 +313,7 @@ export default function EditCoursePage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setMotto(saved.motto || "");
       setDescription(saved.description || "");
       setCourseType(saved.courseType || CourseType.LEHRGANG);
@@ -494,6 +510,7 @@ export default function EditCoursePage() {
     if (course && !isInitialized) {
       startTransition(() => {
         setTitle(course.title);
+        setSlug(course.slug ?? "");
         setMotto(course.motto || "");
         setDescription(course.description);
 
@@ -983,6 +1000,7 @@ export default function EditCoursePage() {
     updateCourseMutation.mutate({
       id: courseId,
       title: title.trim(),
+      slug: slug.trim() || undefined,
       motto: motto.trim() || undefined,
       description: description.trim(),
       startDate: new Date(`${startDate}T${startTime}`),
@@ -1127,6 +1145,14 @@ export default function EditCoursePage() {
                             maxLength={200}
                           />
                         </div>
+
+                        <SlugField
+                          value={slug}
+                          onChange={setSlug}
+                          autoSlug={autoSlug}
+                          basePath="/termine/course/"
+                          currentSlug={course?.slug}
+                        />
 
                         <div>
                           <label
