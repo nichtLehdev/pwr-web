@@ -619,6 +619,7 @@ export default function EventsClient({
                                 <EventCard
                                   key={`event-${item.id}`}
                                   id={item.id}
+                                  slug={item.slug}
                                   title={item.title}
                                   date={item.eventDate}
                                   duration={item.duration}
@@ -720,6 +721,7 @@ export default function EventsClient({
                                           <EventCard
                                             key={`past-event-${item.id}`}
                                             id={item.id}
+                                            slug={item.slug}
                                             title={item.title}
                                             date={item.eventDate}
                                             duration={item.duration}

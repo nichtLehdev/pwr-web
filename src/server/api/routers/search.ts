@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, rateLimitedPublicProcedure } from "../trpc";
 import { ContentStatus } from "~/generated/prisma/client";
 import { GAMES } from "@/app/spiele/_lib/games";
-import { postPath } from "@/lib/slug";
+import { coursePath, eventPath, postPath } from "@/lib/slug";
 
 export type SearchResultType =
   | "post"
@@ -738,6 +738,7 @@ export const searchRouter = createTRPCRouter({
         },
         select: {
           id: true,
+          slug: true,
           title: true,
           description: true,
           eventDate: true,
@@ -778,6 +779,7 @@ export const searchRouter = createTRPCRouter({
         },
         select: {
           id: true,
+          slug: true,
           title: true,
           description: true,
           startDate: true,
@@ -857,7 +859,7 @@ export const searchRouter = createTRPCRouter({
           type: "event",
           title: event.title,
           description: event.description,
-          url: `/termine/event/${event.id}`,
+          url: eventPath(event),
           imageUrl: event.coverImage?.url ?? null,
           date: event.eventDate,
           category: event.category,
@@ -883,7 +885,7 @@ export const searchRouter = createTRPCRouter({
           type: "course",
           title: course.title,
           description: course.description,
-          url: `/termine/course/${course.id}`,
+          url: coursePath(course),
           imageUrl: null,
           date: course.startDate,
           category: course.courseType,

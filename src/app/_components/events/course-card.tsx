@@ -16,6 +16,7 @@ import {
   MapPinIcon,
   ChevronRightIcon,
 } from "lucide-react";
+import { coursePath } from "@/lib/slug";
 
 interface CourseCardProps {
   id: string;
@@ -64,7 +65,7 @@ export default function CourseCard({
   }
 
   return (
-    <Link href={`/termine/course/${id}`} className="group block h-full">
+    <Link href={coursePath(course)} className="group block h-full">
       <article
         className="bg-background-secondary dark:bg-dark-surface dark:shadow-dark-border flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
         style={{

@@ -10,12 +10,13 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
-  DashboardPage,
-  DashboardSectionedFormLayout,
+  DashboardFormBlock,
   DashboardFormMediaSplit,
   DashboardFormZoneHeader,
-  DashboardFormBlock,
+  DashboardPage,
+  DashboardSectionedFormLayout,
   DraftRestorePrompt,
+  SlugField,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
@@ -28,6 +29,7 @@ import {
 import { Lock, Trash2, ImageIcon, FileDown, X } from "lucide-react";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import DownloadPickerModal from "@/app/_components/editor/download-picker-modal";
+import { datedSlugBase, slugify } from "@/lib/slug";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
 
@@ -77,6 +79,7 @@ export default function NewEventPage() {
   const userBezirkId = profile?.bezirkId ?? null;
 
   const [title, setTitle] = useState("");
+  const [slug, setSlug] = useState("");
   const [motto, setMotto] = useState("");
   const [description, setDescription] = useState("");
   const [eventDate, setEventDate] = useState("");
@@ -133,6 +136,7 @@ export default function NewEventPage() {
   const formData = useMemo(
     () => ({
       title,
+      slug,
       motto,
       description,
       eventDate,
@@ -164,6 +168,7 @@ export default function NewEventPage() {
     }),
     [
       title,
+      slug,
       motto,
       description,
       eventDate,
@@ -203,6 +208,16 @@ export default function NewEventPage() {
       ready: !sessionLoading && !profileLoading,
     });
 
+  // Mirrors what createEventSlug derives on the server, so the preview is honest.
+  const autoSlug = useMemo(() => {
+    const parsed = eventDate
+      ? new Date(`${eventDate}T${eventTime || "00:00"}`)
+      : null;
+    return parsed && !Number.isNaN(parsed.getTime())
+      ? datedSlugBase(title, parsed)
+      : slugify(title);
+  }, [title, eventDate, eventTime]);
+
   const hasUnsavedChanges = Boolean(
     title.trim() || description.trim() || eventDate,
   );
@@ -213,6 +228,7 @@ export default function NewEventPage() {
     if (!saved) return;
     startTransition(() => {
       setTitle(saved.title || "");
+      setSlug(saved.slug || "");
       setMotto(saved.motto || "");
       setDescription(saved.description || "");
       setEventDate(saved.eventDate || "");
@@ -415,6 +431,7 @@ export default function NewEventPage() {
 
     createEventMutation.mutate({
       title: title.trim(),
+      slug: slug.trim() || undefined,
       motto: motto.trim() || undefined,
       description: description.trim() || undefined,
       eventDate: dateTime,
@@ -524,6 +541,13 @@ export default function NewEventPage() {
                         required
                       />
                     </div>
+
+                    <SlugField
+                      value={slug}
+                      onChange={setSlug}
+                      autoSlug={autoSlug}
+                      basePath="/termine/event/"
+                    />
 
                     <div>
                       <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">

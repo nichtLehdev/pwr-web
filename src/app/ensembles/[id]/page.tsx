@@ -21,7 +21,7 @@ import {
 import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
 import { db } from "@/server/db";
 import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
-import { ensemblePath, isUuid } from "@/lib/slug";
+import { ensemblePath, eventPath, isUuid } from "@/lib/slug";
 import JsonLd from "@/app/_components/seo/json-ld";
 import { breadcrumbSchema, musicGroupSchema } from "@/lib/structured-data";
 
@@ -430,7 +430,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                         .map((event) => (
                           <Link
                             key={event.id}
-                            href={`/termine/event/${event.id}`}
+                            href={eventPath(event)}
                             className="dark:border-dark-border dark:hover:bg-dark-background-secondary block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
                           >
                             <div className="flex items-start justify-between gap-4">
@@ -494,7 +494,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                         .map((event) => (
                           <Link
                             key={event.id}
-                            href={`/termine/event/${event.id}`}
+                            href={eventPath(event)}
                             className="dark:border-dark-border dark:hover:bg-dark-background-secondary block rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50"
                           >
                             <div className="flex items-start justify-between">

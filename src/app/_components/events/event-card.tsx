@@ -8,9 +8,11 @@ import {
   MapPin,
   ChevronRight,
 } from "lucide-react";
+import { eventPath } from "@/lib/slug";
 
 interface EventCardProps {
   id: string;
+  slug?: string | null;
   title: string;
   date: Date;
   duration?: number | null;
@@ -23,6 +25,7 @@ interface EventCardProps {
 
 export default function EventCard({
   id,
+  slug,
   title,
   date,
   duration,
@@ -35,7 +38,7 @@ export default function EventCard({
   const districtColor = getDistrictColor(district);
 
   return (
-    <Link href={`/termine/event/${id}`} className="group block h-full">
+    <Link href={eventPath({ id, slug })} className="group block h-full">
       <article
         className={`dark:shadow-dark-border bg-background-secondary dark:bg-dark-surface relative flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border-l-4 shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
           cancelled ? "opacity-75" : ""

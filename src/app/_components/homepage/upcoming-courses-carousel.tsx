@@ -16,6 +16,7 @@ import {
 import type { RouterOutputs } from "@/trpc/react";
 import MediaCredit from "@/app/_components/general/media-credit";
 import { getDistrictColor } from "@/lib/district-color";
+import { coursePath } from "@/lib/slug";
 import {
   capitalizeFirstLetter,
   cn,
@@ -221,7 +222,7 @@ function SmallOpenRegistrationCard({
 
   return (
     <Link
-      href={`/termine/course/${course.id}`}
+      href={coursePath(course)}
       className={cn(
         "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md",
         className,
@@ -421,7 +422,7 @@ function FallbackUpcomingCourseCard({ course }: { course: CourseListItem }) {
 
   return (
     <Link
-      href={`/termine/course/${course.id}`}
+      href={coursePath(course)}
       className={cn(
         "group bg-background dark:bg-dark-surface dark:border-dark-border hover:border-primary/40 flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md",
         "max-lg:min-h-[400px]",
@@ -962,7 +963,7 @@ export default function UpcomingCoursesCarousel({
                 )}
               >
                 <Link
-                  href={`/termine/course/${leftCourse.id}`}
+                  href={coursePath(leftCourse)}
                   className={cn(
                     "group bg-background dark:bg-dark-surface dark:border-dark-border flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-l-4 border-gray-200 shadow-sm transition-all hover:shadow-md lg:flex-row lg:items-stretch",
                     mainBannerHeightClass,

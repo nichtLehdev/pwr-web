@@ -1,9 +1,10 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { api } from "@/trpc/server";
 import CourseRegistrationPage from "@/app/_components/events/course-registration-page";
 import type { RouterOutputs } from "@/trpc/react";
 import { isExternalCourse } from "@/lib/course-external";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
+import { coursePath, courseRegistrationPath, isUuid } from "@/lib/slug";
 
 type Course = NonNullable<RouterOutputs["courses"]["getById"]>;
 type Spots = RouterOutputs["courses"]["getAvailableSlots"];
@@ -52,12 +53,16 @@ export default async function CourseAnmeldenPage({ params }: PageProps) {
     notFound();
   }
 
+  if (isUuid(id) && course.slug) {
+    permanentRedirect(courseRegistrationPath(course));
+  }
+
   if (isExternalCourse(course) && course.externalRegistrationUrl) {
     redirect(course.externalRegistrationUrl);
   }
 
   if (!canRegisterForCourse(course, spots)) {
-    redirect(`/termine/course/${id}`);
+    redirect(coursePath(course));
   }
 
   return <CourseRegistrationPage course={course} spots={spots} />;

@@ -11,9 +11,11 @@ import {
   Tag,
   User,
 } from "lucide-react";
+import { eventPath } from "@/lib/slug";
 
 interface DashboardEventCardProps {
   id: string;
+  slug?: string | null;
   title: string;
   date: Date;
   location: string;
@@ -61,6 +63,7 @@ const statusConfig: Record<
 
 export default function DashboardEventCard({
   id,
+  slug,
   title,
   date,
   location,
@@ -182,7 +185,7 @@ export default function DashboardEventCard({
         </Link>
 
         <Link
-          href={`/termine/event/${id}`}
+          href={eventPath({ id, slug })}
           className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
           target="_blank"
           rel="noopener noreferrer"
