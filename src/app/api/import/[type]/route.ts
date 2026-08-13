@@ -14,6 +14,7 @@ import {
   FileType,
   CourseType,
   TargetAudience,
+  HistoryCategory,
 } from "~/generated/prisma/client";
 import { Prisma } from "~/generated/prisma/client";
 
@@ -365,6 +366,36 @@ export async function POST(
                   (bhData.availableTrompeten as boolean) ?? false,
                 availableCd: (bhData.availableCd as boolean) ?? true,
                 sortOrder: (bhData.sortOrder as number) || 0,
+              },
+            });
+          }),
+        );
+
+        result = {
+          success: true,
+          importedCount: results.length,
+        };
+        break;
+      }
+
+      case "history-events": {
+        const historyEvents =
+          (jsonData.historyEvents as Array<Record<string, unknown>>) || [];
+        const results = await Promise.all(
+          historyEvents.map(async (historyData: Record<string, unknown>) => {
+            const imageId = historyData.imageId as string | undefined;
+            const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
+
+            return await db.historyEvent.create({
+              data: {
+                year: historyData.year as number,
+                title: historyData.title as string,
+                description: (historyData.description as string) || "",
+                category:
+                  (historyData.category as string as HistoryCategory) || null,
+                imageId: newImageId,
+                imageAlt: (historyData.imageAlt as string) || null,
+                sortOrder: (historyData.sortOrder as number) || 0,
               },
             });
           }),
