@@ -15,7 +15,13 @@ import {
   SocialIcon,
   SOCIAL_TYPE_OPTIONS,
 } from "@/app/_components/ui/social-icon";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "@/app/_components/dashboard";
 import { Plus, TrashIcon } from "lucide-react";
 
 // Dashboard access is now controlled by permissions
@@ -56,6 +62,9 @@ export default function EditTeamPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userLabel, setUserLabel] = useState("");
+  const [person, setPerson] = useState<PersonDetails>(emptyPersonDetails());
   const [role, setRole] = useState("");
   const [contactType, setContactType] = useState<ContactType | "">("");
   const [sortOrder, setSortOrder] = useState(0);
@@ -67,10 +76,23 @@ export default function EditTeamPage() {
 
   useEffect(() => {
     if (member) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      /* eslint-disable react-hooks/set-state-in-effect */
       setRole(member.role || "");
       setContactType(member.contactType || "");
       setSortOrder(member.sortOrder || 0);
+      setUserId(member.userId);
+      setUserLabel(member.user?.displayName ?? member.user?.email ?? "");
+      setPerson({
+        // Rohwerte des Datensatzes — nicht das gegen den Benutzer aufgelöste
+        // Ergebnis, sonst würden dessen Daten beim Speichern festgeschrieben.
+        name: member.name ?? "",
+        email: member.email ?? "",
+        phone: member.phone ?? "",
+        city: "",
+        bio: member.bio ?? "",
+        imageId: member.imageId,
+        imageUrl: member.image?.url ?? null,
+      });
 
       if (member.responsibilities && member.responsibilities.length > 0) {
         setResponsibilitiesText(member.responsibilities.join("\n"));
@@ -79,6 +101,7 @@ export default function EditTeamPage() {
       if (member.socials && member.socials.length > 0) {
         setSocials(member.socials);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [member]);
 
@@ -160,8 +183,20 @@ export default function EditTeamPage() {
     const socialsJson =
       validSocials.length > 0 ? JSON.stringify(validSocials) : undefined;
 
+    if (!userId && !person.name.trim()) {
+      setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
+      setIsSubmitting(false);
+      return;
+    }
+
     updateMutation.mutate({
       id: memberId,
+      userId,
+      name: person.name.trim() || null,
+      email: person.email.trim() || null,
+      phone: person.phone.trim() || null,
+      bio: person.bio.trim() || null,
+      imageId: person.imageId,
       role: role.trim() || undefined,
       contactType: contactType === "" ? null : contactType,
       sortOrder,
@@ -200,7 +235,7 @@ export default function EditTeamPage() {
     );
   }
 
-  const memberName = member.user?.displayName || "Mitglied";
+  const memberName = member.person.name || "Mitglied";
 
   return (
     <DashboardPage
@@ -223,37 +258,27 @@ export default function EditTeamPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* User Info (read-only) */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Verknüpfter Benutzer
-          </h2>
-          <div className="flex items-center gap-4">
-            <div className="dark:bg-dark-background-secondary flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-              <span className="dark:text-dark-muted text-lg font-medium text-gray-500">
-                {(member.user?.displayName || "?").charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p className="dark:text-dark-text font-medium text-gray-900">
-                {member.user?.displayName || "Unbekannt"}
-              </p>
-              <p className="dark:text-dark-muted text-sm text-gray-500">
-                {member.user?.email}
-              </p>
-            </div>
-            <Link
-              href={`/dashboard/users/${member.userId}`}
-              className="text-primary ml-auto text-sm hover:underline"
-            >
-              Benutzer anzeigen →
-            </Link>
-          </div>
-          <p className="dark:text-dark-muted mt-4 text-sm text-gray-500">
-            Um den verknüpften Benutzer zu ändern, lösche diesen Eintrag und
-            erstelle einen neuen.
-          </p>
-        </section>
+        <UserLinkField
+          userId={userId}
+          userLabel={userLabel}
+          onSelect={(user) => {
+            setUserId(user.id);
+            setUserLabel(user.displayName ?? user.email);
+          }}
+          onClear={() => {
+            setUserId(null);
+            setUserLabel("");
+          }}
+          description="Optional: Verknüpfe das Teammitglied mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen. Jedes Konto kann nur einmal im Team sein."
+        />
+
+        <PersonDetailsFields
+          value={person}
+          onChange={(patch) =>
+            setPerson((current) => ({ ...current, ...patch }))
+          }
+          hasLinkedUser={!!userId}
+        />
 
         {/* Role & Contact Type */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

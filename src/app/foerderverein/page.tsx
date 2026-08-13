@@ -354,14 +354,10 @@ export default async function FoerdervereinPage() {
                 {boardMembers.map((member) => (
                   <PeopleCard
                     key={member.id}
-                    image={
-                      (member.image || member.user?.profileImage) ?? undefined
-                    }
-                    name={
-                      member.name || member.user?.displayName || "Unbekannt"
-                    }
+                    image={member.person.image ?? undefined}
+                    name={member.person.name ?? "Unbekannt"}
                     subtitle={capitalizeFirstLetter(member.role)}
-                    email={member.user?.email || undefined}
+                    email={member.person.email ?? undefined}
                   />
                 ))}
               </div>
@@ -376,8 +372,8 @@ export default async function FoerdervereinPage() {
                       key={member.id}
                       className="text-gray-700 dark:text-gray-300"
                     >
-                      {member.name}{" "}
-                      {member.user?.city && `(${member.user.city})`}
+                      {member.person.name}{" "}
+                      {member.person.city && `(${member.person.city})`}
                     </p>
                   ))}
                 </div>

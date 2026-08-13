@@ -29,3 +29,9 @@ export {
 } from "./dashboard-overflow-menu";
 export { DraftRestorePrompt } from "./draft-restore-prompt";
 export { default as SlugField } from "./slug-field";
+export {
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "./person-details-fields";

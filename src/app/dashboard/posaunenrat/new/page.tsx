@@ -9,10 +9,15 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DashboardPage,
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "@/app/_components/dashboard";
 import { PosaunenratRole } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
-import { XIcon } from "lucide-react";
 
 const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
   { value: PosaunenratRole.VORSTAND, label: "Vorstand" },
@@ -40,45 +45,14 @@ export default function NewPosaunenratPage() {
     PERMISSIONS.ORGANIZATION_MANAGE_POSAUNENRAT,
   );
 
-  const { data: users } = api.users.list.useQuery(
-    { page: 1, limit: 100 },
-    { enabled: !!session?.user },
-  );
-
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [person, setPerson] = useState<PersonDetails>(emptyPersonDetails());
   const [role, setRole] = useState<PosaunenratRole>(PosaunenratRole.VORSTAND);
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userSearch, setUserSearch] = useState("");
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [userLabel, setUserLabel] = useState("");
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const filteredUsers = users?.users.filter((user) => {
-    if (!userSearch.trim()) return true;
-    const searchLower = userSearch.toLowerCase();
-    return (
-      user.displayName?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const handleUserSelect = (user: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  }) => {
-    setUserId(user.id);
-    setUserSearch(user.displayName || user.email);
-    setShowUserDropdown(false);
-  };
-
-  const handleClearUser = () => {
-    setUserId(null);
-    setUserSearch("");
-  };
 
   const utils = api.useUtils();
 
@@ -126,15 +100,18 @@ export default function NewPosaunenratPage() {
     setError("");
     setIsSubmitting(true);
 
-    if (!userId && !name.trim()) {
+    if (!userId && !person.name.trim()) {
       setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
       setIsSubmitting(false);
       return;
     }
 
     createMutation.mutate({
-      name: name.trim() || undefined,
-      email: email.trim() || undefined,
+      name: person.name.trim() || undefined,
+      email: person.email.trim() || undefined,
+      phone: person.phone.trim() || undefined,
+      bio: person.bio.trim() || undefined,
+      imageId: person.imageId || undefined,
       role,
       sortOrder,
       userId: userId || undefined,
@@ -173,134 +150,27 @@ export default function NewPosaunenratPage() {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* User Link (optional) */}
-        <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Benutzer verknüpfen (optional)
-          </h2>
-          <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-            Du kannst ein bestehendes Benutzerkonto verknüpfen. Dann werden
-            Name, E-Mail und Profilbild automatisch übernommen. Alternativ
-            kannst du die Daten manuell eingeben.
-          </p>
-          <div className="relative">
-            <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-              Benutzer suchen
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={userSearch}
-                onChange={(e) => {
-                  setUserSearch(e.target.value);
-                  setShowUserDropdown(true);
-                  if (!e.target.value) setUserId(null);
-                }}
-                onFocus={() => setShowUserDropdown(true)}
-                placeholder="Name oder E-Mail eingeben..."
-                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:ring-1 focus:outline-none"
-              />
-              {userId && (
-                <button
-                  type="button"
-                  onClick={handleClearUser}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <XIcon className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+        <UserLinkField
+          userId={userId}
+          userLabel={userLabel}
+          onSelect={(user) => {
+            setUserId(user.id);
+            setUserLabel(user.displayName ?? user.email);
+          }}
+          onClear={() => {
+            setUserId(null);
+            setUserLabel("");
+          }}
+          description="Optional: Verknüpfe dieses Posaunenratsmitglied mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen."
+        />
 
-            {/* User Dropdown */}
-            {showUserDropdown && (
-              <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                <div className="overflow-y-auto" style={{ maxHeight: "240px" }}>
-                  {filteredUsers && filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        onClick={() => handleUserSelect(user)}
-                        className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        <span className="dark:text-dark-text font-medium text-gray-900">
-                          {user.displayName || user.email}
-                        </span>
-                        {user.displayName && (
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {" "}
-                            – {user.email}
-                          </span>
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                      {userSearch
-                        ? "Keine Benutzer gefunden"
-                        : "Tippe, um Benutzer zu suchen"}
-                    </div>
-                  )}
-                </div>
-                {userId && (
-                  <button
-                    type="button"
-                    onClick={handleClearUser}
-                    className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                  >
-                    Auswahl entfernen
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Selected user indicator */}
-            {userId && (
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                ✓ Benutzer ausgewählt
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* Manual Data */}
-        {!userId && (
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Manuelle Daten
-            </h2>
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Wenn kein Benutzer verknüpft ist, gib die Daten manuell ein.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Max Mustermann"
-                  maxLength={100}
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                  E-Mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="max@example.de"
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-              </div>
-            </div>
-          </section>
-        )}
+        <PersonDetailsFields
+          value={person}
+          onChange={(patch) =>
+            setPerson((current) => ({ ...current, ...patch }))
+          }
+          hasLinkedUser={!!userId}
+        />
 
         {/* Role & District */}
         <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

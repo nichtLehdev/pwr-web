@@ -120,10 +120,10 @@ export default function PosaunenratDetailPage() {
     );
   }
 
-  const displayName = member.user?.displayName || member.name || "Unbekannt";
-  const displayEmail = member.user?.email || member.email || "-";
-  const displayBio = member.user?.bio || null;
-  const imageUrl = member.user?.profileImage?.url || member.image?.url;
+  const displayName = member.person.name || "Unbekannt";
+  const displayEmail = member.person.email || "-";
+  const displayBio = member.person.bio || null;
+  const imageUrl = member.person.image?.url;
 
   return (
     <DashboardPage

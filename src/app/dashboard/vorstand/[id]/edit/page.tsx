@@ -3,22 +3,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/lib/utils";
-import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
-import { DashboardPage } from "@/app/_components/dashboard";
-import { User, XIcon } from "lucide-react";
+import {
+  DashboardPage,
+  PersonDetailsFields,
+  UserLinkField,
+  emptyPersonDetails,
+  type PersonDetails,
+} from "@/app/_components/dashboard";
 
 // Dashboard access is now controlled by permissions
-
-const UserPlaceholderIcon = ({ className }: { className?: string }) => (
-  <User className={className} />
-);
 
 export default function EditVorstandPage() {
   const router = useRouter();
@@ -44,62 +43,37 @@ export default function EditVorstandPage() {
       { enabled: !!memberId && !!session?.user },
     );
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [person, setPerson] = useState<PersonDetails>(emptyPersonDetails());
   const [position, setPosition] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userSearch, setUserSearch] = useState("");
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [imageId, setImageId] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
-
-  // Server-side search (users.list caps limit at 100 and needs the
-  // USERS_MANAGE permission; users.search is the picker endpoint).
-  const { data: filteredUsers } = api.users.search.useQuery(
-    { query: userSearch.trim(), limit: 20 },
-    { enabled: !!session?.user && userSearch.trim().length >= 2 },
-  );
-
-  const handleUserSelect = (user: {
-    id: string;
-    displayName: string | null;
-    email: string;
-  }) => {
-    setUserId(user.id);
-    setUserSearch(user.displayName || user.email);
-    setShowUserDropdown(false);
-  };
-
-  const handleClearUser = () => {
-    setUserId(null);
-    setUserSearch("");
-  };
+  const [userLabel, setUserLabel] = useState("");
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (member) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setName(member.name || "");
-      setEmail(member.email || "");
-      setPhone(member.phone || "");
+      /* eslint-disable react-hooks/set-state-in-effect */
+      // Rohwerte des Datensatzes: was hier steht, wird auch veröffentlicht.
+      setPerson({
+        name: member.name ?? "",
+        email: member.email ?? "",
+        phone: member.phone ?? "",
+        city: "",
+        bio: "",
+        imageId: member.imageId,
+        imageUrl: member.image?.url ?? null,
+      });
       setPosition(member.position || "");
       setDescription(member.description || "");
       setColor(member.color || "");
       setSortOrder(member.sortOrder || 0);
       setUserId(member.userId || null);
-
-      if (member.user) {
-        setUserSearch(member.user.displayName || member.user.email || "");
-      }
-      setImageId(member.imageId || null);
-      setImageUrl(member.image?.url || null);
+      setUserLabel(member.user?.displayName ?? member.user?.email ?? "");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [member]);
 
@@ -156,17 +130,23 @@ export default function EditVorstandPage() {
       return;
     }
 
+    if (!userId && !person.name.trim()) {
+      setError("Bitte wähle einen Benutzer aus oder gib einen Namen ein.");
+      setIsSubmitting(false);
+      return;
+    }
+
     updateMutation.mutate({
       id: memberId,
-      name: name.trim() || undefined,
-      email: email.trim() || undefined,
-      phone: phone.trim() || undefined,
+      name: person.name.trim() || null,
+      email: person.email.trim() || null,
+      phone: person.phone.trim() || null,
       position: position.trim(),
-      description: description.trim() || undefined,
-      color: color.trim() || undefined,
+      description: description.trim() || null,
+      color: color.trim() || null,
       sortOrder,
-      userId: userId || undefined,
-      imageId,
+      userId,
+      imageId: person.imageId,
     });
   };
 
@@ -224,49 +204,14 @@ export default function EditVorstandPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Image */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Bild
-            </h2>
-            <div className="flex items-center gap-6">
-              {imageUrl ? (
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full">
-                  <Image
-                    src={imageUrl}
-                    alt="Vorstandsbild"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="dark:bg-dark-background-secondary flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                  <UserPlaceholderIcon className="dark:text-dark-muted h-12 w-12 text-gray-400" />
-                </div>
-              )}
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsMediaPickerOpen(true)}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-                >
-                  {imageUrl ? "Bild ändern" : "Bild auswählen"}
-                </button>
-                {imageUrl && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImageId(null);
-                      setImageUrl(null);
-                    }}
-                    className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                  >
-                    Bild entfernen
-                  </button>
-                )}
-              </div>
-            </div>
-          </section>
+          <PersonDetailsFields
+            value={person}
+            onChange={(patch) =>
+              setPerson((current) => ({ ...current, ...patch }))
+            }
+            hasLinkedUser={!!userId}
+            showBio={false}
+          />
 
           {/* Position Info */}
           <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -336,150 +281,19 @@ export default function EditVorstandPage() {
             </div>
           </section>
 
-          {/* Link to User */}
-          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-              Benutzerverknüpfung
-            </h2>
-            <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-              Optional: Verknüpfe dieses Vorstandsmitglied mit einem
-              Benutzerkonto. Kontaktdaten werden dann vom Benutzer übernommen.
-            </p>
-            <div className="relative">
-              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                Benutzer suchen
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={userSearch}
-                  onChange={(e) => {
-                    setUserSearch(e.target.value);
-                    setShowUserDropdown(true);
-                    if (!e.target.value) setUserId(null);
-                  }}
-                  onFocus={() => setShowUserDropdown(true)}
-                  placeholder="Name oder E-Mail eingeben..."
-                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 focus:ring-1 focus:outline-none"
-                />
-                {userId && (
-                  <button
-                    type="button"
-                    onClick={handleClearUser}
-                    className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* User Dropdown */}
-              {showUserDropdown && (
-                <div className="dark:border-dark-border dark:bg-dark-surface absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                  <div
-                    className="overflow-y-auto"
-                    style={{ maxHeight: "240px" }}
-                  >
-                    {filteredUsers && filteredUsers.length > 0 ? (
-                      filteredUsers.map((user) => (
-                        <button
-                          key={user.id}
-                          type="button"
-                          onClick={() => handleUserSelect(user)}
-                          className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                        >
-                          <span className="dark:text-dark-text font-medium text-gray-900">
-                            {user.displayName || user.email}
-                          </span>
-                          {user.displayName && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {" "}
-                              – {user.email}
-                            </span>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {userSearch.trim().length >= 2
-                          ? "Keine Benutzer gefunden"
-                          : "Tippe, um Benutzer zu suchen"}
-                      </div>
-                    )}
-                  </div>
-                  {userId && (
-                    <button
-                      type="button"
-                      onClick={handleClearUser}
-                      className="dark:border-dark-border block w-full border-t border-gray-200 px-4 py-2 text-left text-sm font-medium text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
-                    >
-                      Verknüpfung entfernen
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Selected user indicator */}
-              {userId && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                  ✓ Benutzer verknüpft
-                </p>
-              )}
-            </div>
-          </section>
-
-          {/* Manual Contact Info (if no user linked) */}
-          {!userId && (
-            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-                Kontaktinformationen
-              </h2>
-              <p className="dark:text-dark-muted mb-4 text-sm text-gray-600">
-                Diese Felder werden nur verwendet, wenn kein Benutzer verknüpft
-                ist.
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Vollständiger Name"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    E-Mail
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+49 123 456789"
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  />
-                </div>
-              </div>
-            </section>
-          )}
+          <UserLinkField
+            userId={userId}
+            userLabel={userLabel}
+            onSelect={(user) => {
+              setUserId(user.id);
+              setUserLabel(user.displayName ?? user.email);
+            }}
+            onClear={() => {
+              setUserId(null);
+              setUserLabel("");
+            }}
+            description="Optional: Verknüpfe dieses Vorstandsmitglied mit einem Benutzerkonto. Leer gelassene Angaben werden dann von dort übernommen."
+          />
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -502,17 +316,6 @@ export default function EditVorstandPage() {
         </form>
 
         {/* Media Picker Modal */}
-        <MediaPickerModal
-          isOpen={isMediaPickerOpen}
-          onClose={() => setIsMediaPickerOpen(false)}
-          onSelect={(url, _alt, mediaId) => {
-            if (mediaId) {
-              setImageId(mediaId);
-            }
-            setImageUrl(url);
-            setIsMediaPickerOpen(false);
-          }}
-        />
       </DashboardPage>
     </>
   );

@@ -49,14 +49,10 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
     : null;
 
   // Helper function to get main obleute (not stellvertretend)
-  const getMainObleute = (bezirk: Bezirk) => {
-    if (!bezirk.users) return [];
-    return bezirk.users.filter(
-      (user) =>
-        user.districtRoleName &&
-        !user.districtRoleName.toLowerCase().includes("stell"),
+  const getMainObleute = (bezirk: Bezirk) =>
+    (bezirk.obleute ?? []).filter(
+      (person) => !person.roleName.toLowerCase().includes("stell"),
     );
-  };
 
   return (
     <div className="flex flex-col items-start gap-6 lg:flex-row">
@@ -302,10 +298,10 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
                         }
                       >
                         <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
-                          {obmann.districtRoleName}
+                          {obmann.roleName}
                         </p>
                         <p className="text-dark dark:text-dark-text font-semibold">
-                          {obmann.displayName}
+                          {obmann.name}
                         </p>
                       </div>
                     ))}
@@ -457,9 +453,9 @@ export default function BezirkePage() {
 
                     {/* Content */}
                     <div className="p-6">
-                      {bezirk.users && (
+                      {bezirk.obleute.length > 0 && (
                         <div className="space-y-8">
-                          {bezirk.users.map((obmann, idx) => (
+                          {bezirk.obleute.map((obmann, idx) => (
                             <div
                               key={idx}
                               className={`flex items-start gap-5 ${
@@ -471,12 +467,12 @@ export default function BezirkePage() {
                               <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-28 md:w-28">
                                 <Image
                                   src={
-                                    obmann.profileImage?.url ||
+                                    obmann.image?.url ||
                                     "/images/profile-placeholder.jpg"
                                   }
                                   alt={
-                                    obmann.profileImage?.alt ||
-                                    `Profilbild von ${obmann.displayName}`
+                                    obmann.image?.alt ||
+                                    `Profilbild von ${obmann.name ?? "Obperson"}`
                                   }
                                   width={400}
                                   height={400}
@@ -487,10 +483,10 @@ export default function BezirkePage() {
                                 <span
                                   className={`mb-0 inline-block rounded-full pt-1 text-xs font-semibold bg-district-${bezirk.number}/20`}
                                 >
-                                  {obmann.districtRoleName}
+                                  {obmann.roleName}
                                 </span>
                                 <h4 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                                  {obmann.displayName}
+                                  {obmann.name}
                                 </h4>
                                 <div className="space-y-1">
                                   {obmann.address && (
