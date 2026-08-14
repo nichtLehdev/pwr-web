@@ -41,6 +41,7 @@ export async function GET(
       ensemble?: { image?: Media | null } | null;
       auswahlChor?: { image?: Media | null } | null;
     }> = [];
+    let filePaths: string[] = [];
     let filename: string;
 
     switch (type) {
@@ -272,9 +273,18 @@ export async function GET(
           count: downloads.length,
         };
 
-        const { createExportZip } =
-          await import("@/server/utils/export-import");
-        const zipBuffer = await createExportZip(jsonData, [], "downloads.json");
+        // Download files are plain uploads referenced by URL, not Media rows,
+        // so they have to be collected by path.
+        const filePaths = downloads
+          .map((download) => download.fileUrl)
+          .filter((fileUrl): fileUrl is string => Boolean(fileUrl));
+
+        const zipBuffer = await createExportZip(
+          jsonData,
+          [],
+          "downloads.json",
+          filePaths,
+        );
 
         return new NextResponse(zipBuffer as unknown as BodyInit, {
           headers: {
@@ -302,6 +312,11 @@ export async function GET(
         };
 
         mediaFiles = blaeserhefte;
+        // The Hoerprobe is a download file referenced by URL, so it travels
+        // by path like the downloads export rather than as a Media row.
+        filePaths = blaeserhefte
+          .map((bh) => bh.audioSample)
+          .filter((audioSample): audioSample is string => Boolean(audioSample));
         filename = `blaeserhefte-export-${date}.zip`;
         break;
       }
@@ -385,6 +400,7 @@ export async function GET(
       jsonData,
       mediaList,
       `${type}.json`,
+      filePaths,
     );
 
     return new NextResponse(zipBuffer as unknown as BodyInit, {
