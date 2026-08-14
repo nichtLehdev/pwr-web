@@ -11,6 +11,7 @@ type ContentType =
   | "events"
   | "courses"
   | "ensembles"
+  | "auswahlchoere"
   | "media"
   | "downloads"
   | "blaeserhefte"
@@ -32,6 +33,7 @@ export default function ExportImportSection() {
     events: "Termine",
     courses: "Kurse",
     ensembles: "Ensembles",
+    auswahlchoere: "Auswahlchöre",
     media: "Medien",
     downloads: "Downloads",
     blaeserhefte: "Bläserhefte",
@@ -135,6 +137,7 @@ export default function ExportImportSection() {
                 "events",
                 "courses",
                 "ensembles",
+                "auswahlchoere",
                 "media",
                 "downloads",
                 "blaeserhefte",
@@ -182,6 +185,7 @@ export default function ExportImportSection() {
                     "events",
                     "courses",
                     "ensembles",
+                    "auswahlchoere",
                     "media",
                     "downloads",
                     "blaeserhefte",

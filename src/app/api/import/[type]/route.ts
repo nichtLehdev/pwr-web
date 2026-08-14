@@ -259,6 +259,62 @@ export async function POST(
         break;
       }
 
+      case "auswahlchoere": {
+        const auswahlchoere =
+          (jsonData.auswahlchoere as Array<Record<string, unknown>>) || [];
+        const results = await Promise.all(
+          auswahlchoere.map(async (chorData: Record<string, unknown>) => {
+            const slug = chorData.slug as string | undefined;
+            if (!slug) {
+              throw new Error(
+                `Slug fehlt fuer Auswahlchor: ${(chorData.name as string) || "unbenannt"}`,
+              );
+            }
+
+            const imageId = chorData.imageId as string | undefined;
+            const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
+
+            // Resolve the conductor by email: user IDs from the source system
+            // do not exist in the target system.
+            const conductorEmail = chorData.conductorEmail as
+              string | undefined;
+            const conductor = conductorEmail
+              ? await db.user.findUnique({
+                  where: { email: conductorEmail },
+                  select: { id: true },
+                })
+              : null;
+
+            const chorFields = {
+              name: chorData.name as string,
+              subtitle: (chorData.subtitle as string) || "",
+              founded: (chorData.founded as string) || "",
+              members: (chorData.members as string) || "",
+              description: (chorData.description as string) || "",
+              color: (chorData.color as string) || "bg-primary",
+              colorHex: (chorData.colorHex as string) || "#000000",
+              imageId: newImageId,
+              conductorId: conductor?.id ?? null,
+              showApplication: (chorData.showApplication as boolean) ?? false,
+            };
+
+            // The slug is unique, so a re-import updates the existing choir
+            // instead of failing on the unique constraint.
+            return await db.auswahlChor.upsert({
+              where: { slug },
+              create: { ...chorFields, slug },
+              update: chorFields,
+            });
+          }),
+        );
+
+        result = {
+          success: true,
+          importedCount: results.length,
+        };
+        break;
+      }
+
       case "media": {
         const media = (jsonData.media as Array<Record<string, unknown>>) || [];
         const results = await Promise.all(
