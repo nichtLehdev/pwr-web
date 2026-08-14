@@ -180,6 +180,36 @@ export async function GET(
         break;
       }
 
+      case "auswahlchoere": {
+        const auswahlchoere = await db.auswahlChor.findMany({
+          include: {
+            image: true,
+            conductor: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+          },
+          orderBy: { name: "asc" },
+        });
+
+        jsonData = {
+          auswahlchoere: auswahlchoere.map((auswahlChor) => ({
+            ...auswahlChor,
+            imageUrl: auswahlChor.image?.url,
+            conductorEmail: auswahlChor.conductor?.email,
+          })),
+          exportedAt: new Date().toISOString(),
+          count: auswahlchoere.length,
+        };
+
+        mediaFiles = auswahlchoere;
+        filename = `auswahlchoere-export-${date}.zip`;
+        break;
+      }
+
       case "media": {
         const media = await db.media.findMany({
           include: {
