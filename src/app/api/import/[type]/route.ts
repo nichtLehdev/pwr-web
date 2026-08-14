@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
-import { extractImportZip } from "@/server/utils/export-import";
+import {
+  extractImportZip,
+  buildImportFilename,
+} from "@/server/utils/export-import";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
@@ -17,6 +20,12 @@ import {
   HistoryCategory,
 } from "~/generated/prisma/client";
 import { Prisma } from "~/generated/prisma/client";
+
+/**
+ * Upload folders an import may write into. Everything else in a ZIP is
+ * ignored, so the archive cannot decide where files land.
+ */
+const IMPORTABLE_UPLOAD_FOLDERS = new Set(["downloads"]);
 
 export async function POST(
   request: NextRequest,
@@ -54,6 +63,8 @@ export async function POST(
     let jsonData: Record<string, unknown>;
     let mediaFiles: Map<string, Buffer> = new Map();
     let mediaMapping: Record<string, string> = {};
+    let uploadFiles: Map<string, Buffer> = new Map();
+    let fileMapping: Record<string, string> = {};
 
     if (isZip) {
       const arrayBuffer = await file.arrayBuffer();
@@ -62,6 +73,8 @@ export async function POST(
       jsonData = extracted.jsonData;
       mediaFiles = extracted.mediaFiles;
       mediaMapping = extracted.mediaMapping;
+      uploadFiles = extracted.uploadFiles;
+      fileMapping = extracted.fileMapping;
     } else {
       const text = await file.text();
       jsonData = JSON.parse(text);
@@ -72,6 +85,7 @@ export async function POST(
     if (mediaFiles.size > 0 && Object.keys(mediaMapping).length > 0) {
       const userId = session.user.id;
       const timestamp = Date.now();
+      let mediaIndex = 0;
 
       for (const [oldMediaId, filename] of Object.entries(mediaMapping)) {
         const fileBuffer = mediaFiles.get(filename);
@@ -80,7 +94,13 @@ export async function POST(
           continue;
         }
 
-        const extension = filename.split(".").pop()?.toLowerCase() || "bin";
+        const { filename: newFilename, extension } = buildImportFilename(
+          filename,
+          userId,
+          timestamp,
+          mediaIndex++,
+        );
+
         const mimeTypes: Record<string, string> = {
           jpg: "image/jpeg",
           jpeg: "image/jpeg",
@@ -90,12 +110,6 @@ export async function POST(
           pdf: "application/pdf",
         };
         const mimeType = mimeTypes[extension] || "application/octet-stream";
-
-        const baseName = filename
-          .replace(/\.[^/.]+$/, "")
-          .replace(/[^a-zA-Z0-9-_]/g, "-")
-          .substring(0, 50);
-        const newFilename = `${baseName}-${userId.substring(0, 8)}-${timestamp}.${extension}`;
 
         const uploadDir = join(
           /* turbopackIgnore: true */ UPLOADS_ROOT,
@@ -123,6 +137,50 @@ export async function POST(
         });
 
         mediaIdMap[oldMediaId] = media.id;
+      }
+    }
+
+    // Raw uploads (e.g. download files) travel by path, not as Media rows.
+    // They are written back under uploads/ and the entity URL is rewritten,
+    // since the source system's URL means nothing here.
+    const uploadUrlMap: Record<string, string> = {}; // old URL -> new URL
+
+    if (uploadFiles.size > 0 && Object.keys(fileMapping).length > 0) {
+      const userId = session.user.id;
+      const timestamp = Date.now();
+      let fileIndex = 0;
+
+      for (const [oldUrl, filename] of Object.entries(fileMapping)) {
+        const fileBuffer = uploadFiles.get(filename);
+        if (!fileBuffer) {
+          console.warn(`Upload file not found in ZIP: ${filename}`);
+          continue;
+        }
+
+        // The folder comes from the exported URL but is checked against a
+        // fixed set: a crafted ZIP must not steer writes outside uploads/.
+        const folder = oldUrl.split("/")[3] ?? "";
+        if (!IMPORTABLE_UPLOAD_FOLDERS.has(folder)) {
+          console.warn(`Skipping upload file with unexpected path: ${oldUrl}`);
+          continue;
+        }
+
+        const { filename: newFilename } = buildImportFilename(
+          filename,
+          userId,
+          timestamp,
+          fileIndex++,
+        );
+
+        const uploadDir = join(
+          /* turbopackIgnore: true */ UPLOADS_ROOT,
+          folder,
+        );
+        await mkdir(/* turbopackIgnore: true */ uploadDir, { recursive: true });
+        const filePath = join(uploadDir, newFilename);
+        await writeFile(/* turbopackIgnore: true */ filePath, fileBuffer);
+
+        uploadUrlMap[oldUrl] = `/api/uploads/${folder}/${newFilename}`;
       }
     }
 
@@ -359,12 +417,14 @@ export async function POST(
           (jsonData.downloads as Array<Record<string, unknown>>) || [];
         const results = await Promise.all(
           downloads.map(async (downloadData: Record<string, unknown>) => {
+            const oldFileUrl = downloadData.fileUrl as string;
+
             return await db.download.create({
               data: {
                 title: downloadData.title as string,
                 description: (downloadData.description as string) || null,
                 category: downloadData.category as string as DownloadCategory,
-                fileUrl: downloadData.fileUrl as string,
+                fileUrl: uploadUrlMap[oldFileUrl] ?? oldFileUrl,
                 fileType: downloadData.fileType as string as FileType,
                 fileSize: (downloadData.fileSize as number) || null,
                 tags: (downloadData.tags as unknown) || [],
@@ -410,7 +470,10 @@ export async function POST(
                   ? (bhData.highlights as Prisma.InputJsonValue)
                   : Prisma.JsonNull,
                 imageId: newImageId,
-                audioSample: (bhData.audioSample as string) || null,
+                audioSample: bhData.audioSample
+                  ? (uploadUrlMap[bhData.audioSample as string] ??
+                    (bhData.audioSample as string))
+                  : null,
                 priceBlaeserheft: (bhData.priceBlaeserheft as number) || null,
                 priceBeiheft: (bhData.priceBeiheft as number) || null,
                 priceTrompeten: (bhData.priceTrompeten as number) || null,
