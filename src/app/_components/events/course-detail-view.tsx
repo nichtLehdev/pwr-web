@@ -32,6 +32,8 @@ import {
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
 import { isExternalCourse } from "@/lib/course-external";
 import { coursePath, courseRegistrationPath } from "@/lib/slug";
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
+
 type CourseWithRelations = RouterOutputs["courses"]["getById"];
 type CourseSpots = RouterOutputs["courses"]["getAvailableSlots"];
 
@@ -465,6 +467,8 @@ export default function CourseDetailView({
                           {course.location.additionalInfo}
                         </p>
                       )}
+                      {/* Navigation Button */}
+                      <LocationNavigationLink location={course.location} />
                     </div>
                   </div>
                 )}

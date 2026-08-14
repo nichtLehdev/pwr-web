@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
+import { coursePath } from "@/lib/slug";
 import type { ContentStatus, CourseType } from "~/generated/prisma/enums";
 import {
   Calendar,
@@ -14,6 +15,7 @@ import {
 
 interface DashboardCourseCardProps {
   id: string;
+  slug?: string | null;
   title: string;
   startDate: Date;
   endDate: Date;
@@ -75,6 +77,7 @@ const courseTypeLabels: Record<CourseType, string> = {
 
 export default function DashboardCourseCard({
   id,
+  slug,
   title,
   startDate,
   endDate,
@@ -239,7 +242,7 @@ export default function DashboardCourseCard({
         </Link>
 
         <Link
-          href={`/mitmachen/kurse/${id}`}
+          href={coursePath({ id, slug })}
           className="hover:text-primary dark:hover:text-primary ml-auto inline-flex items-center text-gray-500 transition-colors dark:text-gray-500"
           target="_blank"
           rel="noopener noreferrer"

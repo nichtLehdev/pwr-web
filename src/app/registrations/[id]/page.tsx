@@ -26,6 +26,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -292,6 +293,11 @@ export default function ViewRegistrationPage() {
                   {registration.course.location.name},{" "}
                   {registration.course.location.city}
                 </p>
+                <LocationNavigationLink
+                  location={registration.course.location}
+                  variant="inline"
+                  className="mt-1"
+                />
               </div>
             )}
             {registration.course.registrationDeadline && (
