@@ -527,6 +527,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
               )}
               <DashboardCourseCard
                 id={course.id}
+                slug={course.slug}
                 title={course.title}
                 startDate={new Date(course.startDate)}
                 endDate={new Date(course.endDate)}

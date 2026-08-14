@@ -18,6 +18,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 
 interface EventDetailModalProps {
   event: CalendarItem & {
@@ -219,6 +220,11 @@ export default function EventDetailModal({
                   {event.location.zipCode && `${event.location.zipCode} `}
                   {event.location.city}
                 </p>
+                <LocationNavigationLink
+                  location={event.location}
+                  variant="inline"
+                  className="mt-1"
+                />
               </div>
             </div>
           )}

@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { MailIcon } from "lucide-react";
 import { ensemblePath } from "@/lib/slug";
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 
 function ChorFindenContent() {
   const searchParams = useSearchParams();
@@ -1167,6 +1168,11 @@ function ChorFindenContent() {
                                     {choir.location.street},{" "}
                                     {choir.location.zipCode}{" "}
                                     {choir.location.city}
+                                    <LocationNavigationLink
+                                      location={choir.location}
+                                      variant="inline"
+                                      className="ml-2 align-middle"
+                                    />
                                   </span>
                                 </div>
                               )}

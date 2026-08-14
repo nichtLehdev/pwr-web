@@ -9,6 +9,7 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper";
 import PublicPage from "@/app/_components/general/public-page";
 import MediaCredit from "@/app/_components/general/media-credit";
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import {
   ClockIcon,
   GlobeIcon,
@@ -16,7 +17,6 @@ import {
   MailIcon,
   PhoneIcon,
   UserIcon,
-  NavigationIcon,
 } from "lucide-react";
 import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
 import { db } from "@/server/db";
@@ -316,27 +316,9 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                     </div>
 
                     {/* Navigation Button */}
-                    {(latitude && longitude) || ensemble.location.city ? (
-                      <a
-                        href={
-                          latitude && longitude
-                            ? `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
-                            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                `${ensemble.location.name || ""} ${
-                                  ensemble.location.street || ""
-                                } ${ensemble.location.zipCode || ""} ${
-                                  ensemble.location.city
-                                }`,
-                              )}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-primary hover:bg-primary-dark mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
-                      >
-                        <NavigationIcon className="h-5 w-5" />
-                        Navigation starten
-                      </a>
-                    ) : null}
+                    <LocationNavigationLink
+                      location={{ ...ensemble.location, latitude, longitude }}
+                    />
 
                     {/* OpenStreetMap Map */}
                     {latitude != null &&

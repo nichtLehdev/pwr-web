@@ -21,11 +21,12 @@ import {
   CircleXIcon,
   MapPin,
   MapPinIcon,
-  NavigationIcon,
   Users,
   UsersIcon,
   EditIcon,
 } from "lucide-react";
+
+import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 
 type EventWithRelations = RouterOutputs["events"]["getById"];
 
@@ -372,21 +373,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
                         </p>
                       )}
                       {/* Navigation Button */}
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          `${event.location.name || ""} ${
-                            event.location.street || ""
-                          } ${event.location.zipCode || ""} ${
-                            event.location.city
-                          }`,
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-primary hover:bg-primary-dark mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-white transition-colors"
-                      >
-                        <NavigationIcon className="h-5 w-5" />
-                        Navigation starten
-                      </a>
+                      <LocationNavigationLink location={event.location} />
                     </div>
                   )}
                 </div>
