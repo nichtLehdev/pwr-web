@@ -9,6 +9,12 @@ export type SelectProps = Omit<
   "size" | "multiple"
 > & {
   error?: boolean;
+  /**
+   * `md` matches the shared `Input` (16px text, 44px tall) so a select can sit
+   * in a row of text inputs without looking shorter. Below 16px iOS Safari also
+   * zooms the page in when the control is focused.
+   */
+  fieldSize?: "sm" | "md";
   children: React.ReactNode;
 };
 
@@ -16,6 +22,12 @@ type ParsedOption = {
   value: string;
   label: string;
   disabled?: boolean;
+  /**
+   * Text pinned to the right of the label (e.g. a price), set via
+   * `data-trailing` on the `<option>`. It never truncates, so it stays readable
+   * on narrow screens where the label itself has to be cut off.
+   */
+  trailing?: string;
 };
 
 function optionTextContent(node: React.ReactNode): string {
@@ -38,7 +50,9 @@ function parseOptions(children: React.ReactNode): ParsedOption[] {
 
       if (child.type === "option") {
         const props =
-          child.props as React.OptionHTMLAttributes<HTMLOptionElement>;
+          child.props as React.OptionHTMLAttributes<HTMLOptionElement> & {
+            "data-trailing"?: string;
+          };
         const textLabel =
           optionTextContent(props.children).trim() || String(props.value ?? "");
         const displayLabel = groupLabel
@@ -48,6 +62,7 @@ function parseOptions(children: React.ReactNode): ParsedOption[] {
           value: props.value != null ? String(props.value) : "",
           label: displayLabel,
           disabled: props.disabled,
+          trailing: props["data-trailing"],
         });
       } else if (child.type === "optgroup") {
         const og =
@@ -72,6 +87,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     {
       className,
       error,
+      fieldSize = "sm",
       children,
       value: valueProp,
       defaultValue,
@@ -219,7 +235,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
     };
 
     const triggerClasses = cn(
-      "flex w-full items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm text-gray-900 shadow-sm transition-colors",
+      "flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-gray-900 shadow-sm transition-colors",
+      fieldSize === "md" ? "h-11 text-base sm:px-4" : "text-sm",
       "focus:border-primary focus:ring-primary focus:ring-1 focus:outline-none",
       "dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text",
       "hover:bg-gray-50 dark:hover:bg-dark-background",
@@ -262,6 +279,11 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           >
             {displayText}
           </span>
+          {selectedOption?.trailing ? (
+            <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+              {selectedOption.trailing}
+            </span>
+          ) : null}
           <ChevronDown
             className={cn(
               "h-4 w-4 shrink-0 text-gray-500 transition-transform dark:text-gray-400",
@@ -289,7 +311,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                   aria-selected={selected}
                   data-index={index}
                   className={cn(
-                    "dark:text-dark-text flex cursor-pointer items-center gap-2 px-3 py-2 text-sm text-gray-900",
+                    "dark:text-dark-text flex cursor-pointer items-start gap-2 px-3 py-2 text-gray-900",
+                    fieldSize === "md" ? "text-base" : "text-sm",
                     index === highlight && "bg-primary/10 dark:bg-primary/15",
                     opt.disabled && "cursor-not-allowed opacity-40",
                     selected && "font-medium",
@@ -303,10 +326,24 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     buttonRef.current?.focus();
                   }}
                 >
-                  <span className="min-w-0 flex-1 truncate">{opt.label}</span>
+                  <span
+                    className={cn(
+                      "min-w-0 flex-1",
+                      // A label paired with a trailing value is meant to be read
+                      // in full — wrap it instead of hiding the end of it.
+                      opt.trailing ? "break-words" : "truncate",
+                    )}
+                  >
+                    {opt.label}
+                  </span>
+                  {opt.trailing ? (
+                    <span className="shrink-0 font-medium text-gray-700 dark:text-gray-300">
+                      {opt.trailing}
+                    </span>
+                  ) : null}
                   {selected && (
                     <Check
-                      className="text-primary h-4 w-4 shrink-0"
+                      className="text-primary mt-1 h-4 w-4 shrink-0"
                       aria-hidden
                     />
                   )}

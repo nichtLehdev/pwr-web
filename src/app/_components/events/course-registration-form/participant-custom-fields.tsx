@@ -1,6 +1,7 @@
 "use client";
 
 import { Input, Label, Textarea, Select } from "@/app/_components/ui";
+import type { SelectProps } from "@/app/_components/ui/select";
 import {
   parseSelectOptionValues,
   YEAR_MAX,
@@ -56,6 +57,8 @@ type ParticipantCustomFieldsProps = {
   invalidFieldNames?: string[];
   labelClassName?: string;
   inputClassName?: string;
+  /** Keeps the select the same height as `inputClassName`'s text inputs. */
+  selectFieldSize?: SelectProps["fieldSize"];
   /** Background/border wrapper for CHECKBOX and MULTISELECT boxes (step 2 tints sibling groups green). */
   choiceContainerClassName?: string;
 };
@@ -67,6 +70,7 @@ export function ParticipantCustomFields({
   invalidFieldNames = [],
   labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
   inputClassName = "focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none",
+  selectFieldSize,
   choiceContainerClassName = "dark:bg-dark-background-secondary bg-white",
 }: ParticipantCustomFieldsProps) {
   if (fields.length === 0) {
@@ -96,6 +100,7 @@ export function ParticipantCustomFields({
                 value={fieldValue != null ? String(fieldValue) : ""}
                 onChange={(e) => setField(field.fieldName, e.target.value)}
                 error={isInvalid}
+                fieldSize={selectFieldSize}
                 className={inputClassName}
               >
                 <option value="">Bitte wählen</option>

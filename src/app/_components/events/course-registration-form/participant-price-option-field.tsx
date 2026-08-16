@@ -3,6 +3,7 @@
 import { Tags } from "lucide-react";
 import { Select } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
+import { FIELD_SELECT_SIZE } from "./field-styles";
 
 export type PriceOptionChoice = {
   id: string;
@@ -21,6 +22,7 @@ type ParticipantPriceOptionFieldProps = {
   isOptionDisabled?: (optionId: string) => boolean;
   getOptionSuffix?: (optionId: string) => string;
   className?: string;
+  labelClassName?: string;
 };
 
 export function ParticipantPriceOptionField({
@@ -32,6 +34,7 @@ export function ParticipantPriceOptionField({
   isOptionDisabled,
   getOptionSuffix,
   className,
+  labelClassName = "text-dark dark:text-dark-text mb-1 block text-sm font-medium",
 }: ParticipantPriceOptionFieldProps) {
   if (priceOptions.length === 0) {
     return null;
@@ -41,9 +44,7 @@ export function ParticipantPriceOptionField({
 
   return (
     <div className={cn("md:col-span-2", className)}>
-      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-        Preisoption *
-      </label>
+      <label className={labelClassName}>Preisoption *</label>
       <div className="flex items-center gap-2.5 sm:gap-3">
         <div
           className={cn(
@@ -61,6 +62,7 @@ export function ParticipantPriceOptionField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             error={error}
+            fieldSize={FIELD_SELECT_SIZE}
           >
             {placeholderOption ? <option value="">Bitte wählen</option> : null}
             {priceOptions.map((option) => (
@@ -68,9 +70,14 @@ export function ParticipantPriceOptionField({
                 key={option.id}
                 value={option.id}
                 disabled={isOptionDisabled?.(option.id)}
+                // Price (and availability) as trailing text, so a long option
+                // name truncates on narrow screens without taking the price
+                // with it.
+                data-trailing={`${option.price.toFixed(2)} €${
+                  getOptionSuffix?.(option.id) ?? ""
+                }`}
               >
-                {option.label} – {option.price.toFixed(2)} €
-                {getOptionSuffix?.(option.id) ?? ""}
+                {option.label}
               </option>
             ))}
           </Select>

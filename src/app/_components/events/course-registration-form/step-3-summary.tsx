@@ -137,9 +137,9 @@ export function Step3Summary({
             return (
               <div
                 key={index}
-                className="dark:border-dark-border flex items-start justify-between border-b border-gray-200 pb-3 last:border-0"
+                className="dark:border-dark-border flex items-start justify-between gap-3 border-b border-gray-200 pb-3 last:border-0"
               >
-                <div>
+                <div className="min-w-0">
                   <p className="text-dark dark:text-dark-text font-semibold">
                     {participant.firstName} {participant.lastName}
                   </p>
@@ -153,7 +153,7 @@ export function Step3Summary({
                     {priceOption?.label}
                   </p>
                 </div>
-                <p className="text-primary font-bold">
+                <p className="text-primary shrink-0 font-bold">
                   {priceOption?.price.toFixed(2)} €
                 </p>
               </div>
