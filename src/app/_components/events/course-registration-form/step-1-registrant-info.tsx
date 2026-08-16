@@ -1,6 +1,7 @@
 "use client";
 
 import type { RegistrationData } from "./types";
+import { fieldClass } from "./field-styles";
 
 interface Step1RegistrantInfoProps {
   registrationData: RegistrationData;
@@ -18,6 +19,9 @@ export function Step1RegistrantInfo({
   staffMode = false,
 }: Step1RegistrantInfoProps) {
   const contactRequiredMark = staffMode ? "" : " *";
+  const inputClass = fieldClass({
+    className: "dark:bg-dark-background-secondary bg-white",
+  });
   return (
     <div className="space-y-4">
       <div>
@@ -46,7 +50,7 @@ export function Step1RegistrantInfo({
               }
               maxLength={100}
               required
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="Max"
             />
           </div>
@@ -66,7 +70,7 @@ export function Step1RegistrantInfo({
               }
               maxLength={100}
               required
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="Mustermann"
             />
           </div>
@@ -85,7 +89,7 @@ export function Step1RegistrantInfo({
                 })
               }
               required
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="max@example.com"
             />
           </div>
@@ -105,7 +109,7 @@ export function Step1RegistrantInfo({
               }
               maxLength={50}
               required={!staffMode}
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="0211 123456"
             />
           </div>
@@ -123,7 +127,7 @@ export function Step1RegistrantInfo({
                 })
               }
               maxLength={200}
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="Musterstraße 1"
               required={!staffMode && !registrationData.useSeparateBilling}
             />
@@ -142,7 +146,7 @@ export function Step1RegistrantInfo({
                 })
               }
               maxLength={20}
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="12345"
               required={!staffMode && !registrationData.useSeparateBilling}
             />
@@ -161,7 +165,7 @@ export function Step1RegistrantInfo({
                 })
               }
               maxLength={100}
-              className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+              className={inputClass}
               placeholder="Düsseldorf"
               required={!staffMode && !registrationData.useSeparateBilling}
             />
@@ -214,7 +218,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={200}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="Evangelische Kirchengemeinde Düsseldorf"
                 />
               </div>
@@ -233,7 +237,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={100}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="Max"
                 />
               </div>
@@ -252,7 +256,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={100}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="Mustermann"
                 />
               </div>
@@ -271,7 +275,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={200}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="Musterstraße 123"
                 />
               </div>
@@ -290,7 +294,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={20}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="40210"
                 />
               </div>
@@ -309,7 +313,7 @@ export function Step1RegistrantInfo({
                     })
                   }
                   maxLength={100}
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="Düsseldorf"
                 />
               </div>
@@ -327,7 +331,7 @@ export function Step1RegistrantInfo({
                       billingEmail: e.target.value,
                     })
                   }
-                  className="focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-transparent focus:ring-2"
+                  className={inputClass}
                   placeholder="rechnung@gemeinde.de"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

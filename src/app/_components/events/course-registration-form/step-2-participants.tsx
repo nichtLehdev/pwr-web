@@ -17,6 +17,11 @@ import { ParticipantLibraryPopup } from "./participant-library-popup";
 import { ParticipantCustomFields } from "./participant-custom-fields";
 import type { User } from "~/generated/prisma/client";
 import { ParticipantPriceOptionField } from "./participant-price-option-field";
+import {
+  FIELD_SELECT_SIZE,
+  FIELD_SIZE_CLASS,
+  fieldClass,
+} from "./field-styles";
 
 interface Step2ParticipantsProps {
   course: CourseWithRelations;
@@ -381,7 +386,7 @@ export function Step2Participants({
 
                   <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Vorname *
                       </label>
                       <input
@@ -392,16 +397,15 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
-                          missingFields[index]?.includes("firstName")
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        className={fieldClass({
+                          error: missingFields[index]?.includes("firstName"),
+                          className: "dark:bg-dark-background",
+                        })}
                       />
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Nachname *
                       </label>
                       <input
@@ -412,16 +416,15 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
-                          missingFields[index]?.includes("lastName")
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        className={fieldClass({
+                          error: missingFields[index]?.includes("lastName"),
+                          className: "dark:bg-dark-background",
+                        })}
                       />
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Geburtsdatum *
                       </label>
                       <input
@@ -510,14 +513,16 @@ export function Step2Participants({
                             .split("T")[0]
                         }
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
-                          missingFields[index]?.includes("birthDate") ||
-                          (validationErrors[index] &&
-                            (validationErrors[index].includes("Geburtsdatum") ||
-                              validationErrors[index].includes("Jahr alt")))
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        className={fieldClass({
+                          error:
+                            missingFields[index]?.includes("birthDate") ||
+                            (!!validationErrors[index] &&
+                              (validationErrors[index].includes(
+                                "Geburtsdatum",
+                              ) ||
+                                validationErrors[index].includes("Jahr alt"))),
+                          className: "dark:bg-dark-background",
+                        })}
                       />
                       {validationErrors[index] &&
                         (validationErrors[index].includes("Geburtsdatum") ||
@@ -529,7 +534,7 @@ export function Step2Participants({
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Wohnort *
                       </label>
                       <input
@@ -540,17 +545,16 @@ export function Step2Participants({
                         }
                         maxLength={100}
                         required
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text dark:bg-dark-background w-full rounded-lg border px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
-                          missingFields[index]?.includes("city")
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
+                        className={fieldClass({
+                          error: missingFields[index]?.includes("city"),
+                          className: "dark:bg-dark-background",
+                        })}
                         placeholder="Düsseldorf"
                       />
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 sm:text-sm dark:text-gray-300">
+                      <label className="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300">
                         Instrument
                       </label>
                       <input
@@ -560,11 +564,11 @@ export function Step2Participants({
                           updateParticipant(index, "instrument", e.target.value)
                         }
                         maxLength={100}
-                        className={`focus:ring-primary dark:border-dark-border text-dark dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 sm:px-4 sm:text-base ${
-                          isInGroup
+                        className={fieldClass({
+                          className: isInGroup
                             ? "bg-green-50 dark:bg-green-900/20"
-                            : "dark:bg-dark-background bg-white"
-                        }`}
+                            : "dark:bg-dark-background bg-white",
+                        })}
                         placeholder="Trompete"
                       />
                     </div>
@@ -581,6 +585,7 @@ export function Step2Participants({
                           )
                         }
                         error={missingFields[index]?.includes("priceOptionId")}
+                        labelClassName="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300"
                       />
                     ) : null}
 
@@ -594,8 +599,9 @@ export function Step2Participants({
                       invalidFieldNames={(missingFields[index] ?? [])
                         .filter((m) => m.startsWith("customField:"))
                         .map((m) => m.slice("customField:".length))}
-                      labelClassName="mb-1 text-xs sm:text-sm"
-                      inputClassName="text-sm sm:text-base"
+                      labelClassName="mb-1 block text-sm font-semibold text-gray-700 dark:text-gray-300"
+                      inputClassName={FIELD_SIZE_CLASS}
+                      selectFieldSize={FIELD_SELECT_SIZE}
                       choiceContainerClassName={
                         isInGroup
                           ? "bg-green-50 dark:bg-green-900/20"

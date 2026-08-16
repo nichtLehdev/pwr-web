@@ -256,3 +256,28 @@ body {
 .rhythm-count-pop {
   animation: rhythm-count-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/*
+ * iOS Safari lays `input[type="date"]` (and the other date/time types) out from
+ * its native widget instead of as a text box: the field keeps an intrinsic
+ * width — so it overflows narrow grid columns rather than shrinking — and
+ * centres its value, which makes it taller than the inputs next to it. Reset it
+ * to a plain field so mixed rows (e.g. Geburtsdatum next to Wohnort in der
+ * Kursanmeldung) line up.
+ */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  /* Holds the row height while the field is still empty. */
+  min-height: 1.5em;
+}
