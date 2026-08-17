@@ -1,13 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
-
-function getSecret(): string {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret)
-    throw new Error(
-      "BETTER_AUTH_SECRET is required for registration access tokens",
-    );
-  return secret;
-}
+import { createSignedToken, verifySignedToken } from "./signed-token";
 
 const PURPOSE = "registration-access";
 
@@ -20,23 +11,8 @@ const PURPOSE = "registration-access";
  */
 const TOKEN_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
-function sign(payload: string): string {
-  return createHmac("sha256", getSecret()).update(payload).digest("hex");
-}
-
-function safeCompare(a: string, b: string): boolean {
-  const bufA = Buffer.from(a);
-  const bufB = Buffer.from(b);
-  if (bufA.length !== bufB.length) return false;
-  return timingSafeEqual(bufA, bufB);
-}
-
-function payloadFor(
-  registrationId: string,
-  email: string,
-  expiresAt: number,
-): string {
-  return `${PURPOSE}|${registrationId}|${email.toLowerCase()}|${expiresAt}`;
+function subject(registrationId: string, email: string): string {
+  return `${registrationId}|${email.toLowerCase()}`;
 }
 
 /**
@@ -50,8 +26,11 @@ export function createRegistrationAccessToken(
   registrationId: string,
   email: string,
 ): string {
-  const expiresAt = Date.now() + TOKEN_TTL_MS;
-  return `${expiresAt}.${sign(payloadFor(registrationId, email, expiresAt))}`;
+  return createSignedToken(
+    PURPOSE,
+    subject(registrationId, email),
+    TOKEN_TTL_MS,
+  );
 }
 
 export function verifyRegistrationAccessToken(
@@ -59,15 +38,5 @@ export function verifyRegistrationAccessToken(
   email: string,
   token: string,
 ): boolean {
-  const dotIndex = token.indexOf(".");
-  if (dotIndex === -1) return false;
-
-  const expiresAt = Number(token.slice(0, dotIndex));
-  const signature = token.slice(dotIndex + 1);
-  if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
-
-  return safeCompare(
-    sign(payloadFor(registrationId, email, expiresAt)),
-    signature,
-  );
+  return verifySignedToken(PURPOSE, subject(registrationId, email), token);
 }
