@@ -5,6 +5,7 @@ import {
   countConfirmedParticipants,
   runSerializable,
 } from "./course-capacity";
+import { registrationAccessUrl } from "./registration-access";
 
 type Db = typeof database;
 
@@ -166,6 +167,7 @@ export async function sendPromotionEmails(
           registration.totalPrice,
           registration.participantsCount,
           registration.id,
+          registrationAccessUrl(registration),
         );
       } catch (error) {
         console.error(

@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import {
   createTRPCRouter,
   protectedProcedure,
+  publicProcedure,
   rateLimitedPublicProcedure,
 } from "../trpc";
 import {
@@ -17,9 +18,11 @@ import type { db as database } from "@/server/db";
 import { isExternalCourse } from "@/lib/course-external";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 
-function collaboratorsForViewer(userId: string) {
+function collaboratorsForViewer(userId: string | null) {
   return {
-    where: { userId },
+    // Magic-link callers have no account and can never be course staff, but
+    // the include still needs a filter it can run — one that matches nothing.
+    where: { userId: userId ?? "" },
     select: { role: true },
   } as const;
 }
@@ -52,6 +55,11 @@ import {
   prepareParticipantsForCourse,
   resolveCoursePaymentMethod,
 } from "../helpers/registration-write";
+import {
+  isRegistrationOwner,
+  registrationAccessUrl,
+  viewerId,
+} from "../helpers/registration-access";
 
 const getEmailService = async () => import("@/server/email");
 
@@ -108,6 +116,7 @@ async function sendRegistrationCreatedEmail(args: {
         totalPrice,
         registration.participants.length,
         registration.id,
+        registrationAccessUrl(registration),
       );
     } else if (registrationStatus === RegistrationStatus.CONFIRMED) {
       await emailService.sendCourseRegistrationConfirmedEmail(
@@ -120,6 +129,7 @@ async function sendRegistrationCreatedEmail(args: {
         registration.totalPrice,
         registration.participants.length,
         registration.id,
+        registrationAccessUrl(registration),
       );
     } else if (registrationStatus === RegistrationStatus.WAITLIST) {
       await emailService.sendCourseRegistrationWaitlistEmail(
@@ -132,6 +142,7 @@ async function sendRegistrationCreatedEmail(args: {
         registration.totalPrice,
         registration.participants.length,
         registration.id,
+        registrationAccessUrl(registration),
       );
     }
   } catch (error) {
@@ -524,7 +535,7 @@ export const registrationsRouter = createTRPCRouter({
         include: {
           priceOptions: true,
           customFields: true,
-          collaborators: collaboratorsForViewer(ctx.session.user.id),
+          collaborators: collaboratorsForViewer(viewerId(ctx)),
         },
       });
 
@@ -732,8 +743,65 @@ export const registrationsRouter = createTRPCRouter({
       return registration;
     }),
 
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
+  /**
+   * "I signed up without an account and lost the link." Mails a fresh magic
+   * link for every anmeldung on that address whose course has not ended yet.
+   *
+   * Always reports success: whether an address has registrations here is not
+   * something an anonymous caller gets to probe for.
+   */
+  requestAccessLink: rateLimitedPublicProcedure(
+    "registrations.requestAccessLink",
+    { maxRequests: 5, windowMs: 60 * 60 * 1000 },
+  )
+    .input(z.object({ email: z.email() }))
+    .mutation(async ({ ctx, input }) => {
+      const registrations = await ctx.db.courseRegistration.findMany({
+        where: {
+          registrantEmail: { equals: input.email.trim(), mode: "insensitive" },
+          registrationStatus: { not: RegistrationStatus.CANCELLED },
+          course: { endDate: { gte: new Date() } },
+        },
+        include: {
+          participants: { select: { id: true } },
+          course: { select: { title: true, startDate: true, endDate: true } },
+        },
+        orderBy: { course: { startDate: "asc" } },
+      });
+
+      const first = registrations[0];
+      if (!first) return { success: true };
+
+      const emailService = await getEmailService();
+      if (!emailService.isEmailConfigured()) return { success: true };
+
+      try {
+        // Delivered to the stored address, never to the one typed into the
+        // form: the token is bound to what the registration actually holds.
+        await emailService.sendRegistrationAccessLinksEmail(
+          first.registrantEmail,
+          first.registrantFirstName,
+          registrations.map((registration) => ({
+            courseTitle: registration.course.title,
+            startDate: registration.course.startDate,
+            endDate: registration.course.endDate,
+            statusLabel:
+              registration.registrationStatus === RegistrationStatus.WAITLIST
+                ? "Auf Warteliste"
+                : "Teilnahme bestätigt",
+            participantsCount: registration.participants.length,
+            manageUrl: registrationAccessUrl(registration),
+          })),
+        );
+      } catch (error) {
+        console.error("Failed to send registration access links:", error);
+      }
+
+      return { success: true };
+    }),
+
+  getById: publicProcedure
+    .input(z.object({ id: z.string(), accessToken: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const registration = await ctx.db.courseRegistration.findUnique({
         where: { id: input.id },
@@ -753,7 +821,7 @@ export const registrationsRouter = createTRPCRouter({
               allowWaitingList: true,
               allowSiblingDiscount: true,
               createdById: true,
-              collaborators: collaboratorsForViewer(ctx.session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
               priceOptions: {
                 select: {
                   id: true,
@@ -785,17 +853,19 @@ export const registrationsRouter = createTRPCRouter({
 
       // A registration record contains the registrant's contact and billing
       // data plus participants' birth dates — only the registrant themselves
-      // or course staff may read it.
-      const isOwner = registration.registrantEmail === ctx.session.user.email;
-      const isCreator = registration.course.createdById === ctx.session.user.id;
+      // (signed in, or through a magic link) or course staff may read it.
+      const isOwner = isRegistrationOwner(ctx, registration, input.accessToken);
+      const userId = viewerId(ctx);
+      const isCreator =
+        userId !== null && registration.course.createdById === userId;
       const teamMember = viewerIsCourseTeamMember(
         registration.course.collaborators,
       );
       const canManageRegistrations =
-        isOwner || isCreator || teamMember
+        userId === null || isOwner || isCreator || teamMember
           ? false
           : await userHasPermission(
-              ctx.session.user.id,
+              userId,
               PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
               ctx.permissionCache,
             );
@@ -826,7 +896,7 @@ export const registrationsRouter = createTRPCRouter({
               createdById: true,
               startDate: true,
               registrationDeadline: true,
-              collaborators: collaboratorsForViewer(ctx.session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
             },
           },
         },
@@ -1045,10 +1115,12 @@ export const registrationsRouter = createTRPCRouter({
       };
     }),
 
-  updateMyRegistration: protectedProcedure
+  updateMyRegistration: publicProcedure
     .input(
       z.object({
         id: z.string(),
+        /** Magic-link credential for registrants without an account. */
+        accessToken: z.string().optional(),
         registrantPhone: z
           .string()
           .max(50)
@@ -1084,6 +1156,7 @@ export const registrationsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const {
         id,
+        accessToken,
         participants: participantsInput,
         ...registrationData
       } = input;
@@ -1097,7 +1170,7 @@ export const registrationsRouter = createTRPCRouter({
               priceOptions: true,
               customFields: true,
               createdBy: { select: { id: true } },
-              collaborators: collaboratorsForViewer(ctx.session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
               _count: {
                 select: {
                   registrations: {
@@ -1119,14 +1192,17 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const isOwner = registration.registrantEmail === ctx.session.user.email;
+      const isOwner = isRegistrationOwner(ctx, registration, accessToken);
+      const userId = viewerId(ctx);
       const isCreator =
-        registration.course.createdBy?.id === ctx.session.user.id;
-      const canManageRegistrations = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        ctx.permissionCache,
-      );
+        userId !== null && registration.course.createdBy?.id === userId;
+      const canManageRegistrations =
+        userId !== null &&
+        (await userHasPermission(
+          userId,
+          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+          ctx.permissionCache,
+        ));
       const teamMember = viewerIsCourseTeamMember(
         registration.course.collaborators,
       );
@@ -1343,7 +1419,7 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               createdBy: { select: { id: true } },
-              collaborators: collaboratorsForViewer(ctx.session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
             },
           },
         },
@@ -1439,6 +1515,7 @@ export const registrationsRouter = createTRPCRouter({
             updatedRegistration.totalPrice,
             updatedRegistration.participants.length,
             updatedRegistration.id,
+            registrationAccessUrl(updatedRegistration),
           );
         } catch (error) {
           console.error("Failed to send confirmation email:", error);
@@ -1489,7 +1566,7 @@ export const registrationsRouter = createTRPCRouter({
           course: {
             include: {
               createdBy: { select: { id: true } },
-              collaborators: collaboratorsForViewer(ctx.session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
             },
           },
         },
@@ -1560,14 +1637,15 @@ export const registrationsRouter = createTRPCRouter({
   // dashboard) is login-gated, and an anonymous branch keyed only on the
   // registrant e-mail would let anyone with a leaked registration id cancel
   // it (the e-mail used to be readable from the same record).
-  cancel: protectedProcedure
+  cancel: publicProcedure
     .input(
       z.object({
         id: z.string(),
+        /** Magic-link credential for registrants without an account. */
+        accessToken: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const session = ctx.session;
       const registration = await ctx.db.courseRegistration.findUnique({
         where: { id: input.id },
         include: {
@@ -1578,7 +1656,7 @@ export const registrationsRouter = createTRPCRouter({
               startDate: true,
               endDate: true,
               createdById: true,
-              collaborators: collaboratorsForViewer(session.user.id),
+              collaborators: collaboratorsForViewer(viewerId(ctx)),
             },
           },
         },
@@ -1589,13 +1667,17 @@ export const registrationsRouter = createTRPCRouter({
           message: "Registration not found",
         });
       }
-      const isOwner = registration.registrantEmail === session.user.email;
-      const isCreator = registration.course.createdById === session.user.id;
-      const canManageRegistrations = await userHasPermission(
-        session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        ctx.permissionCache,
-      );
+      const isOwner = isRegistrationOwner(ctx, registration, input.accessToken);
+      const userId = viewerId(ctx);
+      const isCreator =
+        userId !== null && registration.course.createdById === userId;
+      const canManageRegistrations =
+        userId !== null &&
+        (await userHasPermission(
+          userId,
+          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+          ctx.permissionCache,
+        ));
       const teamMember = viewerIsCourseTeamMember(
         registration.course.collaborators,
       );
@@ -1689,7 +1771,7 @@ export const registrationsRouter = createTRPCRouter({
       const course = await ctx.db.course.findUnique({
         where: { id: input.courseId },
         include: {
-          collaborators: collaboratorsForViewer(ctx.session.user.id),
+          collaborators: collaboratorsForViewer(viewerId(ctx)),
           priceOptions: { select: { label: true, maxParticipants: true } },
         },
       });
@@ -1833,6 +1915,7 @@ export const registrationsRouter = createTRPCRouter({
             updated.totalPrice,
             updated.participants.length,
             updated.id,
+            registrationAccessUrl(updated),
           );
         } catch (error) {
           console.error("Failed to send discount approval email:", error);
@@ -1907,6 +1990,7 @@ export const registrationsRouter = createTRPCRouter({
             originalPrice,
             updated.participants.length,
             updated.id,
+            registrationAccessUrl(updated),
           );
         } catch (error) {
           console.error("Failed to send discount rejection email:", error);
@@ -1916,10 +2000,12 @@ export const registrationsRouter = createTRPCRouter({
       return updated;
     }),
 
-  confirmAtFullPrice: protectedProcedure
+  confirmAtFullPrice: publicProcedure
     .input(
       z.object({
         registrationId: z.string(),
+        /** Magic-link credential for registrants without an account. */
+        accessToken: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1937,7 +2023,7 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      if (registration.registrantEmail !== ctx.session.user.email) {
+      if (!isRegistrationOwner(ctx, registration, input.accessToken)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You can only confirm your own registrations",
@@ -1987,6 +2073,7 @@ export const registrationsRouter = createTRPCRouter({
             updated.totalPrice,
             updated.participants.length,
             updated.id,
+            registrationAccessUrl(updated),
           );
         } catch (error) {
           console.error("Failed to send confirmation email:", error);

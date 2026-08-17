@@ -8,6 +8,10 @@ import {
   normalizeParticipantCustomFieldsValues,
 } from "@/lib/course-custom-fields";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  useRegistrationAccessToken,
+  withAccessToken,
+} from "@/lib/registration-access";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -62,6 +66,14 @@ export default function EditRegistrationPage() {
   const registrationId = params.id as string;
   const utils = api.useUtils();
   const returnTo = getReturnToPath(searchParams);
+  const accessToken = useRegistrationAccessToken();
+  // Magic-link visitors have no account area to navigate back into.
+  const isGuestAccess = !!accessToken;
+  const backHref =
+    returnTo ??
+    (isGuestAccess
+      ? withAccessToken(`/registrations/${registrationId}`, accessToken)
+      : "/registrations");
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [error, setError] = useState("");
@@ -94,7 +106,7 @@ export default function EditRegistrationPage() {
 
   const { data: registration, isLoading: registrationLoading } =
     api.registrations.getById.useQuery(
-      { id: registrationId },
+      { id: registrationId, accessToken },
       { enabled: !!registrationId },
     );
 
@@ -119,7 +131,7 @@ export default function EditRegistrationPage() {
       void utils.registrations.getById.invalidate({ id: registrationId });
 
       setTimeout(() => {
-        router.push(returnTo ?? "/registrations");
+        router.push(backHref);
       }, 1500);
     },
     onError: (err) => {
@@ -135,7 +147,7 @@ export default function EditRegistrationPage() {
       setCancelError("");
       toast.success("Anmeldung erfolgreich storniert");
       void utils.registrations.getMyRegistrations.invalidate();
-      router.push(returnTo ?? "/registrations");
+      router.push(backHref);
     },
     onError: (err) => {
       setCancelError(err.message || "Ein Fehler ist aufgetreten.");
@@ -144,14 +156,14 @@ export default function EditRegistrationPage() {
   });
 
   const confirmCancel = () => {
-    cancelMutation.mutate({ id: registrationId });
+    cancelMutation.mutate({ id: registrationId, accessToken });
   };
 
   useEffect(() => {
-    if (!sessionLoading && !session?.user) {
+    if (!isGuestAccess && !sessionLoading && !session?.user) {
       router.push("/login");
     }
-  }, [session, sessionLoading, router]);
+  }, [session, sessionLoading, router, isGuestAccess]);
 
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
@@ -217,7 +229,8 @@ export default function EditRegistrationPage() {
     return true;
   };
 
-  const isOwner = registration?.registrantEmail === session?.user?.email;
+  const isOwner =
+    isGuestAccess || registration?.registrantEmail === session?.user?.email;
   const isStaff = management?.isStaff ?? false;
   const canView = management?.canView ?? isOwner;
   const canEdit = management?.canEdit ?? (isOwner && canEditRegistration());
@@ -581,6 +594,7 @@ export default function EditRegistrationPage() {
 
     updateMutation.mutate({
       id: registrationId,
+      accessToken,
       participants: participantsData,
       registrantPhone: registrantPhone || undefined,
       useSeparateBilling,
@@ -615,16 +629,31 @@ export default function EditRegistrationPage() {
   if (!registration) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
+        <div className="max-w-md px-4 text-center">
           <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
             Anmeldung nicht gefunden
           </h1>
-          <Link
-            href={returnTo ?? "/registrations"}
-            className="text-primary hover:text-primary-dark"
-          >
-            Zurück zur Übersicht
-          </Link>
+          {isGuestAccess ? (
+            <>
+              <p className="mb-4 text-gray-600 dark:text-gray-400">
+                Dieser Zugangslink ist ungültig oder abgelaufen. Du kannst dir
+                jederzeit einen neuen Link schicken lassen.
+              </p>
+              <Link
+                href="/anmeldung-verwalten"
+                className="text-primary hover:text-primary-dark"
+              >
+                Neuen Zugangslink anfordern
+              </Link>
+            </>
+          ) : (
+            <Link
+              href={backHref}
+              className="text-primary hover:text-primary-dark"
+            >
+              Zurück zur Übersicht
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -642,7 +671,7 @@ export default function EditRegistrationPage() {
             bearbeiten, für die du Admin, Kursleitung oder Ersteller:in bist.
           </p>
           <Link
-            href={returnTo ?? "/registrations"}
+            href={backHref}
             className="text-primary hover:text-primary-dark"
           >
             Zurück zur Übersicht
@@ -664,7 +693,7 @@ export default function EditRegistrationPage() {
             abgelaufen ist oder der Kurs bereits begonnen hat.
           </p>
           <Link
-            href={returnTo ?? "/registrations"}
+            href={backHref}
             className="text-primary hover:text-primary-dark"
           >
             Zurück zur Übersicht
@@ -689,10 +718,14 @@ export default function EditRegistrationPage() {
           )}
           <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Link
-              href={returnTo ?? "/registrations"}
+              href={backHref}
               className="hover:text-primary transition-colors"
             >
-              {returnTo ? "Teilnehmer" : "Meine Anmeldungen"}
+              {returnTo
+                ? "Teilnehmer"
+                : isGuestAccess
+                  ? "Meine Anmeldung"
+                  : "Meine Anmeldungen"}
             </Link>
             <span>/</span>
             <span className="text-dark dark:text-dark-text">Bearbeiten</span>
@@ -788,14 +821,20 @@ export default function EditRegistrationPage() {
                   className="dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 opacity-60"
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Name und Adresse können in den{" "}
-                  <Link
-                    href="/settings"
-                    className="text-primary hover:underline"
-                  >
-                    Einstellungen
-                  </Link>{" "}
-                  geändert werden
+                  {isGuestAccess ? (
+                    "Name und Adresse können nur vom Kursteam geändert werden – melde dich dafür bitte bei uns"
+                  ) : (
+                    <>
+                      Name und Adresse können in den{" "}
+                      <Link
+                        href="/settings"
+                        className="text-primary hover:underline"
+                      >
+                        Einstellungen
+                      </Link>{" "}
+                      geändert werden
+                    </>
+                  )}
                 </p>
               </div>
               <div>
@@ -1388,7 +1427,7 @@ export default function EditRegistrationPage() {
             )}
             <div className="flex flex-col gap-4 sm:flex-row">
               <Link
-                href={returnTo ?? "/registrations"}
+                href={backHref}
                 className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-6 py-3 text-center font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 Abbrechen
