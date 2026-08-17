@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "pnpm licenses:generate && next build",
+    "licenses:generate": "tsx scripts/generate-licenses.ts",
     "check": "pnpm run lint && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy && tsx prisma/backfill-slugs.ts",

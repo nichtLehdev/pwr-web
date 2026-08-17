@@ -288,44 +288,11 @@ export const locationsRouter = createTRPCRouter({
 });
 
 export const newsletterRouter = createTRPCRouter({
-  subscribe: rateLimitedPublicProcedure("newsletter.subscribe", {
-    maxRequests: 5,
-    windowMs: 15 * 60 * 1000,
-  })
-    .input(
-      z.object({
-        email: z.string().email(),
-        name: z.string().max(100).optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const existing = await ctx.db.newsletterSubscriber.findUnique({
-        where: { email: input.email },
-      });
-
-      if (existing) {
-        if (existing.isActive) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Email already subscribed",
-          });
-        }
-
-        return await ctx.db.newsletterSubscriber.update({
-          where: { email: input.email },
-          data: {
-            isActive: true,
-            name: input.name,
-            subscribedAt: new Date(),
-            unsubscribedAt: null,
-          },
-        });
-      }
-
-      return await ctx.db.newsletterSubscriber.create({
-        data: input,
-      });
-    }),
+  // NOTE: subscribing goes exclusively through POST /api/newsletter/subscribe,
+  // which creates the row unconfirmed and mails the double-opt-in link. A
+  // tRPC variant used to exist here and marked new subscribers active
+  // immediately — a way around the confirmation, and a way to sign up
+  // addresses you do not own.
 
   // NOTE: unsubscribing goes exclusively through POST
   // /api/newsletter/unsubscribe, which verifies the signed token from the
@@ -371,15 +338,23 @@ export const newsletterRouter = createTRPCRouter({
 
   getStatistics: permissionProcedure(PERMISSIONS.NEWSLETTER_MANAGE).query(
     async ({ ctx }) => {
-      const [total, active, inactive] = await Promise.all([
+      // `active` is what the compose screen promises to send to, so it counts
+      // confirmed recipients only; pending sign-ups are reported separately.
+      const [total, active, pending, inactive] = await Promise.all([
         ctx.db.newsletterSubscriber.count(),
-        ctx.db.newsletterSubscriber.count({ where: { isActive: true } }),
+        ctx.db.newsletterSubscriber.count({
+          where: { isActive: true, confirmedAt: { not: null } },
+        }),
+        ctx.db.newsletterSubscriber.count({
+          where: { isActive: true, confirmedAt: null },
+        }),
         ctx.db.newsletterSubscriber.count({ where: { isActive: false } }),
       ]);
 
       return {
         total,
         active,
+        pending,
         inactive,
       };
     },
@@ -437,8 +412,10 @@ export const newsletterRouter = createTRPCRouter({
         };
       }
 
+      // An unconfirmed row is a pending sign-up, not a recipient: sending to
+      // it would defeat the double opt-in that created it.
       const subscribers = await ctx.db.newsletterSubscriber.findMany({
-        where: { isActive: true },
+        where: { isActive: true, confirmedAt: { not: null } },
       });
 
       if (subscribers.length === 0) {

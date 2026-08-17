@@ -53,6 +53,18 @@ Als Administrator können Sie verschiedene Datentypen exportieren:
 - **Ort:** Einstellungen → Nutzungsstatistik
 - Benutzer können ihre Einwilligung zur Datenerfassung ändern oder widerrufen
 
+#### 3. Anmeldung ohne Benutzerkonto verwalten (Magic Link)
+- **Ort:** Link in der Anmelde-Bestätigungsmail, oder `/anmeldung-verwalten`
+- Wer sich ohne Konto zu einem Kurs anmeldet, erhält einen signierten,
+  personalisierten Link zu seiner Anmeldung. Damit sind Auskunft (Art. 15),
+  Berichtigung (Art. 16) und Stornierung ohne Kontaktaufnahme möglich.
+- Der Link ist an Anmeldung **und** hinterlegte E-Mail-Adresse gebunden, läuft
+  nach 180 Tagen ab und wird nur an die gespeicherte Adresse verschickt —
+  über `/anmeldung-verwalten` kann sich niemand Links zu fremden Anmeldungen
+  schicken lassen.
+- Fristen bleiben unverändert: Bearbeiten ist nur bis Anmeldeschluss bzw.
+  Kursbeginn möglich, unabhängig von der Gültigkeit des Links.
+
 ## Fehlende Funktionen für vollständige DSGVO-Compliance
 
 ### 🔴 Kritisch - Muss implementiert werden

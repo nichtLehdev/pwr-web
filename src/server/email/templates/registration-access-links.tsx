@@ -6,46 +6,37 @@ import {
   Section,
   Text,
   Hr,
+  Button,
 } from "@react-email/components";
-import { ManageRegistrationCta } from "./manage-registration-cta";
 
-interface CourseRegistrationWaitlistProps {
-  registrantFirstName: string;
-  registrantLastName: string;
+export interface RegistrationAccessLinkEntry {
   courseTitle: string;
   startDate: Date;
   endDate: Date;
-  totalPrice: number;
+  statusLabel: string;
   participantsCount: number;
-  registrationId: string;
-  /** Magic link letting the registrant manage the anmeldung without an account. */
-  manageUrl?: string;
+  manageUrl: string;
 }
 
-export function CourseRegistrationWaitlist({
+interface RegistrationAccessLinksProps {
+  registrantFirstName: string;
+  registrations: RegistrationAccessLinkEntry[];
+}
+
+/**
+ * Answer to "I registered without an account and lost the link". One mail with
+ * a fresh magic link per anmeldung that is still open for changes.
+ */
+export function RegistrationAccessLinks({
   registrantFirstName,
-  registrantLastName,
-  courseTitle,
-  startDate,
-  endDate,
-  totalPrice,
-  participantsCount,
-  registrationId,
-  manageUrl,
-}: CourseRegistrationWaitlistProps) {
+  registrations,
+}: RegistrationAccessLinksProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     }).format(date);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
   };
 
   return (
@@ -62,52 +53,46 @@ export function CourseRegistrationWaitlist({
           </Section>
 
           <Section style={content}>
-            <Text style={heading}>Auf Warteliste gesetzt</Text>
+            <Text style={heading}>Deine Anmeldungen</Text>
+
+            <Text style={paragraph}>Hallo {registrantFirstName},</Text>
 
             <Text style={paragraph}>
-              Hallo {registrantFirstName} {registrantLastName},
+              du hast einen Zugangslink zu deinen Anmeldungen angefordert. Über
+              die folgenden Links kannst du deine Anmeldungen ansehen, ändern
+              oder stornieren — ganz ohne Benutzerkonto.
             </Text>
 
-            <Text style={paragraph}>
-              vielen Dank für deine Anmeldung! Leider ist der folgende Kurs
-              bereits vollständig ausgebucht. Wir haben dich auf die Warteliste
-              gesetzt:
-            </Text>
-
-            <Section style={courseInfo}>
-              <Text style={courseTitleStyle}>{courseTitle}</Text>
-              <Text style={courseDetail}>
-                <strong>Start:</strong> {formatDate(startDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Ende:</strong> {formatDate(endDate)}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Teilnehmer:</strong> {participantsCount}{" "}
-                {participantsCount === 1 ? "Person" : "Personen"}
-              </Text>
-              <Text style={courseDetail}>
-                <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
-              </Text>
-            </Section>
+            {registrations.map((registration) => (
+              <Section key={registration.manageUrl} style={courseInfo}>
+                <Text style={courseTitleStyle}>{registration.courseTitle}</Text>
+                <Text style={courseDetail}>
+                  <strong>Zeitraum:</strong>{" "}
+                  {formatDate(registration.startDate)} –{" "}
+                  {formatDate(registration.endDate)}
+                </Text>
+                <Text style={courseDetail}>
+                  <strong>Status:</strong> {registration.statusLabel}
+                </Text>
+                <Text style={courseDetail}>
+                  <strong>Teilnehmer:</strong> {registration.participantsCount}{" "}
+                  {registration.participantsCount === 1 ? "Person" : "Personen"}
+                </Text>
+                <Section style={buttonContainer}>
+                  <Button style={button} href={registration.manageUrl}>
+                    Anmeldung öffnen
+                  </Button>
+                </Section>
+                <Text style={linkText}>{registration.manageUrl}</Text>
+              </Section>
+            ))}
 
             <Hr style={hr} />
 
             <Text style={paragraph}>
-              Sollte ein Platz frei werden, werden wir dich umgehend per E-Mail
-              benachrichtigen. Du erhältst dann eine Bestätigung deiner
-              Anmeldung.
-            </Text>
-
-            <Text style={paragraph}>
-              Falls du Fragen hast oder deine Anmeldung stornieren möchtest,
-              kannst du dich gerne an uns wenden.
-            </Text>
-
-            <ManageRegistrationCta manageUrl={manageUrl} />
-
-            <Text style={paragraph}>
-              Deine Anmelde-ID: <strong>{registrationId}</strong>
+              Die Links sind persönlich — bitte gib sie nicht weiter. Falls du
+              diese E-Mail nicht angefordert hast, kannst du sie einfach
+              ignorieren.
             </Text>
           </Section>
 
@@ -201,6 +186,32 @@ const courseDetail = {
   lineHeight: "24px",
   color: "#58595b",
   marginBottom: "8px",
+};
+
+const buttonContainer = {
+  textAlign: "center" as const,
+  margin: "24px 0 12px 0",
+};
+
+const button = {
+  backgroundColor: "#faa619",
+  borderRadius: "8px",
+  color: "#ffffff",
+  fontSize: "16px",
+  fontWeight: "bold",
+  textDecoration: "none",
+  textAlign: "center" as const,
+  display: "inline-block",
+  padding: "14px 32px",
+  boxShadow: "0 2px 4px rgba(250, 166, 25, 0.3)",
+};
+
+const linkText = {
+  fontSize: "12px",
+  lineHeight: "20px",
+  color: "#faa619",
+  wordBreak: "break-all" as const,
+  margin: "0",
 };
 
 const hr = {

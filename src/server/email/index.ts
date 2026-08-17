@@ -2,12 +2,17 @@ import { render } from "@react-email/components";
 import { sendEmail, type EmailAttachment } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { PasswordResetEmail } from "./templates/password-reset-email";
+import { NewsletterConfirm } from "./templates/newsletter-confirm";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
 import { SiblingDiscountApproved } from "./templates/sibling-discount-approved";
 import { SiblingDiscountRejected } from "./templates/sibling-discount-rejected";
 import { CourseRegistrationPendingDiscount } from "./templates/course-registration-pending-discount";
 import { CourseRegistrationCancelled } from "./templates/course-registration-cancelled";
+import {
+  RegistrationAccessLinks,
+  type RegistrationAccessLinkEntry,
+} from "./templates/registration-access-links";
 import { CourseRegistrationClosedOverview } from "./templates/course-registration-closed-overview";
 import {
   ContentReviewResult,
@@ -55,6 +60,26 @@ export async function sendPasswordResetEmail(
   });
 }
 
+export async function sendNewsletterConfirmEmail(
+  email: string,
+  confirmUrl: string,
+  subscriberName?: string,
+) {
+  const html = await render(
+    NewsletterConfirm({
+      confirmUrl,
+      subscriberName,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject:
+      "Bitte bestätige deine Newsletter-Anmeldung - Posaunenwerk Rheinland",
+    html,
+  });
+}
+
 export async function sendCourseRegistrationConfirmedEmail(
   email: string,
   registrantFirstName: string,
@@ -65,6 +90,7 @@ export async function sendCourseRegistrationConfirmedEmail(
   totalPrice: number,
   participantsCount: number,
   registrationId: string,
+  manageUrl?: string,
 ) {
   const html = await render(
     CourseRegistrationConfirmed({
@@ -76,6 +102,7 @@ export async function sendCourseRegistrationConfirmedEmail(
       totalPrice,
       participantsCount,
       registrationId,
+      manageUrl,
     }),
   );
 
@@ -96,6 +123,7 @@ export async function sendCourseRegistrationWaitlistEmail(
   totalPrice: number,
   participantsCount: number,
   registrationId: string,
+  manageUrl?: string,
 ) {
   const html = await render(
     CourseRegistrationWaitlist({
@@ -107,6 +135,7 @@ export async function sendCourseRegistrationWaitlistEmail(
       totalPrice,
       participantsCount,
       registrationId,
+      manageUrl,
     }),
   );
 
@@ -129,6 +158,7 @@ export async function sendSiblingDiscountApprovedEmail(
   finalTotalPrice: number,
   participantsCount: number,
   registrationId: string,
+  manageUrl?: string,
 ) {
   const html = await render(
     SiblingDiscountApproved({
@@ -142,6 +172,7 @@ export async function sendSiblingDiscountApprovedEmail(
       finalTotalPrice,
       participantsCount,
       registrationId,
+      manageUrl,
     }),
   );
 
@@ -164,6 +195,7 @@ export async function sendCourseRegistrationPendingDiscountEmail(
   finalTotalPrice: number,
   participantsCount: number,
   registrationId: string,
+  manageUrl?: string,
 ) {
   const html = await render(
     CourseRegistrationPendingDiscount({
@@ -177,6 +209,7 @@ export async function sendCourseRegistrationPendingDiscountEmail(
       finalTotalPrice,
       participantsCount,
       registrationId,
+      manageUrl,
     }),
   );
 
@@ -197,6 +230,7 @@ export async function sendSiblingDiscountRejectedEmail(
   originalTotalPrice: number,
   participantsCount: number,
   registrationId: string,
+  manageUrl?: string,
 ) {
   const html = await render(
     SiblingDiscountRejected({
@@ -208,6 +242,7 @@ export async function sendSiblingDiscountRejectedEmail(
       originalTotalPrice,
       participantsCount,
       registrationId,
+      manageUrl,
     }),
   );
 
@@ -243,6 +278,25 @@ export async function sendCourseRegistrationCancelledEmail(
   return sendEmail({
     to: email,
     subject: `Anmeldung storniert: ${courseTitle} - Posaunenwerk Rheinland`,
+    html,
+  });
+}
+
+export async function sendRegistrationAccessLinksEmail(
+  email: string,
+  registrantFirstName: string,
+  registrations: RegistrationAccessLinkEntry[],
+) {
+  const html = await render(
+    RegistrationAccessLinks({
+      registrantFirstName,
+      registrations,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: "Zugang zu deinen Anmeldungen - Posaunenwerk Rheinland",
     html,
   });
 }

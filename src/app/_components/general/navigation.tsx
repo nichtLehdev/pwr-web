@@ -136,6 +136,7 @@ export default function Navigation() {
         { href: "/ueber-uns/bezirke", label: "Bezirke & Obleute" },
         { href: "/ueber-uns/auswahlchoere", label: "Auswahlchöre" },
         { href: "/ueber-uns/posaunenrat", label: "Posaunenrat" },
+        { href: "/praevention", label: "Prävention" },
       ],
     },
   ];

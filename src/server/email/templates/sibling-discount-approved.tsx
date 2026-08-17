@@ -7,6 +7,7 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
+import { ManageRegistrationCta } from "./manage-registration-cta";
 
 interface SiblingDiscountApprovedProps {
   registrantFirstName: string;
@@ -19,6 +20,8 @@ interface SiblingDiscountApprovedProps {
   finalTotalPrice: number;
   participantsCount: number;
   registrationId: string;
+  /** Magic link letting the registrant manage the anmeldung without an account. */
+  manageUrl?: string;
 }
 
 export function SiblingDiscountApproved({
@@ -32,6 +35,7 @@ export function SiblingDiscountApproved({
   finalTotalPrice,
   participantsCount,
   registrationId,
+  manageUrl,
 }: SiblingDiscountApprovedProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -109,6 +113,8 @@ export function SiblingDiscountApproved({
               Deine Anmeldung wurde bestätigt. Du erhältst in Kürze weitere
               Informationen zum Kurs per E-Mail.
             </Text>
+
+            <ManageRegistrationCta manageUrl={manageUrl} />
 
             <Text style={paragraph}>
               Deine Anmelde-ID: <strong>{registrationId}</strong>
