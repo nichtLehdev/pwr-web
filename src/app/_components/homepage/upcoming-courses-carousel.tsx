@@ -150,13 +150,18 @@ function SaveTheDateTag({ className }: { className?: string }) {
 function CourseBezirkBadge({
   bezirkNumber,
   districtColor,
+  align = "start",
 }: {
   bezirkNumber?: number | null;
   districtColor: string;
+  align?: "start" | "center";
 }) {
   return (
     <span
-      className="shrink-0 self-start rounded-full px-3 py-1 text-xs font-semibold text-white"
+      className={cn(
+        "shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white",
+        align === "center" ? "self-center" : "self-start",
+      )}
       style={{ backgroundColor: districtColor }}
     >
       {bezirkNumber ? `Bezirk ${bezirkNumber}` : "Bezirksübergreifend"}
@@ -169,29 +174,32 @@ function CourseCardTopRow({
   bezirkNumber,
   children,
   className,
-  compact = false,
+  singleRow = false,
 }: {
   districtColor: string;
   bezirkNumber?: number | null;
   children: ReactNode;
   className?: string;
-  /** Keep status + badge stacked (narrow side column). */
-  compact?: boolean;
+  /** Keep status + badge on one row at every width (narrow side column). */
+  singleRow?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "mb-2 flex flex-col items-start gap-1.5",
-        !compact && "sm:flex-row sm:items-center sm:justify-between sm:gap-2",
+        "mb-2 flex",
+        singleRow
+          ? "flex-row items-center justify-between gap-2"
+          : "flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2",
         className,
       )}
     >
-      <div className={cn("w-full min-w-0", !compact && "sm:w-auto")}>
+      <div className={cn("min-w-0", !singleRow && "w-full sm:w-auto")}>
         {children}
       </div>
       <CourseBezirkBadge
         bezirkNumber={bezirkNumber}
         districtColor={districtColor}
+        align={singleRow ? "center" : "start"}
       />
     </div>
   );
@@ -234,9 +242,11 @@ function SmallOpenRegistrationCard({
           districtColor={districtColor}
           bezirkNumber={course.bezirk?.number}
           className="mb-1"
-          compact
+          singleRow
         >
-          <p className="text-primary text-sm font-semibold">Anmeldung offen</p>
+          <p className="text-primary truncate text-sm font-semibold">
+            Anmeldung offen
+          </p>
         </CourseCardTopRow>
         <h4 className="text-dark dark:text-dark-text mb-2 line-clamp-2 text-base leading-snug font-semibold">
           {course.title}
@@ -246,6 +256,25 @@ function SmallOpenRegistrationCard({
           <span className="min-w-0 leading-snug">
             {formatGermanCourseDateTimeRange(course.startDate, course.endDate)}
           </span>
+        </div>
+        <div className="mb-1.5 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+          {course.location ? (
+            /* Single line (card height is fixed): the venue name gives way first, the city always stays. */
+            <span
+              className="flex min-w-0 gap-1 overflow-hidden leading-snug"
+              title={[course.location.name, course.location.city]
+                .filter(Boolean)
+                .join(", ")}
+            >
+              {course.location.name ? (
+                <span className="truncate">{course.location.name},</span>
+              ) : null}
+              <span className="shrink-0">{course.location.city}</span>
+            </span>
+          ) : (
+            <span className="min-w-0 leading-snug">Ort folgt</span>
+          )}
         </div>
         {course.registrationDeadline ? (
           <div className="mb-1.5 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">

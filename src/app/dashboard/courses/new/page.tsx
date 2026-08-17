@@ -20,6 +20,7 @@ import {
   SlugField,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
+  NewLocationForm,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import { datedSlugBase, slugify } from "@/lib/slug";
@@ -110,14 +111,6 @@ export default function NewCoursePage() {
   const [locationSearch, setLocationSearch] = useState("");
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showNewLocationForm, setShowNewLocationForm] = useState(false);
-  const [newLocation, setNewLocation] = useState({
-    name: "",
-    street: "",
-    zipCode: "",
-    city: "",
-    additionalInfo: "",
-  });
-
   const [bezirkId, setBezirkId] = useState<string>("");
   const userBezirkId = profile?.bezirkId ?? null;
 
@@ -327,35 +320,6 @@ export default function NewCoursePage() {
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
 
-  const utils = api.useUtils();
-
-  const createLocationMutation = api.locations.create.useMutation({
-    onSuccess: async (location) => {
-      await utils.locations.getAll.invalidate();
-      setLocationId(location.id);
-      setLocationSearch(
-        `${location.name ? location.name + ", " : ""}${location.city}`,
-      );
-      setShowNewLocationForm(false);
-      setNewLocation({
-        name: "",
-        street: "",
-        zipCode: "",
-        city: "",
-        additionalInfo: "",
-      });
-      toast.success("Veranstaltungsort erstellt");
-    },
-    onError: (err) => {
-      setError(
-        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
-      );
-      toast.error(
-        getErrorMessage(err, "Fehler beim Erstellen des Veranstaltungsortes."),
-      );
-    },
-  });
-
   const createCourseMutation = api.courses.create.useMutation({
     onSuccess: (course) => {
       clear();
@@ -410,14 +374,6 @@ export default function NewCoursePage() {
       `${location.name ? location.name + ", " : ""}${location.city}`,
     );
     setShowLocationDropdown(false);
-  };
-
-  const handleCreateLocation = () => {
-    if (!newLocation.city) {
-      setError("Bitte gib mindestens eine Stadt an.");
-      return;
-    }
-    createLocationMutation.mutate(newLocation);
   };
 
   const addPriceOption = () => {
@@ -1089,105 +1045,19 @@ export default function NewCoursePage() {
                   )}
                 </div>
 
-                {/* New Location Form */}
                 {showNewLocationForm && (
-                  <div className="dark:border-dark-border dark:bg-dark-background-secondary rounded-lg border border-gray-200 bg-gray-50 p-4">
-                    <h3 className="dark:text-dark-text mb-3 font-medium text-gray-900">
-                      Neuen Ort erstellen
-                    </h3>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <input
-                          type="text"
-                          value={newLocation.name}
-                          onChange={(e) =>
-                            setNewLocation({
-                              ...newLocation,
-                              name: e.target.value,
-                            })
-                          }
-                          placeholder="Name (z.B. Jugendherberge, Gemeindehaus)"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <input
-                          type="text"
-                          value={newLocation.street}
-                          onChange={(e) =>
-                            setNewLocation({
-                              ...newLocation,
-                              street: e.target.value,
-                            })
-                          }
-                          placeholder="Straße und Hausnummer"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={newLocation.zipCode}
-                          onChange={(e) =>
-                            setNewLocation({
-                              ...newLocation,
-                              zipCode: e.target.value,
-                            })
-                          }
-                          placeholder="PLZ"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={newLocation.city}
-                          onChange={(e) =>
-                            setNewLocation({
-                              ...newLocation,
-                              city: e.target.value,
-                            })
-                          }
-                          placeholder="Stadt *"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <input
-                          type="text"
-                          value={newLocation.additionalInfo}
-                          onChange={(e) =>
-                            setNewLocation({
-                              ...newLocation,
-                              additionalInfo: e.target.value,
-                            })
-                          }
-                          placeholder="Zusätzliche Info (z.B. Anfahrtsbeschreibung)"
-                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleCreateLocation}
-                        disabled={createLocationMutation.isPending}
-                        className="bg-primary hover:bg-primary/90 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                      >
-                        {createLocationMutation.isPending
-                          ? "Speichern..."
-                          : "Speichern"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowNewLocationForm(false)}
-                        className="dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      >
-                        Abbrechen
-                      </button>
-                    </div>
-                  </div>
+                  <NewLocationForm
+                    onCreated={(location) => {
+                      setLocationId(location.id);
+                      setLocationSearch(
+                        `${location.name ? location.name + ", " : ""}${location.city}`,
+                      );
+                      setShowNewLocationForm(false);
+                    }}
+                    onCancel={() => setShowNewLocationForm(false)}
+                    onError={setError}
+                    successMessage="Veranstaltungsort erstellt"
+                  />
                 )}
               </div>
             </DashboardFormBlock>
