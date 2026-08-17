@@ -35,3 +35,12 @@ export {
   emptyPersonDetails,
   type PersonDetails,
 } from "./person-details-fields";
+export {
+  AddressAutocomplete,
+  type AddressSuggestion,
+} from "./address-autocomplete";
+export {
+  NewLocationForm,
+  DEFAULT_LOCATION_COUNTRY,
+  type CreatedLocation,
+} from "./new-location-form";

@@ -943,6 +943,7 @@ model Location {
   street         String?
   zipCode        String?
   city           String
+  country        String? @default("Deutschland")
   additionalInfo String? // e.g., "Eingang über den Hinterhof"
 
   // Coordinates for map display
