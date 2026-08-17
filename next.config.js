@@ -36,6 +36,19 @@ const config = {
     ],
   },
 
+  async redirects() {
+    return [
+      {
+        // Auf der alten Website lag die Präventionsseite unter diesem Pfad —
+        // offenbar eine Kopie der Chorsuche, deren Slug nie angepasst wurde.
+        // Externe Links und Suchtreffer zeigen weiterhin dorthin.
+        source: "/posaunenchor-finden-2",
+        destination: "/praevention",
+        permanent: true,
+      },
+    ];
+  },
+
   async rewrites() {
     return [
       {
