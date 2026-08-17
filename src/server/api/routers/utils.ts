@@ -13,6 +13,8 @@ import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
+import { searchAddresses } from "@/server/utils/address-search";
+import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 import { eventPath, postPath } from "@/lib/slug";
 
@@ -126,6 +128,7 @@ export const locationsRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().min(1).max(100),
+        country: z.string().max(100).optional(),
         additionalInfo: z.string().max(500).optional(),
         latitude: z.number().optional(),
         longitude: z.number().optional(),
@@ -140,6 +143,7 @@ export const locationsRouter = createTRPCRouter({
           street: input.street,
           zipCode: input.zipCode,
           city: input.city,
+          country: input.country,
         });
         if (geocodeResult.latitude && geocodeResult.longitude) {
           latitude = geocodeResult.latitude;
@@ -164,6 +168,7 @@ export const locationsRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
+        country: z.string().max(100).optional(),
         additionalInfo: z.string().max(500).optional(),
         latitude: z.number().optional().nullable(),
         longitude: z.number().optional().nullable(),
@@ -188,7 +193,9 @@ export const locationsRouter = createTRPCRouter({
           input.street !== existingLocation.street) ||
         (input.zipCode !== undefined &&
           input.zipCode !== existingLocation.zipCode) ||
-        (input.city !== undefined && input.city !== existingLocation.city);
+        (input.city !== undefined && input.city !== existingLocation.city) ||
+        (input.country !== undefined &&
+          input.country !== existingLocation.country);
 
       const needsGeocoding =
         !input.latitude &&
@@ -202,6 +209,7 @@ export const locationsRouter = createTRPCRouter({
           street: input.street ?? existingLocation.street,
           zipCode: input.zipCode ?? existingLocation.zipCode,
           city: input.city ?? existingLocation.city,
+          country: input.country ?? existingLocation.country,
         });
         if (geocodeResult.latitude && geocodeResult.longitude) {
           updateData.latitude = geocodeResult.latitude;
@@ -267,6 +275,30 @@ export const locationsRouter = createTRPCRouter({
       });
 
       return locations;
+    }),
+
+  /**
+   * Type-ahead address lookup for the location forms. Permission-gated (only
+   * dashboard users create locations) and throttled on top, so a stuck input
+   * can't hammer Photon on our behalf.
+   */
+  searchAddress: permissionProcedure(PERMISSIONS.ORGANIZATION_MANAGE_LOCATIONS)
+    .use(async ({ ctx, next }) => {
+      const key = `trpc:locations.searchAddress:${clientKeyFromHeaders(
+        ctx.headers,
+      )}`;
+      const result = rateLimit(key, { maxRequests: 60, windowMs: 60 * 1000 });
+      if (!result.success) {
+        throw new TRPCError({
+          code: "TOO_MANY_REQUESTS",
+          message: "Zu viele Anfragen. Bitte versuche es später erneut.",
+        });
+      }
+      return next();
+    })
+    .input(z.object({ query: z.string().min(3).max(200) }))
+    .query(async ({ input }) => {
+      return await searchAddresses(input.query);
     }),
 
   // Public geocoding proxies to Nominatim — throttle so we can't be used
