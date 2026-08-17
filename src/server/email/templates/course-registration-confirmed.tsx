@@ -7,6 +7,7 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
+import { ManageRegistrationCta } from "./manage-registration-cta";
 
 interface CourseRegistrationConfirmedProps {
   registrantFirstName: string;
@@ -17,6 +18,8 @@ interface CourseRegistrationConfirmedProps {
   totalPrice: number;
   participantsCount: number;
   registrationId: string;
+  /** Magic link letting the registrant manage the anmeldung without an account. */
+  manageUrl?: string;
 }
 
 export function CourseRegistrationConfirmed({
@@ -28,6 +31,7 @@ export function CourseRegistrationConfirmed({
   totalPrice,
   participantsCount,
   registrationId,
+  manageUrl,
 }: CourseRegistrationConfirmedProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -92,6 +96,8 @@ export function CourseRegistrationConfirmed({
               Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail.
               Bei Fragen kannst du dich gerne an uns wenden.
             </Text>
+
+            <ManageRegistrationCta manageUrl={manageUrl} />
 
             <Text style={paragraph}>
               Deine Anmelde-ID: <strong>{registrationId}</strong>

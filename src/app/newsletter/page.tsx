@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -29,9 +30,13 @@ export default function NewsletterPage() {
 
       if (response.ok) {
         setStatus("success");
-        setMessage("Erfolgreich zum Newsletter angemeldet!");
+        setMessage(
+          data.message ??
+            "Fast geschafft: Bitte bestätige deine Anmeldung über den Link in der E-Mail.",
+        );
         setEmail("");
         setName("");
+        setConsent(false);
       } else {
         setStatus("error");
         setMessage(data.message || "Ein Fehler ist aufgetreten.");
@@ -53,10 +58,24 @@ export default function NewsletterPage() {
             Bleibe auf dem Laufenden über neue Beiträge, kommende Termine und
             wichtige Informationen vom Posaunenwerk Rheinland.
           </p>
+          <p className="dark:text-dark-muted mb-8 text-sm text-gray-600">
+            Nach dem Absenden erhältst du eine E-Mail mit einem
+            Bestätigungslink. Erst wenn du ihn öffnest, ist die Anmeldung aktiv
+            (Double-Opt-In).
+          </p>
 
           {status === "success" ? (
             <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <p className="text-green-800 dark:text-green-400">{message}</p>
+              <p className="font-semibold text-green-800 dark:text-green-400">
+                Bitte bestätige deine Anmeldung
+              </p>
+              <p className="mt-2 text-green-800 dark:text-green-400">
+                {message}
+              </p>
+              <p className="mt-2 text-sm text-green-800 dark:text-green-400">
+                Ohne diese Bestätigung schicken wir dir nichts. Schau bitte auch
+                im Spam-Ordner nach — der Link ist 7 Tage gültig.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -95,6 +114,33 @@ export default function NewsletterPage() {
                 />
               </div>
 
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  name="consent"
+                  required
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="text-primary focus:ring-primary dark:border-dark-border mt-1 h-4 w-4 rounded border-gray-300"
+                />
+                <label
+                  htmlFor="consent"
+                  className="dark:text-dark-muted text-sm text-gray-600"
+                >
+                  Ich möchte den Newsletter des Posaunenwerks Rheinland per
+                  E-Mail erhalten und habe die{" "}
+                  <Link
+                    href="/datenschutz"
+                    className="text-primary hover:underline"
+                  >
+                    Datenschutzerklärung
+                  </Link>{" "}
+                  zur Kenntnis genommen. Diese Einwilligung kann ich jederzeit
+                  über den Abmeldelink in jedem Newsletter widerrufen. *
+                </label>
+              </div>
+
               {status === "error" && message && (
                 <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
                   <p className="text-red-800 dark:text-red-400">{message}</p>
@@ -103,7 +149,7 @@ export default function NewsletterPage() {
 
               <button
                 type="submit"
-                disabled={status === "loading"}
+                disabled={status === "loading" || !consent}
                 className="bg-primary hover:bg-primary/90 w-full rounded-lg px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {status === "loading" ? "Wird abonniert..." : "Abonnieren"}

@@ -1507,14 +1507,22 @@ model Media {
   @@index([url])
 }
 
+/// Newsletter recipients. `isActive` says the address wants the newsletter;
+/// `confirmedAt` says the address proved it does (double opt-in). Both must
+/// hold before anything is sent — an unconfirmed row is only a pending
+/// sign-up, and anyone can create one for an address they do not own.
 model NewsletterSubscriber {
   id       String  @id @default(uuid())
   email    String  @unique
   name     String?
   isActive Boolean @default(true)
 
+  /// Null until the confirmation link from the opt-in mail was opened.
+  confirmedAt    DateTime?
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
+
+  @@index([isActive, confirmedAt])
 }
 
 model HomepageCarouselItem {

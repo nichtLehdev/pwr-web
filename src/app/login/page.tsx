@@ -182,6 +182,16 @@ function LoginForm() {
             </Button>
           </form>
         </div>
+
+        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          Ohne Konto zu einem Kurs angemeldet?{" "}
+          <Link
+            href="/anmeldung-verwalten"
+            className="text-primary hover:text-primary-dark font-medium"
+          >
+            Anmeldung verwalten
+          </Link>
+        </p>
       </div>
     </div>
   );

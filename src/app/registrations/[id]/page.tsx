@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  useRegistrationAccessToken,
+  withAccessToken,
+} from "@/lib/registration-access";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
@@ -35,13 +39,16 @@ export default function ViewRegistrationPage() {
   const registrationId = params.id as string;
   const utils = api.useUtils();
   const toast = useToast();
+  const accessToken = useRegistrationAccessToken();
+  // Magic-link visitors have no account area to return to.
+  const isGuestAccess = !!accessToken;
 
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
 
   const { data: registration, isLoading: registrationLoading } =
     api.registrations.getById.useQuery(
-      { id: registrationId },
+      { id: registrationId, accessToken },
       { enabled: !!registrationId },
     );
 
@@ -91,12 +98,15 @@ export default function ViewRegistrationPage() {
   });
 
   useEffect(() => {
-    if (!sessionLoading && !session?.user) {
+    if (!isGuestAccess && !sessionLoading && !session?.user) {
       router.push("/login");
     }
-  }, [session, sessionLoading, router]);
+  }, [session, sessionLoading, router, isGuestAccess]);
 
-  const isOwner = registration?.registrantEmail === session?.user?.email;
+  // With a magic link the server already verified ownership before returning
+  // anything, so having the record in hand is the proof.
+  const isOwner =
+    isGuestAccess || registration?.registrantEmail === session?.user?.email;
 
   const canEdit = () => {
     if (!registration) return false;
@@ -130,7 +140,7 @@ export default function ViewRegistrationPage() {
   };
 
   const confirmCancel = () => {
-    cancelMutation.mutate({ id: registrationId });
+    cancelMutation.mutate({ id: registrationId, accessToken });
   };
 
   const formatDate = (date: Date) => {
@@ -185,16 +195,31 @@ export default function ViewRegistrationPage() {
   if (!registration) {
     return (
       <div className="bg-background-secondary dark:bg-dark-background-secondary flex min-h-[calc(100vh-4rem)] items-center justify-center">
-        <div className="text-center">
+        <div className="max-w-md px-4 text-center">
           <h1 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
             Anmeldung nicht gefunden
           </h1>
-          <Link
-            href="/registrations"
-            className="text-primary hover:text-primary-dark"
-          >
-            Zurück zur Übersicht
-          </Link>
+          {isGuestAccess ? (
+            <>
+              <p className="mb-4 text-gray-600 dark:text-gray-400">
+                Dieser Zugangslink ist ungültig oder abgelaufen. Du kannst dir
+                jederzeit einen neuen Link schicken lassen.
+              </p>
+              <Link
+                href="/anmeldung-verwalten"
+                className="text-primary hover:text-primary-dark"
+              >
+                Neuen Zugangslink anfordern
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/registrations"
+              className="text-primary hover:text-primary-dark"
+            >
+              Zurück zur Übersicht
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -227,12 +252,16 @@ export default function ViewRegistrationPage() {
         {/* Header */}
         <div className="mb-8">
           <nav className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Link
-              href="/registrations"
-              className="hover:text-primary transition-colors"
-            >
-              Meine Anmeldungen
-            </Link>
+            {isGuestAccess ? (
+              <span>Meine Anmeldung</span>
+            ) : (
+              <Link
+                href="/registrations"
+                className="hover:text-primary transition-colors"
+              >
+                Meine Anmeldungen
+              </Link>
+            )}
             <span>/</span>
             <span className="text-dark dark:text-dark-text">Details</span>
           </nav>
@@ -248,7 +277,10 @@ export default function ViewRegistrationPage() {
             <div className="flex shrink-0 flex-wrap gap-2">
               {canEdit() && (
                 <Link
-                  href={`/registrations/${registration.id}/edit`}
+                  href={withAccessToken(
+                    `/registrations/${registration.id}/edit`,
+                    accessToken,
+                  )}
                   className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
                 >
                   <EditIcon className="h-4 w-4" />
@@ -685,11 +717,13 @@ export default function ViewRegistrationPage() {
         {/* Back Link */}
         <div className="flex justify-start">
           <Link
-            href="/registrations"
+            href={
+              isGuestAccess ? coursePath(registration.course) : "/registrations"
+            }
             className="text-primary hover:text-primary-dark inline-flex items-center gap-2 text-sm font-medium transition-colors"
           >
             <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zur Übersicht
+            {isGuestAccess ? "Zur Kursseite" : "Zurück zur Übersicht"}
           </Link>
         </div>
 
