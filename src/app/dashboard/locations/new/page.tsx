@@ -8,7 +8,11 @@ import { useToast } from "@/app/_components/ui/toast";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  AddressAutocomplete,
+  DashboardPage,
+  DEFAULT_LOCATION_COUNTRY,
+} from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
 import {
   Button,
@@ -43,6 +47,7 @@ export default function NewLocationPage() {
   const [street, setStreet] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
+  const [country, setCountry] = useState(DEFAULT_LOCATION_COUNTRY);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -94,6 +99,7 @@ export default function NewLocationPage() {
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
       city: city.trim(),
+      country: country.trim() || DEFAULT_LOCATION_COUNTRY,
       additionalInfo: additionalInfo.trim() || undefined,
       latitude: latitude.trim() ? parseFloat(latitude.trim()) : undefined,
       longitude: longitude.trim() ? parseFloat(longitude.trim()) : undefined,
@@ -140,6 +146,19 @@ export default function NewLocationPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
+                {/* Address search */}
+                <AddressAutocomplete
+                  onSelect={(suggestion) => {
+                    if (suggestion.name) setName(suggestion.name);
+                    if (suggestion.street) setStreet(suggestion.street);
+                    if (suggestion.zipCode) setZipCode(suggestion.zipCode);
+                    if (suggestion.city) setCity(suggestion.city);
+                    if (suggestion.country) setCountry(suggestion.country);
+                    setLatitude(String(suggestion.latitude));
+                    setLongitude(String(suggestion.longitude));
+                  }}
+                />
+
                 {/* Name */}
                 <div>
                   <Label>Name</Label>
@@ -148,6 +167,7 @@ export default function NewLocationPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={200}
+                    autoComplete="organization"
                     placeholder="z.B. Gemeindehaus Köln-Deutz"
                   />
                   <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
@@ -164,7 +184,21 @@ export default function NewLocationPage() {
                     onChange={(e) => setCity(e.target.value)}
                     required
                     maxLength={100}
+                    autoComplete="address-level2"
                     placeholder="z.B. Köln"
+                  />
+                </div>
+
+                {/* Country */}
+                <div>
+                  <Label>Land</Label>
+                  <Input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    maxLength={100}
+                    autoComplete="country-name"
+                    placeholder={DEFAULT_LOCATION_COUNTRY}
                   />
                 </div>
 
@@ -176,6 +210,7 @@ export default function NewLocationPage() {
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
                     maxLength={200}
+                    autoComplete="street-address"
                     placeholder="z.B. Musterstraße 123"
                   />
                 </div>
@@ -188,6 +223,7 @@ export default function NewLocationPage() {
                     value={zipCode}
                     onChange={(e) => setZipCode(e.target.value)}
                     maxLength={20}
+                    autoComplete="postal-code"
                     placeholder="z.B. 50679"
                   />
                 </div>
