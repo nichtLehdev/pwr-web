@@ -19,6 +19,7 @@ export async function geocodeAddress(address: {
   street?: string | null;
   zipCode?: string | null;
   city: string;
+  country?: string | null;
 }): Promise<GeocodeResult> {
   try {
     const queryParts: string[] = [];
@@ -33,7 +34,9 @@ export async function geocodeAddress(address: {
       queryParts.push(address.city);
     }
 
-    queryParts.push("Germany");
+    // Nominatim understands localised country names, so the stored value can
+    // be passed straight through; fall back to our default catchment area.
+    queryParts.push(address.country?.trim() || "Germany");
 
     const query = queryParts.join(", ");
 
