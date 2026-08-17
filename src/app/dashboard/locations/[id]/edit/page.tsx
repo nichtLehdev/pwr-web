@@ -13,6 +13,7 @@ import {
   DashboardSectionedFormLayout,
   DashboardFormZoneHeader,
   DashboardFormBlock,
+  DEFAULT_LOCATION_COUNTRY,
   type DashboardSectionNavItem,
 } from "@/app/_components/dashboard";
 import { getErrorMessage } from "@/lib/utils";
@@ -50,6 +51,7 @@ export default function EditLocationPage() {
   const [street, setStreet] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
+  const [country, setCountry] = useState(DEFAULT_LOCATION_COUNTRY);
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
@@ -64,6 +66,7 @@ export default function EditLocationPage() {
       setStreet(location.street || "");
       setZipCode(location.zipCode || "");
       setCity(location.city);
+      setCountry(location.country || DEFAULT_LOCATION_COUNTRY);
       setAdditionalInfo(location.additionalInfo || "");
       setLatitude(location.latitude?.toString() || "");
       setLongitude(location.longitude?.toString() || "");
@@ -118,6 +121,7 @@ export default function EditLocationPage() {
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
       city: city.trim() || undefined,
+      country: country.trim() || DEFAULT_LOCATION_COUNTRY,
       additionalInfo: additionalInfo.trim() || undefined,
       latitude: latitude.trim() ? parseFloat(latitude.trim()) : undefined,
       longitude: longitude.trim() ? parseFloat(longitude.trim()) : undefined,
@@ -223,6 +227,22 @@ export default function EditLocationPage() {
                     maxLength={100}
                     className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
                     placeholder="z.B. Köln"
+                  />
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                    Land
+                  </label>
+                  <input
+                    type="text"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    maxLength={100}
+                    autoComplete="country-name"
+                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+                    placeholder={DEFAULT_LOCATION_COUNTRY}
                   />
                 </div>
 
