@@ -40,6 +40,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/spiele/rhythmus", priority: 0.5 },
   { path: "/impressum", priority: 0.3 },
   { path: "/datenschutz", priority: 0.3 },
+  { path: "/lizenzen", priority: 0.2 },
 ];
 
 /**
