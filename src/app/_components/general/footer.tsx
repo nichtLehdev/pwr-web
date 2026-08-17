@@ -29,6 +29,7 @@ export default function Footer() {
     legal: [
       { label: "Impressum", href: "/impressum" },
       { label: "Datenschutz", href: "/datenschutz" },
+      { label: "Lizenzen", href: "/lizenzen" },
       { label: "Kontakt", href: "/kontakt" },
     ],
   };
