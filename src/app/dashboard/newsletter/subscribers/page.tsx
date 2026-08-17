@@ -117,7 +117,7 @@ export default function DashboardNewsletterSubscribersPage() {
     >
       {/* Statistics */}
       {statistics && (
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
             <p className="dark:text-dark-muted text-sm text-gray-600">Gesamt</p>
             <p className="dark:text-dark-text text-2xl font-bold text-gray-900">
@@ -125,9 +125,19 @@ export default function DashboardNewsletterSubscribersPage() {
             </p>
           </div>
           <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">Aktiv</p>
+            <p className="dark:text-dark-muted text-sm text-gray-600">
+              Bestätigt
+            </p>
             <p className="dark:text-dark-text text-2xl font-bold text-green-600">
               {statistics.active}
+            </p>
+          </div>
+          <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
+            <p className="dark:text-dark-muted text-sm text-gray-600">
+              Bestätigung ausstehend
+            </p>
+            <p className="dark:text-dark-text text-2xl font-bold text-yellow-600">
+              {statistics.pending}
             </p>
           </div>
           <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700">
@@ -227,9 +237,16 @@ export default function DashboardNewsletterSubscribersPage() {
                       {subscriber.name || "-"}
                     </td>
                     <td className="px-6 py-4 text-sm whitespace-nowrap">
-                      {subscriber.isActive ? (
+                      {subscriber.isActive && subscriber.confirmedAt ? (
                         <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                          Aktiv
+                          Bestätigt
+                        </span>
+                      ) : subscriber.isActive ? (
+                        <span
+                          className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          title="Anmeldung wurde noch nicht über den Link in der Bestätigungs-E-Mail bestätigt — erhält keinen Newsletter."
+                        >
+                          Ausstehend
                         </span>
                       ) : (
                         <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-300">

@@ -2,6 +2,7 @@ import { render } from "@react-email/components";
 import { sendEmail, type EmailAttachment } from "./send-email";
 import { VerificationEmail } from "./templates/verification-email";
 import { PasswordResetEmail } from "./templates/password-reset-email";
+import { NewsletterConfirm } from "./templates/newsletter-confirm";
 import { CourseRegistrationConfirmed } from "./templates/course-registration-confirmed";
 import { CourseRegistrationWaitlist } from "./templates/course-registration-waitlist";
 import { SiblingDiscountApproved } from "./templates/sibling-discount-approved";
@@ -55,6 +56,26 @@ export async function sendPasswordResetEmail(
   return sendEmail({
     to: email,
     subject: "Passwort zurücksetzen - Posaunenwerk Rheinland",
+    html,
+  });
+}
+
+export async function sendNewsletterConfirmEmail(
+  email: string,
+  confirmUrl: string,
+  subscriberName?: string,
+) {
+  const html = await render(
+    NewsletterConfirm({
+      confirmUrl,
+      subscriberName,
+    }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject:
+      "Bitte bestätige deine Newsletter-Anmeldung - Posaunenwerk Rheinland",
     html,
   });
 }
