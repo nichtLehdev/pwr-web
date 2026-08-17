@@ -18,6 +18,8 @@ interface SiblingDiscountRejectedProps {
   originalTotalPrice: number;
   participantsCount: number;
   registrationId: string;
+  /** Magic link letting the registrant manage the anmeldung without an account. */
+  manageUrl?: string;
 }
 
 export function SiblingDiscountRejected({
@@ -29,6 +31,7 @@ export function SiblingDiscountRejected({
   originalTotalPrice,
   participantsCount,
   registrationId,
+  manageUrl,
 }: SiblingDiscountRejectedProps) {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -106,7 +109,7 @@ export function SiblingDiscountRejected({
 
             <Text style={paragraph}>
               <a
-                href={`${baseUrl}/registrations/${registrationId}/edit`}
+                href={manageUrl ?? `${baseUrl}/registrations/${registrationId}`}
                 style={linkStyle}
               >
                 Anmeldung bearbeiten

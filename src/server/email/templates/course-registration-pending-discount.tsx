@@ -7,6 +7,7 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
+import { ManageRegistrationCta } from "./manage-registration-cta";
 
 interface CourseRegistrationPendingDiscountProps {
   registrantFirstName: string;
@@ -19,6 +20,8 @@ interface CourseRegistrationPendingDiscountProps {
   finalTotalPrice: number;
   participantsCount: number;
   registrationId: string;
+  /** Magic link letting the registrant manage the anmeldung without an account. */
+  manageUrl?: string;
 }
 
 export function CourseRegistrationPendingDiscount({
@@ -32,6 +35,7 @@ export function CourseRegistrationPendingDiscount({
   finalTotalPrice,
   participantsCount,
   registrationId,
+  manageUrl,
 }: CourseRegistrationPendingDiscountProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -120,6 +124,8 @@ export function CourseRegistrationPendingDiscount({
               Du erhältst in Kürze weitere Informationen zum Kurs per E-Mail.
               Bei Fragen kannst du dich gerne an uns wenden.
             </Text>
+
+            <ManageRegistrationCta manageUrl={manageUrl} />
 
             <Text style={paragraph}>
               Deine Anmelde-ID: <strong>{registrationId}</strong>
