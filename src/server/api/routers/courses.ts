@@ -116,7 +116,7 @@ export const coursesRouter = createTRPCRouter({
               select: {
                 registrationStatus: true,
                 participants: {
-                  select: { priceOption: true },
+                  select: { priceOptionId: true, priceOption: true },
                 },
               },
             },
@@ -1132,7 +1132,7 @@ export const coursesRouter = createTRPCRouter({
 
             if (inputOption.maxParticipants != null) {
               const usedCount =
-                registrationStats.byPriceOptionLabel[existing.label] ?? 0;
+                registrationStats.byPriceOptionId[existing.id] ?? 0;
               if (inputOption.maxParticipants < usedCount) {
                 throw new TRPCError({
                   code: "BAD_REQUEST",
@@ -1376,7 +1376,7 @@ export const coursesRouter = createTRPCRouter({
             select: {
               registrationStatus: true,
               participants: {
-                select: { priceOption: true },
+                select: { priceOptionId: true, priceOption: true },
               },
             },
           },

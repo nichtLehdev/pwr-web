@@ -373,16 +373,16 @@ export const registrationsRouter = createTRPCRouter({
           // Per-price-tier limits are enforced here too (they previously were
           // only checked on registration updates, not on creation).
           if (status === RegistrationStatus.CONFIRMED) {
-            const additionsByLabel: Record<string, number> = {};
+            const additionsByOptionId: Record<string, number> = {};
             for (const participant of participantsWithPriceOptions) {
-              additionsByLabel[participant.priceOption] =
-                (additionsByLabel[participant.priceOption] ?? 0) + 1;
+              additionsByOptionId[participant.priceOptionId] =
+                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
             }
             await assertPriceTierCapacity(
               tx,
               input.courseId,
               course.priceOptions,
-              additionsByLabel,
+              additionsByOptionId,
             );
           }
 
@@ -405,16 +405,15 @@ export const registrationsRouter = createTRPCRouter({
               siblingDiscountStatus,
               registrationStatus: status,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  const { priceOptionId, ...participantData } = participant;
-                  return {
-                    ...participantData,
-                    customFields: (participantData.customFields ||
-                      {}) as Prisma.InputJsonValue,
-                    siblingGroupId: participant.siblingGroupId || null,
-                  };
-                }),
+                create: participantsWithPriceOptions.map((participant) => ({
+                  ...participant,
+                  // Führend für Kapazität und Belegung; `priceOption` bleibt
+                  // als Anzeige-Snapshot daneben stehen.
+                  priceOptionId: participant.priceOptionId,
+                  customFields: (participant.customFields ||
+                    {}) as Prisma.InputJsonValue,
+                  siblingGroupId: participant.siblingGroupId || null,
+                })),
               },
             },
             include: {
@@ -637,16 +636,16 @@ export const registrationsRouter = createTRPCRouter({
           // staff who knowingly exceed the course capacity should not be
           // stopped by a tier limit right afterwards.
           if (status === RegistrationStatus.CONFIRMED && !allowOverbooking) {
-            const additionsByLabel: Record<string, number> = {};
+            const additionsByOptionId: Record<string, number> = {};
             for (const participant of participantsWithPriceOptions) {
-              additionsByLabel[participant.priceOption] =
-                (additionsByLabel[participant.priceOption] ?? 0) + 1;
+              additionsByOptionId[participant.priceOptionId] =
+                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
             }
             await assertPriceTierCapacity(
               tx,
               input.courseId,
               course.priceOptions,
-              additionsByLabel,
+              additionsByOptionId,
             );
           }
 
@@ -665,16 +664,13 @@ export const registrationsRouter = createTRPCRouter({
               siblingDiscountStatus,
               registrationStatus: status,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  const { priceOptionId, ...participantData } = participant;
-                  return {
-                    ...participantData,
-                    customFields:
-                      participantData.customFields as Prisma.InputJsonValue,
-                    siblingGroupId: participant.siblingGroupId || null,
-                  };
-                }),
+                create: participantsWithPriceOptions.map((participant) => ({
+                  ...participant,
+                  priceOptionId: participant.priceOptionId,
+                  customFields:
+                    participant.customFields as Prisma.InputJsonValue,
+                  siblingGroupId: participant.siblingGroupId || null,
+                })),
               },
             },
             include: {
@@ -1349,9 +1345,9 @@ export const registrationsRouter = createTRPCRouter({
 
         const priceOptionCounts: Record<string, number> = {};
         for (const participant of participantsWithPriceOptions) {
-          if (participant.priceOption) {
-            priceOptionCounts[participant.priceOption] =
-              (priceOptionCounts[participant.priceOption] ?? 0) + 1;
+          if (participant.priceOptionId) {
+            priceOptionCounts[participant.priceOptionId] =
+              (priceOptionCounts[participant.priceOptionId] ?? 0) + 1;
           }
         }
         await assertPriceTierCapacity(
@@ -1386,6 +1382,7 @@ export const registrationsRouter = createTRPCRouter({
             birthDate: participantData.birthDate,
             city: participantData.city,
             instrument: participantData.instrument ?? null,
+            priceOptionId: participantData.priceOptionId ?? null,
             priceOption: participantData.priceOption ?? null,
             customFields: (participantData.customFields ??
               {}) as Prisma.InputJsonValue,

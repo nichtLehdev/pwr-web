@@ -657,6 +657,8 @@ model CoursePriceOption {
   description     String?
   maxParticipants Int?
 
+  participants Participant[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -915,7 +917,22 @@ model Participant {
   birthDate      DateTime
   city           String
   instrument     String?
-  priceOption    String? // Which price option was selected
+  /**
+   * Gewählte Preiskategorie. Führend für Belegung und Kapazität — das Label
+   * allein taugt dafür nicht, weil ein Kurs zwei Kategorien mit demselben
+   * Namen führen darf (etwa dieselbe Zimmerart in zwei Häusern).
+   *
+   * Bleibt bei gelöschter Kategorie null; `priceOption` hält den Namen dann
+   * weiterhin fest.
+   */
+  priceOptionId  String?
+  priceOptionRef CoursePriceOption? @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
+  /**
+   * Name der Kategorie zum Zeitpunkt der Anmeldung — Anzeige-Snapshot für
+   * Listen, Exporte und Rechnungen. Bewusst nicht führend: er darf sich
+   * nachträglich vom aktuellen Label unterscheiden.
+   */
+  priceOption    String?
   customFields   Json? // JSON for custom field values
   siblingGroupId String? // Groups siblings together for discount calculation (same ID = siblings)
 
@@ -924,6 +941,7 @@ model Participant {
 
   @@index([registrationId])
   @@index([priceOption])
+  @@index([priceOptionId])
 }
 
 model SavedParticipant {

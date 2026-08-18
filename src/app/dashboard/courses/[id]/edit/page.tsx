@@ -751,8 +751,11 @@ export default function EditCoursePage() {
     course?.registrationStats?.totalConfirmedParticipants ??
     course?._count?.participants ??
     0;
+  // Nach id, nicht nach Label: zwei Kategorien dürfen gleich heißen und wären
+  // sonst in einem Topf. Neu hinzugefügte Kategorien ("new-…") haben noch
+  // keine id im Bestand und damit erwartungsgemäß 0 Anmeldungen.
   const participantsByPriceOption =
-    course?.registrationStats?.byPriceOptionLabel ?? {};
+    course?.registrationStats?.byPriceOptionId ?? {};
 
   const addPriceOption = () => {
     const newOptions = [
@@ -851,7 +854,7 @@ export default function EditCoursePage() {
     if (hasRegistrations && !isFree) {
       for (const option of priceOptions) {
         if (option.maxParticipants == null) continue;
-        const minForOption = participantsByPriceOption[option.label] ?? 0;
+        const minForOption = participantsByPriceOption[option.id] ?? 0;
         if (option.maxParticipants < minForOption) {
           setError(
             `Das Limit für „${option.label}“ darf nicht unter ${minForOption} liegen (bereits angemeldet).`,
@@ -2558,7 +2561,7 @@ export default function EditCoursePage() {
                                             ? Math.max(
                                                 1,
                                                 participantsByPriceOption[
-                                                  option.label
+                                                  option.id
                                                 ] ?? 0,
                                               )
                                             : 1
@@ -2568,12 +2571,11 @@ export default function EditCoursePage() {
                                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
                                       />
                                       {hasRegistrations &&
-                                      (participantsByPriceOption[
-                                        option.label
-                                      ] ?? 0) > 0 ? (
+                                      (participantsByPriceOption[option.id] ??
+                                        0) > 0 ? (
                                         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                           {participantsByPriceOption[
-                                            option.label
+                                            option.id
                                           ] ?? 0}{" "}
                                           bereits angemeldet
                                         </p>

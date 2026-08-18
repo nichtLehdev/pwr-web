@@ -275,7 +275,9 @@ export default function EditRegistrationPage() {
     );
     if (!priceOption) return false;
 
-    const available = availability.capacityByPriceOption[priceOption.label];
+    // Nach id nachschlagen: zwei Kategorien dürfen dasselbe Label tragen, und
+    // über das Label bekam die eine die Restplätze der anderen.
+    const available = availability.capacityByPriceOption[priceOption.id];
     if (available === undefined) return true;
 
     const currentUsage = activeParticipants.filter(
