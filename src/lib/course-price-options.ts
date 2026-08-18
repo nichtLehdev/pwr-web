@@ -137,7 +137,8 @@ export function needsDistinguishingDescription(
 
   // Auch eine vorhandene, aber identische Beschreibung unterscheidet nichts.
   return (
-    sameName.filter((other) => (other.description?.trim() ?? "") === description)
-      .length > 1
+    sameName.filter(
+      (other) => (other.description?.trim() ?? "") === description,
+    ).length > 1
   );
 }

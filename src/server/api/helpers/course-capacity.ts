@@ -85,7 +85,11 @@ export async function countConfirmedParticipants(
 export async function assertPriceTierCapacity(
   db: Db | Tx,
   courseId: string,
-  priceOptions: Array<{ id: string; label: string; maxParticipants: number | null }>,
+  priceOptions: Array<{
+    id: string;
+    label: string;
+    maxParticipants: number | null;
+  }>,
   additionsByOptionId: Record<string, number>,
   excludeRegistrationId?: string,
 ): Promise<void> {

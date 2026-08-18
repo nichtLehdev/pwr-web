@@ -68,8 +68,7 @@ const externalRegistrationUrlSchema = z
  */
 const priceOptionsMustBeDistinct = (
   options:
-    | ReadonlyArray<{ label: string; description?: string | null }>
-    | undefined,
+    ReadonlyArray<{ label: string; description?: string | null }> | undefined,
   ctx: z.RefinementCtx,
 ) => {
   if (!options) return;

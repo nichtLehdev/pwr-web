@@ -48,7 +48,9 @@ const hasSequence = (value: string) => {
   for (let i = 0; i + 4 <= lower.length; i++) {
     const chunk = lower.slice(i, i + 4);
     const reversed = [...chunk].reverse().join("");
-    if (SEQUENCES.some((seq) => seq.includes(chunk) || seq.includes(reversed))) {
+    if (
+      SEQUENCES.some((seq) => seq.includes(chunk) || seq.includes(reversed))
+    ) {
       return true;
     }
   }
@@ -107,10 +109,7 @@ export function scorePassword(password: string): PasswordStrength {
   // Länge dominiert: ein kurzes Passwort erreicht auch mit allen vier
   // Zeichenklassen nie mehr als "Mittel".
   const lengthCap = password.length >= 12 ? 4 : 2;
-  const score = Math.max(
-    0,
-    Math.min(lengthCap, points - 1),
-  ) as PasswordScore;
+  const score = Math.max(0, Math.min(lengthCap, points - 1)) as PasswordScore;
 
   let hint = "";
   if (hasCommonWord(password)) {

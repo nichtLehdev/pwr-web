@@ -2338,11 +2338,11 @@ export default function EditCoursePage() {
                         </p>
                         <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
                           Es gibt bereits {registrationCount} Teilnehmer für
-                          diesen Kurs. Bezeichnung und Preis der
-                          Preiskategorien können nicht mehr geändert werden. Die
-                          Beschreibung sowie die maximale Teilnehmerzahl (gesamt
-                          und pro Preiskategorie) lassen sich weiter anpassen –
-                          die Teilnehmerzahl mindestens auf die Zahl bereits
+                          diesen Kurs. Bezeichnung und Preis der Preiskategorien
+                          können nicht mehr geändert werden. Die Beschreibung
+                          sowie die maximale Teilnehmerzahl (gesamt und pro
+                          Preiskategorie) lassen sich weiter anpassen – die
+                          Teilnehmerzahl mindestens auf die Zahl bereits
                           angemeldeter Teilnehmer.
                         </p>
                       </div>
@@ -2611,7 +2611,10 @@ export default function EditCoursePage() {
                                       placeholder="z.B. Inkl. Verpflegung und Übernachtung"
                                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                                     />
-                                    {needsDistinguishingDescription(option, priceOptions) && (
+                                    {needsDistinguishingDescription(
+                                      option,
+                                      priceOptions,
+                                    ) && (
                                       <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                                         Dieser Name kommt mehrfach vor — ohne
                                         unterscheidende Beschreibung sind die

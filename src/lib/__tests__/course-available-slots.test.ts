@@ -54,8 +54,16 @@ describe("getCourseCapacitySummary", () => {
     const summary = getCourseCapacitySummary({
       maxParticipants: 116,
       priceOptions: [
-        { id: "wasserburg", label: "Erwachsene Einzelzimmer", maxParticipants: 6 },
-        { id: "marienau", label: "Erwachsene Einzelzimmer", maxParticipants: 30 },
+        {
+          id: "wasserburg",
+          label: "Erwachsene Einzelzimmer",
+          maxParticipants: 6,
+        },
+        {
+          id: "marienau",
+          label: "Erwachsene Einzelzimmer",
+          maxParticipants: 30,
+        },
       ],
       registrations: [confirmed(["marienau"])],
     });
@@ -83,8 +91,16 @@ describe("getCourseCapacitySummary", () => {
     const summary = getCourseCapacitySummary({
       maxParticipants: 36,
       priceOptions: [
-        { id: "wasserburg", label: "Erwachsene Einzelzimmer", maxParticipants: 6 },
-        { id: "marienau", label: "Erwachsene Einzelzimmer", maxParticipants: 30 },
+        {
+          id: "wasserburg",
+          label: "Erwachsene Einzelzimmer",
+          maxParticipants: 6,
+        },
+        {
+          id: "marienau",
+          label: "Erwachsene Einzelzimmer",
+          maxParticipants: 30,
+        },
       ],
       registrations: [legacy(["Erwachsene Einzelzimmer"])],
     });

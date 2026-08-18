@@ -129,9 +129,7 @@ export default function CourseParticipantsPage() {
   const [statusFilter, setStatusFilter] = useState<
     RegistrationStatus | "ALL" | "ACTIVE"
   >("ACTIVE");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(
-    "ALL",
-  );
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showExportMenu, setShowExportMenu] = useState(false);

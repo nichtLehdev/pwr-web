@@ -35,9 +35,7 @@ function viewerIsCourseTeamMember(
 }
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import {
-  permissionProcedure,
-} from "../middleware/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import {
   assertPriceTierCapacity,
