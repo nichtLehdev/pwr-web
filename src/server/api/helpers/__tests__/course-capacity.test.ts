@@ -1,5 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
-import { computeCourseCapacity } from "../course-capacity";
+import {
+  assertPriceTierCapacity,
+  computeCourseCapacity,
+} from "../course-capacity";
 
 describe("computeCourseCapacity", () => {
   it("returns Infinity for a course with no limits at all", () => {
@@ -78,5 +81,74 @@ describe("computeCourseCapacity", () => {
     expect(
       computeCourseCapacity({ maxParticipants: 0, priceOptions: [] }),
     ).toBe(0);
+  });
+});
+
+describe("assertPriceTierCapacity", () => {
+  const priceOptions = [
+    {
+      id: "wasserburg",
+      label: "Erwachsene Einzelzimmer",
+      maxParticipants: 6,
+    },
+    { id: "marienau", label: "Erwachsene Einzelzimmer", maxParticipants: 30 },
+    { id: "kinder", label: "Kinder und Jugendliche", maxParticipants: 50 },
+  ];
+
+  /** Minimaler Prisma-Stub: merkt sich das where und liefert einen Zählwert. */
+  const dbWith = (count: number) => {
+    const seen: unknown[] = [];
+    return {
+      db: {
+        participant: {
+          count: (args: { where: unknown }) => {
+            seen.push(args.where);
+            return Promise.resolve(count);
+          },
+        },
+      } as never,
+      seen,
+    };
+  };
+
+  it("checks a tier against its own limit, not a same-named tier's", async () => {
+    // 10 gebuchte Marienau-Plätze passen in dessen Limit 30 — über das Label
+    // wäre gegen Wasserburgs Limit 6 geprüft und die Buchung abgelehnt worden.
+    const { db } = dbWith(10);
+    await expect(
+      assertPriceTierCapacity(db, "course", priceOptions, { marienau: 1 }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("still rejects once the tier's own limit is reached", async () => {
+    const { db } = dbWith(6);
+    await expect(
+      assertPriceTierCapacity(db, "course", priceOptions, { wasserburg: 1 }),
+    ).rejects.toThrow("Erwachsene Einzelzimmer");
+  });
+
+  it("counts legacy label-only participants when the label is unique", async () => {
+    const { db, seen } = dbWith(0);
+    await assertPriceTierCapacity(db, "course", priceOptions, { kinder: 1 });
+    expect(JSON.stringify(seen[0])).toContain("Kinder und Jugendliche");
+  });
+
+  it("ignores legacy label-only participants for duplicated labels", async () => {
+    const { db, seen } = dbWith(0);
+    await assertPriceTierCapacity(db, "course", priceOptions, { marienau: 1 });
+    // Nur der id-Zweig, kein Label-Fallback — sonst zählten Wasserburgs
+    // Altbestände gegen Marienaus Limit.
+    expect(JSON.stringify(seen[0])).not.toContain("Erwachsene Einzelzimmer");
+  });
+
+  it("skips tiers without a limit", async () => {
+    const { db, seen } = dbWith(999);
+    await assertPriceTierCapacity(
+      db,
+      "course",
+      [{ id: "offen", label: "Offen", maxParticipants: null }],
+      { offen: 5 },
+    );
+    expect(seen).toHaveLength(0);
   });
 });
