@@ -31,6 +31,10 @@ import {
   registrationOpenAmount,
   registrationPaymentState,
 } from "@/lib/invoice-payment";
+import {
+  participantPriceOptionLabel,
+  resolveParticipantPriceOption,
+} from "@/lib/course-price-options";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -454,8 +458,9 @@ export default function CourseParticipantsPage() {
           );
         });
 
-        const priceOption = course.priceOptions?.find(
-          (p) => p.label === participant.priceOption,
+        const priceOption = resolveParticipantPriceOption(
+          participant,
+          course.priceOptions,
         );
         const participantPrice = priceOption?.price ?? 0;
 
@@ -465,7 +470,10 @@ export default function CourseParticipantsPage() {
           geburtsdatum: formatBirthDate(participant.birthDate),
           ort: participant.city || "",
           instrument: participant.instrument || "",
-          preiskategorie: participant.priceOption || "",
+          preiskategorie: participantPriceOptionLabel(
+            participant,
+            course.priceOptions,
+          ),
           preis: participantPrice.toFixed(2),
           ...customFieldValues,
           status: registrationStatusLabels[registration.registrationStatus],
@@ -923,7 +931,10 @@ export default function CourseParticipantsPage() {
                           {participant.instrument || "–"}
                         </td>
                         <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {participant.priceOption || "–"}
+                          {participantPriceOptionLabel(
+                            participant,
+                            course.priceOptions,
+                          ) || "–"}
                         </td>
                         {/* Custom Fields Values */}
                         {showCustomFields &&
@@ -1164,7 +1175,10 @@ export default function CourseParticipantsPage() {
                                   {participant.instrument || "–"}
                                 </td>
                                 <td className="px-4 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                  {participant.priceOption || "–"}
+                                  {participantPriceOptionLabel(
+                                    participant,
+                                    course.priceOptions,
+                                  ) || "–"}
                                 </td>
                                 {/* Custom Fields Values */}
                                 {showCustomFields &&

@@ -40,6 +40,7 @@ import {
   RegistrationPaymentBadge,
 } from "@/app/_components/dashboard/invoice-payment-badge";
 import { formatEuro } from "@/lib/invoice-document";
+import { participantPriceOptionLabel } from "@/lib/course-price-options";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -925,7 +926,10 @@ export default function RegistrationDetailPage() {
                           Preiskategorie:
                         </span>
                         <p className="text-gray-600 dark:text-gray-400">
-                          {participant.priceOption}
+                          {participantPriceOptionLabel(
+                            participant,
+                            course.priceOptions,
+                          )}
                         </p>
                       </div>
                     )}

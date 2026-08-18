@@ -40,6 +40,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { participantPriceOptionLabel } from "@/lib/course-price-options";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -1128,7 +1129,10 @@ export default function CourseDetailPage() {
                               </div>
                               {participant.priceOption && (
                                 <span className="text-gray-500">
-                                  {participant.priceOption}
+                                  {participantPriceOptionLabel(
+                                    participant,
+                                    course.priceOptions,
+                                  )}
                                 </span>
                               )}
                             </div>
