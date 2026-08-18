@@ -12,19 +12,23 @@ import {
   Label,
   Alert,
   AlertDescription,
+  PasswordStrengthMeter,
 } from "@/app/_components/ui";
+import { PASSWORD_MIN_LENGTH } from "@/lib/password-strength";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     firstName: "",
     lastName: "",
     username: "",
   });
   const [usernameEdited, setUsernameEdited] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -136,6 +140,25 @@ export default function RegisterPage() {
     checkEmailQuery.data,
   ]);
 
+  // Erst meckern, wenn das Bestätigungsfeld angefasst wurde — sonst steht die
+  // Warnung schon nach dem ersten getippten Zeichen da.
+  const passwordsMatch = formData.password === formData.confirmPassword;
+  const showMismatch =
+    confirmTouched && formData.confirmPassword.length > 0 && !passwordsMatch;
+
+  // Der Absenden-Button bleibt gesperrt, solange das Formular garantiert
+  // scheitern würde. Laufende Verfügbarkeitsprüfungen sperren ihn nicht — nur
+  // ein bereits bekanntes "vergeben" tut das.
+  const canSubmit =
+    formData.firstName.trim().length > 0 &&
+    formData.lastName.trim().length > 0 &&
+    formData.username.trim().length >= 3 &&
+    isValidEmail(formData.email) &&
+    formData.password.length >= PASSWORD_MIN_LENGTH &&
+    passwordsMatch &&
+    usernameStatus.available !== false &&
+    emailStatus.available !== false;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -161,14 +184,25 @@ export default function RegisterPage() {
     if (name === "username") {
       setUsernameEdited(true);
     }
+
+    if (name === "confirmPassword") {
+      setConfirmTouched(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (formData.password.length < 8) {
-      setError("Passwort muss mindestens 8 Zeichen lang sein");
+    if (formData.password.length < PASSWORD_MIN_LENGTH) {
+      setError(
+        `Passwort muss mindestens ${PASSWORD_MIN_LENGTH} Zeichen lang sein`,
+      );
+      return;
+    }
+
+    if (!passwordsMatch) {
+      setError("Die Passwörter stimmen nicht überein");
       return;
     }
 
@@ -399,12 +433,53 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Mindestens 8 Zeichen
-              </p>
+              <PasswordStrengthMeter password={formData.password} />
+              {!formData.password && (
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Mindestens {PASSWORD_MIN_LENGTH} Zeichen
+                </p>
+              )}
             </div>
 
-            <Button type="submit" isLoading={isLoading} className="w-full">
+            <div>
+              <Label htmlFor="confirmPassword" required>
+                Passwort bestätigen
+              </Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                onBlur={() => setConfirmTouched(true)}
+                error={showMismatch}
+                className={
+                  formData.confirmPassword.length > 0 && passwordsMatch
+                    ? "border-green-500 focus:border-green-500 focus:ring-green-500"
+                    : ""
+                }
+              />
+              {showMismatch ? (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  ✗ Die Passwörter stimmen nicht überein
+                </p>
+              ) : (
+                formData.confirmPassword.length > 0 && (
+                  <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                    ✓ Passwörter stimmen überein
+                  </p>
+                )
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              isLoading={isLoading}
+              disabled={!canSubmit}
+              className="w-full"
+            >
               Konto erstellen
             </Button>
 
