@@ -569,7 +569,7 @@ export function Step2Participants({
                             ? "bg-green-50 dark:bg-green-900/20"
                             : "dark:bg-dark-background bg-white",
                         })}
-                        placeholder="Trompete"
+                        placeholder="Instrument"
                       />
                     </div>
 
