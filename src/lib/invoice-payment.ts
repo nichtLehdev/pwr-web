@@ -11,10 +11,7 @@
 
 export type InvoicePaymentState =
   /** Entwurf oder Storno — an einem solchen Dokument gibt es nichts zu zahlen. */
-  | "NOT_APPLICABLE"
-  | "OPEN"
-  | "PARTIAL"
-  | "PAID";
+  "NOT_APPLICABLE" | "OPEN" | "PARTIAL" | "PAID";
 
 export type InvoicePaymentInput = {
   status: "DRAFT" | "PUBLISHED" | "CANCELLED";

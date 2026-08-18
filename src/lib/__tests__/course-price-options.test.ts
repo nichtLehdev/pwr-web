@@ -59,7 +59,9 @@ describe("priceOptionDisplayLabel", () => {
   });
 
   it("works on a single-option course", () => {
-    const one = [{ label: "Teilnehmerbeitrag", description: "inkl. Vollpension" }];
+    const one = [
+      { label: "Teilnehmerbeitrag", description: "inkl. Vollpension" },
+    ];
     expect(priceOptionDisplayLabel(one[0]!, one)).toBe("Teilnehmerbeitrag");
   });
 });

@@ -83,7 +83,6 @@ const registrationStatusColors: Record<RegistrationStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-
 // Dashboard access is now controlled by permissions
 
 export default function CourseDetailPage() {

@@ -1131,7 +1131,12 @@ export const invoicesRouter = createTRPCRouter({
         }),
         ctx.db.invoice.findMany({
           where: { ...where, status: InvoiceStatus.PUBLISHED },
-          select: { status: true, totalAmount: true, paidAt: true, paidAmount: true },
+          select: {
+            status: true,
+            totalAmount: true,
+            paidAt: true,
+            paidAmount: true,
+          },
         }),
       ]);
 

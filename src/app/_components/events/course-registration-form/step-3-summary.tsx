@@ -152,7 +152,10 @@ export function Step3Summary({
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {priceOption
-                      ? priceOptionDisplayLabel(priceOption, course.priceOptions)
+                      ? priceOptionDisplayLabel(
+                          priceOption,
+                          course.priceOptions,
+                        )
                       : null}
                   </p>
                 </div>

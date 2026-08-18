@@ -1,8 +1,5 @@
 import { describe, expect, it } from "@jest/globals";
-import {
-  PASSWORD_MIN_LENGTH,
-  scorePassword,
-} from "../password-strength";
+import { PASSWORD_MIN_LENGTH, scorePassword } from "../password-strength";
 
 describe("password strength", () => {
   it("stays at zero below the enforced minimum", () => {
