@@ -30,6 +30,7 @@ import {
 } from "../helpers/course-access";
 import { createCourseSlug, updateCourseSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { pairPriceOptions } from "../helpers/price-option-pairing";
 
 /** Nested args for `Course.collaborators` on public course queries. */
 const courseCollaboratorsForPublic = {
@@ -1105,12 +1106,10 @@ export const coursesRouter = createTRPCRouter({
             });
           }
 
+          const pairing = pairPriceOptions(priceOptions, existingOptions);
+
           for (const inputOption of priceOptions) {
-            const existing = existingOptions.find(
-              (option) =>
-                (inputOption.id && option.id === inputOption.id) ||
-                option.label === inputOption.label,
-            );
+            const existing = pairing.get(inputOption);
 
             if (!existing) {
               throw new TRPCError({
@@ -1145,11 +1144,7 @@ export const coursesRouter = createTRPCRouter({
 
           await Promise.all(
             priceOptions.map((inputOption) => {
-              const existing = existingOptions.find(
-                (option) =>
-                  (inputOption.id && option.id === inputOption.id) ||
-                  option.label === inputOption.label,
-              );
+              const existing = pairing.get(inputOption);
               if (!existing) {
                 return Promise.resolve();
               }
