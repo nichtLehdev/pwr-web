@@ -18,6 +18,7 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
+import { validatePriceOptionDistinctness } from "@/lib/course-price-options";
 import {
   isExternalCourse,
   normalizeExternalRegistrationUrl,
@@ -59,6 +60,22 @@ const externalRegistrationUrlSchema = z
   .refine((val) => !val?.trim() || /^https?:\/\/.+/i.test(val.trim()), {
     message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
   });
+
+/**
+ * Preiskategorien müssen auseinanderzuhalten sein: gleiche Namen sind
+ * erlaubt, brauchen dann aber unterschiedliche Beschreibungen. Sonst stehen
+ * sie in der Anmeldung zweimal identisch da.
+ */
+const priceOptionsMustBeDistinct = (
+  options:
+    | ReadonlyArray<{ label: string; description?: string | null }>
+    | undefined,
+  ctx: z.RefinementCtx,
+) => {
+  if (!options) return;
+  const message = validatePriceOptionDistinctness(options);
+  if (message) ctx.addIssue({ code: "custom", message });
+};
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -569,7 +586,8 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
               }),
             )
-            .optional(),
+            .optional()
+            .superRefine(priceOptionsMustBeDistinct),
           customFields: z
             .array(
               z.object({
@@ -774,7 +792,8 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
               }),
             )
-            .optional(),
+            .optional()
+            .superRefine(priceOptionsMustBeDistinct),
           customFields: z
             .array(
               z.object({
@@ -1152,6 +1171,13 @@ export const coursesRouter = createTRPCRouter({
                 where: { id: existing.id },
                 data: {
                   maxParticipants: inputOption.maxParticipants ?? null,
+                  // Beschreibung bleibt änderbar, auch nach Anmeldungen: sie
+                  // ist reiner Anzeigetext ohne Einfluss auf Preis oder
+                  // Kapazität — und bei zwei gleichnamigen Kategorien das
+                  // Einzige, was sie unterscheidbar macht. Wäre sie gesperrt,
+                  // ließe sich ein bestehender Kurs mit doppeltem Namen nicht
+                  // mehr in einen gültigen Zustand bringen.
+                  description: inputOption.description ?? null,
                 },
               });
             }),

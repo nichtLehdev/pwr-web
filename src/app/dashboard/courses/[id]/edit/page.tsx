@@ -51,6 +51,10 @@ import {
   registrationOpensSplit,
 } from "@/lib/dashboard-registration-opens-at";
 import { isExternalCourse } from "@/lib/course-external";
+import {
+  needsDistinguishingDescription,
+  validatePriceOptionDistinctness,
+} from "@/lib/course-price-options";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -932,6 +936,14 @@ export default function EditCoursePage() {
               maxParticipants: maxParticipants || undefined,
             }))
         : [];
+
+    const priceOptionProblem =
+      validatePriceOptionDistinctness(preparedPriceOptions);
+    if (priceOptionProblem) {
+      setError(priceOptionProblem);
+      setIsSubmitting(false);
+      return;
+    }
 
     const preparedCustomFields = isExternalProvider
       ? []
@@ -2326,12 +2338,12 @@ export default function EditCoursePage() {
                         </p>
                         <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
                           Es gibt bereits {registrationCount} Teilnehmer für
-                          diesen Kurs. Bezeichnung, Preis und Beschreibung der
+                          diesen Kurs. Bezeichnung und Preis der
                           Preiskategorien können nicht mehr geändert werden. Die
-                          maximale Teilnehmerzahl (gesamt und pro
-                          Preiskategorie) lässt sich weiter anpassen –
-                          mindestens auf die Zahl bereits angemeldeter
-                          Teilnehmer.
+                          Beschreibung sowie die maximale Teilnehmerzahl (gesamt
+                          und pro Preiskategorie) lassen sich weiter anpassen –
+                          die Teilnehmerzahl mindestens auf die Zahl bereits
+                          angemeldeter Teilnehmer.
                         </p>
                       </div>
                     </div>
@@ -2597,9 +2609,16 @@ export default function EditCoursePage() {
                                         )
                                       }
                                       placeholder="z.B. Inkl. Verpflegung und Übernachtung"
-                                      disabled={hasRegistrations}
-                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                                     />
+                                    {needsDistinguishingDescription(option, priceOptions) && (
+                                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                        Dieser Name kommt mehrfach vor — ohne
+                                        unterscheidende Beschreibung sind die
+                                        Kategorien bei der Anmeldung nicht
+                                        auseinanderzuhalten.
+                                      </p>
+                                    )}
                                   </div>
                                 </div>
                               ))}

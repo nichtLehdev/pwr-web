@@ -1,8 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  needsDistinguishingDescription,
   participantPriceOptionLabel,
   priceOptionDisplayLabel,
   resolveParticipantPriceOption,
+  validatePriceOptionDistinctness,
 } from "../course-price-options";
 
 const options = [
@@ -162,5 +164,107 @@ describe("participantPriceOptionLabel", () => {
 
   it("returns an empty string when nothing was stored", () => {
     expect(participantPriceOptionLabel({}, courseOptions)).toBe("");
+  });
+});
+
+describe("validatePriceOptionDistinctness", () => {
+  it("accepts unique labels without descriptions", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Erwachsene" },
+        { label: "Kinder" },
+      ]),
+    ).toBeNull();
+  });
+
+  it("accepts duplicated labels with distinct descriptions", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Einzelzimmer", description: "Haus Wasserburg" },
+        { label: "Einzelzimmer", description: "Haus Marienau" },
+      ]),
+    ).toBeNull();
+  });
+
+  it("rejects duplicated labels without descriptions", () => {
+    const error = validatePriceOptionDistinctness([
+      { label: "Einzelzimmer" },
+      { label: "Einzelzimmer" },
+    ]);
+    expect(error).toContain("Einzelzimmer");
+    expect(error).toContain("Beschreibung");
+  });
+
+  it("rejects when only one of the duplicates has a description", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Einzelzimmer", description: "Haus Marienau" },
+        { label: "Einzelzimmer", description: "" },
+      ]),
+    ).toContain("Einzelzimmer");
+  });
+
+  it("rejects duplicated labels with identical descriptions", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Einzelzimmer", description: "Haus Marienau" },
+        { label: "Einzelzimmer", description: "Haus Marienau" },
+      ]),
+    ).toContain("dieselbe Beschreibung");
+  });
+
+  it("treats a whitespace-only description as missing", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Einzelzimmer", description: "  " },
+        { label: "Einzelzimmer", description: "Haus Marienau" },
+      ]),
+    ).toContain("Beschreibung");
+  });
+
+  it("ignores leading and trailing space when comparing labels", () => {
+    expect(
+      validatePriceOptionDistinctness([
+        { label: "Einzelzimmer" },
+        { label: " Einzelzimmer " },
+      ]),
+    ).toContain("Einzelzimmer");
+  });
+
+  it("passes an empty list", () => {
+    expect(validatePriceOptionDistinctness([])).toBeNull();
+  });
+});
+
+describe("needsDistinguishingDescription", () => {
+  it("flags a duplicate name without a description", () => {
+    const options = [{ label: "Standard" }, { label: "Standard" }];
+    expect(needsDistinguishingDescription(options[0]!, options)).toBe(true);
+  });
+
+  it("flags duplicates that share the same description", () => {
+    const options = [
+      { label: "Einzelzimmer", description: "Marienau" },
+      { label: "Einzelzimmer", description: "Marienau" },
+    ];
+    expect(needsDistinguishingDescription(options[0]!, options)).toBe(true);
+  });
+
+  it("clears once the descriptions differ", () => {
+    const options = [
+      { label: "Einzelzimmer", description: "Wasserburg" },
+      { label: "Einzelzimmer", description: "Marienau" },
+    ];
+    expect(needsDistinguishingDescription(options[0]!, options)).toBe(false);
+  });
+
+  it("stays quiet for a unique name", () => {
+    const options = [{ label: "Erwachsene" }, { label: "Kinder" }];
+    expect(needsDistinguishingDescription(options[0]!, options)).toBe(false);
+  });
+
+  it("stays quiet for a row the user has not named yet", () => {
+    const options = [{ label: "" }, { label: "" }];
+    expect(needsDistinguishingDescription(options[0]!, options)).toBe(false);
   });
 });

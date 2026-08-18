@@ -76,3 +76,68 @@ export function participantPriceOptionLabel(
   if (!option || !priceOptions) return participant.priceOption ?? "";
   return priceOptionDisplayLabel(option, priceOptions);
 }
+
+/**
+ * Prüft, ob die Preiskategorien eines Kurses auseinanderzuhalten sind.
+ *
+ * Gleiche Namen sind erlaubt — dieselbe Zimmerart in zwei Häusern etwa —, aber
+ * dann muss die Beschreibung sie unterscheiden: sie ist das Einzige, was in
+ * Auswahllisten hinter dem Namen erscheint. Ohne sie stehen zwei Einträge
+ * identisch nebeneinander und Anmeldende raten, welchen sie nehmen sollen.
+ *
+ * Gibt die Fehlermeldung zurück oder `null`, wenn alles unterscheidbar ist.
+ */
+export function validatePriceOptionDistinctness(
+  options: ReadonlyArray<{ label: string; description?: string | null }>,
+): string | null {
+  const byLabel = new Map<
+    string,
+    Array<{ label: string; description?: string | null }>
+  >();
+  for (const option of options) {
+    const label = option.label.trim();
+    if (!label) continue;
+    byLabel.set(label, [...(byLabel.get(label) ?? []), option]);
+  }
+
+  for (const [label, group] of byLabel) {
+    if (group.length < 2) continue;
+
+    const descriptions = group.map((o) => o.description?.trim() ?? "");
+
+    if (descriptions.some((d) => !d)) {
+      return `Es gibt mehrere Preiskategorien „${label}“. Bitte gib jeder eine Beschreibung, damit Anmeldende sie unterscheiden können — oder benenne sie unterschiedlich.`;
+    }
+
+    if (new Set(descriptions).size !== descriptions.length) {
+      return `Mehrere Preiskategorien „${label}“ haben dieselbe Beschreibung. Bitte unterscheide sie, damit Anmeldende die richtige auswählen können.`;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Ob diese Kategorie eine unterscheidende Beschreibung braucht — für den
+ * Hinweis direkt am Eingabefeld, damit der Konflikt beim Tippen auffällt und
+ * nicht erst beim Speichern.
+ */
+export function needsDistinguishingDescription(
+  option: { label: string; description?: string | null },
+  allOptions: ReadonlyArray<{ label: string; description?: string | null }>,
+): boolean {
+  const label = option.label.trim();
+  if (!label) return false;
+
+  const sameName = allOptions.filter((other) => other.label.trim() === label);
+  if (sameName.length < 2) return false;
+
+  const description = option.description?.trim() ?? "";
+  if (!description) return true;
+
+  // Auch eine vorhandene, aber identische Beschreibung unterscheidet nichts.
+  return (
+    sameName.filter((other) => (other.description?.trim() ?? "") === description)
+      .length > 1
+  );
+}

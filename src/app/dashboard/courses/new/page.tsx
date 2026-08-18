@@ -36,6 +36,10 @@ import {
   registrationOpensSplit,
 } from "@/lib/dashboard-registration-opens-at";
 import { Button, Select } from "@/app/_components/ui";
+import {
+  needsDistinguishingDescription,
+  validatePriceOptionDistinctness,
+} from "@/lib/course-price-options";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -528,6 +532,15 @@ export default function NewCoursePage() {
               maxParticipants: maxParticipants || undefined,
             }))
         : undefined;
+
+    const priceOptionProblem = preparedPriceOptions
+      ? validatePriceOptionDistinctness(preparedPriceOptions)
+      : null;
+    if (priceOptionProblem) {
+      setError(priceOptionProblem);
+      setIsSubmitting(false);
+      return;
+    }
 
     const preparedCustomFields = isExternalProvider
       ? []
@@ -1612,6 +1625,14 @@ export default function NewCoursePage() {
                                   placeholder="Beschreibung (optional)"
                                   className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
                                 />
+                                {needsDistinguishingDescription(option, priceOptions) && (
+                                  <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                    Dieser Name kommt mehrfach vor — ohne
+                                    unterscheidende Beschreibung sind die
+                                    Kategorien bei der Anmeldung nicht
+                                    auseinanderzuhalten.
+                                  </p>
+                                )}
                               </div>
                               <button
                                 type="button"
