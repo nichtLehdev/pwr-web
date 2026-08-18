@@ -961,6 +961,7 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus: z.nativeEnum(RegistrationStatus).optional(),
         /** Nur Anmeldungen mit noch offener bzw. beglichener Rechnung. */
         paid: z.boolean().optional(),
+        siblingDiscountStatus: z.nativeEnum(SiblingDiscountStatus).optional(),
         courseId: z.string().optional(),
       }),
     )
@@ -969,6 +970,9 @@ export const registrationsRouter = createTRPCRouter({
       const where: Prisma.CourseRegistrationWhereInput = {
         ...(input.registrationStatus && {
           registrationStatus: input.registrationStatus,
+        }),
+        ...(input.siblingDiscountStatus && {
+          siblingDiscountStatus: input.siblingDiscountStatus,
         }),
         ...(input.paid === undefined
           ? {}
@@ -1016,6 +1020,8 @@ export const registrationsRouter = createTRPCRouter({
             registrantLastName: true,
             registrantEmail: true,
             registrationStatus: true,
+            siblingDiscountStatus: true,
+            siblingDiscountAmount: true,
             paymentMethod: true,
             totalPrice: true,
             invoiceId: true,
