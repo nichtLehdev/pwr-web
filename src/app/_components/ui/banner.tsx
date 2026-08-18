@@ -193,7 +193,45 @@ export function AnnouncementBanner({
   );
 }
 
+/**
+ * Fragt zur Laufzeit ab, ob dieses Deployment eine Vorab-Umgebung ist.
+ *
+ * Bewusst nicht als Prop aus dem Root-Layout: /dashboard & Co. werden statisch
+ * vorgerendert, dort wäre `APP_ENV` auf den Build-Zeit-Wert eingefroren und das
+ * Banner erschiene auch auf der öffentlichen Seite.
+ */
+function useIsPreRelease() {
+  const [isPreRelease, setIsPreRelease] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    fetch("/api/app-env", { signal: controller.signal })
+      .then((res) => (res.ok ? (res.json() as Promise<unknown>) : null))
+      .then((data) => {
+        setIsPreRelease(
+          typeof data === "object" &&
+            data !== null &&
+            (data as { isPreRelease?: unknown }).isPreRelease === true,
+        );
+      })
+      .catch(() => {
+        // Abbruch oder offline: im Zweifel kein Banner (Produktionsverhalten).
+      });
+
+    return () => controller.abort();
+  }, []);
+
+  return isPreRelease;
+}
+
 export function BetaBanner() {
+  const isPreRelease = useIsPreRelease();
+
+  if (!isPreRelease) {
+    return null;
+  }
+
   return (
     <AnnouncementBanner
       id="beta"

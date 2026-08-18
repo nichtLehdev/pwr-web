@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "../styles/globals.css";
 import { AppChrome } from "./_components/general/app-chrome";
-import { env } from "@/env";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "./_components/general/theme-provider";
 import { ThemeSync } from "./_components/general/theme-sync";
@@ -131,9 +130,7 @@ export default function RootLayout({
               <TrackingConsentProvider>
                 <PageViewTracker />
                 <BannerProvider>
-                  <AppChrome showBetaBanner={env.APP_ENV !== "production"}>
-                    {children}
-                  </AppChrome>
+                  <AppChrome>{children}</AppChrome>
                 </BannerProvider>
               </TrackingConsentProvider>
               <Toaster />
