@@ -86,6 +86,7 @@ model User {
 
   createdInvoices   Invoice[] @relation("InvoiceCreator")
   publishedInvoices Invoice[] @relation("InvoicePublisher")
+  paidInvoices      Invoice[] @relation("InvoicePayer")
 
   @@index([bezirkId])
   @@map("user")
@@ -354,12 +355,6 @@ enum TargetAudience {
   DIRIGENTEN // Conductors
   JUGEND // Youth
   ALLE // All
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  REFUNDED
 }
 
 enum RegistrationStatus {
@@ -734,7 +729,6 @@ model CourseRegistration {
 
   // Payment & Status
   totalPrice         Float
-  paymentStatus      PaymentStatus        @default(PENDING)
   /**
    * Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist.
    */
@@ -762,7 +756,6 @@ model CourseRegistration {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([paymentStatus])
   @@index([registrationStatus])
   @@index([siblingDiscountStatus])
   @@index([courseId, registrationStatus])
@@ -882,6 +875,19 @@ model Invoice {
   /// Wann die Rechnung zuletzt per Kursmail verschickt wurde.
   mailedAt    DateTime?
 
+  /// Zahlungseingang. `paidAt` ist die einzige Wahrheit darüber, ob eine
+  /// Rechnung beglichen ist — der Dokumentstatus (DRAFT/PUBLISHED/CANCELLED)
+  /// bleibt davon unberührt, weil eine bezahlte Rechnung weiterhin eine
+  /// ausgestellte Rechnung ist und §14 UStG das Dokument einfriert.
+  paidAt      DateTime?
+  /// Tatsächlich eingegangener Betrag. Weicht bei Teilzahlung von
+  /// `totalAmount` ab; null bedeutet "voller Betrag".
+  paidAmount  Float?
+  paidById    String?
+  paidBy      User?     @relation("InvoicePayer", fields: [paidById], references: [id], onDelete: SetNull)
+  /// Interner Vermerk zur Zahlung (Kontoauszug, Barzahlung, Kulanz).
+  paymentNote String?
+
   createdById   String?
   createdBy     User?   @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
   publishedById String?
@@ -893,6 +899,7 @@ model Invoice {
   @@index([courseId, status])
   @@index([registrationId])
   @@index([status, publishedAt])
+  @@index([courseId, paidAt])
   @@index([createdById])
   @@index([createdAt])
   @@map("invoice")

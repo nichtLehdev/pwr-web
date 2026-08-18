@@ -103,25 +103,6 @@ export function StaffOptions({
         </div>
       )}
 
-      {!course.isFree && (
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={options.markAsPaid}
-            onChange={(e) =>
-              setOptions((prev) => ({ ...prev, markAsPaid: e.target.checked }))
-            }
-            className="text-primary focus:ring-primary mt-1 h-4 w-4"
-          />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Teilnahmegebühr ist bereits bezahlt
-            <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
-              Setzt den Zahlungsstatus direkt auf „Bezahlt“.
-            </span>
-          </span>
-        </label>
-      )}
-
       <label className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"

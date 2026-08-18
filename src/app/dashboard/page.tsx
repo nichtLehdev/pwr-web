@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { RegistrationStatus, PaymentStatus } from "~/generated/prisma/enums";
+import { RegistrationStatus } from "~/generated/prisma/enums";
 import Link from "next/link";
 import {
   Calendar,
@@ -98,7 +98,7 @@ export default function DashboardPage() {
     { enabled: ready && canManageRegistrations },
   );
   const { data: openPayments } = api.registrations.getAllAdmin.useQuery(
-    { page: 1, limit: 1, paymentStatus: PaymentStatus.PENDING },
+    { page: 1, limit: 1, paid: false },
     { enabled: ready && canManageRegistrations },
   );
   const { data: waitlisted } = api.registrations.getAllAdmin.useQuery(

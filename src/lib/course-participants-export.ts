@@ -1,9 +1,10 @@
 import {
-  PaymentStatus,
+  InvoiceStatus,
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
+import { invoicePaidAmount } from "@/lib/invoice-payment";
 
 export const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -161,13 +162,25 @@ export type CourseRegistrationStats = {
   paidRevenue: number;
 };
 
+/**
+ * Zahlungsdaten einer Anmeldung — seit dem Umzug des Zahlungsstatus an die
+ * Rechnung ist das kein Feld der Anmeldung mehr, sondern die Summe ihrer
+ * ausgestellten Rechnungen.
+ */
+type ExportInvoice = {
+  status: InvoiceStatus;
+  totalAmount: number;
+  paidAt: Date | string | null;
+  paidAmount: number | null;
+};
+
 export function computeCourseRegistrationStats(
   registrations: Array<{
     registrationStatus: RegistrationStatus;
-    paymentStatus: PaymentStatus;
     siblingDiscountStatus: SiblingDiscountStatus;
     totalPrice: number;
     participants: unknown[];
+    invoices: ExportInvoice[];
   }>,
 ): CourseRegistrationStats {
   let confirmedParticipants = 0;
@@ -184,9 +197,12 @@ export function computeCourseRegistrationStats(
       confirmedParticipants += count;
       activeRegistrations += 1;
       totalRevenueConfirmed += r.totalPrice;
-      if (r.paymentStatus === PaymentStatus.PAID) {
-        paidRevenue += r.totalPrice;
-      }
+      // Verbucht wird, was tatsächlich eingegangen ist — bei Teilzahlung also
+      // der Teilbetrag, nicht der volle Anmeldepreis.
+      paidRevenue += r.invoices.reduce(
+        (sum, invoice) => sum + invoicePaidAmount(invoice),
+        0,
+      );
     } else if (r.registrationStatus === RegistrationStatus.WAITLIST) {
       waitlistParticipants += count;
       activeRegistrations += 1;

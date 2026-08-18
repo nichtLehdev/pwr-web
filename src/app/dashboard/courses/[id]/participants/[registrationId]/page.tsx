@@ -10,8 +10,8 @@ import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import {
+  InvoiceStatus,
   RegistrationStatus,
-  PaymentStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
@@ -35,6 +35,11 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import {
+  InvoicePaymentBadge,
+  RegistrationPaymentBadge,
+} from "@/app/_components/dashboard/invoice-payment-badge";
+import { formatEuro } from "@/lib/invoice-document";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -48,19 +53,6 @@ const registrationStatusColors: Record<RegistrationStatus, string> = {
   WAITLIST:
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-};
-
-const paymentStatusLabels: Record<PaymentStatus, string> = {
-  PENDING: "Ausstehend",
-  PAID: "Bezahlt",
-  REFUNDED: "Erstattet",
-};
-
-const paymentStatusColors: Record<PaymentStatus, string> = {
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
 };
 
 const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
@@ -105,10 +97,6 @@ export default function RegistrationDetailPage() {
   const toast = useToast();
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
-  const [editingPaymentStatus, setEditingPaymentStatus] = useState(false);
-  const [paymentStatusDraft, setPaymentStatusDraft] = useState<
-    (typeof PaymentStatus)[keyof typeof PaymentStatus] | null
-  >(null);
   const [editingStatus, setEditingStatus] = useState(false);
   const [statusDraft, setStatusDraft] = useState<
     (typeof RegistrationStatus)[keyof typeof RegistrationStatus] | null
@@ -175,21 +163,31 @@ export default function RegistrationDetailPage() {
       },
     });
 
-  const updatePaymentStatusMutation =
-    api.registrations.updatePaymentStatus.useMutation({
-      onSuccess: () => {
-        setEditingPaymentStatus(false);
-        setPaymentStatusDraft(null);
-        toast.success("Zahlungsstatus aktualisiert");
-        void utils.registrations.getById.invalidate({ id: registrationId });
-        void utils.courses.getRegistrations.invalidate({ courseId });
-      },
-      onError: (error) => {
-        toast.error(
-          error.message || "Fehler beim Aktualisieren des Zahlungsstatus",
-        );
-      },
-    });
+  const invalidatePayment = () => {
+    void utils.registrations.getById.invalidate({ id: registrationId });
+    void utils.courses.getRegistrations.invalidate({ courseId });
+    void utils.invoices.listForCourse.invalidate({ courseId });
+  };
+
+  const markPaidMutation = api.invoices.markPaid.useMutation({
+    onSuccess: () => {
+      toast.success("Zahlung verbucht");
+      invalidatePayment();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Fehler beim Verbuchen der Zahlung");
+    },
+  });
+
+  const markUnpaidMutation = api.invoices.markUnpaid.useMutation({
+    onSuccess: () => {
+      toast.success("Zahlung zurückgenommen");
+      invalidatePayment();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Fehler beim Zurücknehmen der Zahlung");
+    },
+  });
 
   const updateStatusMutation = api.registrations.updateStatus.useMutation({
     onSuccess: (updated) => {
@@ -216,12 +214,18 @@ export default function RegistrationDetailPage() {
     hasPermission("courses.approve" as PermissionKey) ||
     hasPermission("courses.manage" as PermissionKey);
 
-  const canManagePaymentStatus = hasPermission(
-    "invoices.manage" as PermissionKey,
-  );
-  const canMarkPaidOnly =
-    hasPermission("registrations.mark_paid" as PermissionKey) &&
-    !canManagePaymentStatus;
+  // Zahlungen werden an der Rechnung verbucht. Beide Rollen dürfen das —
+  // "als bezahlt markieren" war schon immer die Aufgabe der Kassenführung,
+  // und der Serverguard in invoices.markPaid prüft dasselbe noch einmal.
+  /** Nur ausgestellte Rechnungen tragen einen Zahlungsstand. */
+  const publishedInvoices =
+    registration?.invoices.filter(
+      (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
+    ) ?? [];
+
+  const canBookPayments =
+    hasPermission("invoices.manage" as PermissionKey) ||
+    hasPermission("registrations.mark_paid" as PermissionKey);
 
   const canApproveDiscount =
     profile &&
@@ -437,11 +441,10 @@ export default function RegistrationDetailPage() {
                   )}
               </div>
             )}
-            <span
-              className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-            >
-              {paymentStatusLabels[registration.paymentStatus]}
-            </span>
+            <RegistrationPaymentBadge
+              invoices={registration.invoices}
+              className="px-3 py-1"
+            />
             {/* Phones keep only the primary action; everything else moves into
                 the "…" menu, so the header stays one short row instead of three
                 stacked rows of buttons. From sm up the full row is shown. */}
@@ -694,107 +697,79 @@ export default function RegistrationDetailPage() {
                   </span>
                 </div>
               )}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Zahlungsstatus:
-                </span>
-                {canManagePaymentStatus && editingPaymentStatus ? (
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={paymentStatusDraft ?? registration.paymentStatus}
-                      onChange={(e) =>
-                        setPaymentStatusDraft(
-                          e.target
-                            .value as (typeof PaymentStatus)[keyof typeof PaymentStatus],
-                        )
-                      }
-                      className="dark:bg-dark-background-secondary dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium focus:ring-1 focus:outline-none"
-                    >
-                      <option value={PaymentStatus.PENDING}>
-                        {paymentStatusLabels[PaymentStatus.PENDING]}
-                      </option>
-                      <option value={PaymentStatus.PAID}>
-                        {paymentStatusLabels[PaymentStatus.PAID]}
-                      </option>
-                      <option value={PaymentStatus.REFUNDED}>
-                        {paymentStatusLabels[PaymentStatus.REFUNDED]}
-                      </option>
-                    </Select>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updatePaymentStatusMutation.mutate({
-                          id: registrationId,
-                          paymentStatus:
-                            paymentStatusDraft ?? registration.paymentStatus,
-                        })
-                      }
-                      disabled={updatePaymentStatusMutation.isPending}
-                      className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                    >
-                      {updatePaymentStatusMutation.isPending
-                        ? "Speichert…"
-                        : "Speichern"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingPaymentStatus(false);
-                        setPaymentStatusDraft(null);
-                      }}
-                      disabled={updatePaymentStatusMutation.isPending}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      Abbrechen
-                    </button>
-                  </div>
-                ) : canManagePaymentStatus ? (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-                    >
-                      {paymentStatusLabels[registration.paymentStatus]}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditingPaymentStatus(true)}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                      aria-label="Zahlungsstatus bearbeiten"
-                    >
-                      <PencilIcon className="h-3.5 w-3.5" />
-                      Bearbeiten
-                    </button>
-                  </div>
-                ) : canMarkPaidOnly &&
-                  registration.paymentStatus === PaymentStatus.PENDING ? (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-                    >
-                      {paymentStatusLabels[registration.paymentStatus]}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        updatePaymentStatusMutation.mutate({
-                          id: registrationId,
-                          paymentStatus: PaymentStatus.PAID,
-                        })
-                      }
-                      disabled={updatePaymentStatusMutation.isPending}
-                      className="bg-primary hover:bg-primary-dark inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                    >
-                      {updatePaymentStatusMutation.isPending
-                        ? "Speichert…"
-                        : "Als bezahlt markieren"}
-                    </button>
-                  </div>
-                ) : (
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-                  >
-                    {paymentStatusLabels[registration.paymentStatus]}
+              <div className="space-y-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Zahlungsstatus:
                   </span>
+                  <RegistrationPaymentBadge
+                    invoices={registration.invoices}
+                    className="px-3 py-1"
+                  />
+                </div>
+
+                {/* Gezahlt wird auf eine Rechnung, nicht auf eine Anmeldung —
+                    darum steht hier eine Zeile je ausgestellter Rechnung statt
+                    eines einzelnen Status am Datensatz. */}
+                {publishedInvoices.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Für diese Anmeldung wurde noch keine Rechnung ausgestellt.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {publishedInvoices.map((invoice) => (
+                      <li
+                        key={invoice.id}
+                        className="dark:border-dark-border dark:bg-dark-background-secondary flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <span className="dark:text-dark-text text-sm font-medium text-gray-900">
+                            {invoice.invoiceNumber ?? "Ohne Nummer"} ·{" "}
+                            {formatEuro(invoice.totalAmount)}
+                          </span>
+                          {invoice.paidAt && (
+                            <span className="block text-xs text-gray-500 dark:text-gray-400">
+                              Verbucht am{" "}
+                              {new Date(invoice.paidAt).toLocaleDateString(
+                                "de-DE",
+                              )}
+                              {invoice.paidAmount !== null &&
+                                ` · ${formatEuro(invoice.paidAmount)}`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <InvoicePaymentBadge invoice={invoice} />
+                          {canBookPayments &&
+                            (invoice.paidAt ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  markUnpaidMutation.mutate({ id: invoice.id })
+                                }
+                                disabled={markUnpaidMutation.isPending}
+                                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+                              >
+                                Zahlung zurücknehmen
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  markPaidMutation.mutate({ id: invoice.id })
+                                }
+                                disabled={markPaidMutation.isPending}
+                                className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                              >
+                                {markPaidMutation.isPending
+                                  ? "Speichert…"
+                                  : "Als bezahlt markieren"}
+                              </button>
+                            ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
               {registration.invoiceGenerated && registration.invoiceId && (

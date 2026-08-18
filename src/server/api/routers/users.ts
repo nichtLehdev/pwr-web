@@ -8,6 +8,7 @@ import {
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
+import { invoicePaymentState } from "@/lib/invoice-payment";
 // UserRole enum removed - using permissions system instead
 
 /**
@@ -828,6 +829,16 @@ export const usersRouter = createTRPCRouter({
             },
           },
           participants: true,
+          invoices: {
+            select: {
+              invoiceNumber: true,
+              status: true,
+              invoiceDate: true,
+              totalAmount: true,
+              paidAt: true,
+              paidAmount: true,
+            },
+          },
         },
         orderBy: { createdAt: "desc" },
       });
@@ -953,7 +964,15 @@ export const usersRouter = createTRPCRouter({
           billingCity: reg.billingCity,
           billingEmail: reg.billingEmail,
           totalPrice: reg.totalPrice,
-          paymentStatus: reg.paymentStatus,
+          invoices: reg.invoices.map((invoice) => ({
+            invoiceNumber: invoice.invoiceNumber,
+            status: invoice.status,
+            invoiceDate: invoice.invoiceDate,
+            totalAmount: invoice.totalAmount,
+            paidAt: invoice.paidAt,
+            paidAmount: invoice.paidAmount,
+            paymentState: invoicePaymentState(invoice),
+          })),
           registrationStatus: reg.registrationStatus,
           siblingDiscountApplied: reg.siblingDiscountApplied,
           invoiceGenerated: reg.invoiceGenerated,
