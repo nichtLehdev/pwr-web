@@ -832,6 +832,9 @@ export const registrationsRouter = createTRPCRouter({
                 select: {
                   id: true,
                   label: true,
+                  // description gehört zur Anzeige: bei zwei gleichnamigen
+                  // Kategorien steht sie in Klammern hinter dem Namen.
+                  description: true,
                   price: true,
                   maxParticipants: true,
                 },
@@ -1123,6 +1126,7 @@ export const registrationsRouter = createTRPCRouter({
                   select: {
                     id: true,
                     label: true,
+                    description: true,
                     price: true,
                     maxParticipants: true,
                   },

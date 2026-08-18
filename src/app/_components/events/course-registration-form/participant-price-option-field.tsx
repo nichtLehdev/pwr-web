@@ -4,12 +4,14 @@ import { Tags } from "lucide-react";
 import { Select } from "@/app/_components/ui";
 import { cn } from "@/lib/utils";
 import { FIELD_SELECT_SIZE } from "./field-styles";
+import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 
 export type PriceOptionChoice = {
   id: string;
   label: string;
   price: number;
-  description?: string | null;
+  /** Pflichtfeld: trägt bei gleichnamigen Kategorien die Unterscheidung. */
+  description: string | null;
 };
 
 type ParticipantPriceOptionFieldProps = {
@@ -77,7 +79,7 @@ export function ParticipantPriceOptionField({
                   getOptionSuffix?.(option.id) ?? ""
                 }`}
               >
-                {option.label}
+                {priceOptionDisplayLabel(option, priceOptions)}
               </option>
             ))}
           </Select>
