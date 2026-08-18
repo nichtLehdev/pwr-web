@@ -14,7 +14,6 @@ import {
   CourseCollaboratorRole,
   CourseType,
   RegistrationStatus,
-  PaymentStatus,
 } from "~/generated/prisma/enums";
 import { customFieldTypeNeedsOptions } from "@/lib/course-custom-fields";
 import { customFieldTypeLabels } from "@/app/_components/dashboard";
@@ -40,6 +39,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -82,11 +82,6 @@ const registrationStatusColors: Record<RegistrationStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-const paymentStatusLabels: Record<PaymentStatus, string> = {
-  PENDING: "Ausstehend",
-  PAID: "Bezahlt",
-  REFUNDED: "Erstattet",
-};
 
 // Dashboard access is now controlled by permissions
 
@@ -1098,18 +1093,9 @@ export default function CourseDetailPage() {
                             ]
                           }
                         </span>
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                            registration.paymentStatus === PaymentStatus.PAID
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                              : registration.paymentStatus ===
-                                  PaymentStatus.REFUNDED
-                                ? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                                : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          }`}
-                        >
-                          {paymentStatusLabels[registration.paymentStatus]}
-                        </span>
+                        <RegistrationPaymentBadge
+                          invoices={registration.invoices}
+                        />
                       </div>
                     </div>
 

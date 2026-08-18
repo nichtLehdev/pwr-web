@@ -8,7 +8,6 @@ export const registrationsData = [
     registrantPhone: "0221 123456",
     registrantChoir: "Posaunenchor Köln-Deutz",
     registrantDistrict: "Bezirk 6",
-    paymentStatus: "PAID",
     registrationStatus: "CONFIRMED",
     participants: [
       {
@@ -54,7 +53,6 @@ export const registrationsData = [
     registrantPhone: "0211 987654",
     registrantChoir: "Posaunenchor Düsseldorf-Oberkassel",
     registrantDistrict: "Bezirk 4",
-    paymentStatus: "PENDING",
     registrationStatus: "CONFIRMED",
     participants: [
       {
@@ -76,7 +74,6 @@ export const registrationsData = [
     registrantPhone: "0228 456789",
     registrantChoir: "Jugendposaunenchor Bonn",
     registrantDistrict: "Bezirk 8",
-    paymentStatus: "PAID",
     registrationStatus: "CONFIRMED",
     participants: [
       {
@@ -106,7 +103,6 @@ export const registrationsData = [
     registrantPhone: "0201 234567",
     registrantChoir: "Posaunenchor Essen-Werden",
     registrantDistrict: "Bezirk 3",
-    paymentStatus: "PAID",
     registrationStatus: "CONFIRMED",
     participants: [
       {
@@ -128,7 +124,6 @@ export const registrationsData = [
     registrantPhone: "0221 345678",
     registrantChoir: "Posaunenchor Köln-Mülheim",
     registrantDistrict: "Bezirk 6",
-    paymentStatus: "PENDING",
     registrationStatus: "CONFIRMED",
     participants: [
       {
@@ -150,7 +145,6 @@ export const registrationsData = [
     registrantPhone: "0172 8765432",
     registrantChoir: "Posaunenchor Wermelskirchen",
     registrantDistrict: "Bezirk 5",
-    paymentStatus: "PAID",
     registrationStatus: "CONFIRMED",
     participants: [
       {

@@ -12,8 +12,8 @@ import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   CourseCollaboratorRole,
+  InvoiceStatus,
   RegistrationStatus,
-  PaymentStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import {
@@ -26,6 +26,11 @@ import {
   SearchIcon,
 } from "lucide-react";
 import { FileIcon, UserIcon } from "lucide-react";
+import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import {
+  registrationOpenAmount,
+  registrationPaymentState,
+} from "@/lib/invoice-payment";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -41,18 +46,8 @@ const registrationStatusColors: Record<RegistrationStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-const paymentStatusLabels: Record<PaymentStatus, string> = {
-  PENDING: "Ausstehend",
-  PAID: "Bezahlt",
-  REFUNDED: "Erstattet",
-};
-
-const paymentStatusColors: Record<PaymentStatus, string> = {
-  PENDING:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  PAID: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300",
-};
+/** Filterwerte der Zahlungsspalte — abgeleitet aus den Rechnungen. */
+type PaymentFilter = "ALL" | "OPEN" | "PAID" | "NONE";
 
 const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
   NONE: "",
@@ -130,7 +125,7 @@ export default function CourseParticipantsPage() {
   const [statusFilter, setStatusFilter] = useState<
     RegistrationStatus | "ALL" | "ACTIVE"
   >("ACTIVE");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | "ALL">(
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>(
     "ALL",
   );
   const [searchQuery, setSearchQuery] = useState("");
@@ -201,8 +196,7 @@ export default function CourseParticipantsPage() {
 
   const toast = useToast();
   const utils = api.useUtils();
-  const bulkPaymentMutation =
-    api.registrations.updatePaymentStatus.useMutation();
+  const bulkPaymentMutation = api.invoices.markPaid.useMutation();
   const bulkStatusMutation = api.registrations.updateStatus.useMutation();
 
   const runBulkAction = async (action: "paid" | "confirm") => {
@@ -216,10 +210,18 @@ export default function CourseParticipantsPage() {
     for (const id of ids) {
       try {
         if (action === "paid") {
-          await bulkPaymentMutation.mutateAsync({
-            id,
-            paymentStatus: PaymentStatus.PAID,
-          });
+          // Eine Anmeldung kann mehrere ausgestellte Rechnungen haben
+          // (Storno-Kette, Teilrechnungen) — verbucht werden alle noch offenen.
+          const open =
+            registrationsData?.registrations
+              .find((r) => r.id === id)
+              ?.invoices.filter(
+                (invoice) =>
+                  invoice.status === InvoiceStatus.PUBLISHED && !invoice.paidAt,
+              ) ?? [];
+          for (const invoice of open) {
+            await bulkPaymentMutation.mutateAsync({ id: invoice.id });
+          }
         } else {
           await bulkStatusMutation.mutateAsync({
             id,
@@ -340,11 +342,15 @@ export default function CourseParticipantsPage() {
         return false;
       }
 
-      if (
-        paymentFilter !== "ALL" &&
-        registration.paymentStatus !== paymentFilter
-      ) {
-        return false;
+      if (paymentFilter !== "ALL") {
+        const state = registrationPaymentState(registration.invoices);
+        const matches =
+          paymentFilter === "PAID"
+            ? state === "PAID"
+            : paymentFilter === "NONE"
+              ? state === "NOT_APPLICABLE"
+              : state === "OPEN" || state === "PARTIAL";
+        if (!matches) return false;
       }
 
       if (searchQuery) {
@@ -373,8 +379,10 @@ export default function CourseParticipantsPage() {
   const selectedWaitlisted = selectedRegistrations.filter(
     (r) => r.registrationStatus === RegistrationStatus.WAITLIST,
   ).length;
-  const selectedUnpaid = selectedRegistrations.filter(
-    (r) => r.paymentStatus === PaymentStatus.PENDING,
+  // Sammelaktion greift nur, wo es eine offene ausgestellte Rechnung gibt —
+  // ohne Rechnung gibt es nichts zu verbuchen.
+  const selectedUnpaid = selectedRegistrations.filter((r) =>
+    ["OPEN", "PARTIAL"].includes(registrationPaymentState(r.invoices)),
   ).length;
   const allFilteredSelected =
     filteredRegistrations.length > 0 &&
@@ -418,8 +426,13 @@ export default function CourseParticipantsPage() {
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
   const paidRevenue =
     registrationsData?.registrations
-      .filter((r) => r.paymentStatus === PaymentStatus.PAID)
+      .filter((r) => registrationPaymentState(r.invoices) === "PAID")
       .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
+  const openInvoiceAmount =
+    registrationsData?.registrations.reduce(
+      (sum, r) => sum + registrationOpenAmount(r.invoices),
+      0,
+    ) ?? 0;
 
   const hasPendingDiscounts =
     registrationsData?.registrations.some(
@@ -665,7 +678,7 @@ export default function CourseParticipantsPage() {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {confirmedCount}
@@ -704,6 +717,14 @@ export default function CourseParticipantsPage() {
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Bezahlt
+            </div>
+          </div>
+          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+              {openInvoiceAmount.toFixed(2)} €
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Offene Rechnungen
             </div>
           </div>
         </div>
@@ -804,14 +825,14 @@ export default function CourseParticipantsPage() {
               <Select
                 value={paymentFilter}
                 onChange={(e) =>
-                  setPaymentFilter(e.target.value as PaymentStatus | "ALL")
+                  setPaymentFilter(e.target.value as PaymentFilter)
                 }
                 className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
               >
                 <option value="ALL">Alle</option>
-                <option value={PaymentStatus.PENDING}>Ausstehend</option>
-                <option value={PaymentStatus.PAID}>Bezahlt</option>
-                <option value={PaymentStatus.REFUNDED}>Erstattet</option>
+                <option value="OPEN">Offen</option>
+                <option value="PAID">Bezahlt</option>
+                <option value="NONE">Ohne Rechnung</option>
               </Select>
             </div>
           </div>
@@ -1074,11 +1095,10 @@ export default function CourseParticipantsPage() {
                             ]
                           }
                         </span>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${paymentStatusColors[registration.paymentStatus]}`}
-                        >
-                          {paymentStatusLabels[registration.paymentStatus]}
-                        </span>
+                        <RegistrationPaymentBadge
+                          invoices={registration.invoices}
+                          className="px-3 py-1"
+                        />
                         {registration.siblingDiscountStatus &&
                           registration.siblingDiscountStatus !==
                             SiblingDiscountStatus.NONE && (

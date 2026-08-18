@@ -1480,6 +1480,18 @@ export const coursesRouter = createTRPCRouter({
           where,
           include: {
             participants: true,
+            // Zahlungsstand hängt an den Rechnungen — Teilnehmerlisten,
+            // Statistiken und Exporte leiten ihn hieraus ab.
+            invoices: {
+              select: {
+                id: true,
+                status: true,
+                invoiceNumber: true,
+                totalAmount: true,
+                paidAt: true,
+                paidAmount: true,
+              },
+            },
           },
           ...(input.all
             ? {}
