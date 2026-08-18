@@ -3,6 +3,7 @@ import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import { userHasPermission } from "@/server/api/helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { invoicePaymentState } from "@/lib/invoice-payment";
 
 /**
  * Export user data for GDPR compliance (Art. 20 DSGVO)
@@ -75,6 +76,16 @@ export async function GET(
           },
         },
         participants: true,
+        invoices: {
+          select: {
+            invoiceNumber: true,
+            status: true,
+            invoiceDate: true,
+            totalAmount: true,
+            paidAt: true,
+            paidAmount: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -198,7 +209,15 @@ export async function GET(
         billingCity: reg.billingCity,
         billingEmail: reg.billingEmail,
         totalPrice: reg.totalPrice,
-        paymentStatus: reg.paymentStatus,
+        invoices: reg.invoices.map((invoice) => ({
+          invoiceNumber: invoice.invoiceNumber,
+          status: invoice.status,
+          invoiceDate: invoice.invoiceDate,
+          totalAmount: invoice.totalAmount,
+          paidAt: invoice.paidAt,
+          paidAmount: invoice.paidAmount,
+          paymentState: invoicePaymentState(invoice),
+        })),
         registrationStatus: reg.registrationStatus,
         siblingDiscountApplied: reg.siblingDiscountApplied,
         invoiceGenerated: reg.invoiceGenerated,

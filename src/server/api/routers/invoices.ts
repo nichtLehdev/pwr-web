@@ -22,6 +22,7 @@ import {
   type InvoiceRecordForPdf,
 } from "../helpers/invoice-pdf";
 import { invoiceTotal, type InvoiceLineItem } from "@/lib/invoice-document";
+import { invoiceOpenAmount } from "@/lib/invoice-payment";
 
 /**
  * Everything the PDF renderer needs, in one reusable include. Both storno
@@ -199,6 +200,52 @@ async function loadInvoiceForWrite(
   }
 
   return { invoice, access };
+}
+
+/**
+ * Load an invoice for booking a payment.
+ *
+ * Weiter gefasst als {@link loadInvoiceForWrite}: einen Zahlungseingang zu
+ * verbuchen ist Buchhaltung, kein Ausstellen eines Dokuments. Wer bisher
+ * Anmeldungen als bezahlt markieren durfte, kann das weiterhin — sonst hätte
+ * der Umzug des Zahlungsstatus an die Rechnung dieser Rolle die Aufgabe
+ * genommen.
+ */
+async function loadInvoiceForPayment(
+  db: PrismaClient,
+  invoiceId: string,
+  userId: string,
+  permissionCache?: PermissionCache,
+) {
+  const invoice = await db.invoice.findUnique({
+    where: { id: invoiceId },
+    include: invoiceForPdfInclude,
+  });
+
+  if (!invoice) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Rechnung nicht gefunden",
+    });
+  }
+
+  const [access, canMarkPaid] = await Promise.all([
+    resolveInvoiceAccess(db, userId, invoice.course, permissionCache),
+    userHasPermission(
+      userId,
+      PERMISSIONS.REGISTRATIONS_MARK_PAID,
+      permissionCache,
+    ),
+  ]);
+
+  if (!access.canManage && !canMarkPaid) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Keine Berechtigung, Zahlungen zu dieser Rechnung zu verbuchen",
+    });
+  }
+
+  return { invoice };
 }
 
 /**
@@ -400,7 +447,6 @@ export const invoicesRouter = createTRPCRouter({
           registrantLastName: true,
           registrantEmail: true,
           totalPrice: true,
-          paymentStatus: true,
           paymentMethod: true,
           siblingDiscountStatus: true,
           participants: { select: { firstName: true, lastName: true } },
@@ -408,7 +454,14 @@ export const invoicesRouter = createTRPCRouter({
             where: {
               status: { in: [InvoiceStatus.DRAFT, InvoiceStatus.PUBLISHED] },
             },
-            select: { id: true, status: true, invoiceNumber: true },
+            select: {
+              id: true,
+              status: true,
+              invoiceNumber: true,
+              totalAmount: true,
+              paidAt: true,
+              paidAmount: true,
+            },
           },
         },
       });
@@ -737,6 +790,117 @@ export const invoicesRouter = createTRPCRouter({
    * Void a published invoice. The document itself is kept — cancelling an
    * invoice is not the same as making it disappear.
    */
+  /**
+   * Zahlungseingang verbuchen. Nur an ausgestellten Rechnungen: an einem
+   * Entwurf gibt es nichts zu zahlen, und ein Storno ist gegenstandslos.
+   *
+   * Der Dokumentstatus bleibt PUBLISHED — bezahlt zu sein ändert nichts daran,
+   * dass die Rechnung ausgestellt und nach §14 UStG eingefroren ist.
+   */
+  markPaid: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        /** Wertstellung; ohne Angabe der heutige Tag. */
+        paidAt: z.date().optional(),
+        /**
+         * Tatsächlich eingegangener Betrag. Weglassen heißt "voller Betrag" —
+         * so muss der Normalfall keine Zahl tippen und eine spätere Korrektur
+         * am Rechnungsbetrag läuft nicht aus dem Ruder.
+         */
+        paidAmount: z.number().min(0).max(1_000_000).nullish(),
+        note: z.string().trim().max(500).nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { invoice } = await loadInvoiceForPayment(
+        ctx.db,
+        input.id,
+        ctx.session.user.id,
+        ctx.permissionCache,
+      );
+
+      if (invoice.status !== InvoiceStatus.PUBLISHED) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Nur ausgestellte Rechnungen können als bezahlt markiert werden.",
+        });
+      }
+
+      const paidAt = input.paidAt ?? new Date();
+      const updated = await ctx.db.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          paidAt,
+          paidAmount: input.paidAmount ?? null,
+          paidById: ctx.session.user.id,
+          paymentNote: input.note ?? null,
+        },
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "invoice.mark_paid",
+        entityType: "invoice",
+        entityId: invoice.id,
+        details: {
+          invoiceNumber: invoice.invoiceNumber,
+          courseId: invoice.courseId,
+          paidAt: paidAt.toISOString(),
+          paidAmount: input.paidAmount ?? invoice.totalAmount,
+          totalAmount: invoice.totalAmount,
+        },
+      });
+
+      return updated;
+    }),
+
+  /** Fehlbuchung zurücknehmen — die Rechnung gilt danach wieder als offen. */
+  markUnpaid: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const { invoice } = await loadInvoiceForPayment(
+        ctx.db,
+        input.id,
+        ctx.session.user.id,
+        ctx.permissionCache,
+      );
+
+      if (!invoice.paidAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Diese Rechnung ist nicht als bezahlt markiert.",
+        });
+      }
+
+      const updated = await ctx.db.invoice.update({
+        where: { id: invoice.id },
+        data: {
+          paidAt: null,
+          paidAmount: null,
+          paidById: null,
+          paymentNote: null,
+        },
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "invoice.mark_unpaid",
+        entityType: "invoice",
+        entityId: invoice.id,
+        details: {
+          invoiceNumber: invoice.invoiceNumber,
+          courseId: invoice.courseId,
+          previousPaidAt: invoice.paidAt?.toISOString() ?? null,
+        },
+      });
+
+      return updated;
+    }),
+
   cancel: protectedProcedure
     .input(
       z.object({
@@ -946,7 +1110,7 @@ export const invoicesRouter = createTRPCRouter({
           : {}),
       };
 
-      const [invoices, total, totals] = await Promise.all([
+      const [invoices, total, totals, openRows] = await Promise.all([
         ctx.db.invoice.findMany({
           where,
           orderBy: [{ createdAt: "desc" }],
@@ -957,13 +1121,22 @@ export const invoicesRouter = createTRPCRouter({
             replaces: { select: { id: true, invoiceNumber: true } },
             replacedBy: { select: { id: true, invoiceNumber: true } },
             createdBy: { select: { id: true, displayName: true, email: true } },
-            registration: { select: { id: true, paymentStatus: true } },
+            registration: { select: { id: true } },
           },
         }),
         ctx.db.invoice.count({ where }),
         ctx.db.invoice.aggregate({
           where: { ...where, status: InvoiceStatus.PUBLISHED },
           _sum: { totalAmount: true },
+        }),
+        ctx.db.invoice.findMany({
+          where: { ...where, status: InvoiceStatus.PUBLISHED },
+          select: {
+            status: true,
+            totalAmount: true,
+            paidAt: true,
+            paidAmount: true,
+          },
         }),
       ]);
 
@@ -973,6 +1146,11 @@ export const invoicesRouter = createTRPCRouter({
         pages: Math.ceil(total / input.limit),
         /** Sum of the invoices actually in force, for the header figure. */
         publishedTotal: totals._sum.totalAmount ?? 0,
+        /** Was davon noch aussteht — die Zahl, nach der das Büro sucht. */
+        openTotal: openRows.reduce(
+          (sum, row) => sum + invoiceOpenAmount(row),
+          0,
+        ),
       };
     }),
 
@@ -1022,6 +1200,9 @@ export const invoicesRouter = createTRPCRouter({
         totalAmount: true,
         pdfFilename: true,
         registrationId: true,
+        status: true,
+        paidAt: true,
+        paidAmount: true,
         course: { select: { id: true, title: true } },
       },
     });

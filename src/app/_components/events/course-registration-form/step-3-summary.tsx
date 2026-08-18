@@ -21,6 +21,7 @@ import {
   courseRequiresPaymentMethodChoice,
   registrationNeedsPaymentMethod,
 } from "@/lib/course-payment-methods";
+import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 
 interface Step3SummaryProps {
   course: CourseWithRelations;
@@ -150,7 +151,12 @@ export function Step3Summary({
                     {participant.instrument && ` • ${participant.instrument}`}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {priceOption?.label}
+                    {priceOption
+                      ? priceOptionDisplayLabel(
+                          priceOption,
+                          course.priceOptions,
+                        )
+                      : null}
                   </p>
                 </div>
                 <p className="text-primary shrink-0 font-bold">

@@ -6,7 +6,10 @@ import { useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { RegistrationStatus, PaymentStatus } from "~/generated/prisma/enums";
+import {
+  RegistrationStatus,
+  SiblingDiscountStatus,
+} from "~/generated/prisma/enums";
 import Link from "next/link";
 import {
   Calendar,
@@ -98,11 +101,22 @@ export default function DashboardPage() {
     { enabled: ready && canManageRegistrations },
   );
   const { data: openPayments } = api.registrations.getAllAdmin.useQuery(
-    { page: 1, limit: 1, paymentStatus: PaymentStatus.PENDING },
+    { page: 1, limit: 1, paid: false },
     { enabled: ready && canManageRegistrations },
   );
   const { data: waitlisted } = api.registrations.getAllAdmin.useQuery(
     { page: 1, limit: 1, registrationStatus: RegistrationStatus.WAITLIST },
+    { enabled: ready && canManageRegistrations },
+  );
+  // Geschwisterrabatte gehören in dieselbe Freigabe-Warteschlange wie Kurse,
+  // Termine und Beiträge. Gegated auf courses.manage_registrations — genau die
+  // Berechtigung, die auch approveSiblingDiscount verlangt.
+  const { data: pendingDiscounts } = api.registrations.getAllAdmin.useQuery(
+    {
+      page: 1,
+      limit: 1,
+      siblingDiscountStatus: SiblingDiscountStatus.PENDING,
+    },
     { enabled: ready && canManageRegistrations },
   );
 
@@ -149,11 +163,15 @@ export default function DashboardPage() {
     "User";
 
   const showReviewTile =
-    canApproveCourses || canApproveEvents || canApprovePosts;
+    canApproveCourses ||
+    canApproveEvents ||
+    canApprovePosts ||
+    canManageRegistrations;
   const pendingTotal =
     (pendingCourses?.total ?? 0) +
     (pendingEvents?.total ?? 0) +
-    (pendingPosts?.total ?? 0);
+    (pendingPosts?.total ?? 0) +
+    (pendingDiscounts?.total ?? 0);
   const showCoursesTile = (upcomingCourses?.courses.length ?? 0) > 0;
   const showRegistrationsTile = canManageRegistrations;
   const showNewsletterTile = canManageNewsletter;
@@ -257,6 +275,14 @@ export default function DashboardPage() {
                       href="/dashboard/posts"
                     />
                   )}
+                  {canManageRegistrations &&
+                    (pendingDiscounts?.total ?? 0) > 0 && (
+                      <ReviewRow
+                        label="Geschwisterrabatte"
+                        count={pendingDiscounts?.total ?? 0}
+                        href={`/dashboard/registrations?discount=${SiblingDiscountStatus.PENDING}`}
+                      />
+                    )}
                 </ul>
               )}
             </OverviewTile>

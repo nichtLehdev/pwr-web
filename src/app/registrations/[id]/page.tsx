@@ -31,6 +31,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
+import { participantPriceOptionLabel } from "@/lib/course-price-options";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -556,7 +557,10 @@ export default function ViewRegistrationPage() {
                           Preisoption:
                         </span>
                         <p className="text-gray-600 dark:text-gray-400">
-                          {participant.priceOption}
+                          {participantPriceOptionLabel(
+                            participant,
+                            registration.course.priceOptions,
+                          )}
                         </p>
                       </div>
                     )}

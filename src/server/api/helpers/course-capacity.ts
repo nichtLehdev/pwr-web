@@ -71,20 +71,43 @@ export async function countConfirmedParticipants(
  * Throws BAD_REQUEST when adding `additionsByLabel` participants would
  * overbook any limited price tier (counting CONFIRMED registrations only).
  */
+/**
+ * Prüft je Preiskategorie, ob die neuen Teilnehmer noch hineinpassen.
+ *
+ * Zählt über `priceOptionId`, nicht über das Label: ein Kurs darf zwei
+ * Kategorien mit demselben Namen führen, und über das Label wurde die eine
+ * gegen das Limit der anderen geprüft — mal zu streng, mal zu lasch.
+ *
+ * Teilnehmer aus der Zeit vor der id-Migration werden mitgezählt, sofern ihr
+ * Label im Kurs eindeutig ist; bei Duplikaten sind sie nicht zuzuordnen und
+ * bleiben außen vor (die Kurs-Gesamtkapazität greift weiterhin).
+ */
 export async function assertPriceTierCapacity(
   db: Db | Tx,
   courseId: string,
-  priceOptions: Array<{ label: string; maxParticipants: number | null }>,
-  additionsByLabel: Record<string, number>,
+  priceOptions: Array<{
+    id: string;
+    label: string;
+    maxParticipants: number | null;
+  }>,
+  additionsByOptionId: Record<string, number>,
   excludeRegistrationId?: string,
 ): Promise<void> {
-  for (const [label, addition] of Object.entries(additionsByLabel)) {
-    const priceOption = priceOptions.find((p) => p.label === label);
+  for (const [optionId, addition] of Object.entries(additionsByOptionId)) {
+    const priceOption = priceOptions.find((p) => p.id === optionId);
     if (priceOption?.maxParticipants == null) continue;
+
+    const labelIsUnique =
+      priceOptions.filter((p) => p.label === priceOption.label).length === 1;
 
     const currentCount = await db.participant.count({
       where: {
-        priceOption: label,
+        OR: [
+          { priceOptionId: optionId },
+          ...(labelIsUnique
+            ? [{ priceOptionId: null, priceOption: priceOption.label }]
+            : []),
+        ],
         registration: {
           courseId,
           registrationStatus: RegistrationStatus.CONFIRMED,
@@ -98,7 +121,7 @@ export async function assertPriceTierCapacity(
     if (currentCount + addition > priceOption.maxParticipants) {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: `Die Preisoption "${label}" ist ausgebucht.`,
+        message: `Die Preisoption "${priceOption.label}" ist ausgebucht.`,
       });
     }
   }

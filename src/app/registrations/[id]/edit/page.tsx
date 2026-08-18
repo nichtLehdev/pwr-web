@@ -33,6 +33,7 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { resolveParticipantPriceOption } from "@/lib/course-price-options";
 
 interface Participant {
   id: string;
@@ -170,8 +171,12 @@ export default function EditRegistrationPage() {
     if (registration?.participants && registration?.course?.priceOptions) {
       setParticipants(
         registration.participants.map((p) => {
-          const priceOption = registration.course.priceOptions.find(
-            (po) => po.label === p.priceOption,
+          // Über die id, nicht über das Label: bei zwei gleichnamigen
+          // Kategorien hätte der Label-Treffer die Anmeldung beim Speichern
+          // stillschweigend auf die andere (und deren Preis) umgestellt.
+          const priceOption = resolveParticipantPriceOption(
+            p,
+            registration.course.priceOptions,
           );
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { priceOption: priceOptionLabel, ...participantWithoutLabel } =
@@ -275,7 +280,9 @@ export default function EditRegistrationPage() {
     );
     if (!priceOption) return false;
 
-    const available = availability.capacityByPriceOption[priceOption.label];
+    // Nach id nachschlagen: zwei Kategorien dürfen dasselbe Label tragen, und
+    // über das Label bekam die eine die Restplätze der anderen.
+    const available = availability.capacityByPriceOption[priceOption.id];
     if (available === undefined) return true;
 
     const currentUsage = activeParticipants.filter(
