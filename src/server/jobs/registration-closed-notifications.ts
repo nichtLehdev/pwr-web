@@ -56,7 +56,17 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
         include: { user: { select: { email: true, displayName: true } } },
       },
       registrations: {
-        include: { participants: true },
+        include: {
+          participants: true,
+          invoices: {
+            select: {
+              status: true,
+              totalAmount: true,
+              paidAt: true,
+              paidAmount: true,
+            },
+          },
+        },
       },
     },
   });

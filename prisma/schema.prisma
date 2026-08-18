@@ -86,6 +86,7 @@ model User {
 
   createdInvoices   Invoice[] @relation("InvoiceCreator")
   publishedInvoices Invoice[] @relation("InvoicePublisher")
+  paidInvoices      Invoice[] @relation("InvoicePayer")
 
   @@index([bezirkId])
   @@map("user")
@@ -354,12 +355,6 @@ enum TargetAudience {
   DIRIGENTEN // Conductors
   JUGEND // Youth
   ALLE // All
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  REFUNDED
 }
 
 enum RegistrationStatus {
@@ -662,6 +657,8 @@ model CoursePriceOption {
   description     String?
   maxParticipants Int?
 
+  participants Participant[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -734,7 +731,6 @@ model CourseRegistration {
 
   // Payment & Status
   totalPrice         Float
-  paymentStatus      PaymentStatus        @default(PENDING)
   /**
    * Gewünschte Zahlungsweise (Bar / Rechnung), sofern der Kurs kostenpflichtig ist.
    */
@@ -762,7 +758,6 @@ model CourseRegistration {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([paymentStatus])
   @@index([registrationStatus])
   @@index([siblingDiscountStatus])
   @@index([courseId, registrationStatus])
@@ -882,6 +877,19 @@ model Invoice {
   /// Wann die Rechnung zuletzt per Kursmail verschickt wurde.
   mailedAt    DateTime?
 
+  /// Zahlungseingang. `paidAt` ist die einzige Wahrheit darüber, ob eine
+  /// Rechnung beglichen ist — der Dokumentstatus (DRAFT/PUBLISHED/CANCELLED)
+  /// bleibt davon unberührt, weil eine bezahlte Rechnung weiterhin eine
+  /// ausgestellte Rechnung ist und §14 UStG das Dokument einfriert.
+  paidAt      DateTime?
+  /// Tatsächlich eingegangener Betrag. Weicht bei Teilzahlung von
+  /// `totalAmount` ab; null bedeutet "voller Betrag".
+  paidAmount  Float?
+  paidById    String?
+  paidBy      User?     @relation("InvoicePayer", fields: [paidById], references: [id], onDelete: SetNull)
+  /// Interner Vermerk zur Zahlung (Kontoauszug, Barzahlung, Kulanz).
+  paymentNote String?
+
   createdById   String?
   createdBy     User?   @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
   publishedById String?
@@ -893,6 +901,7 @@ model Invoice {
   @@index([courseId, status])
   @@index([registrationId])
   @@index([status, publishedAt])
+  @@index([courseId, paidAt])
   @@index([createdById])
   @@index([createdAt])
   @@map("invoice")
@@ -908,7 +917,22 @@ model Participant {
   birthDate      DateTime
   city           String
   instrument     String?
-  priceOption    String? // Which price option was selected
+  /**
+   * Gewählte Preiskategorie. Führend für Belegung und Kapazität — das Label
+   * allein taugt dafür nicht, weil ein Kurs zwei Kategorien mit demselben
+   * Namen führen darf (etwa dieselbe Zimmerart in zwei Häusern).
+   *
+   * Bleibt bei gelöschter Kategorie null; `priceOption` hält den Namen dann
+   * weiterhin fest.
+   */
+  priceOptionId  String?
+  priceOptionRef CoursePriceOption? @relation(fields: [priceOptionId], references: [id], onDelete: SetNull)
+  /**
+   * Name der Kategorie zum Zeitpunkt der Anmeldung — Anzeige-Snapshot für
+   * Listen, Exporte und Rechnungen. Bewusst nicht führend: er darf sich
+   * nachträglich vom aktuellen Label unterscheiden.
+   */
+  priceOption    String?
   customFields   Json? // JSON for custom field values
   siblingGroupId String? // Groups siblings together for discount calculation (same ID = siblings)
 
@@ -917,6 +941,7 @@ model Participant {
 
   @@index([registrationId])
   @@index([priceOption])
+  @@index([priceOptionId])
 }
 
 model SavedParticipant {

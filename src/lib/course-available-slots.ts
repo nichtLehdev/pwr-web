@@ -1,22 +1,50 @@
 import { RegistrationStatus } from "~/generated/prisma/client";
 
+type CapacityPriceOption = {
+  id: string;
+  label: string;
+  maxParticipants: number | null;
+};
+
 type CourseCapacityCourse = {
   maxParticipants: number | null;
-  priceOptions: Array<{ label: string; maxParticipants: number | null }>;
+  priceOptions: CapacityPriceOption[];
   registrations: Array<{
     registrationStatus: RegistrationStatus;
-    participants: Array<{ priceOption: string | null }>;
+    // Beide Felder sind Pflicht in der Abfrage: fehlte `priceOptionId`, fiele
+    // die Zählung stillschweigend auf den Label-Pfad zurück und die Duplikate
+    // liefen wieder in einen Topf.
+    participants: Array<{
+      priceOptionId: string | null;
+      priceOption: string | null;
+    }>;
   }>;
 };
 
+/**
+ * Belegte Plätze einer Kategorie.
+ *
+ * Führend ist `priceOptionId`. Teilnehmer ohne id — Altbestand, dessen Label
+ * beim Backfill nicht eindeutig aufzulösen war — werden nur dann über das
+ * Label mitgezählt, wenn dieses Label im Kurs **einmalig** ist. Bei doppelten
+ * Labels zählen sie zu keiner der beiden Kategorien: welche gemeint war, ist
+ * nicht mehr feststellbar, und sie beiden zuzuschlagen würde die Restplätze
+ * doppelt kürzen. In der Kurs-Gesamtkapazität stecken sie weiterhin.
+ */
 function countParticipantsForPriceOption(
   course: CourseCapacityCourse,
-  label: string,
+  option: CapacityPriceOption,
 ) {
+  const labelIsUnique =
+    course.priceOptions.filter((po) => po.label === option.label).length === 1;
+
   return course.registrations.reduce(
     (sum, registration) =>
       sum +
-      registration.participants.filter((p) => p.priceOption === label).length,
+      registration.participants.filter((p) => {
+        if (p.priceOptionId) return p.priceOptionId === option.id;
+        return labelIsUnique && p.priceOption === option.label;
+      }).length,
     0,
   );
 }
@@ -42,6 +70,7 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
     (po) => po.maxParticipants === null,
   );
 
+  /** Restplätze je Preiskategorie, **nach id** — Labels sind nicht eindeutig. */
   const capacityByPriceOption: Record<string, number> = {};
   let sumPerOptionRemaining = 0;
 
@@ -51,15 +80,12 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
   );
 
   for (const priceOption of priceOptionsWithLimits) {
-    const usedSlots = countParticipantsForPriceOption(
-      course,
-      priceOption.label,
-    );
+    const usedSlots = countParticipantsForPriceOption(course, priceOption);
     const remaining = Math.max(
       0,
       (priceOption.maxParticipants || 0) - usedSlots,
     );
-    capacityByPriceOption[priceOption.label] = remaining;
+    capacityByPriceOption[priceOption.id] = remaining;
     sumPerOptionRemaining += remaining;
   }
 
@@ -70,7 +96,7 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
     );
     const usedOnUnlimited = priceOptionsWithoutLimits.reduce(
       (sum, priceOption) =>
-        sum + countParticipantsForPriceOption(course, priceOption.label),
+        sum + countParticipantsForPriceOption(course, priceOption),
       0,
     );
     const unlimitedPoolRemaining = Math.max(
@@ -80,7 +106,7 @@ export function getCourseCapacitySummary(course: CourseCapacityCourse) {
     sumPerOptionRemaining += unlimitedPoolRemaining;
 
     for (const priceOption of priceOptionsWithoutLimits) {
-      capacityByPriceOption[priceOption.label] = unlimitedPoolRemaining;
+      capacityByPriceOption[priceOption.id] = unlimitedPoolRemaining;
     }
   }
 

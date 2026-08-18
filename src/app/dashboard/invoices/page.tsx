@@ -9,7 +9,9 @@ import { InvoiceStatusBadge } from "@/app/_components/dashboard/invoice-status-b
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { formatDate, formatEuro } from "@/lib/invoice-document";
-import { InvoiceStatus, PaymentStatus } from "~/generated/prisma/enums";
+import { InvoiceStatus } from "~/generated/prisma/enums";
+import { InvoicePaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { invoiceOpenAmount } from "@/lib/invoice-payment";
 import { DownloadIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 
 const PAGE_SIZE = 25;
@@ -174,7 +176,7 @@ export default function InvoiceArchivePage() {
       </div>
 
       {/* Summary */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow">
           <p className="dark:text-dark-muted text-xs text-gray-500">
             Rechnungen in dieser Auswahl
@@ -189,6 +191,20 @@ export default function InvoiceArchivePage() {
           </p>
           <p className="dark:text-dark-text mt-1 text-2xl font-semibold text-gray-900">
             {formatEuro(data?.publishedTotal ?? 0)}
+          </p>
+        </div>
+        <div className="dark:bg-dark-surface rounded-lg bg-white p-4 shadow">
+          <p className="dark:text-dark-muted text-xs text-gray-500">
+            Davon noch offen
+          </p>
+          <p
+            className={`mt-1 text-2xl font-semibold ${
+              (data?.openTotal ?? 0) > 0
+                ? "text-amber-600 dark:text-amber-400"
+                : "text-green-600 dark:text-green-400"
+            }`}
+          >
+            {formatEuro(data?.openTotal ?? 0)}
           </p>
         </div>
       </div>
@@ -276,15 +292,24 @@ export default function InvoiceArchivePage() {
                     </td>
                     <td className="dark:text-dark-text px-4 py-3 text-right font-medium whitespace-nowrap text-gray-900">
                       {formatEuro(invoice.totalAmount)}
-                      {invoice.registration?.paymentStatus ===
-                        PaymentStatus.PAID && (
-                        <span className="block text-xs font-normal text-green-600 dark:text-green-400">
-                          bezahlt
-                        </span>
-                      )}
+                      {invoice.status === InvoiceStatus.PUBLISHED &&
+                        (invoice.paidAt ? (
+                          <span className="block text-xs font-normal text-green-600 dark:text-green-400">
+                            {invoiceOpenAmount(invoice) > 0
+                              ? `${formatEuro(invoiceOpenAmount(invoice))} offen`
+                              : "bezahlt"}
+                          </span>
+                        ) : (
+                          <span className="block text-xs font-normal text-amber-600 dark:text-amber-400">
+                            offen
+                          </span>
+                        ))}
                     </td>
                     <td className="px-4 py-3">
-                      <InvoiceStatusBadge status={invoice.status} />
+                      <div className="flex flex-wrap items-center gap-1">
+                        <InvoiceStatusBadge status={invoice.status} />
+                        <InvoicePaymentBadge invoice={invoice} />
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
                       {invoice.pdfPath ? (

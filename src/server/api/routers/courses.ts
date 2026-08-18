@@ -18,6 +18,7 @@ import {
 } from "../helpers/review-notifications";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
+import { validatePriceOptionDistinctness } from "@/lib/course-price-options";
 import {
   isExternalCourse,
   normalizeExternalRegistrationUrl,
@@ -30,6 +31,7 @@ import {
 } from "../helpers/course-access";
 import { createCourseSlug, updateCourseSlug } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { pairPriceOptions } from "../helpers/price-option-pairing";
 
 /** Nested args for `Course.collaborators` on public course queries. */
 const courseCollaboratorsForPublic = {
@@ -58,6 +60,21 @@ const externalRegistrationUrlSchema = z
   .refine((val) => !val?.trim() || /^https?:\/\/.+/i.test(val.trim()), {
     message: "Bitte gib eine gültige URL ein (mit http:// oder https://).",
   });
+
+/**
+ * Preiskategorien müssen auseinanderzuhalten sein: gleiche Namen sind
+ * erlaubt, brauchen dann aber unterschiedliche Beschreibungen. Sonst stehen
+ * sie in der Anmeldung zweimal identisch da.
+ */
+const priceOptionsMustBeDistinct = (
+  options:
+    ReadonlyArray<{ label: string; description?: string | null }> | undefined,
+  ctx: z.RefinementCtx,
+) => {
+  if (!options) return;
+  const message = validatePriceOptionDistinctness(options);
+  if (message) ctx.addIssue({ code: "custom", message });
+};
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -115,7 +132,7 @@ export const coursesRouter = createTRPCRouter({
               select: {
                 registrationStatus: true,
                 participants: {
-                  select: { priceOption: true },
+                  select: { priceOptionId: true, priceOption: true },
                 },
               },
             },
@@ -568,7 +585,8 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
               }),
             )
-            .optional(),
+            .optional()
+            .superRefine(priceOptionsMustBeDistinct),
           customFields: z
             .array(
               z.object({
@@ -773,7 +791,8 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
               }),
             )
-            .optional(),
+            .optional()
+            .superRefine(priceOptionsMustBeDistinct),
           customFields: z
             .array(
               z.object({
@@ -1105,12 +1124,10 @@ export const coursesRouter = createTRPCRouter({
             });
           }
 
+          const pairing = pairPriceOptions(priceOptions, existingOptions);
+
           for (const inputOption of priceOptions) {
-            const existing = existingOptions.find(
-              (option) =>
-                (inputOption.id && option.id === inputOption.id) ||
-                option.label === inputOption.label,
-            );
+            const existing = pairing.get(inputOption);
 
             if (!existing) {
               throw new TRPCError({
@@ -1133,7 +1150,7 @@ export const coursesRouter = createTRPCRouter({
 
             if (inputOption.maxParticipants != null) {
               const usedCount =
-                registrationStats.byPriceOptionLabel[existing.label] ?? 0;
+                registrationStats.byPriceOptionId[existing.id] ?? 0;
               if (inputOption.maxParticipants < usedCount) {
                 throw new TRPCError({
                   code: "BAD_REQUEST",
@@ -1145,11 +1162,7 @@ export const coursesRouter = createTRPCRouter({
 
           await Promise.all(
             priceOptions.map((inputOption) => {
-              const existing = existingOptions.find(
-                (option) =>
-                  (inputOption.id && option.id === inputOption.id) ||
-                  option.label === inputOption.label,
-              );
+              const existing = pairing.get(inputOption);
               if (!existing) {
                 return Promise.resolve();
               }
@@ -1157,6 +1170,13 @@ export const coursesRouter = createTRPCRouter({
                 where: { id: existing.id },
                 data: {
                   maxParticipants: inputOption.maxParticipants ?? null,
+                  // Beschreibung bleibt änderbar, auch nach Anmeldungen: sie
+                  // ist reiner Anzeigetext ohne Einfluss auf Preis oder
+                  // Kapazität — und bei zwei gleichnamigen Kategorien das
+                  // Einzige, was sie unterscheidbar macht. Wäre sie gesperrt,
+                  // ließe sich ein bestehender Kurs mit doppeltem Namen nicht
+                  // mehr in einen gültigen Zustand bringen.
+                  description: inputOption.description ?? null,
                 },
               });
             }),
@@ -1381,7 +1401,7 @@ export const coursesRouter = createTRPCRouter({
             select: {
               registrationStatus: true,
               participants: {
-                select: { priceOption: true },
+                select: { priceOptionId: true, priceOption: true },
               },
             },
           },
@@ -1480,6 +1500,18 @@ export const coursesRouter = createTRPCRouter({
           where,
           include: {
             participants: true,
+            // Zahlungsstand hängt an den Rechnungen — Teilnehmerlisten,
+            // Statistiken und Exporte leiten ihn hieraus ab.
+            invoices: {
+              select: {
+                id: true,
+                status: true,
+                invoiceNumber: true,
+                totalAmount: true,
+                paidAt: true,
+                paidAmount: true,
+              },
+            },
           },
           ...(input.all
             ? {}

@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import { PaymentStatus, RegistrationStatus } from "~/generated/prisma/enums";
+import {
+  RegistrationStatus,
+  SiblingDiscountStatus,
+} from "~/generated/prisma/enums";
+import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import { PencilIcon, SearchIcon, UsersIcon } from "lucide-react";
 
 const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
@@ -15,25 +20,12 @@ const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CANCELLED: "Storniert",
 };
 
-const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  PENDING: "Offen",
-  PAID: "Bezahlt",
-  REFUNDED: "Erstattet",
-};
-
 const REGISTRATION_STATUS_BADGES: Record<RegistrationStatus, string> = {
   CONFIRMED:
     "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
   WAITLIST:
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
   CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-};
-
-const PAYMENT_STATUS_BADGES: Record<PaymentStatus, string> = {
-  PENDING:
-    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-  PAID: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  REFUNDED: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
 };
 
 function formatPrice(price: number) {
@@ -60,8 +52,23 @@ export default function AdminRegistrationsPage() {
   const [registrationStatus, setRegistrationStatus] = useState<
     RegistrationStatus | ""
   >("");
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "">("");
+  /** "" = alle, "paid" = alles beglichen, "open" = mindestens eine offene Rechnung. */
+  const [paymentFilter, setPaymentFilter] = useState<"" | "paid" | "open">("");
   const [courseId, setCourseId] = useState("");
+  // Vorbelegt über ?discount=PENDING — so landet die Freigabe-Kachel des
+  // Dashboards direkt auf den offenen Rabatten statt auf der vollen Liste.
+  const searchParams = useSearchParams();
+  const [discountFilter, setDiscountFilter] = useState<
+    SiblingDiscountStatus | ""
+  >(() => {
+    const requested = searchParams.get("discount");
+    return requested &&
+      Object.values(SiblingDiscountStatus).includes(
+        requested as SiblingDiscountStatus,
+      )
+      ? (requested as SiblingDiscountStatus)
+      : "";
+  });
 
   const canView = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
 
@@ -71,7 +78,8 @@ export default function AdminRegistrationsPage() {
       limit: 25,
       search: search || undefined,
       registrationStatus: registrationStatus || undefined,
-      paymentStatus: paymentStatus || undefined,
+      paid: paymentFilter === "" ? undefined : paymentFilter === "paid",
+      siblingDiscountStatus: discountFilter || undefined,
       courseId: courseId || undefined,
     },
     { enabled: canView },
@@ -194,19 +202,41 @@ export default function AdminRegistrationsPage() {
             </label>
             <select
               id="filter-payment"
-              value={paymentStatus}
+              value={paymentFilter}
               onChange={(e) => {
-                setPaymentStatus(e.target.value as PaymentStatus | "");
+                setPaymentFilter(e.target.value as "" | "paid" | "open");
                 setPage(1);
               }}
               className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
               <option value="">Alle</option>
-              {Object.entries(PAYMENT_STATUS_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+              <option value="open">Offen</option>
+              <option value="paid">Bezahlt</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="filter-discount"
+              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+            >
+              Geschwisterrabatt
+            </label>
+            <select
+              id="filter-discount"
+              value={discountFilter}
+              onChange={(e) => {
+                setDiscountFilter(e.target.value as SiblingDiscountStatus | "");
+                setPage(1);
+              }}
+              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="">Alle</option>
+              <option value={SiblingDiscountStatus.PENDING}>
+                Wartet auf Freigabe
+              </option>
+              <option value={SiblingDiscountStatus.APPROVED}>Genehmigt</option>
+              <option value={SiblingDiscountStatus.REJECTED}>Abgelehnt</option>
             </select>
           </div>
         </div>
@@ -292,14 +322,21 @@ export default function AdminRegistrationsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${PAYMENT_STATUS_BADGES[registration.paymentStatus]}`}
-                        >
-                          {PAYMENT_STATUS_LABELS[registration.paymentStatus]}
-                        </span>
+                        <RegistrationPaymentBadge
+                          invoices={registration.invoices}
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 tabular-nums dark:text-gray-300">
                         {formatPrice(registration.totalPrice)}
+                        {registration.siblingDiscountStatus ===
+                          SiblingDiscountStatus.PENDING && (
+                          <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-orange-600 dark:text-orange-400">
+                            Rabatt prüfen
+                            {registration.siblingDiscountAmount
+                              ? ` (${formatPrice(registration.siblingDiscountAmount)})`
+                              : ""}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                         {registration.invoiceId ?? "–"}

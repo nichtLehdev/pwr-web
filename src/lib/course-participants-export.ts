@@ -1,9 +1,14 @@
 import {
-  PaymentStatus,
+  InvoiceStatus,
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
+import { invoicePaidAmount } from "@/lib/invoice-payment";
+import {
+  participantPriceOptionLabel,
+  resolveParticipantPriceOption,
+} from "@/lib/course-price-options";
 
 export const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -47,6 +52,8 @@ type ExportParticipant = {
   lastName: string;
   city: string | null;
   instrument: string | null;
+  /** Führend für die Preiszuordnung; siehe resolveParticipantPriceOption. */
+  priceOptionId?: string | null;
   priceOption: string | null;
   customFields?: unknown;
 };
@@ -66,7 +73,12 @@ type ExportRegistration = {
 type ExportCourse = {
   title: string;
   customFields?: Array<{ fieldName: string }>;
-  priceOptions?: Array<{ label: string; price: number }>;
+  priceOptions?: Array<{
+    id: string;
+    label: string;
+    description: string | null;
+    price: number;
+  }>;
 };
 
 export function buildCourseParticipantsExportRows(
@@ -93,8 +105,9 @@ export function buildCourseParticipantsExportRows(
         );
       }
 
-      const priceOption = course.priceOptions?.find(
-        (p) => p.label === participant.priceOption,
+      const priceOption = resolveParticipantPriceOption(
+        participant,
+        course.priceOptions,
       );
       const participantPrice = priceOption?.price ?? 0;
 
@@ -103,7 +116,10 @@ export function buildCourseParticipantsExportRows(
         nachname: participant.lastName,
         ort: participant.city ?? "",
         instrument: participant.instrument ?? "",
-        preiskategorie: participant.priceOption ?? "",
+        preiskategorie: participantPriceOptionLabel(
+          participant,
+          course.priceOptions,
+        ),
         preis: participantPrice.toFixed(2),
         ...customFieldValues,
         status: registrationStatusLabels[registration.registrationStatus],
@@ -161,13 +177,25 @@ export type CourseRegistrationStats = {
   paidRevenue: number;
 };
 
+/**
+ * Zahlungsdaten einer Anmeldung — seit dem Umzug des Zahlungsstatus an die
+ * Rechnung ist das kein Feld der Anmeldung mehr, sondern die Summe ihrer
+ * ausgestellten Rechnungen.
+ */
+type ExportInvoice = {
+  status: InvoiceStatus;
+  totalAmount: number;
+  paidAt: Date | string | null;
+  paidAmount: number | null;
+};
+
 export function computeCourseRegistrationStats(
   registrations: Array<{
     registrationStatus: RegistrationStatus;
-    paymentStatus: PaymentStatus;
     siblingDiscountStatus: SiblingDiscountStatus;
     totalPrice: number;
     participants: unknown[];
+    invoices: ExportInvoice[];
   }>,
 ): CourseRegistrationStats {
   let confirmedParticipants = 0;
@@ -184,9 +212,12 @@ export function computeCourseRegistrationStats(
       confirmedParticipants += count;
       activeRegistrations += 1;
       totalRevenueConfirmed += r.totalPrice;
-      if (r.paymentStatus === PaymentStatus.PAID) {
-        paidRevenue += r.totalPrice;
-      }
+      // Verbucht wird, was tatsächlich eingegangen ist — bei Teilzahlung also
+      // der Teilbetrag, nicht der volle Anmeldepreis.
+      paidRevenue += r.invoices.reduce(
+        (sum, invoice) => sum + invoicePaidAmount(invoice),
+        0,
+      );
     } else if (r.registrationStatus === RegistrationStatus.WAITLIST) {
       waitlistParticipants += count;
       activeRegistrations += 1;

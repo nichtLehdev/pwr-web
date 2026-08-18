@@ -71,7 +71,6 @@ export default function CourseRegistrationForm({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [staffOptions, setStaffOptions] = useState<StaffRegistrationOptions>({
     registrationStatus: "AUTO",
-    markAsPaid: false,
     sendConfirmationEmail: true,
     allowOverbooking: false,
   });
@@ -450,7 +449,6 @@ export default function CourseRegistrationForm({
           ...(staffOptions.registrationStatus !== "AUTO" && {
             registrationStatus: staffOptions.registrationStatus,
           }),
-          paymentStatus: staffOptions.markAsPaid ? "PAID" : "PENDING",
           allowOverbooking: staffOptions.allowOverbooking,
           sendConfirmationEmail: staffOptions.sendConfirmationEmail,
         },

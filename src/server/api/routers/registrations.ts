@@ -9,7 +9,7 @@ import {
 import {
   CourseCollaboratorRole,
   CoursePaymentMethod,
-  PaymentStatus,
+  InvoiceStatus,
   RegistrationStatus,
   SiblingDiscountStatus,
 } from "~/generated/prisma/client";
@@ -17,6 +17,7 @@ import type { Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 import { isExternalCourse } from "@/lib/course-external";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
+import { invoiceOpenAmount } from "@/lib/invoice-payment";
 
 function collaboratorsForViewer(userId: string | null) {
   return {
@@ -34,10 +35,7 @@ function viewerIsCourseTeamMember(
 }
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
-import {
-  permissionProcedure,
-  permissionProcedureAny,
-} from "../middleware/permissions";
+import { permissionProcedure } from "../middleware/permissions";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import {
   assertPriceTierCapacity,
@@ -373,16 +371,16 @@ export const registrationsRouter = createTRPCRouter({
           // Per-price-tier limits are enforced here too (they previously were
           // only checked on registration updates, not on creation).
           if (status === RegistrationStatus.CONFIRMED) {
-            const additionsByLabel: Record<string, number> = {};
+            const additionsByOptionId: Record<string, number> = {};
             for (const participant of participantsWithPriceOptions) {
-              additionsByLabel[participant.priceOption] =
-                (additionsByLabel[participant.priceOption] ?? 0) + 1;
+              additionsByOptionId[participant.priceOptionId] =
+                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
             }
             await assertPriceTierCapacity(
               tx,
               input.courseId,
               course.priceOptions,
-              additionsByLabel,
+              additionsByOptionId,
             );
           }
 
@@ -405,16 +403,15 @@ export const registrationsRouter = createTRPCRouter({
               siblingDiscountStatus,
               registrationStatus: status,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  const { priceOptionId, ...participantData } = participant;
-                  return {
-                    ...participantData,
-                    customFields: (participantData.customFields ||
-                      {}) as Prisma.InputJsonValue,
-                    siblingGroupId: participant.siblingGroupId || null,
-                  };
-                }),
+                create: participantsWithPriceOptions.map((participant) => ({
+                  ...participant,
+                  // Führend für Kapazität und Belegung; `priceOption` bleibt
+                  // als Anzeige-Snapshot daneben stehen.
+                  priceOptionId: participant.priceOptionId,
+                  customFields: (participant.customFields ||
+                    {}) as Prisma.InputJsonValue,
+                  siblingGroupId: participant.siblingGroupId || null,
+                })),
               },
             },
             include: {
@@ -512,9 +509,6 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus: z
           .enum([RegistrationStatus.CONFIRMED, RegistrationStatus.WAITLIST])
           .optional(),
-        paymentStatus: z
-          .enum([PaymentStatus.PENDING, PaymentStatus.PAID])
-          .default(PaymentStatus.PENDING),
         allowOverbooking: z.boolean().default(false),
         sendConfirmationEmail: z.boolean().default(true),
       }),
@@ -524,7 +518,6 @@ export const registrationsRouter = createTRPCRouter({
         participants: participantsInput,
         paymentMethod: inputPaymentMethod,
         registrationStatus: requestedStatus,
-        paymentStatus,
         allowOverbooking,
         sendConfirmationEmail,
         ...registrationData
@@ -641,16 +634,16 @@ export const registrationsRouter = createTRPCRouter({
           // staff who knowingly exceed the course capacity should not be
           // stopped by a tier limit right afterwards.
           if (status === RegistrationStatus.CONFIRMED && !allowOverbooking) {
-            const additionsByLabel: Record<string, number> = {};
+            const additionsByOptionId: Record<string, number> = {};
             for (const participant of participantsWithPriceOptions) {
-              additionsByLabel[participant.priceOption] =
-                (additionsByLabel[participant.priceOption] ?? 0) + 1;
+              additionsByOptionId[participant.priceOptionId] =
+                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
             }
             await assertPriceTierCapacity(
               tx,
               input.courseId,
               course.priceOptions,
-              additionsByLabel,
+              additionsByOptionId,
             );
           }
 
@@ -668,18 +661,14 @@ export const registrationsRouter = createTRPCRouter({
               siblingDiscountApplied: input.siblingDiscountApplied ?? false,
               siblingDiscountStatus,
               registrationStatus: status,
-              paymentStatus,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => {
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  const { priceOptionId, ...participantData } = participant;
-                  return {
-                    ...participantData,
-                    customFields:
-                      participantData.customFields as Prisma.InputJsonValue,
-                    siblingGroupId: participant.siblingGroupId || null,
-                  };
-                }),
+                create: participantsWithPriceOptions.map((participant) => ({
+                  ...participant,
+                  priceOptionId: participant.priceOptionId,
+                  customFields:
+                    participant.customFields as Prisma.InputJsonValue,
+                  siblingGroupId: participant.siblingGroupId || null,
+                })),
               },
             },
             include: {
@@ -730,7 +719,6 @@ export const registrationsRouter = createTRPCRouter({
           registrantEmail: registration.registrantEmail,
           participantCount: registration.participants.length,
           registrationStatus,
-          paymentStatus,
           totalPrice,
           allowOverbooking,
           sendConfirmationEmail,
@@ -807,6 +795,22 @@ export const registrationsRouter = createTRPCRouter({
         where: { id: input.id },
         include: {
           participants: true,
+          // Zahlungsstand wird an der Rechnung geführt — die Detailansicht
+          // leitet ihn hieraus ab und bucht Zahlungen auch hier.
+          invoices: {
+            select: {
+              id: true,
+              status: true,
+              invoiceNumber: true,
+              invoiceDate: true,
+              dueDate: true,
+              totalAmount: true,
+              paidAt: true,
+              paidAmount: true,
+              paymentNote: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
           course: {
             select: {
               id: true,
@@ -826,6 +830,9 @@ export const registrationsRouter = createTRPCRouter({
                 select: {
                   id: true,
                   label: true,
+                  // description gehört zur Anzeige: bei zwei gleichnamigen
+                  // Kategorien steht sie in Klammern hinter dem Namen.
+                  description: true,
                   price: true,
                   maxParticipants: true,
                 },
@@ -953,7 +960,9 @@ export const registrationsRouter = createTRPCRouter({
         limit: z.number().min(1).max(100).default(25),
         search: z.string().max(200).optional(),
         registrationStatus: z.nativeEnum(RegistrationStatus).optional(),
-        paymentStatus: z.nativeEnum(PaymentStatus).optional(),
+        /** Nur Anmeldungen mit noch offener bzw. beglichener Rechnung. */
+        paid: z.boolean().optional(),
+        siblingDiscountStatus: z.nativeEnum(SiblingDiscountStatus).optional(),
         courseId: z.string().optional(),
       }),
     )
@@ -963,7 +972,25 @@ export const registrationsRouter = createTRPCRouter({
         ...(input.registrationStatus && {
           registrationStatus: input.registrationStatus,
         }),
-        ...(input.paymentStatus && { paymentStatus: input.paymentStatus }),
+        ...(input.siblingDiscountStatus && {
+          siblingDiscountStatus: input.siblingDiscountStatus,
+        }),
+        ...(input.paid === undefined
+          ? {}
+          : input.paid
+            ? {
+                invoices: {
+                  some: {
+                    status: InvoiceStatus.PUBLISHED,
+                    paidAt: { not: null },
+                  },
+                },
+              }
+            : {
+                invoices: {
+                  some: { status: InvoiceStatus.PUBLISHED, paidAt: null },
+                },
+              }),
         ...(input.courseId && { courseId: input.courseId }),
         ...(search && {
           OR: [
@@ -994,11 +1021,22 @@ export const registrationsRouter = createTRPCRouter({
             registrantLastName: true,
             registrantEmail: true,
             registrationStatus: true,
-            paymentStatus: true,
+            siblingDiscountStatus: true,
+            siblingDiscountAmount: true,
             paymentMethod: true,
             totalPrice: true,
             invoiceId: true,
             createdAt: true,
+            invoices: {
+              select: {
+                id: true,
+                status: true,
+                invoiceNumber: true,
+                totalAmount: true,
+                paidAt: true,
+                paidAmount: true,
+              },
+            },
             course: {
               select: { id: true, title: true, startDate: true },
             },
@@ -1086,6 +1124,7 @@ export const registrationsRouter = createTRPCRouter({
                   select: {
                     id: true,
                     label: true,
+                    description: true,
                     price: true,
                     maxParticipants: true,
                   },
@@ -1314,9 +1353,9 @@ export const registrationsRouter = createTRPCRouter({
 
         const priceOptionCounts: Record<string, number> = {};
         for (const participant of participantsWithPriceOptions) {
-          if (participant.priceOption) {
-            priceOptionCounts[participant.priceOption] =
-              (priceOptionCounts[participant.priceOption] ?? 0) + 1;
+          if (participant.priceOptionId) {
+            priceOptionCounts[participant.priceOptionId] =
+              (priceOptionCounts[participant.priceOptionId] ?? 0) + 1;
           }
         }
         await assertPriceTierCapacity(
@@ -1351,6 +1390,7 @@ export const registrationsRouter = createTRPCRouter({
             birthDate: participantData.birthDate,
             city: participantData.city,
             instrument: participantData.instrument ?? null,
+            priceOptionId: participantData.priceOptionId ?? null,
             priceOption: participantData.priceOption ?? null,
             customFields: (participantData.customFields ??
               {}) as Prisma.InputJsonValue,
@@ -1549,90 +1589,6 @@ export const registrationsRouter = createTRPCRouter({
       return updatedRegistration;
     }),
 
-  updatePaymentStatus: permissionProcedureAny([
-    PERMISSIONS.INVOICES_MANAGE,
-    PERMISSIONS.REGISTRATIONS_MARK_PAID,
-  ])
-    .input(
-      z.object({
-        id: z.string(),
-        paymentStatus: z.enum(PaymentStatus),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const registration = await ctx.db.courseRegistration.findUnique({
-        where: { id: input.id },
-        include: {
-          course: {
-            include: {
-              createdBy: { select: { id: true } },
-              collaborators: collaboratorsForViewer(viewerId(ctx)),
-            },
-          },
-        },
-      });
-
-      if (!registration) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Registration not found",
-        });
-      }
-
-      const isCreator =
-        registration.course.createdBy?.id === ctx.session.user.id;
-      const canManageRegistrations = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
-        ctx.permissionCache,
-      );
-      const isAdmin = canManageRegistrations;
-      const teamMember = viewerIsCourseTeamMember(
-        registration.course.collaborators,
-      );
-
-      if (!teamMember && !isCreator && !isAdmin) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Insufficient permissions",
-        });
-      }
-
-      const hasInvoicesManage = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.INVOICES_MANAGE,
-        ctx.permissionCache,
-      );
-      if (!hasInvoicesManage && input.paymentStatus !== PaymentStatus.PAID) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Mit Ihrer Berechtigung können Sie nur „Bezahlt“ setzen. Andere Zahlungsstatus erfordern die Rechnungspflege-Berechtigung.",
-        });
-      }
-
-      void logAudit(ctx.db, {
-        actorId: ctx.session.user.id,
-        actorEmail: ctx.session.user.email,
-        action: "registration.payment_status",
-        entityType: "registration",
-        entityId: input.id,
-        details: {
-          paymentStatus: input.paymentStatus,
-          previousPaymentStatus: registration.paymentStatus,
-        },
-      });
-
-      // Invoice state lives on the Invoice model now — issuing or voiding a
-      // document is the invoice router's job, and this mutation must not draw
-      // a number of its own (that used to leave the registration pointing at a
-      // number with no invoice behind it).
-      return ctx.db.courseRegistration.update({
-        where: { id: input.id },
-        data: { paymentStatus: input.paymentStatus },
-      });
-    }),
-
   // Cancellation requires a session: every UI path (own registrations,
   // dashboard) is login-gated, and an anonymous branch keyed only on the
   // registrant e-mail would let anyone with a leaked registration id cancel
@@ -1803,6 +1759,14 @@ export const registrationsRouter = createTRPCRouter({
         where: { courseId: input.courseId },
         include: {
           participants: true,
+          invoices: {
+            select: {
+              status: true,
+              totalAmount: true,
+              paidAt: true,
+              paidAmount: true,
+            },
+          },
         },
       });
 
@@ -1824,12 +1788,33 @@ export const registrationsRouter = createTRPCRouter({
       );
       const totalRevenue = confirmed.reduce((sum, r) => sum + r.totalPrice, 0);
 
-      const paidCount = confirmed.filter(
-        (r) => r.paymentStatus === PaymentStatus.PAID,
+      // Zahlung hängt jetzt an der Rechnung: "bezahlt" heißt, dass jede
+      // ausgestellte Rechnung dieser Anmeldung beglichen ist. Anmeldungen ohne
+      // ausgestellte Rechnung zählen weder als bezahlt noch als offen — für sie
+      // gibt es schlicht nichts zu verbuchen.
+      const withInvoices = confirmed.map((r) => ({
+        registration: r,
+        published: r.invoices.filter(
+          (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
+        ),
+      }));
+
+      const invoiced = withInvoices.filter((r) => r.published.length > 0);
+      const paidCount = invoiced.filter((r) =>
+        r.published.every((invoice) => invoiceOpenAmount(invoice) === 0),
       ).length;
-      const pendingPayment = confirmed.filter(
-        (r) => r.paymentStatus === PaymentStatus.PENDING,
-      ).length;
+      const pendingPayment = invoiced.length - paidCount;
+      const openAmount = invoiced.reduce(
+        (sum, r) =>
+          sum +
+          r.published.reduce(
+            (inner, invoice) => inner + invoiceOpenAmount(invoice),
+            0,
+          ),
+        0,
+      );
+      /** Bestätigte Anmeldungen, zu denen noch gar keine Rechnung existiert. */
+      const uninvoicedCount = withInvoices.length - invoiced.length;
 
       return {
         total: registrations.length,
@@ -1841,6 +1826,8 @@ export const registrationsRouter = createTRPCRouter({
         totalRevenue,
         paidCount,
         pendingPayment,
+        openAmount,
+        uninvoicedCount,
       };
     }),
 

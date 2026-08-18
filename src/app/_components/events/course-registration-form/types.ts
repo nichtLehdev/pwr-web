@@ -16,7 +16,6 @@ export interface StaffRegistrationOptions {
   /** "AUTO" leaves the choice to the server: confirmed while seats are free. */
   registrationStatus: "AUTO" | "CONFIRMED" | "WAITLIST";
   /** Fee already collected — e.g. cash handed over on the spot. */
-  markAsPaid: boolean;
   sendConfirmationEmail: boolean;
   /** Required to confirm a registration beyond the course capacity. */
   allowOverbooking: boolean;
