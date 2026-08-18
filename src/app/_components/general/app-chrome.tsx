@@ -7,14 +7,7 @@ import { BetaBanner } from "@/app/_components/ui/banner";
 import { MainContent } from "@/app/_components/ui/main-content";
 import { isStandaloneGamePath } from "@/lib/standalone-game-route";
 
-export function AppChrome({
-  children,
-  showBetaBanner = false,
-}: {
-  children: React.ReactNode;
-  /** Aus dem Layout gereicht: auf der öffentlichen Seite (APP_ENV=production) aus. */
-  showBetaBanner?: boolean;
-}) {
+export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const standalone = isStandaloneGamePath(pathname);
 
@@ -25,7 +18,8 @@ export function AppChrome({
 
   return (
     <>
-      {showBetaBanner && <BetaBanner />}
+      {/* Blendet sich auf der öffentlichen Seite (APP_ENV=production) selbst aus. */}
+      <BetaBanner />
       <Navigation />
       <MainContent>{children}</MainContent>
       <Footer />
