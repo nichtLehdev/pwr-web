@@ -26,9 +26,19 @@ const SEPARATOR = "[\\s./-]";
 /** The country these numbers belong to unless they say otherwise. */
 const DEFAULT_COUNTRY = "49";
 
-/** Non-breaking spaces travel in from spreadsheet exports. */
+/**
+ * Strips what spreadsheet exports smuggle in around the actual number:
+ * non-breaking spaces, the invisible bidi marks Excel wraps "+49 …" in, and
+ * the parentheses of the "(0173) 59 33 710" style — the area code is already
+ * delimited by the separator that follows it.
+ */
 function clean(value: string): string {
-  return value.replace(/ /g, " ").trim();
+  return value
+    .replace(/[\u00a0\u202f]/g, " ")
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+    .replace(/[()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /** Splits "0176/2299 4781" into its area code and the remaining digits. */

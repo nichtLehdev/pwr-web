@@ -127,10 +127,11 @@ describe("formatPhoneNumberInternational", () => {
 
   it("leaves input without any digits alone instead of making it +49", () => {
     // Old registration rows hold junk like this; turning it into "+49" would
-    // read as a real number.
+    // read as a real number. Whitespace and brackets still get cleaned, so the
+    // point of the assertion is that no country code is invented.
     expect(formatPhoneNumberInternational("bbbbbbb")).toBe("bbbbbbb");
     expect(formatPhoneNumberInternational('console.log("aaaa");  ')).toBe(
-      'console.log("aaaa");',
+      'console.log "aaaa" ;',
     );
   });
 });
@@ -149,5 +150,26 @@ describe("the zod schemas", () => {
       false,
     );
     expect(phoneSchema.safeParse("1".repeat(51)).success).toBe(false);
+  });
+});
+
+describe("what spreadsheet exports smuggle in", () => {
+  it("drops the parentheses around an area code", () => {
+    expect(formatPhoneNumber("(0173) 59 33 710")).toBe("0173 5933710");
+    expect(formatPhoneNumber("(0201) 743121")).toBe("0201 743121");
+  });
+
+  it("drops the invisible bidi marks Excel wraps +49 numbers in", () => {
+    // U+202A … U+202C, with non-breaking spaces between the groups.
+    expect(formatPhoneNumber("‪+49 173 9077996‬")).toBe("0173 9077996");
+  });
+
+  it("applies the same cleaning to the international format", () => {
+    expect(formatPhoneNumberInternational("‪+49 173 9077996‬")).toBe(
+      "+49 173 9077996",
+    );
+    expect(formatPhoneNumberInternational("(0173) 59 33 710")).toBe(
+      "+49 173 5933710",
+    );
   });
 });
