@@ -100,10 +100,26 @@ export default function ExportImportSection() {
       const result = (await response.json()) as {
         success: boolean;
         importedCount: number;
+        unresolvedReferences?: Array<{
+          subject: string;
+          field: string;
+          value: string;
+        }>;
       };
 
+      // A reference the target database did not know is dropped rather than
+      // failing the whole import, so it has to be said out loud.
+      const unresolved = result.unresolvedReferences ?? [];
+      const unresolvedNote =
+        unresolved.length > 0
+          ? ` ${unresolved.length} Verweis(e) konnten nicht zugeordnet und mussten weggelassen werden: ${unresolved
+              .slice(0, 5)
+              .map((r) => `${r.subject} (${r.field}: ${r.value})`)
+              .join(", ")}${unresolved.length > 5 ? " …" : ""}`
+          : "";
+
       setImportSuccess(
-        `Erfolgreich ${result.importedCount} ${contentTypeLabels[selectedType]} importiert.`,
+        `Erfolgreich ${result.importedCount} ${contentTypeLabels[selectedType]} importiert.${unresolvedNote}`,
       );
       setImportFile(null);
       setSelectedType(null);
