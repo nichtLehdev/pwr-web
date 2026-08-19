@@ -18,6 +18,8 @@ import {
   PhoneIcon,
   UserIcon,
 } from "lucide-react";
+import { SocialIcon } from "@/app/_components/ui/social-icon";
+import { readSocialLinks, socialTypeLabel } from "@/lib/social-links";
 import { formatPublicAddress } from "@/lib/resolve-ensemble-contact";
 import { db } from "@/server/db";
 import { buildPageMetadata, plainTextExcerpt, SITE_NAME } from "@/lib/seo";
@@ -132,6 +134,8 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
   if (isUuid(id) && ensemble.slug) {
     permanentRedirect(ensemblePath(ensemble));
   }
+
+  const socialLinks = readSocialLinks(ensemble.socials);
 
   const districtColor = ensemble.bezirk
     ? getDistrictColor(ensemble.bezirk.number)
@@ -626,21 +630,46 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Website (only when set) */}
-              {ensemble.contactWebsite && (
+              {/* Webseite und Social Media (only when at least one is set) */}
+              {(ensemble.contactWebsite || socialLinks.length > 0) && (
                 <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                   <h2 className="text-dark dark:text-dark-text mb-4 text-lg font-bold">
-                    Webseite
+                    {ensemble.contactWebsite && socialLinks.length > 0
+                      ? "Webseite & Social Media"
+                      : ensemble.contactWebsite
+                        ? "Webseite"
+                        : "Social Media"}
                   </h2>
-                  <a
-                    href={ensemble.contactWebsite}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
-                  >
-                    <GlobeIcon className="h-5 w-5 shrink-0" />
-                    <span className="break-all">Webseite besuchen</span>
-                  </a>
+                  <div className="space-y-3">
+                    {ensemble.contactWebsite && (
+                      <a
+                        href={ensemble.contactWebsite}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                      >
+                        <GlobeIcon className="h-5 w-5 shrink-0" />
+                        <span className="break-all">Webseite besuchen</span>
+                      </a>
+                    )}
+                    {socialLinks.map((social, index) => (
+                      <a
+                        key={index}
+                        href={social.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-primary flex items-center gap-2 text-gray-700 transition-colors dark:text-gray-300"
+                      >
+                        <SocialIcon
+                          type={social.type}
+                          className="h-5 w-5 shrink-0"
+                        />
+                        <span className="break-all">
+                          {social.label ?? socialTypeLabel(social.type)}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

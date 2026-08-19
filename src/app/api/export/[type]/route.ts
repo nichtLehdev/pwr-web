@@ -157,6 +157,9 @@ export async function GET(
                 email: true,
               },
             },
+            rehearsalSchedules: {
+              orderBy: { day: "asc" },
+            },
           },
           orderBy: { name: "asc" },
         });

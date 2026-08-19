@@ -15,7 +15,10 @@ import {
   DashboardPage,
   SlugField,
   NewLocationForm,
+  SocialLinksEditor,
+  cleanSocialLinks,
 } from "@/app/_components/dashboard";
+import type { SocialLink } from "@/lib/social-links";
 import { ensembleSlugBase } from "@/lib/slug";
 import { CheckIcon, PlusIcon, XIcon } from "lucide-react";
 
@@ -106,6 +109,7 @@ export default function EditEnsemblePage() {
   );
   const [representativePhone, setRepresentativePhone] = useState("");
   const [contactWebsite, setContactWebsite] = useState<string | null>("");
+  const [socials, setSocials] = useState<SocialLink[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -160,6 +164,11 @@ export default function EditEnsemblePage() {
       setRepresentativeEmail(ensemble.representativeEmail);
       setRepresentativePhone(ensemble.representativePhone ?? "");
       setContactWebsite(ensemble.contactWebsite);
+      setSocials(
+        Array.isArray(ensemble.socials)
+          ? (ensemble.socials as SocialLink[])
+          : [],
+      );
       setConductorId(ensemble.conductorId);
       setRepresentativeId(ensemble.representativeId);
       setIsActive(ensemble.isActive);
@@ -320,6 +329,7 @@ export default function EditEnsemblePage() {
           : undefined,
       internalId: internalId?.trim() || null,
       contactWebsite: contactWebsite?.trim() || null,
+      socials: cleanSocialLinks(socials),
       conductorId: useCustomConductor ? null : conductorId || null,
       conductorName: useCustomConductor ? conductorName.trim() || null : null,
       conductorEmail: conductorEmail?.trim() || null,
@@ -1112,10 +1122,10 @@ export default function EditEnsemblePage() {
               )}
             </div>
 
-            {/* Website (ensemble-level) */}
+            {/* Website & Social Media (ensemble-level) */}
             <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-                Website
+                Website & Social Media
               </h2>
 
               <div>
@@ -1134,6 +1144,13 @@ export default function EditEnsemblePage() {
                   E-Mail und Telefon werden pro Person (Chorleitung /
                   Ansprechpartner) gepflegt.
                 </p>
+              </div>
+
+              <div>
+                <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                  Social Media
+                </label>
+                <SocialLinksEditor value={socials} onChange={setSocials} />
               </div>
             </div>
           </div>

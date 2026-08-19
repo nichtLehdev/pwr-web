@@ -1074,6 +1074,12 @@ model Ensemble {
 
   // Ensemble-level contact
   contactWebsite String?
+  /**
+   * JSON array of social links, same shape as TeamMember.socials:
+   * [{ type: "instagram", url: "https://…", label?: "…" }]. The known types
+   * are SOCIAL_TYPE_OPTIONS in app/_components/ui/social-icon.tsx.
+   */
+  socials        Json?
 
   // Conductor (Leitung). Either link to a User (preferred) or provide
   // free-text name/email/phone for non-user conductors.

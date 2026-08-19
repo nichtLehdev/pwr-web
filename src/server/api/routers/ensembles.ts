@@ -11,6 +11,16 @@ import {
 } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
 
+/**
+ * One entry of Ensemble.socials. `type` drives the icon, so it stays a plain
+ * string: SOCIAL_TYPE_OPTIONS may grow without a migration here.
+ */
+const socialLinkInput = z.object({
+  type: z.string().min(1).max(50),
+  url: z.string().url().max(500),
+  label: z.string().max(100).optional(),
+});
+
 const linkedUserContactSelect = {
   id: true,
   displayName: true,
@@ -199,6 +209,7 @@ export const ensemblesRouter = createTRPCRouter({
           )
           .optional(),
         contactWebsite: z.string().url().optional(),
+        socials: z.array(socialLinkInput).max(20).optional(),
         conductorId: z.string().optional(),
         conductorName: z.string().max(200).optional(),
         conductorEmail: z.string().email().optional(),
@@ -222,6 +233,7 @@ export const ensemblesRouter = createTRPCRouter({
       const {
         rehearsalSchedules,
         slug: requestedSlug,
+        socials,
         ...ensembleData
       } = input;
 
@@ -239,6 +251,7 @@ export const ensemblesRouter = createTRPCRouter({
       const ensemble = await ctx.db.ensemble.create({
         data: {
           ...ensembleData,
+          ...(socials !== undefined && { socials }),
           slug: await createEnsembleSlug(
             ctx.db,
             input.name,
@@ -287,6 +300,8 @@ export const ensemblesRouter = createTRPCRouter({
           )
           .optional(),
         contactWebsite: z.string().url().optional().nullable(),
+        /** An empty array clears the links; omitting the field leaves them. */
+        socials: z.array(socialLinkInput).max(20).optional(),
         conductorId: z.string().optional().nullable(),
         conductorName: z.string().max(200).optional().nullable(),
         conductorEmail: z.string().email().optional().nullable(),
@@ -313,6 +328,7 @@ export const ensemblesRouter = createTRPCRouter({
         id,
         rehearsalSchedules,
         slug: requestedSlug,
+        socials,
         ...updateData
       } = input;
 
@@ -355,6 +371,7 @@ export const ensemblesRouter = createTRPCRouter({
         where: { id },
         data: {
           ...updateData,
+          ...(socials !== undefined && { socials }),
           // A blank field is "keep the current slug", not "clear it".
           ...(requestedSlug?.trim()
             ? { slug: await updateEnsembleSlug(ctx.db, id, requestedSlug) }
@@ -433,6 +450,9 @@ export const ensemblesRouter = createTRPCRouter({
               displayName: true,
               email: true,
             },
+          },
+          rehearsalSchedules: {
+            orderBy: { day: "asc" },
           },
         },
         orderBy: { name: "asc" },
