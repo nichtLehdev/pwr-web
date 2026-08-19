@@ -12,7 +12,10 @@ import {
   DashboardPage,
   SlugField,
   NewLocationForm,
+  SocialLinksEditor,
+  cleanSocialLinks,
 } from "@/app/_components/dashboard";
+import type { SocialLink } from "@/lib/social-links";
 import { ensembleSlugBase } from "@/lib/slug";
 import { getErrorMessage } from "@/lib/utils";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
@@ -107,6 +110,7 @@ export default function NewEnsemblePage() {
   const [representativeEmail, setRepresentativeEmail] = useState("");
   const [representativePhone, setRepresentativePhone] = useState("");
   const [contactWebsite, setContactWebsite] = useState("");
+  const [socials, setSocials] = useState<SocialLink[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -253,6 +257,7 @@ export default function NewEnsemblePage() {
       locationId: locationId || undefined,
       rehearsalSchedules: transformedRehearsalSchedules,
       contactWebsite: contactWebsite.trim() || undefined,
+      socials: cleanSocialLinks(socials),
       conductorId: useCustomConductor ? undefined : conductorId || undefined,
       conductorName: useCustomConductor
         ? conductorName.trim() || undefined
@@ -1001,10 +1006,10 @@ export default function NewEnsemblePage() {
             )}
           </div>
 
-          {/* Website (ensemble-level) */}
+          {/* Website & Social Media (ensemble-level) */}
           <div className="dark:border-dark-border dark:bg-dark-surface space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="dark:text-dark-text text-lg font-semibold text-gray-900">
-              Website
+              Website & Social Media
             </h2>
 
             <div>
@@ -1023,6 +1028,13 @@ export default function NewEnsemblePage() {
                 E-Mail und Telefon werden pro Person (Chorleitung /
                 Ansprechpartner) gepflegt.
               </p>
+            </div>
+
+            <div>
+              <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                Social Media
+              </label>
+              <SocialLinksEditor value={socials} onChange={setSocials} />
             </div>
           </div>
         </div>

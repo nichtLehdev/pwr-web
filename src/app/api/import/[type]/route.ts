@@ -9,6 +9,12 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 import {
+  readRehearsalSchedules,
+  readSocials,
+  type ImportLocation,
+} from "@/server/utils/ensemble-import";
+import { createLocationResolver } from "@/server/utils/ensemble-import-location";
+import {
   ContentStatus,
   PostCategory,
   EventCategory,
@@ -265,26 +271,48 @@ export async function POST(
       case "ensembles": {
         const ensembles =
           (jsonData.ensembles as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          ensembles.map(async (ensembleData: Record<string, unknown>) => {
-            const imageId = ensembleData.imageId as string | undefined;
-            const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
+        const resolveLocation = createLocationResolver(db);
+        // Sequential, not Promise.all: see createLocationResolver.
+        const results = [];
 
-            const legacyContactEmail = ensembleData.contactEmail as
-              string | undefined;
-            const legacyContactPhone = ensembleData.contactPhone as
-              string | undefined;
+        for (const ensembleData of ensembles) {
+          const imageId = ensembleData.imageId as string | undefined;
+          const newImageId = imageId ? mediaIdMap[imageId] || imageId : null;
 
-            return await db.ensemble.create({
+          const legacyContactEmail = ensembleData.contactEmail as
+            string | undefined;
+          const legacyContactPhone = ensembleData.contactPhone as
+            string | undefined;
+
+          // An explicit id wins; the address block is the fallback for sheets
+          // that only know where the chor rehearses.
+          let locationId = (ensembleData.locationId as string) || null;
+          if (!locationId && ensembleData.location) {
+            locationId = await resolveLocation(
+              ensembleData.location as ImportLocation,
+              (ensembleData.name as string) || "unbenannt",
+            );
+          }
+
+          const rehearsalSchedules = readRehearsalSchedules(
+            ensembleData.rehearsalSchedules,
+          );
+
+          results.push(
+            await db.ensemble.create({
               data: {
                 name: ensembleData.name as string,
                 description: (ensembleData.description as string) || null,
                 internalId: (ensembleData.internalId as string) || null,
                 bezirkId: (ensembleData.bezirkId as string) || null,
-                locationId: (ensembleData.locationId as string) || null,
+                locationId,
                 rehearsalDay: (ensembleData.rehearsalDay as string) || null,
                 rehearsalTime: (ensembleData.rehearsalTime as string) || null,
+                ...(rehearsalSchedules.length > 0 && {
+                  rehearsalSchedules: { create: rehearsalSchedules },
+                }),
                 contactWebsite: (ensembleData.contactWebsite as string) || null,
+                socials: readSocials(ensembleData.socials),
                 conductorId: (ensembleData.conductorId as string) || null,
                 conductorName: (ensembleData.conductorName as string) || null,
                 conductorEmail:
@@ -306,9 +334,9 @@ export async function POST(
                 imageId: newImageId,
                 isActive: (ensembleData.isActive as boolean) ?? true,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
 
         result = {
           success: true,
