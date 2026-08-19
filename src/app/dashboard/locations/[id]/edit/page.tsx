@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
+  AddressAutocomplete,
   DashboardPage,
   DashboardSectionedFormLayout,
   DashboardFormZoneHeader,
@@ -197,6 +198,21 @@ export default function EditLocationPage() {
             />
             <DashboardFormBlock title="Adresse">
               <div className="space-y-6">
+                {/* Address search — same component as the new-location form,
+                    here it overwrites the fields of an existing standort. */}
+                <AddressAutocomplete
+                  hint="Vorschlag auswählen, um die Felder unten zu überschreiben"
+                  onSelect={(suggestion) => {
+                    if (suggestion.name) setName(suggestion.name);
+                    if (suggestion.street) setStreet(suggestion.street);
+                    if (suggestion.zipCode) setZipCode(suggestion.zipCode);
+                    if (suggestion.city) setCity(suggestion.city);
+                    if (suggestion.country) setCountry(suggestion.country);
+                    setLatitude(String(suggestion.latitude));
+                    setLongitude(String(suggestion.longitude));
+                  }}
+                />
+
                 {/* Name */}
                 <div>
                   <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
