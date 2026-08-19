@@ -14,6 +14,10 @@ import {
   type ImportLocation,
 } from "@/server/utils/ensemble-import";
 import { createLocationResolver } from "@/server/utils/ensemble-import-location";
+import {
+  createReferenceResolver,
+  type UnresolvedReference,
+} from "@/server/utils/import-references";
 import { formatPhoneNumberOrNull } from "@/lib/phone-number";
 import {
   ContentStatus,
@@ -191,25 +195,38 @@ export async function POST(
       }
     }
 
-    let result: { success: boolean; importedCount: number };
+    let result: {
+      success: boolean;
+      importedCount: number;
+      /** References an export carried that this database could not match. */
+      unresolvedReferences?: UnresolvedReference[];
+    };
 
     switch (type) {
       case "posts": {
         const posts = (jsonData.posts as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          posts.map(async (postData: Record<string, unknown>) => {
-            const coverImageId = postData.coverImageId as string | undefined;
-            const newCoverImageId = coverImageId
-              ? mediaIdMap[coverImageId] || coverImageId
-              : null;
+        const references = createReferenceResolver(db);
+        // Sequential: the resolver caches its lookups, see its comment.
+        const results = [];
 
-            return await db.post.create({
+        for (const postData of posts) {
+          const coverImageId = postData.coverImageId as string | undefined;
+          const newCoverImageId = coverImageId
+            ? mediaIdMap[coverImageId] || coverImageId
+            : null;
+
+          results.push(
+            await db.post.create({
               data: {
                 title: postData.title as string,
                 excerpt: (postData.excerpt as string) || null,
                 content: postData.content as string,
                 category: postData.category as string as PostCategory,
-                bezirkId: (postData.bezirkId as string) || null,
+                bezirkId: await references.bezirkId(
+                  postData.bezirkId,
+                  postData.bezirk,
+                  (postData.title as string) || "ohne Titel",
+                ),
                 pinned: (postData.pinned as boolean) || false,
                 status:
                   (postData.status as string as ContentStatus) ||
@@ -217,13 +234,21 @@ export async function POST(
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
+
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Post-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
 
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }
@@ -231,14 +256,33 @@ export async function POST(
       case "events": {
         const events =
           (jsonData.events as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          events.map(async (eventData: Record<string, unknown>) => {
-            const coverImageId = eventData.coverImageId as string | undefined;
-            const newCoverImageId = coverImageId
-              ? mediaIdMap[coverImageId] || coverImageId
-              : null;
+        const references = createReferenceResolver(db);
+        const resolveLocation = createLocationResolver(db);
+        // Sequential: the resolvers cache and create rows, see their comments.
+        const results = [];
 
-            return await db.event.create({
+        for (const eventData of events) {
+          const coverImageId = eventData.coverImageId as string | undefined;
+          const newCoverImageId = coverImageId
+            ? mediaIdMap[coverImageId] || coverImageId
+            : null;
+
+          const title = (eventData.title as string) || "unbenannt";
+
+          // An id from another database means nothing here, so every
+          // reference is resolved against this one first.
+          let locationId = await references.knownLocationId(
+            eventData.locationId,
+          );
+          if (!locationId && eventData.location) {
+            locationId = await resolveLocation(
+              eventData.location as ImportLocation,
+              title,
+            );
+          }
+
+          results.push(
+            await db.event.create({
               data: {
                 title: eventData.title as string,
                 motto: (eventData.motto as string) || null,
@@ -246,10 +290,23 @@ export async function POST(
                 eventDate: new Date(eventData.eventDate as string),
                 cancelled: (eventData.cancelled as boolean) || false,
                 category: eventData.category as string as EventCategory,
-                bezirkId: (eventData.bezirkId as string) || null,
-                locationId: (eventData.locationId as string) || null,
-                ensembleId: (eventData.ensembleId as string) || null,
-                auswahlChorId: (eventData.auswahlChorId as string) || null,
+                bezirkId: await references.bezirkId(
+                  eventData.bezirkId,
+                  eventData.bezirk,
+                  title,
+                ),
+                locationId,
+                ensembleId: await references.ensembleId(
+                  eventData.ensembleId,
+                  eventData.ensemble,
+                  eventData.ensembleName,
+                  title,
+                ),
+                auswahlChorId: await references.auswahlChorId(
+                  eventData.auswahlChorId,
+                  eventData.auswahlChor,
+                  title,
+                ),
                 performingEnsembleType: (eventData.ensembleType as string)
                   ? (eventData.ensembleType as string as EventEnsembleType)
                   : null,
@@ -258,13 +315,21 @@ export async function POST(
                   (eventData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
+
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Event-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
 
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }
@@ -272,6 +337,7 @@ export async function POST(
       case "ensembles": {
         const ensembles =
           (jsonData.ensembles as Array<Record<string, unknown>>) || [];
+        const references = createReferenceResolver(db);
         const resolveLocation = createLocationResolver(db);
         // Sequential, not Promise.all: see createLocationResolver.
         const results = [];
@@ -305,7 +371,13 @@ export async function POST(
                 name: ensembleData.name as string,
                 description: (ensembleData.description as string) || null,
                 internalId: (ensembleData.internalId as string) || null,
-                bezirkId: (ensembleData.bezirkId as string) || null,
+                // Same cross-environment problem as on events: the raw ids
+                // belong to whichever database wrote the export.
+                bezirkId: await references.bezirkId(
+                  ensembleData.bezirkId,
+                  ensembleData.bezirk,
+                  (ensembleData.name as string) || "unbenannt",
+                ),
                 locationId,
                 rehearsalDay: (ensembleData.rehearsalDay as string) || null,
                 rehearsalTime: (ensembleData.rehearsalTime as string) || null,
@@ -314,7 +386,12 @@ export async function POST(
                 }),
                 contactWebsite: (ensembleData.contactWebsite as string) || null,
                 socials: readSocials(ensembleData.socials),
-                conductorId: (ensembleData.conductorId as string) || null,
+                conductorId: await references.userId(
+                  ensembleData.conductorId,
+                  ensembleData.conductorEmail,
+                  (ensembleData.name as string) || "unbenannt",
+                  "conductorId",
+                ),
                 conductorName: (ensembleData.conductorName as string) || null,
                 conductorEmail:
                   (ensembleData.conductorEmail as string) ||
@@ -326,8 +403,12 @@ export async function POST(
                     legacyContactPhone ||
                     null,
                 ),
-                representativeId:
-                  (ensembleData.representativeId as string) || null,
+                representativeId: await references.userId(
+                  ensembleData.representativeId,
+                  ensembleData.representativeEmail,
+                  (ensembleData.name as string) || "unbenannt",
+                  "representativeId",
+                ),
                 representativeName:
                   (ensembleData.representativeName as string) || null,
                 representativeEmail:
@@ -342,9 +423,17 @@ export async function POST(
           );
         }
 
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Ensemble-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
+
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }
@@ -562,9 +651,27 @@ export async function POST(
       case "courses": {
         const courses =
           (jsonData.courses as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          courses.map(async (courseData: Record<string, unknown>) => {
-            return await db.course.create({
+        const references = createReferenceResolver(db);
+        const resolveLocation = createLocationResolver(db);
+        // Sequential: the resolvers cache and create rows, see their comments.
+        const results = [];
+
+        for (const courseData of courses) {
+          const title = (courseData.title as string) || "ohne Titel";
+
+          // An id from another database means nothing here.
+          let locationId = await references.knownLocationId(
+            courseData.locationId,
+          );
+          if (!locationId && courseData.location) {
+            locationId = await resolveLocation(
+              courseData.location as ImportLocation,
+              title,
+            );
+          }
+
+          results.push(
+            await db.course.create({
               data: {
                 title: courseData.title as string,
                 description: (courseData.description as string) || "",
@@ -580,20 +687,32 @@ export async function POST(
                   ? new Date(courseData.registrationDeadline as string)
                   : null,
                 maxParticipants: (courseData.maxParticipants as number) || null,
-                bezirkId: (courseData.bezirkId as string) || null,
-                locationId: (courseData.locationId as string) || null,
+                bezirkId: await references.bezirkId(
+                  courseData.bezirkId,
+                  courseData.bezirk,
+                  title,
+                ),
+                locationId,
                 status:
                   (courseData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
                 createdById: session.user.id,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
+
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Kurs-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
 
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }

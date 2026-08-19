@@ -192,8 +192,33 @@ jobs:
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
-            # Cleanup old images
+            # Cleanup old images.
+            #
+            # This server receives every pre-release, so each deploy leaves
+            # three more tagged images behind — that, not dangling layers, is
+            # what fills the disk. Only our own repositories are touched, and
+            # only tags other than the one just deployed (plus "latest", which
+            # a manual `docker compose up` without APP_IMAGE_TAG falls back
+            # to). Images belonging to anything else on this server are left
+            # alone, which `docker image prune -af` would not do.
+            echo "Disk before cleanup:"
+            docker system df --format 'table {{.Type}}\t{{.Size}}\t{{.Reclaimable}}' || true
+
+            for repo in pwr-web pwr-backup pwr-cron; do
+              docker images --format '{{.Repository}}:{{.Tag}}' \
+                "ghcr.io/nichtlehdev/$repo" 2>/dev/null \
+                | grep -v ":${APP_IMAGE_TAG}$" \
+                | grep -v ':latest$' \
+                | grep -v ':<none>$' \
+                | xargs -r docker rmi 2>/dev/null || true
+            done
+
+            # Dangling layers left over from the above, plus stopped
+            # containers' writable layers.
             docker image prune -f
+
+            echo "Disk after cleanup:"
+            docker system df --format 'table {{.Type}}\t{{.Size}}\t{{.Reclaimable}}' || true
 
             echo "✅ Deployment complete!"
 
