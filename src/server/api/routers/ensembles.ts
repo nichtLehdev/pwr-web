@@ -10,6 +10,7 @@ import {
   updateEnsembleSlug,
 } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { formatPhoneNumberOrNull } from "@/lib/phone-number";
 
 /**
  * One entry of Ensemble.socials. `type` drives the icon, so it stays a plain
@@ -252,6 +253,12 @@ export const ensemblesRouter = createTRPCRouter({
         data: {
           ...ensembleData,
           ...(socials !== undefined && { socials }),
+          // Stored in the house format so the list stays consistent no matter
+          // how the author typed it; see formatPhoneNumber.
+          conductorPhone: formatPhoneNumberOrNull(ensembleData.conductorPhone),
+          representativePhone: formatPhoneNumberOrNull(
+            ensembleData.representativePhone,
+          ),
           slug: await createEnsembleSlug(
             ctx.db,
             input.name,
@@ -372,6 +379,16 @@ export const ensemblesRouter = createTRPCRouter({
         data: {
           ...updateData,
           ...(socials !== undefined && { socials }),
+          // Only touch a phone the caller actually sent: an absent field means
+          // "leave it", which is not the same as clearing it.
+          ...(updateData.conductorPhone !== undefined && {
+            conductorPhone: formatPhoneNumberOrNull(updateData.conductorPhone),
+          }),
+          ...(updateData.representativePhone !== undefined && {
+            representativePhone: formatPhoneNumberOrNull(
+              updateData.representativePhone,
+            ),
+          }),
           // A blank field is "keep the current slug", not "clear it".
           ...(requestedSlug?.trim()
             ? { slug: await updateEnsembleSlug(ctx.db, id, requestedSlug) }
