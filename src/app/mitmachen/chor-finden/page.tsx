@@ -1,10 +1,5 @@
 "use client";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Select,
-} from "@/app/_components/ui";
+import { Select } from "@/app/_components/ui";
 
 import {
   useState,
@@ -36,7 +31,6 @@ import {
   MapPinIcon,
   PhoneIcon,
   SearchIcon,
-  InfoIcon,
 } from "lucide-react";
 import { MailIcon } from "lucide-react";
 import { ensemblePath } from "@/lib/slug";
@@ -408,26 +402,6 @@ function ChorFindenContent() {
             <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
               Alle Posaunenchöre
             </h2>
-
-            <Alert variant="warning" className="mb-8">
-              <div className="flex gap-3">
-                <InfoIcon
-                  className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
-                  aria-hidden
-                />
-                <div>
-                  <AlertTitle className="mb-1">Vorläufige Daten</AlertTitle>
-                  <AlertDescription className="leading-relaxed">
-                    Die hier angezeigten Angaben sind vorläufig. Es können
-                    Ensembles fehlen oder einzelne Einträge unvollständig bzw.
-                    fehlerhaft sein. Bekannte Abweichungen werden mit dem Start
-                    der Website bereinigt. Bitte keine E-Mails oder Rückfragen
-                    zu Daten auf dieser Seite — uns ist bekannt, was noch
-                    angepasst werden muss.
-                  </AlertDescription>
-                </div>
-              </div>
-            </Alert>
 
             <div className="mb-8 inline-flex rounded-lg border border-gray-300 p-1 dark:border-gray-600">
               <button

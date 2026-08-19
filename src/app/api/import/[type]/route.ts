@@ -14,6 +14,7 @@ import {
   type ImportLocation,
 } from "@/server/utils/ensemble-import";
 import { createLocationResolver } from "@/server/utils/ensemble-import-location";
+import { formatPhoneNumberOrNull } from "@/lib/phone-number";
 import {
   ContentStatus,
   PostCategory,
@@ -319,18 +320,21 @@ export async function POST(
                   (ensembleData.conductorEmail as string) ||
                   legacyContactEmail ||
                   null,
-                conductorPhone:
+                // No zod layer here, so the house format is applied directly.
+                conductorPhone: formatPhoneNumberOrNull(
                   (ensembleData.conductorPhone as string) ||
-                  legacyContactPhone ||
-                  null,
+                    legacyContactPhone ||
+                    null,
+                ),
                 representativeId:
                   (ensembleData.representativeId as string) || null,
                 representativeName:
                   (ensembleData.representativeName as string) || null,
                 representativeEmail:
                   (ensembleData.representativeEmail as string) || null,
-                representativePhone:
+                representativePhone: formatPhoneNumberOrNull(
                   (ensembleData.representativePhone as string) || null,
+                ),
                 imageId: newImageId,
                 isActive: (ensembleData.isActive as boolean) ?? true,
               },

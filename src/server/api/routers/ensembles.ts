@@ -10,6 +10,7 @@ import {
   updateEnsembleSlug,
 } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
+import { phoneSchema } from "@/lib/phone-number";
 
 /**
  * One entry of Ensemble.socials. `type` drives the icon, so it stays a plain
@@ -213,19 +214,11 @@ export const ensemblesRouter = createTRPCRouter({
         conductorId: z.string().optional(),
         conductorName: z.string().max(200).optional(),
         conductorEmail: z.string().email().optional(),
-        conductorPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        conductorPhone: phoneSchema.optional(),
         representativeId: z.string().optional(),
         representativeName: z.string().max(200).optional(),
         representativeEmail: z.string().email().optional(),
-        representativePhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        representativePhone: phoneSchema.optional(),
         isActive: z.boolean().default(true),
       }),
     )
@@ -305,21 +298,11 @@ export const ensemblesRouter = createTRPCRouter({
         conductorId: z.string().optional().nullable(),
         conductorName: z.string().max(200).optional().nullable(),
         conductorEmail: z.string().email().optional().nullable(),
-        conductorPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional()
-          .nullable(),
+        conductorPhone: phoneSchema.optional().nullable(),
         representativeId: z.string().optional().nullable(),
         representativeName: z.string().max(200).optional().nullable(),
         representativeEmail: z.string().email().optional().nullable(),
-        representativePhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional()
-          .nullable(),
+        representativePhone: phoneSchema.optional().nullable(),
         isActive: z.boolean().optional(),
       }),
     )
