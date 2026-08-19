@@ -205,20 +205,28 @@ export async function POST(
     switch (type) {
       case "posts": {
         const posts = (jsonData.posts as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          posts.map(async (postData: Record<string, unknown>) => {
-            const coverImageId = postData.coverImageId as string | undefined;
-            const newCoverImageId = coverImageId
-              ? mediaIdMap[coverImageId] || coverImageId
-              : null;
+        const references = createReferenceResolver(db);
+        // Sequential: the resolver caches its lookups, see its comment.
+        const results = [];
 
-            return await db.post.create({
+        for (const postData of posts) {
+          const coverImageId = postData.coverImageId as string | undefined;
+          const newCoverImageId = coverImageId
+            ? mediaIdMap[coverImageId] || coverImageId
+            : null;
+
+          results.push(
+            await db.post.create({
               data: {
                 title: postData.title as string,
                 excerpt: (postData.excerpt as string) || null,
                 content: postData.content as string,
                 category: postData.category as string as PostCategory,
-                bezirkId: (postData.bezirkId as string) || null,
+                bezirkId: await references.bezirkId(
+                  postData.bezirkId,
+                  postData.bezirk,
+                  (postData.title as string) || "ohne Titel",
+                ),
                 pinned: (postData.pinned as boolean) || false,
                 status:
                   (postData.status as string as ContentStatus) ||
@@ -226,13 +234,21 @@ export async function POST(
                 coverImageId: newCoverImageId,
                 createdById: session.user.id,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
+
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Post-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
 
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }
@@ -635,9 +651,27 @@ export async function POST(
       case "courses": {
         const courses =
           (jsonData.courses as Array<Record<string, unknown>>) || [];
-        const results = await Promise.all(
-          courses.map(async (courseData: Record<string, unknown>) => {
-            return await db.course.create({
+        const references = createReferenceResolver(db);
+        const resolveLocation = createLocationResolver(db);
+        // Sequential: the resolvers cache and create rows, see their comments.
+        const results = [];
+
+        for (const courseData of courses) {
+          const title = (courseData.title as string) || "ohne Titel";
+
+          // An id from another database means nothing here.
+          let locationId = await references.knownLocationId(
+            courseData.locationId,
+          );
+          if (!locationId && courseData.location) {
+            locationId = await resolveLocation(
+              courseData.location as ImportLocation,
+              title,
+            );
+          }
+
+          results.push(
+            await db.course.create({
               data: {
                 title: courseData.title as string,
                 description: (courseData.description as string) || "",
@@ -653,20 +687,32 @@ export async function POST(
                   ? new Date(courseData.registrationDeadline as string)
                   : null,
                 maxParticipants: (courseData.maxParticipants as number) || null,
-                bezirkId: (courseData.bezirkId as string) || null,
-                locationId: (courseData.locationId as string) || null,
+                bezirkId: await references.bezirkId(
+                  courseData.bezirkId,
+                  courseData.bezirk,
+                  title,
+                ),
+                locationId,
                 status:
                   (courseData.status as string as ContentStatus) ||
                   ContentStatus.DRAFT,
                 createdById: session.user.id,
               },
-            });
-          }),
-        );
+            }),
+          );
+        }
+
+        if (references.unresolved.length > 0) {
+          console.warn(
+            `Kurs-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
+            references.unresolved,
+          );
+        }
 
         result = {
           success: true,
           importedCount: results.length,
+          unresolvedReferences: references.unresolved,
         };
         break;
       }
