@@ -5,6 +5,7 @@ import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { bezirkPersonInclude, toBezirkPerson } from "../helpers/people";
 import type { Prisma } from "~/generated/prisma/client";
+import { lenientPhoneSchema } from "@/lib/phone-number";
 
 /** Obleute eines Bezirks, sortiert wie im Dashboard gepflegt. */
 const bezirkPeople = {
@@ -242,7 +243,7 @@ export const bezirkeRouter = createTRPCRouter({
               userId: z.string().optional().nullable(),
               name: z.string().max(100).optional().nullable(),
               email: z.email().optional().nullable(),
-              phone: z.string().max(50).optional().nullable(),
+              phone: lenientPhoneSchema.optional().nullable(),
               street: z.string().max(200).optional().nullable(),
               zipCode: z.string().max(20).optional().nullable(),
               city: z.string().max(100).optional().nullable(),

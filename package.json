@@ -25,6 +25,7 @@
     "seed:roles": "tsx prisma/seed-roles.ts",
     "backfill:geocode": "tsx prisma/backfill-geocode.ts",
     "backfill:slugs": "tsx prisma/backfill-slugs.ts",
+    "backfill:phones": "tsx prisma/backfill-phone-format.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },

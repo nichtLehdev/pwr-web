@@ -9,6 +9,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { invoicePaymentState } from "@/lib/invoice-payment";
+import { internationalPhoneSchema } from "@/lib/phone-number";
 // UserRole enum removed - using permissions system instead
 
 /**
@@ -208,11 +209,7 @@ export const usersRouter = createTRPCRouter({
           .max(30)
           .regex(/^[a-zA-Z0-9_.-]+$/)
           .optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        phone: internationalPhoneSchema.optional(),
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
@@ -425,11 +422,7 @@ export const usersRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        phone: internationalPhoneSchema.optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -507,11 +500,7 @@ export const usersRouter = createTRPCRouter({
         street: z.string().max(200).optional(),
         zipCode: z.string().max(20).optional(),
         city: z.string().max(100).optional(),
-        phone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        phone: internationalPhoneSchema.optional(),
         preferences: z.string().optional(),
       }),
     )
