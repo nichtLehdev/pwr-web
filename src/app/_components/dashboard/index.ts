@@ -44,3 +44,4 @@ export {
   DEFAULT_LOCATION_COUNTRY,
   type CreatedLocation,
 } from "./new-location-form";
+export { SocialLinksEditor, cleanSocialLinks } from "./social-links-editor";

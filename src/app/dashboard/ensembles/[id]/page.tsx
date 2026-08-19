@@ -8,7 +8,9 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
-import { EditIcon, MusicIcon } from "lucide-react";
+import { SocialIcon } from "@/app/_components/ui/social-icon";
+import { readSocialLinks } from "@/lib/social-links";
+import { EditIcon, GlobeIcon, MusicIcon } from "lucide-react";
 import { UserIcon } from "lucide-react";
 import { ArrowLeftIcon } from "lucide-react";
 
@@ -80,6 +82,8 @@ export default function EnsembleDetailPage() {
       </div>
     );
   }
+
+  const socialLinks = readSocialLinks(ensemble.socials);
 
   return (
     <DashboardPage
@@ -395,20 +399,37 @@ export default function EnsembleDetailPage() {
         </dl>
       </div>
 
-      {/* Website */}
-      {ensemble.contactWebsite && (
+      {/* Website & Social Media */}
+      {(ensemble.contactWebsite || socialLinks.length > 0) && (
         <div className="dark:border-dark-border dark:bg-dark-surface mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="dark:text-dark-text mb-4 text-lg font-semibold text-gray-900">
-            Website
+            Website & Social Media
           </h2>
-          <a
-            href={ensemble.contactWebsite}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            {ensemble.contactWebsite}
-          </a>
+          <div className="space-y-2">
+            {ensemble.contactWebsite && (
+              <a
+                href={ensemble.contactWebsite}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary flex items-center gap-2 hover:underline"
+              >
+                <GlobeIcon className="h-4 w-4 shrink-0" />
+                <span className="break-all">{ensemble.contactWebsite}</span>
+              </a>
+            )}
+            {socialLinks.map((social, index) => (
+              <a
+                key={index}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary flex items-center gap-2 hover:underline"
+              >
+                <SocialIcon type={social.type} className="h-4 w-4 shrink-0" />
+                <span className="break-all">{social.label ?? social.url}</span>
+              </a>
+            ))}
+          </div>
         </div>
       )}
 
