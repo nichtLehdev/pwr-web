@@ -51,7 +51,7 @@
     "@trpc/client": "^11.18.0",
     "@trpc/react-query": "^11.18.0",
     "@trpc/server": "^11.18.0",
-    "better-auth": "^1.6.29",
+    "better-auth": "^1.7.1",
     "dotenv": "^17.4.2",
     "html-to-image": "^1.11.13",
     "isomorphic-dompurify": "^3.17.0",
