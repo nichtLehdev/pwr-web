@@ -22,6 +22,7 @@ import {
   parseResponsibilities,
   parseSocials,
 } from "../helpers/people";
+import { lenientPhoneSchema } from "@/lib/phone-number";
 
 export const organizationRouter = createTRPCRouter({
   getPosaunenrat: publicProcedure.query(async ({ ctx }) => {
@@ -102,7 +103,7 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().max(50).optional(),
+        phone: lenientPhoneSchema.optional(),
         bio: z.string().max(2000).optional(),
         imageId: z.string().optional(),
         role: z.enum(PosaunenratRole),
@@ -139,7 +140,7 @@ export const organizationRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().max(50).optional().nullable(),
+        phone: lenientPhoneSchema.optional().nullable(),
         bio: z.string().max(2000).optional().nullable(),
         imageId: z.string().optional().nullable(),
         role: z.enum(PosaunenratRole).optional(),
@@ -215,7 +216,7 @@ export const organizationRouter = createTRPCRouter({
         userId: z.string().optional(),
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().max(50).optional(),
+        phone: lenientPhoneSchema.optional(),
         bio: z.string().max(2000).optional(),
         imageId: z.string().optional(),
         role: z.string().max(100).optional(),
@@ -273,7 +274,7 @@ export const organizationRouter = createTRPCRouter({
         userId: z.string().optional().nullable(),
         name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().max(50).optional().nullable(),
+        phone: lenientPhoneSchema.optional().nullable(),
         bio: z.string().max(2000).optional().nullable(),
         imageId: z.string().optional().nullable(),
         role: z.string().max(100).optional(),
@@ -379,7 +380,7 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().max(50).optional(),
+        phone: lenientPhoneSchema.optional(),
         position: z.string().min(1).max(100),
         description: z.string().max(1000).optional(),
         color: z.string().optional(),
@@ -425,7 +426,7 @@ export const organizationRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().max(50).optional().nullable(),
+        phone: lenientPhoneSchema.optional().nullable(),
         position: z.string().max(100).optional(),
         description: z.string().max(1000).optional().nullable(),
         color: z.string().optional().nullable(),
@@ -570,7 +571,7 @@ export const organizationRouter = createTRPCRouter({
       z.object({
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().max(50).optional(),
+        phone: lenientPhoneSchema.optional(),
         city: z.string().max(100).optional(),
         position: z.string().max(100).optional(),
         role: z.enum(FoerdervereinRole).default("MITGLIED"),
@@ -623,7 +624,7 @@ export const organizationRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().max(50).optional().nullable(),
+        phone: lenientPhoneSchema.optional().nullable(),
         city: z.string().max(100).optional().nullable(),
         position: z.string().max(100).optional().nullable(),
         role: z.enum(FoerdervereinRole).optional(),
@@ -937,7 +938,7 @@ export const organizationRouter = createTRPCRouter({
         userId: z.string().optional(),
         name: z.string().max(100).optional(),
         email: z.email().optional(),
-        phone: z.string().max(50).optional(),
+        phone: lenientPhoneSchema.optional(),
         bio: z.string().max(2000).optional(),
         roleLabel: z.string().max(100).optional(),
         roleType: z.enum(PosaunenwartRoleType),
@@ -982,7 +983,7 @@ export const organizationRouter = createTRPCRouter({
         userId: z.string().optional().nullable(),
         name: z.string().max(100).optional().nullable(),
         email: z.email().optional().nullable(),
-        phone: z.string().max(50).optional().nullable(),
+        phone: lenientPhoneSchema.optional().nullable(),
         bio: z.string().max(2000).optional().nullable(),
         roleLabel: z.string().max(100).optional().nullable(),
         roleType: z.enum(PosaunenwartRoleType).optional(),

@@ -58,6 +58,7 @@ import {
   registrationAccessUrl,
   viewerId,
 } from "../helpers/registration-access";
+import { internationalPhoneSchema } from "@/lib/phone-number";
 
 const getEmailService = async () => import("@/server/email");
 
@@ -205,11 +206,7 @@ export const registrationsRouter = createTRPCRouter({
         registrantFirstName: z.string().min(1).max(100),
         registrantLastName: z.string().min(1).max(100),
         registrantEmail: z.email(),
-        registrantPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        registrantPhone: internationalPhoneSchema.optional(),
         registrantStreet: z.string().max(200).optional(),
         registrantZipCode: z.string().max(20).optional(),
         registrantCity: z.string().max(100).optional(),
@@ -470,11 +467,7 @@ export const registrationsRouter = createTRPCRouter({
         registrantFirstName: z.string().min(1).max(100),
         registrantLastName: z.string().min(1).max(100),
         registrantEmail: z.email(),
-        registrantPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        registrantPhone: internationalPhoneSchema.optional(),
         registrantStreet: z.string().max(200).optional(),
         registrantZipCode: z.string().max(20).optional(),
         registrantCity: z.string().max(100).optional(),
@@ -1160,11 +1153,7 @@ export const registrationsRouter = createTRPCRouter({
         id: z.string(),
         /** Magic-link credential for registrants without an account. */
         accessToken: z.string().optional(),
-        registrantPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        registrantPhone: internationalPhoneSchema.optional(),
         useSeparateBilling: z.boolean().optional(),
         billingCompany: z.string().max(200).optional(),
         billingFirstName: z.string().max(100).optional(),

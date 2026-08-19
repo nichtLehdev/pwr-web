@@ -10,7 +10,7 @@ import {
   updateEnsembleSlug,
 } from "../helpers/content-slug";
 import { isUuid, MAX_SLUG_LENGTH } from "@/lib/slug";
-import { formatPhoneNumberOrNull } from "@/lib/phone-number";
+import { phoneSchema } from "@/lib/phone-number";
 
 /**
  * One entry of Ensemble.socials. `type` drives the icon, so it stays a plain
@@ -214,19 +214,11 @@ export const ensemblesRouter = createTRPCRouter({
         conductorId: z.string().optional(),
         conductorName: z.string().max(200).optional(),
         conductorEmail: z.string().email().optional(),
-        conductorPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        conductorPhone: phoneSchema.optional(),
         representativeId: z.string().optional(),
         representativeName: z.string().max(200).optional(),
         representativeEmail: z.string().email().optional(),
-        representativePhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional(),
+        representativePhone: phoneSchema.optional(),
         isActive: z.boolean().default(true),
       }),
     )
@@ -253,12 +245,6 @@ export const ensemblesRouter = createTRPCRouter({
         data: {
           ...ensembleData,
           ...(socials !== undefined && { socials }),
-          // Stored in the house format so the list stays consistent no matter
-          // how the author typed it; see formatPhoneNumber.
-          conductorPhone: formatPhoneNumberOrNull(ensembleData.conductorPhone),
-          representativePhone: formatPhoneNumberOrNull(
-            ensembleData.representativePhone,
-          ),
           slug: await createEnsembleSlug(
             ctx.db,
             input.name,
@@ -312,21 +298,11 @@ export const ensemblesRouter = createTRPCRouter({
         conductorId: z.string().optional().nullable(),
         conductorName: z.string().max(200).optional().nullable(),
         conductorEmail: z.string().email().optional().nullable(),
-        conductorPhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional()
-          .nullable(),
+        conductorPhone: phoneSchema.optional().nullable(),
         representativeId: z.string().optional().nullable(),
         representativeName: z.string().max(200).optional().nullable(),
         representativeEmail: z.string().email().optional().nullable(),
-        representativePhone: z
-          .string()
-          .max(50)
-          .regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/)
-          .optional()
-          .nullable(),
+        representativePhone: phoneSchema.optional().nullable(),
         isActive: z.boolean().optional(),
       }),
     )
@@ -379,16 +355,6 @@ export const ensemblesRouter = createTRPCRouter({
         data: {
           ...updateData,
           ...(socials !== undefined && { socials }),
-          // Only touch a phone the caller actually sent: an absent field means
-          // "leave it", which is not the same as clearing it.
-          ...(updateData.conductorPhone !== undefined && {
-            conductorPhone: formatPhoneNumberOrNull(updateData.conductorPhone),
-          }),
-          ...(updateData.representativePhone !== undefined && {
-            representativePhone: formatPhoneNumberOrNull(
-              updateData.representativePhone,
-            ),
-          }),
           // A blank field is "keep the current slug", not "clear it".
           ...(requestedSlug?.trim()
             ? { slug: await updateEnsembleSlug(ctx.db, id, requestedSlug) }
