@@ -8,6 +8,10 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
+import {
+  InvoicePaymentDialog,
+  type PayableInvoice,
+} from "@/app/_components/dashboard/invoice-payment-dialog";
 import type { PermissionKey } from "@/lib/permissions";
 import {
   InvoiceStatus,
@@ -169,6 +173,11 @@ export default function RegistrationDetailPage() {
     void utils.courses.getRegistrations.invalidate({ courseId });
     void utils.invoices.listForCourse.invalidate({ courseId });
   };
+
+  /** Rechnung, für die der Dialog offen ist — null heißt geschlossen. */
+  const [paymentInvoice, setPaymentInvoice] = useState<PayableInvoice | null>(
+    null,
+  );
 
   const markPaidMutation = api.invoices.markPaid.useMutation({
     onSuccess: () => {
@@ -754,18 +763,34 @@ export default function RegistrationDetailPage() {
                                 Zahlung zurücknehmen
                               </button>
                             ) : (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  markPaidMutation.mutate({ id: invoice.id })
-                                }
-                                disabled={markPaidMutation.isPending}
-                                className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                              >
-                                {markPaidMutation.isPending
-                                  ? "Speichert…"
-                                  : "Als bezahlt markieren"}
-                              </button>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPaymentInvoice({
+                                      id: invoice.id,
+                                      invoiceNumber: invoice.invoiceNumber,
+                                      totalAmount: invoice.totalAmount,
+                                    })
+                                  }
+                                  title="Teilzahlung, abweichende Wertstellung oder Notiz erfassen"
+                                  className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background-secondary rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                                >
+                                  Abweichend…
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    markPaidMutation.mutate({ id: invoice.id })
+                                  }
+                                  disabled={markPaidMutation.isPending}
+                                  className="bg-primary hover:bg-primary-dark rounded-lg px-3 py-1.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                                >
+                                  {markPaidMutation.isPending
+                                    ? "Speichert…"
+                                    : "Als bezahlt markieren"}
+                                </button>
+                              </>
                             ))}
                         </div>
                       </li>
@@ -999,6 +1024,14 @@ export default function RegistrationDetailPage() {
               </ScrollableModalFooter>
             </ScrollableModalCard>
           </ScrollableModal>
+        )}
+
+        {paymentInvoice && (
+          <InvoicePaymentDialog
+            invoice={paymentInvoice}
+            onClose={() => setPaymentInvoice(null)}
+            onBooked={invalidatePayment}
+          />
         )}
       </div>
     </main>

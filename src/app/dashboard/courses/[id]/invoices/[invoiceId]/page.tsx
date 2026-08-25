@@ -7,6 +7,8 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import DashboardPage from "@/app/_components/dashboard/dashboard-page";
 import { InvoiceStatusBadge } from "@/app/_components/dashboard/invoice-status-badge";
+import { InvoicePaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { InvoicePaymentDialog } from "@/app/_components/dashboard/invoice-payment-dialog";
 import { SignatureCanvas } from "@/app/_components/dashboard/signature-canvas";
 import { useToast } from "@/app/_components/ui/toast";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
@@ -16,6 +18,7 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
+import { invoiceOpenAmount } from "@/lib/invoice-payment";
 import {
   formatDate,
   formatEuro,
@@ -33,6 +36,7 @@ import {
   PlusIcon,
   SaveIcon,
   SendIcon,
+  SlidersHorizontalIcon,
   Trash2Icon,
   UploadIcon,
   XIcon,
@@ -101,6 +105,7 @@ export default function InvoiceEditorPage() {
 
   const [publishOpen, setPublishOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [notifyRegistrant, setNotifyRegistrant] = useState(true);
   // Only ever held in memory and handed to the publish call — the signature is
@@ -188,6 +193,25 @@ export default function InvoiceEditorPage() {
       void utils.invoices.getById.invalidate({ id: invoiceId });
       void utils.invoices.listForCourse.invalidate({ courseId });
       toast.success("Rechnung storniert");
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
+
+  /** Der Normalfall: voller Betrag, heute. Abweichungen laufen über den Dialog. */
+  const markPaid = api.invoices.markPaid.useMutation({
+    onSuccess: () => {
+      void utils.invoices.getById.invalidate({ id: invoiceId });
+      void utils.invoices.listForCourse.invalidate({ courseId });
+      toast.success("Zahlung verbucht");
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
+
+  const markUnpaid = api.invoices.markUnpaid.useMutation({
+    onSuccess: () => {
+      void utils.invoices.getById.invalidate({ id: invoiceId });
+      void utils.invoices.listForCourse.invalidate({ courseId });
+      toast.success("Zahlung zurückgenommen");
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
@@ -350,6 +374,16 @@ export default function InvoiceEditorPage() {
       <div className="dark:bg-dark-surface mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-white p-4 shadow">
         <div className="flex flex-wrap items-center gap-3">
           <InvoiceStatusBadge status={invoice.status} />
+          <InvoicePaymentBadge invoice={invoice} />
+          {invoice.paidAt && (
+            <span className="dark:text-dark-muted text-sm text-gray-500">
+              verbucht am {formatDate(invoice.paidAt)}
+              {invoice.paidAmount !== null &&
+                ` · ${formatEuro(invoice.paidAmount)}`}
+              {invoiceOpenAmount(invoice) > 0 &&
+                ` · offen ${formatEuro(invoiceOpenAmount(invoice))}`}
+            </span>
+          )}
           {invoice.invoiceDate && (
             <span className="dark:text-dark-muted text-sm text-gray-500">
               Rechnungsdatum {formatDate(invoice.invoiceDate)}
@@ -423,6 +457,40 @@ export default function InvoiceEditorPage() {
               Stornieren
             </button>
           )}
+          {invoice.status === InvoiceStatus.PUBLISHED &&
+            invoice.canBookPayments &&
+            (invoice.paidAt ? (
+              <button
+                type="button"
+                onClick={() => markUnpaid.mutate({ id: invoiceId })}
+                disabled={markUnpaid.isPending}
+                className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                {markUnpaid.isPending
+                  ? "Nehme zurück…"
+                  : "Zahlung zurücknehmen"}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPaymentOpen(true)}
+                  title="Teilzahlung, abweichende Wertstellung oder Notiz erfassen"
+                  className="dark:border-dark-border dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
+                >
+                  <SlidersHorizontalIcon className="h-4 w-4" />
+                  Abweichend verbuchen…
+                </button>
+                <button
+                  type="button"
+                  onClick={() => markPaid.mutate({ id: invoiceId })}
+                  disabled={markPaid.isPending}
+                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {markPaid.isPending ? "Verbuche…" : "Als bezahlt markieren"}
+                </button>
+              </>
+            ))}
         </div>
       </div>
 
@@ -1060,6 +1128,21 @@ export default function InvoiceEditorPage() {
             </ScrollableModalFooter>
           </ScrollableModalCard>
         </ScrollableModal>
+      )}
+
+      {paymentOpen && (
+        <InvoicePaymentDialog
+          invoice={{
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            totalAmount: invoice.totalAmount,
+          }}
+          onClose={() => setPaymentOpen(false)}
+          onBooked={() => {
+            void utils.invoices.getById.invalidate({ id: invoiceId });
+            void utils.invoices.listForCourse.invalidate({ courseId });
+          }}
+        />
       )}
     </DashboardPage>
   );
