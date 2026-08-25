@@ -414,7 +414,29 @@ export const newsletterRouter = createTRPCRouter({
       const baseUrl = getBaseUrl(
         ctx.headers ? { headers: ctx.headers } : undefined,
       );
-      const unsubscribeUrl = `${baseUrl}/newsletter/unsubscribe`;
+      /**
+       * Where one subscriber unsubscribes: the page a human lands on, and the
+       * endpoint a mail client posts to on their behalf.
+       */
+      const unsubscribeLinks = (email: string) => {
+        const query = `email=${encodeURIComponent(email)}&token=${createUnsubscribeToken(email)}`;
+        return {
+          page: `${baseUrl}/newsletter/unsubscribe?${query}`,
+          oneClick: `${baseUrl}/api/newsletter/unsubscribe?${query}`,
+        };
+      };
+
+      /**
+       * One-click unsubscribe (RFC 8058). Gmail and Yahoo expect it from bulk
+       * senders, but the reason to want it is narrower: an unsubscribe button
+       * in the client's own chrome is what stops people reaching for "mark as
+       * spam" instead, and it is the complaint rate — not the volume — that
+       * costs a sending domain its reputation.
+       */
+      const unsubscribeHeaders = (oneClickUrl: string) => ({
+        "List-Unsubscribe": `<${oneClickUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      });
 
       const htmlContent = String(await marked.parse(input.content));
 
@@ -426,15 +448,19 @@ export const newsletterRouter = createTRPCRouter({
       }
 
       if (input.testEmail) {
+        // Same links and headers as the real thing, so a test send actually
+        // exercises the unsubscribe path rather than only the layout.
+        const links = unsubscribeLinks(input.testEmail);
         const emailHtml = generateNewsletterHtml({
           content: htmlContent,
-          unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(input.testEmail)}&token=${createUnsubscribeToken(input.testEmail)}`,
+          unsubscribeUrl: links.page,
         });
 
         await sendEmail({
           to: input.testEmail,
           subject: `[TEST] ${input.subject}`,
           html: emailHtml,
+          headers: unsubscribeHeaders(links.oneClick),
         });
 
         return {
@@ -468,9 +494,10 @@ export const newsletterRouter = createTRPCRouter({
         const batch = subscribers.slice(i, i + BATCH_SIZE);
         const results = await Promise.allSettled(
           batch.map((subscriber) => {
+            const links = unsubscribeLinks(subscriber.email);
             const emailHtml = generateNewsletterHtml({
               content: htmlContent,
-              unsubscribeUrl: `${unsubscribeUrl}?email=${encodeURIComponent(subscriber.email)}&token=${createUnsubscribeToken(subscriber.email)}`,
+              unsubscribeUrl: links.page,
               subscriberName: subscriber.name || undefined,
             });
 
@@ -478,6 +505,7 @@ export const newsletterRouter = createTRPCRouter({
               to: subscriber.email,
               subject: input.subject,
               html: emailHtml,
+              headers: unsubscribeHeaders(links.oneClick),
             });
           }),
         );
