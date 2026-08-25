@@ -166,6 +166,15 @@ function CourseMailPageContent() {
 
   const sendMail = api.courseMail.send.useMutation({
     onSuccess: (data) => {
+      // Eine übersprungene Rechnung ist kein Versandfehler: die Nachricht ist
+      // raus, nur ohne das Dokument. Ohne Hinweis hier hielte man sie für
+      // zugestellt — der Server hat es sonst nur ins Log geschrieben.
+      if (data.skippedInvoices.length > 0) {
+        toast.warning(
+          `Nicht angehängt: ${data.skippedInvoices.join(", ")} — die E-Mail wurde ohne diese Rechnung(en) versendet.`,
+          10000,
+        );
+      }
       if (data.test) {
         toast.success("Test-E-Mail wurde an dich gesendet.");
         return;
