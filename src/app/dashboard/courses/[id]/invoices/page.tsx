@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import DashboardPage from "@/app/_components/dashboard/dashboard-page";
+import { InvoicePaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import {
   InvoiceStatusBadge,
   INVOICE_STATUS_LABELS,
@@ -346,6 +347,7 @@ export default function CourseInvoicesPage() {
                         {invoice.invoiceNumber ?? "Entwurf"}
                       </span>
                       <InvoiceStatusBadge status={invoice.status} />
+                      <InvoicePaymentBadge invoice={invoice} />
                       {invoice.replaces?.invoiceNumber && (
                         <span className="dark:text-dark-muted text-xs text-gray-500">
                           ersetzt {invoice.replaces.invoiceNumber}

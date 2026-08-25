@@ -119,6 +119,28 @@ async function resolveInvoiceAccess(
   return { canManage: hasGlobalGrant || isOrganizer, hasGlobalGrant };
 }
 
+/**
+ * Ob an einer Rechnung eine Zahlung verbucht werden darf: die Kursverwaltung
+ * selbst darf es, sonst braucht es das globale Kassenrecht.
+ *
+ * Eine Stelle für Guard und Oberfläche. Die Buttons fragen dieselbe Regel ab,
+ * die die Mutation durchsetzt — sonst driften beide auseinander und es entsteht
+ * genau der Fall, den niemand meldet: ein Knopf, der 403 wirft, oder eine
+ * Berechtigung ohne Knopf.
+ */
+async function canBookInvoicePayments(
+  access: InvoiceAccess,
+  userId: string,
+  permissionCache?: PermissionCache,
+): Promise<boolean> {
+  if (access.canManage) return true;
+  return userHasPermission(
+    userId,
+    PERMISSIONS.REGISTRATIONS_MARK_PAID,
+    permissionCache,
+  );
+}
+
 /** Load a course and assert the viewer may issue invoices for it. */
 async function loadCourseForInvoicing(
   db: PrismaClient,
@@ -229,16 +251,14 @@ async function loadInvoiceForPayment(
     });
   }
 
-  const [access, canMarkPaid] = await Promise.all([
-    resolveInvoiceAccess(db, userId, invoice.course, permissionCache),
-    userHasPermission(
-      userId,
-      PERMISSIONS.REGISTRATIONS_MARK_PAID,
-      permissionCache,
-    ),
-  ]);
+  const access = await resolveInvoiceAccess(
+    db,
+    userId,
+    invoice.course,
+    permissionCache,
+  );
 
-  if (!access.canManage && !canMarkPaid) {
+  if (!(await canBookInvoicePayments(access, userId, permissionCache))) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Keine Berechtigung, Zahlungen zu dieser Rechnung zu verbuchen",
@@ -283,7 +303,15 @@ async function loadInvoiceForRead(
     });
   }
 
-  return { invoice, canManage: access.canManage };
+  return {
+    invoice,
+    canManage: access.canManage,
+    canBookPayments: await canBookInvoicePayments(
+      access,
+      userId,
+      permissionCache,
+    ),
+  };
 }
 
 function assertDraft(status: InvoiceStatus) {
@@ -411,13 +439,13 @@ export const invoicesRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const { invoice, canManage } = await loadInvoiceForRead(
+      const { invoice, canManage, canBookPayments } = await loadInvoiceForRead(
         ctx.db,
         input.id,
         ctx.session.user.id,
         ctx.permissionCache,
       );
-      return { ...invoice, canManage };
+      return { ...invoice, canManage, canBookPayments };
     }),
 
   /**

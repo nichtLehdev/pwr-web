@@ -31,6 +31,24 @@ export const invoicePaymentStateLabels: Record<InvoicePaymentState, string> = {
 const coversTotal = (paidAmount: number, totalAmount: number) =>
   Math.round(paidAmount * 100) >= Math.round(totalAmount * 100);
 
+const centsEqual = (a: number, b: number) =>
+  Math.round(a * 100) === Math.round(b * 100);
+
+/**
+ * Was als `paidAmount` an `markPaid` geht — `undefined` für den vollen Betrag.
+ *
+ * `paidAmount = null` heißt in der Datenbank bewusst "alles": wird der
+ * Rechnungsbetrag später korrigiert, zieht der Zahlungsstand mit. Eine
+ * ausgeschriebene Zahl täte das nicht und bliebe als veraltete Teilzahlung
+ * stehen — deshalb wird der Normalfall gar nicht erst gespeichert.
+ */
+export function bookedAmountFor(
+  enteredAmount: number,
+  totalAmount: number,
+): number | undefined {
+  return centsEqual(enteredAmount, totalAmount) ? undefined : enteredAmount;
+}
+
 export function invoicePaymentState(
   invoice: InvoicePaymentInput,
 ): InvoicePaymentState {
