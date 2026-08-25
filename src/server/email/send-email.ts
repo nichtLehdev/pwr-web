@@ -14,6 +14,11 @@ export interface EmailOptions {
   from?: string;
   replyTo?: string;
   attachments?: EmailAttachment[];
+  /**
+   * Extra MIME headers. Used for List-Unsubscribe on bulk mail; anything set
+   * here goes out verbatim, so values must not carry CR/LF.
+   */
+  headers?: Record<string, string>;
 }
 
 export async function sendEmail(options: EmailOptions) {
@@ -32,6 +37,7 @@ export async function sendEmail(options: EmailOptions) {
     html: options.html,
     ...(options.replyTo && { replyTo: options.replyTo }),
     ...(options.text && { text: options.text }),
+    ...(options.headers && { headers: options.headers }),
     ...(options.attachments?.length && {
       attachments: options.attachments.map((a) => ({
         filename: a.filename,
