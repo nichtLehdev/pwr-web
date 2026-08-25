@@ -224,18 +224,19 @@ export default function RegistrationDetailPage() {
     hasPermission("courses.approve" as PermissionKey) ||
     hasPermission("courses.manage" as PermissionKey);
 
-  // Zahlungen werden an der Rechnung verbucht. Beide Rollen dürfen das —
-  // "als bezahlt markieren" war schon immer die Aufgabe der Kassenführung,
-  // und der Serverguard in invoices.markPaid prüft dasselbe noch einmal.
   /** Nur ausgestellte Rechnungen tragen einen Zahlungsstand. */
   const publishedInvoices =
     registration?.invoices.filter(
       (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
     ) ?? [];
 
-  const canBookPayments =
-    hasPermission("invoices.manage" as PermissionKey) ||
-    hasPermission("registrations.mark_paid" as PermissionKey);
+  // Zahlungen werden an der Rechnung verbucht und folgen deren Rechteregel:
+  // Kursverwaltung oder Kassenführung. Die Antwort kommt vom Server, weil
+  // "Kursverwaltung" die Organisator:innen des Kurses einschließt — clientseitig
+  // ist davon nichts zu sehen, und genau daran ist die frühere Prüfung hier
+  // vorbeigelaufen: Organisator:innen sahen den Knopf nicht, obwohl die Mutation
+  // sie durchgelassen hätte.
+  const canBookPayments = management?.canBookPayments ?? false;
 
   const canApproveDiscount =
     profile &&
