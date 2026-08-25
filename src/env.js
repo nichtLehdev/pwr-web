@@ -1,6 +1,20 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+/**
+ * A positive integer that falls back to `fallback` when the variable is
+ * missing *or* set to an empty string. Deployment templates routinely render
+ * an unset value as "", which plain `.default()` would treat as present and
+ * then reject as NaN — turning an optional tuning knob into a boot failure.
+ *
+ * @param {number} fallback
+ */
+const positiveIntWithDefault = (fallback) =>
+  z.preprocess(
+    (value) => (value === "" || value === undefined ? fallback : value),
+    z.coerce.number().int().min(1),
+  );
+
 export const env = createEnv({
   /**
    * Specify your server-side environment variables schema here. This way you can ensure the app
@@ -42,6 +56,15 @@ export const env = createEnv({
     SMTP_USER: z.string().email().optional(),
     SMTP_PASSWORD: z.string().min(1).optional(),
     SMTP_FROM: z.string().email().optional(),
+    /**
+     * SMTP connection pool, sized for what the relay tolerates rather than
+     * for how fast we would like to be. A newsletter blast holds this many
+     * connections open at once; going past the relay's limit gets the
+     * remaining messages rejected, and a rejected message is never retried.
+     */
+    SMTP_MAX_CONNECTIONS: positiveIntWithDefault(3),
+    /** Burst ceiling across the whole pool. Keep under the relay's rate limit. */
+    SMTP_MAX_MESSAGES_PER_SECOND: positiveIntWithDefault(5),
     /** Recipient for messages from the public contact form. */
     CONTACT_EMAIL: z.string().email().optional(),
     /** Secret for /api/cron/* routes (Bearer token or ?secret=). */
@@ -72,6 +95,8 @@ export const env = createEnv({
     SMTP_USER: process.env.SMTP_USER,
     SMTP_PASSWORD: process.env.SMTP_PASSWORD,
     SMTP_FROM: process.env.SMTP_FROM,
+    SMTP_MAX_CONNECTIONS: process.env.SMTP_MAX_CONNECTIONS,
+    SMTP_MAX_MESSAGES_PER_SECOND: process.env.SMTP_MAX_MESSAGES_PER_SECOND,
     CONTACT_EMAIL: process.env.CONTACT_EMAIL,
     CRON_SECRET: process.env.CRON_SECRET,
   },
