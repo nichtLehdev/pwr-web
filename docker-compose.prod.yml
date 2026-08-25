@@ -240,6 +240,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-}
+      # Pool sizing — keep at or under what the relay allows per mailbox.
+      SMTP_MAX_CONNECTIONS: ${SMTP_MAX_CONNECTIONS:-3}
+      SMTP_MAX_MESSAGES_PER_SECOND: ${SMTP_MAX_MESSAGES_PER_SECOND:-5}
 
       # Cron API (registration-closed overview e-mails)
       CRON_SECRET: ${CRON_SECRET:-}
