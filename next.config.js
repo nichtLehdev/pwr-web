@@ -1,7 +1,3 @@
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
 import "./src/env.js";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -13,16 +9,11 @@ const config = {
   allowedDevOrigins: ["192.168.6.*"],
 
   typescript: {
-    // The build's type pass skips test files (they are covered by the
-    // dedicated lint-typecheck CI job) — keeps the check inside the
-    // memory-capped Docker builder's 1 GB heap.
     tsconfigPath: "tsconfig.build.json",
   },
 
   images: {
     formats: ["image/avif", "image/webp"],
-    // Uploaded assets are immutable (timestamped filenames), so optimized
-    // variants can be cached aggressively.
     minimumCacheTTL: 31536000,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
   },
@@ -34,19 +25,6 @@ const config = {
       "@tiptap/react",
       "@tiptap/starter-kit",
     ],
-  },
-
-  async redirects() {
-    return [
-      {
-        // Auf der alten Website lag die Präventionsseite unter diesem Pfad —
-        // offenbar eine Kopie der Chorsuche, deren Slug nie angepasst wurde.
-        // Externe Links und Suchtreffer zeigen weiterhin dorthin.
-        source: "/posaunenchor-finden-2",
-        destination: "/praevention",
-        permanent: true,
-      },
-    ];
   },
 
   async rewrites() {
@@ -65,9 +43,6 @@ const config = {
         headers: [
           {
             key: "Content-Security-Policy",
-            // 'unsafe-inline' stays for Next's inline bootstrap scripts;
-            // 'unsafe-eval' is only needed by dev tooling (React refresh)
-            // and must not ship in production.
             value: `
               default-src 'self';
               script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://static.cloudflareinsights.com;
@@ -75,7 +50,7 @@ const config = {
               img-src 'self' data: https: blob:;
               font-src 'self' https: data:;
               connect-src 'self' https://static.cloudflareinsights.com;
-              object-src 'none';
+              object-src 'self' https://posaunenwerk-rheinland.de https://www.posaunenwerk-rheinland.de https://next.posaunenwerk-rheinland.de https://pwr.lehdev.de;
               frame-ancestors 'self';
               base-uri 'self';
               form-action 'self';
@@ -102,11 +77,6 @@ const config = {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
           },
-          // The former Access-Control-Allow-* headers were removed on
-          // purpose: the Cloudflare Insights beacon does not need CORS on
-          // this origin, and blanket CORS headers on /api/* would expose the
-          // API to cross-origin calls if the (malformed) origin value were
-          // ever "fixed" to a real one.
         ],
       },
     ];
