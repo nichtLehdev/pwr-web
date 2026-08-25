@@ -18,6 +18,7 @@ import { Step1RegistrantInfo } from "./course-registration-form/step-1-registran
 import { Step2Participants } from "./course-registration-form/step-2-participants";
 import { Step3Summary } from "./course-registration-form/step-3-summary";
 import { validateStep as validateStepUtil } from "./course-registration-form/utils";
+import { registrationErrorMessage } from "@/lib/registration-error-message";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -430,12 +431,10 @@ export default function CourseRegistrationForm({
       onError: (error: { message: string }) => {
         // Surface the real cause (course filled up, deadline passed,
         // duplicate registration) — a generic "try again" message hides
-        // errors that retrying can never fix. Zod issues serialize as a
-        // JSON array; keep the generic text for those.
-        const message =
-          error.message && !error.message.trim().startsWith("[")
-            ? error.message
-            : "Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.";
+        // errors that retrying can never fix. Zod issues arrive as a JSON
+        // array and used to collapse into that same generic text, which named
+        // neither the field nor the reason; they are now named instead.
+        const message = registrationErrorMessage(error.message);
         setSubmitError(message);
         toast.error(message);
         console.error("Registration error:", error);

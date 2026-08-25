@@ -1,4 +1,5 @@
 import type { RegistrationData, CourseWithRelations } from "./types";
+import { isPlausibleEmail } from "@/lib/email-address";
 import { isParticipantUnder18 } from "@/lib/participant-utils";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
 import {
@@ -165,15 +166,22 @@ export function validateStep(
         registrantCity,
       } = registrationData;
 
+      // Das Format gehört hierher, nicht erst zum Absenden: eine Adresse mit
+      // Tippfehler kam sonst durch Schritt 1 und 2 und scheiterte erst am
+      // Server — drei Schritte entfernt von dem Feld, um das es geht.
       const basicValid = !!(
         registrantFirstName &&
         registrantLastName &&
-        registrantEmail &&
+        isPlausibleEmail(registrantEmail) &&
         (staffMode || registrantPhone)
       );
 
       if (registrationData.useSeparateBilling) {
-        const { billingStreet, billingZipCode, billingCity } = registrationData;
+        const { billingStreet, billingZipCode, billingCity, billingEmail } =
+          registrationData;
+        // Die Rechnungsadresse ist optional — wenn sie aber ausgefüllt ist,
+        // prüft der Server sie genauso.
+        if (billingEmail && !isPlausibleEmail(billingEmail)) return false;
         return basicValid && !!(billingStreet && billingZipCode && billingCity);
       }
 
