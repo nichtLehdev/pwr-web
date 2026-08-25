@@ -223,26 +223,48 @@ async function loadPublishedInvoices(
  * Read one recipient's invoice PDFs off disk, ready to attach.
  *
  * `budgetBytes` is what is left of the message's attachment allowance after the
- * shared files. Anything past it is skipped and logged rather than thrown: the
- * blast is already under way by then, and a message that arrives with one
- * attachment missing beats one that never arrives at all.
+ * shared files. Anything past it is skipped rather than thrown: the blast is
+ * already under way by then, and a message that arrives with one attachment
+ * missing beats one that never arrives at all.
+ *
+ * What was skipped is reported back rather than only logged. `mailedAt` and the
+ * count shown to the sender must describe what actually went out — crediting an
+ * invoice that was dropped here would mark a document as delivered that nobody
+ * ever received, and nothing downstream would ever notice.
  */
+type LoadedInvoiceAttachments = {
+  attachments: { filename: string; content: Buffer }[];
+  /** Rechnungen, die wirklich am Umschlag hängen — Grundlage für `mailedAt`. */
+  attachedIds: string[];
+  /** Nummern der Rechnungen, die nicht mitkonnten. */
+  skipped: string[];
+};
+
 async function loadInvoiceAttachments(
   invoices: RecipientInvoice[],
   budgetBytes: number,
-) {
+): Promise<LoadedInvoiceAttachments> {
   const attachments: { filename: string; content: Buffer }[] = [];
+  const attachedIds: string[] = [];
+  const skipped: string[] = [];
   let used = 0;
 
   for (const invoice of invoices) {
     const fsPath = resolveUploadFsPath(invoice.pdfPath);
-    if (!fsPath) continue;
+    if (!fsPath) {
+      console.error(
+        `[CourseMail] Skipped invoice ${invoice.invoiceNumber}: PDF path is not inside the uploads directory`,
+      );
+      skipped.push(invoice.invoiceNumber);
+      continue;
+    }
     try {
       const content = await readFile(/* turbopackIgnore: true */ fsPath);
       if (used + content.byteLength > budgetBytes) {
         console.error(
           `[CourseMail] Skipped invoice ${invoice.invoiceNumber}: attachment budget exhausted`,
         );
+        skipped.push(invoice.invoiceNumber);
         continue;
       }
       used += content.byteLength;
@@ -252,6 +274,7 @@ async function loadInvoiceAttachments(
         ),
         content,
       });
+      attachedIds.push(invoice.id);
     } catch (error) {
       // A missing file must not silently drop the whole mail — the message
       // still goes out, just without that attachment, and the log says why.
@@ -259,9 +282,10 @@ async function loadInvoiceAttachments(
         `[CourseMail] Invoice PDF missing for ${invoice.invoiceNumber}:`,
         error,
       );
+      skipped.push(invoice.invoiceNumber);
     }
   }
-  return attachments;
+  return { attachments, attachedIds, skipped };
 }
 
 /** The values behind `{{…}}` for one recipient. Keys must be lowercase tokens. */
@@ -741,23 +765,31 @@ export const courseMailRouter = createTRPCRouter({
             )
           : exampleValues();
         const personalized = personalize(sample);
+        const sampleInvoices = sampleRecipient
+          ? await loadInvoiceAttachments(
+              invoicesFor(sampleRecipient),
+              invoiceBudgetBytes,
+            )
+          : null;
         await sendCourseMailToRegistrant({
           ...baseMail,
           ...personalized,
           to: input.testEmail,
           subject: `[TEST] ${personalized.subject}`,
           recipientName: sample.vorname || senderName || undefined,
-          attachments: sampleRecipient
-            ? [
-                ...attachments,
-                ...(await loadInvoiceAttachments(
-                  invoicesFor(sampleRecipient),
-                  invoiceBudgetBytes,
-                )),
-              ]
+          attachments: sampleInvoices
+            ? [...attachments, ...sampleInvoices.attachments]
             : attachments,
         });
-        return { test: true, sentCount: 1, failedCount: 0, recipientCount: 1 };
+        // Der Test verbucht nichts — er zeigt aber, was im Ernstfall fehlen
+        // würde, und dafür ist er da.
+        return {
+          test: true,
+          sentCount: 1,
+          failedCount: 0,
+          recipientCount: 1,
+          skippedInvoices: sampleInvoices?.skipped ?? [],
+        };
       }
 
       if (recipients.length === 0) {
@@ -771,6 +803,8 @@ export const courseMailRouter = createTRPCRouter({
       let failedCount = 0;
       /** Invoices actually attached to a delivered message, for `mailedAt`. */
       const mailedInvoiceIds = new Set<string>();
+      /** Rechnungen, die an einer versendeten Nachricht gefehlt haben. */
+      const skippedInvoices: string[] = [];
 
       // One message per recipient rather than a single BCC blast: it keeps
       // the greeting personal and avoids the spam scores a large BCC earns.
@@ -782,32 +816,31 @@ export const courseMailRouter = createTRPCRouter({
         const results = await Promise.allSettled(
           batch.map(async (recipient) => {
             const recipientInvoices = invoicesFor(recipient);
-            return sendCourseMailToRegistrant({
+            const loaded = await loadInvoiceAttachments(
+              recipientInvoices,
+              invoiceBudgetBytes,
+            );
+            await sendCourseMailToRegistrant({
               ...baseMail,
               ...personalize(
                 placeholderValuesFor(recipient, course, recipientInvoices),
               ),
               to: recipient.email,
               recipientName: recipient.firstName,
-              attachments: [
-                ...attachments,
-                ...(await loadInvoiceAttachments(
-                  recipientInvoices,
-                  invoiceBudgetBytes,
-                )),
-              ],
+              attachments: [...attachments, ...loaded.attachments],
             });
+            // Erst nach dem Versand zurückgegeben: was hier ankommt, hing an
+            // einer Nachricht, die tatsächlich rausgegangen ist.
+            return loaded;
           }),
         );
         results.forEach((result, index) => {
           if (result.status === "fulfilled") {
             sentCount++;
-            const recipient = batch[index];
-            if (recipient) {
-              for (const invoice of invoicesFor(recipient)) {
-                mailedInvoiceIds.add(invoice.id);
-              }
+            for (const id of result.value.attachedIds) {
+              mailedInvoiceIds.add(id);
             }
+            skippedInvoices.push(...result.value.skipped);
           } else {
             failedCount++;
             console.error(
@@ -883,6 +916,7 @@ export const courseMailRouter = createTRPCRouter({
           failedCount,
           attachmentCount: input.attachments.length,
           invoicesAttached: mailedInvoiceIds.size,
+          invoicesSkipped: skippedInvoices,
         },
       });
 
@@ -892,6 +926,12 @@ export const courseMailRouter = createTRPCRouter({
         sentCount,
         failedCount,
         invoicesAttached: mailedInvoiceIds.size,
+        /**
+         * Rechnungen, die an einer versendeten Nachricht gefehlt haben. Die
+         * Nachricht ist raus, das Dokument nicht — das muss die Absenderin
+         * erfahren, sonst hält sie die Rechnung für zugestellt.
+         */
+        skippedInvoices,
       };
     }),
 });
