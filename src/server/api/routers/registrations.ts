@@ -34,6 +34,7 @@ function viewerIsCourseTeamMember(
   return (collaborators?.length ?? 0) > 0;
 }
 import { userHasPermission } from "../helpers/permissions";
+import { userCanBookInvoicePayments } from "../helpers/invoice-access";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
@@ -893,7 +894,9 @@ export const registrationsRouter = createTRPCRouter({
         include: {
           course: {
             select: {
+              id: true,
               createdById: true,
+              invoicingEnabled: true,
               startDate: true,
               registrationDeadline: true,
               collaborators: collaboratorsForViewer(viewerId(ctx)),
@@ -907,6 +910,7 @@ export const registrationsRouter = createTRPCRouter({
           canEdit: false,
           canCancel: false,
           isStaff: false,
+          canBookPayments: false,
         };
       }
       const isOwner = registration.registrantEmail === ctx.session.user.email;
@@ -937,7 +941,17 @@ export const registrationsRouter = createTRPCRouter({
         (isCancelled ? false : isStaff ? true : isOwner && ownerCanEditByTime);
       const canCancel = (isOwner || isStaff) && !isCancelled;
 
-      return { canView, canEdit, canCancel, isStaff };
+      // Zahlungen folgen nicht der Anmeldungs-, sondern der Rechnungsregel —
+      // deshalb dieselbe Funktion, die auch die Mutation durchsetzt, statt die
+      // Rechte hier noch einmal von Hand nachzubauen.
+      const canBookPayments = await userCanBookInvoicePayments(
+        ctx.db,
+        ctx.session.user.id,
+        registration.course,
+        ctx.permissionCache,
+      );
+
+      return { canView, canEdit, canCancel, isStaff, canBookPayments };
     }),
 
   /**

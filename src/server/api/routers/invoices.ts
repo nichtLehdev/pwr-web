@@ -2,7 +2,6 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
-  CourseCollaboratorRole,
   InvoiceStatus,
   type Prisma,
   type PrismaClient,
@@ -12,6 +11,10 @@ import {
   userHasPermission,
   type PermissionCache,
 } from "../helpers/permissions";
+import {
+  canBookInvoicePayments,
+  resolveInvoiceAccess,
+} from "../helpers/invoice-access";
 import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { createNotification } from "../helpers/notifications";
@@ -76,70 +79,6 @@ const signatureInput = z
   .startsWith("data:image/")
   .max(2_000_000)
   .optional();
-
-type CourseAccessRecord = {
-  id: string;
-  createdById: string | null;
-  invoicingEnabled: boolean;
-};
-
-export type InvoiceAccess = {
-  /** May create, edit and publish invoices for this course. */
-  canManage: boolean;
-  /** Holds invoices.generate, i.e. may work on any course's invoices. */
-  hasGlobalGrant: boolean;
-};
-
-/**
- * Who may invoice a course: its organizers (creator or ORGANIZER collaborator)
- * and holders of invoices.generate (LPW/Admin). Plain STAFF collaborators can
- * see participants but deliberately cannot issue money documents.
- *
- * `courses.enable_invoicing` is not accepted here — deciding *that* a course is
- * billed and *doing* the billing are separate jobs by design.
- */
-async function resolveInvoiceAccess(
-  db: PrismaClient,
-  userId: string,
-  course: CourseAccessRecord,
-  permissionCache?: PermissionCache,
-): Promise<InvoiceAccess> {
-  const [hasGlobalGrant, collaborator] = await Promise.all([
-    userHasPermission(userId, PERMISSIONS.INVOICES_GENERATE, permissionCache),
-    db.courseCollaborator.findUnique({
-      where: { courseId_userId: { courseId: course.id, userId } },
-      select: { role: true },
-    }),
-  ]);
-
-  const isOrganizer =
-    course.createdById === userId ||
-    collaborator?.role === CourseCollaboratorRole.ORGANIZER;
-
-  return { canManage: hasGlobalGrant || isOrganizer, hasGlobalGrant };
-}
-
-/**
- * Ob an einer Rechnung eine Zahlung verbucht werden darf: die Kursverwaltung
- * selbst darf es, sonst braucht es das globale Kassenrecht.
- *
- * Eine Stelle für Guard und Oberfläche. Die Buttons fragen dieselbe Regel ab,
- * die die Mutation durchsetzt — sonst driften beide auseinander und es entsteht
- * genau der Fall, den niemand meldet: ein Knopf, der 403 wirft, oder eine
- * Berechtigung ohne Knopf.
- */
-async function canBookInvoicePayments(
-  access: InvoiceAccess,
-  userId: string,
-  permissionCache?: PermissionCache,
-): Promise<boolean> {
-  if (access.canManage) return true;
-  return userHasPermission(
-    userId,
-    PERMISSIONS.REGISTRATIONS_MARK_PAID,
-    permissionCache,
-  );
-}
 
 /** Load a course and assert the viewer may issue invoices for it. */
 async function loadCourseForInvoicing(
