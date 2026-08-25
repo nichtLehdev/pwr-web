@@ -2,6 +2,10 @@
 
 import type { RegistrationData } from "./types";
 import { fieldClass } from "./field-styles";
+import { isPlausibleEmail } from "@/lib/email-address";
+
+const EMAIL_HINT =
+  "Bitte eine gültige E-Mail-Adresse eingeben, z. B. max@example.com";
 
 interface Step1RegistrantInfoProps {
   registrationData: RegistrationData;
@@ -22,6 +26,19 @@ export function Step1RegistrantInfo({
   const inputClass = fieldClass({
     className: "dark:bg-dark-background-secondary bg-white",
   });
+  const invalidInputClass = fieldClass({
+    error: true,
+    className: "dark:bg-dark-background-secondary bg-white",
+  });
+
+  // Erst meckern, wenn etwas dasteht: ein noch leeres Pflichtfeld ist kein
+  // Fehler, sondern unausgefüllt — dafür bleibt der Weiter-Button gesperrt.
+  const emailInvalid =
+    registrationData.registrantEmail.length > 0 &&
+    !isPlausibleEmail(registrationData.registrantEmail);
+  const billingEmailInvalid =
+    !!registrationData.billingEmail &&
+    !isPlausibleEmail(registrationData.billingEmail);
   return (
     <div className="space-y-4">
       <div>
@@ -89,9 +106,21 @@ export function Step1RegistrantInfo({
                 })
               }
               required
-              className={inputClass}
+              aria-invalid={emailInvalid}
+              aria-describedby={
+                emailInvalid ? "registrant-email-error" : undefined
+              }
+              className={emailInvalid ? invalidInputClass : inputClass}
               placeholder="max@example.com"
             />
+            {emailInvalid && (
+              <p
+                id="registrant-email-error"
+                className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
+              >
+                {EMAIL_HINT}
+              </p>
+            )}
           </div>
 
           <div>
@@ -331,12 +360,27 @@ export function Step1RegistrantInfo({
                       billingEmail: e.target.value,
                     })
                   }
-                  className={inputClass}
+                  aria-invalid={billingEmailInvalid}
+                  aria-describedby={
+                    billingEmailInvalid ? "billing-email-error" : undefined
+                  }
+                  className={
+                    billingEmailInvalid ? invalidInputClass : inputClass
+                  }
                   placeholder="rechnung@gemeinde.de"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Falls abweichend von Ihrer E-Mail-Adresse
-                </p>
+                {billingEmailInvalid ? (
+                  <p
+                    id="billing-email-error"
+                    className="mt-1 text-sm font-medium text-red-600 dark:text-red-400"
+                  >
+                    {EMAIL_HINT}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Falls abweichend von Ihrer E-Mail-Adresse
+                  </p>
+                )}
               </div>
             </div>
           )}
