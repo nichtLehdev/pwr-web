@@ -222,6 +222,12 @@ services:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
 
+      # Log verbosity: debug | info | warn | error | silent.
+      # Production defaults to warn so per-request tRPC chatter stays out of
+      # the container log and errors are actually readable. Set to debug for
+      # one deploy when tracing a live issue.
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+
       # Public URLs
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
 

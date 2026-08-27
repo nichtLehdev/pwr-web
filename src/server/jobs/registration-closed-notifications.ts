@@ -14,6 +14,10 @@ import {
   CourseCollaboratorRole,
 } from "~/generated/prisma/client";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Registration Closed");
+
 export type RegistrationClosedNotificationResult = {
   processed: number;
   emailed: number;
@@ -105,7 +109,7 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
 
   const recipients = await resolveRecipientEmails(course);
   if (recipients.length === 0) {
-    console.warn(
+    log.warn(
       `[registration-closed] No recipients for course ${course.id} (${course.title})`,
     );
     return "skipped";

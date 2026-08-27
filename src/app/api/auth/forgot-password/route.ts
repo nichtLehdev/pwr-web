@@ -3,6 +3,10 @@ import { auth } from "@/server/better-auth/config";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Forgot Password");
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("Forgot password error:", error);
+    log.error("Forgot password error:", error);
     return NextResponse.json(
       {
         success: false,

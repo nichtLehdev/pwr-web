@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { verifyUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Newsletter");
+
 type Credentials = { email: string | null; token: string | null };
 
 /**
@@ -87,7 +91,7 @@ export async function POST(request: NextRequest) {
       message: "Unsubscribed successfully",
     });
   } catch (error) {
-    console.error("Error unsubscribing from newsletter:", error);
+    log.error("Error unsubscribing from newsletter:", error);
     return NextResponse.json(
       {
         success: false,

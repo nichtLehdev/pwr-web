@@ -32,6 +32,10 @@ import {
 } from "~/generated/prisma/client";
 import { Prisma } from "~/generated/prisma/client";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Import");
+
 /**
  * Upload folders an import may write into. Everything else in a ZIP is
  * ignored, so the archive cannot decide where files land.
@@ -101,7 +105,7 @@ export async function POST(
       for (const [oldMediaId, filename] of Object.entries(mediaMapping)) {
         const fileBuffer = mediaFiles.get(filename);
         if (!fileBuffer) {
-          console.warn(`Media file not found in ZIP: ${filename}`);
+          log.warn(`Media file not found in ZIP: ${filename}`);
           continue;
         }
 
@@ -164,7 +168,7 @@ export async function POST(
       for (const [oldUrl, filename] of Object.entries(fileMapping)) {
         const fileBuffer = uploadFiles.get(filename);
         if (!fileBuffer) {
-          console.warn(`Upload file not found in ZIP: ${filename}`);
+          log.warn(`Upload file not found in ZIP: ${filename}`);
           continue;
         }
 
@@ -172,7 +176,7 @@ export async function POST(
         // fixed set: a crafted ZIP must not steer writes outside uploads/.
         const folder = oldUrl.split("/")[3] ?? "";
         if (!IMPORTABLE_UPLOAD_FOLDERS.has(folder)) {
-          console.warn(`Skipping upload file with unexpected path: ${oldUrl}`);
+          log.warn(`Skipping upload file with unexpected path: ${oldUrl}`);
           continue;
         }
 
@@ -239,7 +243,7 @@ export async function POST(
         }
 
         if (references.unresolved.length > 0) {
-          console.warn(
+          log.warn(
             `Post-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
             references.unresolved,
           );
@@ -320,7 +324,7 @@ export async function POST(
         }
 
         if (references.unresolved.length > 0) {
-          console.warn(
+          log.warn(
             `Event-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
             references.unresolved,
           );
@@ -424,7 +428,7 @@ export async function POST(
         }
 
         if (references.unresolved.length > 0) {
-          console.warn(
+          log.warn(
             `Ensemble-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
             references.unresolved,
           );
@@ -703,7 +707,7 @@ export async function POST(
         }
 
         if (references.unresolved.length > 0) {
-          console.warn(
+          log.warn(
             `Kurs-Import: ${references.unresolved.length} Verweis(e) nicht aufloesbar`,
             references.unresolved,
           );
@@ -726,7 +730,7 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Import error:", error);
+    log.error("Import error:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to import data",

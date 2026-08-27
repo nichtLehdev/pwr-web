@@ -4,6 +4,10 @@ import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { createNewsletterConfirmToken } from "@/server/utils/newsletter-confirm-token";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Newsletter");
+
 /**
  * Newsletter sign-up, step one of two.
  *
@@ -94,7 +98,7 @@ export async function POST(request: NextRequest) {
           subscriberName ?? existing?.name ?? undefined,
         );
       } catch (error) {
-        console.error("Failed to send newsletter confirmation email:", error);
+        log.error("Failed to send newsletter confirmation email:", error);
         return NextResponse.json(
           {
             success: false,
@@ -113,7 +117,7 @@ export async function POST(request: NextRequest) {
         "Fast geschafft: Bitte bestätige deine Anmeldung über den Link in der E-Mail, die wir dir gerade geschickt haben.",
     });
   } catch (error) {
-    console.error("Error subscribing to newsletter:", error);
+    log.error("Error subscribing to newsletter:", error);
     return NextResponse.json(
       {
         success: false,

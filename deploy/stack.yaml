@@ -39,6 +39,10 @@ services:
       # Öffentliche Seite: blendet u. a. das Beta-Banner aus.
       APP_ENV: "production"
       NEXT_TELEMETRY_DISABLED: "1"
+      # Log-Ausführlichkeit: debug | info | warn | error | silent.
+      # "warn" hält das tRPC-Rauschen aus dem Container-Log, damit Fehler
+      # lesbar bleiben. Zum Debuggen eines Live-Problems auf "debug" setzen.
+      LOG_LEVEL: "warn"
       NEXT_PUBLIC_APP_URL: "{{ .Env.APP_URL }}"
       BETTER_AUTH_SECRET: "{{ .Env.BETTER_AUTH_SECRET }}"
       BETTER_AUTH_URL: "{{ .Env.APP_URL }}"

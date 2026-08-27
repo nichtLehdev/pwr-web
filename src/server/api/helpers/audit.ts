@@ -1,6 +1,10 @@
 import type { Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Audit");
+
 type Db = typeof database;
 
 export type AuditEntry = {
@@ -33,6 +37,6 @@ export async function logAudit(db: Db, entry: AuditEntry): Promise<void> {
       },
     });
   } catch (error) {
-    console.error(`Failed to write audit log (${entry.action}):`, error);
+    log.error(`Failed to write audit log (${entry.action}):`, error);
   }
 }
