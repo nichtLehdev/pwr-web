@@ -10,6 +10,13 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  assertDistrictAllowed,
+  assertDistrictChangeAllowed,
+  districtScopeFilter,
+  resolveDistrictScope,
+} from "../helpers/district-scope";
 import { changesRestrictedFlag } from "../helpers/restricted-flag";
 import { promoteCustomFieldTemplatesForCourses } from "../helpers/custom-field-templates";
 import {
@@ -406,6 +413,18 @@ export const coursesRouter = createTRPCRouter({
             : { OR: sharedAccessOr };
       }
 
+      // Obleute sehen die Liste ihres eigenen Bezirks, nicht die aller 13.
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        userId,
+        "courses",
+        ctx.permissionCache,
+      );
+      const scopeFilter = districtScopeFilter(scope, userId);
+      if (scopeFilter) {
+        where = { AND: [{ ...where }, scopeFilter] };
+      }
+
       const scheduleWhere: Prisma.CourseWhereInput =
         input.schedule === "all"
           ? {}
@@ -668,6 +687,26 @@ export const coursesRouter = createTRPCRouter({
       );
       const external = Boolean(externalUrl);
 
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Kurse anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "courses",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, input.bezirkId);
+
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
@@ -909,6 +948,14 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "courses",
+        ctx.permissionCache,
+      );
+      assertDistrictChangeAllowed(scope, updateData.bezirkId, course.bezirkId);
+
       const mergedExternalUrl =
         updateData.externalRegistrationUrl === undefined
           ? course.externalRegistrationUrl
@@ -1015,15 +1062,7 @@ export const coursesRouter = createTRPCRouter({
 
       if (status !== undefined) {
         if (!canApproveContent) {
-          const unchanged = status === course.status;
-          const submitForReview =
-            status === ContentStatus.PENDING &&
-            (course.status === ContentStatus.DRAFT ||
-              course.status === ContentStatus.REJECTED);
-          const backToDraftAfterRejection =
-            status === ContentStatus.DRAFT &&
-            course.status === ContentStatus.REJECTED;
-          if (!unchanged && !submitForReview && !backToDraftAfterRejection) {
+          if (!authorMayChangeStatus(course.status, status)) {
             throw new TRPCError({
               code: "FORBIDDEN",
               message:
@@ -1790,6 +1829,26 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Kurse anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "courses",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, original.bezirkId);
+
       const newCourse = await ctx.db.course.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -1847,6 +1906,28 @@ export const coursesRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "No courses found",
         });
+      }
+
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Kurse anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "courses",
+        ctx.permissionCache,
+      );
+      for (const original of originals) {
+        assertDistrictAllowed(scope, original.bezirkId);
       }
 
       const newCourses = await Promise.all(
@@ -1911,11 +1992,16 @@ export const coursesRouter = createTRPCRouter({
 
       const courses = await ctx.db.course.findMany({
         where: { id: { in: input.ids } },
-        select: { id: true, createdById: true },
+        select: { id: true, createdById: true, status: true },
       });
 
       const canUpdateIds = courses
-        .filter((course) => course.createdById === userId || canApprove)
+        .filter(
+          (course) =>
+            canApprove ||
+            (course.createdById === userId &&
+              authorMayChangeStatus(course.status, input.status)),
+        )
         .map((c) => c.id);
 
       if (canUpdateIds.length === 0) {

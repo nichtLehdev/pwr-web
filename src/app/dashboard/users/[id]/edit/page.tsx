@@ -50,6 +50,13 @@ export default function EditUserPage() {
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [showAddressPublicly, setShowAddressPublicly] = useState(true);
   const [showPhonePublicly, setShowPhonePublicly] = useState(true);
+  // Zugehörigkeit: wo die Person im Werk verortet ist. Zusammen mit
+  // districtRoleName ergibt das ein öffentlich sichtbares Amt. Nicht zu
+  // verwechseln mit bezirkScopeIds weiter unten — das ist die Zuständigkeit
+  // fürs Anlegen von Inhalten und hängt nicht am Amt.
+  const [bezirkId, setBezirkId] = useState<string>("");
+  const [districtRoleName, setDistrictRoleName] = useState("");
+  const [bezirkScopeIds, setBezirkScopeIds] = useState<string[]>([]);
 
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +78,9 @@ export default function EditUserPage() {
       setCity(user.city ?? "");
       setProfileImageId(user.profileImageId ?? null);
       setProfileImageUrl(user.profileImage?.url ?? null);
+      setBezirkId(user.bezirkId ?? "");
+      setDistrictRoleName(user.districtRoleName ?? "");
+      setBezirkScopeIds(user.bezirkScopes?.map((s) => s.bezirkId) ?? []);
       try {
         const prefs =
           typeof user.preferences === "string"
@@ -177,6 +187,26 @@ export default function EditUserPage() {
 
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
+  const canEditRoles = hasPermission(PERMISSIONS.USERS_EDIT_ROLES);
+
+  const { data: bezirke } = api.bezirke.getAll.useQuery(undefined, {
+    enabled: canManageUsers,
+  });
+  const updateRoleMutation = api.users.updateRole.useMutation({
+    onError: (err) => {
+      toast.error(
+        getErrorMessage(err, "Zuständigkeit konnte nicht gespeichert werden."),
+      );
+    },
+  });
+
+  const toggleBezirkScope = (bezirkId: string) => {
+    setBezirkScopeIds((current) =>
+      current.includes(bezirkId)
+        ? current.filter((id) => id !== bezirkId)
+        : [...current, bezirkId],
+    );
+  };
 
   useEffect(() => {
     if (
@@ -245,13 +275,20 @@ export default function EditUserPage() {
           })()
         : ((user.preferences as Record<string, unknown> | null) ?? {});
 
+    if (canEditRoles) {
+      updateRoleMutation.mutate({
+        userId,
+        bezirkScopeIds,
+      });
+    }
+
     updateUserMutation.mutate({
       id: userId,
       displayName: name.trim() || undefined,
       email: email.trim(),
       username: username.trim() || undefined,
-      districtRoleName: user.districtRoleName ?? undefined,
-      bezirkId: user.bezirkId ?? null,
+      districtRoleName: districtRoleName.trim() || null,
+      bezirkId: bezirkId || null,
       bio: bio.trim() || undefined,
       phone: phone.trim() || undefined,
       profileImageId,
@@ -560,6 +597,103 @@ export default function EditUserPage() {
               </div>
             </div>
           </section>
+
+          <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="dark:text-dark-text mb-1 text-lg font-semibold text-gray-900">
+              Bezirkszugehörigkeit
+            </h2>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Zu welchem Bezirk gehört diese Person, und in welchem Amt? Beides
+              erscheint auf den öffentlichen Seiten. Wer nur Inhalte für einen
+              Bezirk pflegen soll, braucht hier nichts — dafür ist die
+              Zuständigkeit weiter unten da.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="edit-bezirk"
+                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Bezirk
+                </label>
+                <select
+                  id="edit-bezirk"
+                  value={bezirkId}
+                  onChange={(e) => setBezirkId(e.target.value)}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                >
+                  <option value="">Keinem Bezirk zugeordnet</option>
+                  {bezirke?.map((bezirk) => (
+                    <option key={bezirk.id} value={bezirk.id}>
+                      Bezirk {bezirk.number} – {bezirk.shortName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="edit-districtRoleName"
+                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                >
+                  Amtsbezeichnung
+                </label>
+                <input
+                  id="edit-districtRoleName"
+                  type="text"
+                  value={districtRoleName}
+                  onChange={(e) => setDistrictRoleName(e.target.value)}
+                  placeholder="z. B. Bezirksobmann"
+                  maxLength={100}
+                  className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Wird als Bezeichnung angezeigt, wo die Person öffentlich
+                  auftaucht.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {canEditRoles && (
+            <section className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="dark:text-dark-text mb-1 text-lg font-semibold text-gray-900">
+                Zuständigkeit für Bezirke
+              </h2>
+              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Für welche Bezirke darf dieser Benutzer Termine, Beiträge und
+                Kurse anlegen? Das ist unabhängig davon, ob er Obmann oder
+                Obfrau ist — auch eine einmalige Ausnahme lässt sich hier
+                eintragen. Ohne Anlage-Berechtigung bleibt die Auswahl
+                folgenlos; wer freigeben darf, arbeitet ohnehin
+                bezirksübergreifend.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {bezirke?.map((bezirk) => (
+                  <label
+                    key={bezirk.id}
+                    className="dark:border-dark-border flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 px-3 py-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={bezirkScopeIds.includes(bezirk.id)}
+                      onChange={() => toggleBezirkScope(bezirk.id)}
+                      className="focus:ring-primary text-primary h-4 w-4 rounded border-gray-300 focus:ring-2"
+                    />
+                    <span className="dark:text-dark-text text-sm text-gray-700">
+                      Bezirk {bezirk.number} – {bezirk.shortName}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              {bezirkScopeIds.length === 0 && (
+                <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                  Keine Zuständigkeit: der Benutzer kann keine bezirksgebundenen
+                  Inhalte anlegen.
+                </p>
+              )}
+            </section>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">

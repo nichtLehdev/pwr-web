@@ -10,6 +10,7 @@ import { api } from "@/trpc/react";
 import { parseDeadlineEndOfDay, toLocalDateInputValue } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
+import { districtFieldState } from "@/lib/district-scope";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
 import {
@@ -461,7 +462,18 @@ export default function EditCoursePage() {
   const canManageSiblingDiscount = hasPermission(
     "courses.manage_registrations" as PermissionKey,
   );
-  const userBezirkId = profile?.bezirkId ?? null;
+  const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
+  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
+  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
+  // vergeben.
+  const { selectableBezirkIds } = districtFieldState(
+    isHigherRole,
+    scopedBezirkIds,
+  );
+  const selectableBezirke = selectableBezirkIds
+    ? (bezirke?.filter((b) => selectableBezirkIds.includes(b.id)) ?? [])
+    : (bezirke ?? []);
 
   const canManageCourseTeamUi = useMemo(() => {
     if (!course || !profile || !session?.user) return false;
@@ -1373,14 +1385,17 @@ export default function EditCoursePage() {
                     >
                       Bezirk
                     </label>
-                    {!isHigherRole && userBezirkId ? (
+                    {selectableBezirkIds !== null &&
+                    selectableBezirke.length < 2 ? (
                       <div className="flex items-center gap-2">
                         <input
                           type="text"
                           value={
-                            bezirke?.find((b) => b.id === userBezirkId)
-                              ? `Bezirk ${bezirke.find((b) => b.id === userBezirkId)?.number} – ${bezirke.find((b) => b.id === userBezirkId)?.name}`
-                              : "Wird geladen..."
+                            !bezirke
+                              ? "Wird geladen..."
+                              : bezirke.find((b) => b.id === bezirkId)
+                                ? `Bezirk ${bezirke.find((b) => b.id === bezirkId)?.number} – ${bezirke.find((b) => b.id === bezirkId)?.name}`
+                                : "Übergreifend / Kein Bezirk"
                           }
                           disabled
                           className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-2.5 text-gray-900 opacity-60"
@@ -1394,8 +1409,10 @@ export default function EditCoursePage() {
                         onChange={(e) => setBezirkId(e.target.value)}
                         className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                       >
-                        <option value="">Übergreifend / Kein Bezirk</option>
-                        {bezirke?.map((bezirk) => (
+                        {selectableBezirkIds === null && (
+                          <option value="">Übergreifend / Kein Bezirk</option>
+                        )}
+                        {selectableBezirke.map((bezirk) => (
                           <option key={bezirk.id} value={bezirk.id}>
                             Bezirk {bezirk.number} – {bezirk.shortName}
                           </option>
