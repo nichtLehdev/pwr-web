@@ -9,6 +9,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
+import { districtFieldState } from "@/lib/district-scope";
 import {
   DashboardFormBlock,
   DashboardFormMediaSplit,
@@ -76,8 +77,15 @@ export default function NewEventPage() {
   const { hasDashboardAccess, hasPermission } = usePermissions();
 
   const hasApprovePermission = hasPermission(PERMISSIONS.EVENTS_APPROVE);
+  const hasCreatePermission = hasPermission(PERMISSIONS.EVENTS_CREATE);
   const isHigherRole = hasApprovePermission;
-  const userBezirkId = profile?.bezirkId ?? null;
+  const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
+  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
+  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
+  // vergeben.
+  const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
+    districtFieldState(isHigherRole, scopedBezirkIds);
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -254,6 +262,9 @@ export default function NewEventPage() {
   };
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
+  const selectableBezirke = selectableBezirkIds
+    ? (bezirke?.filter((b) => selectableBezirkIds.includes(b.id)) ?? [])
+    : (bezirke ?? []);
 
   const { data: locationsData } = api.locations.getAll.useQuery({
     limit: 100,
@@ -261,7 +272,7 @@ export default function NewEventPage() {
   });
 
   const { data: ensemblesData } = api.ensembles.getAll.useQuery({
-    bezirkId: !isHigherRole && userBezirkId ? userBezirkId : undefined,
+    bezirkId: !isHigherRole && lockedBezirkId ? lockedBezirkId : undefined,
   });
 
   const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
@@ -271,10 +282,10 @@ export default function NewEventPage() {
 
   /* eslint-disable react-hooks/set-state-in-effect -- Initializing form state from server data is a valid pattern */
   useEffect(() => {
-    if (!isHigherRole && userBezirkId && !bezirkId) {
-      setBezirkId(userBezirkId);
+    if (!isHigherRole && lockedBezirkId && !bezirkId) {
+      setBezirkId(lockedBezirkId);
     }
-  }, [isHigherRole, userBezirkId, bezirkId]);
+  }, [isHigherRole, lockedBezirkId, bezirkId]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   const createEventMutation = api.events.create.useMutation({
@@ -299,12 +310,20 @@ export default function NewEventPage() {
 
   useEffect(() => {
     if (!profileLoading && profile && !hasRedirected.current) {
-      if (!hasDashboardAccess) {
+      // Nicht nur "irgendein Dashboard-Recht": ohne das Anlage-Recht lehnt der
+      // Server ab, das Formular soll gar nicht erst aufgehen.
+      if (!hasDashboardAccess || !hasCreatePermission) {
         hasRedirected.current = true;
         router.push("/dashboard");
       }
     }
-  }, [profile, profileLoading, router, hasDashboardAccess]);
+  }, [
+    profile,
+    profileLoading,
+    router,
+    hasDashboardAccess,
+    hasCreatePermission,
+  ]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -813,7 +832,7 @@ export default function NewEventPage() {
 
               <DashboardFormBlock title="Bezirk">
                 <div className="space-y-4">
-                  {!isHigherRole && userBezirkId ? (
+                  {!isHigherRole && lockedBezirkId ? (
                     <div>
                       <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                         Dein Bezirk
@@ -822,8 +841,8 @@ export default function NewEventPage() {
                         <input
                           type="text"
                           value={
-                            bezirke?.find((b) => b.id === userBezirkId)
-                              ? `Bezirk ${bezirke.find((b) => b.id === userBezirkId)?.number} – ${bezirke.find((b) => b.id === userBezirkId)?.name}`
+                            bezirke?.find((b) => b.id === lockedBezirkId)
+                              ? `Bezirk ${bezirke.find((b) => b.id === lockedBezirkId)?.number} – ${bezirke.find((b) => b.id === lockedBezirkId)?.name}`
                               : "Wird geladen..."
                           }
                           disabled
@@ -836,7 +855,7 @@ export default function NewEventPage() {
                         erstellen.
                       </p>
                     </div>
-                  ) : !isHigherRole && !userBezirkId ? (
+                  ) : hasNoDistrict ? (
                     <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                       <p className="text-sm text-yellow-800 dark:text-yellow-300">
                         <strong>Hinweis:</strong> Du bist keinem Bezirk
@@ -855,8 +874,10 @@ export default function NewEventPage() {
                           onChange={(e) => setBezirkId(e.target.value)}
                           className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
                         >
-                          <option value="">Übergreifend / Kein Bezirk</option>
-                          {bezirke?.map((bezirk) => (
+                          {selectableBezirkIds === null && (
+                            <option value="">Übergreifend / Kein Bezirk</option>
+                          )}
+                          {selectableBezirke.map((bezirk) => (
                             <option key={bezirk.id} value={bezirk.id}>
                               Bezirk {bezirk.number} – {bezirk.shortName}
                             </option>
