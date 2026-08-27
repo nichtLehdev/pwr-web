@@ -9,6 +9,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
+import { districtFieldState } from "@/lib/district-scope";
 import { getErrorMessage } from "@/lib/utils";
 import { slugify } from "@/lib/slug";
 import { PostCategory, ContentStatus } from "~/generated/prisma/enums";
@@ -16,7 +17,7 @@ import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import MediaPickerModal from "@/app/_components/editor/media-picker-modal";
 import ImagePositionEditor from "@/app/_components/posts/image-position-editor";
 import { useToast } from "@/app/_components/ui/toast";
-import { ImageIcon, AlertTriangle, X } from "lucide-react";
+import { ImageIcon, AlertTriangle, Lock, X } from "lucide-react";
 import {
   DashboardFormZoneHeader,
   DashboardPage,
@@ -74,6 +75,15 @@ export default function EditPostPage() {
 
   const hasApprovePermission = hasPermission("posts.approve" as PermissionKey);
   const isHigherRole = hasApprovePermission;
+  const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
+  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
+  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
+  // vergeben.
+  const { selectableBezirkIds } = districtFieldState(
+    isHigherRole,
+    scopedBezirkIds,
+  );
 
   const { data: post, isLoading: postLoading } = api.posts.getById.useQuery(
     { id: postId },
@@ -232,6 +242,9 @@ export default function EditPostPage() {
   }, [post]);
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
+  const selectableBezirke = selectableBezirkIds
+    ? (bezirke?.filter((b) => selectableBezirkIds.includes(b.id)) ?? [])
+    : (bezirke ?? []);
   const { data: users } = api.users.list.useQuery(
     { page: 1, limit: 100 },
     { enabled: !!session?.user },
@@ -637,23 +650,52 @@ export default function EditPostPage() {
                 description="Bezirkszuordnung anpassen."
               />
               <div className="space-y-4">
-                <div>
-                  <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
-                    Bezirk auswählen
-                  </label>
-                  <Select
-                    value={bezirkId}
-                    onChange={(e) => setBezirkId(e.target.value)}
-                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
-                  >
-                    <option value="">Übergreifend / Kein Bezirk</option>
-                    {bezirke?.map((bezirk) => (
-                      <option key={bezirk.id} value={bezirk.id}>
-                        Bezirk {bezirk.number} – {bezirk.shortName}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
+                {selectableBezirkIds !== null &&
+                selectableBezirke.length < 2 ? (
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Dein Bezirk
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={
+                          !bezirke
+                            ? "Wird geladen..."
+                            : bezirke.find((b) => b.id === bezirkId)
+                              ? `Bezirk ${bezirke.find((b) => b.id === bezirkId)?.number} – ${bezirke.find((b) => b.id === bezirkId)?.name}`
+                              : "Übergreifend / Kein Bezirk"
+                        }
+                        disabled
+                        className="dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 opacity-60"
+                      />
+                      <Lock className="h-5 w-5 shrink-0 text-gray-400" />
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Du kannst Beiträge nur deinem eigenen Bezirk zuordnen.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
+                      Bezirk auswählen
+                    </label>
+                    <Select
+                      value={bezirkId}
+                      onChange={(e) => setBezirkId(e.target.value)}
+                      className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:ring-1 focus:outline-none"
+                    >
+                      {selectableBezirkIds === null && (
+                        <option value="">Übergreifend / Kein Bezirk</option>
+                      )}
+                      {selectableBezirke.map((bezirk) => (
+                        <option key={bezirk.id} value={bezirk.id}>
+                          Bezirk {bezirk.number} – {bezirk.shortName}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
               </div>
             </section>
 
