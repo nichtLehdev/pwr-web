@@ -81,6 +81,7 @@ model User {
   // Custom Roles & Permissions
   customRoles     UserRoleAssignment[]
   userPermissions UserPermission[]
+  bezirkScopes    UserBezirkScope[]    @relation("UserBezirkScopes")
 
   gameResults GameResult[] @relation("UserGameResults")
 
@@ -921,7 +922,6 @@ model Participant {
    * Gewählte Preiskategorie. Führend für Belegung und Kapazität — das Label
    * allein taugt dafür nicht, weil ein Kurs zwei Kategorien mit demselben
    * Namen führen darf (etwa dieselbe Zimmerart in zwei Häusern).
-   *
    * Bleibt bei gelöschter Kategorie null; `priceOption` hält den Namen dann
    * weiterhin fest.
    */
@@ -1163,6 +1163,7 @@ model Bezirk {
 
   // Relations
   users                        User[]                       @relation("BezirkUsers")
+  contentScopes                UserBezirkScope[]
   people                       BezirkPerson[] // Obleute & Stellvertretung shown publicly
   events                       Event[] // Events in this district
   courses                      Course[] // Courses in this district
@@ -1244,6 +1245,32 @@ model Posaunenwart {
 
   @@index([roleType])
   @@index([sortOrder])
+}
+
+/**
+ * Bezirke, für die ein Nutzer Inhalte anlegen und pflegen darf.
+ * Bewusst getrennt von `User.bezirkId`: das ist die Organisationszugehörigkeit
+ * und trägt zusammen mit `districtRoleName` ein öffentlich sichtbares Amt
+ * ("Bezirksobmann"). Wer ausnahmsweise für einen Bezirk schreiben darf, soll
+ * dadurch nicht zum Obmann werden — und umgekehrt kann jemand für mehrere
+ * Bezirke zuständig sein, ohne dass die Zugehörigkeit mehrdeutig wird.
+ * Der Eintrag allein erlaubt nichts; er schneidet nur zu, worauf die
+ * Anlage-Berechtigungen wirken (siehe lib/district-scope.ts).
+ */
+model UserBezirkScope {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation("UserBezirkScopes", fields: [userId], references: [id], onDelete: Cascade)
+
+  bezirkId String
+  bezirk   Bezirk @relation(fields: [bezirkId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bezirkId])
+  @@index([userId])
+  @@index([bezirkId])
 }
 
 model PosaunenwartResponsibility {
