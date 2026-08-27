@@ -15,6 +15,7 @@ import {
   Button,
   Input,
   Label,
+  Select,
   Textarea,
   Card,
   CardHeader,
@@ -45,6 +46,10 @@ export default function NewUserPage() {
   const [street, setStreet] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [city, setCity] = useState("");
+  // Zugehörigkeit samt öffentlich sichtbarem Amt. Die Zuständigkeit fürs
+  // Anlegen von Inhalten hängt nicht daran und wird im Benutzer-Editor gesetzt.
+  const [bezirkId, setBezirkId] = useState("");
+  const [districtRoleName, setDistrictRoleName] = useState("");
 
   const isValidEmail = (emailToCheck: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailToCheck);
@@ -199,6 +204,10 @@ export default function NewUserPage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canManageUsers = hasPermission(PERMISSIONS.USERS_MANAGE);
 
+  const { data: bezirke } = api.bezirke.getAll.useQuery(undefined, {
+    enabled: canManageUsers,
+  });
+
   useEffect(() => {
     if (
       !profileLoading &&
@@ -276,6 +285,8 @@ export default function NewUserPage() {
       street: street.trim() || undefined,
       zipCode: zipCode.trim() || undefined,
       city: city.trim() || undefined,
+      bezirkId: bezirkId || null,
+      districtRoleName: districtRoleName.trim() || undefined,
     });
   };
 
@@ -498,6 +509,47 @@ export default function NewUserPage() {
                     maxLength={100}
                   />
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bezirkszugehörigkeit */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bezirkszugehörigkeit</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Zu welchem Bezirk gehört diese Person, und in welchem Amt? Beides
+              erscheint auf den öffentlichen Seiten. Für wen sie Inhalte anlegen
+              darf, wird nach dem Anlegen im Benutzer-Editor festgelegt.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Bezirk</Label>
+                <Select
+                  value={bezirkId}
+                  onChange={(e) => setBezirkId(e.target.value)}
+                >
+                  <option value="">Keinem Bezirk zugeordnet</option>
+                  {bezirke?.map((bezirk) => (
+                    <option key={bezirk.id} value={bezirk.id}>
+                      Bezirk {bezirk.number} – {bezirk.shortName}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              <div>
+                <Label>Amtsbezeichnung</Label>
+                <Input
+                  type="text"
+                  value={districtRoleName}
+                  onChange={(e) => setDistrictRoleName(e.target.value)}
+                  placeholder="z. B. Bezirksobmann"
+                  maxLength={100}
+                />
               </div>
             </div>
           </CardContent>
