@@ -5,6 +5,10 @@
 
 import { env } from "@/env";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Geocoding");
+
 interface GeocodeResult {
   latitude: number | null;
   longitude: number | null;
@@ -54,7 +58,7 @@ export async function geocodeAddress(address: {
     });
 
     if (!response.ok) {
-      console.error("Geocoding API error:", response.statusText);
+      log.error("Geocoding API error:", response.statusText);
       return { latitude: null, longitude: null };
     }
 
@@ -75,7 +79,7 @@ export async function geocodeAddress(address: {
 
     return { latitude: null, longitude: null };
   } catch (error) {
-    console.error("Geocoding error:", error);
+    log.error("Geocoding error:", error);
     return { latitude: null, longitude: null };
   }
 }

@@ -4,6 +4,10 @@ import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 import JSZip from "jszip";
 import type { Media } from "~/generated/prisma/client";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Export/Import");
+
 /**
  * Collects all unique media files referenced by entities
  * Handles nested structures like events with ensemble.image
@@ -72,7 +76,7 @@ export async function readMediaFile(media: Media): Promise<Buffer | null> {
   try {
     const filePath = resolveMediaFsPath(media.path);
     if (!filePath) {
-      console.warn(
+      log.warn(
         `Media path outside the allowed roots: ${media.path} (media ID: ${media.id})`,
       );
       return null;
@@ -81,13 +85,13 @@ export async function readMediaFile(media: Media): Promise<Buffer | null> {
     try {
       await stat(/* turbopackIgnore: true */ filePath);
     } catch {
-      console.warn(`Media file not found: ${filePath} (media ID: ${media.id})`);
+      log.warn(`Media file not found: ${filePath} (media ID: ${media.id})`);
       return null;
     }
 
     return await readFile(/* turbopackIgnore: true */ filePath);
   } catch (error) {
-    console.error(`Error reading media file ${media.id}:`, error);
+    log.error(`Error reading media file ${media.id}:`, error);
     return null;
   }
 }
@@ -108,13 +112,13 @@ export async function readUploadFile(
     try {
       await stat(/* turbopackIgnore: true */ filePath);
     } catch {
-      console.warn(`Upload file not found: ${filePath} (path: ${storedPath})`);
+      log.warn(`Upload file not found: ${filePath} (path: ${storedPath})`);
       return null;
     }
 
     return await readFile(/* turbopackIgnore: true */ filePath);
   } catch (error) {
-    console.error(`Error reading upload file ${storedPath}:`, error);
+    log.error(`Error reading upload file ${storedPath}:`, error);
     return null;
   }
 }

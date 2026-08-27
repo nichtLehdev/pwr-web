@@ -61,6 +61,10 @@ import {
 } from "../helpers/registration-access";
 import { internationalPhoneSchema } from "@/lib/phone-number";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Registrations");
+
 const getEmailService = async () => import("@/server/email");
 
 type CreatedRegistration = {
@@ -146,7 +150,7 @@ async function sendRegistrationCreatedEmail(args: {
       );
     }
   } catch (error) {
-    console.error("Failed to send registration email:", error);
+    log.error("Failed to send registration email:", error);
   }
 }
 
@@ -192,7 +196,7 @@ async function notifyCourseTeamOfNewRegistration(
       });
     }
   } catch (error) {
-    console.error("Failed to notify course team:", error);
+    log.error("Failed to notify course team:", error);
   }
 }
 
@@ -776,7 +780,7 @@ export const registrationsRouter = createTRPCRouter({
           })),
         );
       } catch (error) {
-        console.error("Failed to send registration access links:", error);
+        log.error("Failed to send registration access links:", error);
       }
 
       return { success: true };
@@ -1561,7 +1565,7 @@ export const registrationsRouter = createTRPCRouter({
             registrationAccessUrl(updatedRegistration),
           );
         } catch (error) {
-          console.error("Failed to send confirmation email:", error);
+          log.error("Failed to send confirmation email:", error);
         }
       }
 
@@ -1683,7 +1687,7 @@ export const registrationsRouter = createTRPCRouter({
             updated.id,
           );
         } catch (error) {
-          console.error("Failed to send cancellation email:", error);
+          log.error("Failed to send cancellation email:", error);
         }
       }
 
@@ -1908,7 +1912,7 @@ export const registrationsRouter = createTRPCRouter({
             registrationAccessUrl(updated),
           );
         } catch (error) {
-          console.error("Failed to send discount approval email:", error);
+          log.error("Failed to send discount approval email:", error);
         }
       }
 
@@ -1983,7 +1987,7 @@ export const registrationsRouter = createTRPCRouter({
             registrationAccessUrl(updated),
           );
         } catch (error) {
-          console.error("Failed to send discount rejection email:", error);
+          log.error("Failed to send discount rejection email:", error);
         }
       }
 
@@ -2066,7 +2070,7 @@ export const registrationsRouter = createTRPCRouter({
             registrationAccessUrl(updated),
           );
         } catch (error) {
-          console.error("Failed to send confirmation email:", error);
+          log.error("Failed to send confirmation email:", error);
         }
       }
 

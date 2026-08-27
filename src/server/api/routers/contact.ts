@@ -6,6 +6,10 @@ import { sendContactMessageEmail } from "@/server/email";
 import { CONTACT_SUBJECTS, CONTACT_SUBJECT_KEYS } from "@/lib/contact-subjects";
 import { env } from "@/env";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Contact");
+
 const DEFAULT_CONTACT_EMAIL = "info@posaunenwerk-rheinland.de";
 
 export const contactRouter = createTRPCRouter({
@@ -36,7 +40,7 @@ export const contactRouter = createTRPCRouter({
           message: input.message,
         });
       } catch (error) {
-        console.error("[Contact] Failed to send contact message:", error);
+        log.error("Failed to send contact message:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message:

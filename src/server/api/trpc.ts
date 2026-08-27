@@ -15,6 +15,7 @@ import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
 import type { PermissionKey } from "@/lib/permissions";
 import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
+import { createLogger } from "@/server/utils/logger";
 
 /**
  * 1. CONTEXT
@@ -82,6 +83,15 @@ export const createCallerFactory = t.createCallerFactory;
  */
 export const createTRPCRouter = t.router;
 
+const log = createLogger("tRPC");
+
+/**
+ * Above this, a call is slow enough to be worth a line in production logs.
+ * Everything faster is debug-only — one line per procedure call otherwise
+ * buries the errors in the container log.
+ */
+const SLOW_PROCEDURE_MS = 1000;
+
 /**
  * Middleware for timing procedure execution and adding an artificial delay in development.
  *
@@ -98,8 +108,12 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
   const result = await next();
 
-  const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+  const durationMs = Date.now() - start;
+  if (durationMs >= SLOW_PROCEDURE_MS) {
+    log.warn(`slow procedure: ${path} took ${durationMs}ms`);
+  } else {
+    log.debug(`${path} took ${durationMs}ms`);
+  }
 
   return result;
 });

@@ -6,6 +6,10 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { db } from "@/server/db";
 import { isEmailConfigured } from "@/server/email";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Better Auth");
+
 const getBaseUrl = () => {
   return (
     process.env.BETTER_AUTH_URL ||
@@ -58,7 +62,7 @@ export const auth = betterAuth({
       url: string;
     }) => {
       if (!isEmailConfigured()) {
-        console.error("[Better Auth] Email service is not configured");
+        log.error("Email service is not configured");
         throw new Error("Email service is not configured");
       }
 
@@ -72,13 +76,11 @@ export const auth = betterAuth({
         if (token) {
           resetUrl = `${baseUrl}/reset-password?token=${token}${user.email ? `&email=${encodeURIComponent(user.email)}` : ""}`;
         } else {
-          console.warn(
-            "[Better Auth] No token found in reset URL, using original URL",
-          );
+          log.warn("No token found in reset URL, using original URL");
           resetUrl = url;
         }
       } catch (error) {
-        console.error("[Better Auth] Error parsing reset URL:", error);
+        log.error("Error parsing reset URL:", error);
         resetUrl = url;
       }
 
@@ -90,10 +92,7 @@ export const auth = betterAuth({
           user.name || undefined,
         );
       } catch (emailError) {
-        console.error(
-          "[Better Auth] Error sending password reset email:",
-          emailError,
-        );
+        log.error("Error sending password reset email:", emailError);
         throw emailError;
       }
     },

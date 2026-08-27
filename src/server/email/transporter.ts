@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 import type SMTPPool from "nodemailer/lib/smtp-pool";
 import { env } from "@/env";
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Email");
 
 /**
  * Messages sent down one pooled connection before it is recycled. Relays
@@ -16,7 +19,7 @@ const isSmtpConfigured = () => {
   const configured = !!(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASSWORD);
   if (!configured && !warnedNotConfigured) {
     warnedNotConfigured = true;
-    console.warn("[Email] SMTP not configured. Missing:", {
+    log.warn("SMTP not configured. Missing:", {
       SMTP_HOST: !!env.SMTP_HOST,
       SMTP_USER: !!env.SMTP_USER,
       SMTP_PASSWORD: !!env.SMTP_PASSWORD,
@@ -69,9 +72,7 @@ export const transporter = isSmtpConfigured()
 
 export async function verifyEmailConnection() {
   if (!transporter) {
-    console.warn(
-      "⚠️  SMTP not configured. Email functionality will be disabled.",
-    );
+    log.warn("SMTP not configured. Email functionality will be disabled.");
     return false;
   }
 

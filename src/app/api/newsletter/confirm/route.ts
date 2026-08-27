@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { verifyNewsletterConfirmToken } from "@/server/utils/newsletter-confirm-token";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Newsletter");
+
 /**
  * Newsletter sign-up, step two: the click that turns a pending row into a
  * recipient. Behind a POST from the confirmation page rather than a plain GET,
@@ -74,7 +78,7 @@ export async function POST(request: NextRequest) {
       message: "Deine Anmeldung zum Newsletter ist bestätigt.",
     });
   } catch (error) {
-    console.error("Error confirming newsletter subscription:", error);
+    log.error("Error confirming newsletter subscription:", error);
     return NextResponse.json(
       { success: false, message: "An error occurred" },
       { status: 500 },

@@ -4,6 +4,10 @@ import { ContentStatus } from "~/generated/prisma/client";
 import { siteUrl } from "@/lib/seo";
 import { coursePath, ensemblePath, eventPath, postPath } from "@/lib/slug";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("sitemap");
+
 /**
  * Regenerated hourly rather than pinned at build time — posts and events are
  * published from the dashboard, not by a deploy.
@@ -117,7 +121,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error) {
     // A sitemap listing the static routes beats a 500 during a build that
     // cannot reach the database.
-    console.error("[sitemap] Could not load content entries:", error);
+    log.error("Could not load content entries:", error);
     return staticEntries;
   }
 }

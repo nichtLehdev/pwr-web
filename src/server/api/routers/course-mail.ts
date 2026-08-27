@@ -26,6 +26,10 @@ import {
   type PlaceholderValues,
 } from "@/lib/course-mail-placeholders";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Course Mail");
+
 /**
  * Attachments live in the dedicated course-mail upload folder. Accepting any
  * /api/uploads path would let an organizer mail out a private download or
@@ -252,8 +256,8 @@ async function loadInvoiceAttachments(
   for (const invoice of invoices) {
     const fsPath = resolveUploadFsPath(invoice.pdfPath);
     if (!fsPath) {
-      console.error(
-        `[CourseMail] Skipped invoice ${invoice.invoiceNumber}: PDF path is not inside the uploads directory`,
+      log.error(
+        `Skipped invoice ${invoice.invoiceNumber}: PDF path is not inside the uploads directory`,
       );
       skipped.push(invoice.invoiceNumber);
       continue;
@@ -261,7 +265,7 @@ async function loadInvoiceAttachments(
     try {
       const content = await readFile(/* turbopackIgnore: true */ fsPath);
       if (used + content.byteLength > budgetBytes) {
-        console.error(
+        log.error(
           `[CourseMail] Skipped invoice ${invoice.invoiceNumber}: attachment budget exhausted`,
         );
         skipped.push(invoice.invoiceNumber);
@@ -278,7 +282,7 @@ async function loadInvoiceAttachments(
     } catch (error) {
       // A missing file must not silently drop the whole mail — the message
       // still goes out, just without that attachment, and the log says why.
-      console.error(
+      log.error(
         `[CourseMail] Invoice PDF missing for ${invoice.invoiceNumber}:`,
         error,
       );
@@ -843,7 +847,7 @@ export const courseMailRouter = createTRPCRouter({
             skippedInvoices.push(...result.value.skipped);
           } else {
             failedCount++;
-            console.error(
+            log.error(
               `[CourseMail] Failed to send to ${batch[index]?.email}:`,
               result.reason,
             );
@@ -871,7 +875,7 @@ export const courseMailRouter = createTRPCRouter({
           });
         } catch (error) {
           // The copy is a convenience — never fail a delivered blast over it.
-          console.error("[CourseMail] Failed to send sender copy:", error);
+          log.error("Failed to send sender copy:", error);
         }
       }
 

@@ -7,6 +7,10 @@ import {
 } from "@/server/utils/export-import";
 import type { Media } from "~/generated/prisma/client";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Export");
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ type: string }> },
@@ -413,7 +417,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Export error:", error);
+    log.error("Export error:", error);
     return NextResponse.json(
       { error: "Failed to export data" },
       { status: 500 },

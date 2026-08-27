@@ -1,5 +1,8 @@
 import { transporter, isEmailConfigured } from "./transporter";
 import type { SendMailOptions } from "nodemailer";
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Email");
 
 export interface EmailAttachment {
   filename: string;
@@ -26,7 +29,7 @@ export async function sendEmail(options: EmailOptions) {
     const error = new Error(
       "SMTP is not configured. Please set SMTP environment variables.",
     );
-    console.error("[Email] Send failed:", error.message);
+    log.error("Send failed:", error.message);
     throw error;
   }
 
@@ -47,19 +50,19 @@ export async function sendEmail(options: EmailOptions) {
   };
 
   try {
-    console.log("[Email] Attempting to send email:", {
+    log.debug("Attempting to send email:", {
       to: options.to,
       subject: options.subject,
       from: mailOptions.from,
     });
     const info = await transporter.sendMail(mailOptions);
-    console.log("[Email] Email sent successfully:", {
+    log.info("Email sent successfully:", {
       messageId: info.messageId,
       to: options.to,
     });
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error("[Email] Send error:", {
+    log.error("Send error:", {
       to: options.to,
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
