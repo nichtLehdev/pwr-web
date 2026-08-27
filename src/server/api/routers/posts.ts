@@ -4,6 +4,14 @@ import { marked } from "marked";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { PostCategory, ContentStatus } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  assertDistrictAllowed,
+  assertDistrictChangeAllowed,
+  districtAllowed,
+  districtScopeFilter,
+  resolveDistrictScope,
+} from "../helpers/district-scope";
 import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
@@ -249,19 +257,16 @@ export const postsRouter = createTRPCRouter({
           PERMISSIONS.POSTS_VIEW,
           ctx.permissionCache,
         );
-        const canApprovePost = await userHasPermission(
+        const scope = await resolveDistrictScope(
+          ctx.db,
           ctx.session.user.id,
-          PERMISSIONS.POSTS_APPROVE,
+          "posts",
           ctx.permissionCache,
         );
-        const user = await ctx.db.user.findUnique({
-          where: { id: ctx.session.user.id },
-          select: { bezirkId: true },
-        });
         const canView =
           rawPost.createdById === ctx.session.user.id ||
-          canApprovePost ||
-          (canViewPost && rawPost.bezirkId === user?.bezirkId);
+          scope.unrestricted ||
+          (canViewPost && districtAllowed(scope, rawPost.bezirkId));
 
         if (!canView) {
           throw new TRPCError({
@@ -415,27 +420,11 @@ export const postsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       // PENDING is the review marker itself — a separate pendingReview
       // column never existed in the schema.
-      const where: {
-        status: ContentStatus;
-        bezirkId?: string;
-      } = {
+      // Freigeben ist bewusst nicht bezirksgebunden: wer POSTS_APPROVE hat
+      // (Admin, LPW, RPW), prüft für das ganze Werk.
+      const where: { status: ContentStatus } = {
         status: ContentStatus.PENDING,
       };
-
-      // Check if user can only approve for their district
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { bezirkId: true },
-      });
-      const canApproveAll = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.POSTS_APPROVE,
-        ctx.permissionCache,
-      );
-      // If user can't approve all but has a district, limit to their district
-      if (!canApproveAll && user?.bezirkId) {
-        where.bezirkId = user.bezirkId;
-      }
 
       const [rawPosts, total] = await Promise.all([
         ctx.db.post.findMany({
@@ -484,6 +473,26 @@ export const postsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Beiträge anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "posts",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, input.bezirkId);
+
       const canPinPosts = await userHasPermission(
         ctx.session.user.id,
         PERMISSIONS.HOMEPAGE_MANAGE,
@@ -562,7 +571,12 @@ export const postsRouter = createTRPCRouter({
 
       const post = await ctx.db.post.findUnique({
         where: { id },
-        select: { createdById: true, status: true, coverImageId: true },
+        select: {
+          createdById: true,
+          status: true,
+          coverImageId: true,
+          bezirkId: true,
+        },
       });
 
       if (!post) {
@@ -585,6 +599,14 @@ export const postsRouter = createTRPCRouter({
           message: "Insufficient permissions",
         });
       }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "posts",
+        ctx.permissionCache,
+      );
+      assertDistrictChangeAllowed(scope, updateData.bezirkId, post.bezirkId);
 
       const canPinPosts = await userHasPermission(
         ctx.session.user.id,
@@ -912,6 +934,18 @@ export const postsRouter = createTRPCRouter({
         };
       }
 
+      // Obleute sehen die Liste ihres eigenen Bezirks, nicht die aller 13.
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        userId,
+        "posts",
+        ctx.permissionCache,
+      );
+      const scopeFilter = districtScopeFilter(scope, userId);
+      if (scopeFilter) {
+        where = { AND: [{ ...where }, scopeFilter] };
+      }
+
       const [posts, total] = await Promise.all([
         ctx.db.post.findMany({
           where,
@@ -993,6 +1027,26 @@ export const postsRouter = createTRPCRouter({
         });
       }
 
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Beiträge anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "posts",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, original.bezirkId);
+
       const newPost = await ctx.db.post.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -1024,6 +1078,28 @@ export const postsRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "No posts found",
         });
+      }
+
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.POSTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Beiträge anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "posts",
+        ctx.permissionCache,
+      );
+      for (const original of originals) {
+        assertDistrictAllowed(scope, original.bezirkId);
       }
 
       const newPosts = await Promise.all(
@@ -1066,11 +1142,21 @@ export const postsRouter = createTRPCRouter({
 
       const posts = await ctx.db.post.findMany({
         where: { id: { in: input.ids } },
-        select: { id: true, createdById: true, coverImageId: true },
+        select: {
+          id: true,
+          createdById: true,
+          coverImageId: true,
+          status: true,
+        },
       });
 
       const canUpdateIds = posts
-        .filter((post) => post.createdById === userId || canApprove)
+        .filter(
+          (post) =>
+            canApprove ||
+            (post.createdById === userId &&
+              authorMayChangeStatus(post.status, input.status)),
+        )
         .map((p) => p.id);
 
       if (canUpdateIds.length === 0) {
