@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { processRegistrationClosedNotifications } from "@/server/jobs/registration-closed-notifications";
 import { isEmailConfigured } from "@/server/email";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Cron");
+
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[cron/registration-closed]", error);
+    log.error("Registration-closed run failed:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Internal error",

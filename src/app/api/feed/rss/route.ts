@@ -5,6 +5,10 @@ import { getBaseUrl } from "@/server/utils/get-base-url";
 import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 import { postPath } from "@/lib/slug";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Feed");
+
 /**
  * Escapes XML special characters
  */
@@ -164,7 +168,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error generating RSS feed:", error);
+    log.error("Error generating RSS feed:", error);
     return NextResponse.json(
       {
         error: "Failed to generate RSS feed",

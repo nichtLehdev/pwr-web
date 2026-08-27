@@ -1,6 +1,10 @@
 import type { db as database } from "@/server/db";
 import type { PermissionKey } from "@/lib/permissions";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Notifications");
+
 type Db = typeof database;
 
 export type NotificationPayload = {
@@ -32,7 +36,7 @@ export async function createNotification(
       },
     });
   } catch (error) {
-    console.error(`Failed to create notification (${payload.type}):`, error);
+    log.error(`Failed to create notification (${payload.type}):`, error);
   }
 }
 
@@ -109,6 +113,6 @@ export async function notifyUsersWithPermission(
       })),
     });
   } catch (error) {
-    console.error(`Failed to fan out notifications (${payload.type}):`, error);
+    log.error(`Failed to fan out notifications (${payload.type}):`, error);
   }
 }

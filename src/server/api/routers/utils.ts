@@ -18,6 +18,10 @@ import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 import { createUnsubscribeToken } from "@/server/utils/unsubscribe-token";
 import { eventPath, postPath } from "@/lib/slug";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Utils");
+
 marked.use({
   gfm: true,
   breaks: true,
@@ -513,7 +517,7 @@ export const newsletterRouter = createTRPCRouter({
           if (result.status === "fulfilled") {
             successCount++;
           } else {
-            console.error(
+            log.error(
               `Failed to send newsletter to ${batch[index]?.email}:`,
               result.reason,
             );

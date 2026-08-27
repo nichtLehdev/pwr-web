@@ -4,6 +4,10 @@ import { ContentStatus } from "~/generated/prisma/client";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { coursePath, eventPath } from "@/lib/slug";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Feed");
+
 /**
  * Escapes special characters for iCal format
  */
@@ -391,7 +395,7 @@ END:VCALENDAR`;
       },
     });
   } catch (error) {
-    console.error("Error generating iCal feed:", error);
+    log.error("Error generating iCal feed:", error);
     return NextResponse.json(
       {
         error: "Failed to generate iCal feed",
