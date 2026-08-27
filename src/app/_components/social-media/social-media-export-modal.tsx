@@ -23,6 +23,12 @@ const currentDate = new Date();
 const currentYear = currentDate.getFullYear();
 const currentMonth = currentDate.getMonth() + 1;
 
+/** Native size of the Instagram templates - also the exported image size. */
+const CANVAS_SIZE = 1080;
+/** Size of the on-screen preview box. */
+const PREVIEW_SIZE = 540;
+const PREVIEW_SCALE = PREVIEW_SIZE / CANVAS_SIZE;
+
 export default function SocialMediaExportModal({
   isOpen,
   onClose,
@@ -190,10 +196,19 @@ export default function SocialMediaExportModal({
     const dataUrl = await toPng(element, {
       quality: 1,
       pixelRatio: 2,
-      width: 1080,
-      height: 1080,
+      width: CANVAS_SIZE,
+      height: CANVAS_SIZE,
       cacheBust: true,
       skipFonts: true,
+      backgroundColor: "#ffffff",
+      // The preview shrinks the template with a CSS transform. html-to-image
+      // clones the node with its inline styles, so without resetting the
+      // transform the template would only cover a corner of the canvas.
+      style: {
+        transform: "none",
+        transformOrigin: "top left",
+        margin: "0",
+      },
     });
 
     const base64Response = dataUrl.split(",")[1];
@@ -617,39 +632,46 @@ export default function SocialMediaExportModal({
                     return (
                       <div
                         key={pageIndex}
-                        ref={(el) => {
-                          if (el) {
-                            summaryRefs.current.set(pageIndex, el);
-                          }
-                        }}
-                        className="shadow-lg"
+                        className="overflow-hidden shadow-lg"
                         style={{
-                          width: "540px",
-                          height: "540px",
+                          width: `${PREVIEW_SIZE}px`,
+                          height: `${PREVIEW_SIZE}px`,
                           display:
                             activeSummaryPage === pageIndex ? "block" : "none",
                         }}
                       >
                         <div
                           style={{
-                            transform: "scale(0.5)",
+                            transform: `scale(${PREVIEW_SCALE})`,
                             transformOrigin: "top left",
                           }}
                         >
-                          <InstagramSummaryTemplate
-                            events={pageEvents}
-                            month={selectedMonth}
-                            year={selectedYear}
-                            pageNumber={
-                              summaryPageCount > 1 ? pageIndex + 1 : undefined
-                            }
-                            totalPages={
-                              summaryPageCount > 1
-                                ? summaryPageCount
-                                : undefined
-                            }
-                            totalEvents={filteredEvents.length}
-                          />
+                          <div
+                            ref={(el) => {
+                              if (el) {
+                                summaryRefs.current.set(pageIndex, el);
+                              }
+                            }}
+                            style={{
+                              width: `${CANVAS_SIZE}px`,
+                              height: `${CANVAS_SIZE}px`,
+                            }}
+                          >
+                            <InstagramSummaryTemplate
+                              events={pageEvents}
+                              month={selectedMonth}
+                              year={selectedYear}
+                              pageNumber={
+                                summaryPageCount > 1 ? pageIndex + 1 : undefined
+                              }
+                              totalPages={
+                                summaryPageCount > 1
+                                  ? summaryPageCount
+                                  : undefined
+                              }
+                              totalEvents={filteredEvents.length}
+                            />
+                          </div>
                         </div>
                       </div>
                     );
@@ -681,15 +703,18 @@ export default function SocialMediaExportModal({
                   )}
                 <div
                   className="relative"
-                  style={{ width: "540px", height: "540px" }}
+                  style={{
+                    width: `${PREVIEW_SIZE}px`,
+                    height: `${PREVIEW_SIZE}px`,
+                  }}
                 >
                   {filteredEvents.map((event, index) => (
                     <div
                       key={event.id}
-                      className="shadow-lg"
+                      className="overflow-hidden shadow-lg"
                       style={{
-                        width: "540px",
-                        height: "540px",
+                        width: `${PREVIEW_SIZE}px`,
+                        height: `${PREVIEW_SIZE}px`,
                         position: "absolute",
                         top: 0,
                         left: 0,
@@ -699,14 +724,6 @@ export default function SocialMediaExportModal({
                       }}
                     >
                       <div
-                        ref={(el) => {
-                          if (el) {
-                            eventRefs.current.set(event.id, el);
-                          }
-                          if (activeTab === index && el) {
-                            previewImageRef.current = el;
-                          }
-                        }}
                         className={
                           activeTab === index && isDragging
                             ? "cursor-grabbing"
@@ -727,19 +744,34 @@ export default function SocialMediaExportModal({
                           activeTab === index ? handleMouseUp : undefined
                         }
                         style={{
-                          transform: "scale(0.5)",
+                          transform: `scale(${PREVIEW_SCALE})`,
                           transformOrigin: "top left",
                         }}
                       >
-                        <InstagramEventTemplate
-                          event={event}
-                          imagePosition={
-                            imagePositions[event.id] || {
-                              x: 50,
-                              y: 50,
+                        <div
+                          ref={(el) => {
+                            if (el) {
+                              eventRefs.current.set(event.id, el);
                             }
-                          }
-                        />
+                            if (activeTab === index && el) {
+                              previewImageRef.current = el;
+                            }
+                          }}
+                          style={{
+                            width: `${CANVAS_SIZE}px`,
+                            height: `${CANVAS_SIZE}px`,
+                          }}
+                        >
+                          <InstagramEventTemplate
+                            event={event}
+                            imagePosition={
+                              imagePositions[event.id] || {
+                                x: 50,
+                                y: 50,
+                              }
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}

@@ -2,54 +2,43 @@ import { getDistrictColor } from "@/lib/district-color";
 import type { JSX } from "react";
 import { type RouterOutputs } from "@/trpc/react";
 import {
-  BookOpenIcon,
   UsersIcon,
   MusicIcon,
-  PartyPopperIcon,
-  WrenchIcon,
-  MedalIcon,
   GlobeIcon,
   ChurchIcon,
   UserIcon,
   MapPinIcon,
   ArrowUpRightIcon,
 } from "lucide-react";
+import type { EventCategory } from "~/generated/prisma/enums";
 
 type InstagramEventTemplateProps = {
   event: RouterOutputs["events"]["getEventsByMonth"][0];
   imagePosition?: { x: number; y: number };
 };
 
-const categoryLabels: Record<string, string> = {
-  COURSE: "Lehrgang",
-  CONCERT: "Konzert",
-  MEETING: "Treffen",
-  WORSHIP: "Gottesdienst",
-  WORKSHOP: "Workshop",
-  FESTIVAL: "Festival",
-  COMPETITION: "Wettbewerb",
-  OTHER: "Sonstiges",
+const categoryLabels: Record<EventCategory, string> = {
+  KONZERT: "Konzert",
+  GOTTESDIENST: "Gottesdienst",
+  PROBE: "Probe",
+  ANDERE: "Andere",
 };
 
 const CategoryIcon = ({
   category,
   className = "h-8 w-8",
 }: {
-  category: string;
+  category: EventCategory;
   className?: string;
 }) => {
-  const icons: Record<string, JSX.Element> = {
-    COURSE: <BookOpenIcon className={className} />,
-    CONCERT: <MusicIcon className={className} />,
-    MEETING: <UsersIcon className={className} />,
-    WORSHIP: <ChurchIcon className={className} />,
-    WORKSHOP: <WrenchIcon className={className} />,
-    FESTIVAL: <PartyPopperIcon className={className} />,
-    COMPETITION: <MedalIcon className={className} />,
-    OTHER: <GlobeIcon className={className} />,
+  const icons: Record<EventCategory, JSX.Element> = {
+    KONZERT: <MusicIcon className={className} />,
+    GOTTESDIENST: <ChurchIcon className={className} />,
+    PROBE: <UsersIcon className={className} />,
+    ANDERE: <GlobeIcon className={className} />,
   };
 
-  return icons[category] || icons.OTHER;
+  return icons[category];
 };
 
 export default function InstagramEventTemplate({
@@ -68,7 +57,7 @@ export default function InstagramEventTemplate({
     event.auswahlChor?.image?.alt ||
     event.title;
 
-  const categoryLabel = categoryLabels[event.category] || event.category;
+  const categoryLabel = categoryLabels[event.category];
   const districtColor = event.bezirk
     ? getDistrictColor(event.bezirk.number)
     : "#faa619";
