@@ -88,14 +88,20 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
 
 # Copy tsconfig + the minimal src needed by the prisma/*.ts scripts that run
-# with tsx in the container (post-migration-setup.ts, backfill-slugs.ts).
-# Anything a container-run script imports has to be listed here — the rest of
-# src/ is not in the runtime image.
+# with tsx in the container (post-migration-setup.ts, backfill-slugs.ts,
+# backfill-phone-format.ts, per the app command in deploy/stack.yaml).
+# Everything those scripts import has to be listed here, transitively: the
+# rest of src/ is not in the runtime image, so a file missing from this list
+# still builds fine and only fails when the script runs at container start,
+# where the failure is non-fatal and therefore quiet. db.ts is imported by
+# all three, so a gap in its own imports takes every one of them down.
 COPY --from=builder --chown=nextjs:nodejs /app/tsconfig.json ./
 COPY --from=builder --chown=nextjs:nodejs /app/src/server/db.ts ./src/server/
+COPY --from=builder --chown=nextjs:nodejs /app/src/server/utils/logger.ts ./src/server/utils/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/permissions.ts ./src/lib/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/bezirke.ts ./src/lib/
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/slug.ts ./src/lib/
+COPY --from=builder --chown=nextjs:nodejs /app/src/lib/phone-number.ts ./src/lib/
 
 # Trigger script for the mStudio cron job (mittwald), see the script header
 COPY --chown=nextjs:nodejs scripts/trigger-registration-closed.mjs ./scripts/
