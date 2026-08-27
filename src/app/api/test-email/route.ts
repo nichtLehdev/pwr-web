@@ -3,6 +3,10 @@ import { verifyEmailConnection } from "@/server/email/transporter";
 import { sendVerificationEmail } from "@/server/email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Test Email");
+
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json(
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
       message: `Test email sent to ${email}`,
     });
   } catch (error) {
-    console.error("Error sending test email:", error);
+    log.error("Error sending test email:", error);
     return NextResponse.json(
       {
         success: false,

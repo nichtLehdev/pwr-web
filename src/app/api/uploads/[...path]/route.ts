@@ -7,6 +7,10 @@ import { auth } from "@/server/better-auth";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 import { ContentStatus } from "~/generated/prisma/client";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Uploads");
+
 // No "svg" entry on purpose: SVG can contain script, and serving it inline
 // from the app origin would be a stored-XSS vector. Unknown extensions fall
 // back to application/octet-stream and are served as attachments.
@@ -145,7 +149,7 @@ export async function GET(
 
     return new NextResponse(webStream, { headers });
   } catch (error) {
-    console.error("Error serving upload:", error);
+    log.error("Error serving upload:", error);
     return NextResponse.json(
       { error: "Failed to serve file" },
       { status: 500 },

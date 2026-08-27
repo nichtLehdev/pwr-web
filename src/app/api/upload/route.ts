@@ -4,6 +4,10 @@ import { join } from "path";
 import { auth } from "@/server/better-auth";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Upload");
+
 const ALLOWED_FOLDERS = [
   "profiles",
   "downloads",
@@ -237,7 +241,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    log.error("Upload error:", error);
     return NextResponse.json(
       { error: "Failed to upload file" },
       { status: 500 },

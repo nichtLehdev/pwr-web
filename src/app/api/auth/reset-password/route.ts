@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/server/better-auth/config";
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Reset Password");
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Reset Password] Attempting to reset password with token");
+    log.debug("Attempting to reset password with token");
 
     const result = await auth.api.resetPassword({
       body: {
@@ -30,7 +33,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!result.status) {
-      console.error("[Reset Password] Password reset failed");
+      log.warn("Password reset failed: link invalid or expired");
       return NextResponse.json(
         {
           error: "Der Reset-Link ist ungültig oder abgelaufen.",
@@ -39,14 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("[Reset Password] Password reset successful");
+    log.info("Password reset successful");
 
     return NextResponse.json({
       success: true,
       message: "Passwort wurde erfolgreich zurückgesetzt.",
     });
   } catch (error) {
-    console.error("Password reset error:", error);
+    log.error("Password reset error:", error);
     return NextResponse.json(
       { error: "Ein Fehler ist aufgetreten." },
       { status: 500 },

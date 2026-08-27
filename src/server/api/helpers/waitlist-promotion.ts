@@ -7,6 +7,10 @@ import {
 } from "./course-capacity";
 import { registrationAccessUrl } from "./registration-access";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Waitlist");
+
 type Db = typeof database;
 
 type PromotedRegistration = {
@@ -170,13 +174,13 @@ export async function sendPromotionEmails(
           registrationAccessUrl(registration),
         );
       } catch (error) {
-        console.error(
+        log.error(
           `Failed to send waitlist promotion email for ${registration.id}:`,
           error,
         );
       }
     }
   } catch (error) {
-    console.error("Failed to send waitlist promotion emails:", error);
+    log.error("Failed to send waitlist promotion emails:", error);
   }
 }

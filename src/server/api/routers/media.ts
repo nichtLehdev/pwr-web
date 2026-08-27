@@ -8,6 +8,10 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Media");
+
 // Stored url/path values must be exactly what /api/upload produces:
 // /api/uploads/<folder>/<sanitized filename>. Anything else (absolute paths,
 // dot segments, other folders) is rejected — these values are later used to
@@ -326,7 +330,7 @@ export const mediaRouter = createTRPCRouter({
         try {
           await unlink(/* turbopackIgnore: true */ fullPath);
         } catch (err) {
-          console.warn("Could not delete old media file:", fullPath, err);
+          log.warn("Could not delete old media file:", fullPath, err);
         }
       }
 

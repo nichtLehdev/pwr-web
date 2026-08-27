@@ -1,5 +1,6 @@
 import { PrismaClient } from "~/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { createLogger } from "@/server/utils/logger";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -15,8 +16,10 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL environment variable is not set");
 }
 
-console.log(
-  `[Prisma] Connecting to database at: ${process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@")}`,
+const log = createLogger("Prisma");
+
+log.info(
+  `Connecting to database at: ${process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@")}`,
 );
 
 const adapter = new PrismaPg({

@@ -5,6 +5,10 @@ import { userHasPermission } from "@/server/api/helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { invoicePaymentState } from "@/lib/invoice-payment";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("User Export");
+
 /**
  * Export user data for GDPR compliance (Art. 20 DSGVO)
  * GET /api/users/[userId]/export
@@ -270,7 +274,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("User data export error:", error);
+    log.error("User data export error:", error);
     return NextResponse.json(
       { error: "Failed to export user data" },
       { status: 500 },

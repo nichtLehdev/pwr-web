@@ -6,6 +6,9 @@
  * geocoding still goes through Nominatim (see ./geocoding.ts); this module is
  * only for filling the location form while the user types.
  */
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Address Search");
 
 /** Roughly the centre of the Rheinland — biases results towards our area. */
 const BIAS_LAT = 50.9;
@@ -160,7 +163,7 @@ export async function searchAddresses(
     });
 
     if (!response.ok) {
-      console.error("Photon API error:", response.status, response.statusText);
+      log.error("Photon API error:", response.status, response.statusText);
       return [];
     }
 
@@ -195,7 +198,7 @@ export async function searchAddresses(
 
     return [...german, ...abroad].slice(0, limit);
   } catch (error) {
-    console.error("Address search error:", error);
+    log.error("Address search error:", error);
     return [];
   }
 }

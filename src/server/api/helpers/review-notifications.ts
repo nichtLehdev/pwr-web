@@ -4,6 +4,10 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAudit } from "./audit";
 import { createNotification, notifyUsersWithPermission } from "./notifications";
 
+import { createLogger } from "@/server/utils/logger";
+
+const log = createLogger("Review Notifications");
+
 type Db = typeof database;
 
 const DASHBOARD_PATHS = {
@@ -78,7 +82,7 @@ export async function notifyCreatorOfReviewResult(params: {
       dashboardUrl: `${getBaseUrl()}${DASHBOARD_PATHS[contentType]}/${contentId}`,
     });
   } catch (error) {
-    console.error(
+    log.error(
       `Failed to send review notification for ${contentType} ${contentId}:`,
       error,
     );
