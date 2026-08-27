@@ -8,6 +8,14 @@ import {
 } from "~/generated/prisma/client";
 import type { Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
+import { authorMayChangeStatus } from "../helpers/content-status";
+import {
+  assertDistrictAllowed,
+  assertDistrictChangeAllowed,
+  districtAllowed,
+  districtScopeFilter,
+  resolveDistrictScope,
+} from "../helpers/district-scope";
 import {
   notifyCreatorOfReviewResult,
   notifySubmittedForReview,
@@ -150,18 +158,24 @@ export const eventsRouter = createTRPCRouter({
           });
         }
 
+        // EVENTS_VIEW allein reicht nicht für fremde Entwürfe aus anderen
+        // Bezirken — sonst liest jeder Obmann die noch ungeprüften Termine
+        // des ganzen Werks mit.
+        const canViewEvent = await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.EVENTS_VIEW,
+          ctx.permissionCache,
+        );
+        const scope = await resolveDistrictScope(
+          ctx.db,
+          ctx.session.user.id,
+          "events",
+          ctx.permissionCache,
+        );
         const canView =
           event.createdById === ctx.session.user.id ||
-          (await userHasPermission(
-            ctx.session.user.id,
-            PERMISSIONS.EVENTS_VIEW,
-            ctx.permissionCache,
-          )) ||
-          (await userHasPermission(
-            ctx.session.user.id,
-            PERMISSIONS.EVENTS_APPROVE,
-            ctx.permissionCache,
-          ));
+          scope.unrestricted ||
+          (canViewEvent && districtAllowed(scope, event.bezirkId));
 
         if (!canView) {
           throw new TRPCError({
@@ -274,6 +288,18 @@ export const eventsRouter = createTRPCRouter({
         };
       }
 
+      // Obleute sehen die Liste ihres eigenen Bezirks, nicht die aller 13.
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        userId,
+        "events",
+        ctx.permissionCache,
+      );
+      const scopeFilter = districtScopeFilter(scope, userId);
+      if (scopeFilter) {
+        where = { AND: [{ ...where }, scopeFilter] };
+      }
+
       if (input.schedule === "active") {
         const scheduleClause: Prisma.EventWhereInput = {
           OR: [
@@ -335,27 +361,11 @@ export const eventsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       // PENDING is the review marker itself — a separate pendingReview
       // column never existed in the schema.
-      const where: {
-        status: ContentStatus;
-        bezirkId?: string;
-      } = {
+      // Freigeben ist bewusst nicht bezirksgebunden: wer EVENTS_APPROVE hat
+      // (Admin, LPW, RPW), prüft für das ganze Werk.
+      const where: { status: ContentStatus } = {
         status: ContentStatus.PENDING,
       };
-
-      // Check if user can only approve for their district
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { bezirkId: true },
-      });
-      const canApproveAll = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.EVENTS_APPROVE,
-        ctx.permissionCache,
-      );
-      // If user can't approve all but has a district, limit to their district
-      if (!canApproveAll && user?.bezirkId) {
-        where.bezirkId = user.bezirkId;
-      }
 
       const [events, total] = await Promise.all([
         ctx.db.event.findMany({
@@ -430,6 +440,38 @@ export const eventsRouter = createTRPCRouter({
         slug: requestedSlug,
         ...eventData
       } = input;
+
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Veranstaltungen anzulegen",
+        });
+      }
+
+      const canApprove = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
+      );
+      if (input.status === ContentStatus.APPROVED && !canApprove) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Veranstaltungen freizugeben",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "events",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, input.bezirkId);
 
       const event = await ctx.db.event.create({
         data: {
@@ -530,7 +572,7 @@ export const eventsRouter = createTRPCRouter({
 
       const event = await ctx.db.event.findUnique({
         where: { id },
-        select: { createdById: true, status: true },
+        select: { createdById: true, status: true, bezirkId: true },
       });
 
       if (!event) {
@@ -554,6 +596,26 @@ export const eventsRouter = createTRPCRouter({
           message: "Insufficient permissions",
         });
       }
+
+      const canApprove = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_APPROVE,
+        ctx.permissionCache,
+      );
+      if (updateData.status === ContentStatus.APPROVED && !canApprove) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Veranstaltungen freizugeben",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "events",
+        ctx.permissionCache,
+      );
+      assertDistrictChangeAllowed(scope, updateData.bezirkId, event.bezirkId);
 
       if (priceOptions) {
         await ctx.db.eventPriceOption.deleteMany({
@@ -687,28 +749,6 @@ export const eventsRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Event not found",
-        });
-      }
-
-      // Check if user can only approve for their district
-      const userForApproval = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-        select: { bezirkId: true },
-      });
-      const canApproveAllEvents = await userHasPermission(
-        ctx.session.user.id,
-        PERMISSIONS.EVENTS_APPROVE,
-        ctx.permissionCache,
-      );
-      // If user can't approve all but has a district, check district match
-      if (
-        !canApproveAllEvents &&
-        userForApproval?.bezirkId &&
-        event.bezirkId !== userForApproval.bezirkId
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Can only approve events in your district",
         });
       }
 
@@ -883,6 +923,26 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Veranstaltungen anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "events",
+        ctx.permissionCache,
+      );
+      assertDistrictAllowed(scope, original.bezirkId);
+
       const newEvent = await ctx.db.event.create({
         data: {
           title: `${original.title} (Kopie)`,
@@ -948,6 +1008,28 @@ export const eventsRouter = createTRPCRouter({
         });
       }
 
+      const canCreate = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.EVENTS_CREATE,
+        ctx.permissionCache,
+      );
+      if (!canCreate) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Veranstaltungen anzulegen",
+        });
+      }
+
+      const scope = await resolveDistrictScope(
+        ctx.db,
+        ctx.session.user.id,
+        "events",
+        ctx.permissionCache,
+      );
+      for (const original of originals) {
+        assertDistrictAllowed(scope, original.bezirkId);
+      }
+
       const newEvents = await Promise.all(
         originals.map((original) =>
           ctx.db.event.create({
@@ -1010,11 +1092,16 @@ export const eventsRouter = createTRPCRouter({
 
       const events = await ctx.db.event.findMany({
         where: { id: { in: input.ids } },
-        select: { id: true, createdById: true },
+        select: { id: true, createdById: true, status: true },
       });
 
       const canUpdateIds = events
-        .filter((event) => event.createdById === userId || canApprove)
+        .filter(
+          (event) =>
+            canApprove ||
+            (event.createdById === userId &&
+              authorMayChangeStatus(event.status, input.status)),
+        )
         .map((e) => e.id);
 
       if (canUpdateIds.length === 0) {

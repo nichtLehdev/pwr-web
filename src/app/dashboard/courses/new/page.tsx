@@ -9,6 +9,7 @@ import { api } from "@/trpc/react";
 import { parseDeadlineEndOfDay } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
+import { districtFieldState } from "@/lib/district-scope";
 import {
   DashboardPage,
   DashboardSectionedFormLayout,
@@ -86,6 +87,7 @@ export default function NewCoursePage() {
   const hasApprovePermission = hasPermission(
     "courses.approve" as PermissionKey,
   );
+  const hasCreatePermission = hasPermission("courses.create" as PermissionKey);
   const isHigherRole = hasApprovePermission;
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
@@ -116,7 +118,13 @@ export default function NewCoursePage() {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showNewLocationForm, setShowNewLocationForm] = useState(false);
   const [bezirkId, setBezirkId] = useState<string>("");
-  const userBezirkId = profile?.bezirkId ?? null;
+  const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
+  // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im
+  // Werk verortet ist (und trägt öffentlich ein Amt), nicht wofür er schreiben
+  // darf. Beides zu vermischen hieße, für eine einzelne Ausnahme ein Amt zu
+  // vergeben.
+  const { lockedBezirkId, hasNoDistrict, selectableBezirkIds } =
+    districtFieldState(isHigherRole, scopedBezirkIds);
 
   const [isExternalProvider, setIsExternalProvider] = useState(false);
   const [externalProviderName, setExternalProviderName] = useState("");
@@ -323,6 +331,9 @@ export default function NewCoursePage() {
   });
 
   const { data: bezirke } = api.bezirke.getAll.useQuery();
+  const selectableBezirke = selectableBezirkIds
+    ? (bezirke?.filter((b) => selectableBezirkIds.includes(b.id)) ?? [])
+    : (bezirke ?? []);
 
   const createCourseMutation = api.courses.create.useMutation({
     onSuccess: (course) => {
@@ -345,17 +356,23 @@ export default function NewCoursePage() {
   }, [session, sessionLoading, router]);
 
   useEffect(() => {
-    if (!permissionsLoading && !hasDashboardAccess && !hasRedirected.current) {
+    // Nicht nur "irgendein Dashboard-Recht": ohne das Anlage-Recht lehnt der
+    // Server ab, das Formular soll gar nicht erst aufgehen.
+    if (
+      !permissionsLoading &&
+      (!hasDashboardAccess || !hasCreatePermission) &&
+      !hasRedirected.current
+    ) {
       hasRedirected.current = true;
       router.push("/dashboard");
     }
-  }, [permissionsLoading, hasDashboardAccess, router]);
+  }, [permissionsLoading, hasDashboardAccess, hasCreatePermission, router]);
 
   useEffect(() => {
-    if (!isHigherRole && userBezirkId && !bezirkId) {
-      setBezirkId(userBezirkId);
+    if (!isHigherRole && lockedBezirkId && !bezirkId) {
+      setBezirkId(lockedBezirkId);
     }
-  }, [isHigherRole, userBezirkId, bezirkId]);
+  }, [isHigherRole, lockedBezirkId, bezirkId]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -938,13 +955,13 @@ export default function NewCoursePage() {
                   >
                     Bezirk
                   </label>
-                  {!isHigherRole && userBezirkId ? (
+                  {!isHigherRole && lockedBezirkId ? (
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         value={
-                          bezirke?.find((b) => b.id === userBezirkId)
-                            ? `Bezirk ${bezirke.find((b) => b.id === userBezirkId)?.number} – ${bezirke.find((b) => b.id === userBezirkId)?.name}`
+                          bezirke?.find((b) => b.id === lockedBezirkId)
+                            ? `Bezirk ${bezirke.find((b) => b.id === lockedBezirkId)?.number} – ${bezirke.find((b) => b.id === lockedBezirkId)?.name}`
                             : "Wird geladen..."
                         }
                         disabled
@@ -952,7 +969,7 @@ export default function NewCoursePage() {
                       />
                       <Lock className="h-5 w-5 shrink-0 text-gray-400" />
                     </div>
-                  ) : !isHigherRole && !userBezirkId ? (
+                  ) : hasNoDistrict ? (
                     <div className="rounded-lg bg-yellow-50 p-4 dark:bg-yellow-900/20">
                       <p className="text-sm text-yellow-800 dark:text-yellow-300">
                         <strong>Hinweis:</strong> Du bist keinem Bezirk
@@ -967,15 +984,17 @@ export default function NewCoursePage() {
                       onChange={(e) => setBezirkId(e.target.value)}
                       className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
                     >
-                      <option value="">Übergreifend / Kein Bezirk</option>
-                      {bezirke?.map((bezirk) => (
+                      {selectableBezirkIds === null && (
+                        <option value="">Übergreifend / Kein Bezirk</option>
+                      )}
+                      {selectableBezirke.map((bezirk) => (
                         <option key={bezirk.id} value={bezirk.id}>
                           Bezirk {bezirk.number} – {bezirk.shortName}
                         </option>
                       ))}
                     </Select>
                   )}
-                  {!isHigherRole && userBezirkId ? (
+                  {!isHigherRole && lockedBezirkId ? (
                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       Du kannst nur Lehrgänge für deinen eigenen Bezirk
                       erstellen.

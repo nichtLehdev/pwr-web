@@ -6,7 +6,26 @@ import {
   resolveUserPermissionsCached,
   type PermissionCache,
 } from "./permissions";
-import { PERMISSIONS } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
+import { districtAllowed, districtScopeFor } from "@/lib/district-scope";
+
+/**
+ * Wer für einen Bezirk zuständig ist, betreut dessen Kurse mit — auch die von
+ * Kollegen.
+ *
+ * Die Zuständigkeit allein reicht dafür nicht: ohne `courses.create` bliebe der
+ * Zuschnitt wirkungslos, und der Eintrag in `UserBezirkScope` würde still zur
+ * Mitbearbeitung sämtlicher Kurse des Bezirks führen.
+ */
+function scopedToCourseBezirk(
+  perms: Set<PermissionKey>,
+  scopedBezirkIds: string[],
+  courseBezirkId: string | null,
+): boolean {
+  if (!perms.has(PERMISSIONS.COURSES_CREATE)) return false;
+  const scope = districtScopeFor(perms, "courses", scopedBezirkIds);
+  return districtAllowed(scope, courseBezirkId);
+}
 
 /** Volle Kursbearbeitung (Formular, keine Teamverwaltung-Stufe). Kein reines STAFF-Teammitglied. */
 export async function userCanEditCourseRecord(
@@ -21,7 +40,7 @@ export async function userCanEditCourseRecord(
 ): Promise<boolean> {
   if (course.createdById === userId) return true;
 
-  const [perms, organizer, userBezirk] = await Promise.all([
+  const [perms, organizer, scopes] = await Promise.all([
     resolveUserPermissionsCached(userId, permissionCache),
     db.courseCollaborator.findUnique({
       where: {
@@ -29,23 +48,19 @@ export async function userCanEditCourseRecord(
       },
       select: { role: true },
     }),
-    db.user.findUnique({
-      where: { id: userId },
+    db.userBezirkScope.findMany({
+      where: { userId },
       select: { bezirkId: true },
     }),
   ]);
 
   if (perms.has(PERMISSIONS.COURSES_EDIT)) return true;
   if (organizer?.role === CourseCollaboratorRole.ORGANIZER) return true;
-  if (
-    userBezirk?.bezirkId &&
-    course.bezirkId &&
-    userBezirk.bezirkId === course.bezirkId
-  ) {
-    return true;
-  }
-
-  return false;
+  return scopedToCourseBezirk(
+    perms,
+    scopes.map((s) => s.bezirkId),
+    course.bezirkId,
+  );
 }
 
 /** Teammitglieder verwalten (Organizer + einladen). */
@@ -61,7 +76,7 @@ export async function userCanManageCourseTeam(
 ): Promise<boolean> {
   if (course.createdById === userId) return true;
 
-  const [perms, organizer, userBezirk] = await Promise.all([
+  const [perms, organizer, scopes] = await Promise.all([
     resolveUserPermissionsCached(userId, permissionCache),
     db.courseCollaborator.findUnique({
       where: {
@@ -69,8 +84,8 @@ export async function userCanManageCourseTeam(
       },
       select: { role: true },
     }),
-    db.user.findUnique({
-      where: { id: userId },
+    db.userBezirkScope.findMany({
+      where: { userId },
       select: { bezirkId: true },
     }),
   ]);
@@ -82,15 +97,11 @@ export async function userCanManageCourseTeam(
     return true;
   }
   if (organizer?.role === CourseCollaboratorRole.ORGANIZER) return true;
-  if (
-    userBezirk?.bezirkId &&
-    course.bezirkId &&
-    userBezirk.bezirkId === course.bezirkId
-  ) {
-    return true;
-  }
-
-  return false;
+  return scopedToCourseBezirk(
+    perms,
+    scopes.map((s) => s.bezirkId),
+    course.bezirkId,
+  );
 }
 
 export async function courseCollaboratorRolesForUser(

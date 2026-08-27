@@ -135,12 +135,18 @@ async function ensureSystemRolesExist() {
     });
   }
 
+  // Freigeben ist bewusst nicht bezirksgebunden: RPWs prüfen wie LPW und Admin
+  // für das ganze Werk. Die *_APPROVE-Rechte sind zugleich die Marke, an der
+  // der Bezirks-Zuschnitt endet (siehe helpers/district-scope.ts) — ohne sie
+  // wäre ein RPW wie ein Obmann auf seinen eigenen Bezirk beschränkt.
   const rpwPermissionKeys = [
     PERMISSIONS.EVENTS_CREATE,
     PERMISSIONS.EVENTS_EDIT,
+    PERMISSIONS.EVENTS_APPROVE,
     PERMISSIONS.EVENTS_VIEW,
     PERMISSIONS.COURSES_CREATE,
     PERMISSIONS.COURSES_EDIT,
+    PERMISSIONS.COURSES_APPROVE,
     PERMISSIONS.COURSES_VIEW,
     // RPWs entscheiden für ihre eigenen Kurse, ob abgerechnet wird; das
     // Erstellen der Rechnungen selbst läuft über die Kurs-Organisatorenrolle
@@ -149,10 +155,13 @@ async function ensureSystemRolesExist() {
     PERMISSIONS.INVOICES_VIEW,
     PERMISSIONS.POSTS_CREATE,
     PERMISSIONS.POSTS_EDIT,
+    PERMISSIONS.POSTS_APPROVE,
     PERMISSIONS.POSTS_VIEW,
     PERMISSIONS.MEDIA_UPLOAD,
+    PERMISSIONS.MEDIA_APPROVE,
     PERMISSIONS.MEDIA_VIEW,
     PERMISSIONS.DOWNLOADS_UPLOAD,
+    PERMISSIONS.DOWNLOADS_APPROVE,
     PERMISSIONS.DOWNLOADS_VIEW,
   ];
 

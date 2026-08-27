@@ -34,6 +34,7 @@ export const usersRouter = createTRPCRouter({
         include: {
           profileImage: true,
           bezirk: true,
+          bezirkScopes: { include: { bezirk: true } },
           teamMember: {
             include: {
               user: {
@@ -122,6 +123,7 @@ export const usersRouter = createTRPCRouter({
       include: {
         profileImage: true,
         bezirk: true,
+        bezirkScopes: { include: { bezirk: true } },
         teamMember: true,
         posaunenratMember: {
           include: {
@@ -494,7 +496,10 @@ export const usersRouter = createTRPCRouter({
           .optional(),
         // role filter removed - use permissions system instead
         bio: z.string().max(2000).optional(),
-        districtRoleName: z.string().max(100).optional(),
+        // Nullable, damit sich eine Amtsbezeichnung auch wieder entfernen
+        // lässt: `undefined` heißt "unverändert", ein leeres Feld im Formular
+        // meint aber "gelöscht".
+        districtRoleName: z.string().max(100).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
         profileImageId: z.string().optional().nullable(),
         street: z.string().max(200).optional(),
@@ -612,10 +617,16 @@ export const usersRouter = createTRPCRouter({
         userId: z.string(),
         districtRoleName: z.string().max(100).optional().nullable(),
         bezirkId: z.string().optional().nullable(),
+        /**
+         * Bezirke, für die der Nutzer Inhalte pflegen darf. Getrennt von
+         * `bezirkId`: das ist die Zugehörigkeit samt öffentlichem Amt, das hier
+         * ist reine Zuständigkeit. Weglassen lässt den Zuschnitt unangetastet.
+         */
+        bezirkScopeIds: z.array(z.string()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { userId, ...updateData } = input;
+      const { userId, bezirkScopeIds, ...updateData } = input;
 
       const user = await ctx.db.user.findUnique({
         where: { id: userId },
@@ -628,11 +639,35 @@ export const usersRouter = createTRPCRouter({
         });
       }
 
+      if (bezirkScopeIds) {
+        const wanted = [...new Set(bezirkScopeIds)];
+        const known = await ctx.db.bezirk.count({
+          where: { id: { in: wanted } },
+        });
+        if (known !== wanted.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Unbekannter Bezirk in der Zuständigkeit",
+          });
+        }
+
+        await ctx.db.$transaction([
+          ctx.db.userBezirkScope.deleteMany({
+            where: { userId, bezirkId: { notIn: wanted } },
+          }),
+          ctx.db.userBezirkScope.createMany({
+            data: wanted.map((bezirkId) => ({ userId, bezirkId })),
+            skipDuplicates: true,
+          }),
+        ]);
+      }
+
       return await ctx.db.user.update({
         where: { id: userId },
         data: updateData,
         include: {
           bezirk: true,
+          bezirkScopes: { include: { bezirk: true } },
         },
       });
     }),
