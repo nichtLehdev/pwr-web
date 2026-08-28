@@ -167,10 +167,6 @@ export default function PostDetailView({
               width={300}
               height={84}
               className="h-auto w-auto max-w-[70%] md:max-w-[60%] lg:max-w-[50%] dark:hidden"
-              style={{
-                mixBlendMode: "multiply",
-                filter: "brightness(1.1)",
-              }}
               unoptimized
             />
             <Image
