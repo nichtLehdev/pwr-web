@@ -26,7 +26,6 @@ export function LogoPlaceholder({ className = "" }: { className?: string }) {
         width={200}
         height={56}
         className="hidden h-auto w-auto max-w-[80%] dark:block"
-        style={{ mixBlendMode: "multiply", filter: "brightness(1.1)" }}
         unoptimized
       />
     </div>
