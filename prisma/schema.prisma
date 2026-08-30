@@ -1581,6 +1581,17 @@ model NewsletterSubscriber {
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
 
+  /// Nachweis der Einwilligung (Art. 7 Abs. 1 DSGVO): die IP-Adressen von
+  /// Anmeldung und Bestätigung sowie die Fassung des Einwilligungstextes, dem
+  /// zugestimmt wurde. Die Beweislast liegt beim Versender; ein blosses
+  /// `confirmedAt` belegt nur, dass irgendwer geklickt hat.
+  ///
+  /// Wird bei der Abmeldung geleert: ohne laufende Einwilligung gibt es nichts
+  /// mehr zu belegen, und die IP darf dann nicht weiter aufbewahrt werden.
+  signupIp       String?
+  confirmIp      String?
+  consentVersion String?
+
   @@index([isActive, confirmedAt])
 }
 
