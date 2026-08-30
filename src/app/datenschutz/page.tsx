@@ -612,6 +612,45 @@ export default function DatenschutzPage() {
                     </p>
                   </div>
                 </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    8.3 Nachweis der Einwilligung
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Um die Einwilligung nachweisen zu können (Art. 7 Abs. 1
+                      DSGVO), speichern wir zusätzlich den Zeitpunkt der
+                      Anmeldung und der Bestätigung, die dabei verwendeten
+                      IP-Adressen sowie die Fassung des Einwilligungstextes, dem
+                      Sie zugestimmt haben. Diese Angaben dienen ausschließlich
+                      dem Nachweis und werden bei Ihrer Abmeldung gelöscht.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="dark:border-dark-border border-t border-gray-200 pt-6">
+                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-semibold">
+                    8.4 Speicherdauer
+                  </h3>
+                  <div className="space-y-3 text-gray-700 dark:text-gray-300">
+                    <p className="leading-relaxed">
+                      Ihre Daten werden für den Newsletter-Versand gespeichert,
+                      bis Sie sich abmelden. Anmeldungen, die nicht innerhalb
+                      von 30 Tagen bestätigt werden, löschen wir automatisch.
+                    </p>
+                    <p className="leading-relaxed">
+                      Nach einer Abmeldung bewahren wir Ihre E-Mail-Adresse
+                      zusammen mit den Zeitstempeln der An- und Abmeldung auf,
+                      damit Sie nicht versehentlich erneut angeschrieben werden
+                      und wir zurückliegende Versände belegen können (Art. 6
+                      Abs. 1 lit. f DSGVO). Name und Nachweisdaten werden dabei
+                      gelöscht. Auf Wunsch entfernen wir Ihre Adresse
+                      vollständig — wenden Sie sich dazu an die im Impressum
+                      genannte Adresse.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
 import { verifyNewsletterConfirmToken } from "@/server/utils/newsletter-confirm-token";
+import { clientIpFromHeaders } from "@/server/utils/client-ip";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -69,6 +70,8 @@ export async function POST(request: NextRequest) {
         isActive: true,
         confirmedAt: subscriber.confirmedAt ?? new Date(),
         unsubscribedAt: null,
+        // Zweite Hälfte des Nachweises: die Bestätigung kam von dieser Adresse.
+        confirmIp: subscriber.confirmIp ?? clientIpFromHeaders(request.headers),
       },
     });
 
