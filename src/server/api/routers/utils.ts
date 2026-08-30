@@ -9,6 +9,7 @@ import { permissionProcedure } from "../middleware/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/server/email/send-email";
 import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
+import { maskEmail } from "@/lib/mask-email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { ContentStatus } from "~/generated/prisma/client";
 import { marked } from "marked";
@@ -518,7 +519,7 @@ export const newsletterRouter = createTRPCRouter({
             successCount++;
           } else {
             log.error(
-              `Failed to send newsletter to ${batch[index]?.email}:`,
+              `Failed to send newsletter to ${maskEmail(batch[index]?.email)}:`,
               result.reason,
             );
             errorCount++;

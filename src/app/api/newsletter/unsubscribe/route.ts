@@ -78,11 +78,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Datenminimierung bei der Abmeldung: bleiben darf, was die Sperrliste
+    // trägt und die zurückliegenden Versände belegt — die Adresse selbst und
+    // die Zeitstempel. Name und Einwilligungsnachweis haben ohne laufende
+    // Einwilligung keinen Zweck mehr und werden gelöscht. Wer vollständige
+    // Löschung verlangt (Art. 17), wird über die Verwaltung entfernt.
     await db.newsletterSubscriber.update({
       where: { email },
       data: {
         isActive: false,
         unsubscribedAt: new Date(),
+        name: null,
+        signupIp: null,
+        confirmIp: null,
+        consentVersion: null,
       },
     });
 
