@@ -17,6 +17,7 @@ import { getBaseUrl } from "@/server/utils/get-base-url";
 import { coursePath } from "@/lib/slug";
 import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 import { rateLimit } from "@/server/utils/rate-limit";
+import { maskEmail } from "@/lib/mask-email";
 import type { PermissionCache } from "../helpers/permissions";
 import {
   applyPlaceholders,
@@ -848,7 +849,7 @@ export const courseMailRouter = createTRPCRouter({
           } else {
             failedCount++;
             log.error(
-              `[CourseMail] Failed to send to ${batch[index]?.email}:`,
+              `[CourseMail] Failed to send to ${maskEmail(batch[index]?.email)}:`,
               result.reason,
             );
           }

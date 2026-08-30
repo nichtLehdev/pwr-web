@@ -1,4 +1,5 @@
 import { transporter, isEmailConfigured } from "./transporter";
+import { maskEmail } from "@/lib/mask-email";
 import type { SendMailOptions } from "nodemailer";
 import { createLogger } from "@/server/utils/logger";
 
@@ -51,19 +52,19 @@ export async function sendEmail(options: EmailOptions) {
 
   try {
     log.debug("Attempting to send email:", {
-      to: options.to,
+      to: maskEmail(options.to),
       subject: options.subject,
       from: mailOptions.from,
     });
     const info = await transporter.sendMail(mailOptions);
     log.info("Email sent successfully:", {
       messageId: info.messageId,
-      to: options.to,
+      to: maskEmail(options.to),
     });
     return { success: true, messageId: info.messageId };
   } catch (error) {
     log.error("Send error:", {
-      to: options.to,
+      to: maskEmail(options.to),
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });

@@ -3,6 +3,8 @@ import { db } from "@/server/db";
 import { rateLimit, rateLimitResponse } from "@/server/utils/rate-limit";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { createNewsletterConfirmToken } from "@/server/utils/newsletter-confirm-token";
+import { clientIpFromHeaders } from "@/server/utils/client-ip";
+import { NEWSLETTER_CONSENT_VERSION } from "@/lib/newsletter-consent";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -57,6 +59,9 @@ export async function POST(request: NextRequest) {
         ? name.trim().slice(0, 100)
         : null;
 
+    // Nachweis der Einwilligung: wer, wann, und zu welchem Text.
+    const signupIp = clientIpFromHeaders(request.headers);
+
     const existing = await db.newsletterSubscriber.findUnique({
       where: { email },
     });
@@ -65,7 +70,13 @@ export async function POST(request: NextRequest) {
 
     if (!existing) {
       await db.newsletterSubscriber.create({
-        data: { email, name: subscriberName, isActive: true },
+        data: {
+          email,
+          name: subscriberName,
+          isActive: true,
+          signupIp,
+          consentVersion: NEWSLETTER_CONSENT_VERSION,
+        },
       });
     } else if (!alreadySubscribed) {
       // Pending or previously unsubscribed: back to square one, so consent is
@@ -78,6 +89,11 @@ export async function POST(request: NextRequest) {
           name: subscriberName ?? existing.name,
           subscribedAt: new Date(),
           unsubscribedAt: null,
+          // Die neue Anmeldung ist die neue Einwilligung — der alte Nachweis
+          // gehört nicht dazu und wird überschrieben, nicht ergänzt.
+          signupIp,
+          confirmIp: null,
+          consentVersion: NEWSLETTER_CONSENT_VERSION,
         },
       });
     }
