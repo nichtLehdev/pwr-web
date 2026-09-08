@@ -20,7 +20,7 @@ import {
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import type { Editor } from "@tiptap/react";
 import {
-  COURSE_MAIL_PLACEHOLDERS,
+  COURSE_MAIL_PLACEHOLDER_GROUPS,
   findUnknownPlaceholders,
 } from "@/lib/course-mail-placeholders";
 import {
@@ -622,9 +622,8 @@ function CourseMailPageContent() {
                       <span className="dark:text-dark-muted block text-xs text-gray-500">
                         Jede:r Empfänger:in bekommt die eigene ausgestellte
                         Rechnung als PDF. Wer keine hat, erhält die Nachricht
-                        ohne Anhang. Nutze dazu die Platzhalter
-                        {" {{rechnungsnummer}}"}, {"{{rechnungsbetrag}}"} und
-                        {" {{zahlungsziel}}"}.
+                        ohne Anhang. Dazu passen die Platzhalter der Gruppe
+                        „Rechnung“.
                       </span>
                     </span>
                   </label>
@@ -754,22 +753,39 @@ function CourseMailPageContent() {
                 jede Empfängerin und jeden Empfänger einzeln ersetzt. Wirkt auch
                 im Betreff.
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {COURSE_MAIL_PLACEHOLDERS.map((placeholder) => (
-                  <button
-                    key={placeholder.token}
-                    type="button"
-                    onClick={() => insertPlaceholder(placeholder.token)}
-                    title={`${placeholder.label} – z. B. „${placeholder.example}“`}
-                    className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text rounded-md border border-gray-200 bg-gray-50 px-2 py-1 font-mono text-xs text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    {`{{${placeholder.token}}}`}
-                  </button>
+              <div className="space-y-4">
+                {COURSE_MAIL_PLACEHOLDER_GROUPS.map((group) => (
+                  <div key={group.id}>
+                    <h3 className="dark:text-dark-text text-xs font-semibold text-gray-900">
+                      {group.label}
+                    </h3>
+                    <p className="dark:text-dark-muted text-[11px] text-gray-500">
+                      {group.description}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {group.placeholders.map((placeholder) => (
+                        <button
+                          key={placeholder.token}
+                          type="button"
+                          onClick={() => insertPlaceholder(placeholder.token)}
+                          title={`Beispiel: ${placeholder.example}`}
+                          className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text flex flex-col items-start rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-left text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <span className="text-xs font-medium">
+                            {placeholder.label}
+                          </span>
+                          <span className="dark:text-dark-muted font-mono text-[10px] text-gray-500">
+                            {`{{${placeholder.token}}}`}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-              <p className="dark:text-dark-muted mt-3 text-xs text-gray-500">
+              <p className="dark:text-dark-muted mt-4 text-xs text-gray-500">
                 Hat jemand mehrere Anmeldungen, fasst{" "}
-                <span className="font-mono">{"{{teilnehmer}}"}</span> alle
+                <span className="font-mono">{"{{teilnehmer.namen}}"}</span> alle
                 angemeldeten Personen zusammen.
               </p>
             </div>
