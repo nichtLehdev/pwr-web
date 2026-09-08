@@ -32,7 +32,11 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
+import {
+  computeSiblingDiscounts,
+  hasDiscountEligibleSiblingGroup,
+  roundMoney,
+} from "@/lib/sibling-discount";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
 
 interface Participant {
@@ -372,6 +376,20 @@ export default function EditRegistrationPage() {
     }, 0);
   };
 
+  /**
+   * Same shared rule the server applies when it saves the edit, so the price
+   * shown here is the price that ends up on the registration.
+   */
+  const siblingDiscountInput = () =>
+    activeParticipants.map((participant) => ({
+      birthDate: participant.birthDate,
+      siblingGroupId: participant.siblingGroupId,
+      price:
+        registration?.course?.priceOptions?.find(
+          (p) => p.id === participant.priceOptionId,
+        )?.price ?? 0,
+    }));
+
   const calculateDiscountAmount = () => {
     if (
       !siblingDiscountApplied ||
@@ -380,68 +398,18 @@ export default function EditRegistrationPage() {
     )
       return 0;
 
-    const siblingGroups = new Map<string, typeof activeParticipants>();
-    for (const participant of activeParticipants) {
-      if (participant.siblingGroupId) {
-        if (!siblingGroups.has(participant.siblingGroupId)) {
-          siblingGroups.set(participant.siblingGroupId, []);
-        }
-        siblingGroups.get(participant.siblingGroupId)?.push(participant);
-      }
-    }
-
-    let discount = 0;
-    for (const [, groupParticipants] of siblingGroups) {
-      if (groupParticipants.length > 1) {
-        // Only apply discount when 2+ minors are in the same sibling group
-        const eligibleParticipants = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-        if (eligibleParticipants.length > 1) {
-          for (let i = 1; i < eligibleParticipants.length; i++) {
-            const participant = eligibleParticipants[i];
-            if (participant) {
-              const priceOption = registration.course.priceOptions.find(
-                (p) => p.id === participant.priceOptionId,
-              );
-              if (priceOption) {
-                discount += priceOption.price * 0.2;
-              }
-            }
-          }
-        }
-      }
-    }
-    return discount;
+    return computeSiblingDiscounts(siblingDiscountInput()).totalDiscount;
   };
 
-  /** True when at least one sibling group has 2+ minors (under 18). Required for sibling discount. */
-  const hasEligibleSiblingGroupForDiscount = (() => {
-    if (!registration?.course?.allowSiblingDiscount) return false;
-    const siblingGroups = new Map<string, typeof activeParticipants>();
-    for (const participant of activeParticipants) {
-      if (participant.siblingGroupId) {
-        if (!siblingGroups.has(participant.siblingGroupId)) {
-          siblingGroups.set(participant.siblingGroupId, []);
-        }
-        siblingGroups.get(participant.siblingGroupId)?.push(participant);
-      }
-    }
-    for (const [, groupParticipants] of siblingGroups) {
-      if (groupParticipants.length > 1) {
-        const minors = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-        if (minors.length > 1) return true;
-      }
-    }
-    return false;
-  })();
+  /** True when at least one sibling group has 2+ members. Required for the discount. */
+  const hasEligibleSiblingGroupForDiscount =
+    (registration?.course?.allowSiblingDiscount ?? false) &&
+    hasDiscountEligibleSiblingGroup(activeParticipants);
 
   const calculateTotalPrice = () => {
     const original = calculateOriginalPrice();
     const discount = calculateDiscountAmount();
-    return original - discount;
+    return roundMoney(original - discount);
   };
 
   const linkSiblings = (participantId1: string, participantId2: string) => {
@@ -1318,7 +1286,7 @@ export default function EditRegistrationPage() {
               ))}
             </div>
 
-            {/* Sibling Discount Option: only if at least one group has 2+ minors */}
+            {/* Sibling Discount Option: only if at least one group has 2+ siblings */}
             {registration.course.allowSiblingDiscount &&
               activeParticipants.length > 1 &&
               hasSiblingGroups && (
@@ -1340,9 +1308,8 @@ export default function EditRegistrationPage() {
                           </div>
                           <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
                             Sie erhalten 20% Rabatt auf die Teilnahmegebühr
-                            jedes weiteren Geschwisterkindes ab dem zweiten Kind
-                            (nur Minderjährige unter 18). Der Rabatt muss noch
-                            bestätigt werden.
+                            jedes weiteren Geschwisterkindes ab dem zweiten
+                            Kind. Der Rabatt muss noch bestätigt werden.
                           </p>
                           {siblingDiscountApplied &&
                             calculateDiscountAmount() > 0 && (
@@ -1358,8 +1325,8 @@ export default function EditRegistrationPage() {
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
                       <p className="text-sm text-amber-800 dark:text-amber-200">
                         Für den Geschwisterkindrabatt müssen mindestens zwei
-                        Minderjährige (unter 18 Jahren) in einer
-                        Geschwistergruppe vorhanden sein.
+                        Geschwister in einer Geschwistergruppe zusammengefasst
+                        sein.
                       </p>
                     </div>
                   )}

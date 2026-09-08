@@ -109,8 +109,11 @@ export default function DashboardPage() {
     { enabled: ready && canManageRegistrations },
   );
   // Geschwisterrabatte gehören in dieselbe Freigabe-Warteschlange wie Kurse,
-  // Termine und Beiträge. Gegated auf courses.manage_registrations — genau die
-  // Berechtigung, die auch approveSiblingDiscount verlangt.
+  // Termine und Beiträge. Gegated auf courses.manage_registrations, weil
+  // getAllAdmin selbst diese Berechtigung verlangt — entscheiden darf über den
+  // Rabatt hingegen, wer registrations.manage_sibling_discount hat. Wer nur
+  // Letzteres hält (etwa Posaunenwarte), prüft die Rabatte seiner eigenen Kurse
+  // über deren Teilnehmerliste.
   const { data: pendingDiscounts } = api.registrations.getAllAdmin.useQuery(
     {
       page: 1,

@@ -1,18 +1,18 @@
-import { isParticipantUnder18 } from "./participant-utils";
-
 /**
- * Canonical sibling-discount rule, shared by registration create/update and
- * the invoice generator so all three always agree.
+ * Canonical sibling-discount rule, shared by the registration form,
+ * registration create/update and the invoice generator so they always agree.
  *
  * - Participants are grouped by siblingGroupId.
- * - Only participants under 18 at `referenceDate` (normally the course start
- *   date) are eligible.
- * - In each group with 2+ eligible members, the oldest sibling pays full
- *   price; every further eligible sibling gets 20% off their price, rounded
- *   to cents per person.
+ * - In each group with 2+ members, the oldest sibling pays full price; every
+ *   further sibling gets 20% off their price, rounded to cents per person.
  *
- * Eligible siblings are ordered by birth date ascending (tie: original array
- * order), so the result is deterministic regardless of input order.
+ * There is no age limit: the Förderverein grants the discount to any set of
+ * siblings booked together, adults included.
+ *
+ * Siblings are ordered by birth date ascending (tie: original array order), so
+ * the result is deterministic regardless of input order. A participant without
+ * a birth date has no place in that order and is therefore skipped — persisted
+ * participants always have one, only a half-filled form does not.
  */
 
 export const SIBLING_DISCOUNT_RATE = 0.2;
@@ -37,7 +37,6 @@ export type SiblingDiscountResult = {
 
 export function computeSiblingDiscounts(
   participants: SiblingDiscountParticipant[],
-  referenceDate: Date,
 ): SiblingDiscountResult {
   const discounts = participants.map(() => 0);
 
@@ -50,15 +49,9 @@ export function computeSiblingDiscounts(
   });
 
   for (const indexes of groups.values()) {
-    if (indexes.length < 2) continue;
-
-    const eligible = indexes.filter((index) => {
-      const participant = participants[index];
-      return (
-        participant?.birthDate != null &&
-        isParticipantUnder18(participant.birthDate, referenceDate)
-      );
-    });
+    const eligible = indexes.filter(
+      (index) => participants[index]?.birthDate != null,
+    );
     if (eligible.length < 2) continue;
 
     const sorted = [...eligible].sort((a, b) => {
@@ -78,4 +71,24 @@ export function computeSiblingDiscounts(
     totalDiscount: roundMoney(discounts.reduce((sum, d) => sum + d, 0)),
     discountPerParticipant: discounts,
   };
+}
+
+/**
+ * True when at least one sibling group is large enough to earn a discount —
+ * the condition the "Geschwisterkindrabatt" checkbox is offered under. Asks
+ * about group sizes, not about money, so a free price option in the group
+ * doesn't make the option disappear.
+ */
+export function hasDiscountEligibleSiblingGroup<
+  T extends Pick<SiblingDiscountParticipant, "birthDate" | "siblingGroupId">,
+>(participants: T[]): boolean {
+  const groupSizes = new Map<string, number>();
+  for (const participant of participants) {
+    if (!participant.siblingGroupId || participant.birthDate == null) continue;
+    groupSizes.set(
+      participant.siblingGroupId,
+      (groupSizes.get(participant.siblingGroupId) ?? 0) + 1,
+    );
+  }
+  return [...groupSizes.values()].some((size) => size >= 2);
 }
