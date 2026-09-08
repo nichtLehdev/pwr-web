@@ -35,6 +35,7 @@ function viewerIsCourseTeamMember(
 }
 import { userHasPermission } from "../helpers/permissions";
 import { userCanBookInvoicePayments } from "../helpers/invoice-access";
+import { userCanManageSiblingDiscount } from "../helpers/course-access";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
@@ -45,7 +46,10 @@ import {
   runSerializable,
 } from "../helpers/course-capacity";
 import { logAudit } from "../helpers/audit";
-import { createNotification } from "../helpers/notifications";
+import {
+  createNotification,
+  notifyUsersWithPermission,
+} from "../helpers/notifications";
 import {
   promoteFromWaitlist,
   sendPromotionEmails,
@@ -321,7 +325,6 @@ export const registrationsRouter = createTRPCRouter({
               course.priceOptions.find((po) => po.id === p.priceOptionId)
                 ?.price ?? 0,
           })),
-          course.startDate,
         );
         siblingDiscountAmount = totalDiscount;
 
@@ -584,7 +587,6 @@ export const registrationsRouter = createTRPCRouter({
               course.priceOptions.find((po) => po.id === p.priceOptionId)
                 ?.price ?? 0,
           })),
-          course.startDate,
         );
         siblingDiscountAmount = totalDiscount;
 
@@ -915,6 +917,7 @@ export const registrationsRouter = createTRPCRouter({
           canCancel: false,
           isStaff: false,
           canBookPayments: false,
+          canManageSiblingDiscount: false,
         };
       }
       const isOwner = registration.registrantEmail === ctx.session.user.email;
@@ -955,7 +958,24 @@ export const registrationsRouter = createTRPCRouter({
         ctx.permissionCache,
       );
 
-      return { canView, canEdit, canCancel, isStaff, canBookPayments };
+      // Dieselbe Funktion, die auch die Mutation durchsetzt: die
+      // Kursverantwortung ist clientseitig nicht sichtbar.
+      const { allowed: canManageSiblingDiscount } =
+        await userCanManageSiblingDiscount(
+          ctx.db,
+          ctx.session.user.id,
+          registration.course,
+          ctx.permissionCache,
+        );
+
+      return {
+        canView,
+        canEdit,
+        canCancel,
+        isStaff,
+        canBookPayments,
+        canManageSiblingDiscount,
+      };
     }),
 
   /**
@@ -1306,7 +1326,6 @@ export const registrationsRouter = createTRPCRouter({
               course.priceOptions.find((po) => po.id === p.priceOptionId)
                 ?.price ?? 0,
           })),
-          course.startDate,
         );
         siblingDiscountAmount = totalDiscount;
 
@@ -1839,7 +1858,7 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   approveSiblingDiscount: permissionProcedure(
-    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   )
     .input(
       z.object({
@@ -1920,7 +1939,7 @@ export const registrationsRouter = createTRPCRouter({
     }),
 
   rejectSiblingDiscount: permissionProcedure(
-    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   )
     .input(
       z.object({
@@ -1988,6 +2007,340 @@ export const registrationsRouter = createTRPCRouter({
           );
         } catch (error) {
           log.error("Failed to send discount rejection email:", error);
+        }
+      }
+
+      return updated;
+    }),
+
+  /**
+   * Den Geschwisterkindrabatt nachträglich auf eine bestehende Anmeldung
+   * anwenden — für die Fälle, in denen beim Anmelden niemand daran gedacht hat.
+   *
+   * Wer den Rabatt verwalten darf, gewährt ihn damit zugleich (APPROVED). Wer
+   * nur den Kurs verantwortet, stößt ihn an; er landet dann wie ein beantragter
+   * Rabatt in der Prüfung (PENDING).
+   */
+  applySiblingDiscount: protectedProcedure
+    .input(z.object({ registrationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: {
+          participants: true,
+          invoices: { select: { status: true } },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+              createdById: true,
+              allowSiblingDiscount: true,
+              priceOptions: { select: { id: true, price: true } },
+            },
+          },
+        },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      const { allowed, canDecide } = await userCanManageSiblingDiscount(
+        ctx.db,
+        ctx.session.user.id,
+        registration.course,
+        ctx.permissionCache,
+      );
+      if (!allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, den Geschwisterkindrabatt zu gewähren",
+        });
+      }
+
+      if (!registration.course.allowSiblingDiscount) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Für diesen Kurs ist der Geschwisterkindrabatt nicht freigeschaltet",
+        });
+      }
+
+      if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Die Anmeldung ist storniert",
+        });
+      }
+
+      if (
+        registration.siblingDiscountStatus === SiblingDiscountStatus.PENDING ||
+        registration.siblingDiscountStatus === SiblingDiscountStatus.APPROVED
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Für diese Anmeldung ist der Geschwisterkindrabatt bereits vermerkt",
+        });
+      }
+
+      // Eine veröffentlichte Rechnung ist bereits beim Empfänger — der Preis
+      // dahinter darf sich nicht mehr still ändern.
+      if (
+        registration.invoices.some(
+          (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
+        )
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Für diese Anmeldung wurde bereits eine Rechnung veröffentlicht",
+        });
+      }
+
+      const { totalDiscount } = computeSiblingDiscounts(
+        registration.participants.map((participant) => ({
+          birthDate: participant.birthDate,
+          siblingGroupId: participant.siblingGroupId,
+          price:
+            registration.course.priceOptions.find(
+              (option) => option.id === participant.priceOptionId,
+            )?.price ?? 0,
+        })),
+      );
+
+      if (totalDiscount <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Kein Rabatt möglich: Es müssen mindestens zwei Teilnehmer als Geschwister zusammengefasst und kostenpflichtig sein",
+        });
+      }
+
+      // Grundlage ist der aktuell vereinbarte Preis, nicht eine Neuberechnung
+      // aus den Preiskategorien: die können sich seit der Anmeldung geändert
+      // haben, der zugesagte Betrag nicht.
+      const originalTotalPrice = registration.totalPrice;
+      const status = canDecide
+        ? SiblingDiscountStatus.APPROVED
+        : SiblingDiscountStatus.PENDING;
+
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountApplied: true,
+          siblingDiscountStatus: status,
+          siblingDiscountAmount: totalDiscount,
+          originalTotalPrice,
+          totalPrice: roundMoney(originalTotalPrice - totalDiscount),
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.sibling_discount_applied",
+        entityType: "registration",
+        entityId: updated.id,
+        details: {
+          courseId: registration.course.id,
+          status,
+          discountAmount: totalDiscount,
+          originalTotalPrice,
+          totalPrice: updated.totalPrice,
+        },
+      });
+
+      if (status === SiblingDiscountStatus.PENDING) {
+        void notifyUsersWithPermission(
+          ctx.db,
+          PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+          {
+            type: "registration.sibling_discount_pending",
+            title: `Geschwisterkindrabatt zu prüfen: ${updated.course.title}`,
+            body: `${updated.registrantFirstName} ${updated.registrantLastName} — ${totalDiscount.toFixed(2)} €`,
+            url: `/dashboard/courses/${updated.course.id}/participants/${updated.id}`,
+          },
+          ctx.session.user.id,
+        );
+      } else {
+        const emailService = await getEmailService();
+        if (emailService.isEmailConfigured()) {
+          try {
+            await emailService.sendSiblingDiscountApprovedEmail(
+              updated.registrantEmail,
+              updated.registrantFirstName,
+              updated.registrantLastName,
+              updated.course.title,
+              updated.course.startDate,
+              updated.course.endDate,
+              originalTotalPrice,
+              totalDiscount,
+              updated.totalPrice,
+              updated.participants.length,
+              updated.id,
+              registrationAccessUrl(updated),
+            );
+          } catch (error) {
+            log.error("Failed to send discount approval email:", error);
+          }
+        }
+      }
+
+      return updated;
+    }),
+
+  /**
+   * Den Geschwisterkindrabatt einer Anmeldung wieder entfernen — die Rücknahme
+   * zu applySiblingDiscount und zur Genehmigung.
+   *
+   * Nicht gedacht für die Ablehnung eines beantragten Rabatts: dafür gibt es
+   * rejectSiblingDiscount, das den Antrag begründet beantwortet. Hier geht es um
+   * den versehentlich gewährten Rabatt.
+   */
+  removeSiblingDiscount: protectedProcedure
+    .input(z.object({ registrationId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.registrationId },
+        include: {
+          participants: true,
+          invoices: { select: { status: true } },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+              createdById: true,
+            },
+          },
+        },
+      });
+
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      const { allowed } = await userCanManageSiblingDiscount(
+        ctx.db,
+        ctx.session.user.id,
+        registration.course,
+        ctx.permissionCache,
+      );
+      if (!allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, den Geschwisterkindrabatt zu entfernen",
+        });
+      }
+
+      if (
+        !registration.siblingDiscountApplied &&
+        registration.siblingDiscountStatus === SiblingDiscountStatus.NONE
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Für diese Anmeldung ist kein Geschwisterkindrabatt vermerkt",
+        });
+      }
+
+      // Wie beim Gewähren: hinter einer veröffentlichten Rechnung darf sich der
+      // Preis nicht mehr still ändern.
+      if (
+        registration.invoices.some(
+          (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
+        )
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Für diese Anmeldung wurde bereits eine Rechnung veröffentlicht",
+        });
+      }
+
+      const previousStatus = registration.siblingDiscountStatus;
+      const originalPrice =
+        registration.originalTotalPrice ?? registration.totalPrice;
+
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: input.registrationId },
+        data: {
+          siblingDiscountApplied: false,
+          siblingDiscountStatus: SiblingDiscountStatus.NONE,
+          siblingDiscountAmount: null,
+          originalTotalPrice: null,
+          totalPrice: originalPrice,
+        },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              id: true,
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.sibling_discount_removed",
+        entityType: "registration",
+        entityId: updated.id,
+        details: {
+          courseId: registration.course.id,
+          previousStatus,
+          previousDiscountAmount: registration.siblingDiscountAmount,
+          totalPrice: originalPrice,
+        },
+      });
+
+      // Nur ein bereits gewährter Rabatt war dem Anmelder zugesagt — wird der
+      // zurückgenommen, ändert sich sein Preis und er muss es erfahren. Ein
+      // anhängiger Antrag war noch keine Zusage.
+      if (previousStatus === SiblingDiscountStatus.APPROVED) {
+        const emailService = await getEmailService();
+        if (emailService.isEmailConfigured()) {
+          try {
+            await emailService.sendSiblingDiscountRejectedEmail(
+              updated.registrantEmail,
+              updated.registrantFirstName,
+              updated.registrantLastName,
+              updated.course.title,
+              updated.course.startDate,
+              updated.course.endDate,
+              originalPrice,
+              updated.participants.length,
+              updated.id,
+              registrationAccessUrl(updated),
+            );
+          } catch (error) {
+            log.error("Failed to send discount removal email:", error);
+          }
         }
       }
 

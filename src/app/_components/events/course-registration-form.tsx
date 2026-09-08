@@ -6,7 +6,7 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
 import type {
   RegistrationData,
@@ -101,6 +101,11 @@ export default function CourseRegistrationForm({
     const cash = course.paymentCashAllowed !== false;
     const inv = course.paymentInvoiceAllowed !== false;
     if (cash && !inv) {
+      // Lässt der Kurs nur eine Zahlungsweise zu, wird sie hier vorbelegt.
+      // Der setState im Effekt ist bestehendes Verhalten und bleibt unangetastet;
+      // sichtbar wurde er erst, als weiter unten eine react-hooks-Unterdrückung
+      // entfallen konnte.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRegistrationData((d) =>
         d.paymentMethod === "CASH" ? d : { ...d, paymentMethod: "CASH" },
       );
@@ -274,38 +279,17 @@ export default function CourseRegistrationForm({
       return "";
     }
 
-    const siblingGroups = new Map<
-      string,
-      typeof registrationData.participants
-    >();
-    for (const participant of registrationData.participants) {
-      if (participant.siblingGroupId) {
-        if (!siblingGroups.has(participant.siblingGroupId)) {
-          siblingGroups.set(participant.siblingGroupId, []);
-        }
-        siblingGroups.get(participant.siblingGroupId)?.push(participant);
-      }
-    }
-
-    let hasEligibleParticipants = false;
-    for (const [, groupParticipants] of siblingGroups) {
-      if (groupParticipants.length > 1) {
-        const eligibleParticipants = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-        if (eligibleParticipants.length > 1) {
-          hasEligibleParticipants = true;
-          break;
-        }
-      }
-    }
-
-    if (!hasEligibleParticipants && siblingGroups.size > 0) {
-      return "Für den Geschwisterkindrabatt müssen mindestens zwei Minderjährige (unter 18 Jahren) in einer Geschwistergruppe vorhanden sein.";
+    const hasAnySiblingGroup = registrationData.participants.some(
+      (p) => p.siblingGroupId,
+    );
+    if (
+      hasAnySiblingGroup &&
+      !hasDiscountEligibleSiblingGroup(registrationData.participants)
+    ) {
+      return "Für den Geschwisterkindrabatt müssen mindestens zwei Geschwister in einer Geschwistergruppe zusammengefasst sein.";
     }
 
     return "";
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     registrationData.siblingDiscountApplied,
     registrationData.participants,

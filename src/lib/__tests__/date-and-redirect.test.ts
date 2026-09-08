@@ -1,7 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { parseDeadlineEndOfDay, toLocalDateInputValue } from "../date-input";
 import { safeInternalPath } from "../safe-redirect";
-import { isParticipantUnder18 } from "../participant-utils";
 
 describe("parseDeadlineEndOfDay", () => {
   it("parses a date-only string as local end of day", () => {
@@ -57,24 +56,5 @@ describe("safeInternalPath", () => {
 
   it("honors a custom fallback", () => {
     expect(safeInternalPath("//x", "/start")).toBe("/start");
-  });
-});
-
-describe("isParticipantUnder18", () => {
-  const reference = new Date(2026, 8, 1); // 2026-09-01
-
-  it("is true just before the 18th birthday", () => {
-    const birth = new Date(2008, 8, 2); // turns 18 on 2026-09-02
-    expect(isParticipantUnder18(birth, reference)).toBe(true);
-  });
-
-  it("is false on the 18th birthday", () => {
-    const birth = new Date(2008, 8, 1); // turns 18 exactly on reference day
-    expect(isParticipantUnder18(birth, reference)).toBe(false);
-  });
-
-  it("is false for missing birth dates", () => {
-    expect(isParticipantUnder18(null, reference)).toBe(false);
-    expect(isParticipantUnder18(undefined, reference)).toBe(false);
   });
 });

@@ -1,6 +1,6 @@
 import type { RegistrationData, CourseWithRelations } from "./types";
 import { isPlausibleEmail } from "@/lib/email-address";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
 import {
   registrationNeedsPaymentMethod,
@@ -8,117 +8,60 @@ import {
 } from "@/lib/course-payment-methods";
 import type { CoursePaymentMethod } from "~/generated/prisma/client";
 
-export function calculateTotalPrice(
+/**
+ * Maps the form's participants onto the shared discount rule. The preview the
+ * registrant sees and the price the server persists come from the same
+ * function, so the summary step can't quote a total the server won't honour.
+ */
+function siblingDiscountInput(
   registrationData: RegistrationData,
   course: CourseWithRelations,
-): number {
-  const basePrice = registrationData.participants.reduce((sum, participant) => {
-    const priceOption = course.priceOptions.find(
-      (p) => p.id === participant.priceOptionId,
-    );
-    return sum + (priceOption?.price || 0);
-  }, 0);
-
-  if (registrationData.siblingDiscountApplied && course.allowSiblingDiscount) {
-    const siblingGroups = new Map<
-      string,
-      typeof registrationData.participants
-    >();
-    for (const participant of registrationData.participants) {
-      if (participant.siblingGroupId) {
-        if (!siblingGroups.has(participant.siblingGroupId)) {
-          siblingGroups.set(participant.siblingGroupId, []);
-        }
-        siblingGroups.get(participant.siblingGroupId)?.push(participant);
-      }
-    }
-
-    let discount = 0;
-    for (const [, groupParticipants] of siblingGroups) {
-      if (groupParticipants.length > 1) {
-        // Only apply discount to participants under 18
-        const eligibleParticipants = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-        if (eligibleParticipants.length > 1) {
-          // Apply discount to all eligible participants except the first one
-          for (let i = 1; i < eligibleParticipants.length; i++) {
-            const participant = eligibleParticipants[i];
-            if (participant) {
-              const priceOption = course.priceOptions.find(
-                (p) => p.id === participant.priceOptionId,
-              );
-              if (priceOption) {
-                discount += priceOption.price * 0.2;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return basePrice - discount;
-  }
-
-  return basePrice;
+) {
+  return registrationData.participants.map((participant) => ({
+    birthDate: participant.birthDate,
+    siblingGroupId: participant.siblingGroupId,
+    price:
+      course.priceOptions.find((p) => p.id === participant.priceOptionId)
+        ?.price ?? 0,
+  }));
 }
 
 export function calculateOriginalPrice(
   registrationData: RegistrationData,
   course: CourseWithRelations,
 ): number {
-  return registrationData.participants.reduce((sum, participant) => {
-    const priceOption = course.priceOptions.find(
-      (p) => p.id === participant.priceOptionId,
-    );
-    return sum + (priceOption?.price || 0);
-  }, 0);
+  return roundMoney(
+    registrationData.participants.reduce((sum, participant) => {
+      const priceOption = course.priceOptions.find(
+        (p) => p.id === participant.priceOptionId,
+      );
+      return sum + (priceOption?.price ?? 0);
+    }, 0),
+  );
 }
 
 export function calculateDiscountAmount(
   registrationData: RegistrationData,
   course: CourseWithRelations,
 ): number {
-  if (registrationData.siblingDiscountApplied && course.allowSiblingDiscount) {
-    const siblingGroups = new Map<
-      string,
-      typeof registrationData.participants
-    >();
-    for (const participant of registrationData.participants) {
-      if (participant.siblingGroupId) {
-        if (!siblingGroups.has(participant.siblingGroupId)) {
-          siblingGroups.set(participant.siblingGroupId, []);
-        }
-        siblingGroups.get(participant.siblingGroupId)?.push(participant);
-      }
-    }
-
-    let discount = 0;
-    for (const [, groupParticipants] of siblingGroups) {
-      if (groupParticipants.length > 1) {
-        // Only apply discount to participants under 18
-        const eligibleParticipants = groupParticipants.filter(
-          (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-        );
-        if (eligibleParticipants.length > 1) {
-          // Apply discount to all eligible participants except the first one
-          for (let i = 1; i < eligibleParticipants.length; i++) {
-            const participant = eligibleParticipants[i];
-            if (participant) {
-              const priceOption = course.priceOptions.find(
-                (p) => p.id === participant.priceOptionId,
-              );
-              if (priceOption) {
-                discount += priceOption.price * 0.2;
-              }
-            }
-          }
-        }
-      }
-    }
-    return discount;
+  if (
+    !registrationData.siblingDiscountApplied ||
+    !course.allowSiblingDiscount
+  ) {
+    return 0;
   }
-  return 0;
+  return computeSiblingDiscounts(siblingDiscountInput(registrationData, course))
+    .totalDiscount;
+}
+
+export function calculateTotalPrice(
+  registrationData: RegistrationData,
+  course: CourseWithRelations,
+): number {
+  return roundMoney(
+    calculateOriginalPrice(registrationData, course) -
+      calculateDiscountAmount(registrationData, course),
+  );
 }
 
 export function getParticipantDisplayName(
