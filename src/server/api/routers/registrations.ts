@@ -37,7 +37,10 @@ import { userHasPermission } from "../helpers/permissions";
 import { userCanBookInvoicePayments } from "../helpers/invoice-access";
 import { userCanManageSiblingDiscount } from "../helpers/course-access";
 import { PERMISSIONS } from "@/lib/permissions";
-import { permissionProcedure } from "../middleware/permissions";
+import {
+  permissionProcedure,
+  permissionProcedureAny,
+} from "../middleware/permissions";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import {
   assertPriceTierCapacity,
@@ -877,7 +880,31 @@ export const registrationsRouter = createTRPCRouter({
               ctx.permissionCache,
             );
 
-      if (!isOwner && !isCreator && !teamMember && !canManageRegistrations) {
+      // Über einen Geschwisterkindrabatt entscheidet, wer die Berechtigung
+      // dafür hat — kursübergreifend. Dann muss er die Anmeldung auch lesen
+      // dürfen, sonst führt die Freigabe-Warteschlange ins Leere. Ausgeweitet
+      // wird dabei nichts: nur Anmeldungen, die einen Rabatt tragen.
+      const canReviewSiblingDiscount =
+        userId === null ||
+        isOwner ||
+        isCreator ||
+        teamMember ||
+        canManageRegistrations ||
+        registration.siblingDiscountStatus === SiblingDiscountStatus.NONE
+          ? false
+          : await userHasPermission(
+              userId,
+              PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+              ctx.permissionCache,
+            );
+
+      if (
+        !isOwner &&
+        !isCreator &&
+        !teamMember &&
+        !canManageRegistrations &&
+        !canReviewSiblingDiscount
+      ) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Registration not found",
@@ -983,8 +1010,16 @@ export const registrationsRouter = createTRPCRouter({
    * registration, filterable by registrant, status, payment, and course —
    * the "who owes money / who registered" view that per-course participant
    * pages can't answer.
+   *
+   * Zwei Zugänge: mit courses.manage_registrations die volle Liste, mit
+   * registrations.manage_sibling_discount nur die nach Rabattstatus gefilterte.
+   * Über genau diese Anmeldungen entscheidet die Rabattberechtigung ohnehin —
+   * ohne den Zugang bliebe die Freigabe-Warteschlange für sie unauffindbar.
    */
-  getAllAdmin: permissionProcedure(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS)
+  getAllAdmin: permissionProcedureAny([
+    PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+  ])
     .input(
       z.object({
         page: z.number().min(1).default(1),
@@ -998,6 +1033,27 @@ export const registrationsRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
+      // Die Rabattberechtigung öffnet nur die Anmeldungen, über die sie
+      // entscheidet: die mit einem Rabatt. NONE zählt ausdrücklich nicht dazu —
+      // danach zu filtern wäre die ganze Tabelle minus einer Handvoll Zeilen.
+      const scopedToSiblingDiscount =
+        input.siblingDiscountStatus !== undefined &&
+        input.siblingDiscountStatus !== SiblingDiscountStatus.NONE;
+
+      if (!scopedToSiblingDiscount) {
+        const canSeeEveryRegistration = await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+          ctx.permissionCache,
+        );
+        if (!canSeeEveryRegistration) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: `Permission required: ${PERMISSIONS.COURSES_MANAGE_REGISTRATIONS}`,
+          });
+        }
+      }
+
       const search = input.search?.trim();
       const where: Prisma.CourseRegistrationWhereInput = {
         ...(input.registrationStatus && {
