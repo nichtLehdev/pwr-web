@@ -6,7 +6,7 @@ export const metadata = buildPageMetadata({
   title: "Posaunenwerk Rheinland — Evangelische Bläserarbeit im Rheinland",
   titleAbsolute: true,
   description:
-    "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland — Termine, Lehrgänge, Nachrichten und Posaunenchöre in 13 Bezirken.",
+    "Posaunenwerk der Evangelischen Kirche im Rheinland — Termine, Lehrgänge, Nachrichten und Posaunenchöre in 13 Bezirken.",
   path: "/",
 });
 

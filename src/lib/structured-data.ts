@@ -15,8 +15,7 @@ export const ORGANIZATION_ID = "#organization";
  * @see src/app/impressum/page.tsx
  */
 const ORGANIZATION = {
-  legalName:
-    "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland",
+  legalName: "Posaunenwerk der Evangelischen Kirche im Rheinland e.V.",
   email: "info@posaunenwerk-rheinland.de",
   telephone: "+49 261 3000011",
   street: "Rudolf-Harbig-Str. 20",

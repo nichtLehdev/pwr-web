@@ -78,7 +78,7 @@ export function generateCourseMailHtml({
           <tr>
             <td style="background-color: #faa619; padding: 32px 24px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0 0 8px 0; letter-spacing: 0.5px;">Posaunenwerk Rheinland</h1>
-              <p style="color: #ffffff; font-size: 12px; font-weight: normal; margin: 0; opacity: 0.95; letter-spacing: 0.3px;">Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland</p>
+              <p style="color: #ffffff; font-size: 12px; font-weight: normal; margin: 0; opacity: 0.95; letter-spacing: 0.3px;">Posaunenwerk der Evangelischen Kirche im Rheinland</p>
             </td>
           </tr>
 
@@ -116,7 +116,7 @@ export function generateCourseMailHtml({
           <tr>
             <td style="padding: 24px; background-color: #f5f5f5; text-align: center; border-radius: 0 0 8px 8px;">
               <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland
+                Posaunenwerk der Evangelischen Kirche im Rheinland
               </p>
             </td>
           </tr>

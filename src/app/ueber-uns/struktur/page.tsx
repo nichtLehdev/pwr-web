@@ -16,7 +16,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata = buildPageMetadata({
   title: "Struktur & Geschichte",
   description:
-    "Aufbau, Bezirke und Geschichte des Evangelischen Posaunenwerks in der Evangelischen Kirche im Rheinland.",
+    "Aufbau, Bezirke und Geschichte des Posaunenwerks der Evangelischen Kirche im Rheinland.",
   path: "/ueber-uns/struktur",
 });
 
@@ -51,18 +51,18 @@ export default async function StrukturGeschichtePage() {
             <div className="mb-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
               <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
                 <p className="mb-6 leading-relaxed text-gray-600 dark:text-gray-400">
-                  Das Evangelische Posaunenwerk in der Evangelischen Kirche im
-                  Rheinland ist die Dachorganisation für mehr als 200
-                  Posaunenchöre mit über 2.000 aktiven Bläserinnen und Bläsern.
-                  Die Arbeit ist strukturiert in 13 Bezirken, die das gesamte
-                  Gebiet der Evangelischen Kirche im Rheinland abdecken.
+                  Das Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
+                  ist die Dachorganisation für annähernd 200 Posaunenchöre mit
+                  über 2.000 aktiven Bläserinnen und Bläsern. Die Arbeit ist
+                  strukturiert in 13 Bezirken, die das gesamte Gebiet der
+                  Evangelischen Kirche im Rheinland abdecken.
                 </p>
                 <p className="leading-relaxed text-gray-600">
                   Geleitet wird das Posaunenwerk vom Posaunenrat, der die
                   strategischen Entscheidungen trifft und den Vorstand wählt.
-                  Die operative Arbeit wird von den Landesposaunenwarten
-                  koordiniert, unterstützt durch die Bezirksobleute in den
-                  einzelnen Regionen.
+                  Die operative Arbeit wird von den Posaunenwarten koordiniert,
+                  unterstützt durch die Bezirksobleute in den einzelnen
+                  Regionen.
                 </p>
               </div>
 
@@ -76,7 +76,7 @@ export default async function StrukturGeschichtePage() {
                       Posaunenchöre
                     </span>
                     <span className="text-primary text-2xl font-bold">
-                      200+
+                      ca. 200
                     </span>
                   </div>
                   <div className="flex items-center justify-between">

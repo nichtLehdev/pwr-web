@@ -13,7 +13,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata = buildPageMetadata({
   title: "Über uns",
   description:
-    "Das Evangelische Posaunenwerk im Rheinland: Auftrag, Struktur, Gremien und die Menschen hinter der Bläserarbeit in der Evangelischen Kirche im Rheinland.",
+    "Das Posaunenwerk der Evangelischen Kirche im Rheinland: Auftrag, Struktur, Gremien und die Menschen hinter der Bläserarbeit im Rheinland.",
   path: "/ueber-uns",
 });
 
@@ -78,10 +78,10 @@ export default function UeberUnsPage() {
       description={
         <>
           <p className="mb-6">
-            Das Evangelische Posaunenwerk in der Evangelischen Kirche im
-            Rheinland ist die Dachorganisation für knapp 200 Posaunenchöre mit
-            etwa 2.000 Mitgliedern. Diese Chöre verteilen sich über das große
-            Gebiet der rheinischen Landeskirche, von Emmerich im Norden bis nach
+            Das Posaunenwerk der Evangelischen Kirche im Rheinland e.V. ist die
+            Dachorganisation für knapp 200 Posaunenchöre mit etwa 2.000
+            Mitgliedern. Diese Chöre verteilen sich über das große Gebiet der
+            rheinischen Landeskirche, von Emmerich im Norden bis nach
             Saarbrücken im Süden, von Aachen im Westen bis
             Altenkirchen/Westerwald im Osten.
           </p>
@@ -327,10 +327,11 @@ export default function UeberUnsPage() {
                       Adresse
                     </p>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Evangelisches Posaunenwerk Rheinland
+                      Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                       <br />
-                      Hans-Böckler-Straße 7<br />
-                      40476 Düsseldorf
+                      Rudolf-Harbig-Str. 20
+                      <br />
+                      56179 Vallendar
                     </p>
                   </div>
                 </div>
@@ -344,10 +345,10 @@ export default function UeberUnsPage() {
                       Telefon
                     </p>
                     <a
-                      href="tel:+492118957370"
+                      href="tel:02613000011"
                       className="hover:text-primary dark:hover:text-primary-light text-gray-600 transition-colors dark:text-gray-400"
                     >
-                      +49 211 89 57 370
+                      0261 300 00 11
                     </a>
                   </div>
                 </div>
