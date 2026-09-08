@@ -29,3 +29,12 @@ overrides:
   # were loaded)" and no new paragraph was inserted.
   'prosemirror-model': '^1.25.11'
   'prosemirror-view': '^1.42.2'
+
+  # Vulnerable transitive deps with no reachable parent bump; Dependabot
+  # reports these as "no update possible" on every security run because it
+  # can only touch direct dependencies.
+  'js-yaml@<3.15.2': '~3.15.2'
+  'js-yaml@>=4.0.0 <4.3.2': '~4.3.2'
+  'dompurify@<3.4.13': '^3.4.13'
+  'fflate@<0.8.3': '^0.8.3'
+  'mysql2@<3.24.0': '^3.24.0'
