@@ -12,7 +12,7 @@ import {
   InvoicePaymentDialog,
   type PayableInvoice,
 } from "@/app/_components/dashboard/invoice-payment-dialog";
-import type { PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS } from "@/lib/permissions";
 import {
   InvoiceStatus,
   RegistrationStatus,
@@ -31,7 +31,7 @@ import {
   CircleXIcon,
 } from "lucide-react";
 import { DashboardOverflowMenu } from "@/app/_components/dashboard";
-import { isParticipantUnder18 } from "@/lib/participant-utils";
+import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
 import { COURSE_PAYMENT_METHOD_LABELS } from "@/lib/course-payment-methods";
 import {
   ScrollableModal,
@@ -168,6 +168,34 @@ export default function RegistrationDetailPage() {
       },
     });
 
+  const applyDiscountMutation =
+    api.registrations.applySiblingDiscount.useMutation({
+      onSuccess: (updated) => {
+        toast.success(
+          updated.siblingDiscountStatus === SiblingDiscountStatus.APPROVED
+            ? "Geschwisterkindrabatt gewährt"
+            : "Geschwisterkindrabatt beantragt — er muss noch geprüft werden",
+        );
+        void utils.registrations.getById.invalidate({ id: registrationId });
+        void utils.courses.getRegistrations.invalidate({ courseId });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Fehler beim Gewähren des Rabatts");
+      },
+    });
+
+  const removeDiscountMutation =
+    api.registrations.removeSiblingDiscount.useMutation({
+      onSuccess: () => {
+        toast.success("Geschwisterkindrabatt entfernt");
+        void utils.registrations.getById.invalidate({ id: registrationId });
+        void utils.courses.getRegistrations.invalidate({ courseId });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Fehler beim Entfernen des Rabatts");
+      },
+    });
+
   const invalidatePayment = () => {
     void utils.registrations.getById.invalidate({ id: registrationId });
     void utils.courses.getRegistrations.invalidate({ courseId });
@@ -220,10 +248,6 @@ export default function RegistrationDetailPage() {
 
   const { hasPermission } = usePermissions();
 
-  const hasApprovePermission =
-    hasPermission("courses.approve" as PermissionKey) ||
-    hasPermission("courses.manage" as PermissionKey);
-
   /** Nur ausgestellte Rechnungen tragen einen Zahlungsstand. */
   const publishedInvoices =
     registration?.invoices.filter(
@@ -238,10 +262,45 @@ export default function RegistrationDetailPage() {
   // sie durchgelassen hätte.
   const canBookPayments = management?.canBookPayments ?? false;
 
+  // Dieselbe Berechtigung, die auch die Mutation verlangt — die frühere
+  // Prüfung auf courses.approve zeigte die Knöpfe Leuten, die der Server
+  // abgewiesen hätte.
+  const canDecideDiscount = hasPermission(
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+  );
+
   const canApproveDiscount =
     profile &&
-    hasApprovePermission &&
+    canDecideDiscount &&
     registration?.siblingDiscountStatus === SiblingDiscountStatus.PENDING;
+
+  /** Rabattzeilen erscheinen, sobald ein Rabatt beziffert ist. */
+  const hasDiscountLines = Boolean(
+    registration?.siblingDiscountApplied &&
+    registration.originalTotalPrice &&
+    registration.siblingDiscountAmount,
+  );
+
+  /**
+   * Rücknahme eines gewährten Rabatts. Für einen noch anhängigen Antrag stehen
+   * stattdessen "genehmigen"/"ablehnen" bereit — die beantworten ihn begründet.
+   */
+  const canRemoveDiscount =
+    (management?.canManageSiblingDiscount ?? false) &&
+    registration?.siblingDiscountStatus === SiblingDiscountStatus.APPROVED;
+
+  /**
+   * Nachträglich gewähren: nur solange kein Rabatt anhängig oder gewährt ist
+   * und die Teilnehmer überhaupt eine Geschwistergruppe bilden. Ob der Aufrufer
+   * darf, beantwortet der Server — die Kursverantwortung ist hier nicht sichtbar.
+   */
+  const canApplyDiscount =
+    (management?.canManageSiblingDiscount ?? false) &&
+    (course?.allowSiblingDiscount ?? false) &&
+    registration?.registrationStatus !== RegistrationStatus.CANCELLED &&
+    registration?.siblingDiscountStatus !== SiblingDiscountStatus.PENDING &&
+    registration?.siblingDiscountStatus !== SiblingDiscountStatus.APPROVED &&
+    hasDiscountEligibleSiblingGroup(registration?.participants ?? []);
 
   const getParticipantDisplayName = (
     firstName: string,
@@ -614,79 +673,96 @@ export default function RegistrationDetailPage() {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {registration.siblingDiscountApplied &&
-                registration.originalTotalPrice &&
-                registration.siblingDiscountAmount && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">
-                        Zwischensumme:
-                      </span>
-                      <span className="text-gray-900 line-through dark:text-gray-100">
-                        {registration.originalTotalPrice.toFixed(2)} €
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt (20% pro weiteres Kind):
-                      </span>
-                      <span className="font-semibold text-green-600 dark:text-green-400">
-                        -{registration.siblingDiscountAmount.toFixed(2)} €
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-gray-200 pt-2 dark:border-gray-700">
-                      <span className="text-dark dark:text-dark-text font-semibold">
-                        Gesamtbetrag:
-                      </span>
-                      <span className="text-primary text-xl font-bold">
-                        {registration.totalPrice.toFixed(2)} €
-                      </span>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Rabattstatus:
-                      </span>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
-                      >
-                        {
-                          siblingDiscountStatusLabels[
-                            registration.siblingDiscountStatus
-                          ]
-                        }
-                      </span>
-                    </div>
-                    {canApproveDiscount && (
-                      <div className="mt-4 flex gap-3">
-                        <button
-                          onClick={() =>
-                            approveDiscountMutation.mutate({
-                              registrationId: registration.id,
-                            })
-                          }
-                          disabled={approveDiscountMutation.isPending}
-                          className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Rabatt genehmigen
-                        </button>
-                        <button
-                          onClick={() =>
-                            rejectDiscountMutation.mutate({
-                              registrationId: registration.id,
-                            })
-                          }
-                          disabled={rejectDiscountMutation.isPending}
-                          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Rabatt ablehnen
-                        </button>
-                      </div>
-                    )}
+              {hasDiscountLines && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Zwischensumme:
+                    </span>
+                    <span className="text-gray-900 line-through dark:text-gray-100">
+                      {(registration.originalTotalPrice ?? 0).toFixed(2)} €
+                    </span>
                   </div>
-                )}
-              {!registration.siblingDiscountApplied && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-600 dark:text-green-400">
+                      Geschwisterkindrabatt (20% pro weiteres Kind):
+                    </span>
+                    <span className="font-semibold text-green-600 dark:text-green-400">
+                      -{(registration.siblingDiscountAmount ?? 0).toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-gray-200 pt-2 dark:border-gray-700">
+                    <span className="text-dark dark:text-dark-text font-semibold">
+                      Gesamtbetrag:
+                    </span>
+                    <span className="text-primary text-xl font-bold">
+                      {registration.totalPrice.toFixed(2)} €
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Rabattstatus:
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${siblingDiscountStatusColors[registration.siblingDiscountStatus]}`}
+                    >
+                      {
+                        siblingDiscountStatusLabels[
+                          registration.siblingDiscountStatus
+                        ]
+                      }
+                    </span>
+                  </div>
+                  {canRemoveDiscount && (
+                    <div className="mt-4">
+                      <button
+                        onClick={() =>
+                          removeDiscountMutation.mutate({
+                            registrationId: registration.id,
+                          })
+                        }
+                        disabled={removeDiscountMutation.isPending}
+                        className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-700"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Rabatt entfernen
+                      </button>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Der Anmelder wird über den vollen Preis informiert.
+                      </p>
+                    </div>
+                  )}
+                  {canApproveDiscount && (
+                    <div className="mt-4 flex gap-3">
+                      <button
+                        onClick={() =>
+                          approveDiscountMutation.mutate({
+                            registrationId: registration.id,
+                          })
+                        }
+                        disabled={approveDiscountMutation.isPending}
+                        className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Rabatt genehmigen
+                      </button>
+                      <button
+                        onClick={() =>
+                          rejectDiscountMutation.mutate({
+                            registrationId: registration.id,
+                          })
+                        }
+                        disabled={rejectDiscountMutation.isPending}
+                        className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Rabatt ablehnen
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!hasDiscountLines && (
                 <div className="flex items-center justify-between">
                   <span className="text-dark dark:text-dark-text font-semibold">
                     Gesamtbetrag:
@@ -694,6 +770,27 @@ export default function RegistrationDetailPage() {
                   <span className="text-primary text-xl font-bold">
                     {registration.totalPrice.toFixed(2)} €
                   </span>
+                </div>
+              )}
+              {canApplyDiscount && (
+                <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                  <p className="mb-3 text-sm text-gray-700 dark:text-gray-300">
+                    Die Teilnehmer bilden eine Geschwistergruppe. Der
+                    Geschwisterkindrabatt (20% auf jedes weitere Geschwister)
+                    kann nachträglich gewährt werden.
+                  </p>
+                  <button
+                    onClick={() =>
+                      applyDiscountMutation.mutate({
+                        registrationId: registration.id,
+                      })
+                    }
+                    disabled={applyDiscountMutation.isPending}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    Geschwisterkindrabatt gewähren
+                  </button>
                 </div>
               )}
               {course?.isFree === false && (
@@ -855,10 +952,8 @@ export default function RegistrationDetailPage() {
                 );
 
               // Check if this group is eligible for discount
-              const eligibleParticipants = siblingGroup.filter(
-                (p) => p.birthDate && isParticipantUnder18(p.birthDate),
-              );
-              const isEligibleForDiscount = eligibleParticipants.length > 1;
+              const isEligibleForDiscount =
+                hasDiscountEligibleSiblingGroup(siblingGroup);
 
               return (
                 <div
@@ -913,8 +1008,8 @@ export default function RegistrationDetailPage() {
                           }`}
                         >
                           {isEligibleForDiscount
-                            ? `✓ Gruppe berechtigt für Geschwisterkindrabatt (${eligibleParticipants.length} Minderjährige)`
-                            : "⚠ Gruppe nicht berechtigt für Geschwisterkindrabatt (mindestens 2 Minderjährige erforderlich)"}
+                            ? `✓ Gruppe berechtigt für Geschwisterkindrabatt (${siblingGroup.length} Geschwister)`
+                            : "⚠ Gruppe nicht berechtigt für Geschwisterkindrabatt (mindestens 2 Geschwister erforderlich)"}
                         </div>
                       )}
                     </div>

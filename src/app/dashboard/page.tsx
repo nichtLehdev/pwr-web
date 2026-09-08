@@ -69,6 +69,9 @@ export default function DashboardPage() {
     PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
   );
   const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
+  const canManageSiblingDiscount = hasPermission(
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+  );
 
   // Every tile query is gated on the permission its procedure enforces —
   // users without it neither see the tile nor fire the request.
@@ -109,15 +112,16 @@ export default function DashboardPage() {
     { enabled: ready && canManageRegistrations },
   );
   // Geschwisterrabatte gehören in dieselbe Freigabe-Warteschlange wie Kurse,
-  // Termine und Beiträge. Gegated auf courses.manage_registrations — genau die
-  // Berechtigung, die auch approveSiblingDiscount verlangt.
+  // Termine und Beiträge — und zwar für alle, die darüber entscheiden dürfen.
+  // Die Abfrage ist auf den Rabattstatus eingegrenzt; genau dafür lässt
+  // getAllAdmin auch die reine Rabattberechtigung zu.
   const { data: pendingDiscounts } = api.registrations.getAllAdmin.useQuery(
     {
       page: 1,
       limit: 1,
       siblingDiscountStatus: SiblingDiscountStatus.PENDING,
     },
-    { enabled: ready && canManageRegistrations },
+    { enabled: ready && (canManageRegistrations || canManageSiblingDiscount) },
   );
 
   const { data: newsletterStats } = api.newsletter.getStatistics.useQuery(
@@ -166,7 +170,8 @@ export default function DashboardPage() {
     canApproveCourses ||
     canApproveEvents ||
     canApprovePosts ||
-    canManageRegistrations;
+    canManageRegistrations ||
+    canManageSiblingDiscount;
   const pendingTotal =
     (pendingCourses?.total ?? 0) +
     (pendingEvents?.total ?? 0) +
@@ -275,7 +280,7 @@ export default function DashboardPage() {
                       href="/dashboard/posts"
                     />
                   )}
-                  {canManageRegistrations &&
+                  {(canManageRegistrations || canManageSiblingDiscount) &&
                     (pendingDiscounts?.total ?? 0) > 0 && (
                       <ReviewRow
                         label="Geschwisterrabatte"

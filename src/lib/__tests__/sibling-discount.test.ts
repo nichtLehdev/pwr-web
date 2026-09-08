@@ -1,18 +1,18 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   computeSiblingDiscounts,
+  hasDiscountEligibleSiblingGroup,
   roundMoney,
   SIBLING_DISCOUNT_RATE,
 } from "../sibling-discount";
 
-// Course starts 2026-09-01; ages are evaluated at this date.
-const COURSE_START = new Date("2026-09-01T10:00:00");
+const REFERENCE = new Date("2026-09-01T10:00:00");
 
 const bornYearsAgo = (years: number) =>
   new Date(
-    COURSE_START.getFullYear() - years,
-    COURSE_START.getMonth(),
-    COURSE_START.getDate() - 30,
+    REFERENCE.getFullYear() - years,
+    REFERENCE.getMonth(),
+    REFERENCE.getDate() - 30,
   );
 
 describe("roundMoney", () => {
@@ -26,34 +26,27 @@ describe("roundMoney", () => {
 
 describe("computeSiblingDiscounts", () => {
   it("gives no discount without sibling groups", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: bornYearsAgo(10), price: 100 },
-        { birthDate: bornYearsAgo(12), price: 100 },
-      ],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(10), price: 100 },
+      { birthDate: bornYearsAgo(12), price: 100 },
+    ]);
     expect(result.totalDiscount).toBe(0);
     expect(result.discountPerParticipant).toEqual([0, 0]);
   });
 
   it("gives no discount for a group of one", () => {
-    const result = computeSiblingDiscounts(
-      [{ birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 100 }],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 100 },
+    ]);
     expect(result.totalDiscount).toBe(0);
   });
 
   it("discounts every eligible sibling except the oldest", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 100 }, // oldest
-        { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 80 },
-        { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 60 },
-      ],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 100 }, // oldest
+      { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 80 },
+      { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 60 },
+    ]);
     expect(result.discountPerParticipant).toEqual([
       0,
       roundMoney(80 * SIBLING_DISCOUNT_RATE),
@@ -74,8 +67,8 @@ describe("computeSiblingDiscounts", () => {
       price: 100,
     };
 
-    const forward = computeSiblingDiscounts([older, younger], COURSE_START);
-    const backward = computeSiblingDiscounts([younger, older], COURSE_START);
+    const forward = computeSiblingDiscounts([older, younger]);
+    const backward = computeSiblingDiscounts([younger, older]);
 
     // Same sibling (the younger one) is discounted in both orders.
     expect(forward.discountPerParticipant).toEqual([0, 12]);
@@ -83,70 +76,91 @@ describe("computeSiblingDiscounts", () => {
     expect(forward.totalDiscount).toBe(backward.totalDiscount);
   });
 
-  it("ignores adults (18+ at reference date)", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: bornYearsAgo(20), siblingGroupId: "a", price: 100 },
-        { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 80 },
-      ],
-      COURSE_START,
-    );
-    // Only one eligible (under-18) sibling → no discount.
-    expect(result.totalDiscount).toBe(0);
+  it("discounts adult siblings too", () => {
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(45), siblingGroupId: "a", price: 100 },
+      { birthDate: bornYearsAgo(20), siblingGroupId: "a", price: 80 },
+    ]);
+    // No age limit: the younger of two adult siblings is discounted.
+    expect(result.discountPerParticipant).toEqual([0, 16]);
+    expect(result.totalDiscount).toBe(16);
   });
 
-  it("evaluates age at the reference date, not today", () => {
-    // 17 years old at course start, even if "today" is years later.
-    const seventeenAtStart = bornYearsAgo(17);
-    const result = computeSiblingDiscounts(
-      [
-        {
-          birthDate: seventeenAtStart,
-          siblingGroupId: "a",
-          price: 100,
-        },
-        { birthDate: bornYearsAgo(15), siblingGroupId: "a", price: 100 },
-      ],
-      COURSE_START,
-    );
-    expect(result.totalDiscount).toBe(20);
+  it("mixes adults and minors in one group", () => {
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(20), siblingGroupId: "a", price: 100 },
+      { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 80 },
+    ]);
+    // The adult is the oldest and pays full price; the child gets 20% off.
+    expect(result.discountPerParticipant).toEqual([0, 16]);
   });
 
   it("handles multiple independent groups", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 100 },
-        { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 100 },
-        { birthDate: bornYearsAgo(13), siblingGroupId: "b", price: 50 },
-        { birthDate: bornYearsAgo(11), siblingGroupId: "b", price: 50 },
-        { birthDate: bornYearsAgo(9), price: 50 }, // no group
-      ],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 100 },
+      { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 100 },
+      { birthDate: bornYearsAgo(13), siblingGroupId: "b", price: 50 },
+      { birthDate: bornYearsAgo(11), siblingGroupId: "b", price: 50 },
+      { birthDate: bornYearsAgo(9), price: 50 }, // no group
+    ]);
     expect(result.discountPerParticipant).toEqual([0, 20, 0, 10, 0]);
     expect(result.totalDiscount).toBe(30);
   });
 
   it("rounds each per-participant discount to cents", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 45.55 },
-        { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 45.55 },
-      ],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: bornYearsAgo(14), siblingGroupId: "a", price: 45.55 },
+      { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 45.55 },
+    ]);
     // 45.55 * 0.2 = 9.11 exactly after rounding
     expect(result.discountPerParticipant[1]).toBe(9.11);
   });
 
   it("skips participants without birth date", () => {
-    const result = computeSiblingDiscounts(
-      [
-        { birthDate: null, siblingGroupId: "a", price: 100 },
-        { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 100 },
-      ],
-      COURSE_START,
-    );
+    const result = computeSiblingDiscounts([
+      { birthDate: null, siblingGroupId: "a", price: 100 },
+      { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 100 },
+    ]);
     expect(result.totalDiscount).toBe(0);
+  });
+});
+
+describe("hasDiscountEligibleSiblingGroup", () => {
+  it("is false without a group of two", () => {
+    expect(
+      hasDiscountEligibleSiblingGroup([
+        { birthDate: bornYearsAgo(10), siblingGroupId: "a" },
+        { birthDate: bornYearsAgo(12) },
+      ]),
+    ).toBe(false);
+  });
+
+  it("is true for a group of two, whatever their age", () => {
+    expect(
+      hasDiscountEligibleSiblingGroup([
+        { birthDate: bornYearsAgo(40), siblingGroupId: "a" },
+        { birthDate: bornYearsAgo(38), siblingGroupId: "a" },
+      ]),
+    ).toBe(true);
+  });
+
+  it("stays true when the group's price options are free", () => {
+    // Asking about group size, not money: a 0 € category must not hide the
+    // option from the form.
+    expect(
+      hasDiscountEligibleSiblingGroup([
+        { birthDate: bornYearsAgo(10), siblingGroupId: "a", price: 0 },
+        { birthDate: bornYearsAgo(12), siblingGroupId: "a", price: 0 },
+      ]),
+    ).toBe(true);
+  });
+
+  it("ignores members without a birth date", () => {
+    expect(
+      hasDiscountEligibleSiblingGroup([
+        { birthDate: null, siblingGroupId: "a" },
+        { birthDate: bornYearsAgo(12), siblingGroupId: "a" },
+      ]),
+    ).toBe(false);
   });
 });

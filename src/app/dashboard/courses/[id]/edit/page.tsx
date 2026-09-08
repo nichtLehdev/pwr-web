@@ -9,7 +9,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { parseDeadlineEndOfDay, toLocalDateInputValue } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
-import type { PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { districtFieldState } from "@/lib/district-scope";
 import { cn, getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
@@ -456,11 +456,9 @@ export default function EditCoursePage() {
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
   );
-  // The same permission courses.update checks. Gating the control on
-  // courses.approve instead used to hide it from people who were allowed to
-  // set it, and show a value they were not allowed to change.
+  // Dieselbe Berechtigung, die courses.create/update serverseitig prüft.
   const canManageSiblingDiscount = hasPermission(
-    "courses.manage_registrations" as PermissionKey,
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   );
   const scopedBezirkIds = profile?.bezirkScopes?.map((s) => s.bezirkId) ?? [];
   // Zuständigkeit statt Zugehörigkeit: `profile.bezirkId` sagt, wo jemand im

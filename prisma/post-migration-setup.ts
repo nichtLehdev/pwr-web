@@ -152,6 +152,9 @@ async function ensureSystemRolesExist() {
     // Erstellen der Rechnungen selbst läuft über die Kurs-Organisatorenrolle
     // bzw. invoices.generate (LPW/Admin).
     PERMISSIONS.COURSES_ENABLE_INVOICING,
+    // Der Geschwisterkindrabatt ist eine Förderverein-Leistung, die die
+    // Posaunenwarte vor Ort gewähren und prüfen — deshalb von Haus aus dabei.
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
     PERMISSIONS.INVOICES_VIEW,
     PERMISSIONS.POSTS_CREATE,
     PERMISSIONS.POSTS_EDIT,

@@ -8,7 +8,7 @@ import { useSession } from "@/lib/auth";
 import { api } from "@/trpc/react";
 import { parseDeadlineEndOfDay } from "@/lib/date-input";
 import { usePermissions } from "@/lib/use-permissions";
-import type { PermissionKey } from "@/lib/permissions";
+import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { districtFieldState } from "@/lib/district-scope";
 import {
   DashboardPage,
@@ -92,9 +92,9 @@ export default function NewCoursePage() {
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
   );
-  // The permission courses.create actually checks for this flag.
+  // Dieselbe Berechtigung, die courses.create/update serverseitig prüft.
   const canManageSiblingDiscount = hasPermission(
-    "courses.manage_registrations" as PermissionKey,
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
   );
 
   const [title, setTitle] = useState("");

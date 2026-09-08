@@ -709,13 +709,14 @@ export const coursesRouter = createTRPCRouter({
 
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
         ctx.permissionCache,
       );
       if (!external && input.allowSiblingDiscount && !canManageDiscounts) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Only LPW and Admin can enable sibling discount",
+          message:
+            "Keine Berechtigung, den Geschwisterkindrabatt freizuschalten",
         });
       }
 
@@ -1097,7 +1098,7 @@ export const coursesRouter = createTRPCRouter({
 
       const canManageDiscounts = await userHasPermission(
         ctx.session.user.id,
-        PERMISSIONS.COURSES_MANAGE_REGISTRATIONS,
+        PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
         ctx.permissionCache,
       );
       if (
@@ -1109,7 +1110,7 @@ export const coursesRouter = createTRPCRouter({
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "Only LPW and Admin can modify sibling discount setting",
+          message: "Keine Berechtigung, den Geschwisterkindrabatt zu ändern",
         });
       }
 
