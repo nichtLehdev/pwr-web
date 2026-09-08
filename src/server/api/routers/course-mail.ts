@@ -90,7 +90,7 @@ type RecipientInvoice = {
  * Registrants addressed by a selection, collapsed to one entry per address.
  * A person who registered twice (e.g. two of their children) must not receive
  * the same information mail twice — their registrations are merged instead, so
- * {{teilnehmer}} names every child they signed up rather than just the first.
+ * {{teilnehmer.namen}} names every child they signed up rather than just the first.
  */
 async function resolveRecipients(
   db: PrismaClient,
@@ -316,33 +316,33 @@ function placeholderValuesFor(
     : "";
 
   return {
-    vorname: recipient.firstName,
-    nachname: recipient.lastName,
-    name: `${recipient.firstName} ${recipient.lastName}`.trim(),
-    email: recipient.email,
-    strasse: recipient.street ?? "",
-    plz: recipient.zipCode ?? "",
-    ort: recipient.city ?? "",
-    adresse: address,
-    teilnehmer: joinNames(recipient.participantNames),
-    anzahl: String(recipient.participantNames.length),
-    instrumente: joinNames(recipient.instruments),
-    kurs: course.title,
-    beginn: formatDate(course.startDate),
-    ende: formatDate(course.endDate),
-    kursort: courseLocation,
-    betrag: formatAmount(recipient.totalPrice),
+    "anmelder.vorname": recipient.firstName,
+    "anmelder.nachname": recipient.lastName,
+    "anmelder.name": `${recipient.firstName} ${recipient.lastName}`.trim(),
+    "anmelder.email": recipient.email,
+    "anmelder.strasse": recipient.street ?? "",
+    "anmelder.plz": recipient.zipCode ?? "",
+    "anmelder.ort": recipient.city ?? "",
+    "anmelder.anschrift": address,
+    "teilnehmer.namen": joinNames(recipient.participantNames),
+    "teilnehmer.anzahl": String(recipient.participantNames.length),
+    "teilnehmer.instrumente": joinNames(recipient.instruments),
+    "anmeldung.betrag": formatAmount(recipient.totalPrice),
+    "kurs.titel": course.title,
+    "kurs.beginn": formatDate(course.startDate),
+    "kurs.ende": formatDate(course.endDate),
+    "kurs.ort": courseLocation,
     // A person who registered twice gets both numbers, and the amount is the
     // sum — same collapsing rule as the rest of this record.
-    rechnungsnummer: invoices
+    "rechnung.nummer": invoices
       .map((invoice) => invoice.invoiceNumber)
       .join(", "),
-    rechnungsbetrag: invoices.length
+    "rechnung.betrag": invoices.length
       ? formatAmount(
           invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0),
         )
       : "",
-    zahlungsziel: invoices
+    "rechnung.zahlungsziel": invoices
       .map((invoice) => (invoice.dueDate ? formatDate(invoice.dueDate) : ""))
       .filter(Boolean)
       .join(", "),
@@ -575,7 +575,7 @@ export const courseMailRouter = createTRPCRouter({
           )
         : recipients[0];
 
-      // The recipient's own invoices, so {{rechnungsnummer}} and friends show
+      // The recipient's own invoices, so {{rechnung.nummer}} and friends show
       // what they would actually receive rather than blanks.
       const invoices =
         recipient && input.attachInvoices
