@@ -128,10 +128,15 @@ export default function JungblaserPage() {
                 musizieren. Ziel ist es, die jungen Bläserinnen und Bläser
                 Schritt für Schritt in die Posaunenchöre zu integrieren.
               </p>
-              <p>
+              <p className="mb-4">
                 Unsere Jungbläserarbeit verbindet musikalische Ausbildung mit
                 christlichen Werten und Gemeinschaftserlebnissen – sei es bei
                 Freizeiten, Workshops oder besonderen Projekten.
+              </p>
+              <p>
+                „Jungbläser“ hat bei uns übrigens nichts mit dem Geburtsdatum zu
+                tun. Wer neu mit einem Blechblasinstrument anfängt, gehört dazu
+                – ganz gleich, ob Kind, Jugendlicher oder längst erwachsen.
               </p>
             </div>
           </div>

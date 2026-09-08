@@ -47,8 +47,7 @@ export function RegistrationAccessLinks({
           <Section style={header}>
             <Text style={logoText}>Posaunenwerk Rheinland</Text>
             <Text style={tagline}>
-              Evangelisches Posaunenwerk in der Evangelischen Kirche im
-              Rheinland
+              Posaunenwerk der Evangelischen Kirche im Rheinland
             </Text>
           </Section>
 
@@ -98,8 +97,7 @@ export function RegistrationAccessLinks({
 
           <Section style={footerSection}>
             <Text style={footerText}>
-              Evangelisches Posaunenwerk in der Evangelischen Kirche im
-              Rheinland
+              Posaunenwerk der Evangelischen Kirche im Rheinland
             </Text>
           </Section>
         </Container>

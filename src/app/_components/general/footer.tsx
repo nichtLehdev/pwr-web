@@ -103,12 +103,10 @@ export default function Footer() {
               Bleib in Kontakt
             </h3>
             <div className="space-y-4">
+              {/* Ohne feste Umbrüche: der Name ist länger als die Spalte
+                  breit ist, und wo er umbricht hängt an der Schriftgröße. */}
               <p className="text-sm text-gray-300 dark:text-gray-400">
-                Evangelisches Posaunenwerk
-                <br />
-                in der Evangelischen Kirche
-                <br />
-                im Rheinland
+                Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
               </p>
 
               {/* Social Media Icons */}

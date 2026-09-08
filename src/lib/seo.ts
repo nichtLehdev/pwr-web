@@ -4,7 +4,7 @@ import { markdownToPlainText } from "@/lib/markdown-to-plain-text";
 
 export const SITE_NAME = "Posaunenwerk Rheinland";
 export const SITE_DESCRIPTION =
-  "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland";
+  "Posaunenwerk der Evangelischen Kirche im Rheinland";
 export const SITE_LOCALE = "de_DE";
 
 /** Absolute URL for a site-relative path — Open Graph and sitemaps require one. */

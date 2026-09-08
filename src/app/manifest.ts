@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Posaunenwerk Rheinland",
     short_name: "Posaunenwerk",
     description:
-      "Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland — mit interaktiven Übungen und Spielen.",
+      "Posaunenwerk der Evangelischen Kirche im Rheinland — mit interaktiven Übungen und Spielen.",
     lang: "de",
     start_url: "/spiele",
     scope: "/",
