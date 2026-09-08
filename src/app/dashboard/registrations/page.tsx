@@ -55,6 +55,18 @@ export default function AdminRegistrationsPage() {
   /** "" = alle, "paid" = alles beglichen, "open" = mindestens eine offene Rechnung. */
   const [paymentFilter, setPaymentFilter] = useState<"" | "paid" | "open">("");
   const [courseId, setCourseId] = useState("");
+  const canViewAll = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
+  /**
+   * Wer nur den Geschwisterkindrabatt verwaltet, sieht hier ausschließlich
+   * Anmeldungen mit Rabattstatus — über die entscheidet er, über alle anderen
+   * nicht. Der Server lässt die Abfrage für ihn deshalb auch nur mit gesetztem
+   * Rabattfilter zu, weshalb "Alle" für ihn keine wählbare Option ist.
+   */
+  const discountOnly =
+    !canViewAll &&
+    hasPermission(PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT);
+  const canView = canViewAll || discountOnly;
+
   // Vorbelegt über ?discount=PENDING — so landet die Freigabe-Kachel des
   // Dashboards direkt auf den offenen Rabatten statt auf der vollen Liste.
   const searchParams = useSearchParams();
@@ -62,15 +74,19 @@ export default function AdminRegistrationsPage() {
     SiblingDiscountStatus | ""
   >(() => {
     const requested = searchParams.get("discount");
-    return requested &&
+    // NONE ist kein Rabattstatus, den man hier prüfen würde, und steht auch im
+    // Filter nicht zur Wahl — aus der URL wird er deshalb nicht übernommen.
+    if (
+      requested &&
+      requested !== SiblingDiscountStatus.NONE &&
       Object.values(SiblingDiscountStatus).includes(
         requested as SiblingDiscountStatus,
       )
-      ? (requested as SiblingDiscountStatus)
-      : "";
+    ) {
+      return requested as SiblingDiscountStatus;
+    }
+    return discountOnly ? SiblingDiscountStatus.PENDING : "";
   });
-
-  const canView = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
 
   const { data, isLoading } = api.registrations.getAllAdmin.useQuery(
     {
@@ -82,12 +98,12 @@ export default function AdminRegistrationsPage() {
       siblingDiscountStatus: discountFilter || undefined,
       courseId: courseId || undefined,
     },
-    { enabled: canView },
+    { enabled: canView && (canViewAll || !!discountFilter) },
   );
 
   const { data: courses } =
     api.registrations.getCoursesWithRegistrations.useQuery(undefined, {
-      enabled: canView,
+      enabled: canViewAll,
     });
 
   const applySearch = (e: React.FormEvent) => {
@@ -109,7 +125,11 @@ export default function AdminRegistrationsPage() {
   return (
     <DashboardPage
       title="Anmeldungen"
-      description="Alle Kursanmeldungen kursübergreifend durchsuchen und filtern"
+      description={
+        discountOnly
+          ? "Anmeldungen mit Geschwisterkindrabatt kursübergreifend prüfen"
+          : "Alle Kursanmeldungen kursübergreifend durchsuchen und filtern"
+      }
     >
       <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
@@ -139,30 +159,32 @@ export default function AdminRegistrationsPage() {
             </div>
           </form>
 
-          <div>
-            <label
-              htmlFor="filter-course"
-              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-            >
-              Kurs
-            </label>
-            <select
-              id="filter-course"
-              value={courseId}
-              onChange={(e) => {
-                setCourseId(e.target.value);
-                setPage(1);
-              }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm lg:w-64"
-            >
-              <option value="">Alle Kurse</option>
-              {courses?.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title} ({formatDate(course.startDate)})
-                </option>
-              ))}
-            </select>
-          </div>
+          {!discountOnly && (
+            <div>
+              <label
+                htmlFor="filter-course"
+                className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+              >
+                Kurs
+              </label>
+              <select
+                id="filter-course"
+                value={courseId}
+                onChange={(e) => {
+                  setCourseId(e.target.value);
+                  setPage(1);
+                }}
+                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm lg:w-64"
+              >
+                <option value="">Alle Kurse</option>
+                {courses?.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title} ({formatDate(course.startDate)})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label
@@ -231,7 +253,7 @@ export default function AdminRegistrationsPage() {
               }}
               className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
             >
-              <option value="">Alle</option>
+              {!discountOnly && <option value="">Alle</option>}
               <option value={SiblingDiscountStatus.PENDING}>
                 Wartet auf Freigabe
               </option>
@@ -345,17 +367,31 @@ export default function AdminRegistrationsPage() {
                         {formatDate(registration.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
-                        {registration.registrationStatus !==
-                          RegistrationStatus.CANCELLED && (
+                        {/* Wer nur den Rabatt prüft, darf die Anmeldung nicht
+                            zwangsläufig bearbeiten — er wird auf die
+                            Anmeldungsseite geschickt, wo genehmigen und
+                            ablehnen sitzen. */}
+                        {discountOnly ? (
                           <Link
-                            href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
-                              "/dashboard/registrations",
-                            )}`}
+                            href={`/dashboard/courses/${registration.course.id}/participants/${registration.id}`}
                             className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
                           >
-                            <PencilIcon className="h-3.5 w-3.5" />
-                            Bearbeiten
+                            <SearchIcon className="h-3.5 w-3.5" />
+                            Rabatt prüfen
                           </Link>
+                        ) : (
+                          registration.registrationStatus !==
+                            RegistrationStatus.CANCELLED && (
+                            <Link
+                              href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
+                                "/dashboard/registrations",
+                              )}`}
+                              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+                            >
+                              <PencilIcon className="h-3.5 w-3.5" />
+                              Bearbeiten
+                            </Link>
+                          )
                         )}
                       </td>
                     </tr>
