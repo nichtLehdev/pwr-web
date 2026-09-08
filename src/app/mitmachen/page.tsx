@@ -238,7 +238,7 @@ export default function MitmachenPage() {
                   Teil einer Bewegung
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Werde Teil einer über 140 Jahre alten Tradition mit mehr als
+                  Werde Teil einer über 140 Jahre alten Tradition mit annähernd
                   200 Posaunenchören im Rheinland.
                 </p>
               </div>

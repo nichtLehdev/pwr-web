@@ -36,8 +36,7 @@ export default function ImpressumPage() {
                   </h3>
                   <div className="text-gray-700 dark:text-gray-300">
                     <p className="font-semibold">
-                      Evangelisches Posaunenwerk in der Evangelischen Kirche im
-                      Rheinland
+                      Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                     </p>
                     <p className="mt-2">
                       Rudolf-Harbig-Str. 20
@@ -104,7 +103,7 @@ export default function ImpressumPage() {
                     Zugehörigkeit
                   </h3>
                   <p className="text-gray-700 dark:text-gray-300">
-                    Das Evangelische Posaunenwerk ist ein Werk der{" "}
+                    Das Rheinische Posaunenwerk ist ein Verband innerhalb der{" "}
                     <a
                       href="https://www.ekir.de"
                       target="_blank"
@@ -138,7 +137,7 @@ export default function ImpressumPage() {
                   <p className="text-gray-700 dark:text-gray-300">
                     Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:
                     <br />
-                    Landesposaunenwart des Posaunenwerks Rheinland
+                    Landesobmann Friedemann Schmidt-Eggert
                     <br />
                     Rudolf-Harbig-Str. 20
                     <br />

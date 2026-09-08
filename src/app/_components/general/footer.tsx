@@ -104,9 +104,9 @@ export default function Footer() {
             </h3>
             <div className="space-y-4">
               <p className="text-sm text-gray-300 dark:text-gray-400">
-                Evangelisches Posaunenwerk
+                Posaunenwerk
                 <br />
-                in der Evangelischen Kirche
+                der Evangelischen Kirche
                 <br />
                 im Rheinland
               </p>
