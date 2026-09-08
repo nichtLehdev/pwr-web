@@ -465,15 +465,19 @@ Bewahre diese Datei sicher auf und teile sie niemals mit anderen!`;
                             result.error.message ||
                               "Fehler beim Aktivieren von 2FA",
                           );
-                        } else if (result.data?.totpURI) {
+                        } else if (result.data?.method === "totp") {
                           setTwoFactorQRCode(result.data.totpURI);
-                          if (result.data.backupCodes) {
+                          if (result.data.backupCodes.length > 0) {
                             setBackupCodes(result.data.backupCodes);
                             setShowBackupCodes(true);
                           }
                           setBackupCodesAcknowledged(false);
                           toast.info(
                             "Scanne den QR-Code und bestätige mit einem Code, um die Einrichtung abzuschließen.",
+                          );
+                        } else {
+                          setEnableError(
+                            "Unerwartete Antwort vom Server. Bitte versuche es erneut.",
                           );
                         }
                       } catch (error) {
