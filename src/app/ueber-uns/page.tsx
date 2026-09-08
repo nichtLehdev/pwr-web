@@ -329,8 +329,9 @@ export default function UeberUnsPage() {
                     <p className="text-gray-600 dark:text-gray-400">
                       Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                       <br />
-                      Hans-Böckler-Straße 7<br />
-                      40476 Düsseldorf
+                      Rudolf-Harbig-Str. 20
+                      <br />
+                      56179 Vallendar
                     </p>
                   </div>
                 </div>
@@ -344,10 +345,10 @@ export default function UeberUnsPage() {
                       Telefon
                     </p>
                     <a
-                      href="tel:+492118957370"
+                      href="tel:02613000011"
                       className="hover:text-primary dark:hover:text-primary-light text-gray-600 transition-colors dark:text-gray-400"
                     >
-                      +49 211 89 57 370
+                      0261 300 00 11
                     </a>
                   </div>
                 </div>
