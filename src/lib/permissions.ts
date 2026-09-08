@@ -25,6 +25,8 @@ export const PERMISSIONS = {
   COURSES_MANAGE_REGISTRATIONS: "courses.manage_registrations",
   COURSES_ENABLE_INVOICING: "courses.enable_invoicing",
   REGISTRATIONS_MARK_PAID: "registrations.mark_paid",
+  REGISTRATIONS_MANAGE_SIBLING_DISCOUNT:
+    "registrations.manage_sibling_discount",
 
   // Posts
   POSTS_CREATE: "posts.create",
@@ -221,6 +223,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Anmeldungen als bezahlt markieren",
     description:
       "Berechtigung, den Zahlungsstatus von Kursanmeldungen auf „bezahlt“ zu setzen",
+    category: "courses",
+  },
+  {
+    key: PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+    name: "Geschwisterkindrabatt verwalten",
+    description:
+      "Berechtigung, den Geschwisterkindrabatt für Kurse freizuschalten, ihn für einzelne Anmeldungen nachträglich zu gewähren und beantragte Rabatte zu genehmigen oder abzulehnen",
     category: "courses",
   },
 

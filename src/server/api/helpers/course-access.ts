@@ -128,3 +128,38 @@ export async function courseCollaboratorRolesForUser(
     isOrganizer: row.role === CourseCollaboratorRole.ORGANIZER,
   };
 }
+
+/**
+ * Wer den Geschwisterkindrabatt einer Anmeldung nachträglich gewähren darf.
+ *
+ * `canDecide` heißt: die eigene Berechtigung reicht aus, den Rabatt zugleich zu
+ * genehmigen. Kursverantwortliche ohne dieses Recht dürfen ihn zwar für ihre
+ * eigenen Kurse anstoßen, er geht dann aber wie ein beantragter Rabatt in die
+ * Prüfung — sonst wäre die Prüfung durch die Hintertür abgeschafft.
+ */
+export async function userCanManageSiblingDiscount(
+  db: PrismaClient,
+  userId: string,
+  course: {
+    id: string;
+    createdById: string | null;
+  },
+  permissionCache?: PermissionCache,
+): Promise<{ allowed: boolean; canDecide: boolean }> {
+  const [perms, collaborator] = await Promise.all([
+    resolveUserPermissionsCached(userId, permissionCache),
+    db.courseCollaborator.findUnique({
+      where: { courseId_userId: { courseId: course.id, userId } },
+      select: { role: true },
+    }),
+  ]);
+
+  const canDecide = perms.has(
+    PERMISSIONS.REGISTRATIONS_MANAGE_SIBLING_DISCOUNT,
+  );
+  const ownsCourse =
+    course.createdById === userId ||
+    collaborator?.role === CourseCollaboratorRole.ORGANIZER;
+
+  return { allowed: canDecide || ownsCourse, canDecide };
+}
