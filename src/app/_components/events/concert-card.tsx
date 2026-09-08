@@ -5,6 +5,23 @@ import { capitalizeFirstLetter } from "@/lib/utils";
 import { Calendar, MapPin } from "lucide-react";
 import { eventPath } from "@/lib/slug";
 
+/**
+ * Der Auswahlchor-Überblick rendert auf dem Server, dessen Zeitzone UTC ist.
+ * Ohne feste Zone stand hier 15:00, während die Detailseite im Browser 17:00
+ * anzeigte — Termine sind immer deutsche Ortszeit.
+ */
+const BERLIN_DATE = new Intl.DateTimeFormat("de-DE", {
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  timeZone: "Europe/Berlin",
+});
+const BERLIN_TIME = new Intl.DateTimeFormat("de-DE", {
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "Europe/Berlin",
+});
+
 type Event = RouterOutputs["events"]["getById"];
 type AuswahlChorEvent =
   RouterOutputs["auswahlchoere"]["getAll"]["auswahlchoere"][0]["events"][0];
@@ -33,16 +50,8 @@ const ConcertCard: React.FC<ConcertCardProps> = ({ concert, ensemble, i }) => {
               {/* Date Information */}
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                {new Date(concert.eventDate).toLocaleDateString("de-DE", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-                ,{" "}
-                {new Date(concert.eventDate).toLocaleTimeString("de-DE", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {BERLIN_DATE.format(new Date(concert.eventDate))},{" "}
+                {BERLIN_TIME.format(new Date(concert.eventDate))}
               </div>
 
               {/* Location Information */}

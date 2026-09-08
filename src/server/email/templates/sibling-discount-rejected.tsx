@@ -61,8 +61,7 @@ export function SiblingDiscountRejected({
           <Section style={header}>
             <Text style={logoText}>Posaunenwerk Rheinland</Text>
             <Text style={tagline}>
-              Evangelisches Posaunenwerk in der Evangelischen Kirche im
-              Rheinland
+              Posaunenwerk der Evangelischen Kirche im Rheinland
             </Text>
           </Section>
 
@@ -127,8 +126,7 @@ export function SiblingDiscountRejected({
 
           <Section style={footerSection}>
             <Text style={footerText}>
-              Evangelisches Posaunenwerk in der Evangelischen Kirche im
-              Rheinland
+              Posaunenwerk der Evangelischen Kirche im Rheinland
             </Text>
           </Section>
         </Container>

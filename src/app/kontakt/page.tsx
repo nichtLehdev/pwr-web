@@ -24,7 +24,7 @@ import { buildPageMetadata } from "@/lib/seo";
 export const metadata = buildPageMetadata({
   title: "Kontakt",
   description:
-    "Kontakt zum Evangelischen Posaunenwerk im Rheinland — Geschäftsstelle in Vallendar, Ansprechpartner und Kontaktformular.",
+    "Kontakt zum Posaunenwerk der Evangelischen Kirche im Rheinland — Geschäftsstelle in Vallendar, Ansprechpartner und Kontaktformular.",
   path: "/kontakt",
 });
 
@@ -411,7 +411,7 @@ export default async function KontaktPage() {
                   <Music className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-dark dark:text-dark-text group-hover:text-primary mb-2 text-lg font-bold transition-colors">
-                  Landesposaunenwarte
+                  Posaunenwarte
                 </h3>
                 <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
                   Für musikalische und inhaltliche Fragen zur Posaunenchorarbeit

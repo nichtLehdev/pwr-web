@@ -87,7 +87,7 @@ async function testEmail() {
             <p>If you received this email, your SMTP configuration is working correctly! ✅</p>
             <hr style="margin: 20px 0; border: none; border-top: 1px solid #e5e7eb;">
             <p style="color: #6b7280; font-size: 12px;">
-              Evangelisches Posaunenwerk in der Evangelischen Kirche im Rheinland
+              Posaunenwerk der Evangelischen Kirche im Rheinland
             </p>
           </body>
         </html>

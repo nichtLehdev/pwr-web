@@ -74,8 +74,7 @@ export default function DatenschutzPage() {
                 <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border dark:bg-gray-800/30">
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong className="text-dark dark:text-dark-text">
-                      Evangelisches Posaunenwerk in der Evangelischen Kirche im
-                      Rheinland
+                      Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                     </strong>
                     <br />
                     Rudolf-Harbig-Str. 20
@@ -1164,8 +1163,7 @@ export default function DatenschutzPage() {
                 <div className="dark:border-dark-border rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border dark:bg-gray-800/30">
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong className="text-dark dark:text-dark-text">
-                      Evangelisches Posaunenwerk in der Evangelischen Kirche im
-                      Rheinland
+                      Posaunenwerk der Evangelischen Kirche im Rheinland e.V.
                     </strong>
                     <br />
                     Rudolf-Harbig-Str. 20
