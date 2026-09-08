@@ -87,6 +87,8 @@ function CourseMailPageContent() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
+  /** Where "Test senden" delivers to — the sender's own address by default. */
+  const [testEmail, setTestEmail] = useState("");
   const [statuses, setStatuses] = useState<RegistrationStatus[]>([
     RegistrationStatus.CONFIRMED,
   ]);
@@ -165,7 +167,7 @@ function CourseMailPageContent() {
   };
 
   const sendMail = api.courseMail.send.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Eine übersprungene Rechnung ist kein Versandfehler: die Nachricht ist
       // raus, nur ohne das Dokument. Ohne Hinweis hier hielte man sie für
       // zugestellt — der Server hat es sonst nur ins Log geschrieben.
@@ -176,7 +178,7 @@ function CourseMailPageContent() {
         );
       }
       if (data.test) {
-        toast.success("Test-E-Mail wurde an dich gesendet.");
+        toast.success(`Test-E-Mail wurde an ${variables.testEmail} gesendet.`);
         return;
       }
       if (data.failedCount > 0) {
@@ -219,10 +221,14 @@ function CourseMailPageContent() {
   const hasUnsavedChanges = Boolean(subject.trim() || body.trim());
   useBeforeUnload(hasUnsavedChanges && !sendMail.isPending);
 
-  // Default the reply address to the sender's own once the profile arrives.
+  // Default the reply and test addresses to the sender's own once the profile
+  // arrives.
   useEffect(() => {
     if (profile?.email && !replyToEmail) {
       setReplyToEmail(profile.email);
+    }
+    if (profile?.email && !testEmail) {
+      setTestEmail(profile.email);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.email]);
@@ -435,12 +441,13 @@ function CourseMailPageContent() {
       toast.error(error);
       return;
     }
-    if (!profile?.email) {
-      toast.error("Für dein Konto ist keine E-Mail-Adresse hinterlegt.");
+    const address = testEmail.trim();
+    if (!address) {
+      toast.error("Bitte gib eine Adresse für den Test an.");
       return;
     }
     setSendMode("test");
-    sendMail.mutate({ ...sendPayload(), testEmail: profile.email });
+    sendMail.mutate({ ...sendPayload(), testEmail: address });
   };
 
   const handleSend = () => {
@@ -684,6 +691,23 @@ function CourseMailPageContent() {
                 </p>
               </div>
 
+              <div className="mb-4">
+                <label className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700">
+                  Test-E-Mail an
+                </label>
+                <input
+                  type="email"
+                  value={testEmail}
+                  onChange={(event) => setTestEmail(event.target.value)}
+                  placeholder="test@example.com"
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:outline-none"
+                />
+                <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+                  Der Testversand geht nur an diese Adresse — vorbelegt mit
+                  deiner eigenen.
+                </p>
+              </div>
+
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
@@ -697,13 +721,13 @@ function CourseMailPageContent() {
                 </button>
                 <button
                   onClick={handleTestSend}
-                  disabled={isSending || isUploading}
-                  title="Sendet die Nachricht nur an dich — mit den echten Daten des ersten Empfängers, damit du die Platzhalter siehst."
+                  disabled={isSending || isUploading || !testEmail.trim()}
+                  title="Sendet die Nachricht nur an die Test-Adresse — mit den echten Daten des ersten Empfängers, damit du die Platzhalter siehst."
                   className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
                 >
                   {isSending && sendMode === "test"
                     ? "Test wird gesendet..."
-                    : "Test an mich senden"}
+                    : "Test senden"}
                 </button>
                 <button
                   onClick={handleSend}
