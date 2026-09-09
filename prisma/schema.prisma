@@ -538,6 +538,14 @@ model Course {
   motto       String?
   description String
 
+  /**
+   * Interne Kursnummer (nur Ziffern), ausschließlich für die Rechnungsstellung:
+   * sie bildet den mittleren Teil der Rechnungsnummer (RE-<Kursnummer>-<lfd.>)
+   * und steht im Verwendungszweck, damit Zahlungseingänge einem Kurs zugeordnet
+   * werden können. Optional — ohne Nummer bleibt es bei der Jahresnummerierung.
+   */
+  courseNumber String? @unique
+
   imageId String?
   image   Media?  @relation("CourseImage", fields: [imageId], references: [id], onDelete: SetNull)
 
@@ -807,6 +815,15 @@ model CourseMail {
 model InvoiceCounter {
   year  Int @id
   value Int @default(0)
+}
+
+/// Fortlaufende Rechnungsnummer je Kursnummer, für Kurse mit gesetzter
+/// `Course.courseNumber`. Eigene Tabelle statt eines Zählers auf dem Kurs, weil
+/// der Zähler wie {@link InvoiceCounter} in der Ausstell-Transaktion gesperrt
+/// und bei einem Rollback mit zurückgedreht werden muss.
+model CourseInvoiceCounter {
+  courseNumber String @id
+  value        Int    @default(0)
 }
 
 /// Eine erstellte Rechnung zu einer Kursanmeldung.

@@ -8,7 +8,7 @@ import {
   CourseCollaboratorRole,
   RegistrationStatus,
 } from "~/generated/prisma/client";
-import type { Prisma } from "~/generated/prisma/client";
+import type { Prisma, PrismaClient } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { authorMayChangeStatus } from "../helpers/content-status";
 import {
@@ -31,6 +31,10 @@ import {
   normalizeExternalRegistrationUrl,
 } from "@/lib/course-external";
 import { getCourseRegistrationStats } from "@/lib/course-registration-stats";
+import {
+  COURSE_NUMBER_PATTERN,
+  normalizeCourseNumber,
+} from "@/lib/invoice-document";
 import { permissionProcedure } from "../middleware/permissions";
 import {
   userCanEditCourseRecord,
@@ -58,7 +62,44 @@ const courseCollaboratorsForPublic = {
   },
 };
 
+/**
+ * Kursnummern sind global eindeutig: sie bilden die Rechnungsnummern-Sequenz
+ * (RE-<Kursnummer>-<lfd.>), zwei Kurse mit derselben Nummer würden sich also
+ * eine Nummernfolge teilen. Der Unique-Index fängt das ohnehin ab — die
+ * Vorabprüfung sorgt nur dafür, dass statt eines P2002-Fehlers eine lesbare
+ * Meldung im Formular landet.
+ */
+async function assertCourseNumberAvailable(
+  db: PrismaClient,
+  courseNumber: string,
+  exceptCourseId?: string,
+) {
+  const existing = await db.course.findUnique({
+    where: { courseNumber },
+    select: { id: true, title: true },
+  });
+  if (existing && existing.id !== exceptCourseId) {
+    throw new TRPCError({
+      code: "CONFLICT",
+      message: `Die Kursnummer ${courseNumber} ist bereits für „${existing.title}“ vergeben.`,
+    });
+  }
+}
+
 const externalProviderNameSchema = z.string().max(200).optional();
+
+/**
+ * Die interne Kursnummer. Leer/blank heißt "keine Nummer" — das Feld ist
+ * optional und wird dann als null gespeichert. Ziffern only, weil die Nummer
+ * in der Rechnungsnummer und damit im Dateinamen des eingefrorenen PDFs landet.
+ */
+const courseNumberSchema = z
+  .string()
+  .trim()
+  .refine((value) => value === "" || COURSE_NUMBER_PATTERN.test(value), {
+    message: "Die Kursnummer darf nur aus Ziffern bestehen (maximal 10).",
+  })
+  .nullish();
 
 const externalRegistrationUrlSchema = z
   .string()
@@ -157,8 +198,11 @@ export const coursesRouter = createTRPCRouter({
           0,
         );
         const summary = getCourseCapacitySummary(course);
+        // courseNumber ist eine reine Buchhaltungsangabe (siehe getById) und
+        // hat in der öffentlichen Kursliste nichts zu suchen.
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { registrations, ...courseWithoutRegistrations } = course;
+        const { registrations, courseNumber, ...courseWithoutRegistrations } =
+          course;
         return {
           ...courseWithoutRegistrations,
           _count: {
@@ -271,8 +315,34 @@ export const coursesRouter = createTRPCRouter({
         courseRaw.id,
       );
 
+      // Die Kursnummer ist eine Buchhaltungsangabe und gehört nicht in die
+      // öffentliche Kursdarstellung. Anonyme Aufrufe — der Großteil des
+      // Traffics hier — kosten dadurch keine zusätzliche Abfrage.
+      const { courseNumber, ...coursePublic } = courseRaw;
+      const maySeeCourseNumber =
+        !!ctx.session?.user &&
+        (courseRaw.createdById === ctx.session.user.id ||
+          viewerCollaboratorRole !== null ||
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_ENABLE_INVOICING,
+            ctx.permissionCache,
+          )));
+
+      // Nur relevant, solange es überhaupt eine Nummer zu sperren gibt — der
+      // öffentliche Pfad zahlt für diese Abfrage also nie.
+      const courseNumberLocked =
+        maySeeCourseNumber && courseNumber
+          ? (await ctx.db.invoice.count({
+              where: { courseId: courseRaw.id, invoiceNumber: { not: null } },
+            })) > 0
+          : false;
+
       return {
-        ...courseRaw,
+        ...coursePublic,
+        courseNumber: maySeeCourseNumber ? courseNumber : null,
+        /** Ausgestellte Rechnungen frieren die Kursnummer ein, siehe `update`. */
+        courseNumberLocked,
         viewerCollaboratorRole,
         _count: {
           participants: registrationStats.totalConfirmedParticipants,
@@ -592,6 +662,7 @@ export const coursesRouter = createTRPCRouter({
           paymentCashAllowed: z.boolean().default(true),
           paymentInvoiceAllowed: z.boolean().default(true),
           invoicingEnabled: z.boolean().default(false),
+          courseNumber: courseNumberSchema,
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -733,6 +804,21 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
+      // Die Kursnummer steuert nur die Rechnungsstellung, also hängt sie an
+      // derselben Berechtigung wie deren Freischaltung.
+      const courseNumber = external
+        ? null
+        : normalizeCourseNumber(input.courseNumber);
+      if (courseNumber) {
+        if (!canEnableInvoicing) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Keine Berechtigung, eine Kursnummer zu vergeben",
+          });
+        }
+        await assertCourseNumberAvailable(ctx.db, courseNumber);
+      }
+
       const course = await ctx.db.course.create({
         data: {
           ...courseData,
@@ -755,6 +841,7 @@ export const coursesRouter = createTRPCRouter({
           invoicingEnabled: external
             ? false
             : input.invoicingEnabled && canEnableInvoicing,
+          courseNumber,
           isFree: external ? true : courseData.isFree,
           createdById: ctx.session.user.id,
           priceOptions:
@@ -818,6 +905,7 @@ export const coursesRouter = createTRPCRouter({
           paymentCashAllowed: z.boolean().optional(),
           paymentInvoiceAllowed: z.boolean().optional(),
           invoicingEnabled: z.boolean().optional(),
+          courseNumber: courseNumberSchema,
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -911,6 +999,7 @@ export const coursesRouter = createTRPCRouter({
           paymentCashAllowed: true,
           paymentInvoiceAllowed: true,
           invoicingEnabled: true,
+          courseNumber: true,
           allowSiblingDiscount: true,
           startDate: true,
           registrationOpensAt: true,
@@ -1133,6 +1222,50 @@ export const coursesRouter = createTRPCRouter({
           });
         }
         data.invoicingEnabled = mergedExternal ? false : input.invoicingEnabled;
+      }
+
+      if (input.courseNumber !== undefined) {
+        const nextCourseNumber = mergedExternal
+          ? null
+          : normalizeCourseNumber(input.courseNumber);
+
+        if (nextCourseNumber !== course.courseNumber) {
+          if (
+            !(await userHasPermission(
+              ctx.session.user.id,
+              PERMISSIONS.COURSES_ENABLE_INVOICING,
+              ctx.permissionCache,
+            ))
+          ) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Keine Berechtigung, die Kursnummer zu ändern",
+            });
+          }
+
+          // Ausgestellte Rechnungen tragen die alte Nummer in Nummernkreis und
+          // Verwendungszweck und sind eingefroren (§14 UStG). Würde der Kurs
+          // umnummeriert, zeigten sie auf eine Nummer, die es hier nicht mehr
+          // gibt — und eine neue Sequenz startete wieder bei 001.
+          if (course.courseNumber) {
+            const issued = await ctx.db.invoice.count({
+              where: { courseId: id, invoiceNumber: { not: null } },
+            });
+            if (issued > 0) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message:
+                  "Die Kursnummer kann nicht mehr geändert werden, weil für diesen Kurs bereits Rechnungen ausgestellt wurden.",
+              });
+            }
+          }
+
+          if (nextCourseNumber) {
+            await assertCourseNumberAvailable(ctx.db, nextCourseNumber, id);
+          }
+        }
+
+        data.courseNumber = nextCourseNumber;
       }
 
       if (priceOptions && !mergedExternal) {

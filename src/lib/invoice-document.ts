@@ -35,6 +35,8 @@ export interface InvoiceDocumentCourse {
   endDate: Date | string | null;
   locationName?: string | null;
   locationCity?: string | null;
+  /** Interne Kursnummer, siehe {@link invoicePaymentReference}. */
+  courseNumber?: string | null;
 }
 
 export interface InvoiceDocument {
@@ -73,6 +75,53 @@ export const DEFAULT_INVOICE_ORGANIZATION: InvoiceOrganization = {
   iban: "DE57 3506 0190 1011 4590 10",
   bic: "GENODED1DKD",
 };
+
+/**
+ * Digits only, at most ten of them.
+ *
+ * The course number ends up inside the invoice number, and the invoice number
+ * names the frozen PDF on disk (see storeInvoicePdf) — so it has to stay free
+ * of separators, umlauts and anything that could walk out of the folder. Digits
+ * are also what the treasurer types into the banking search.
+ */
+export const COURSE_NUMBER_PATTERN = /^\d{1,10}$/;
+
+export function isValidCourseNumber(value: string): boolean {
+  return COURSE_NUMBER_PATTERN.test(value);
+}
+
+/**
+ * Normalises what an organizer typed into the course-number field. Empty (or
+ * blank) input means "no number" and is stored as null.
+ */
+export function normalizeCourseNumber(
+  value: string | null | undefined,
+): string | null {
+  const trimmed = (value ?? "").trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Wording the payment reference uses in front of the course number. */
+export const COURSE_PAYMENT_REFERENCE_PREFIX = "Bläserlehrgang";
+
+/**
+ * The Verwendungszweck for a bank transfer: the invoice number, prefixed with
+ * the course the payment belongs to when that course carries an internal
+ * number. Having both on one line lets the treasurer match a statement entry to
+ * a course at a glance and still to the exact invoice.
+ *
+ * Used for the printed line and for the EPC QR payload, so a scanned transfer
+ * and a hand-typed one arrive with the same reference.
+ */
+export function invoicePaymentReference(
+  invoiceNumber: string,
+  courseNumber?: string | null,
+): string {
+  const number = normalizeCourseNumber(courseNumber);
+  return number
+    ? `${COURSE_PAYMENT_REFERENCE_PREFIX} ${number} ${invoiceNumber}`
+    : invoiceNumber;
+}
 
 /** Days between issuing an invoice and its default due date. */
 export const DEFAULT_PAYMENT_DEADLINE_DAYS = 21;
