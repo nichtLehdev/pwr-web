@@ -100,12 +100,11 @@ export default function PostDetailView({
   const districtColor = getDistrictColor(post.bezirk?.number);
   const publishDate = new Date(post.publishedAt || post.createdAt);
 
-  const displayUser = post.author || post.createdBy;
+  const displayUser = post.author || (post.authorName ? null : post.createdBy);
   const displayName =
     post.authorName || displayUser?.displayName || "Unbekannt";
-  const displayBio = post.author?.bio || post.createdBy?.bio;
-  const displayImage =
-    post.author?.profileImage || post.createdBy?.profileImage;
+  const displayBio = displayUser?.bio;
+  const displayImage = displayUser?.profileImage;
   const userId = displayUser?.id;
 
   const { hasDashboardAccess: hasAnyPermission, hasAnyPermission: hasAnyPerm } =
