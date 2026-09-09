@@ -123,9 +123,6 @@ export function invoicePaymentReference(
     : invoiceNumber;
 }
 
-/** Days between issuing an invoice and its default due date. */
-export const DEFAULT_PAYMENT_DEADLINE_DAYS = 21;
-
 export const DEFAULT_INVOICE_CLOSING_TEXT =
   "Wir freuen uns auf eine gemeinsame Zeit!";
 
