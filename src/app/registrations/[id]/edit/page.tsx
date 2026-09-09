@@ -19,7 +19,7 @@ import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import { CircleXIcon, PlusIcon, Info } from "lucide-react";
+import { CircleXIcon, PlusIcon, Info, Users } from "lucide-react";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -528,6 +528,35 @@ export default function EditRegistrationPage() {
           (p) => p.siblingGroupId === participant.siblingGroupId,
         ).length
       : 1;
+
+  /**
+   * The list split into sibling groups and lone participants, so members of a
+   * group sit together instead of wherever they happen to fall in the list.
+   *
+   * A group takes the position of its first member, which keeps the rest of
+   * the order as the registrant entered it. Display only — `participants`
+   * keeps its own order for saving.
+   */
+  const participantBlocks: { key: string; members: Participant[] }[] = [];
+  const placed = new Set<string>();
+  for (const participant of activeParticipants) {
+    if (placed.has(participant.id)) continue;
+    const members = participant.siblingGroupId
+      ? activeParticipants.filter(
+          (p) => p.siblingGroupId === participant.siblingGroupId,
+        )
+      : [participant];
+    members.forEach((m) => placed.add(m.id));
+    participantBlocks.push({
+      key: participant.siblingGroupId ?? participant.id,
+      members,
+    });
+  }
+
+  /** Display order, so the numbers on the cards read 1..n top to bottom. */
+  const orderedParticipants = participantBlocks.flatMap(
+    (block) => block.members,
+  );
 
   const editingParticipant = editingParticipantId
     ? activeParticipants.find((p) => p.id === editingParticipantId)
@@ -1096,21 +1125,57 @@ export default function EditRegistrationPage() {
               </button>
             </div>
 
-            <div className="space-y-3">
-              {activeParticipants.map((participant, index) => (
-                <ParticipantCard
-                  key={participant.id}
-                  participant={participant}
-                  index={index}
-                  priceOptions={registration.course.priceOptions}
-                  validationError={participantError(participant)}
-                  siblingGroupSize={siblingGroupSize(participant)}
-                  badge={participant.isNew ? "Neu" : undefined}
-                  canRemove={activeParticipants.length > 1}
-                  onEdit={() => openParticipant(participant.id)}
-                  onRemove={() => removeParticipant(participant.id)}
-                />
-              ))}
+            <div className="space-y-4">
+              {participantBlocks.map((block) => {
+                const isGroup = block.members.length > 1;
+                const cards = block.members.map((participant) => (
+                  <ParticipantCard
+                    key={participant.id}
+                    participant={participant}
+                    index={orderedParticipants.findIndex(
+                      (p) => p.id === participant.id,
+                    )}
+                    priceOptions={registration.course.priceOptions}
+                    validationError={participantError(participant)}
+                    siblingGroupSize={siblingGroupSize(participant)}
+                    badge={participant.isNew ? "Neu" : undefined}
+                    canRemove={activeParticipants.length > 1}
+                    onEdit={() => openParticipant(participant.id)}
+                    onRemove={() => removeParticipant(participant.id)}
+                  />
+                ));
+
+                if (!isGroup) return <div key={block.key}>{cards}</div>;
+
+                // Tighter spacing inside a group than between blocks, plus one
+                // caption underneath — enough to read as a unit without
+                // wrapping the cards in yet another bordered box.
+                const eligible = hasDiscountEligibleSiblingGroup(block.members);
+                return (
+                  <div key={block.key}>
+                    <div className="space-y-2">{cards}</div>
+                    <p className="mt-2 flex items-start gap-1.5 pl-1 text-xs text-green-700 dark:text-green-400">
+                      <Users className="mt-px h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Geschwistergruppe:{" "}
+                        {block.members
+                          .map((p) =>
+                            getParticipantDisplayName(
+                              p.firstName,
+                              p.lastName,
+                              p.id,
+                            ),
+                          )
+                          .join(", ")}
+                        {registration.course.allowSiblingDiscount &&
+                          (eligible
+                            ? " — 20% Rabatt ab dem zweiten Kind"
+                            : " — Rabatt erst mit vollständigen Angaben")}
+                      </span>
+                    </p>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Sibling Discount Option: only if at least one group has 2+ siblings */}
@@ -1161,10 +1226,13 @@ export default function EditRegistrationPage() {
               )}
           </div>
 
-          {/* Price Summary */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
+          {/* Price Summary: the breakdown gets the full card width on a phone
+              and a fixed column from sm: up. Squeezed into half the card it
+              wrapped the discount label onto three lines and broke the amount
+              itself across two. */}
+          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                   Gesamtpreis
                 </h2>
@@ -1173,38 +1241,44 @@ export default function EditRegistrationPage() {
                   {activeParticipants.length !== 1 && "n"}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="w-full sm:w-72 sm:shrink-0">
                 {siblingDiscountApplied &&
                 registration.course.allowSiblingDiscount &&
                 calculateDiscountAmount() > 0 ? (
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Zwischensumme:
+                        Zwischensumme
                       </span>
-                      <span className="text-gray-900 line-through dark:text-gray-100">
+                      <span className="shrink-0 whitespace-nowrap text-gray-900 line-through dark:text-gray-100">
                         {calculateOriginalPrice().toFixed(2)} €
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 text-sm">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt (20% pro weiteres Kind):
+                        Geschwisterkindrabatt
+                        <span className="block text-xs">
+                          20% pro weiteres Kind
+                        </span>
                       </span>
-                      <span className="font-semibold text-green-600 dark:text-green-400">
+                      <span className="shrink-0 font-semibold whitespace-nowrap text-green-600 dark:text-green-400">
                         -{calculateDiscountAmount().toFixed(2)} €
                       </span>
                     </div>
-                    <div className="border-t border-gray-200 pt-1 dark:border-gray-700">
-                      <p className="text-primary text-3xl font-bold">
+                    <div className="dark:border-dark-border flex items-baseline justify-between gap-3 border-t border-gray-200 pt-2">
+                      <span className="text-dark dark:text-dark-text text-sm font-semibold">
+                        Gesamt
+                      </span>
+                      <span className="text-primary text-2xl font-bold whitespace-nowrap sm:text-3xl">
                         {calculateTotalPrice().toFixed(2)} €
-                      </p>
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       * Der Rabatt muss noch bestätigt werden
                     </p>
                   </div>
                 ) : (
-                  <p className="text-primary text-3xl font-bold">
+                  <p className="text-primary text-2xl font-bold whitespace-nowrap sm:text-right sm:text-3xl">
                     {calculateTotalPrice().toFixed(2)} €
                   </p>
                 )}
@@ -1248,7 +1322,7 @@ export default function EditRegistrationPage() {
         {editingParticipant ? (
           <ParticipantSheet
             title={`Teilnehmer ${
-              activeParticipants.findIndex(
+              orderedParticipants.findIndex(
                 (p) => p.id === editingParticipant.id,
               ) + 1
             }`}
