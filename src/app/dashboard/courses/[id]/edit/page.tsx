@@ -139,6 +139,7 @@ export default function EditCoursePage() {
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [invoicingEnabled, setInvoicingEnabled] = useState(false);
+  const [courseNumber, setCourseNumber] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -181,6 +182,7 @@ export default function EditCoursePage() {
     paymentCashAllowed: boolean;
     paymentInvoiceAllowed: boolean;
     invoicingEnabled: boolean;
+    courseNumber: string;
     priceInfo: string;
     priceOptions: PriceOption[];
     prerequisites: string;
@@ -198,6 +200,10 @@ export default function EditCoursePage() {
       { id: courseId },
       { enabled: !!courseId && !!session?.user },
     );
+
+  // Ab der ersten ausgestellten Rechnung ist die Kursnummer eingefroren; der
+  // Server lehnt eine Änderung ohnehin ab, das Feld sagt es nur vorher.
+  const courseNumberLocked = course?.courseNumberLocked ?? false;
 
   const formData = useMemo(
     () => ({
@@ -228,6 +234,7 @@ export default function EditCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled,
+      courseNumber,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -265,6 +272,7 @@ export default function EditCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled,
+      courseNumber,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -344,6 +352,7 @@ export default function EditCoursePage() {
       setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
       setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
       setInvoicingEnabled(saved.invoicingEnabled ?? false);
+      setCourseNumber(saved.courseNumber || "");
       setPriceInfo(saved.priceInfo || "");
       setPriceOptions(saved.priceOptions || []);
       setPrerequisites(saved.prerequisites || "");
@@ -395,6 +404,7 @@ export default function EditCoursePage() {
         paymentCashAllowed: course.paymentCashAllowed ?? true,
         paymentInvoiceAllowed: course.paymentInvoiceAllowed ?? true,
         invoicingEnabled: course.invoicingEnabled ?? false,
+        courseNumber: course.courseNumber || "",
         priceInfo: course.priceInfo || "",
         priceOptions:
           course.priceOptions?.map((opt) => ({
@@ -585,6 +595,7 @@ export default function EditCoursePage() {
         setPaymentCashAllowed(course.paymentCashAllowed ?? true);
         setPaymentInvoiceAllowed(course.paymentInvoiceAllowed ?? true);
         setInvoicingEnabled(course.invoicingEnabled ?? false);
+        setCourseNumber(course.courseNumber || "");
         setPriceInfo(course.priceInfo || "");
         if (course.priceOptions && course.priceOptions.length > 0) {
           const options = course.priceOptions.map((opt) => ({
@@ -1023,6 +1034,14 @@ export default function EditCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled: isExternalProvider ? false : invoicingEnabled,
+      // Ohne die Berechtigung wird das Feld gar nicht angezeigt und der Wert
+      // kommt redigiert an — dann darf der Speichervorgang ihn auch nicht
+      // mitschicken, sonst würde er die Nummer löschen wollen und scheitern.
+      courseNumber: !canEnableInvoicing
+        ? undefined
+        : isExternalProvider
+          ? ""
+          : courseNumber.trim(),
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
@@ -2462,6 +2481,56 @@ export default function EditCoursePage() {
                                 </span>
                               </span>
                             </label>
+
+                            <div className="dark:border-dark-border border-t border-gray-200 pt-3">
+                              <label
+                                htmlFor="courseNumber"
+                                className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                              >
+                                Kursnummer{" "}
+                                <span className="font-normal text-gray-500 dark:text-gray-400">
+                                  (optional)
+                                </span>
+                              </label>
+                              <input
+                                id="courseNumber"
+                                type="text"
+                                inputMode="numeric"
+                                value={courseNumber}
+                                disabled={courseNumberLocked}
+                                onChange={(e) =>
+                                  setCourseNumber(
+                                    e.target.value
+                                      .replace(/\D/g, "")
+                                      .slice(0, 10),
+                                  )
+                                }
+                                placeholder="z.B. 2601"
+                                className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full max-w-[12rem] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-800"
+                              />
+                              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {courseNumberLocked ? (
+                                  <>
+                                    Für diesen Kurs wurden bereits Rechnungen
+                                    ausgestellt — sie tragen die Kursnummer in
+                                    Nummernkreis und Verwendungszweck und sind
+                                    eingefroren. Die Nummer lässt sich deshalb
+                                    nicht mehr ändern.
+                                  </>
+                                ) : (
+                                  <>
+                                    Interne Nummer für die Buchhaltung. Mit
+                                    Kursnummer lauten die Rechnungsnummern
+                                    dieses Kurses RE-{courseNumber || "<Nr.>"}
+                                    -001, RE-{courseNumber || "<Nr.>"}-002 … und
+                                    der Verwendungszweck nennt zusätzlich
+                                    „Bläserlehrgang {courseNumber || "<Nr.>"}“.
+                                    Ab der ersten ausgestellten Rechnung ist sie
+                                    fest.
+                                  </>
+                                )}
+                              </p>
+                            </div>
                           </div>
                         ) : (
                           invoicingEnabled && (

@@ -36,6 +36,7 @@ const invoiceForPdfInclude = {
     select: {
       id: true,
       title: true,
+      courseNumber: true,
       startDate: true,
       endDate: true,
       createdById: true,
@@ -679,7 +680,7 @@ export const invoicesRouter = createTRPCRouter({
           });
         }
 
-        const number = await nextInvoiceId(tx);
+        const number = await nextInvoiceId(tx, invoice.course.courseNumber);
         await tx.invoice.update({
           where: { id: invoice.id },
           data: { invoiceNumber: number },

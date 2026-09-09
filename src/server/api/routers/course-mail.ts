@@ -18,6 +18,7 @@ import { coursePath } from "@/lib/slug";
 import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 import { rateLimit } from "@/server/utils/rate-limit";
 import { maskEmail } from "@/lib/mask-email";
+import { invoicePaymentReference } from "@/lib/invoice-document";
 import type { PermissionCache } from "../helpers/permissions";
 import {
   applyPlaceholders,
@@ -298,6 +299,7 @@ function placeholderValuesFor(
   recipient: Recipient,
   course: {
     title: string;
+    courseNumber: string | null;
     startDate: Date;
     endDate: Date;
     location: { name: string | null; city: string } | null;
@@ -337,6 +339,13 @@ function placeholderValuesFor(
     "rechnung.nummer": invoices
       .map((invoice) => invoice.invoiceNumber)
       .join(", "),
+    // Was auf dem PDF und im Zahlungs-QR steht — mit Kursnummer ist das mehr
+    // als die reine Rechnungsnummer, siehe invoicePaymentReference.
+    "rechnung.verwendungszweck": invoices
+      .map((invoice) =>
+        invoicePaymentReference(invoice.invoiceNumber, course.courseNumber),
+      )
+      .join(", "),
     "rechnung.betrag": invoices.length
       ? formatAmount(
           invoices.reduce((sum, invoice) => sum + invoice.totalAmount, 0),
@@ -362,6 +371,7 @@ async function loadCourseForMailing(
       id: true,
       slug: true,
       title: true,
+      courseNumber: true,
       startDate: true,
       endDate: true,
       createdById: true,

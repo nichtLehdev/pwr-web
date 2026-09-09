@@ -42,6 +42,7 @@ export async function GET(
         select: {
           createdById: true,
           title: true,
+          courseNumber: true,
           startDate: true,
           endDate: true,
           location: { select: { name: true, city: true } },
