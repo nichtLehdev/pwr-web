@@ -16,6 +16,7 @@ import {
   formatDate,
   formatEuro,
   formatLongDate,
+  invoicePaymentReference,
   invoiceTotal,
   lineItemTotal,
   recipientName,
@@ -105,6 +106,10 @@ export async function renderInvoicePdf(
 
   const total = invoiceTotal(invoice.lineItems);
   const invoiceNumber = invoice.invoiceNumber ?? "ENTWURF";
+  const courseNumber = invoice.course.courseNumber?.trim() ?? "";
+  // A draft has no number yet, so its preview shows the reference built around
+  // the "ENTWURF" placeholder — same shape as the issued document will carry.
+  const paymentReference = invoicePaymentReference(invoiceNumber, courseNumber);
 
   const checkPageBreak = (requiredSpace = 20) => {
     if (y > 270 - requiredSpace) {
@@ -195,6 +200,7 @@ export async function renderInvoicePdf(
     ["Rechnungsnummer", invoiceNumber],
     ["Rechnungsdatum", formatDate(invoice.invoiceDate ?? new Date())],
   ];
+  if (courseNumber) infoRows.push(["Kursnummer", courseNumber]);
   const dueDateShort = formatDate(invoice.dueDate);
   if (dueDateShort) infoRows.push(["Zahlbar bis", dueDateShort]);
   if (courseStart) {
@@ -379,7 +385,12 @@ export async function renderInvoicePdf(
 
   const dueDateText = formatLongDate(invoice.dueDate);
   if (dueDateText) {
-    const paymentText = `Wir bitten Sie, den Rechnungsbetrag bis zum ${dueDateText} auf das unten angegebene Konto zu überweisen. Bitte geben Sie als Verwendungszweck die Rechnungsnummer an.`;
+    // With a course number the reference is more than the invoice number, so
+    // the sentence points at the printed line instead of naming the number.
+    const referenceHint = courseNumber
+      ? "den unten angegebenen Verwendungszweck"
+      : "als Verwendungszweck die Rechnungsnummer";
+    const paymentText = `Wir bitten Sie, den Rechnungsbetrag bis zum ${dueDateText} auf das unten angegebene Konto zu überweisen. Bitte geben Sie ${referenceHint} an.`;
     const splitPayment = doc.splitTextToSize(
       paymentText,
       pageWidth - 2 * margin,
@@ -405,7 +416,7 @@ export async function renderInvoicePdf(
   if (org.iban && invoice.status === "PUBLISHED" && total > 0) {
     try {
       qrDataUrl = await QRCode.toDataURL(
-        buildEpcQrPayload(org.name, org.iban, total, invoiceNumber, org.bic),
+        buildEpcQrPayload(org.name, org.iban, total, paymentReference, org.bic),
         { errorCorrectionLevel: "M", margin: 1, width: 256 },
       );
     } catch {
@@ -427,7 +438,7 @@ export async function renderInvoicePdf(
   doc.text(`BIC: ${org.bic}`, margin + 90, leftTextY);
   leftTextY += 5;
   doc.setFont("helvetica", "bold");
-  doc.text(`Verwendungszweck: ${invoiceNumber}`, margin + 3, leftTextY);
+  doc.text(`Verwendungszweck: ${paymentReference}`, margin + 3, leftTextY);
   doc.setFont("helvetica", "normal");
 
   if (qrDataUrl) {
