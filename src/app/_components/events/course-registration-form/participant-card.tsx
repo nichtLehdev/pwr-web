@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ChevronRight, Save, Trash2 } from "lucide-react";
+import { AlertCircle, Save, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { priceOptionDisplayLabel } from "@/lib/course-price-options";
 import type { ParticipantFields } from "./types";
@@ -90,13 +90,13 @@ export function ParticipantCard({
         onClick={onEdit}
         aria-label={`Teilnehmer ${index + 1}${fullName ? ` — ${fullName}` : ""} bearbeiten`}
         className={cn(
-          "focus-visible:ring-primary flex w-full items-center gap-3 rounded-lg p-4 text-left focus-visible:ring-2 focus-visible:outline-none",
-          onSaveToLibrary ? "pr-24" : "pr-14",
+          "focus-visible:ring-primary flex w-full items-start gap-3 rounded-lg p-4 text-left focus-visible:ring-2 focus-visible:outline-none",
+          onSaveToLibrary ? "pr-[5.5rem]" : "pr-14",
         )}
       >
         <span
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
             isInGroup
               ? "bg-green-600 text-white dark:bg-green-700"
               : "bg-primary/15 text-primary dark:bg-primary/25",
@@ -107,7 +107,7 @@ export function ParticipantCard({
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="text-dark dark:text-dark-text block truncate font-semibold">
+          <span className="text-dark dark:text-dark-text block truncate leading-7 font-semibold">
             {fullName || `Teilnehmer ${index + 1}`}
           </span>
 
@@ -126,7 +126,7 @@ export function ParticipantCard({
             </span>
           ) : null}
 
-          <span className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="mt-2 flex flex-wrap items-center gap-1.5 empty:mt-0">
             {badge ? (
               <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 {badge}
@@ -145,13 +145,12 @@ export function ParticipantCard({
             ) : null}
           </span>
         </span>
-
-        <ChevronRight className="h-5 w-5 shrink-0 self-center text-gray-400" />
       </button>
 
       {/* Outside the button: nesting these would be invalid markup and would
-          swallow taps meant for the card. */}
-      <div className="absolute top-2 right-2 flex gap-0.5">
+          swallow taps meant for the card. Pinned to the name's line so the
+          card has one right-hand cluster instead of three loose elements. */}
+      <div className="absolute top-2.5 right-2.5 flex items-center gap-0.5">
         {onSaveToLibrary ? (
           <button
             type="button"
@@ -159,7 +158,7 @@ export function ParticipantCard({
             disabled={!canSaveToLibrary || saveToLibraryPending}
             title="Teilnehmer in Bibliothek speichern"
             aria-label="Teilnehmer in Bibliothek speichern"
-            className="text-dark dark:text-dark-text dark:hover:bg-dark-background flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-gray-100 disabled:opacity-40"
+            className="dark:hover:bg-dark-background flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:opacity-40 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <Save className="h-4 w-4" />
           </button>
@@ -174,7 +173,7 @@ export function ParticipantCard({
               : "Mindestens ein Teilnehmer muss bleiben"
           }
           aria-label={`Teilnehmer ${index + 1} entfernen`}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40 disabled:hover:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
         >
           <Trash2 className="h-4 w-4" />
         </button>

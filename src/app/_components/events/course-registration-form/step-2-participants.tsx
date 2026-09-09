@@ -2,6 +2,7 @@
 "use client";
 import { useState } from "react";
 import { BookOpen, UserIcon, Plus, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@/trpc/react";
 import type { RegistrationData, CourseWithRelations } from "./types";
 import { getParticipantDisplayName, calculateDiscountAmount } from "./utils";
@@ -10,6 +11,9 @@ import { ParticipantCard } from "./participant-card";
 import { ParticipantEditor } from "./participant-editor";
 import { ParticipantSheet } from "./participant-sheet";
 import type { User } from "~/generated/prisma/client";
+
+/** The two places the add buttons appear: above the list and after it. */
+type LibraryAnchor = "top" | "bottom";
 
 interface Step2ParticipantsProps {
   course: CourseWithRelations;
@@ -30,8 +34,6 @@ interface Step2ParticipantsProps {
   headerHeight: number;
   groupIdCounterRef: React.MutableRefObject<number>;
   siblingDiscountError: string;
-  /** When false (e.g. full-page registration), use a static toolbar — no sticky offset hacks */
-  stickyToolbar?: boolean;
 }
 
 export function Step2Participants({
@@ -48,12 +50,22 @@ export function Step2Participants({
   headerHeight,
   groupIdCounterRef,
   siblingDiscountError,
-  stickyToolbar = true,
 }: Step2ParticipantsProps) {
   /** Index of the participant whose fields are open in the sheet. */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Set once "Fertig" is pressed on an incomplete participant. */
   const [doneAttempted, setDoneAttempted] = useState(false);
+  /** Which of the two action groups the library popup belongs to. */
+  const [libraryAnchor, setLibraryAnchor] = useState<LibraryAnchor>("top");
+
+  const toggleParticipantLibrary = (anchor: LibraryAnchor) => {
+    if (showParticipantLibrary && libraryAnchor === anchor) {
+      setShowParticipantLibrary(false);
+      return;
+    }
+    setLibraryAnchor(anchor);
+    setShowParticipantLibrary(true);
+  };
 
   const openParticipant = (index: number | null) => {
     setEditingIndex(index);
@@ -262,20 +274,37 @@ export function Step2Participants({
       ? registrationData.participants[editingIndex]
       : undefined;
 
-  const toolbarButtons = (
-    <div className="flex flex-wrap justify-center gap-2">
+  // Three labelled buttons need ~376px and a phone card offers ~300, so they
+  // cannot share one row without labels too terse to read. Rather than let
+  // them wrap into a ragged second line, they are laid out as a deliberate
+  // 2-up grid with the primary spanning both — and collapse to a single row
+  // from sm: up, where the width is there.
+  const ADD_BUTTON_GROUP =
+    "grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center";
+  const ADD_BUTTON_BASE =
+    "inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors sm:w-auto sm:gap-2 sm:px-4 sm:text-sm";
+  const ADD_BUTTON_SECONDARY =
+    "text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background border border-gray-300 bg-white hover:bg-gray-50";
+
+  /**
+   * Rendered above and below the list, so adding a tenth person does not mean
+   * scrolling back to the header. `anchor` decides which of the two triggers
+   * the library popup hangs off — they share one open flag.
+   */
+  const renderActionButtons = (anchor: LibraryAnchor) => (
+    <>
       {currentUser && (
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <button
             type="button"
-            onClick={() => setShowParticipantLibrary(!showParticipantLibrary)}
-            className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background flex min-h-11 items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-3 text-xs font-semibold transition-colors hover:bg-gray-50 sm:px-4 sm:text-sm"
+            onClick={() => toggleParticipantLibrary(anchor)}
+            className={cn(ADD_BUTTON_BASE, ADD_BUTTON_SECONDARY)}
           >
             <BookOpen className="h-4 w-4 shrink-0" />
             Aus Bibliothek
           </button>
           <ParticipantLibraryPopup
-            isOpen={showParticipantLibrary}
+            isOpen={showParticipantLibrary && libraryAnchor === anchor}
             onClose={() => setShowParticipantLibrary(false)}
             savedParticipants={savedParticipantsQuery.data}
             onLoadParticipant={loadSavedParticipant}
@@ -287,7 +316,7 @@ export function Step2Participants({
         <button
           type="button"
           onClick={addMyselfAsParticipant}
-          className="text-dark dark:text-dark-text dark:border-dark-border dark:hover:bg-dark-background flex min-h-11 items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-3 text-xs font-semibold transition-colors hover:bg-gray-50 sm:px-4 sm:text-sm"
+          className={cn(ADD_BUTTON_BASE, ADD_BUTTON_SECONDARY)}
         >
           <UserIcon className="h-4 w-4 shrink-0" />
           Mich selbst
@@ -296,43 +325,44 @@ export function Step2Participants({
       <button
         type="button"
         onClick={addParticipant}
-        className="bg-primary hover:bg-primary-dark flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 text-xs font-semibold text-white transition-colors sm:px-4 sm:text-sm"
+        className={cn(
+          ADD_BUTTON_BASE,
+          "bg-primary hover:bg-primary-dark col-span-2 text-white",
+        )}
       >
         <Plus className="h-4 w-4 shrink-0" />
         Hinzufügen
       </button>
-    </div>
+    </>
   );
 
   return (
     <div className="flex flex-col">
-      <div className="mb-5">
-        <h3 className="text-dark dark:text-dark-text mb-1 text-lg font-bold sm:text-xl">
-          Teilnehmer
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Fügen Sie alle Personen hinzu, die Sie für diesen Lehrgang anmelden
-          möchten. Zum Bearbeiten auf eine Person tippen.
-        </p>
-      </div>
-
-      {/* `top-0`, not the modal header height: this bar already lives inside the
-          modal's scroll container, whose top edge sits below that header —
-          offsetting it again parked the buttons in mid-screen on phones. */}
-      {stickyToolbar && hasParticipants && (
-        <div className="dark:bg-dark-surface dark:border-dark-border sticky top-0 z-10 -mx-6 mb-6 border-b border-gray-100 bg-white px-6 py-3 shadow-sm">
-          {toolbarButtons}
-        </div>
-      )}
-
-      {!stickyToolbar && hasParticipants && (
-        <div className="dark:border-dark-border dark:bg-dark-background-secondary bg-background-secondary mb-5 rounded-lg border border-gray-200 p-4">
-          <p className="text-dark dark:text-dark-text mb-3 text-sm font-semibold">
-            Weitere Teilnehmer
+      {/* Actions live in the header, like the edit page. They used to sit in a
+          bordered "Weitere Teilnehmer" panel wedged between the description
+          and the list — a box and a heading around what is really one button. */}
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-dark dark:text-dark-text text-lg font-bold sm:text-xl">
+            Teilnehmer
+            {hasParticipants
+              ? ` (${registrationData.participants.length})`
+              : ""}
+          </h3>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            {hasParticipants
+              ? "Zum Bearbeiten auf eine Person tippen."
+              : "Fügen Sie alle Personen hinzu, die Sie für diesen Lehrgang anmelden möchten."}
           </p>
-          {toolbarButtons}
         </div>
-      )}
+        {hasParticipants ? (
+          <div
+            className={cn(ADD_BUTTON_GROUP, "w-full sm:w-auto sm:justify-end")}
+          >
+            {renderActionButtons("top")}
+          </div>
+        ) : null}
+      </div>
 
       <div className="flex-1">
         {!hasParticipants ? (
@@ -346,7 +376,9 @@ export function Step2Participants({
                 ? "Übernehmen Sie Daten aus Ihrer Bibliothek, tragen Sie sich selbst ein oder legen Sie eine neue Person an."
                 : "Legen Sie eine neue Teilnehmerperson an."}
             </p>
-            {toolbarButtons}
+            <div className={cn(ADD_BUTTON_GROUP, "sm:justify-center")}>
+              {renderActionButtons("top")}
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -366,6 +398,18 @@ export function Step2Participants({
                 saveToLibraryPending={saveParticipantMutation.isPending}
               />
             ))}
+
+            {/* Same group again, so the tenth participant can be followed by
+                an eleventh without scrolling back up. A dashed row rather than
+                a second solid toolbar: it reads as the end of the list. */}
+            <div
+              className={cn(
+                ADD_BUTTON_GROUP,
+                "dark:border-dark-border rounded-lg border border-dashed border-gray-300 p-3 sm:justify-center",
+              )}
+            >
+              {renderActionButtons("bottom")}
+            </div>
           </div>
         )}
       </div>

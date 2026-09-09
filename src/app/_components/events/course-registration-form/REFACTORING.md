@@ -42,5 +42,6 @@ categories. It computes its own `participantMissingFields` /
 - The dashboard registration detail page shows participants read-only and could
   use `ParticipantCard` without an editor.
 - `variant="modal"` on the registration form is unreachable — both call sites
-  pass `variant="page"` — so the modal branch and the `stickyToolbar` /
-  `headerHeight` plumbing it feeds could go.
+  pass `variant="page"` — so the modal branch and the `headerHeight` plumbing
+  it feeds could go. (`stickyToolbar` already has: step 2 renders one toolbar,
+  in its header.)

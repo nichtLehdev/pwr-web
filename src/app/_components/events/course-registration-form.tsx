@@ -515,7 +515,6 @@ export default function CourseRegistrationForm({
           headerHeight={headerHeight}
           groupIdCounterRef={groupIdCounterRef}
           siblingDiscountError={siblingDiscountError}
-          stickyToolbar={isModal}
         />
       )}
       {currentStep === 3 && (
