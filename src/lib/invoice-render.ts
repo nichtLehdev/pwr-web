@@ -166,7 +166,7 @@ export async function renderInvoicePdf(
   // band so the upper half of the page isn't a tall column of text against an
   // empty right margin — and it puts number, date and deadline where a reader
   // (and a bookkeeper's eye) looks for them.
-  y += 11;
+  y += 8;
   const bandTop = y;
   const infoLabelX = 112;
 
@@ -226,7 +226,7 @@ export async function renderInvoicePdf(
   y = Math.max(leftY, infoY);
 
   // Subject line, DIN-5008 style: what this invoice is for, full width.
-  y += 6;
+  y += 5;
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0);
@@ -296,7 +296,7 @@ export async function renderInvoicePdf(
     y += intro.length * 5;
   }
 
-  y += 9;
+  y += 6;
   checkPageBreak(30);
 
   // Column layout: description grows, the three number columns are fixed and
@@ -315,7 +315,7 @@ export async function renderInvoicePdf(
   doc.text("Einzelpreis", unitPriceX, y, { align: "right" });
   doc.text("Betrag", amountX, y, { align: "right" });
 
-  y += 9;
+  y += 8;
   doc.setFont("helvetica", "normal");
 
   for (const item of invoice.lineItems) {
@@ -367,7 +367,7 @@ export async function renderInvoicePdf(
   doc.text("Gesamtbetrag:", quantityX, y, { align: "right" });
   doc.text(formatEuro(total), amountX, y, { align: "right" });
 
-  y += 7;
+  y += 6;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(110);
@@ -379,7 +379,7 @@ export async function renderInvoicePdf(
   );
   doc.setTextColor(0);
 
-  y += 7;
+  y += 5;
   checkPageBreak(30);
   doc.setFontSize(10);
 
@@ -406,7 +406,7 @@ export async function renderInvoicePdf(
   const bankBlockHeight = leftTextTotalHeight + 6;
   const qrSize = bankBlockHeight - 4;
 
-  y += 5;
+  y += 3;
   checkPageBreak(bankBlockHeight + 2);
   const bankBlockY = y - 4;
 
@@ -456,7 +456,7 @@ export async function renderInvoicePdf(
 
   const closing = (invoice.closingText ?? DEFAULT_INVOICE_CLOSING_TEXT).trim();
 
-  y = bankBlockY + bankBlockHeight + 7;
+  y = bankBlockY + bankBlockHeight + 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   const closingLines = closing
@@ -478,7 +478,6 @@ export async function renderInvoicePdf(
 
   if (options.signatureBase64) {
     try {
-      checkPageBreak(30);
       doc.addImage(
         options.signatureBase64,
         imageFormat(options.signatureBase64),
