@@ -83,6 +83,7 @@ export const mediaRouter = createTRPCRouter({
       );
 
       const where: Prisma.MediaWhereInput = {
+        folder: { not: "profiles" },
         ...(input.mimeType && { mimeType: { contains: input.mimeType } }),
         ...(input.folder && { folder: input.folder }),
         ...(input.uploadedById && { uploadedById: input.uploadedById }),
@@ -448,7 +449,7 @@ export const mediaRouter = createTRPCRouter({
   getFolders: protectedProcedure.query(async ({ ctx }) => {
     const folders = await ctx.db.media.findMany({
       where: {
-        folder: { not: null },
+        folder: { not: null, notIn: ["profiles"] },
       },
       select: {
         folder: true,
