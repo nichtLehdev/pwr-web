@@ -38,7 +38,6 @@ interface Step2ParticipantsProps {
   };
   showParticipantLibrary: boolean;
   setShowParticipantLibrary: (show: boolean) => void;
-  headerHeight: number;
   groupIdCounterRef: React.MutableRefObject<number>;
   siblingDiscountError: string;
 }
@@ -54,7 +53,6 @@ export function Step2Participants({
   saveParticipantMutation,
   showParticipantLibrary,
   setShowParticipantLibrary,
-  headerHeight,
   groupIdCounterRef,
   siblingDiscountError,
 }: Step2ParticipantsProps) {
@@ -315,7 +313,6 @@ export function Step2Participants({
             onClose={() => setShowParticipantLibrary(false)}
             savedParticipants={savedParticipantsQuery.data}
             onLoadParticipant={loadSavedParticipant}
-            headerHeight={headerHeight}
           />
         </div>
       )}

@@ -56,8 +56,6 @@ export default function CourseRegistrationForm({
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const groupIdCounterRef = useRef(0);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [headerHeight, setHeaderHeight] = useState(140);
   const [validationErrors, setValidationErrors] = useState<
     Record<number, string>
   >({});
@@ -118,18 +116,6 @@ export default function CourseRegistrationForm({
     course.paymentCashAllowed,
     course.paymentInvoiceAllowed,
   ]);
-
-  useEffect(() => {
-    const updateHeaderHeight = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.offsetHeight);
-      }
-    };
-
-    updateHeaderHeight();
-    window.addEventListener("resize", updateHeaderHeight);
-    return () => window.removeEventListener("resize", updateHeaderHeight);
-  }, [currentStep]);
 
   // Escape/Abbrechen with entered participants (or past step 1) asks first —
   // it used to silently discard everything, even on the summary step.
@@ -496,7 +482,6 @@ export default function CourseRegistrationForm({
           saveParticipantMutation={saveParticipantMutation}
           showParticipantLibrary={showParticipantLibrary}
           setShowParticipantLibrary={setShowParticipantLibrary}
-          headerHeight={headerHeight}
           groupIdCounterRef={groupIdCounterRef}
           siblingDiscountError={siblingDiscountError}
         />
@@ -587,10 +572,7 @@ export default function CourseRegistrationForm({
 
   return (
     <div className="w-full">
-      <div
-        ref={headerRef}
-        className="dark:border-dark-border dark:bg-dark-surface border-b border-gray-200 bg-white shadow-sm"
-      >
+      <div className="dark:border-dark-border dark:bg-dark-surface border-b border-gray-200 bg-white shadow-sm">
         <div className="container mx-auto max-w-3xl px-4 py-4 sm:py-5">
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
