@@ -391,10 +391,7 @@ export async function renderInvoicePdf(
     : "als Verwendungszweck die Rechnungsnummer";
   const deadlineClause = dueDateText ? ` bis zum ${dueDateText}` : "";
   const paymentText = `Wir bitten Sie, den Rechnungsbetrag${deadlineClause} auf das unten angegebene Konto zu überweisen. Bitte geben Sie ${referenceHint} an.`;
-  const splitPayment = doc.splitTextToSize(
-    paymentText,
-    pageWidth - 2 * margin,
-  );
+  const splitPayment = doc.splitTextToSize(paymentText, pageWidth - 2 * margin);
   doc.text(splitPayment, margin, y);
   y += splitPayment.length * 5 + 3;
 
