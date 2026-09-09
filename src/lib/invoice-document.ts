@@ -126,6 +126,15 @@ export function invoicePaymentReference(
 export const DEFAULT_INVOICE_CLOSING_TEXT =
   "Wir freuen uns auf eine gemeinsame Zeit!";
 
+/**
+ * Description of the negative line item {@link lineItemsFromRegistration}
+ * pushes for the sibling discount (Geschwisterkindrabatt, subsidised by the
+ * Förderverein). Exported so features that need that amount back out of an
+ * invoice — e.g. the invoice CSV export — can find those lines without
+ * re-deriving the discount from the registration.
+ */
+export const SIBLING_DISCOUNT_LINE_DESCRIPTION = "Geschwisterkindrabatt (20 %)";
+
 /** Cent-safe rounding — floats accumulate visible drift over many lines. */
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
