@@ -746,13 +746,35 @@ export const invoicesRouter = createTRPCRouter({
 
       // Only registrants with an account can be notified in-app; guests get
       // their invoice by mail from the organizer instead.
+      //
+      // Die Zuordnung laeuft ueber die E-Mail, nicht ueber registrantId: die
+      // Spalte wird nirgends geschrieben und ist an jeder Anmeldung null, also
+      // fiel diese Benachrichtigung bisher immer aus. Anmeldung und Konto
+      // haengen ueberall sonst an der Adresse zusammen — getMyRegistrations,
+      // myInvoices und der PDF-Download suchen genauso.
       if (input.notifyRegistrant && invoice.registrationId) {
         const registration = await ctx.db.courseRegistration.findUnique({
           where: { id: invoice.registrationId },
-          select: { registrantId: true },
+          select: { registrantId: true, registrantEmail: true },
         });
-        if (registration?.registrantId) {
-          await createNotification(ctx.db, registration.registrantId, {
+        const recipientId =
+          registration?.registrantId ??
+          (registration?.registrantEmail
+            ? ((
+                await ctx.db.user.findFirst({
+                  where: {
+                    email: {
+                      equals: registration.registrantEmail,
+                      mode: "insensitive",
+                    },
+                  },
+                  select: { id: true },
+                })
+              )?.id ?? null)
+            : null);
+
+        if (recipientId) {
+          await createNotification(ctx.db, recipientId, {
             type: "invoice.published",
             title: `Rechnung ${invoiceNumber} für „${invoice.course.title}“`,
             body: "Deine Rechnung steht jetzt unter „Meine Anmeldungen“ zum Download bereit.",
