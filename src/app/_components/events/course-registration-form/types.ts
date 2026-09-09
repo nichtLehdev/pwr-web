@@ -24,6 +24,8 @@ export interface ParticipantFields {
   city: string;
   instrument?: string | null;
   priceOptionId?: string | null;
+  /** Legacy label, for registrations saved before ids were stored. */
+  priceOption?: string | null;
   customFields?: unknown;
 }
 

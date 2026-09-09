@@ -44,7 +44,7 @@ import {
   RegistrationPaymentBadge,
 } from "@/app/_components/dashboard/invoice-payment-badge";
 import { formatEuro } from "@/lib/invoice-document";
-import { participantPriceOptionLabel } from "@/lib/course-price-options";
+import { ParticipantCard } from "@/app/_components/events/course-registration-form/participant-card";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -930,15 +930,14 @@ export default function RegistrationDetailPage() {
         </div>
 
         {/* Participants */}
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
-            <h2 className="text-dark dark:text-dark-text flex items-center gap-2 text-lg font-semibold">
-              <UsersIcon className="text-primary h-5 w-5" />
-              Teilnehmer ({registration.participants.length})
-            </h2>
-          </div>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {registration.participants.map((participant) => {
+        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
+            <UsersIcon className="text-primary h-5 w-5" />
+            Teilnehmer ({registration.participants.length})
+          </h2>
+
+          <div className="space-y-3">
+            {registration.participants.map((participant, index) => {
               const siblingGroup = registration.participants.filter(
                 (p) =>
                   p.siblingGroupId &&
@@ -950,122 +949,67 @@ export default function RegistrationDetailPage() {
                 .map((p) =>
                   getParticipantDisplayName(p.firstName, p.lastName, p.id),
                 );
-
-              // Check if this group is eligible for discount
               const isEligibleForDiscount =
                 hasDiscountEligibleSiblingGroup(siblingGroup);
 
+              // Only what the card summary does not already carry: it shows the
+              // age, city, instrument and price category, so repeating those
+              // here would be the same line twice.
+              const details: { label: string; value: string }[] = [
+                {
+                  label: "Geburtsdatum",
+                  value: formatDate(participant.birthDate),
+                },
+                ...(isInGroup && groupMembers.length > 0
+                  ? [
+                      {
+                        label: "Geschwister mit",
+                        value: groupMembers.join(", "),
+                      },
+                    ]
+                  : []),
+                ...(course.customFields ?? []).map((field) => ({
+                  label: field.fieldName,
+                  value: getCustomFieldValue(participant, field.fieldName),
+                })),
+              ];
+
               return (
-                <div
+                <ParticipantCard
                   key={participant.id}
-                  className={`p-6 ${
-                    isInGroup ? "bg-green-50 dark:bg-green-900/10" : ""
-                  }`}
+                  participant={participant}
+                  index={index}
+                  priceOptions={course.priceOptions}
+                  siblingGroupSize={siblingGroup.length || 1}
+                  extraBadges={
+                    isInGroup && course.allowSiblingDiscount ? (
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          isEligibleForDiscount
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        }`}
+                      >
+                        {isEligibleForDiscount
+                          ? "Rabatt berechtigt"
+                          : "Rabatt nicht berechtigt"}
+                      </span>
+                    ) : null
+                  }
                 >
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-dark dark:text-dark-text font-semibold">
-                        {participant.firstName} {participant.lastName}
-                      </h3>
-                      {isInGroup && (
-                        <span className="rounded-full bg-green-600 px-2 py-1 text-xs font-medium text-white dark:bg-green-700">
-                          Geschwistergruppe
-                        </span>
-                      )}
-                      {isInGroup && course.allowSiblingDiscount && (
-                        <span
-                          className={`rounded-full px-2 py-1 text-xs font-medium ${
-                            isEligibleForDiscount
-                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                              : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          }`}
-                        >
-                          {isEligibleForDiscount
-                            ? "Rabatt berechtigt"
-                            : "Rabatt nicht berechtigt"}
-                        </span>
-                      )}
-                    </div>
-                    <span className="dark:bg-dark-background-secondary rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
-                      {getParticipantDisplayName(
-                        participant.firstName,
-                        participant.lastName,
-                        participant.id,
-                      )}
-                    </span>
-                  </div>
-                  {isInGroup && groupMembers.length > 0 && (
-                    <div className="mb-3 space-y-1">
-                      <div className="text-xs text-green-700 dark:text-green-400">
-                        Geschwister mit: {groupMembers.join(", ")}
-                      </div>
-                      {course.allowSiblingDiscount && (
-                        <div
-                          className={`text-xs ${
-                            isEligibleForDiscount
-                              ? "text-green-700 dark:text-green-400"
-                              : "text-yellow-700 dark:text-yellow-400"
-                          }`}
-                        >
-                          {isEligibleForDiscount
-                            ? `✓ Gruppe berechtigt für Geschwisterkindrabatt (${siblingGroup.length} Geschwister)`
-                            : "⚠ Gruppe nicht berechtigt für Geschwisterkindrabatt (mindestens 2 Geschwister erforderlich)"}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="grid gap-4 text-sm md:grid-cols-2">
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Geburtsdatum:
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {formatDate(participant.birthDate)}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
-                        Wohnort:
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {participant.city}
-                      </p>
-                    </div>
-                    {participant.instrument && (
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Instrument:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {participant.instrument}
-                        </p>
-                      </div>
-                    )}
-                    {participant.priceOption && (
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          Preiskategorie:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {participantPriceOptionLabel(
-                            participant,
-                            course.priceOptions,
-                          )}
-                        </p>
-                      </div>
-                    )}
-                    {course.customFields?.map((field) => (
-                      <div key={field.id}>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">
-                          {field.fieldName}:
-                        </span>
-                        <p className="text-gray-600 dark:text-gray-400">
-                          {getCustomFieldValue(participant, field.fieldName)}
-                        </p>
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    {details.map((detail) => (
+                      <div key={detail.label}>
+                        <dt className="font-medium text-gray-700 dark:text-gray-300">
+                          {detail.label}
+                        </dt>
+                        <dd className="text-gray-600 dark:text-gray-400">
+                          {detail.value}
+                        </dd>
                       </div>
                     ))}
-                  </div>
-                </div>
+                  </dl>
+                </ParticipantCard>
               );
             })}
           </div>
