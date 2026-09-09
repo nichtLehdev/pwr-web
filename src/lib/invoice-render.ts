@@ -384,20 +384,19 @@ export async function renderInvoicePdf(
   doc.setFontSize(10);
 
   const dueDateText = formatLongDate(invoice.dueDate);
-  if (dueDateText) {
-    // With a course number the reference is more than the invoice number, so
-    // the sentence points at the printed line instead of naming the number.
-    const referenceHint = courseNumber
-      ? "den unten angegebenen Verwendungszweck"
-      : "als Verwendungszweck die Rechnungsnummer";
-    const paymentText = `Wir bitten Sie, den Rechnungsbetrag bis zum ${dueDateText} auf das unten angegebene Konto zu überweisen. Bitte geben Sie ${referenceHint} an.`;
-    const splitPayment = doc.splitTextToSize(
-      paymentText,
-      pageWidth - 2 * margin,
-    );
-    doc.text(splitPayment, margin, y);
-    y += splitPayment.length * 5 + 3;
-  }
+  // With a course number the reference is more than the invoice number, so
+  // the sentence points at the printed line instead of naming the number.
+  const referenceHint = courseNumber
+    ? "den unten angegebenen Verwendungszweck"
+    : "als Verwendungszweck die Rechnungsnummer";
+  const deadlineClause = dueDateText ? ` bis zum ${dueDateText}` : "";
+  const paymentText = `Wir bitten Sie, den Rechnungsbetrag${deadlineClause} auf das unten angegebene Konto zu überweisen. Bitte geben Sie ${referenceHint} an.`;
+  const splitPayment = doc.splitTextToSize(
+    paymentText,
+    pageWidth - 2 * margin,
+  );
+  doc.text(splitPayment, margin, y);
+  y += splitPayment.length * 5 + 3;
 
   // Sized to the bank details rather than to the QR: an ordinary invoice has
   // to fit on one page including the closing, and every millimetre this block
