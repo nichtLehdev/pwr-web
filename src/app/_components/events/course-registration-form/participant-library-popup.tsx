@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useEffect } from "react";
 import { X, Plus } from "lucide-react";
 import type { RouterOutputs } from "@/trpc/react";
 
@@ -11,7 +10,6 @@ interface ParticipantLibraryPopupProps {
   onLoadParticipant: (
     saved: RouterOutputs["savedParticipants"]["getAll"][0],
   ) => void;
-  headerHeight: number;
 }
 
 export function ParticipantLibraryPopup({
@@ -19,28 +17,7 @@ export function ParticipantLibraryPopup({
   onClose,
   savedParticipants,
   onLoadParticipant,
-  headerHeight,
 }: ParticipantLibraryPopupProps) {
-  const popupRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isOpen && popupRef.current) {
-      const handleResize = () => {
-        if (window.innerWidth >= 640 && popupRef.current) {
-          // Remove inline top style on desktop to allow sm:top-full to work
-          popupRef.current.style.top = "";
-        } else if (popupRef.current) {
-          // Set inline top style on mobile
-          popupRef.current.style.top = `calc(${headerHeight}px + 80px)`;
-        }
-      };
-
-      handleResize();
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }
-  }, [isOpen, headerHeight]);
-
   if (!isOpen) return null;
 
   return (
@@ -51,12 +28,13 @@ export function ParticipantLibraryPopup({
         onClick={onClose}
       />
       {/* Popup */}
+      {/* Centred on a phone, anchored under its button from sm: up. It used to
+          be placed with an inline `top: headerHeight + 80px` kept in sync by a
+          resize listener — a measurement of the form header, which on the page
+          layout scrolls away and so said nothing about where the popup should
+          sit. */}
       <div
-        ref={popupRef}
-        className="fixed left-1/2 z-101 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 transform rounded-lg border-2 border-gray-200 bg-white shadow-xl sm:absolute sm:top-full sm:right-0 sm:left-auto sm:z-[102] sm:mt-1 sm:max-w-md sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800"
-        style={{
-          top: `calc(${headerHeight}px + 80px)`,
-        }}
+        className="fixed top-1/2 left-1/2 z-101 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg border-2 border-gray-200 bg-white shadow-xl sm:absolute sm:top-full sm:right-0 sm:left-auto sm:z-[102] sm:mt-1 sm:max-w-md sm:translate-x-0 sm:translate-y-0 dark:border-gray-700 dark:bg-gray-800"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >

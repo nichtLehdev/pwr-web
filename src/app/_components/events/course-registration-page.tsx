@@ -229,7 +229,6 @@ export default function CourseRegistrationPage({
         )}
         {showForm && !existingRegistrationLoading && (
           <CourseRegistrationForm
-            variant="page"
             course={course}
             onClose={onCloseForm}
             onSuccess={onSuccessForm}
