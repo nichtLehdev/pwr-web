@@ -254,6 +254,22 @@ async function loadInvoiceForRead(
   };
 }
 
+/** The shape `publishDraftInvoice` needs — what `invoiceForPdfInclude` produces. */
+type InvoiceForPublish = Prisma.InvoiceGetPayload<{
+  include: typeof invoiceForPdfInclude;
+}>;
+
+interface PublishOptions {
+  signatureBase64?: string;
+  /** `undefined` leaves the name already stored on the draft untouched. */
+  signatureName?: string | null;
+  /** `undefined` leaves the draft's own due date (or the default) untouched. */
+  dueDate?: Date | null;
+  notifyRegistrant: boolean;
+  actorId: string;
+  actorEmail: string | null | undefined;
+}
+
 function assertDraft(status: InvoiceStatus) {
   if (status !== InvoiceStatus.DRAFT) {
     throw new TRPCError({
@@ -315,6 +331,175 @@ async function syncRegistrationInvoiceFields(
         }
       : { invoiceGenerated: false, invoiceId: null, invoiceDate: null },
   });
+}
+
+/**
+ * Issue one draft: assign the next continuous number, freeze the PDF on disk
+ * and tell the registrant. Shared by the single-invoice publish mutation and
+ * the "finalize all drafts" bulk mutation, so both go through one code path.
+ *
+ * The number is drawn inside the transaction that flips the status, so a
+ * failure rolls the counter back with it and the sequence stays unbroken
+ * (§14 UStG). Rendering happens after the number exists but before the row is
+ * marked published — a failed render therefore leaves a draft behind, never a
+ * published invoice without a document.
+ */
+async function publishDraftInvoice(
+  db: PrismaClient,
+  invoice: InvoiceForPublish,
+  options: PublishOptions,
+) {
+  assertDraft(invoice.status);
+
+  if (!invoice.course.invoicingEnabled) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet.",
+    });
+  }
+
+  const lineItems = Array.isArray(invoice.lineItems) ? invoice.lineItems : [];
+  if (lineItems.length === 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Eine Rechnung ohne Positionen kann nicht ausgestellt werden.",
+    });
+  }
+  if (!invoice.recipientLastName && !invoice.recipientCompany) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Bitte einen Rechnungsempfänger angeben.",
+    });
+  }
+
+  const now = new Date();
+  // Der Dialog schickt den Namen mit, mit dem tatsächlich unterschrieben
+  // wird. Er wird zusammen mit der Nummer festgeschrieben, damit die Zeile
+  // unter der Unterschrift und die gespeicherte Zeile dasselbe sagen.
+  const signatureName =
+    options.signatureName === undefined
+      ? invoice.signatureName
+      : normalizeOptional(options.signatureName);
+  // Same "undefined leaves it alone" rule as the signature name — a bulk
+  // finalize can set one deadline for every invoice in the batch, but only
+  // if the organizer actually typed one in.
+  const dueDate = options.dueDate ?? invoice.dueDate ?? defaultDueDate(now);
+
+  const invoiceNumber = await db.$transaction(async (tx) => {
+    // Claim the draft first: the conditional update both takes the row lock
+    // and rules out a second publisher, so two organizers pressing the
+    // button at once cannot each draw a number and burn a gap into the
+    // sequence. The loser waits here and then matches zero rows.
+    const claimed = await tx.invoice.updateMany({
+      where: { id: invoice.id, status: InvoiceStatus.DRAFT },
+      data: {
+        invoiceDate: now,
+        dueDate,
+      },
+    });
+    if (claimed.count === 0) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "Diese Rechnung wurde bereits ausgestellt.",
+      });
+    }
+
+    const number = await nextInvoiceId(tx, invoice.course.courseNumber);
+    await tx.invoice.update({
+      where: { id: invoice.id },
+      data: { invoiceNumber: number, signatureName },
+    });
+    return number;
+  });
+
+  const pdfSource: InvoiceRecordForPdf = {
+    ...invoice,
+    invoiceNumber,
+    signatureName,
+    invoiceDate: now,
+    dueDate,
+    status: InvoiceStatus.PUBLISHED,
+  };
+  const stored = await storeInvoicePdf(pdfSource, options.signatureBase64);
+
+  const published = await db.$transaction(async (tx) => {
+    const updated = await tx.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: InvoiceStatus.PUBLISHED,
+        publishedAt: now,
+        publishedById: options.actorId,
+        pdfPath: stored.path,
+        pdfFilename: stored.filename,
+      },
+    });
+    if (invoice.registrationId) {
+      await syncRegistrationInvoiceFields(tx, invoice.registrationId);
+    }
+    return updated;
+  });
+
+  void logAudit(db, {
+    actorId: options.actorId,
+    actorEmail: options.actorEmail,
+    action: "invoice.publish",
+    entityType: "invoice",
+    entityId: invoice.id,
+    details: {
+      invoiceNumber,
+      courseId: invoice.courseId,
+      registrationId: invoice.registrationId,
+      totalAmount: invoice.totalAmount,
+      replacesInvoiceNumber: invoice.replaces?.invoiceNumber ?? null,
+    },
+  });
+
+  // Only registrants with an account can be notified in-app; guests get
+  // their invoice by mail from the organizer instead.
+  //
+  // Die Zuordnung laeuft ueber die E-Mail, nicht ueber registrantId: die
+  // Spalte wird nirgends geschrieben und ist an jeder Anmeldung null, also
+  // fiel diese Benachrichtigung bisher immer aus. Anmeldung und Konto
+  // haengen ueberall sonst an der Adresse zusammen — getMyRegistrations,
+  // myInvoices und der PDF-Download suchen genauso.
+  if (options.notifyRegistrant && invoice.registrationId) {
+    const registration = await db.courseRegistration.findUnique({
+      where: { id: invoice.registrationId },
+      select: { registrantId: true, registrantEmail: true },
+    });
+    const recipientId =
+      registration?.registrantId ??
+      (registration?.registrantEmail
+        ? ((
+            await db.user.findFirst({
+              where: {
+                email: {
+                  equals: registration.registrantEmail,
+                  mode: "insensitive",
+                },
+              },
+              select: { id: true },
+            })
+          )?.id ?? null)
+        : null);
+
+    if (recipientId) {
+      await createNotification(db, recipientId, {
+        type: "invoice.published",
+        title: `Rechnung ${invoiceNumber} für „${invoice.course.title}“`,
+        body: "Deine Rechnung steht jetzt unter „Meine Anmeldungen“ zum Download bereit.",
+        url: `/registrations/${invoice.registrationId}`,
+      });
+      // Return the row that carries notifiedAt, not the one from before it.
+      return db.invoice.update({
+        where: { id: invoice.id },
+        data: { notifiedAt: new Date() },
+      });
+    }
+  }
+
+  return published;
 }
 
 export const invoicesRouter = createTRPCRouter({
@@ -607,16 +792,7 @@ export const invoicesRouter = createTRPCRouter({
       });
     }),
 
-  /**
-   * Issue the invoice: assign the next continuous number, freeze the PDF on
-   * disk and tell the registrant.
-   *
-   * The number is drawn inside the transaction that flips the status, so a
-   * failure rolls the counter back with it and the sequence stays unbroken
-   * (§14 UStG). Rendering happens after the number exists but before the row
-   * is marked published — a failed render therefore leaves a draft behind,
-   * never a published invoice without a document.
-   */
+  /** Issue the invoice — see {@link publishDraftInvoice}. */
   publish: protectedProcedure
     .input(
       z.object({
@@ -639,156 +815,91 @@ export const invoicesRouter = createTRPCRouter({
         ctx.session.user.id,
         ctx.permissionCache,
       );
-      assertDraft(invoice.status);
 
-      if (!invoice.course.invoicingEnabled) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet.",
-        });
-      }
-
-      const lineItems = Array.isArray(invoice.lineItems)
-        ? invoice.lineItems
-        : [];
-      if (lineItems.length === 0) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Eine Rechnung ohne Positionen kann nicht ausgestellt werden.",
-        });
-      }
-      if (!invoice.recipientLastName && !invoice.recipientCompany) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Bitte einen Rechnungsempfänger angeben.",
-        });
-      }
-
-      const now = new Date();
-      // Der Dialog schickt den Namen mit, mit dem tatsächlich unterschrieben
-      // wird. Er wird zusammen mit der Nummer festgeschrieben, damit die Zeile
-      // unter der Unterschrift und die gespeicherte Zeile dasselbe sagen.
-      const signatureName =
-        input.signatureName === undefined
-          ? invoice.signatureName
-          : normalizeOptional(input.signatureName);
-
-      const invoiceNumber = await ctx.db.$transaction(async (tx) => {
-        // Claim the draft first: the conditional update both takes the row lock
-        // and rules out a second publisher, so two organizers pressing the
-        // button at once cannot each draw a number and burn a gap into the
-        // sequence. The loser waits here and then matches zero rows.
-        const claimed = await tx.invoice.updateMany({
-          where: { id: invoice.id, status: InvoiceStatus.DRAFT },
-          data: {
-            invoiceDate: now,
-            dueDate: invoice.dueDate ?? defaultDueDate(now),
-          },
-        });
-        if (claimed.count === 0) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "Diese Rechnung wurde bereits ausgestellt.",
-          });
-        }
-
-        const number = await nextInvoiceId(tx, invoice.course.courseNumber);
-        await tx.invoice.update({
-          where: { id: invoice.id },
-          data: { invoiceNumber: number, signatureName },
-        });
-        return number;
-      });
-
-      const pdfSource: InvoiceRecordForPdf = {
-        ...invoice,
-        invoiceNumber,
-        signatureName,
-        invoiceDate: now,
-        dueDate: invoice.dueDate ?? defaultDueDate(now),
-        status: InvoiceStatus.PUBLISHED,
-      };
-      const stored = await storeInvoicePdf(pdfSource, input.signatureBase64);
-
-      const published = await ctx.db.$transaction(async (tx) => {
-        const updated = await tx.invoice.update({
-          where: { id: invoice.id },
-          data: {
-            status: InvoiceStatus.PUBLISHED,
-            publishedAt: now,
-            publishedById: ctx.session.user.id,
-            pdfPath: stored.path,
-            pdfFilename: stored.filename,
-          },
-        });
-        if (invoice.registrationId) {
-          await syncRegistrationInvoiceFields(tx, invoice.registrationId);
-        }
-        return updated;
-      });
-
-      void logAudit(ctx.db, {
+      return publishDraftInvoice(ctx.db, invoice, {
+        signatureBase64: input.signatureBase64,
+        signatureName: input.signatureName,
+        notifyRegistrant: input.notifyRegistrant,
         actorId: ctx.session.user.id,
         actorEmail: ctx.session.user.email,
-        action: "invoice.publish",
-        entityType: "invoice",
-        entityId: invoice.id,
-        details: {
-          invoiceNumber,
-          courseId: invoice.courseId,
-          registrationId: invoice.registrationId,
-          totalAmount: invoice.totalAmount,
-          replacesInvoiceNumber: invoice.replaces?.invoiceNumber ?? null,
-        },
+      });
+    }),
+
+  /**
+   * Finalize every draft of a course in one go — the "Alle Entwürfe
+   * ausstellen" action behind the confirmation modal. Drafts publish one at a
+   * time (never in parallel: the course's invoice numbers must stay
+   * continuous) and a draft that fails validation is skipped rather than
+   * aborting the rest, so one bad recipient doesn't block thirty good ones.
+   */
+  publishAllDrafts: protectedProcedure
+    .input(
+      z.object({
+        courseId: z.string(),
+        notifyRegistrant: z.boolean().default(true),
+        signatureBase64: signatureInput,
+        /**
+         * Same signature image and signer name for every invoice in the
+         * batch. `signatureName` left unset keeps each draft's own name
+         * (e.g. one carried over from a cancel-and-replace).
+         */
+        signatureName: z.string().trim().max(120).nullish(),
+        /** One shared deadline for the whole batch; unset keeps each draft's own. */
+        dueDate: z.date().nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { course } = await loadCourseForInvoicing(
+        ctx.db,
+        input.courseId,
+        ctx.session.user.id,
+        ctx.permissionCache,
+        { requireInvoicingEnabled: true },
+      );
+
+      const drafts = await ctx.db.invoice.findMany({
+        where: { courseId: course.id, status: InvoiceStatus.DRAFT },
+        include: invoiceForPdfInclude,
+        orderBy: { createdAt: "asc" },
       });
 
-      // Only registrants with an account can be notified in-app; guests get
-      // their invoice by mail from the organizer instead.
-      //
-      // Die Zuordnung laeuft ueber die E-Mail, nicht ueber registrantId: die
-      // Spalte wird nirgends geschrieben und ist an jeder Anmeldung null, also
-      // fiel diese Benachrichtigung bisher immer aus. Anmeldung und Konto
-      // haengen ueberall sonst an der Adresse zusammen — getMyRegistrations,
-      // myInvoices und der PDF-Download suchen genauso.
-      if (input.notifyRegistrant && invoice.registrationId) {
-        const registration = await ctx.db.courseRegistration.findUnique({
-          where: { id: invoice.registrationId },
-          select: { registrantId: true, registrantEmail: true },
-        });
-        const recipientId =
-          registration?.registrantId ??
-          (registration?.registrantEmail
-            ? ((
-                await ctx.db.user.findFirst({
-                  where: {
-                    email: {
-                      equals: registration.registrantEmail,
-                      mode: "insensitive",
-                    },
-                  },
-                  select: { id: true },
-                })
-              )?.id ?? null)
-            : null);
+      const failures: {
+        invoiceId: string;
+        recipient: string;
+        message: string;
+      }[] = [];
+      let publishedCount = 0;
 
-        if (recipientId) {
-          await createNotification(ctx.db, recipientId, {
-            type: "invoice.published",
-            title: `Rechnung ${invoiceNumber} für „${invoice.course.title}“`,
-            body: "Deine Rechnung steht jetzt unter „Meine Anmeldungen“ zum Download bereit.",
-            url: `/registrations/${invoice.registrationId}`,
+      for (const invoice of drafts) {
+        try {
+          await publishDraftInvoice(ctx.db, invoice, {
+            notifyRegistrant: input.notifyRegistrant,
+            actorId: ctx.session.user.id,
+            actorEmail: ctx.session.user.email,
+            signatureBase64: input.signatureBase64,
+            signatureName: input.signatureName,
+            dueDate: input.dueDate ?? undefined,
           });
-          // Return the row that carries notifiedAt, not the one from before it.
-          return ctx.db.invoice.update({
-            where: { id: invoice.id },
-            data: { notifiedAt: new Date() },
+          publishedCount++;
+        } catch (err) {
+          failures.push({
+            invoiceId: invoice.id,
+            recipient:
+              [
+                invoice.recipientCompany,
+                `${invoice.recipientFirstName ?? ""} ${invoice.recipientLastName ?? ""}`.trim(),
+              ]
+                .filter(Boolean)
+                .join(", ") || invoice.id,
+            message:
+              err instanceof TRPCError
+                ? err.message
+                : "Unbekannter Fehler beim Ausstellen.",
           });
         }
       }
 
-      return published;
+      return { published: publishedCount, failed: failures.length, failures };
     }),
 
   /**
