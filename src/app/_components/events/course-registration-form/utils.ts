@@ -199,3 +199,27 @@ export function validateStep(
       return false;
   }
 }
+
+/**
+ * Age in completed years, for the one-line summary on a participant card.
+ * Returns null while the birthdate is empty or not yet a usable date, so the
+ * card can simply leave the age out instead of printing "NaN Jahre".
+ */
+export function participantAge(
+  birthDate: Date | string | null | undefined,
+): number | null {
+  if (!birthDate) return null;
+  const born = new Date(birthDate);
+  if (Number.isNaN(born.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - born.getFullYear();
+  const monthsApart = today.getMonth() - born.getMonth();
+  if (
+    monthsApart < 0 ||
+    (monthsApart === 0 && today.getDate() < born.getDate())
+  ) {
+    age--;
+  }
+  return age >= 0 && age < 150 ? age : null;
+}

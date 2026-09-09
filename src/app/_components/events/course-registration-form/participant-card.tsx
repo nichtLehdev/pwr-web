@@ -1,0 +1,184 @@
+"use client";
+
+import { AlertCircle, ChevronRight, Save, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { priceOptionDisplayLabel } from "@/lib/course-price-options";
+import type { ParticipantFields } from "./types";
+import { participantAge } from "./utils";
+import type { PriceOptionChoice } from "./participant-price-option-field";
+
+interface ParticipantCardProps {
+  participant: ParticipantFields;
+  index: number;
+  priceOptions: PriceOptionChoice[];
+  /** Set when the form's validation pass found something wrong with this one. */
+  validationError?: string;
+  /** Number of participants sharing this one's sibling group, 1 when ungrouped. */
+  siblingGroupSize: number;
+  onEdit: () => void;
+  onRemove: () => void;
+  /** False keeps the row but disables removal, e.g. the last one on an edit. */
+  canRemove?: boolean;
+  /** Short marker next to the name, e.g. "Neu" for an unsaved participant. */
+  badge?: string;
+  /** Only offered to signed-in registrants, who have a participant library. */
+  onSaveToLibrary?: () => void;
+  saveToLibraryPending?: boolean;
+}
+
+/**
+ * Collapsed summary of one participant. Tapping it opens the full field set in
+ * a sheet.
+ *
+ * The list of these is what a phone shows instead of every participant's form
+ * at once: four participants are four rows rather than four screens, so the
+ * step's own navigation stays reachable without scrolling past all of them.
+ */
+export function ParticipantCard({
+  participant,
+  index,
+  priceOptions,
+  validationError,
+  siblingGroupSize,
+  onEdit,
+  onRemove,
+  canRemove = true,
+  badge,
+  onSaveToLibrary,
+  saveToLibraryPending,
+}: ParticipantCardProps) {
+  const isInGroup = siblingGroupSize > 1;
+  const hasError = !!validationError;
+
+  const fullName = [participant.firstName, participant.lastName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const age = participantAge(participant.birthDate);
+  const priceOption = priceOptions.find(
+    (option) => option.id === participant.priceOptionId,
+  );
+
+  // Only the parts that are actually filled in, so a fresh participant shows a
+  // short hint instead of a line of separators with nothing between them.
+  const summary = [
+    age !== null ? `${age} Jahre` : null,
+    participant.city?.trim() || null,
+    participant.instrument?.trim() || null,
+  ].filter(Boolean);
+
+  const canSaveToLibrary =
+    !!onSaveToLibrary &&
+    !!participant.firstName &&
+    !!participant.lastName &&
+    !!participant.birthDate;
+
+  return (
+    <div
+      className={cn(
+        "relative rounded-lg border shadow-sm transition-colors",
+        hasError
+          ? "border-red-300 bg-red-50/50 dark:border-red-800/70 dark:bg-red-900/10"
+          : isInGroup
+            ? "border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/20"
+            : "dark:border-dark-border dark:bg-dark-background-secondary border-gray-200 bg-white",
+      )}
+    >
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Teilnehmer ${index + 1}${fullName ? ` — ${fullName}` : ""} bearbeiten`}
+        className={cn(
+          "focus-visible:ring-primary flex w-full items-center gap-3 rounded-lg p-4 text-left focus-visible:ring-2 focus-visible:outline-none",
+          onSaveToLibrary ? "pr-24" : "pr-14",
+        )}
+      >
+        <span
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+            isInGroup
+              ? "bg-green-600 text-white dark:bg-green-700"
+              : "bg-primary/15 text-primary dark:bg-primary/25",
+          )}
+          aria-hidden
+        >
+          {index + 1}
+        </span>
+
+        <span className="min-w-0 flex-1">
+          <span className="text-dark dark:text-dark-text block truncate font-semibold">
+            {fullName || `Teilnehmer ${index + 1}`}
+          </span>
+
+          {/* Wraps rather than truncates: on a phone a single clipped line
+              turned "Trompete" into "Tro…", which is worse than a second row. */}
+          {summary.length > 0 ? (
+            <span className="mt-0.5 line-clamp-2 block text-sm text-gray-600 dark:text-gray-400">
+              {summary.join(" · ")}
+            </span>
+          ) : null}
+
+          {priceOption ? (
+            <span className="mt-0.5 line-clamp-2 block text-sm text-gray-600 dark:text-gray-400">
+              {priceOptionDisplayLabel(priceOption, priceOptions)} ·{" "}
+              {priceOption.price.toFixed(2)} €
+            </span>
+          ) : null}
+
+          <span className="mt-2 flex flex-wrap items-center gap-1.5">
+            {badge ? (
+              <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                {badge}
+              </span>
+            ) : null}
+            {isInGroup ? (
+              <span className="inline-flex rounded-full bg-green-600 px-2 py-0.5 text-xs font-medium text-white dark:bg-green-700">
+                Geschwister ({siblingGroupSize})
+              </span>
+            ) : null}
+            {hasError ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                Angaben fehlen
+              </span>
+            ) : null}
+          </span>
+        </span>
+
+        <ChevronRight className="h-5 w-5 shrink-0 self-center text-gray-400" />
+      </button>
+
+      {/* Outside the button: nesting these would be invalid markup and would
+          swallow taps meant for the card. */}
+      <div className="absolute top-2 right-2 flex gap-0.5">
+        {onSaveToLibrary ? (
+          <button
+            type="button"
+            onClick={onSaveToLibrary}
+            disabled={!canSaveToLibrary || saveToLibraryPending}
+            title="Teilnehmer in Bibliothek speichern"
+            aria-label="Teilnehmer in Bibliothek speichern"
+            className="text-dark dark:text-dark-text dark:hover:bg-dark-background flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-gray-100 disabled:opacity-40"
+          >
+            <Save className="h-4 w-4" />
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={!canRemove}
+          title={
+            canRemove
+              ? "Teilnehmer entfernen"
+              : "Mindestens ein Teilnehmer muss bleiben"
+          }
+          aria-label={`Teilnehmer ${index + 1} entfernen`}
+          className="flex h-10 w-10 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50 disabled:opacity-40 disabled:hover:bg-transparent dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}

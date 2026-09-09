@@ -506,9 +506,7 @@ export default function CourseRegistrationForm({
           registrationData={registrationData}
           setRegistrationData={setRegistrationData}
           validationErrors={validationErrors}
-          setValidationErrors={setValidationErrors}
           missingFields={missingFields}
-          setMissingFields={setMissingFields}
           currentUser={currentUser}
           savedParticipantsQuery={savedParticipantsQuery}
           saveParticipantMutation={saveParticipantMutation}

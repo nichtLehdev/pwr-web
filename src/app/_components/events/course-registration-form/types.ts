@@ -7,6 +7,26 @@ export type RegistrationData = Omit<
   "courseId" | "totalPrice"
 >;
 
+/** One entry of the participant list while the form is being filled in. */
+export type ParticipantDraft = RegistrationData["participants"][number];
+
+/**
+ * The participant fields `ParticipantCard` and `ParticipantEditor` read.
+ *
+ * Structural rather than tied to one router type, because the same two
+ * components serve the registration form (participants keyed by list index,
+ * not yet saved) and the edit page (participants keyed by database id).
+ */
+export interface ParticipantFields {
+  firstName: string;
+  lastName: string;
+  birthDate: Date | string | null;
+  city: string;
+  instrument?: string | null;
+  priceOptionId?: string | null;
+  customFields?: unknown;
+}
+
 /**
  * Extra decisions only the course team makes when it records a registration
  * itself (paper form, phone call, late sign-up) instead of a registrant
