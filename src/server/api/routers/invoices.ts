@@ -383,8 +383,11 @@ async function publishDraftInvoice(
       : normalizeOptional(options.signatureName);
   // Same "undefined leaves it alone" rule as the signature name — a bulk
   // finalize can set one deadline for every invoice in the batch, but only
-  // if the organizer actually typed one in.
-  const dueDate = options.dueDate ?? invoice.dueDate ?? defaultDueDate(now);
+  // if the organizer actually typed one in. A draft with no due date means
+  // the organizer deliberately removed it, so it stays unset rather than
+  // falling back to a computed default — no deadline, no payment sentence.
+  const dueDate =
+    options.dueDate === undefined ? invoice.dueDate : options.dueDate;
 
   const invoiceNumber = await db.$transaction(async (tx) => {
     // Claim the draft first: the conditional update both takes the row lock
