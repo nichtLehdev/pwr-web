@@ -15,6 +15,13 @@ import type { User } from "~/generated/prisma/client";
 /** The two places the add buttons appear: above the list and after it. */
 type LibraryAnchor = "top" | "bottom";
 
+/**
+ * From this many participants on, the list is long enough that the header
+ * group has scrolled away by the time you finish the last one — below that,
+ * both groups sit on one screen and the second just reads as a duplicate.
+ */
+const REPEAT_ACTIONS_FROM = 3;
+
 interface Step2ParticipantsProps {
   course: CourseWithRelations;
   registrationData: RegistrationData;
@@ -399,17 +406,20 @@ export function Step2Participants({
               />
             ))}
 
-            {/* Same group again, so the tenth participant can be followed by
-                an eleventh without scrolling back up. A dashed row rather than
-                a second solid toolbar: it reads as the end of the list. */}
-            <div
-              className={cn(
-                ADD_BUTTON_GROUP,
-                "dark:border-dark-border rounded-lg border border-dashed border-gray-300 p-3 sm:justify-center",
-              )}
-            >
-              {renderActionButtons("bottom")}
-            </div>
+            {/* Same group again once the list is long, so the tenth
+                participant can be followed by an eleventh without scrolling
+                back up. A dashed row rather than a second solid toolbar: it
+                reads as the end of the list. */}
+            {registrationData.participants.length >= REPEAT_ACTIONS_FROM ? (
+              <div
+                className={cn(
+                  ADD_BUTTON_GROUP,
+                  "dark:border-dark-border rounded-lg border border-dashed border-gray-300 p-3 sm:justify-center",
+                )}
+              >
+                {renderActionButtons("bottom")}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
