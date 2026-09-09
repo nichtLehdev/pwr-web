@@ -19,7 +19,7 @@ import { permissionProcedure } from "../middleware/permissions";
 import { logAudit } from "../helpers/audit";
 import { createNotification } from "../helpers/notifications";
 import { nextInvoiceId } from "../helpers/invoice-number";
-import { buildInvoiceDraft, defaultDueDate } from "../helpers/invoice-draft";
+import { buildInvoiceDraft } from "../helpers/invoice-draft";
 import {
   storeInvoicePdf,
   type InvoiceRecordForPdf,
@@ -672,7 +672,6 @@ export const invoicesRouter = createTRPCRouter({
           recipientEmail: seed.recipient.email ?? null,
           lineItems: lineItemsAsJson(seed.lineItems),
           totalAmount: seed.totalAmount,
-          dueDate: seed.dueDate,
           createdById: ctx.session.user.id,
         },
       });
@@ -734,7 +733,6 @@ export const invoicesRouter = createTRPCRouter({
               recipientEmail: seed.recipient.email ?? null,
               lineItems: lineItemsAsJson(seed.lineItems),
               totalAmount: seed.totalAmount,
-              dueDate: seed.dueDate,
               createdById: ctx.session.user.id,
             },
             select: { id: true },
@@ -1129,7 +1127,7 @@ export const invoicesRouter = createTRPCRouter({
             recipientEmail: invoice.recipientEmail,
             lineItems: invoice.lineItems ?? [],
             totalAmount: invoice.totalAmount,
-            dueDate: defaultDueDate(),
+            dueDate: invoice.dueDate,
             introText: invoice.introText,
             closingText: invoice.closingText,
             signatureName: invoice.signatureName,

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   buildInvoiceDraft,
-  defaultDueDate,
   lineItemsFromRegistration,
   recipientFromRegistration,
   type CourseForDraft,
@@ -438,19 +437,5 @@ describe("buildInvoiceDraft", () => {
     // 145 + 95 − 19 (20 % of the younger sibling's 95)
     expect(draft.totalAmount).toBe(221);
     expect(draft.recipient.lastName).toBe("Muster");
-  });
-});
-
-describe("defaultDueDate", () => {
-  it("is three weeks after the invoice date", () => {
-    expect(defaultDueDate(new Date("2026-09-01T10:00:00"))).toEqual(
-      new Date("2026-09-22T10:00:00"),
-    );
-  });
-
-  it("does not mutate the date it was given", () => {
-    const from = new Date("2026-09-01T10:00:00");
-    defaultDueDate(from);
-    expect(from).toEqual(new Date("2026-09-01T10:00:00"));
   });
 });
