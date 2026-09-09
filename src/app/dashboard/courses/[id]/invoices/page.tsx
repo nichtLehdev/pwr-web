@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
@@ -11,16 +11,32 @@ import {
   InvoiceStatusBadge,
   INVOICE_STATUS_LABELS,
 } from "@/app/_components/dashboard/invoice-status-badge";
+import { SignatureCanvas } from "@/app/_components/dashboard/signature-canvas";
 import { useToast } from "@/app/_components/ui/toast";
+import {
+  ScrollableModal,
+  ScrollableModalCard,
+  ScrollableModalBody,
+  ScrollableModalFooter,
+} from "@/app/_components/ui/scrollable-modal";
 import { formatDate, formatEuro } from "@/lib/invoice-document";
 import { InvoiceStatus } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
   FileTextIcon,
   MailIcon,
+  PencilIcon,
   PlusIcon,
   ReceiptTextIcon,
+  SendIcon,
+  UploadIcon,
+  XIcon,
 } from "lucide-react";
+
+type SignatureMode = "none" | "upload" | "draw";
+
+/** Mirrors the signature cap in the publish input on the server. */
+const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024;
 
 export default function CourseInvoicesPage() {
   const params = useParams();
@@ -32,6 +48,22 @@ export default function CourseInvoicesPage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showPicker, setShowPicker] = useState(false);
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [reviewedConfirmed, setReviewedConfirmed] = useState(false);
+  const [notifyRegistrants, setNotifyRegistrants] = useState(true);
+  const [bulkDueDate, setBulkDueDate] = useState("");
+  const [bulkSignatureName, setBulkSignatureName] = useState("");
+  // Only ever held in memory and handed to the publish call — the signature is
+  // baked into the PDFs, never stored as a reusable signature on its own.
+  const [bulkSignatureBase64, setBulkSignatureBase64] = useState<string | null>(
+    null,
+  );
+  const [bulkSignatureMode, setBulkSignatureMode] =
+    useState<SignatureMode>("none");
+  const [bulkSignatureFileName, setBulkSignatureFileName] = useState<
+    string | null
+  >(null);
+  const bulkSignatureInputRef = useRef<HTMLInputElement>(null);
 
   const { data: course } = api.courses.getById.useQuery(
     { id: courseId },
@@ -77,6 +109,68 @@ export default function CourseInvoicesPage() {
           ? `${result.created} Entwürfe erstellt, ${result.skipped} übersprungen (bereits vorhanden)`
           : `${result.created} Entwürfe erstellt`,
       );
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const resetBulkSignature = () => {
+    setBulkSignatureBase64(null);
+    setBulkSignatureFileName(null);
+    setBulkSignatureMode("none");
+    if (bulkSignatureInputRef.current) bulkSignatureInputRef.current.value = "";
+  };
+
+  const resetFinalizeForm = () => {
+    setReviewedConfirmed(false);
+    setBulkDueDate("");
+    setBulkSignatureName("");
+    resetBulkSignature();
+  };
+
+  const handleBulkSignatureUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Bitte ein Bild hochladen (PNG, JPG, …).");
+      return;
+    }
+    if (file.size > MAX_SIGNATURE_BYTES) {
+      toast.error("Die Datei ist zu groß. Maximal 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBulkSignatureBase64(reader.result as string);
+      setBulkSignatureFileName(file.name);
+    };
+    reader.onerror = () =>
+      toast.error("Die Datei konnte nicht gelesen werden.");
+    reader.readAsDataURL(file);
+  };
+
+  const publishAllDrafts = api.invoices.publishAllDrafts.useMutation({
+    onSuccess: (result) => {
+      void utils.invoices.listForCourse.invalidate({ courseId });
+      setFinalizeOpen(false);
+      resetFinalizeForm();
+      if (result.failed === 0) {
+        toast.success(
+          result.published === 1
+            ? "1 Rechnung ausgestellt"
+            : `${result.published} Rechnungen ausgestellt`,
+        );
+      } else {
+        toast.error(
+          `${result.published} ausgestellt, ${result.failed} fehlgeschlagen: ` +
+            result.failures
+              .map((f) => `${f.recipient} (${f.message})`)
+              .join("; "),
+        );
+      }
     },
     onError: (error) => toast.error(error.message),
   });
@@ -161,6 +255,22 @@ export default function CourseInvoicesPage() {
             <ArrowLeftIcon className="h-4 w-4" />
             Zurück zum Kurs
           </Link>
+          {summary.drafts > 0 && (
+            <button
+              type="button"
+              onClick={() => setFinalizeOpen(true)}
+              disabled={!access?.invoicingEnabled}
+              title={
+                access?.invoicingEnabled
+                  ? undefined
+                  : "Für diesen Kurs ist die Rechnungsstellung nicht freigeschaltet."
+              }
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
+            >
+              <SendIcon className="h-4 w-4" />
+              Alle Entwürfe ausstellen ({summary.drafts})
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setShowPicker((open) => !open)}
@@ -404,6 +514,234 @@ export default function CourseInvoicesPage() {
             Nachricht schreiben
           </Link>
         </div>
+      )}
+
+      {finalizeOpen && (
+        <ScrollableModal>
+          <ScrollableModalCard maxW="md">
+            <ScrollableModalBody>
+              <h2 className="dark:text-dark-text text-xl font-semibold text-gray-900">
+                Alle Entwürfe ausstellen
+              </h2>
+              <p className="dark:text-dark-muted mt-2 text-sm text-gray-600">
+                {summary.drafts === 1
+                  ? "1 Entwurf wird"
+                  : `${summary.drafts} Entwürfe werden`}{" "}
+                jetzt ausgestellt: Jede Rechnung bekommt eine fortlaufende
+                Nummer, das PDF wird archiviert und ist danach unveränderlich.
+                Korrekturen sind nur noch per Storno und Nachfolgerechnung
+                möglich.
+              </p>
+
+              <div className="mt-4 sm:w-60">
+                <label
+                  className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                  htmlFor="bulkDueDate"
+                >
+                  Gemeinsames Zahlungsziel (optional)
+                </label>
+                <input
+                  id="bulkDueDate"
+                  type="date"
+                  value={bulkDueDate}
+                  onChange={(e) => setBulkDueDate(e.target.value)}
+                  className="dark:border-dark-border dark:bg-dark-background dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-1 focus:outline-none"
+                />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  Leer lassen, damit jede Rechnung ihr eigenes Zahlungsziel
+                  behält.
+                </p>
+              </div>
+
+              <div className="dark:border-dark-border mt-4 rounded-lg border border-gray-200 p-4">
+                <p className="dark:text-dark-text text-sm font-medium text-gray-700">
+                  Unterschrift (optional)
+                </p>
+                <p className="dark:text-dark-muted mt-0.5 text-xs text-gray-500">
+                  Wird identisch in jedes PDF dieser Ausstellung eingebettet und
+                  nicht gespeichert.
+                </p>
+                {bulkSignatureMode === "none" && (
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBulkSignatureMode("upload")}
+                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      <UploadIcon className="h-5 w-5 text-gray-400" />
+                      <span className="dark:text-dark-text text-sm text-gray-600">
+                        Hochladen
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBulkSignatureMode("draw")}
+                      className="dark:border-dark-border dark:hover:bg-dark-background-secondary flex flex-1 flex-col items-center gap-1.5 rounded-md border-2 border-dashed border-gray-300 px-4 py-3 transition-colors hover:border-blue-400 hover:bg-blue-50"
+                    >
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                      <span className="dark:text-dark-text text-sm text-gray-600">
+                        Zeichnen
+                      </span>
+                    </button>
+                  </div>
+                )}
+
+                {bulkSignatureMode === "upload" &&
+                  (bulkSignatureBase64 ? (
+                    <div className="dark:border-dark-border dark:bg-dark-background-secondary mt-2 flex items-center gap-3 rounded-md border border-gray-300 bg-gray-50 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={bulkSignatureBase64}
+                        alt="Vorschau der Unterschrift"
+                        className="h-10 max-w-[120px] object-contain"
+                      />
+                      <span className="dark:text-dark-text flex-1 truncate text-sm text-gray-600">
+                        {bulkSignatureFileName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={resetBulkSignature}
+                        aria-label="Unterschrift entfernen"
+                        className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <XIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => bulkSignatureInputRef.current?.click()}
+                        className="dark:border-dark-border flex w-full flex-col items-center gap-1 rounded-md border-2 border-dashed border-gray-300 px-4 py-5 transition-colors hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10"
+                      >
+                        <UploadIcon className="h-6 w-6 text-gray-400" />
+                        <span className="dark:text-dark-text text-sm text-gray-600">
+                          Bild auswählen
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          PNG oder JPG, max. 2 MB
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={resetBulkSignature}
+                        className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
+                      >
+                        ← Ohne Unterschrift
+                      </button>
+                    </div>
+                  ))}
+
+                {bulkSignatureMode === "draw" && (
+                  <div className="mt-2">
+                    <SignatureCanvas
+                      onSignatureChange={setBulkSignatureBase64}
+                    />
+                    <button
+                      type="button"
+                      onClick={resetBulkSignature}
+                      className="dark:text-dark-muted mt-2 text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      ← Ohne Unterschrift
+                    </button>
+                  </div>
+                )}
+
+                <input
+                  ref={bulkSignatureInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleBulkSignatureUpload}
+                  className="hidden"
+                />
+
+                <div className="dark:border-dark-border mt-3 border-t border-gray-200 pt-3">
+                  <label
+                    className="dark:text-dark-text block text-sm font-medium text-gray-700"
+                    htmlFor="bulkSignatureName"
+                  >
+                    Name des Unterzeichners (optional)
+                  </label>
+                  <input
+                    id="bulkSignatureName"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                    placeholder="Ihr Team vom Posaunenwerk Rheinland"
+                    value={bulkSignatureName}
+                    onChange={(e) => setBulkSignatureName(e.target.value)}
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Steht auf jedem PDF dieser Ausstellung unter der
+                    Unterschrift. Leer lassen, damit jede Rechnung ihren eigenen
+                    Unterzeichner-Namen behält.
+                  </p>
+                </div>
+              </div>
+
+              <label className="mt-4 flex cursor-pointer items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={notifyRegistrants}
+                  onChange={(e) => setNotifyRegistrants(e.target.checked)}
+                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                />
+                <span className="dark:text-dark-text text-sm text-gray-700">
+                  Anmelder:innen benachrichtigen
+                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                    Erzeugt je eine Mitteilung im Konto; die Rechnung erscheint
+                    unter „Meine Anmeldungen“ zum Download.
+                  </span>
+                </span>
+              </label>
+              <label className="dark:border-dark-border mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3">
+                <input
+                  type="checkbox"
+                  checked={reviewedConfirmed}
+                  onChange={(e) => setReviewedConfirmed(e.target.checked)}
+                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                />
+                <span className="dark:text-dark-text text-sm font-medium text-gray-700">
+                  Ich habe alle Entwürfe geprüft und es gibt keine Fehler in den
+                  Rechnungen.
+                </span>
+              </label>
+            </ScrollableModalBody>
+            <ScrollableModalFooter>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFinalizeOpen(false);
+                    resetFinalizeForm();
+                  }}
+                  disabled={publishAllDrafts.isPending}
+                  className="dark:border-dark-border dark:text-dark-text flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    publishAllDrafts.mutate({
+                      courseId,
+                      notifyRegistrant: notifyRegistrants,
+                      dueDate: bulkDueDate ? new Date(bulkDueDate) : undefined,
+                      signatureBase64: bulkSignatureBase64 ?? undefined,
+                      signatureName: bulkSignatureName.trim()
+                        ? bulkSignatureName
+                        : undefined,
+                    })
+                  }
+                  disabled={!reviewedConfirmed || publishAllDrafts.isPending}
+                  className="bg-primary hover:bg-primary/90 flex-1 rounded-md px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {publishAllDrafts.isPending
+                    ? "Stelle aus…"
+                    : "Alle ausstellen"}
+                </button>
+              </div>
+            </ScrollableModalFooter>
+          </ScrollableModalCard>
+        </ScrollableModal>
       )}
     </DashboardPage>
   );
