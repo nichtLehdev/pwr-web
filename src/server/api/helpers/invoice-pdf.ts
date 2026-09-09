@@ -83,6 +83,7 @@ export interface InvoiceRecordForPdf {
   replacedBy?: { invoiceNumber: string | null } | null;
   course: {
     title: string;
+    courseNumber: string | null;
     startDate: Date;
     endDate: Date;
     location: { name: string | null; city: string } | null;
@@ -99,6 +100,7 @@ export function toInvoiceDocument(
     status: invoice.status,
     course: {
       title: invoice.course.title,
+      courseNumber: invoice.course.courseNumber,
       startDate: invoice.course.startDate,
       endDate: invoice.course.endDate,
       locationName: invoice.course.location?.name ?? null,

@@ -138,6 +138,7 @@ export default function NewCoursePage() {
   const [paymentCashAllowed, setPaymentCashAllowed] = useState(true);
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [invoicingEnabled, setInvoicingEnabled] = useState(false);
+  const [courseNumber, setCourseNumber] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
 
@@ -186,6 +187,7 @@ export default function NewCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled,
+      courseNumber,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -224,6 +226,7 @@ export default function NewCoursePage() {
       paymentCashAllowed,
       paymentInvoiceAllowed,
       invoicingEnabled,
+      courseNumber,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -313,6 +316,7 @@ export default function NewCoursePage() {
       setPaymentCashAllowed(saved.paymentCashAllowed ?? true);
       setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
       setInvoicingEnabled(saved.invoicingEnabled ?? false);
+      setCourseNumber(saved.courseNumber || "");
       setPriceInfo(saved.priceInfo || "");
       setPriceOptions(saved.priceOptions || []);
       setPrerequisites(saved.prerequisites || "");
@@ -621,6 +625,10 @@ export default function NewCoursePage() {
       paymentInvoiceAllowed,
       invoicingEnabled:
         isExternalProvider || !canEnableInvoicing ? false : invoicingEnabled,
+      courseNumber:
+        isExternalProvider || !canEnableInvoicing
+          ? undefined
+          : courseNumber.trim(),
       priceInfo: priceInfo.trim() || undefined,
       priceOptions: preparedPriceOptions,
       prerequisites: prerequisites.trim() || undefined,
@@ -1549,6 +1557,40 @@ export default function NewCoursePage() {
                           </span>
                         </span>
                       </label>
+
+                      <div className="dark:border-dark-border border-t border-gray-200 pt-3">
+                        <label
+                          htmlFor="courseNumber"
+                          className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
+                        >
+                          Kursnummer{" "}
+                          <span className="font-normal text-gray-500 dark:text-gray-400">
+                            (optional)
+                          </span>
+                        </label>
+                        <input
+                          id="courseNumber"
+                          type="text"
+                          inputMode="numeric"
+                          value={courseNumber}
+                          onChange={(e) =>
+                            setCourseNumber(
+                              e.target.value.replace(/\D/g, "").slice(0, 10),
+                            )
+                          }
+                          placeholder="z.B. 2601"
+                          className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full max-w-[12rem] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 focus:ring-1 focus:outline-none"
+                        />
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                          Interne Nummer für die Buchhaltung. Mit Kursnummer
+                          lauten die Rechnungsnummern dieses Kurses RE-
+                          {courseNumber || "<Nr.>"}-001, RE-
+                          {courseNumber || "<Nr.>"}-002 … und der
+                          Verwendungszweck nennt zusätzlich „Bläserlehrgang{" "}
+                          {courseNumber || "<Nr.>"}“. Ohne Nummer bleibt es bei
+                          der fortlaufenden Jahresnummer.
+                        </p>
+                      </div>
                     </div>
                   )}
 

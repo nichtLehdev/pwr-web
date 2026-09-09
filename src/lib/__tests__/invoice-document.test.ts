@@ -1,8 +1,11 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   invoiceFilename,
+  invoicePaymentReference,
   invoiceTotal,
+  isValidCourseNumber,
   lineItemTotal,
+  normalizeCourseNumber,
   recipientName,
   type InvoiceLineItem,
 } from "../invoice-document";
@@ -114,5 +117,59 @@ describe("invoiceFilename", () => {
     });
     expect(filename).not.toContain("/");
     expect(filename).toBe("Rechnung_RE-2026-00042_etc_passwd.pdf");
+  });
+});
+
+describe("isValidCourseNumber", () => {
+  it("accepts one to ten digits", () => {
+    expect(isValidCourseNumber("1")).toBe(true);
+    expect(isValidCourseNumber("2601")).toBe(true);
+    expect(isValidCourseNumber("1234567890")).toBe(true);
+  });
+
+  it("rejects anything that could not name a file or a number range", () => {
+    expect(isValidCourseNumber("")).toBe(false);
+    expect(isValidCourseNumber("26-01")).toBe(false);
+    expect(isValidCourseNumber("L2601")).toBe(false);
+    expect(isValidCourseNumber("26 01")).toBe(false);
+    expect(isValidCourseNumber("../etc")).toBe(false);
+    expect(isValidCourseNumber("12345678901")).toBe(false);
+  });
+});
+
+describe("normalizeCourseNumber", () => {
+  it("treats blank input as no number", () => {
+    expect(normalizeCourseNumber("")).toBeNull();
+    expect(normalizeCourseNumber("   ")).toBeNull();
+    expect(normalizeCourseNumber(null)).toBeNull();
+    expect(normalizeCourseNumber(undefined)).toBeNull();
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(normalizeCourseNumber("  2601 ")).toBe("2601");
+  });
+});
+
+describe("invoicePaymentReference", () => {
+  it("is just the invoice number when the course has none", () => {
+    expect(invoicePaymentReference("RE-2026-00042")).toBe("RE-2026-00042");
+    expect(invoicePaymentReference("RE-2026-00042", null)).toBe(
+      "RE-2026-00042",
+    );
+    expect(invoicePaymentReference("RE-2026-00042", "  ")).toBe(
+      "RE-2026-00042",
+    );
+  });
+
+  it("names the course in front of the invoice number", () => {
+    expect(invoicePaymentReference("RE-2601-001", "2601")).toBe(
+      "Bläserlehrgang 2601 RE-2601-001",
+    );
+  });
+
+  it("stays inside the 140 characters an EPC QR remittance allows", () => {
+    expect(
+      invoicePaymentReference("RE-1234567890-999", "1234567890").length,
+    ).toBeLessThanOrEqual(140);
   });
 });

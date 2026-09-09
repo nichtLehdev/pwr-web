@@ -105,6 +105,11 @@ export const COURSE_MAIL_PLACEHOLDER_GROUPS: CourseMailPlaceholderGroup[] = [
         example: "RE-2026-00042",
       },
       {
+        token: "rechnung.verwendungszweck",
+        label: "Verwendungszweck",
+        example: "Bläserlehrgang 2601 RE-2601-001",
+      },
+      {
         token: "rechnung.betrag",
         label: "Rechnungsbetrag",
         example: "120,00 €",

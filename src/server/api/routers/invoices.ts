@@ -36,6 +36,7 @@ const invoiceForPdfInclude = {
     select: {
       id: true,
       title: true,
+      courseNumber: true,
       startDate: true,
       endDate: true,
       createdById: true,
@@ -621,6 +622,12 @@ export const invoicesRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         signatureBase64: signatureInput,
+        /**
+         * Wer unterschreibt, steht im Ausstellen-Dialog neben der Unterschrift.
+         * Leer heißt "ohne Namen" — das PDF zeichnet dann mit dem Team-Absender.
+         * `undefined` lässt den am Entwurf gespeicherten Namen unberührt.
+         */
+        signatureName: z.string().trim().max(120).nullish(),
         /** Skip the in-app notification, e.g. when mailing the PDF instead. */
         notifyRegistrant: z.boolean().default(true),
       }),
@@ -660,6 +667,14 @@ export const invoicesRouter = createTRPCRouter({
       }
 
       const now = new Date();
+      // Der Dialog schickt den Namen mit, mit dem tatsächlich unterschrieben
+      // wird. Er wird zusammen mit der Nummer festgeschrieben, damit die Zeile
+      // unter der Unterschrift und die gespeicherte Zeile dasselbe sagen.
+      const signatureName =
+        input.signatureName === undefined
+          ? invoice.signatureName
+          : normalizeOptional(input.signatureName);
+
       const invoiceNumber = await ctx.db.$transaction(async (tx) => {
         // Claim the draft first: the conditional update both takes the row lock
         // and rules out a second publisher, so two organizers pressing the
@@ -679,10 +694,10 @@ export const invoicesRouter = createTRPCRouter({
           });
         }
 
-        const number = await nextInvoiceId(tx);
+        const number = await nextInvoiceId(tx, invoice.course.courseNumber);
         await tx.invoice.update({
           where: { id: invoice.id },
-          data: { invoiceNumber: number },
+          data: { invoiceNumber: number, signatureName },
         });
         return number;
       });
@@ -690,6 +705,7 @@ export const invoicesRouter = createTRPCRouter({
       const pdfSource: InvoiceRecordForPdf = {
         ...invoice,
         invoiceNumber,
+        signatureName,
         invoiceDate: now,
         dueDate: invoice.dueDate ?? defaultDueDate(now),
         status: InvoiceStatus.PUBLISHED,
@@ -730,13 +746,35 @@ export const invoicesRouter = createTRPCRouter({
 
       // Only registrants with an account can be notified in-app; guests get
       // their invoice by mail from the organizer instead.
+      //
+      // Die Zuordnung laeuft ueber die E-Mail, nicht ueber registrantId: die
+      // Spalte wird nirgends geschrieben und ist an jeder Anmeldung null, also
+      // fiel diese Benachrichtigung bisher immer aus. Anmeldung und Konto
+      // haengen ueberall sonst an der Adresse zusammen — getMyRegistrations,
+      // myInvoices und der PDF-Download suchen genauso.
       if (input.notifyRegistrant && invoice.registrationId) {
         const registration = await ctx.db.courseRegistration.findUnique({
           where: { id: invoice.registrationId },
-          select: { registrantId: true },
+          select: { registrantId: true, registrantEmail: true },
         });
-        if (registration?.registrantId) {
-          await createNotification(ctx.db, registration.registrantId, {
+        const recipientId =
+          registration?.registrantId ??
+          (registration?.registrantEmail
+            ? ((
+                await ctx.db.user.findFirst({
+                  where: {
+                    email: {
+                      equals: registration.registrantEmail,
+                      mode: "insensitive",
+                    },
+                  },
+                  select: { id: true },
+                })
+              )?.id ?? null)
+            : null);
+
+        if (recipientId) {
+          await createNotification(ctx.db, recipientId, {
             type: "invoice.published",
             title: `Rechnung ${invoiceNumber} für „${invoice.course.title}“`,
             body: "Deine Rechnung steht jetzt unter „Meine Anmeldungen“ zum Download bereit.",
