@@ -37,10 +37,15 @@ for the last-one-must-stay rule, and `priceOptionField` for sold-out
 categories. It computes its own `participantMissingFields` /
 `participantError`, since it has no step-2 validation effect to read from.
 
+## Read-only surfaces
+
+`ParticipantCard` works without `onEdit`/`onRemove`: the summary then renders
+as plain content instead of a button, and `children` fills a detail block under
+it. The dashboard registration detail page uses that — summary line plus a
+definition list of the birthdate and the course's custom fields.
+
 ## Remaining work
 
-- The dashboard registration detail page shows participants read-only and could
-  use `ParticipantCard` without an editor.
 - `variant="modal"` on the registration form is unreachable — both call sites
   pass `variant="page"` — so the modal branch and the `headerHeight` plumbing
   it feeds could go. (`stickyToolbar` already has: step 2 renders one toolbar,
