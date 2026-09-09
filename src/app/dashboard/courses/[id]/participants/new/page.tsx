@@ -182,7 +182,6 @@ export default function NewCourseRegistrationPage() {
       </div>
 
       <CourseRegistrationForm
-        variant="page"
         staffMode
         course={course}
         currentUser={null}

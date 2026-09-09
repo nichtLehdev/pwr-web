@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
-import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
@@ -32,7 +31,6 @@ export default function CourseRegistrationForm({
   onSuccess,
   isWaitlist,
   currentUser,
-  variant = "modal",
   staffMode = false,
   availableSlots,
 }: CourseRegistrationFormProps) {
@@ -120,18 +118,6 @@ export default function CourseRegistrationForm({
     course.paymentCashAllowed,
     course.paymentInvoiceAllowed,
   ]);
-
-  useEffect(() => {
-    if (variant !== "modal") return;
-    document.body.style.overflow = "hidden";
-    document.documentElement.classList.add("modal-open");
-    document.body.classList.add("modal-open");
-    return () => {
-      document.body.style.overflow = "unset";
-      document.documentElement.classList.remove("modal-open");
-      document.body.classList.remove("modal-open");
-    };
-  }, [variant]);
 
   useEffect(() => {
     const updateHeaderHeight = () => {
@@ -443,8 +429,6 @@ export default function CourseRegistrationForm({
     registrationMutation.mutate(payload, handlers);
   };
 
-  const isModal = variant === "modal";
-
   const discardConfirm = showDiscardConfirm ? (
     <ScrollableModal>
       <ScrollableModalCard maxW="md">
@@ -601,77 +585,6 @@ export default function CourseRegistrationForm({
     </>
   );
 
-  if (isModal) {
-    return (
-      <div className="fixed inset-0 z-50 flex overscroll-y-contain bg-black/50 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4 sm:py-6">
-        <div
-          className="dark:bg-dark-surface dark:shadow-dark-border flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:h-auto sm:max-h-[90vh] sm:rounded-xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            ref={headerRef}
-            className="bg-primary z-10 shrink-0 rounded-none p-6 text-white sm:rounded-t-xl"
-          >
-            <div className="mb-4 flex items-start justify-between">
-              <div className="min-w-0 flex-1">
-                <h2 className="mb-1 text-2xl font-bold">
-                  {staffMode
-                    ? "Anmeldung erfassen"
-                    : isWaitlist
-                      ? "Warteliste"
-                      : "Anmeldung"}
-                </h2>
-                <p className="truncate text-sm opacity-90">{course.title}</p>
-              </div>
-              <button
-                type="button"
-                onClick={requestClose}
-                className="rounded-lg p-2 transition-colors hover:bg-white/20"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="flex items-start justify-between">
-              {stepsMeta.map((step, index) => (
-                <div key={step.num} className="flex flex-1 items-start">
-                  <div className="flex w-full flex-col items-center">
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${
-                        currentStep >= step.num
-                          ? "text-primary bg-white"
-                          : "bg-white/20 text-white/60"
-                      }`}
-                    >
-                      {step.num}
-                    </div>
-                    <span className="mt-1 text-[10px] whitespace-nowrap opacity-90 sm:text-xs">
-                      {step.label}
-                    </span>
-                  </div>
-                  {index < 2 && (
-                    <div
-                      className={`mx-2 mt-4 hidden h-1 flex-1 transition-colors sm:block ${
-                        currentStep > step.num ? "bg-white" : "bg-white/20"
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-            <div className="p-5 sm:p-6">{stepBody}</div>
-          </div>
-          <div className="dark:border-dark-border dark:bg-dark-background-secondary flex shrink-0 flex-col items-stretch justify-between gap-2 rounded-none border-t border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:gap-3 sm:rounded-b-xl sm:p-4">
-            {footerButtons}
-          </div>
-        </div>
-        {discardConfirm}
-      </div>
-    );
-  }
-
-  /* —— Full page layout (matches Lehrgang + Meine Anmeldungen surfaces) —— */
   return (
     <div className="w-full">
       <div

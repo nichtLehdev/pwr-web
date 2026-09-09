@@ -43,10 +43,3 @@ categories. It computes its own `participantMissingFields` /
 as plain content instead of a button, and `children` fills a detail block under
 it. The dashboard registration detail page uses that — summary line plus a
 definition list of the birthdate and the course's custom fields.
-
-## Remaining work
-
-- `variant="modal"` on the registration form is unreachable — both call sites
-  pass `variant="page"` — so the modal branch and the `headerHeight` plumbing
-  it feeds could go. (`stickyToolbar` already has: step 2 renders one toolbar,
-  in its header.)

@@ -49,8 +49,6 @@ export interface CourseRegistrationFormProps {
   onSuccess: () => void;
   isWaitlist: boolean;
   currentUser?: User | null;
-  /** Full page route vs fixed overlay modal */
-  variant?: "modal" | "page";
   /**
    * Dashboard mode: the course team enters a registration on someone's behalf.
    * Uses the staff mutation (no deadline gate), asks for status/payment/mail
