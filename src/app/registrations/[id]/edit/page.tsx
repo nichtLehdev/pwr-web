@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ParticipantPriceOptionField } from "@/app/_components/events/course-registration-form/participant-price-option-field";
-import { ParticipantCustomFields } from "@/app/_components/events/course-registration-form/participant-custom-fields";
+import { ParticipantCard } from "@/app/_components/events/course-registration-form/participant-card";
+import { ParticipantEditor } from "@/app/_components/events/course-registration-form/participant-editor";
+import { ParticipantSheet } from "@/app/_components/events/course-registration-form/participant-sheet";
 import {
   isRequiredCustomFieldEmpty,
   normalizeParticipantCustomFieldsValues,
@@ -18,14 +19,7 @@ import { api } from "@/trpc/react";
 import { RegistrationStatus } from "~/generated/prisma/enums";
 import { getErrorMessage } from "@/lib/utils";
 import { useToast } from "@/app/_components/ui/toast";
-import {
-  CircleXIcon,
-  PlusIcon,
-  TrashIcon,
-  Link as LinkIcon,
-  Link2Off,
-  Info,
-} from "lucide-react";
+import { CircleXIcon, PlusIcon, Info, Users } from "lucide-react";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -43,7 +37,8 @@ interface Participant {
   id: string;
   firstName: string;
   lastName: string;
-  birthDate: Date;
+  /** Null on a participant just added here, until a date is picked. */
+  birthDate: Date | null;
   city: string;
   instrument: string | null;
   priceOptionId: string | null;
@@ -52,6 +47,15 @@ interface Participant {
   isNew?: boolean;
   isDeleted?: boolean;
 }
+
+/** German names for the required participant fields, for the "missing" line. */
+const PARTICIPANT_FIELD_LABELS: Record<string, string> = {
+  firstName: "Vorname",
+  lastName: "Nachname",
+  birthDate: "Geburtsdatum",
+  city: "Wohnort",
+  priceOptionId: "Preisoption",
+};
 
 /** Only allow redirecting to dashboard paths to avoid open redirects */
 function getReturnToPath(searchParams: URLSearchParams): string | null {
@@ -86,13 +90,12 @@ export default function EditRegistrationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelError, setCancelError] = useState("");
-  const [birthdateErrors, setBirthdateErrors] = useState<
-    Record<string, string>
-  >({});
-  const [
-    invalidCustomFieldsByParticipant,
-    setInvalidCustomFieldsByParticipant,
-  ] = useState<Record<string, string[]>>({});
+  /** Id of the participant whose fields are open in the sheet. */
+  const [editingParticipantId, setEditingParticipantId] = useState<
+    string | null
+  >(null);
+  /** Set once "Fertig" is pressed on an incomplete participant. */
+  const [doneAttempted, setDoneAttempted] = useState(false);
   const [siblingDiscountApplied, setSiblingDiscountApplied] = useState(false);
   const groupIdCounterRef = useRef(0);
 
@@ -253,10 +256,6 @@ export default function EditRegistrationPage() {
     });
   };
 
-  const formatDateForInput = (date: Date) => {
-    return new Date(date).toISOString().split("T")[0];
-  };
-
   const activeParticipants = participants.filter((p) => !p.isDeleted);
 
   const canAddParticipant = () => {
@@ -305,13 +304,16 @@ export default function EditRegistrationPage() {
     );
 
     participantIdCounter.current += 1;
+    const id = `new-${participantIdCounter.current}`;
     setParticipants([
       ...participants,
       {
-        id: `new-${participantIdCounter.current}`,
+        id,
         firstName: "",
         lastName: "",
-        birthDate: new Date(),
+        // Not `new Date()`: today is never a valid birthdate, so prefilling it
+        // handed the registrant an invalid value they had not entered.
+        birthDate: null,
         city: "",
         instrument: null,
         priceOptionId: availablePriceOption?.id ?? null,
@@ -320,6 +322,7 @@ export default function EditRegistrationPage() {
         isDeleted: false,
       },
     ]);
+    openParticipant(id);
   };
 
   const removeParticipant = (participantId: string) => {
@@ -330,6 +333,7 @@ export default function EditRegistrationPage() {
       return;
     }
 
+    if (editingParticipantId === participantId) openParticipant(null);
     setParticipants(
       participants.map((p) =>
         p.id === participantId ? { ...p, isDeleted: true } : p,
@@ -359,11 +363,6 @@ export default function EditRegistrationPage() {
         p.id === participantId ? { ...p, customFields } : p,
       ),
     );
-    setInvalidCustomFieldsByParticipant((prev) => {
-      const next = { ...prev };
-      delete next[participantId];
-      return next;
-    });
   };
 
   const calculateOriginalPrice = () => {
@@ -475,6 +474,112 @@ export default function EditRegistrationPage() {
 
   const hasSiblingGroups = activeParticipants.some((p) => p.siblingGroupId);
 
+  /**
+   * Required fields a participant is still missing, in the key vocabulary
+   * `ParticipantEditor` uses for its red borders (`customField:<name>` for the
+   * course's own fields).
+   */
+  const participantMissingFields = (participant: Participant): string[] => {
+    const missing: string[] = [];
+    if (!participant.firstName?.trim()) missing.push("firstName");
+    if (!participant.lastName?.trim()) missing.push("lastName");
+    if (!participant.birthDate) missing.push("birthDate");
+    if (!participant.city?.trim()) missing.push("city");
+    if (!participant.priceOptionId) missing.push("priceOptionId");
+
+    const record =
+      participant.customFields &&
+      typeof participant.customFields === "object" &&
+      !Array.isArray(participant.customFields)
+        ? (participant.customFields as Record<string, unknown>)
+        : {};
+    for (const field of registration?.course.customFields ?? []) {
+      if (
+        field.isRequired &&
+        isRequiredCustomFieldEmpty(field.fieldType, record[field.fieldName])
+      ) {
+        missing.push(`customField:${field.fieldName}`);
+      }
+    }
+    return missing;
+  };
+
+  /**
+   * One line describing what is wrong with a participant, or undefined when it
+   * is complete. Computed on every render rather than only on submit, so the
+   * card badges say which person still needs attention before you try to save.
+   */
+  const participantError = (participant: Participant): string | undefined => {
+    if (participant.birthDate && participant.birthDate >= new Date()) {
+      return "Geburtsdatum muss in der Vergangenheit liegen";
+    }
+    const missing = participantMissingFields(participant);
+    if (missing.length === 0) return undefined;
+    const names = missing.map(
+      (key) =>
+        PARTICIPANT_FIELD_LABELS[key] ?? key.slice("customField:".length),
+    );
+    return `Fehlende Pflichtfelder: ${names.join(", ")}`;
+  };
+
+  const siblingGroupSize = (participant: Participant) =>
+    participant.siblingGroupId
+      ? activeParticipants.filter(
+          (p) => p.siblingGroupId === participant.siblingGroupId,
+        ).length
+      : 1;
+
+  /**
+   * The list split into sibling groups and lone participants, so members of a
+   * group sit together instead of wherever they happen to fall in the list.
+   *
+   * A group takes the position of its first member, which keeps the rest of
+   * the order as the registrant entered it. Display only — `participants`
+   * keeps its own order for saving.
+   */
+  const participantBlocks: { key: string; members: Participant[] }[] = [];
+  const placed = new Set<string>();
+  for (const participant of activeParticipants) {
+    if (placed.has(participant.id)) continue;
+    const members = participant.siblingGroupId
+      ? activeParticipants.filter(
+          (p) => p.siblingGroupId === participant.siblingGroupId,
+        )
+      : [participant];
+    members.forEach((m) => placed.add(m.id));
+    participantBlocks.push({
+      key: participant.siblingGroupId ?? participant.id,
+      members,
+    });
+  }
+
+  /** Display order, so the numbers on the cards read 1..n top to bottom. */
+  const orderedParticipants = participantBlocks.flatMap(
+    (block) => block.members,
+  );
+
+  const editingParticipant = editingParticipantId
+    ? activeParticipants.find((p) => p.id === editingParticipantId)
+    : undefined;
+
+  const openParticipant = (id: string | null) => {
+    setEditingParticipantId(id);
+    setDoneAttempted(false);
+  };
+
+  /**
+   * "Fertig" only closes a participant that is complete. On an incomplete one
+   * it reveals what is missing and stays put — the X, the backdrop and Escape
+   * still leave, so nobody is stuck with a half-filled form.
+   */
+  const finishEditing = () => {
+    if (editingParticipant && participantError(editingParticipant)) {
+      setDoneAttempted(true);
+      return;
+    }
+    openParticipant(null);
+  };
+
   const getParticipantDisplayName = (
     firstName: string,
     lastName: string,
@@ -501,7 +606,13 @@ export default function EditRegistrationPage() {
     setIsSubmitting(true);
 
     for (const p of activeParticipants) {
-      if (!p.firstName || !p.lastName || !p.city || !p.priceOptionId) {
+      if (
+        !p.firstName ||
+        !p.lastName ||
+        !p.birthDate ||
+        !p.city ||
+        !p.priceOptionId
+      ) {
         setError("Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus.");
         setIsSubmitting(false);
         return;
@@ -525,10 +636,6 @@ export default function EditRegistrationPage() {
           .map((field) => field.fieldName) ?? [];
 
       if (missingCustomFields.length > 0) {
-        setInvalidCustomFieldsByParticipant((prev) => ({
-          ...prev,
-          [p.id]: missingCustomFields,
-        }));
         setError(
           "Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus (einschließlich Zusatzfelder).",
         );
@@ -536,8 +643,6 @@ export default function EditRegistrationPage() {
         return;
       }
     }
-
-    setInvalidCustomFieldsByParticipant({});
 
     if (useSeparateBilling) {
       if (
@@ -558,7 +663,8 @@ export default function EditRegistrationPage() {
       id: p.isNew ? undefined : p.id,
       firstName: p.firstName,
       lastName: p.lastName,
-      birthDate: p.birthDate,
+      // Non-null by the required-field loop above, which returns early.
+      birthDate: p.birthDate as Date,
       city: p.city,
       instrument: p.instrument ?? undefined,
       priceOptionId: p.priceOptionId || "", // Ensure priceOptionId is never undefined
@@ -995,295 +1101,81 @@ export default function EditRegistrationPage() {
             )}
           </div>
 
-          {/* Participants Section: scroll container so sticky header works */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 max-h-[min(70vh,42rem)] overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-            <div className="dark:bg-dark-surface sticky top-0 z-10 flex shrink-0 items-center justify-between rounded-t-lg border-b border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700">
-              <div>
+          {/* Participants: a flat list of cards. The old markup nested a
+              max-h/overflow-y-auto box inside the page, which on a phone
+              trapped the scroll and pushed the save bar out of reach. */}
+          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
                 <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                   Teilnehmer ({activeParticipants.length})
                 </h2>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Bearbeite oder füge Teilnehmer hinzu
+                  Zum Bearbeiten auf eine Person tippen.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={addParticipant}
                 disabled={!canAddParticipant()}
-                className="bg-primary hover:bg-primary-dark inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                className="bg-primary hover:bg-primary-dark inline-flex min-h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <PlusIcon className="mr-2 h-5 w-5" />
-                Teilnehmer hinzufügen
+                <PlusIcon className="h-5 w-5 shrink-0" />
+                Hinzufügen
               </button>
             </div>
 
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {activeParticipants.map((participant, index) => (
-                <div key={participant.id} className="p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-dark dark:text-dark-text font-semibold">
-                      Teilnehmer {index + 1}
-                      {participant.isNew && (
-                        <span className="ml-2 rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                          Neu
-                        </span>
-                      )}
-                    </h3>
-                    {activeParticipants.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeParticipant(participant.id)}
-                        className="text-red-600 transition-colors hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        <TrashIcon className="mr-2 h-5 w-5" />
-                      </button>
+            <div className="space-y-4">
+              {participantBlocks.map((block) => {
+                const isGroup = block.members.length > 1;
+                const cards = block.members.map((participant) => (
+                  <ParticipantCard
+                    key={participant.id}
+                    participant={participant}
+                    index={orderedParticipants.findIndex(
+                      (p) => p.id === participant.id,
                     )}
+                    priceOptions={registration.course.priceOptions}
+                    validationError={participantError(participant)}
+                    siblingGroupSize={siblingGroupSize(participant)}
+                    badge={participant.isNew ? "Neu" : undefined}
+                    canRemove={activeParticipants.length > 1}
+                    onEdit={() => openParticipant(participant.id)}
+                    onRemove={() => removeParticipant(participant.id)}
+                  />
+                ));
+
+                if (!isGroup) return <div key={block.key}>{cards}</div>;
+
+                // Tighter spacing inside a group than between blocks, plus one
+                // caption underneath — enough to read as a unit without
+                // wrapping the cards in yet another bordered box.
+                const eligible = hasDiscountEligibleSiblingGroup(block.members);
+                return (
+                  <div key={block.key}>
+                    <div className="space-y-2">{cards}</div>
+                    <p className="mt-2 flex items-start gap-1.5 pl-1 text-xs text-green-700 dark:text-green-400">
+                      <Users className="mt-px h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Geschwistergruppe:{" "}
+                        {block.members
+                          .map((p) =>
+                            getParticipantDisplayName(
+                              p.firstName,
+                              p.lastName,
+                              p.id,
+                            ),
+                          )
+                          .join(", ")}
+                        {registration.course.allowSiblingDiscount &&
+                          (eligible
+                            ? " — 20% Rabatt ab dem zweiten Kind"
+                            : " — Rabatt erst mit vollständigen Angaben")}
+                      </span>
+                    </p>
                   </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Vorname *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.firstName}
-                        onChange={(e) =>
-                          updateParticipant(
-                            participant.id,
-                            "firstName",
-                            e.target.value,
-                          )
-                        }
-                        maxLength={100}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Nachname *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.lastName}
-                        onChange={(e) =>
-                          updateParticipant(
-                            participant.id,
-                            "lastName",
-                            e.target.value,
-                          )
-                        }
-                        maxLength={100}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Geburtsdatum *
-                      </label>
-                      <input
-                        type="date"
-                        value={formatDateForInput(participant.birthDate)}
-                        onChange={(e) => {
-                          const newDate = new Date(e.target.value);
-                          updateParticipant(
-                            participant.id,
-                            "birthDate",
-                            newDate,
-                          );
-                          const newErrors = { ...birthdateErrors };
-                          if (!e.target.value) {
-                            newErrors[participant.id] =
-                              "Geburtsdatum ist erforderlich";
-                          } else if (newDate >= new Date()) {
-                            newErrors[participant.id] =
-                              "Geburtsdatum muss in der Vergangenheit liegen";
-                          } else {
-                            delete newErrors[participant.id];
-                          }
-                          setBirthdateErrors(newErrors);
-                        }}
-                        max={new Date().toISOString().split("T")[0]}
-                        required
-                        title="Geburtsdatum muss in der Vergangenheit liegen"
-                        className={`focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border px-3 py-2 focus:ring-1 focus:outline-none ${
-                          birthdateErrors[participant.id]
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300"
-                        }`}
-                      />
-                      {birthdateErrors[participant.id] && (
-                        <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                          {birthdateErrors[participant.id]}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Wohnort *
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.city}
-                        onChange={(e) =>
-                          updateParticipant(
-                            participant.id,
-                            "city",
-                            e.target.value,
-                          )
-                        }
-                        maxLength={100}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-dark dark:text-dark-text mb-1 block text-sm font-medium">
-                        Instrument
-                      </label>
-                      <input
-                        type="text"
-                        value={participant.instrument ?? ""}
-                        onChange={(e) =>
-                          updateParticipant(
-                            participant.id,
-                            "instrument",
-                            e.target.value || null,
-                          )
-                        }
-                        maxLength={100}
-                        className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary text-dark dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:ring-1 focus:outline-none"
-                      />
-                    </div>
-
-                    {registration.course.priceOptions.length > 0 ? (
-                      <ParticipantPriceOptionField
-                        priceOptions={registration.course.priceOptions}
-                        value={participant.priceOptionId ?? ""}
-                        onChange={(priceOptionId) =>
-                          updateParticipant(
-                            participant.id,
-                            "priceOptionId",
-                            priceOptionId,
-                          )
-                        }
-                        placeholderOption
-                        isOptionDisabled={(optionId) =>
-                          !participant.isNew || isPriceOptionAvailable(optionId)
-                            ? false
-                            : participant.priceOptionId !== optionId
-                        }
-                        getOptionSuffix={(optionId) => {
-                          const isAvailable =
-                            !participant.isNew ||
-                            isPriceOptionAvailable(optionId);
-                          const isCurrent =
-                            participant.priceOptionId === optionId;
-                          return !isAvailable && !isCurrent
-                            ? " (ausgebucht)"
-                            : "";
-                        }}
-                      />
-                    ) : null}
-
-                    {registration.course.customFields &&
-                    registration.course.customFields.length > 0 ? (
-                      <ParticipantCustomFields
-                        fields={registration.course.customFields}
-                        customFields={participant.customFields}
-                        onChange={(customFields) =>
-                          updateParticipantCustomFields(
-                            participant.id,
-                            customFields,
-                          )
-                        }
-                        invalidFieldNames={
-                          invalidCustomFieldsByParticipant[participant.id]
-                        }
-                      />
-                    ) : null}
-
-                    {/* Sibling Grouping */}
-                    {registration.course.allowSiblingDiscount &&
-                      activeParticipants.length > 1 && (
-                        <div className="md:col-span-2">
-                          <div className="space-y-2">
-                            <label className="text-dark dark:text-dark-text block text-sm font-medium">
-                              Geschwister verknüpfen
-                            </label>
-                            <div className="flex flex-wrap items-center gap-2">
-                              {activeParticipants
-                                .filter((p) => p.id !== participant.id)
-                                .map((otherParticipant) => {
-                                  const isLinked =
-                                    participant.siblingGroupId &&
-                                    participant.siblingGroupId ===
-                                      otherParticipant.siblingGroupId;
-                                  return (
-                                    <button
-                                      key={otherParticipant.id}
-                                      type="button"
-                                      onClick={() =>
-                                        linkSiblings(
-                                          participant.id,
-                                          otherParticipant.id,
-                                        )
-                                      }
-                                      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                                        isLinked
-                                          ? "border-green-500 bg-green-50 text-green-700 dark:border-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-                                      }`}
-                                    >
-                                      {isLinked ? (
-                                        <Link2Off className="h-4 w-4" />
-                                      ) : (
-                                        <LinkIcon className="h-4 w-4" />
-                                      )}
-                                      <span>
-                                        {getParticipantDisplayName(
-                                          otherParticipant.firstName,
-                                          otherParticipant.lastName,
-                                          otherParticipant.id,
-                                        )}
-                                        {isLinked && " ✓"}
-                                      </span>
-                                    </button>
-                                  );
-                                })}
-                            </div>
-                            {participant.siblingGroupId && (
-                              <p className="text-xs text-green-700 dark:text-green-400">
-                                Geschwistergruppe:{" "}
-                                {activeParticipants
-                                  .filter(
-                                    (p) =>
-                                      p.siblingGroupId ===
-                                        participant.siblingGroupId &&
-                                      p.id !== participant.id,
-                                  )
-                                  .map((p) =>
-                                    getParticipantDisplayName(
-                                      p.firstName,
-                                      p.lastName,
-                                      p.id,
-                                    ),
-                                  )
-                                  .join(", ")}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Sibling Discount Option: only if at least one group has 2+ siblings */}
@@ -1334,10 +1226,13 @@ export default function EditRegistrationPage() {
               )}
           </div>
 
-          {/* Price Summary */}
-          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
+          {/* Price Summary: the breakdown gets the full card width on a phone
+              and a fixed column from sm: up. Squeezed into half the card it
+              wrapped the discount label onto three lines and broke the amount
+              itself across two. */}
+          <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
                 <h2 className="text-dark dark:text-dark-text text-lg font-semibold">
                   Gesamtpreis
                 </h2>
@@ -1346,38 +1241,44 @@ export default function EditRegistrationPage() {
                   {activeParticipants.length !== 1 && "n"}
                 </p>
               </div>
-              <div className="text-right">
+              <div className="w-full sm:w-72 sm:shrink-0">
                 {siblingDiscountApplied &&
                 registration.course.allowSiblingDiscount &&
                 calculateDiscountAmount() > 0 ? (
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Zwischensumme:
+                        Zwischensumme
                       </span>
-                      <span className="text-gray-900 line-through dark:text-gray-100">
+                      <span className="shrink-0 whitespace-nowrap text-gray-900 line-through dark:text-gray-100">
                         {calculateOriginalPrice().toFixed(2)} €
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-4 text-sm">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
                       <span className="text-green-600 dark:text-green-400">
-                        Geschwisterkindrabatt (20% pro weiteres Kind):
+                        Geschwisterkindrabatt
+                        <span className="block text-xs">
+                          20% pro weiteres Kind
+                        </span>
                       </span>
-                      <span className="font-semibold text-green-600 dark:text-green-400">
+                      <span className="shrink-0 font-semibold whitespace-nowrap text-green-600 dark:text-green-400">
                         -{calculateDiscountAmount().toFixed(2)} €
                       </span>
                     </div>
-                    <div className="border-t border-gray-200 pt-1 dark:border-gray-700">
-                      <p className="text-primary text-3xl font-bold">
+                    <div className="dark:border-dark-border flex items-baseline justify-between gap-3 border-t border-gray-200 pt-2">
+                      <span className="text-dark dark:text-dark-text text-sm font-semibold">
+                        Gesamt
+                      </span>
+                      <span className="text-primary text-2xl font-bold whitespace-nowrap sm:text-3xl">
                         {calculateTotalPrice().toFixed(2)} €
-                      </p>
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       * Der Rabatt muss noch bestätigt werden
                     </p>
                   </div>
                 ) : (
-                  <p className="text-primary text-3xl font-bold">
+                  <p className="text-primary text-2xl font-bold whitespace-nowrap sm:text-right sm:text-3xl">
                     {calculateTotalPrice().toFixed(2)} €
                   </p>
                 )}
@@ -1385,8 +1286,9 @@ export default function EditRegistrationPage() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
+          {/* Actions: sticky so "Speichern" stays reachable however many
+              participants the registration has. */}
+          <div className="dark:border-dark-border dark:bg-dark-background-secondary sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-gray-200 bg-gray-50/90 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:mx-0 sm:flex-row sm:justify-between sm:rounded-lg sm:border sm:px-4">
             {canCancel ? (
               <button
                 type="button"
@@ -1416,6 +1318,115 @@ export default function EditRegistrationPage() {
             </div>
           </div>
         </form>
+
+        {editingParticipant ? (
+          <ParticipantSheet
+            title={`Teilnehmer ${
+              orderedParticipants.findIndex(
+                (p) => p.id === editingParticipant.id,
+              ) + 1
+            }`}
+            subtitle={
+              [editingParticipant.firstName, editingParticipant.lastName]
+                .map((part) => part?.trim())
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
+            onClose={() => openParticipant(null)}
+            onDone={finishEditing}
+          >
+            <ParticipantEditor
+              priceOptions={registration.course.priceOptions}
+              customFields={registration.course.customFields ?? []}
+              participant={editingParticipant}
+              onChange={(field, value) => {
+                if (field === "customFields") {
+                  updateParticipantCustomFields(
+                    editingParticipant.id,
+                    value as Record<string, unknown>,
+                  );
+                } else if (field === "instrument") {
+                  // Kept nullable in the database, so an emptied field must not
+                  // save as "".
+                  updateParticipant(
+                    editingParticipant.id,
+                    "instrument",
+                    (value as string) || null,
+                  );
+                } else if (field === "birthDate") {
+                  updateParticipant(
+                    editingParticipant.id,
+                    "birthDate",
+                    value instanceof Date ? value : null,
+                  );
+                } else {
+                  updateParticipant(
+                    editingParticipant.id,
+                    field as keyof Participant,
+                    value,
+                  );
+                }
+              }}
+              missingFields={participantMissingFields(editingParticipant)}
+              validationError={participantError(editingParticipant)}
+              showProblems={doneAttempted}
+              priceOptionField={{
+                placeholderOption: true,
+                isOptionDisabled: (optionId) =>
+                  !editingParticipant.isNew || isPriceOptionAvailable(optionId)
+                    ? false
+                    : editingParticipant.priceOptionId !== optionId,
+                getOptionSuffix: (optionId) => {
+                  const isAvailable =
+                    !editingParticipant.isNew ||
+                    isPriceOptionAvailable(optionId);
+                  const isCurrent =
+                    editingParticipant.priceOptionId === optionId;
+                  return !isAvailable && !isCurrent ? " (ausgebucht)" : "";
+                },
+              }}
+              siblings={
+                registration.course.allowSiblingDiscount &&
+                activeParticipants.length > 1
+                  ? {
+                      candidates: activeParticipants
+                        .filter((p) => p.id !== editingParticipant.id)
+                        .map((other) => ({
+                          key: other.id,
+                          label: getParticipantDisplayName(
+                            other.firstName,
+                            other.lastName,
+                            other.id,
+                          ),
+                          linked:
+                            !!editingParticipant.siblingGroupId &&
+                            editingParticipant.siblingGroupId ===
+                              other.siblingGroupId,
+                        })),
+                      onToggle: (key) =>
+                        linkSiblings(editingParticipant.id, key),
+                      groupMembers: editingParticipant.siblingGroupId
+                        ? activeParticipants
+                            .filter(
+                              (p) =>
+                                p.id !== editingParticipant.id &&
+                                p.siblingGroupId ===
+                                  editingParticipant.siblingGroupId,
+                            )
+                            .map((p) =>
+                              getParticipantDisplayName(
+                                p.firstName,
+                                p.lastName,
+                                p.id,
+                              ),
+                            )
+                        : [],
+                    }
+                  : undefined
+              }
+            />
+          </ParticipantSheet>
+        ) : null}
 
         {/* Cancel Confirmation Modal */}
         {cancelModalOpen && (
