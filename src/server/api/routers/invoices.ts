@@ -622,6 +622,12 @@ export const invoicesRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         signatureBase64: signatureInput,
+        /**
+         * Wer unterschreibt, steht im Ausstellen-Dialog neben der Unterschrift.
+         * Leer heißt "ohne Namen" — das PDF zeichnet dann mit dem Team-Absender.
+         * `undefined` lässt den am Entwurf gespeicherten Namen unberührt.
+         */
+        signatureName: z.string().trim().max(120).nullish(),
         /** Skip the in-app notification, e.g. when mailing the PDF instead. */
         notifyRegistrant: z.boolean().default(true),
       }),
@@ -661,6 +667,14 @@ export const invoicesRouter = createTRPCRouter({
       }
 
       const now = new Date();
+      // Der Dialog schickt den Namen mit, mit dem tatsächlich unterschrieben
+      // wird. Er wird zusammen mit der Nummer festgeschrieben, damit die Zeile
+      // unter der Unterschrift und die gespeicherte Zeile dasselbe sagen.
+      const signatureName =
+        input.signatureName === undefined
+          ? invoice.signatureName
+          : normalizeOptional(input.signatureName);
+
       const invoiceNumber = await ctx.db.$transaction(async (tx) => {
         // Claim the draft first: the conditional update both takes the row lock
         // and rules out a second publisher, so two organizers pressing the
@@ -683,7 +697,7 @@ export const invoicesRouter = createTRPCRouter({
         const number = await nextInvoiceId(tx, invoice.course.courseNumber);
         await tx.invoice.update({
           where: { id: invoice.id },
-          data: { invoiceNumber: number },
+          data: { invoiceNumber: number, signatureName },
         });
         return number;
       });
@@ -691,6 +705,7 @@ export const invoicesRouter = createTRPCRouter({
       const pdfSource: InvoiceRecordForPdf = {
         ...invoice,
         invoiceNumber,
+        signatureName,
         invoiceDate: now,
         dueDate: invoice.dueDate ?? defaultDueDate(now),
         status: InvoiceStatus.PUBLISHED,

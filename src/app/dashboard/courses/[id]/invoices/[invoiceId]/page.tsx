@@ -518,6 +518,16 @@ export default function InvoiceEditorPage() {
               ? "Für Korrekturen stornierst du sie und stellst eine Nachfolgerechnung aus — die ursprüngliche bleibt im Archiv erhalten."
               : (invoice.cancelReason ?? "")}
           </p>
+          {/* Der Name wird beim Ausstellen erfasst und ist danach nur noch hier
+              und auf dem PDF zu sehen — das Formular ist ab dann gesperrt. */}
+          {invoice.signatureName && (
+            <p className="dark:text-dark-muted mt-2 text-xs text-gray-500">
+              Unterzeichnet mit:{" "}
+              <span className="dark:text-dark-text font-medium text-gray-700">
+                {invoice.signatureName}
+              </span>
+            </p>
+          )}
         </div>
       )}
 
@@ -832,20 +842,6 @@ export default function InvoiceEditorPage() {
                 }}
               />
             </div>
-            <div className="sm:w-80">
-              <label className={labelClass} htmlFor="signatureName">
-                Name des Unterzeichners (optional)
-              </label>
-              <input
-                id="signatureName"
-                className={inputClass}
-                value={signatureName}
-                onChange={(e) => {
-                  setSignatureName(e.target.value);
-                  setIsDirty(true);
-                }}
-              />
-            </div>
             <div>
               <label className={labelClass} htmlFor="internalNote">
                 Interne Notiz (erscheint nicht auf der Rechnung)
@@ -911,7 +907,8 @@ export default function InvoiceEditorPage() {
                   Unterschrift (optional)
                 </p>
                 <p className="dark:text-dark-muted mt-0.5 text-xs text-gray-500">
-                  Wird nur in dieses PDF eingebettet und nicht gespeichert.
+                  Das Bild wird nur in dieses PDF eingebettet und nicht
+                  gespeichert.
                 </p>
                 {signatureMode === "none" && (
                   <div className="mt-2 flex gap-2">
@@ -1004,6 +1001,26 @@ export default function InvoiceEditorPage() {
                   onChange={handleSignatureUpload}
                   className="hidden"
                 />
+
+                <div className="dark:border-dark-border mt-3 border-t border-gray-200 pt-3">
+                  <label
+                    className="dark:text-dark-text block text-sm font-medium text-gray-700"
+                    htmlFor="signatureName"
+                  >
+                    Name des Unterzeichners (optional)
+                  </label>
+                  <input
+                    id="signatureName"
+                    className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-1 focus:outline-none"
+                    placeholder="Ihr Team vom Posaunenwerk Rheinland"
+                    value={signatureName}
+                    onChange={(e) => setSignatureName(e.target.value)}
+                  />
+                  <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                    Steht auf dem PDF unter der Unterschrift. Leer lassen, um
+                    mit „Ihr Team vom Posaunenwerk Rheinland“ zu zeichnen.
+                  </p>
+                </div>
               </div>
               <label className="mt-4 flex cursor-pointer items-start gap-3">
                 <input
@@ -1041,6 +1058,7 @@ export default function InvoiceEditorPage() {
                       id: invoiceId,
                       notifyRegistrant,
                       signatureBase64: signatureBase64 ?? undefined,
+                      signatureName,
                     })
                   }
                   disabled={publishInvoice.isPending}
