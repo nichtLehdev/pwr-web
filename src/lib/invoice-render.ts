@@ -367,20 +367,9 @@ export async function renderInvoicePdf(
   doc.text("Gesamtbetrag:", quantityX, y, { align: "right" });
   doc.text(formatEuro(total), amountX, y, { align: "right" });
 
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(110);
-  // Kleinunternehmer-style note: the association does not show VAT on course fees.
-  doc.text(
-    "Der Betrag ist umsatzsteuerfrei (nicht steuerbare Leistung im ideellen Bereich).",
-    margin,
-    y,
-  );
-  doc.setTextColor(0);
-
-  y += 5;
+  y += 8;
   checkPageBreak(30);
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
 
   const dueDateText = formatLongDate(invoice.dueDate);
