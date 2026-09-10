@@ -87,3 +87,47 @@ export async function userCanBookInvoicePayments(
   );
   return canBookInvoicePayments(access, userId, permissionCache);
 }
+
+/**
+ * Welche der übergebenen Kurse die Person abrechnen darf — dieselbe Regel wie
+ * {@link resolveInvoiceAccess}, nur für eine ganze Liste auf einmal.
+ *
+ * Das Rechnungsarchiv zeigt Rechnungen aus vielen Kursen nebeneinander und muss
+ * pro Zeile wissen, ob der Sprung in die Kursrechnungen offensteht. Einzeln
+ * aufgelöst wäre das eine Collaborator-Abfrage pro Zeile.
+ */
+export async function manageableCourseIds(
+  db: PrismaClient,
+  userId: string,
+  courseIds: string[],
+  permissionCache?: PermissionCache,
+): Promise<Set<string>> {
+  if (courseIds.length === 0) return new Set();
+
+  const hasGlobalGrant = await userHasPermission(
+    userId,
+    PERMISSIONS.INVOICES_GENERATE,
+    permissionCache,
+  );
+  if (hasGlobalGrant) return new Set(courseIds);
+
+  const [own, collaborations] = await Promise.all([
+    db.course.findMany({
+      where: { id: { in: courseIds }, createdById: userId },
+      select: { id: true },
+    }),
+    db.courseCollaborator.findMany({
+      where: {
+        courseId: { in: courseIds },
+        userId,
+        role: CourseCollaboratorRole.ORGANIZER,
+      },
+      select: { courseId: true },
+    }),
+  ]);
+
+  return new Set([
+    ...own.map((course) => course.id),
+    ...collaborations.map((entry) => entry.courseId),
+  ]);
+}

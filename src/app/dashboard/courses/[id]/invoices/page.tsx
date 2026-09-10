@@ -4,8 +4,13 @@ import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import DashboardPage from "@/app/_components/dashboard/dashboard-page";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import { InvoicePaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import {
   InvoiceStatusBadge,
@@ -59,6 +64,22 @@ function siblingDiscountAmount(lineItems: unknown): number {
     )
     .reduce((sum, raw) => sum + lineItemTotal(raw as InvoiceLineItem), 0);
   return -discountTotal;
+}
+
+type CourseInvoice = RouterOutputs["invoices"]["listForCourse"][number];
+
+const invoiceColumn = createDataTableColumnHelper<CourseInvoice>();
+
+/** Firma und Person der Rechnungsanschrift als eine Zeile. */
+function invoiceRecipient(invoice: CourseInvoice): string {
+  return (
+    [
+      invoice.recipientCompany,
+      `${invoice.recipientFirstName ?? ""} ${invoice.recipientLastName ?? ""}`.trim(),
+    ]
+      .filter(Boolean)
+      .join(" · ") || "—"
+  );
 }
 
 type SignatureMode = "none" | "upload" | "draw";
@@ -202,6 +223,110 @@ export default function CourseInvoicesPage() {
     },
     onError: (error) => toast.error(error.message),
   });
+
+  const invoiceColumns = useMemo<DataTableColumn<CourseInvoice>[]>(
+    () =>
+      invoiceColumn.columns([
+        invoiceColumn.accessor(
+          (invoice) => invoice.invoiceNumber ?? "Entwurf",
+          {
+            id: "invoiceNumber",
+            header: "Nummer",
+            meta: { alwaysVisible: true, cellClassName: "whitespace-nowrap" },
+            cell: ({ row }) => (
+              <>
+                <Link
+                  href={`/dashboard/courses/${courseId}/invoices/${row.original.id}`}
+                  className="dark:text-dark-text font-medium text-gray-900 hover:underline"
+                >
+                  {row.original.invoiceNumber ?? "Entwurf"}
+                </Link>
+                {row.original.replaces?.invoiceNumber && (
+                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                    ersetzt {row.original.replaces.invoiceNumber}
+                  </span>
+                )}
+                {row.original.replacedBy?.invoiceNumber && (
+                  <span className="dark:text-dark-muted block text-xs text-gray-500">
+                    ersetzt durch {row.original.replacedBy.invoiceNumber}
+                  </span>
+                )}
+              </>
+            ),
+          },
+        ),
+        invoiceColumn.accessor(invoiceRecipient, {
+          id: "recipient",
+          header: "Empfänger",
+          cell: ({ row }) => (
+            <>
+              <span className="block">{invoiceRecipient(row.original)}</span>
+              {row.original.recipientEmail && (
+                <span className="dark:text-dark-muted block text-xs text-gray-500">
+                  {row.original.recipientEmail}
+                </span>
+              )}
+            </>
+          ),
+        }),
+        invoiceColumn.accessor(
+          (invoice) =>
+            (invoice.registration?.participants ?? [])
+              .map((p) => `${p.firstName} ${p.lastName}`.trim())
+              .join(", "),
+          {
+            id: "participants",
+            header: "Teilnehmer:innen",
+            cell: ({ getValue }) => (
+              <span className="dark:text-dark-muted text-gray-600">
+                {getValue() || "—"}
+              </span>
+            ),
+          },
+        ),
+        invoiceColumn.accessor((invoice) => invoice.invoiceDate, {
+          id: "invoiceDate",
+          header: "Datum",
+          sortFn: "datetime",
+          sortUndefined: "last",
+          meta: { filterVariant: "date", cellClassName: "whitespace-nowrap" },
+          cell: ({ row }) =>
+            row.original.invoiceDate
+              ? formatDate(row.original.invoiceDate)
+              : "—",
+        }),
+        invoiceColumn.accessor((invoice) => invoice.totalAmount, {
+          id: "totalAmount",
+          header: "Betrag",
+          meta: {
+            align: "right",
+            filterVariant: "number",
+            cellClassName: "font-semibold whitespace-nowrap",
+          },
+          cell: ({ getValue }) => formatEuro(getValue()),
+        }),
+        invoiceColumn.accessor(
+          (invoice) => INVOICE_STATUS_LABELS[invoice.status],
+          {
+            id: "status",
+            header: "Status",
+            meta: {
+              filterVariant: "set",
+              filterOptions: Object.values(INVOICE_STATUS_LABELS).map(
+                (label) => ({ value: label, label }),
+              ),
+            },
+            cell: ({ row }) => (
+              <div className="flex flex-wrap items-center gap-1">
+                <InvoiceStatusBadge status={row.original.status} />
+                <InvoicePaymentBadge invoice={row.original} />
+              </div>
+            ),
+          },
+        ),
+      ]),
+    [courseId],
+  );
 
   const summary = useMemo(() => {
     const list = invoices ?? [];
@@ -539,13 +664,19 @@ export default function CourseInvoicesPage() {
       )}
 
       {/* Invoice list */}
-      <div className="dark:bg-dark-surface overflow-hidden rounded-lg bg-white shadow">
-        {invoicesLoading ? (
-          <p className="dark:text-dark-muted p-6 text-sm text-gray-500">
-            Lade…
-          </p>
-        ) : (invoices?.length ?? 0) === 0 ? (
-          <div className="p-10 text-center">
+      <DataTable
+        data={invoices}
+        columns={invoiceColumns}
+        getRowId={(invoice) => invoice.id}
+        isLoading={invoicesLoading}
+        rowNoun={["Rechnung", "Rechnungen"]}
+        searchPlaceholder="Nummer, Empfänger oder Anmeldung"
+        initialSorting={[{ id: "invoiceDate", desc: true }]}
+        onRowClick={(invoice) =>
+          router.push(`/dashboard/courses/${courseId}/invoices/${invoice.id}`)
+        }
+        emptyState={
+          <>
             <ReceiptTextIcon className="mx-auto h-10 w-10 text-gray-300" />
             <p className="dark:text-dark-text mt-3 font-medium text-gray-900">
               Noch keine Rechnungen
@@ -553,59 +684,9 @@ export default function CourseInvoicesPage() {
             <p className="dark:text-dark-muted mt-1 text-sm text-gray-500">
               Erstelle den ersten Entwurf aus einer Anmeldung.
             </p>
-          </div>
-        ) : (
-          <ul className="dark:divide-dark-border divide-y divide-gray-200">
-            {invoices?.map((invoice) => (
-              <li key={invoice.id}>
-                <Link
-                  href={`/dashboard/courses/${courseId}/invoices/${invoice.id}`}
-                  className="dark:hover:bg-dark-background-secondary flex flex-wrap items-center gap-4 p-4 hover:bg-gray-50"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="dark:text-dark-text font-medium text-gray-900">
-                        {invoice.invoiceNumber ?? "Entwurf"}
-                      </span>
-                      <InvoiceStatusBadge status={invoice.status} />
-                      <InvoicePaymentBadge invoice={invoice} />
-                      {invoice.replaces?.invoiceNumber && (
-                        <span className="dark:text-dark-muted text-xs text-gray-500">
-                          ersetzt {invoice.replaces.invoiceNumber}
-                        </span>
-                      )}
-                      {invoice.replacedBy?.invoiceNumber && (
-                        <span className="dark:text-dark-muted text-xs text-gray-500">
-                          ersetzt durch {invoice.replacedBy.invoiceNumber}
-                        </span>
-                      )}
-                    </div>
-                    <p className="dark:text-dark-muted mt-0.5 truncate text-sm text-gray-500">
-                      {[
-                        invoice.recipientCompany,
-                        `${invoice.recipientFirstName ?? ""} ${invoice.recipientLastName ?? ""}`.trim(),
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                      {invoice.invoiceDate
-                        ? ` · ${formatDate(invoice.invoiceDate)}`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="dark:text-dark-text font-semibold text-gray-900">
-                      {formatEuro(invoice.totalAmount)}
-                    </p>
-                    <p className="dark:text-dark-muted text-xs text-gray-500">
-                      {INVOICE_STATUS_LABELS[invoice.status]}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+          </>
+        }
+      />
 
       {summary.published.length > 0 && (
         <div className="dark:bg-dark-surface mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white p-4 shadow">
