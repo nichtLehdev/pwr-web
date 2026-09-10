@@ -18,6 +18,7 @@ import {
   Shield,
   User,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
@@ -297,6 +298,13 @@ export const DASHBOARD_NAV_GROUPS: DashboardNavGroup[] = [
         href: "/dashboard/audit",
         icon: Shield,
         visible: (ctx) => ctx.hasPermission(PERMISSIONS.AUDIT_VIEW),
+      },
+      {
+        title: "Wartungsmodus",
+        description: "Seite für Besucher schließen",
+        href: "/dashboard/wartung",
+        icon: Wrench,
+        visible: (ctx) => ctx.hasPermission(PERMISSIONS.SYSTEM_MANAGE),
       },
     ],
   },

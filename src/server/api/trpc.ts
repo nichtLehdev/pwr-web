@@ -16,6 +16,7 @@ import { db } from "@/server/db";
 import type { PermissionKey } from "@/lib/permissions";
 import { clientKeyFromHeaders, rateLimit } from "@/server/utils/rate-limit";
 import { createLogger } from "@/server/utils/logger";
+import { isMaintenanceActive } from "@/server/maintenance";
 
 /**
  * 1. CONTEXT
@@ -119,13 +120,54 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
+ * Sperrt öffentliche Schreibzugriffe, solange der Wartungsmodus läuft.
+ *
+ * Absichtlich nur Mutationen: Lesen bleibt erlaubt, damit freigeschaltete
+ * Besucher die echte Seite ansehen können. Geschrieben werden darf trotzdem
+ * nicht — eine Kursanmeldung oder ein Newsletter-Opt-in, das während der
+ * Umstellung hereinkommt, landet sonst in einer Datenbank, die gerade
+ * umgezogen wird, oder verschickt eine Mail mit der alten Adresse.
+ *
+ * `protectedProcedure` hängt nicht an dieser Kette. Angemeldete Redaktion
+ * kann also weiterarbeiten — das ist ja der Zweck der Wartung.
+ */
+/**
+ * Mutationen, die trotz Wartung durchlaufen dürfen.
+ *
+ * `stats.recordView` ist Telemetrie, keine Absicht eines Besuchers: Sie läuft
+ * bei jedem Seitenaufruf mit — auch auf der Wartungsseite selbst und bei
+ * freigeschalteten Mitarbeitenden, die die Seite durchsehen. Gesperrt würde sie
+ * dort im Sekundentakt 503 werfen und Konsole wie Container-Log zumüllen,
+ * während der Gewinn bei null liegt: Eine verlorene Zeile Seitenstatistik
+ * kostet nichts, eine verlorene Kursanmeldung schon.
+ */
+const MAINTENANCE_EXEMPT_MUTATIONS = new Set(["stats.recordView"]);
+
+const maintenanceGuard = t.middleware(async ({ next, type, path }) => {
+  if (type !== "mutation") return next();
+  if (MAINTENANCE_EXEMPT_MUTATIONS.has(path)) return next();
+
+  if (await isMaintenanceActive()) {
+    throw new TRPCError({
+      code: "SERVICE_UNAVAILABLE",
+      message:
+        "Die Seite wird gerade gewartet. Bitte versuche es in Kürze noch einmal.",
+    });
+  }
+
+  return next();
+});
+
+/**
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(maintenanceGuard);
 
 /**
  * Public procedure with per-client rate limiting. Use for anonymous

@@ -15,7 +15,12 @@ export function PageViewTracker() {
   const pathname = usePathname();
   const consent = useTrackingConsent();
   const { data: session } = useSession();
-  const recordView = api.stats.recordView.useMutation();
+  // Seitenstatistik ist Beiwerk. Schlägt sie fehl — Wartungsmodus, Rate-Limit,
+  // kurzer Netzaussetzer —, darf das weder in der Konsole noch als Fehler beim
+  // Besucher landen; die Zeile ist dann eben weg.
+  const recordView = api.stats.recordView.useMutation({
+    onError: () => undefined,
+  });
   const lastRecorded = useRef<{
     path: string;
     section: string | null;
@@ -53,7 +58,12 @@ export function useRecordSection(section: string, path?: string) {
   const pathname = usePathname();
   const consent = useTrackingConsent();
   const { data: session } = useSession();
-  const recordView = api.stats.recordView.useMutation();
+  // Seitenstatistik ist Beiwerk. Schlägt sie fehl — Wartungsmodus, Rate-Limit,
+  // kurzer Netzaussetzer —, darf das weder in der Konsole noch als Fehler beim
+  // Besucher landen; die Zeile ist dann eben weg.
+  const recordView = api.stats.recordView.useMutation({
+    onError: () => undefined,
+  });
   const recorded = useRef(false);
 
   useEffect(() => {
