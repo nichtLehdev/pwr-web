@@ -49,11 +49,24 @@ Als Administrator können Sie verschiedene Datentypen exportieren:
 - **Ort:** Einstellungen → Gespeicherte Teilnehmer
 - Benutzer können ihre eigenen gespeicherten Teilnehmer löschen
 
-#### 2. Tracking-Einstellungen ändern
+#### 2. Eigene Daten exportieren (Art. 20 DSGVO)
+- **Ort:** Einstellungen → Daten exportieren
+- Lädt alle zur Person gespeicherten Daten als JSON herunter
+- Technisch: `GET /api/users/<userId>/export` bzw. `api.users.exportData`
+
+#### 3. Eigenes Konto löschen (Art. 17 DSGVO)
+- **Ort:** Einstellungen → Gefahrenzone → Konto löschen
+- Bestätigung durch Eingabe der eigenen E-Mail-Adresse
+- Blockiert, solange Abhängigkeiten bestehen: aktive Mitgliedschaften (Team,
+  Vorstand, Posaunenrat, Förderverein), selbst erstellte Inhalte oder
+  Kursanmeldungen mit Rechnung (gesetzliche Aufbewahrung). Die Meldung nennt
+  den Grund; solche Fälle brauchen Anonymisierung durch einen Admin.
+
+#### 4. Tracking-Einstellungen ändern
 - **Ort:** Einstellungen → Nutzungsstatistik
 - Benutzer können ihre Einwilligung zur Datenerfassung ändern oder widerrufen
 
-#### 3. Anmeldung ohne Benutzerkonto verwalten (Magic Link)
+#### 5. Anmeldung ohne Benutzerkonto verwalten (Magic Link)
 - **Ort:** Link in der Anmelde-Bestätigungsmail, oder `/anmeldung-verwalten`
 - Wer sich ohne Konto zu einem Kurs anmeldet, erhält einen signierten,
   personalisierten Link zu seiner Anmeldung. Damit sind Auskunft (Art. 15),
@@ -67,120 +80,64 @@ Als Administrator können Sie verschiedene Datentypen exportieren:
 
 ## Fehlende Funktionen für vollständige DSGVO-Compliance
 
-### 🔴 Kritisch - Muss implementiert werden
-
-#### 1. Benutzer-Datenexport (Art. 20 DSGVO - Recht auf Datenübertragbarkeit)
-**Status:** ❌ Nicht implementiert
-
-**Was benötigt wird:**
-- Endpunkt: `/api/export/user/[userId]` oder `/api/users/[userId]/export`
-- Sollte alle personenbezogenen Daten eines Benutzers exportieren:
-  - Benutzerprofil-Daten
-  - Kursanmeldungen mit Teilnehmerdaten
-  - Gespeicherte Teilnehmer
-  - Newsletter-Abonnement-Status
-  - Session-Daten (optional)
-  - Feedback-Einträge
-  - Page View Tracking-Daten (falls Einwilligung erteilt wurde)
-  - Hochgeladene Medien
-  - Erstellte Inhalte (Events, Kurse, Posts) - falls relevant
-
-**Format:** JSON oder strukturiertes Format (z.B. JSON-LD)
-
-#### 2. Benutzer-Konto löschen (Art. 17 DSGVO - Recht auf Löschung)
-**Status:** ⚠️ Button vorhanden, aber nicht implementiert
-
-**Ort:** Einstellungen → Gefahrenzone → "Konto löschen"
-
-**Was benötigt wird:**
-- Funktion zum vollständigen Löschen des Benutzerkontos
-- Berücksichtigung von:
-  - Abhängigkeiten (Kursanmeldungen, erstellte Inhalte)
-  - Gesetzliche Aufbewahrungspflichten (Rechnungen: 10 Jahre)
-  - Anonymisierung statt Löschung bei gesetzlich erforderlichen Daten
-
-#### 3. Admin: Benutzer-Datenexport für DSGVO-Anfragen
-**Status:** ❌ Nicht implementiert
-
-**Was benötigt wird:**
-- Admin-Tool zum Exportieren aller Daten eines spezifischen Benutzers
-- Sollte alle oben genannten Daten enthalten
-- Format: Strukturiertes JSON mit Metadaten
-
-#### 4. Admin: Kursanmeldungen-Export mit Teilnehmerdaten
-**Status:** ⚠️ Teilweise vorhanden (nur pro Kurs)
-
-**Was benötigt wird:**
-- Export aller Kursanmeldungen mit Teilnehmerdaten
-- Filter nach Anmelder-E-Mail
-- Export aller Anmeldungen eines bestimmten Benutzers
-
-#### 5. Admin: Newsletter-Abonnenten-Verwaltung
-**Status:** ✅ Vorhanden
-
-**Ort:** Dashboard → Newsletter → Abonnenten
-
-**Verfügbare Funktionen:**
-- Abonnenten anzeigen
-- Abonnenten löschen
-- Status ändern (aktiv/inaktiv)
+> Stand: 2026-09-10. Die früher hier als kritisch gelisteten Punkte
+> (Benutzer-Datenexport, Konto-Löschung) sind inzwischen umgesetzt und stehen
+> jetzt oben unter „Aktuelle Funktionen".
 
 ### 🟡 Wichtig - Sollte implementiert werden
 
-#### 6. Admin: Datenzugriff-Anfragen bearbeiten (Art. 15 DSGVO)
+#### 1. Kursanmeldungen-Export über Kursgrenzen hinweg
+**Status:** ⚠️ Teilweise vorhanden
+
+Pro Kurs gibt es den Teilnehmer-Export. Was fehlt, ist ein Export *aller*
+Anmeldungen einer Person über alle Kurse hinweg. Für eine Auskunftsanfrage ist
+das nicht blockierend — der Benutzer-Datenexport (siehe oben) enthält die
+Anmeldungen bereits vollständig.
+
+#### 2. Datenzugriff-Anfragen dokumentieren (Art. 15 DSGVO)
 **Status:** ❌ Nicht implementiert
 
-**Was benötigt wird:**
-- Workflow-System für DSGVO-Anfragen
-- Möglichkeit, Anfragen zu dokumentieren
-- Automatische Generierung von Datenexporten
-- Nachweis der Bearbeitung
+Es gibt kein Workflow-System, das eingegangene Anfragen und ihre Bearbeitung
+protokolliert. Der Nachweis muss außerhalb der Anwendung geführt werden.
 
-#### 7. Admin: Datenberichtigung (Art. 16 DSGVO)
-**Status:** ⚠️ Teilweise vorhanden (manuelle Bearbeitung möglich)
+#### 3. Datenberichtigung (Art. 16 DSGVO)
+**Status:** ⚠️ Teilweise vorhanden
 
-**Was benötigt wird:**
-- Strukturierter Workflow für Berichtigungsanfragen
-- Nachweis der Berichtigung
-- Benachrichtigung des Benutzers
+Berichtigungen sind über das Dashboard möglich; ein strukturierter Workflow mit
+Nachweis und Benachrichtigung fehlt. Änderungen an Benutzerdaten landen
+allerdings im Audit-Log.
 
-#### 8. Admin: Einschränkung der Verarbeitung (Art. 18 DSGVO)
+#### 4. Einschränkung der Verarbeitung (Art. 18 DSGVO)
 **Status:** ❌ Nicht implementiert
 
-**Was benötigt wird:**
-- Möglichkeit, Verarbeitung bestimmter Daten zu sperren
-- Flag im Benutzerprofil
-- Automatische Einhaltung der Einschränkung
+Es gibt kein Flag, das die Verarbeitung einzelner Datensätze sperrt.
 
-#### 9. Admin: Widerspruch gegen Verarbeitung (Art. 21 DSGVO)
-**Status:** ⚠️ Teilweise vorhanden (Newsletter-Abmeldung)
+#### 5. Widerspruch gegen Verarbeitung (Art. 21 DSGVO)
+**Status:** ⚠️ Teilweise vorhanden
 
-**Was benötigt wird:**
-- Zentrale Verwaltung von Widersprüchen
-- Tracking von Widersprüchen gegen verschiedene Verarbeitungszwecke
+Newsletter-Abmeldung und Tracking-Einstellung decken die beiden Fälle ab, in
+denen überhaupt auf Einwilligung bzw. berechtigtem Interesse verarbeitet wird.
+Eine zentrale Verwaltung von Widersprüchen gibt es nicht.
 
 ## Aktuelle Workarounds für DSGVO-Anfragen
 
 ### Recht auf Auskunft (Art. 15 DSGVO)
 
-**Manuelle Vorgehensweise:**
+**Der Datenexport deckt das vollständig ab** — die frühere Sammelarbeit von
+Hand ist nicht mehr nötig.
 
-1. **Benutzer identifizieren:**
-   - Dashboard → Benutzer → Suche nach E-Mail oder Name
+1. Benutzer-ID ermitteln: Dashboard → Benutzer → Suche nach E-Mail oder Name
+2. `GET /api/users/<userId>/export` aufrufen (als angemeldeter Admin mit
+   `USERS_MANAGE`; im Browser reicht der Aufruf der URL)
+3. Die JSON-Datei enthält Profil, Kursanmeldungen mit Teilnehmerdaten,
+   gespeicherte Teilnehmer, Newsletter-Status, Rechnungen und Seitenaufrufe
+4. Antwort innerhalb von 30 Tagen, Bearbeitung dokumentieren
 
-2. **Daten manuell sammeln:**
-   - Benutzerprofil anzeigen (Dashboard → Benutzer → [Benutzer])
-   - Kursanmeldungen finden:
-     - Dashboard → Kurse → [Kurs] → Teilnehmer
-     - Nach Anmelder-E-Mail suchen
-   - Newsletter-Status prüfen:
-     - Dashboard → Newsletter → Abonnenten
-   - Gespeicherte Teilnehmer:
-     - Datenbank-Abfrage erforderlich (kein Admin-UI verfügbar)
+Benutzer können denselben Export selbst ziehen: Einstellungen → Daten
+exportieren.
 
-3. **Daten zusammenstellen:**
-   - Manuell in strukturiertem Format (z.B. JSON oder PDF)
-   - Alle relevanten Daten auflisten
+> Ein Knopf dafür auf der Admin-Benutzerseite fehlt noch (siehe „Empfohlene
+> Implementierungen"); bis dahin die URL direkt aufrufen.
 
 ### Recht auf Löschung (Art. 17 DSGVO)
 
@@ -216,55 +173,31 @@ Als Administrator können Sie verschiedene Datentypen exportieren:
 
 ## Empfohlene Implementierungen
 
-### Priorität 1 (Kritisch für DSGVO-Compliance)
+### Priorität 1
 
-1. **Benutzer-Datenexport-Funktion**
-   ```typescript
-   // Neuer Endpunkt: /api/users/[userId]/export
-   // Oder: /api/export/user/[userId]
-   // Sollte alle personenbezogenen Daten exportieren
-   ```
+1. **Admin-Knopf „Daten exportieren" auf der Benutzerseite**
+   Der Endpunkt kann das längst (`/api/users/[userId]/export` akzeptiert eine
+   fremde `userId`, wenn die Berechtigung stimmt) — es fehlt nur der Knopf in
+   `src/app/dashboard/users/[id]/page.tsx`. Bis dahin muss die URL von Hand
+   aufgerufen werden.
 
-2. **Benutzer-Konto-Löschung**
-   ```typescript
-   // Implementierung in: src/app/settings/page.tsx
-   // Button "Konto löschen" funktionsfähig machen
-   // Berücksichtigung von Abhängigkeiten und Aufbewahrungspflichten
-   ```
+2. **DSGVO-Anfragen-Verwaltung**
+   Dashboard-Bereich, in dem eingegangene Anfragen samt Bearbeitung
+   dokumentiert werden (Nachweispflicht).
 
-3. **Admin: DSGVO-Anfragen-Verwaltung**
-   ```typescript
-   // Neues Dashboard: /dashboard/dsgvo-requests
-   // Workflow für Anfragen-Verwaltung
-   // Automatische Generierung von Exports
-   ```
+### Priorität 2
 
-### Priorität 2 (Wichtig für effiziente Bearbeitung)
+3. **Kursanmeldungen und gespeicherte Teilnehmer auf der Benutzerseite**
+   Beides steckt bereits im Export, ist im Dashboard aber nicht sichtbar.
 
-4. **Admin: Benutzer-Datenexport-Tool**
-   ```typescript
-   // In: src/app/dashboard/users/[id]/page.tsx
-   // Button "Daten exportieren" hinzufügen
-   // Generiert strukturierten Export
-   ```
+4. **Verarbeitungseinschränkung (Art. 18 DSGVO)**
+   Flag am Benutzerprofil, das die weitere Verarbeitung sperrt.
 
-5. **Admin: Alle Kursanmeldungen eines Benutzers anzeigen**
-   ```typescript
-   // In: src/app/dashboard/users/[id]/page.tsx
-   // Sektion "Kursanmeldungen" hinzufügen
-   ```
+### Priorität 3
 
-6. **Admin: Gespeicherte Teilnehmer anzeigen**
-   ```typescript
-   // In: src/app/dashboard/users/[id]/page.tsx
-   // Sektion "Gespeicherte Teilnehmer" hinzufügen
-   ```
-
-### Priorität 3 (Nice-to-have)
-
-7. **Automatisierte DSGVO-Anfragen-Verarbeitung**
-8. **E-Mail-Templates für DSGVO-Antworten**
-9. **Audit-Log für DSGVO-Anfragen**
+5. Automatisierte Verarbeitung von DSGVO-Anfragen
+6. E-Mail-Vorlagen für DSGVO-Antworten
+7. Audit-Log speziell für DSGVO-Anfragen
 
 ## Checkliste für DSGVO-Anfragen
 
@@ -297,7 +230,7 @@ Als Administrator können Sie verschiedene Datentypen exportieren:
 ### Bei einer Datenübertragbarkeits-Anfrage (Art. 20):
 
 - [ ] Benutzer identifizieren
-- [ ] Alle Daten exportieren (sobald Funktion verfügbar)
+- [ ] Alle Daten exportieren über `/api/users/<userId>/export`
 - [ ] In strukturiertem, maschinenlesbarem Format bereitstellen
 - [ ] Innerhalb von 30 Tagen antworten
 
