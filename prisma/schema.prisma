@@ -1615,20 +1615,14 @@ model NewsletterSubscriber {
 }
 
 /// Einzeiliger Datensatz (id = 1) fuer den Wartungsmodus.
-///
-/// Die Umgebungsvariable MAINTENANCE_MODE hat Vorrang: Sie gilt auch dann,
-/// wenn die Datenbank gerade nicht erreichbar ist, und ist damit der Schalter
-/// fuer ein Deployment-Fenster. Dieser Datensatz ist der Schalter fuer den
-/// Alltag — aus dem Dashboard heraus, ohne Redeploy.
+/// MAINTENANCE_MODE hat Vorrang und kommt ohne Datenbank aus.
 model MaintenanceState {
   id      Int     @id @default(1)
   enabled Boolean @default(false)
 
-  /// Optionaler Text auf der Wartungsseite. Ohne Wert steht dort der Standardtext.
   message String?
 
-  /// Rein informativ fuer die Wartungsseite ("voraussichtlich bis ..."). Es
-  /// schaltet sich nichts automatisch wieder ein.
+  /// Rein informativ. Es schaltet sich nichts automatisch wieder ein.
   until DateTime?
 
   updatedAt   DateTime @updatedAt

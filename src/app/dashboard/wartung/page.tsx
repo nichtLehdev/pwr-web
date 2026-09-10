@@ -7,7 +7,6 @@ import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
 
-/** Datum aus der Datenbank in den Wert für <input type="datetime-local">. */
 function toLocalInput(value: Date | null): string {
   if (!value) return "";
   const offset = value.getTimezoneOffset() * 60_000;
@@ -22,12 +21,7 @@ export default function MaintenanceDashboardPage() {
   const utils = api.useUtils();
   const state = api.maintenance.get.useQuery();
 
-  /**
-   * Entwurf und Serverwert getrennt halten, statt den Serverwert per Effekt in
-   * den State zu spiegeln: `null` heißt "noch nichts eingetippt", dann gilt
-   * der Wert aus der Abfrage. Nach dem Speichern wird der Entwurf verworfen,
-   * und das Formular zeigt wieder, was tatsächlich gespeichert ist.
-   */
+  // `null` heißt "noch nichts eingetippt" — dann gilt der Wert aus der Abfrage.
   const [messageDraft, setMessageDraft] = useState<string | null>(null);
   const [untilDraft, setUntilDraft] = useState<string | null>(null);
 
