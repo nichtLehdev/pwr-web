@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { eventCategoryLabel } from "@/lib/termine-labels";
 import {
   AlertTriangle,
   Users,
@@ -63,7 +63,7 @@ export default function EventCard({
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {capitalizeFirstLetter(category)}
+                {eventCategoryLabel(category)}
               </span>
               {openToParticipants && (
                 <span className="inline-flex items-center gap-1 rounded-full border-2 border-green-300 bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">

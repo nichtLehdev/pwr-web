@@ -6,7 +6,7 @@ import {
 } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import { api } from "@/trpc/react";
-import { capitalizeFirstLetter } from "@/lib/utils";
+import { courseTypeLabel } from "@/lib/termine-labels";
 import { getDistrictColor } from "@/lib/district-color";
 import CourseCardSkeleton from "./course-card-skeleton";
 import { isExternalCourse } from "@/lib/course-external";
@@ -79,7 +79,7 @@ export default function CourseCard({
                 className="rounded-full px-3 py-1 text-xs font-semibold text-white"
                 style={{ backgroundColor: districtColor }}
               >
-                {capitalizeFirstLetter(courseType)}
+                {courseTypeLabel(courseType)}
               </span>
             </div>
 

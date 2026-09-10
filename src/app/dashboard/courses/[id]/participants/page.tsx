@@ -1,11 +1,11 @@
 "use client";
 import { Select } from "@/app/_components/ui";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
@@ -21,11 +21,16 @@ import {
   DownloadIcon,
   PencilIcon,
   PlusIcon,
-  ReceiptTextIcon,
   MailIcon,
   SearchIcon,
 } from "lucide-react";
 import { FileIcon, UserIcon } from "lucide-react";
+import { CourseInvoicesButton } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import {
   registrationOpenAmount,
@@ -35,6 +40,17 @@ import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
+
+type CourseRegistrationRow =
+  RouterOutputs["courses"]["getRegistrations"]["registrations"][number];
+
+/** Eine Tabellenzeile der Teilnehmer-Ansicht: Person plus ihre Anmeldung. */
+type ParticipantRow = {
+  participant: CourseRegistrationRow["participants"][number];
+  registration: CourseRegistrationRow;
+};
+
+const participantColumn = createDataTableColumnHelper<ParticipantRow>();
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -270,6 +286,191 @@ export default function CourseParticipantsPage() {
     }
   }, [permissionsLoading, hasDashboardAccess, router]);
 
+  const filteredRegistrations = useMemo(
+    () =>
+      registrationsData?.registrations.filter((registration) => {
+        if (statusFilter === "ACTIVE") {
+          if (
+            registration.registrationStatus === RegistrationStatus.CANCELLED
+          ) {
+            return false;
+          }
+        } else if (
+          statusFilter !== "ALL" &&
+          registration.registrationStatus !== statusFilter
+        ) {
+          return false;
+        }
+
+        if (paymentFilter !== "ALL") {
+          const state = registrationPaymentState(registration.invoices);
+          const matches =
+            paymentFilter === "PAID"
+              ? state === "PAID"
+              : paymentFilter === "NONE"
+                ? state === "NOT_APPLICABLE"
+                : state === "OPEN" || state === "PARTIAL";
+          if (!matches) return false;
+        }
+
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const registrantMatch =
+            registration.registrantFirstName.toLowerCase().includes(query) ||
+            registration.registrantLastName.toLowerCase().includes(query) ||
+            registration.registrantEmail.toLowerCase().includes(query);
+          const participantMatch = registration.participants.some(
+            (p) =>
+              p.firstName.toLowerCase().includes(query) ||
+              p.lastName.toLowerCase().includes(query) ||
+              p.city?.toLowerCase().includes(query) ||
+              p.instrument?.toLowerCase().includes(query),
+          );
+          const invoiceMatch =
+            registration.invoiceId?.toLowerCase().includes(query) ?? false;
+          return registrantMatch || participantMatch || invoiceMatch;
+        }
+        return true;
+      }) ?? [],
+    [registrationsData, statusFilter, paymentFilter, searchQuery],
+  );
+
+  /**
+   * Die Teilnehmer-Ansicht zeigt eine Zeile je Teilnehmer:in — die Anmeldung
+   * bleibt an der Zeile hängen, damit Status, Anmelder:in und der Link zur
+   * Anmeldung als eigene Spalten sortierbar und filterbar sind.
+   */
+  const participantRows = useMemo<ParticipantRow[]>(
+    () =>
+      filteredRegistrations.flatMap((registration) =>
+        registration.participants.map((participant) => ({
+          participant,
+          registration,
+        })),
+      ),
+    [filteredRegistrations],
+  );
+
+  const participantColumns = useMemo<DataTableColumn<ParticipantRow>[]>(() => {
+    const base = [
+      participantColumn.accessor(
+        ({ participant }) =>
+          `${participant.firstName} ${participant.lastName}`.trim(),
+        {
+          id: "name",
+          header: "Name",
+          meta: {
+            alwaysVisible: true,
+            cellClassName: "font-medium whitespace-nowrap",
+          },
+          cell: ({ row }) => (
+            <Link
+              href={`/dashboard/courses/${courseId}/participants/${row.original.registration.id}`}
+              className="hover:text-primary dark:text-dark-text text-gray-900 transition-colors"
+              title="Zur Anmeldung"
+            >
+              {row.original.participant.firstName}{" "}
+              {row.original.participant.lastName}
+            </Link>
+          ),
+        },
+      ),
+      participantColumn.accessor(
+        ({ participant }) => formatBirthYear(participant.birthDate),
+        {
+          id: "birthYear",
+          header: "Geburtsjahr",
+          meta: { filterVariant: "set", cellClassName: "whitespace-nowrap" },
+        },
+      ),
+      participantColumn.accessor(({ participant }) => participant.city ?? "", {
+        id: "city",
+        header: "Ort",
+        meta: { filterVariant: "set", cellClassName: "whitespace-nowrap" },
+        cell: ({ getValue }) => getValue() || "–",
+      }),
+      participantColumn.accessor(
+        ({ participant }) => participant.instrument ?? "",
+        {
+          id: "instrument",
+          header: "Instrument",
+          meta: { filterVariant: "set", cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) => getValue() || "–",
+        },
+      ),
+      participantColumn.accessor(
+        ({ participant }) =>
+          participantPriceOptionLabel(
+            participant,
+            course?.priceOptions ?? [],
+          ) ?? "",
+        {
+          id: "priceOption",
+          header: "Preiskategorie",
+          meta: { filterVariant: "set", cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) => getValue() || "–",
+        },
+      ),
+    ];
+
+    const customColumns = showCustomFields
+      ? (course?.customFields ?? []).map((field) =>
+          participantColumn.accessor(
+            ({ participant }) =>
+              getCustomFieldValue(participant, field.fieldName),
+            {
+              id: `custom-${field.id}`,
+              header: field.fieldName,
+              meta: {
+                filterVariant: "set",
+                label: field.fieldName,
+                cellClassName: "whitespace-nowrap",
+              },
+            },
+          ),
+        )
+      : [];
+
+    const tail = [
+      participantColumn.accessor(
+        ({ registration }) =>
+          registrationStatusLabels[registration.registrationStatus],
+        {
+          id: "status",
+          header: "Status",
+          meta: { filterVariant: "set" },
+          cell: ({ row, getValue }) => (
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${registrationStatusColors[row.original.registration.registrationStatus]}`}
+            >
+              {getValue()}
+            </span>
+          ),
+        },
+      ),
+      participantColumn.accessor(
+        ({ registration }) =>
+          `${registration.registrantFirstName} ${registration.registrantLastName}`.trim(),
+        {
+          id: "registrant",
+          header: "Anmelder",
+          meta: { cellClassName: "whitespace-nowrap" },
+          cell: ({ row }) => (
+            <Link
+              href={`/dashboard/courses/${courseId}/participants/${row.original.registration.id}`}
+              className="hover:text-primary transition-colors"
+            >
+              {row.original.registration.registrantFirstName}{" "}
+              {row.original.registration.registrantLastName}
+            </Link>
+          ),
+        },
+      ),
+    ];
+
+    return participantColumn.columns([...base, ...customColumns, ...tail]);
+  }, [courseId, course?.priceOptions, course?.customFields, showCustomFields]);
+
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -330,50 +531,6 @@ export default function CourseParticipantsPage() {
       </div>
     );
   }
-
-  const filteredRegistrations =
-    registrationsData?.registrations.filter((registration) => {
-      if (statusFilter === "ACTIVE") {
-        if (registration.registrationStatus === RegistrationStatus.CANCELLED) {
-          return false;
-        }
-      } else if (
-        statusFilter !== "ALL" &&
-        registration.registrationStatus !== statusFilter
-      ) {
-        return false;
-      }
-
-      if (paymentFilter !== "ALL") {
-        const state = registrationPaymentState(registration.invoices);
-        const matches =
-          paymentFilter === "PAID"
-            ? state === "PAID"
-            : paymentFilter === "NONE"
-              ? state === "NOT_APPLICABLE"
-              : state === "OPEN" || state === "PARTIAL";
-        if (!matches) return false;
-      }
-
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const registrantMatch =
-          registration.registrantFirstName.toLowerCase().includes(query) ||
-          registration.registrantLastName.toLowerCase().includes(query) ||
-          registration.registrantEmail.toLowerCase().includes(query);
-        const participantMatch = registration.participants.some(
-          (p) =>
-            p.firstName.toLowerCase().includes(query) ||
-            p.lastName.toLowerCase().includes(query) ||
-            p.city?.toLowerCase().includes(query) ||
-            p.instrument?.toLowerCase().includes(query),
-        );
-        const invoiceMatch =
-          registration.invoiceId?.toLowerCase().includes(query) ?? false;
-        return registrantMatch || participantMatch || invoiceMatch;
-      }
-      return true;
-    }) ?? [];
 
   const selectedRegistrations = filteredRegistrations.filter((r) =>
     selectedIds.has(r.id),
@@ -588,6 +745,7 @@ export default function CourseParticipantsPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <CourseInvoicesButton courseId={courseId} short />
             {/* Add a registration the team received outside the public form */}
             {canManageRegistrations && (
               <Link
@@ -646,24 +804,16 @@ export default function CourseParticipantsPage() {
                     <DownloadIcon className="h-4 w-4 text-yellow-600" />
                     JSON (.json)
                   </button>
-                  {canCreateInvoices && invoiceAccess?.canManage && (
-                    <>
-                      <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
-                      <Link
-                        href={`/dashboard/courses/${courseId}/invoices`}
-                        onClick={() => setShowExportMenu(false)}
-                        className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <ReceiptTextIcon className="h-4 w-4 text-blue-600" />
-                        Rechnungen verwalten
-                      </Link>
-                      {hasPendingDiscounts && (
+                  {canCreateInvoices &&
+                    invoiceAccess?.canManage &&
+                    hasPendingDiscounts && (
+                      <>
+                        <div className="dark:border-dark-border my-1 border-t border-gray-200"></div>
                         <div className="px-4 py-2 text-xs text-yellow-600 dark:text-yellow-400">
                           ⚠️ Es gibt noch ausstehende Geschwisterkindrabatte
                         </div>
-                      )}
-                    </>
-                  )}
+                      </>
+                    )}
                 </div>
               )}
             </div>
@@ -853,114 +1003,20 @@ export default function CourseParticipantsPage() {
               </p>
             </div>
           ) : viewMode === "participants" ? (
-            /* Participants Table View */
-            <div className="overflow-x-auto">
-              <table className="dark:divide-dark-border w-full divide-y divide-gray-200">
-                <thead className="dark:bg-dark-background-secondary bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Geburtsjahr
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Ort
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Instrument
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Preiskategorie
-                    </th>
-                    {/* Custom Fields Headers */}
-                    {showCustomFields &&
-                      course.customFields?.map((field) => (
-                        <th
-                          key={field.id}
-                          className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
-                        >
-                          {field.fieldName}
-                        </th>
-                      ))}
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400">
-                      Anmelder
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="dark:divide-dark-border dark:bg-dark-surface divide-y divide-gray-200 bg-white">
-                  {filteredRegistrations.flatMap((registration) =>
-                    registration.participants.map((participant) => (
-                      <tr
-                        key={participant.id}
-                        className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                      >
-                        <td className="dark:text-dark-text px-6 py-4 text-sm font-medium whitespace-nowrap text-gray-900">
-                          <Link
-                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                            className="hover:text-primary transition-colors"
-                            title="Zur Anmeldung"
-                          >
-                            {participant.firstName} {participant.lastName}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {formatBirthYear(participant.birthDate)}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {participant.city || "–"}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {participant.instrument || "–"}
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {participantPriceOptionLabel(
-                            participant,
-                            course.priceOptions,
-                          ) || "–"}
-                        </td>
-                        {/* Custom Fields Values */}
-                        {showCustomFields &&
-                          course.customFields?.map((field) => (
-                            <td
-                              key={field.id}
-                              className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
-                            >
-                              {getCustomFieldValue(
-                                participant,
-                                field.fieldName,
-                              )}
-                            </td>
-                          ))}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${registrationStatusColors[registration.registrationStatus]}`}
-                          >
-                            {
-                              registrationStatusLabels[
-                                registration.registrationStatus
-                              ]
-                            }
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          <Link
-                            href={`/dashboard/courses/${courseId}/participants/${registration.id}`}
-                            className="hover:text-primary transition-colors"
-                          >
-                            {registration.registrantFirstName}{" "}
-                            {registration.registrantLastName}
-                          </Link>
-                        </td>
-                      </tr>
-                    )),
-                  )}
-                </tbody>
-              </table>
-            </div>
+            /* Participants Table View — eine Zeile je Teilnehmer:in, quer über
+               alle Anmeldungen, mit Sortierung und Spaltenfiltern. Die Suche
+               bleibt oben in der Leiste: sie gilt für beide Ansichten. */
+            <DataTable
+              data={participantRows}
+              columns={participantColumns}
+              getRowId={(row) => row.participant.id}
+              searchable={false}
+              rowNoun={["Teilnehmer:in", "Teilnehmer:innen"]}
+              pageSize={50}
+              pageSizeOptions={[25, 50, 100, 250]}
+              initialSorting={[{ id: "name", desc: false }]}
+              className="p-4 sm:p-6"
+            />
           ) : (
             /* Registrations List View */
             <div>

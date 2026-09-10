@@ -13,6 +13,7 @@ import {
 } from "../helpers/permissions";
 import {
   canBookInvoicePayments,
+  manageableCourseIds,
   resolveInvoiceAccess,
 } from "../helpers/invoice-access";
 import { permissionProcedure } from "../middleware/permissions";
@@ -1190,51 +1191,108 @@ export const invoicesRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().int().min(1).default(1),
-        limit: z.number().int().min(1).max(100).default(25),
-        courseId: z.string().optional(),
-        status: z.nativeEnum(InvoiceStatus).optional(),
-        /** Calendar year of the invoice date. */
-        year: z.number().int().min(2000).max(2200).optional(),
+        limit: z.number().int().min(1).max(250).default(25),
+        /* Set filters: an empty array means "no restriction", like omitting it. */
+        courseId: z.array(z.string()).optional(),
+        status: z.array(z.nativeEnum(InvoiceStatus)).optional(),
+        /** Calendar years of the invoice date. */
+        year: z.array(z.number().int().min(2000).max(2200)).optional(),
         search: z.string().trim().max(200).optional(),
+        sortBy: z
+          .enum([
+            "invoiceNumber",
+            "recipient",
+            "course",
+            "invoiceDate",
+            "totalAmount",
+            "status",
+            "createdAt",
+          ])
+          .default("createdAt"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
       const search = input.search;
+      const courseIds = input.courseId?.length ? input.courseId : undefined;
+      const statuses = input.status?.length ? input.status : undefined;
+      const years = input.year?.length ? input.year : undefined;
+
+      // Year set and free-text search are both `OR` groups; they have to sit in
+      // separate `AND` members or the object spread would drop one of them.
       const where: Prisma.InvoiceWhereInput = {
-        ...(input.courseId ? { courseId: input.courseId } : {}),
-        ...(input.status ? { status: input.status } : {}),
-        ...(input.year
-          ? {
-              invoiceDate: {
-                gte: new Date(Date.UTC(input.year, 0, 1)),
-                lt: new Date(Date.UTC(input.year + 1, 0, 1)),
-              },
-            }
-          : {}),
-        ...(search
-          ? {
-              OR: [
-                { invoiceNumber: { contains: search, mode: "insensitive" } },
+        ...(courseIds ? { courseId: { in: courseIds } } : {}),
+        ...(statuses ? { status: { in: statuses } } : {}),
+        AND: [
+          ...(years
+            ? [
                 {
-                  recipientLastName: { contains: search, mode: "insensitive" },
+                  OR: years.map((year) => ({
+                    invoiceDate: {
+                      gte: new Date(Date.UTC(year, 0, 1)),
+                      lt: new Date(Date.UTC(year + 1, 0, 1)),
+                    },
+                  })),
                 },
+              ]
+            : []),
+          ...(search
+            ? [
                 {
-                  recipientFirstName: { contains: search, mode: "insensitive" },
+                  OR: [
+                    {
+                      invoiceNumber: { contains: search, mode: "insensitive" },
+                    },
+                    {
+                      recipientLastName: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      recipientFirstName: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      recipientCompany: {
+                        contains: search,
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      recipientEmail: { contains: search, mode: "insensitive" },
+                    },
+                    {
+                      course: {
+                        title: { contains: search, mode: "insensitive" },
+                      },
+                    },
+                  ] satisfies Prisma.InvoiceWhereInput[],
                 },
-                { recipientCompany: { contains: search, mode: "insensitive" } },
-                { recipientEmail: { contains: search, mode: "insensitive" } },
-                {
-                  course: { title: { contains: search, mode: "insensitive" } },
-                },
-              ],
-            }
-          : {}),
+              ]
+            : []),
+        ],
       };
+
+      const direction = input.sortOrder;
+      const orderBy: Prisma.InvoiceOrderByWithRelationInput[] =
+        input.sortBy === "recipient"
+          ? [
+              { recipientLastName: direction },
+              { recipientFirstName: direction },
+            ]
+          : input.sortBy === "course"
+            ? [{ course: { title: direction } }]
+            : [{ [input.sortBy]: direction }];
+      // Deterministic tiebreaker, so paging cannot show the same row twice.
+      if (input.sortBy !== "createdAt") orderBy.push({ createdAt: "desc" });
 
       const [invoices, total, totals, openRows] = await Promise.all([
         ctx.db.invoice.findMany({
           where,
-          orderBy: [{ createdAt: "desc" }],
+          orderBy,
           skip: (input.page - 1) * input.limit,
           take: input.limit,
           include: {
@@ -1261,6 +1319,15 @@ export const invoicesRouter = createTRPCRouter({
         }),
       ]);
 
+      // Which of the courses on this page the viewer may actually invoice —
+      // the archive links only those titles into the course's invoice list.
+      const manageable = await manageableCourseIds(
+        ctx.db,
+        ctx.session.user.id,
+        [...new Set(invoices.map((invoice) => invoice.courseId))],
+        ctx.permissionCache,
+      );
+
       return {
         invoices,
         total,
@@ -1272,6 +1339,7 @@ export const invoicesRouter = createTRPCRouter({
           (sum, row) => sum + invoiceOpenAmount(row),
           0,
         ),
+        manageableCourseIds: [...manageable],
       };
     }),
 
@@ -1290,12 +1358,21 @@ export const invoicesRouter = createTRPCRouter({
         orderBy: { startDate: "desc" },
       });
 
+      const manageable = await manageableCourseIds(
+        ctx.db,
+        ctx.session.user.id,
+        courses.map((course) => course.id),
+        ctx.permissionCache,
+      );
+
       const counts = new Map(
         grouped.map((row) => [row.courseId, row._count._all]),
       );
       return courses.map((course) => ({
         ...course,
         invoiceCount: counts.get(course.id) ?? 0,
+        /** Whether the viewer may open this course's invoice list. */
+        canManage: manageable.has(course.id),
       }));
     },
   ),

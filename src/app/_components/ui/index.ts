@@ -20,3 +20,12 @@ export {
   PasswordStrengthMeter,
   type PasswordStrengthMeterProps,
 } from "./password-strength-meter";
+export {
+  DataTable,
+  createDataTableColumnHelper,
+  dataTableFeatures,
+  type DataTableColumn,
+  type DataTableColumnMeta,
+  type DataTableFilterVariant,
+  type DataTableProps,
+} from "./data-table";

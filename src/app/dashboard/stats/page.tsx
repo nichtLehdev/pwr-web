@@ -2,10 +2,15 @@
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { api } from "@/trpc/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import {
   BarChart3,
   FileText,
@@ -33,6 +38,12 @@ const DailyViewsChart = dynamic(
   },
 );
 
+type PathRow = RouterOutputs["stats"]["getStats"]["byPath"][number];
+type SectionRow = RouterOutputs["stats"]["getStats"]["bySection"][number];
+
+const pathColumn = createDataTableColumnHelper<PathRow>();
+const sectionColumn = createDataTableColumnHelper<SectionRow>();
+
 export default function StatsPage() {
   const { data: session, isPending } = useSession();
   const { resolvedTheme } = useTheme();
@@ -52,6 +63,77 @@ export default function StatsPage() {
   );
   const { data: siteStats, isLoading: siteStatsLoading } =
     api.stats.getSiteStats.useQuery(undefined, { enabled: !!canView });
+
+  const pathColumns = useMemo<DataTableColumn<PathRow>[]>(
+    () =>
+      pathColumn.columns([
+        pathColumn.accessor((row) => row.path || "/", {
+          id: "path",
+          header: "Pfad",
+          meta: {
+            alwaysVisible: true,
+            cellClassName: "font-mono whitespace-nowrap",
+          },
+          cell: ({ row }) => (
+            <Link
+              href={row.original.path || "/"}
+              onClick={(e) => {
+                if (!e.ctrlKey && !e.metaKey) {
+                  e.preventDefault();
+                }
+              }}
+              title="Strg+Klick (bzw. Cmd+Klick) zum Öffnen der Seite"
+              className="hover:text-primary dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
+            >
+              {row.original.path || "/"}
+              <ExternalLink
+                className="h-3 w-3 shrink-0 opacity-60"
+                aria-hidden
+              />
+            </Link>
+          ),
+        }),
+        pathColumn.accessor((row) => row.count, {
+          id: "count",
+          header: "Aufrufe",
+          meta: {
+            align: "right",
+            filterVariant: "number",
+            cellClassName: "tabular-nums whitespace-nowrap",
+          },
+          cell: ({ row }) => (
+            <PathCountWithPopup
+              count={row.original.count}
+              path={row.original.path}
+              visitorDetails={stats?.pathVisitorDetails?.[row.original.path]}
+            />
+          ),
+        }),
+      ]),
+    [stats?.pathVisitorDetails],
+  );
+
+  const sectionColumns = useMemo<DataTableColumn<SectionRow>[]>(
+    () =>
+      sectionColumn.columns([
+        sectionColumn.accessor((row) => row.section ?? "", {
+          id: "section",
+          header: "Bereich",
+          meta: { alwaysVisible: true, filterVariant: "set" },
+        }),
+        sectionColumn.accessor((row) => row.count, {
+          id: "count",
+          header: "Aufrufe",
+          meta: {
+            align: "right",
+            filterVariant: "number",
+            cellClassName: "tabular-nums whitespace-nowrap",
+          },
+          cell: ({ getValue }) => getValue().toLocaleString("de-DE"),
+        }),
+      ]),
+    [],
+  );
 
   useEffect(() => {
     if (!isPending && !session && !hasRedirected.current) {
@@ -282,56 +364,15 @@ export default function StatsPage() {
                   </div>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                        Pfad
-                      </th>
-                      <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                        Aufrufe
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="dark:divide-dark-border divide-y divide-gray-200">
-                    {(showAllPaths
-                      ? stats.byPath
-                      : stats.byPath.slice(0, 5)
-                    ).map((row) => (
-                      <tr key={row.path}>
-                        <td className="dark:text-dark-text px-4 py-3 font-mono text-sm whitespace-nowrap text-gray-900 sm:px-6">
-                          <Link
-                            href={row.path || "/"}
-                            onClick={(e) => {
-                              if (!e.ctrlKey && !e.metaKey) {
-                                e.preventDefault();
-                              }
-                            }}
-                            title="Strg+Klick (bzw. Cmd+Klick) zum Öffnen der Seite"
-                            className="hover:text-primary dark:hover:text-primary inline-flex items-center gap-1.5 hover:underline"
-                          >
-                            {row.path || "/"}
-                            <ExternalLink
-                              className="h-3 w-3 shrink-0 opacity-60"
-                              aria-hidden
-                            />
-                          </Link>
-                        </td>
-                        <td className="dark:text-dark-text relative px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
-                          <PathCountWithPopup
-                            count={row.count}
-                            path={row.path}
-                            visitorDetails={
-                              stats.pathVisitorDetails?.[row.path]
-                            }
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                data={showAllPaths ? stats.byPath : stats.byPath.slice(0, 5)}
+                columns={pathColumns}
+                getRowId={(row) => row.path}
+                searchable={false}
+                paginated={false}
+                hideFooter
+                className="[&_table]:min-w-full"
+              />
               {stats.byPath.length > 5 && (
                 <div className="dark:border-dark-border border-t border-gray-200 px-4 py-2 sm:px-6">
                   <button
@@ -358,32 +399,15 @@ export default function StatsPage() {
                   </h2>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-                  <thead>
-                    <tr>
-                      <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                        Bereich
-                      </th>
-                      <th className="dark:bg-dark-surface dark:text-dark-text bg-gray-50 px-4 py-3 text-right text-xs font-medium tracking-wider text-gray-600 uppercase sm:px-6">
-                        Aufrufe
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="dark:divide-dark-border divide-y divide-gray-200">
-                    {stats.bySection.map((row) => (
-                      <tr key={row.section ?? ""}>
-                        <td className="dark:text-dark-text px-4 py-3 text-sm whitespace-nowrap text-gray-900 sm:px-6">
-                          {row.section}
-                        </td>
-                        <td className="dark:text-dark-text px-4 py-3 text-right whitespace-nowrap text-gray-900 tabular-nums sm:px-6">
-                          {row.count.toLocaleString("de-DE")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable
+                data={stats.bySection}
+                columns={sectionColumns}
+                getRowId={(row) => row.section ?? ""}
+                searchable={false}
+                paginated={false}
+                hideFooter
+                className="[&_table]:min-w-full"
+              />
             </div>
           )}
 

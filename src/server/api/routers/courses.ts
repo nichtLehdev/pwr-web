@@ -425,6 +425,10 @@ export const coursesRouter = createTRPCRouter({
           .enum(["startDate", "title", "createdAt", "status"])
           .default("startDate"),
         sortOrder: z.enum(["asc", "desc"]).default("asc"),
+        /** Set-Filter über Bezirke; leer heißt "alle". */
+        bezirkId: z.array(z.string()).optional(),
+        /** Freitext über Titel und Ort, für die Suche der Tabellenansicht. */
+        search: z.string().trim().max(200).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -507,10 +511,36 @@ export const coursesRouter = createTRPCRouter({
               }
             : { endDate: { lt: new Date() } };
 
-      const whereWithSchedule: Prisma.CourseWhereInput =
-        input.schedule === "all"
-          ? (where as Prisma.CourseWhereInput)
-          : { AND: [where as Prisma.CourseWhereInput, scheduleWhere] };
+      const searchWhere: Prisma.CourseWhereInput | null = input.search
+        ? {
+            OR: [
+              { title: { contains: input.search, mode: "insensitive" } },
+              {
+                location: {
+                  city: { contains: input.search, mode: "insensitive" },
+                },
+              },
+              {
+                location: {
+                  name: { contains: input.search, mode: "insensitive" },
+                },
+              },
+            ],
+          }
+        : null;
+
+      const whereWithSchedule: Prisma.CourseWhereInput = {
+        AND: [
+          where as Prisma.CourseWhereInput,
+          ...(input.schedule === "all" ? [] : [scheduleWhere]),
+          // Zusätzlich zum Bezirks-Scope, nicht statt seiner: wer nur den
+          // eigenen Bezirk sehen darf, filtert damit innerhalb dieser Auswahl.
+          ...(input.bezirkId?.length
+            ? [{ bezirkId: { in: input.bezirkId } }]
+            : []),
+          ...(searchWhere ? [searchWhere] : []),
+        ],
+      };
 
       const [coursesRaw, total] = await Promise.all([
         ctx.db.course.findMany({

@@ -23,12 +23,12 @@ import {
   ExternalLink,
   MailIcon,
   PlusIcon,
-  ReceiptTextIcon,
   Trash2,
   UserIcon,
 } from "lucide-react";
 import { isExternalCourse } from "@/lib/course-external";
 import {
+  CourseInvoicesButton,
   DashboardFormMediaSplit,
   DashboardFormSectionLayout,
   DashboardPage,
@@ -144,13 +144,6 @@ export default function CourseDetailPage() {
     );
 
   const { data: canMailRegistrants } = api.courseMail.canSend.useQuery(
-    { courseId },
-    {
-      enabled: !!courseId && !!session?.user && activeTab === "participants",
-    },
-  );
-
-  const { data: invoiceAccess } = api.invoices.canManageCourseInvoices.useQuery(
     { courseId },
     {
       enabled: !!courseId && !!session?.user && activeTab === "participants",
@@ -468,6 +461,7 @@ export default function CourseDetailPage() {
       ]}
       actions={
         <div className="flex flex-wrap gap-2">
+          <CourseInvoicesButton courseId={courseId} />
           {canEdit && (
             <Link
               href={`/dashboard/courses/${courseId}/edit`}
@@ -969,15 +963,6 @@ export default function CourseDetailPage() {
               >
                 <MailIcon className="h-4 w-4" />
                 Anmelder:innen anschreiben
-              </Link>
-            )}
-            {invoiceAccess?.canManage && invoiceAccess.invoicingEnabled && (
-              <Link
-                href={`/dashboard/courses/${courseId}/invoices`}
-                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <ReceiptTextIcon className="h-4 w-4" />
-                Rechnungen
               </Link>
             )}
             {canAddRegistrations && (

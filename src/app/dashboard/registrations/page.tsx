@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import {
@@ -12,7 +17,16 @@ import {
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { registrationPaymentState } from "@/lib/invoice-payment";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
 import { PencilIcon, SearchIcon, UsersIcon } from "lucide-react";
+
+type AdminRegistration =
+  RouterOutputs["registrations"]["getAllAdmin"]["registrations"][number];
 
 const REGISTRATION_STATUS_LABELS: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -27,6 +41,30 @@ const REGISTRATION_STATUS_BADGES: Record<RegistrationStatus, string> = {
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
   CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
 };
+
+const DISCOUNT_OPTIONS = [
+  { value: SiblingDiscountStatus.PENDING, label: "Wartet auf Freigabe" },
+  { value: SiblingDiscountStatus.APPROVED, label: "Genehmigt" },
+  { value: SiblingDiscountStatus.REJECTED, label: "Abgelehnt" },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: "open", label: "Offen" },
+  { value: "paid", label: "Bezahlt" },
+];
+
+/** The columns the server can sort by. */
+const SORTABLE_COLUMNS = {
+  registrant: "registrant",
+  course: "course",
+  totalPrice: "totalPrice",
+  status: "status",
+  createdAt: "createdAt",
+} as const;
+
+type SortableColumn = keyof typeof SORTABLE_COLUMNS;
+
+const column = createDataTableColumnHelper<AdminRegistration>();
 
 function formatPrice(price: number) {
   return new Intl.NumberFormat("de-DE", {
@@ -43,18 +81,15 @@ function formatDate(date: Date | string) {
   }).format(new Date(date));
 }
 
+/** Reads one set filter out of the table's filter state. */
+function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
+  const value = filters.find((filter) => filter.id === id)?.value;
+  return Array.isArray(value) ? (value as string[]) : [];
+}
+
 export default function AdminRegistrationsPage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
 
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [registrationStatus, setRegistrationStatus] = useState<
-    RegistrationStatus | ""
-  >("");
-  /** "" = alle, "paid" = alles beglichen, "open" = mindestens eine offene Rechnung. */
-  const [paymentFilter, setPaymentFilter] = useState<"" | "paid" | "open">("");
-  const [courseId, setCourseId] = useState("");
   const canViewAll = hasPermission(PERMISSIONS.COURSES_MANAGE_REGISTRATIONS);
   /**
    * Wer nur den Geschwisterkindrabatt verwaltet, sieht hier ausschließlich
@@ -70,35 +105,61 @@ export default function AdminRegistrationsPage() {
   // Vorbelegt über ?discount=PENDING — so landet die Freigabe-Kachel des
   // Dashboards direkt auf den offenen Rabatten statt auf der vollen Liste.
   const searchParams = useSearchParams();
-  const [discountFilter, setDiscountFilter] = useState<
-    SiblingDiscountStatus | ""
-  >(() => {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
     const requested = searchParams.get("discount");
     // NONE ist kein Rabattstatus, den man hier prüfen würde, und steht auch im
     // Filter nicht zur Wahl — aus der URL wird er deshalb nicht übernommen.
-    if (
+    const initial =
       requested &&
       requested !== SiblingDiscountStatus.NONE &&
       Object.values(SiblingDiscountStatus).includes(
         requested as SiblingDiscountStatus,
       )
-    ) {
-      return requested as SiblingDiscountStatus;
-    }
-    return discountOnly ? SiblingDiscountStatus.PENDING : "";
+        ? requested
+        : discountOnly
+          ? SiblingDiscountStatus.PENDING
+          : null;
+    return initial ? [{ id: "discount", value: [initial] }] : [];
   });
+
+  // Die Liste geht über alle Kurse und wird serverseitig geblättert; Sortierung,
+  // Spaltenfilter und Suche sind darum Abfrageparameter — sonst würden sie nur
+  // die gerade geladene Seite betreffen.
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "createdAt", desc: true },
+  ]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 25,
+  });
+  const [search, setSearch] = useState("");
+
+  const courseFilter = setFilterValues(columnFilters, "course");
+  const statusFilter = setFilterValues(columnFilters, "status");
+  const paymentFilter = setFilterValues(columnFilters, "payment");
+  const discountFilter = setFilterValues(columnFilters, "discount");
 
   const { data, isLoading } = api.registrations.getAllAdmin.useQuery(
     {
-      page,
-      limit: 25,
+      page: pagination.pageIndex + 1,
+      limit: pagination.pageSize,
       search: search || undefined,
-      registrationStatus: registrationStatus || undefined,
-      paid: paymentFilter === "" ? undefined : paymentFilter === "paid",
-      siblingDiscountStatus: discountFilter || undefined,
-      courseId: courseId || undefined,
+      registrationStatus: statusFilter.length
+        ? (statusFilter as RegistrationStatus[])
+        : undefined,
+      // Nur eindeutig: "offen" und "bezahlt" zugleich ist dasselbe wie kein
+      // Filter, denn der Server kennt hier nur ein Ja/Nein.
+      paid:
+        paymentFilter.length === 1 ? paymentFilter[0] === "paid" : undefined,
+      siblingDiscountStatus: discountFilter.length
+        ? (discountFilter as SiblingDiscountStatus[])
+        : undefined,
+      courseId: courseFilter.length ? courseFilter : undefined,
+      sortBy:
+        SORTABLE_COLUMNS[(sorting[0]?.id ?? "createdAt") as SortableColumn],
+      sortOrder: sorting[0]?.desc === false ? "asc" : "desc",
     },
-    { enabled: canView && (canViewAll || !!discountFilter) },
+    { enabled: canView && (canViewAll || discountFilter.length > 0) },
   );
 
   const { data: courses } =
@@ -106,11 +167,180 @@ export default function AdminRegistrationsPage() {
       enabled: canViewAll,
     });
 
-  const applySearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSearch(searchInput.trim());
-    setPage(1);
-  };
+  const columns = useMemo<DataTableColumn<AdminRegistration>[]>(
+    () =>
+      column.columns([
+        column.accessor(
+          (registration) =>
+            `${registration.registrantFirstName} ${registration.registrantLastName}`,
+          {
+            id: "registrant",
+            header: "Anmelder:in",
+            enableColumnFilter: false,
+            meta: { alwaysVisible: true },
+            cell: ({ row }) => (
+              <>
+                <Link
+                  href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
+                  className="text-primary font-medium hover:underline"
+                >
+                  {row.original.registrantFirstName}{" "}
+                  {row.original.registrantLastName}
+                </Link>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {row.original.registrantEmail}
+                </p>
+              </>
+            ),
+          },
+        ),
+        column.accessor((registration) => registration.course.id, {
+          id: "course",
+          header: "Kurs",
+          meta: {
+            filterVariant: "set",
+            label: "Kurs",
+            filterOptions: (courses ?? []).map((course) => ({
+              value: course.id,
+              label: `${course.title} (${formatDate(course.startDate)})`,
+            })),
+          },
+          cell: ({ row }) => (
+            <>
+              <Link
+                href={`/dashboard/courses/${row.original.course.id}/participants`}
+                className="dark:text-dark-text text-gray-900 hover:underline"
+              >
+                {row.original.course.title}
+              </Link>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDate(row.original.course.startDate)}
+              </p>
+            </>
+          ),
+        }),
+        column.accessor((registration) => registration._count.participants, {
+          id: "participants",
+          header: "Teiln.",
+          enableSorting: false,
+          enableColumnFilter: false,
+          meta: {
+            align: "right",
+            label: "Teilnehmerzahl",
+            cellClassName: "tabular-nums",
+          },
+        }),
+        column.accessor((registration) => registration.registrationStatus, {
+          id: "status",
+          header: "Status",
+          meta: {
+            filterVariant: "set",
+            filterOptions: Object.entries(REGISTRATION_STATUS_LABELS).map(
+              ([value, label]) => ({ value, label }),
+            ),
+          },
+          cell: ({ row }) => (
+            <span
+              className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${REGISTRATION_STATUS_BADGES[row.original.registrationStatus]}`}
+            >
+              {REGISTRATION_STATUS_LABELS[row.original.registrationStatus]}
+            </span>
+          ),
+        }),
+        column.accessor(
+          (registration) =>
+            registrationPaymentState(registration.invoices) === "PAID"
+              ? "paid"
+              : "open",
+          {
+            id: "payment",
+            header: "Zahlung",
+            enableSorting: false,
+            meta: { filterVariant: "set", filterOptions: PAYMENT_OPTIONS },
+            cell: ({ row }) => (
+              <RegistrationPaymentBadge invoices={row.original.invoices} />
+            ),
+          },
+        ),
+        column.accessor((registration) => registration.totalPrice, {
+          id: "totalPrice",
+          header: "Betrag",
+          enableColumnFilter: false,
+          meta: { align: "right", cellClassName: "tabular-nums" },
+          cell: ({ row }) => (
+            <>
+              {formatPrice(row.original.totalPrice)}
+              {row.original.siblingDiscountStatus ===
+                SiblingDiscountStatus.PENDING && (
+                <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-orange-600 dark:text-orange-400">
+                  Rabatt prüfen
+                  {row.original.siblingDiscountAmount
+                    ? ` (${formatPrice(row.original.siblingDiscountAmount)})`
+                    : ""}
+                </span>
+              )}
+            </>
+          ),
+        }),
+        column.accessor((registration) => registration.siblingDiscountStatus, {
+          id: "discount",
+          header: "Rabatt",
+          enableSorting: false,
+          meta: {
+            filterVariant: "set",
+            label: "Geschwisterrabatt",
+            filterOptions: DISCOUNT_OPTIONS,
+          },
+          cell: ({ getValue }) =>
+            DISCOUNT_OPTIONS.find((option) => option.value === getValue())
+              ?.label ?? "–",
+        }),
+        column.accessor((registration) => registration.invoiceId ?? "", {
+          id: "invoice",
+          header: "Rechnung",
+          enableSorting: false,
+          enableColumnFilter: false,
+          cell: ({ getValue }) => getValue() || "–",
+        }),
+        column.accessor((registration) => registration.createdAt, {
+          id: "createdAt",
+          header: "Datum",
+          enableColumnFilter: false,
+          meta: { cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) => formatDate(getValue()),
+        }),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) =>
+            // Wer nur den Rabatt prüft, darf die Anmeldung nicht zwangsläufig
+            // bearbeiten — er wird auf die Anmeldungsseite geschickt, wo
+            // genehmigen und ablehnen sitzen.
+            discountOnly ? (
+              <Link
+                href={`/dashboard/courses/${row.original.course.id}/participants/${row.original.id}`}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <SearchIcon className="h-3.5 w-3.5" />
+                Rabatt prüfen
+              </Link>
+            ) : row.original.registrationStatus !==
+              RegistrationStatus.CANCELLED ? (
+              <Link
+                href={`/registrations/${row.original.id}/edit?returnTo=${encodeURIComponent(
+                  "/dashboard/registrations",
+                )}`}
+                className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <PencilIcon className="h-3.5 w-3.5" />
+                Bearbeiten
+              </Link>
+            ) : null,
+        }),
+      ]),
+    [courses, discountOnly],
+  );
 
   if (!permissionsLoading && !canView) {
     return (
@@ -131,304 +361,46 @@ export default function AdminRegistrationsPage() {
           : "Alle Kursanmeldungen kursübergreifend durchsuchen und filtern"
       }
     >
-      <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <form onSubmit={applySearch} className="flex-1">
-            <label
-              htmlFor="registration-search"
-              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-            >
-              Suche
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="registration-search"
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Name, E-Mail, Teilnehmer oder Rechnungsnummer…"
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="bg-primary hover:bg-primary-dark flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-white"
-              >
-                <SearchIcon className="h-4 w-4" />
-                Suchen
-              </button>
-            </div>
-          </form>
-
-          {!discountOnly && (
-            <div>
-              <label
-                htmlFor="filter-course"
-                className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-              >
-                Kurs
-              </label>
-              <select
-                id="filter-course"
-                value={courseId}
-                onChange={(e) => {
-                  setCourseId(e.target.value);
-                  setPage(1);
-                }}
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-3 py-2 text-sm lg:w-64"
-              >
-                <option value="">Alle Kurse</option>
-                {courses?.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.title} ({formatDate(course.startDate)})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label
-              htmlFor="filter-status"
-              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-            >
-              Status
-            </label>
-            <select
-              id="filter-status"
-              value={registrationStatus}
-              onChange={(e) => {
-                setRegistrationStatus(
-                  e.target.value as RegistrationStatus | "",
-                );
-                setPage(1);
-              }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="">Alle</option>
-              {Object.entries(REGISTRATION_STATUS_LABELS).map(
-                ([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="filter-payment"
-              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-            >
-              Zahlung
-            </label>
-            <select
-              id="filter-payment"
-              value={paymentFilter}
-              onChange={(e) => {
-                setPaymentFilter(e.target.value as "" | "paid" | "open");
-                setPage(1);
-              }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="">Alle</option>
-              <option value="open">Offen</option>
-              <option value="paid">Bezahlt</option>
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="filter-discount"
-              className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
-            >
-              Geschwisterrabatt
-            </label>
-            <select
-              id="filter-discount"
-              value={discountFilter}
-              onChange={(e) => {
-                setDiscountFilter(e.target.value as SiblingDiscountStatus | "");
-                setPage(1);
-              }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            >
-              {!discountOnly && <option value="">Alle</option>}
-              <option value={SiblingDiscountStatus.PENDING}>
-                Wartet auf Freigabe
-              </option>
-              <option value={SiblingDiscountStatus.APPROVED}>Genehmigt</option>
-              <option value={SiblingDiscountStatus.REJECTED}>Abgelehnt</option>
-            </select>
-          </div>
+      {discountOnly && discountFilter.length === 0 && (
+        <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
+          Wähle im Spaltenfilter „Rabatt“ einen Status aus — deine Berechtigung
+          gilt nur für Anmeldungen mit Geschwisterkindrabatt.
         </div>
-      </div>
+      )}
 
-      <div className="dark:bg-dark-surface dark:border-dark-border overflow-hidden rounded-lg border border-gray-200 bg-white">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
-          </div>
-        ) : !data || data.registrations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-16 text-gray-500 dark:text-gray-400">
+      <DataTable
+        data={data?.registrations}
+        columns={columns}
+        getRowId={(registration) => registration.id}
+        isLoading={isLoading}
+        rowNoun={["Anmeldung", "Anmeldungen"]}
+        searchPlaceholder="Name, E-Mail, Teilnehmer oder Rechnungsnummer…"
+        pageSizeOptions={[25, 50, 100, 250]}
+        emptyState={
+          <span className="flex flex-col items-center gap-2 text-gray-500 dark:text-gray-400">
             <UsersIcon className="h-8 w-8" />
-            <p>Keine Anmeldungen gefunden.</p>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-800/60">
-                  <tr>
-                    {[
-                      "Anmelder:in",
-                      "Kurs",
-                      "Teiln.",
-                      "Status",
-                      "Zahlung",
-                      "Betrag",
-                      "Rechnung",
-                      "Datum",
-                      "",
-                    ].map((header, index) => (
-                      <th
-                        key={header || `actions-${index}`}
-                        className="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase dark:text-gray-400"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {data.registrations.map((registration) => (
-                    <tr
-                      key={registration.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                    >
-                      <td className="px-4 py-3 text-sm">
-                        <Link
-                          href={`/dashboard/courses/${registration.course.id}/participants/${registration.id}`}
-                          className="text-primary font-medium hover:underline"
-                        >
-                          {registration.registrantFirstName}{" "}
-                          {registration.registrantLastName}
-                        </Link>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {registration.registrantEmail}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Link
-                          href={`/dashboard/courses/${registration.course.id}/participants`}
-                          className="dark:text-dark-text text-gray-900 hover:underline"
-                        >
-                          {registration.course.title}
-                        </Link>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(registration.course.startDate)}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 tabular-nums dark:text-gray-300">
-                        {registration._count.participants}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${REGISTRATION_STATUS_BADGES[registration.registrationStatus]}`}
-                        >
-                          {
-                            REGISTRATION_STATUS_LABELS[
-                              registration.registrationStatus
-                            ]
-                          }
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <RegistrationPaymentBadge
-                          invoices={registration.invoices}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 tabular-nums dark:text-gray-300">
-                        {formatPrice(registration.totalPrice)}
-                        {registration.siblingDiscountStatus ===
-                          SiblingDiscountStatus.PENDING && (
-                          <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-orange-600 dark:text-orange-400">
-                            Rabatt prüfen
-                            {registration.siblingDiscountAmount
-                              ? ` (${formatPrice(registration.siblingDiscountAmount)})`
-                              : ""}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {registration.invoiceId ?? "–"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(registration.createdAt)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-sm whitespace-nowrap">
-                        {/* Wer nur den Rabatt prüft, darf die Anmeldung nicht
-                            zwangsläufig bearbeiten — er wird auf die
-                            Anmeldungsseite geschickt, wo genehmigen und
-                            ablehnen sitzen. */}
-                        {discountOnly ? (
-                          <Link
-                            href={`/dashboard/courses/${registration.course.id}/participants/${registration.id}`}
-                            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                          >
-                            <SearchIcon className="h-3.5 w-3.5" />
-                            Rabatt prüfen
-                          </Link>
-                        ) : (
-                          registration.registrationStatus !==
-                            RegistrationStatus.CANCELLED && (
-                            <Link
-                              href={`/registrations/${registration.id}/edit?returnTo=${encodeURIComponent(
-                                "/dashboard/registrations",
-                              )}`}
-                              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                              <PencilIcon className="h-3.5 w-3.5" />
-                              Bearbeiten
-                            </Link>
-                          )
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="dark:border-dark-border flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm">
-              <p className="text-gray-600 dark:text-gray-400">
-                {data.total} {data.total === 1 ? "Anmeldung" : "Anmeldungen"}
-              </p>
-              {data.pages > 1 && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page <= 1}
-                    className="dark:border-dark-border rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-                  >
-                    Zurück
-                  </button>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Seite {page} von {data.pages}
-                  </span>
-                  <button
-                    onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-                    disabled={page >= data.pages}
-                    className="dark:border-dark-border rounded-lg border border-gray-300 px-3 py-1.5 disabled:opacity-40"
-                  >
-                    Weiter
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+            Keine Anmeldungen gefunden.
+          </span>
+        }
+        sorting={sorting}
+        onSortingChange={setSorting}
+        manualSorting
+        columnFilters={columnFilters}
+        onColumnFiltersChange={(updater) => {
+          setColumnFilters(updater);
+          setPagination((current) => ({ ...current, pageIndex: 0 }));
+        }}
+        manualFiltering
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPagination((current) => ({ ...current, pageIndex: 0 }));
+        }}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        manualPagination
+        rowCount={data?.total ?? 0}
+      />
     </DashboardPage>
   );
 }

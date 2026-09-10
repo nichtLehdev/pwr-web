@@ -3,8 +3,13 @@
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import {
   Shield,
   Users,
@@ -28,6 +33,10 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 
 type Tab = "roles" | "users";
+
+type ManagedRole = RouterOutputs["permissions"]["getAllRoles"][number];
+
+const roleColumn = createDataTableColumnHelper<ManagedRole>();
 
 export default function PermissionsPage() {
   const { data: session, isPending } = useSession();
@@ -188,13 +197,104 @@ function RolesTab() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-      </div>
-    );
-  }
+  const roleColumns = useMemo<DataTableColumn<ManagedRole>[]>(
+    () =>
+      roleColumn.columns([
+        roleColumn.accessor((role) => role.name, {
+          id: "name",
+          header: "Name",
+          meta: { alwaysVisible: true, cellClassName: "font-medium" },
+          cell: ({ row }) => (
+            <>
+              {row.original.name}
+              {row.original.isSystem && (
+                <span className="ml-2 text-xs text-gray-500">(System)</span>
+              )}
+            </>
+          ),
+        }),
+        roleColumn.accessor((role) => role.description ?? "", {
+          id: "description",
+          header: "Beschreibung",
+          cell: ({ getValue }) => getValue() || "-",
+        }),
+        roleColumn.accessor((role) => (role.isSystem ? "System" : "Eigene"), {
+          id: "kind",
+          header: "Art",
+          meta: { filterVariant: "set", label: "Art" },
+        }),
+        roleColumn.accessor((role) => role.permissions.length, {
+          id: "permissionCount",
+          header: "Berechtigungen",
+          meta: { align: "right", filterVariant: "number" },
+          cell: ({ getValue }) =>
+            `${getValue()} Berechtigung${getValue() === 1 ? "" : "en"}`,
+        }),
+        roleColumn.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => {
+            const role = row.original;
+            if (role.isSystem && isAdminRole(role.name)) {
+              return <span className="text-gray-400">Admin</span>;
+            }
+            if (editingId === role.id) {
+              return (
+                <div className="flex items-center justify-end gap-2">
+                  <button
+                    onClick={handleSave}
+                    className="text-green-600 hover:text-green-900"
+                  >
+                    <Save className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setFormData({
+                        name: "",
+                        description: "",
+                        permissionKeys: [],
+                      });
+                    }}
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            }
+            return (
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => handleEdit(role)}
+                  className="text-blue-600 hover:text-blue-900"
+                  title={
+                    role.isSystem ? "Berechtigungen bearbeiten" : "Bearbeiten"
+                  }
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                {!role.isSystem && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Rolle "${role.name}" wirklich löschen?`)) {
+                        deleteMutation.mutate({ id: role.id });
+                      }
+                    }}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            );
+          },
+        }),
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editingId],
+  );
 
   return (
     <div className="space-y-6">
@@ -215,113 +315,23 @@ function RolesTab() {
         </button>
       </div>
 
-      {roles && roles.length > 0 ? (
-        <div className="dark:bg-dark-surface dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200 bg-white shadow">
-          <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-            <thead className="dark:bg-dark-surface bg-gray-50">
-              <tr>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                  Name
-                </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                  Beschreibung
-                </th>
-                <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                  Berechtigungen
-                </th>
-                <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                  Aktionen
-                </th>
-              </tr>
-            </thead>
-            <tbody className="dark:bg-dark-surface dark:divide-dark-border divide-y divide-gray-200 bg-white">
-              {roles.map((role) => (
-                <tr key={role.id}>
-                  <td className="dark:text-dark-text px-6 py-4 text-sm font-medium text-gray-900">
-                    {role.name}
-                    {role.isSystem && (
-                      <span className="ml-2 text-xs text-gray-500">
-                        (System)
-                      </span>
-                    )}
-                  </td>
-                  <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
-                    {role.description || "-"}
-                  </td>
-                  <td className="dark:text-dark-text px-6 py-4 text-sm text-gray-500">
-                    {role.permissions.length} Berechtigung
-                    {role.permissions.length !== 1 ? "en" : ""}
-                  </td>
-                  <td className="dark:text-dark-text px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                    {role.isSystem && isAdminRole(role.name) ? (
-                      <span className="text-gray-400">Admin</span>
-                    ) : editingId === role.id ? (
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={handleSave}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          <Save className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingId(null);
-                            setFormData({
-                              name: "",
-                              description: "",
-                              permissionKeys: [],
-                            });
-                          }}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleEdit(role)}
-                          className="text-blue-600 hover:text-blue-900"
-                          title={
-                            role.isSystem
-                              ? "Berechtigungen bearbeiten"
-                              : "Bearbeiten"
-                          }
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        {!role.isSystem && (
-                          <button
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Rolle "${role.name}" wirklich löschen?`,
-                                )
-                              ) {
-                                deleteMutation.mutate({ id: role.id });
-                              }
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-8 text-center">
-          <Shield className="mx-auto h-12 w-12 text-gray-400" />
-          <p className="dark:text-dark-muted mt-4 text-gray-500">
-            Noch keine Rollen vorhanden
-          </p>
-        </div>
-      )}
+      <DataTable
+        data={roles}
+        columns={roleColumns}
+        getRowId={(role) => role.id}
+        isLoading={isLoading}
+        rowNoun={["Rolle", "Rollen"]}
+        searchPlaceholder="Rolle oder Beschreibung suchen…"
+        initialSorting={[{ id: "name", desc: false }]}
+        emptyState={
+          <>
+            <Shield className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="dark:text-dark-muted mt-4 text-gray-500">
+              Noch keine Rollen vorhanden
+            </p>
+          </>
+        }
+      />
 
       {/* Create/Edit Modal */}
       {(showCreateModal || editingId) && (
