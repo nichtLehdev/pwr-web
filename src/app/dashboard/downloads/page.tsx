@@ -3,11 +3,16 @@ import { Select } from "@/app/_components/ui";
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { api } from "@/trpc/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ContentStatus,
@@ -24,6 +29,11 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 
 // Dashboard access is now controlled by permissions
+
+type DashboardDownload =
+  RouterOutputs["materials"]["getDownloads"]["downloads"][number];
+
+const column = createDataTableColumnHelper<DashboardDownload>();
 
 const statusLabels: Record<ContentStatus, string> = {
   DRAFT: "Entwurf",
@@ -79,14 +89,6 @@ export default function DashboardDownloadsPage() {
   const toast = useToast();
   const hasRedirected = useRef(false);
 
-  const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<DownloadCategory | "">(
-    "",
-  );
-  const [statusFilter, setStatusFilter] = useState<ContentStatus | "">("");
-  const [page, setPage] = useState(1);
-  const limit = 20;
-
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState<string | null>(null);
@@ -131,14 +133,10 @@ export default function DashboardDownloadsPage() {
 
   const utils = api.useUtils();
 
+  // Die ganze Liste auf einmal: Kategorie, Status und Suche sind jetzt Filter
+  // der Tabelle und müssen über alle Zeilen greifen, nicht nur über eine Seite.
   const { data, isLoading } = api.materials.getDownloads.useQuery(
-    {
-      page,
-      limit,
-      category: categoryFilter || undefined,
-      search: search || undefined,
-      includeAll: true,
-    },
+    { page: 1, limit: 100, includeAll: true },
     { enabled: !!profile },
   );
 
@@ -354,6 +352,133 @@ export default function DashboardDownloadsPage() {
     });
   };
 
+  const isReviewer = hasApprovePermission;
+  const canDelete = hasDeletePermission;
+
+  const columns = useMemo<DataTableColumn<DashboardDownload>[]>(
+    () =>
+      column.columns([
+        column.accessor((download) => download.title, {
+          id: "title",
+          header: "Datei",
+          meta: { alwaysVisible: true },
+          cell: ({ row }) => {
+            const download = row.original;
+            return (
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">
+                  {fileTypeIcons[download.fileType]}
+                </span>
+                <div className="min-w-0">
+                  <p className="dark:text-dark-text font-medium text-gray-900">
+                    {download.title}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {fileTypeLabels[download.fileType]}
+                    {download.fileSize &&
+                      ` • ${formatFileSize(download.fileSize)}`}
+                  </p>
+                </div>
+              </div>
+            );
+          },
+        }),
+        column.accessor((download) => categoryLabels[download.category], {
+          id: "category",
+          header: "Kategorie",
+          meta: { filterVariant: "set" },
+        }),
+        column.accessor((download) => fileTypeLabels[download.fileType], {
+          id: "fileType",
+          header: "Typ",
+          meta: { filterVariant: "set" },
+        }),
+        column.accessor((download) => download.fileSize ?? 0, {
+          id: "fileSize",
+          header: "Größe",
+          meta: { align: "right", filterVariant: "number", label: "Größe" },
+          cell: ({ getValue }) =>
+            getValue() ? formatFileSize(getValue()) : "—",
+        }),
+        column.accessor((download) => statusLabels[download.status], {
+          id: "status",
+          header: "Status",
+          meta: { filterVariant: "set" },
+          cell: ({ row, getValue }) => (
+            <span
+              className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[row.original.status]}`}
+            >
+              {getValue()}
+            </span>
+          ),
+        }),
+        column.accessor(
+          (download) => download.uploadedBy?.displayName ?? "Unbekannt",
+          {
+            id: "uploadedBy",
+            header: "Hochgeladen von",
+            meta: { filterVariant: "set" },
+          },
+        ),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => {
+            const download = row.original;
+            return (
+              <div className="flex items-center justify-end gap-2">
+                <a
+                  href={download.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  title="Herunterladen"
+                >
+                  <DownloadIcon className="h-5 w-5" />
+                </a>
+                {isReviewer && (
+                  <button
+                    onClick={() => openEditModal(download)}
+                    className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    title="Bearbeiten"
+                  >
+                    <EditIcon className="h-5 w-5" />
+                  </button>
+                )}
+                {isReviewer && download.status === ContentStatus.PENDING && (
+                  <button
+                    onClick={() =>
+                      reviewMutation.mutate({
+                        id: download.id,
+                        status: ContentStatus.APPROVED,
+                      })
+                    }
+                    disabled={reviewMutation.isPending}
+                    className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                    title="Freigeben"
+                  >
+                    <CheckIcon className="h-5 w-5" />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => setShowDeleteModal(download.id)}
+                    className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Löschen"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            );
+          },
+        }),
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isReviewer, canDelete, reviewMutation.isPending],
+  );
+
   if (isPending || profileLoading || permissionsLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -365,13 +490,6 @@ export default function DashboardDownloadsPage() {
   if (!session || !profile || !hasDashboardAccess) {
     return null;
   }
-
-  const isReviewer = hasApprovePermission;
-  const canDelete = hasDeletePermission;
-
-  const filteredDownloads = statusFilter
-    ? data?.downloads.filter((d) => d.status === statusFilter)
-    : data?.downloads;
 
   return (
     <>
@@ -392,220 +510,23 @@ export default function DashboardDownloadsPage() {
           </button>
         }
       >
-        {/* Filters */}
-        <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            {/* Search */}
-            <div className="flex-1">
-              <input
-                type="text"
-                placeholder="Suchen..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <Select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value as DownloadCategory | "");
-                setPage(1);
-              }}
-              className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-            >
-              <option value="">Alle Kategorien</option>
-              {Object.entries(categoryLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-
-            {/* Status Filter */}
-            {isReviewer && (
-              <Select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as ContentStatus | "");
-                  setPage(1);
-                }}
-                className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
-              >
-                <option value="">Alle Status</option>
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </div>
-        </div>
-
-        {/* Downloads List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-          </div>
-        ) : !filteredDownloads?.length ? (
-          <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-            <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="dark:text-dark-muted mt-4 text-gray-500">
-              Keine Downloads gefunden
-            </p>
-          </div>
-        ) : (
-          <div className="dark:bg-dark-surface dark:border-dark-border overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-            <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-              <thead className="dark:bg-dark-background-secondary bg-gray-50">
-                <tr>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Datei
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Kategorie
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Status
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Hochgeladen von
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="dark:divide-dark-border divide-y divide-gray-200">
-                {filteredDownloads.map((download) => (
-                  <tr
-                    key={download.id}
-                    className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">
-                          {fileTypeIcons[download.fileType]}
-                        </span>
-                        <div>
-                          <p className="dark:text-dark-text font-medium text-gray-900">
-                            {download.title}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {fileTypeLabels[download.fileType]}
-                            {download.fileSize &&
-                              ` • ${formatFileSize(download.fileSize)}`}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="dark:text-dark-muted text-sm text-gray-600">
-                        {categoryLabels[download.category]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${statusColors[download.status]}`}
-                      >
-                        {statusLabels[download.status]}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="dark:text-dark-muted text-sm text-gray-600">
-                        {download.uploadedBy?.displayName ?? "Unbekannt"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* Download link */}
-                        <a
-                          href={download.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                          title="Herunterladen"
-                        >
-                          <DownloadIcon className="h-5 w-5" />
-                        </a>
-
-                        {/* Edit button for reviewers */}
-                        {isReviewer && (
-                          <button
-                            onClick={() => openEditModal(download)}
-                            className="dark:hover:bg-dark-border rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                            title="Bearbeiten"
-                          >
-                            <EditIcon className="h-5 w-5" />
-                          </button>
-                        )}
-
-                        {/* Approve button for reviewers */}
-                        {isReviewer &&
-                          download.status === ContentStatus.PENDING && (
-                            <button
-                              onClick={() =>
-                                reviewMutation.mutate({
-                                  id: download.id,
-                                  status: ContentStatus.APPROVED,
-                                })
-                              }
-                              disabled={reviewMutation.isPending}
-                              className="rounded p-1 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
-                              title="Freigeben"
-                            >
-                              <CheckIcon className="h-5 w-5" />
-                            </button>
-                          )}
-
-                        {/* Delete button */}
-                        {canDelete && (
-                          <button
-                            onClick={() => setShowDeleteModal(download.id)}
-                            className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            title="Löschen"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {data && data.pages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
-              Seite {page} von {data.pages} ({data.total} Downloads)
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-border rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:text-gray-300"
-              >
-                Zurück
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-                disabled={page === data.pages}
-                className="dark:bg-dark-surface dark:border-dark-border dark:hover:bg-dark-border rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:text-gray-300"
-              >
-                Weiter
-              </button>
-            </div>
-          </div>
-        )}
+        <DataTable
+          data={data?.downloads}
+          columns={columns}
+          getRowId={(download) => download.id}
+          isLoading={isLoading}
+          rowNoun={["Download", "Downloads"]}
+          searchPlaceholder="Titel oder Beschreibung suchen…"
+          initialSorting={[{ id: "title", desc: false }]}
+          emptyState={
+            <>
+              <SearchIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <p className="dark:text-dark-muted mt-4 text-gray-500">
+                Keine Downloads gefunden
+              </p>
+            </>
+          }
+        />
       </DashboardPage>
 
       {/* Upload Modal */}

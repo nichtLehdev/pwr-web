@@ -1,19 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { api } from "@/trpc/react";
+import { useMemo, useState } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth";
+import { CheckCircle2, XCircle, Users } from "lucide-react";
 import {
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  CheckCircle2,
-  XCircle,
-  Filter,
-  Users,
-  Search,
-} from "lucide-react";
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
+import type { PaginationState, SortingState } from "@tanstack/react-table";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -21,44 +18,98 @@ import {
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
 
-type SortField = "displayName" | "email" | "createdAt";
+type ListedUser = RouterOutputs["users"]["list"]["users"][number];
 
-function SortIcon({
-  field,
-  sortBy,
-  sortOrder,
-}: {
-  field: SortField;
-  sortBy: SortField;
-  sortOrder: "asc" | "desc";
-}) {
-  if (sortBy !== field) {
-    return <ArrowUpDown className="ml-1 h-4 w-4 text-gray-400" />;
+/** The columns the server can sort by. */
+const SORTABLE_COLUMNS = {
+  displayName: "displayName",
+  emailVerified: "emailVerified",
+  createdAt: "createdAt",
+  lastLoginAt: "lastLoginAt",
+} as const;
+
+type SortableColumn = keyof typeof SORTABLE_COLUMNS;
+
+const column = createDataTableColumnHelper<ListedUser>();
+
+/** Die Gremien, in denen die Person sitzt — mit ihrer Farbgebung. */
+function membershipBadges(
+  user: ListedUser,
+): { label: string; className: string }[] {
+  const badges: { label: string; className: string }[] = [];
+  if (user.posaunenwart?.roleType === "LPW") {
+    badges.push({
+      label: "LPW",
+      className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    });
   }
-  return sortOrder === "asc" ? (
-    <ArrowUp className="text-primary ml-1 h-4 w-4" />
-  ) : (
-    <ArrowDown className="text-primary ml-1 h-4 w-4" />
-  );
+  if (user.posaunenwart?.roleType === "RPW") {
+    badges.push({
+      label: "RPW",
+      className:
+        "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    });
+  }
+  if (user.teamMember) {
+    badges.push({
+      label: "Team",
+      className:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    });
+  }
+  if (user.vorstandMember) {
+    badges.push({
+      label: "Vorstand",
+      className:
+        "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+    });
+  }
+  if (user.posaunenratMember) {
+    badges.push({
+      label: "Posaunenrat",
+      className:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    });
+  }
+  if (user.foerdervereinMember) {
+    badges.push({
+      label: "Förderverein",
+      className:
+        "bg-foerderverein-light/40 text-foerderverein-dark dark:bg-foerderverein/20 dark:text-foerderverein-light",
+    });
+  }
+  return badges;
+}
+
+/** Dieselben Gremien als Text — die Suchgrundlage der Spalte. */
+function membershipLabels(user: ListedUser): string {
+  return membershipBadges(user)
+    .map((badge) => badge.label)
+    .join(", ");
 }
 
 export default function DashboardUsersList() {
   const { data: session } = useSession();
-  const [sortBy, setSortBy] = useState<SortField>("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  // Die Benutzerliste wächst unbegrenzt und wird deshalb serverseitig
+  // geblättert; Sortierung und Suche sind darum Abfrageparameter — sonst würden
+  // sie nur die gerade geladene Seite betreffen.
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "createdAt", desc: true },
+  ]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 20,
+  });
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
-  const limit = 20;
 
   const utils = api.useUtils();
   const { data, isLoading, error } = api.users.list.useQuery({
-    page,
-    limit,
+    page: pagination.pageIndex + 1,
+    limit: pagination.pageSize,
     search: search || undefined,
-    sortBy,
-    sortOrder,
+    sortBy: SORTABLE_COLUMNS[(sorting[0]?.id ?? "createdAt") as SortableColumn],
+    sortOrder: sorting[0]?.desc === false ? "asc" : "desc",
   });
 
   const { data: stats } = api.users.getStatistics.useQuery();
@@ -74,15 +125,131 @@ export default function DashboardUsersList() {
     },
   });
 
-  const handleSort = (field: SortField) => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(field);
-      setSortOrder("asc");
-    }
-    setPage(1);
-  };
+  const columns = useMemo<DataTableColumn<ListedUser>[]>(
+    () =>
+      column.columns([
+        column.accessor((user) => user.displayName ?? "Unbenannt", {
+          id: "displayName",
+          header: "Benutzer",
+          enableColumnFilter: false,
+          meta: { alwaysVisible: true },
+          cell: ({ row }) => {
+            const user = row.original;
+            return (
+              <div className="flex items-center gap-3">
+                <div className="dark:bg-dark-border h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200">
+                  {user.profileImage?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={user.profileImage.url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="dark:text-dark-muted flex h-full w-full items-center justify-center text-sm font-medium text-gray-500">
+                      {(user.displayName ?? user.email)?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <Link
+                    href={`/dashboard/users/${user.id}`}
+                    className="hover:text-primary dark:text-dark-text dark:hover:text-primary font-medium text-gray-900"
+                  >
+                    {user.displayName ?? "Unbenannt"}
+                  </Link>
+                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                    {user.email}
+                  </p>
+                </div>
+              </div>
+            );
+          },
+        }),
+        column.accessor(membershipLabels, {
+          id: "memberships",
+          header: "Mitgliedschaften",
+          enableSorting: false,
+          enableColumnFilter: false,
+          cell: ({ row }) => {
+            const badges = membershipBadges(row.original);
+            if (badges.length === 0) {
+              return (
+                <span className="dark:text-dark-muted text-sm text-gray-400">
+                  –
+                </span>
+              );
+            }
+            return (
+              <div className="flex flex-wrap gap-1">
+                {badges.map((badge) => (
+                  <span
+                    key={badge.label}
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+                  >
+                    {badge.label}
+                  </span>
+                ))}
+              </div>
+            );
+          },
+        }),
+        column.accessor((user) => user.emailVerified, {
+          id: "emailVerified",
+          header: "E-Mail bestätigt",
+          enableColumnFilter: false,
+          meta: { align: "center", label: "E-Mail bestätigt" },
+          cell: ({ getValue }) =>
+            getValue() ? (
+              <CheckCircle2 className="mx-auto h-5 w-5 text-green-500 dark:text-green-400" />
+            ) : (
+              <XCircle className="mx-auto h-5 w-5 text-amber-500 dark:text-amber-400" />
+            ),
+        }),
+        column.accessor((user) => user.createdAt, {
+          id: "createdAt",
+          header: "Erstellt",
+          enableColumnFilter: false,
+          meta: { cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) =>
+            new Date(getValue()).toLocaleDateString("de-DE"),
+        }),
+        column.accessor((user) => user.lastLoginAt, {
+          id: "lastLoginAt",
+          header: "Letzter Login",
+          enableColumnFilter: false,
+          meta: { cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) => {
+            const value = getValue();
+            return value ? new Date(value).toLocaleDateString("de-DE") : "–";
+          },
+        }),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => (
+            <div className="flex items-center justify-end gap-3">
+              <Link
+                href={`/dashboard/users/${row.original.id}/edit`}
+                className="text-primary hover:text-primary/80 text-sm font-medium"
+              >
+                Bearbeiten
+              </Link>
+              {session?.user.id !== row.original.id && (
+                <button
+                  onClick={() => setShowDeleteModal(row.original.id)}
+                  className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  Löschen
+                </button>
+              )}
+            </div>
+          ),
+        }),
+      ]),
+    [session?.user],
+  );
 
   if (error) {
     return (
@@ -122,246 +289,40 @@ export default function DashboardUsersList() {
         </div>
       )}
 
-      {/* Search & Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Search */}
-        <div className="relative flex-1 sm:max-w-md">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Suche nach Name, E-Mail..."
-            className="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-surface dark:text-dark-text block w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-gray-900 focus:ring-1 focus:outline-none"
-          />
-          <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        {/* Filter Toggle (Mobile) */}
-        <button
-          onClick={() => setFiltersOpen(!filtersOpen)}
-          className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:hidden"
-        >
-          <Filter className="h-5 w-5" />
-          Filter
-        </button>
-      </div>
-
-      {/* Users Table */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-        </div>
-      ) : data?.users.length === 0 ? (
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <Users className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
-            Keine Benutzer gefunden
-          </h3>
-          <p className="dark:text-dark-muted mt-2 text-gray-500">
-            {search
-              ? "Versuche eine andere Suche."
-              : "Es gibt noch keine Benutzer."}
-          </p>
-        </div>
-      ) : (
-        <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <div className="overflow-x-auto">
-            <table className="dark:divide-dark-border min-w-full divide-y divide-gray-200">
-              <thead className="dark:bg-dark-background-secondary bg-gray-50">
-                <tr>
-                  <th
-                    className="dark:text-dark-muted dark:hover:text-dark-text cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:text-gray-700"
-                    onClick={() => handleSort("displayName")}
-                  >
-                    <div className="flex items-center">
-                      Benutzer
-                      <SortIcon
-                        field="displayName"
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                      />
-                    </div>
-                  </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase sm:table-cell">
-                    Mitgliedschaften
-                  </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-center text-xs font-medium tracking-wider text-gray-500 uppercase md:table-cell">
-                    E-Mail bestätigt
-                  </th>
-                  <th
-                    className="dark:text-dark-muted dark:hover:text-dark-text hidden cursor-pointer px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase hover:text-gray-700 md:table-cell"
-                    onClick={() => handleSort("createdAt")}
-                  >
-                    <div className="flex items-center">
-                      Erstellt
-                      <SortIcon
-                        field="createdAt"
-                        sortBy={sortBy}
-                        sortOrder={sortOrder}
-                      />
-                    </div>
-                  </th>
-                  <th className="dark:text-dark-muted hidden px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase lg:table-cell">
-                    Letzter Login
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="dark:divide-dark-border divide-y divide-gray-200">
-                {data?.users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div className="dark:bg-dark-border h-10 w-10 shrink-0 overflow-hidden rounded-full bg-gray-200">
-                          {user.profileImage?.url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={user.profileImage.url}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="dark:text-dark-muted flex h-full w-full items-center justify-center text-sm font-medium text-gray-500">
-                              {(user.displayName ??
-                                user.email)?.[0]?.toUpperCase()}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <Link
-                            href={`/dashboard/users/${user.id}`}
-                            className="hover:text-primary dark:text-dark-text dark:hover:text-primary font-medium text-gray-900"
-                          >
-                            {user.displayName ?? "Unbenannt"}
-                          </Link>
-                          <p className="dark:text-dark-muted text-sm text-gray-500">
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap sm:table-cell">
-                      <div className="flex flex-wrap gap-1">
-                        {user.posaunenwart?.roleType === "LPW" && (
-                          <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                            LPW
-                          </span>
-                        )}
-                        {user.posaunenwart?.roleType === "RPW" && (
-                          <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-                            RPW
-                          </span>
-                        )}
-                        {user.teamMember && (
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                            Team
-                          </span>
-                        )}
-                        {user.vorstandMember && (
-                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
-                            Vorstand
-                          </span>
-                        )}
-                        {user.posaunenratMember && (
-                          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            Posaunenrat
-                          </span>
-                        )}
-                        {user.foerdervereinMember && (
-                          <span className="bg-foerderverein-light/40 text-foerderverein-dark dark:bg-foerderverein/20 dark:text-foerderverein-light rounded-full px-2 py-0.5 text-xs font-medium">
-                            Förderverein
-                          </span>
-                        )}
-                        {!user.teamMember &&
-                          !user.vorstandMember &&
-                          !user.posaunenratMember &&
-                          !user.foerdervereinMember &&
-                          !user.posaunenwart && (
-                            <span className="dark:text-dark-muted text-sm text-gray-400">
-                              –
-                            </span>
-                          )}
-                      </div>
-                    </td>
-                    <td className="hidden px-6 py-4 text-center whitespace-nowrap md:table-cell">
-                      {user.emailVerified ? (
-                        <CheckCircle2 className="mx-auto h-5 w-5 text-green-500 dark:text-green-400" />
-                      ) : (
-                        <XCircle className="mx-auto h-5 w-5 text-amber-500 dark:text-amber-400" />
-                      )}
-                    </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap md:table-cell">
-                      <span className="dark:text-dark-muted text-sm text-gray-500">
-                        {new Date(user.createdAt).toLocaleDateString("de-DE")}
-                      </span>
-                    </td>
-                    <td className="hidden px-6 py-4 whitespace-nowrap lg:table-cell">
-                      <span className="dark:text-dark-muted text-sm text-gray-500">
-                        {user.lastLoginAt
-                          ? new Date(user.lastLoginAt).toLocaleDateString(
-                              "de-DE",
-                            )
-                          : "–"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-3">
-                        <Link
-                          href={`/dashboard/users/${user.id}/edit`}
-                          className="text-primary hover:text-primary/80 text-sm font-medium"
-                        >
-                          Bearbeiten
-                        </Link>
-                        {session?.user.id !== user.id && (
-                          <button
-                            onClick={() => setShowDeleteModal(user.id)}
-                            className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            Löschen
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {data && data.pages > 1 && (
-            <div className="dark:border-dark-border dark:bg-dark-background-secondary flex items-center justify-between border-t border-gray-200 bg-gray-50 px-6 py-3">
-              <p className="dark:text-dark-muted text-sm text-gray-700">
-                Seite {data.page} von {data.pages} ({data.total} Benutzer)
-              </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Zurück
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-                  disabled={page === data.pages}
-                  className="dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-surface rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Weiter
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <DataTable
+        data={data?.users}
+        columns={columns}
+        getRowId={(user) => user.id}
+        isLoading={isLoading}
+        rowNoun={["Benutzer", "Benutzer"]}
+        searchPlaceholder="Suche nach Name, E-Mail…"
+        pageSizeOptions={[20, 50, 100, 250]}
+        initialColumnVisibility={{ lastLoginAt: false }}
+        emptyState={
+          <>
+            <Users className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="dark:text-dark-text mt-4 text-lg font-medium text-gray-900">
+              Keine Benutzer gefunden
+            </h3>
+            <p className="dark:text-dark-muted mt-2 text-gray-500">
+              Es gibt noch keine Benutzer.
+            </p>
+          </>
+        }
+        sorting={sorting}
+        onSortingChange={setSorting}
+        manualSorting
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPagination((current) => ({ ...current, pageIndex: 0 }));
+        }}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        manualPagination
+        manualFiltering
+        rowCount={data?.total ?? 0}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

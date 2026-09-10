@@ -1,16 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useSession } from "@/lib/auth";
 import { useToast } from "@/app/_components/ui/toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { api } from "@/trpc/react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -25,6 +30,10 @@ const CONTACT_TYPE_LABELS: Record<string, string> = {
   GESCHAEFTSSTELLE: "Geschäftsstelle",
   INTERNET_TEAM: "Internet-Team",
 };
+
+type TeamMember = RouterOutputs["organization"]["getTeam"][number];
+
+const column = createDataTableColumnHelper<TeamMember>();
 
 export default function DashboardTeamPage() {
   const router = useRouter();
@@ -121,6 +130,179 @@ export default function DashboardTeamPage() {
     }
   };
 
+  const columns = useMemo<DataTableColumn<TeamMember>[]>(
+    () =>
+      column.columns([
+        // Die gespeicherte Reihenfolge als eigene Spalte: nur so bleiben die
+        // Hoch/Runter-Pfeile nachvollziehbar, wenn nach etwas anderem sortiert
+        // wird — sie verschieben immer die gespeicherte Position, nie die Sicht.
+        column.accessor((member) => (teamMembers?.indexOf(member) ?? 0) + 1, {
+          id: "position",
+          header: "#",
+          enableColumnFilter: false,
+          meta: { align: "right", label: "Reihenfolge" },
+        }),
+        column.accessor((member) => member.person.name || "Unbekannt", {
+          id: "member",
+          header: "Mitglied",
+          meta: { alwaysVisible: true },
+          cell: ({ row }) => {
+            const member = row.original;
+            const displayName = member.person.name || "Unbekannt";
+            const imageUrl = member.person.image?.url;
+            return (
+              <div className="flex items-center gap-3">
+                {imageUrl ? (
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+                    <Image
+                      src={imageUrl}
+                      alt={displayName}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="dark:bg-dark-background-secondary flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                    <span className="dark:text-dark-muted text-sm font-medium text-gray-500">
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <Link
+                    href={`/dashboard/team/${member.id}`}
+                    className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+                  >
+                    {displayName}
+                  </Link>
+                  {!member.userId && (
+                    <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-300">
+                      ohne Konto
+                    </span>
+                  )}
+                  <p className="dark:text-dark-muted text-sm text-gray-500">
+                    {member.person.email || "-"}
+                  </p>
+                </div>
+              </div>
+            );
+          },
+        }),
+        column.accessor((member) => member.role ?? "", {
+          id: "role",
+          header: "Rolle",
+          cell: ({ getValue }) => getValue() || "-",
+        }),
+        column.accessor(
+          (member) =>
+            member.contactType
+              ? (CONTACT_TYPE_LABELS[member.contactType] ?? member.contactType)
+              : "",
+          {
+            id: "contactType",
+            header: "Bereich",
+            meta: { filterVariant: "set" },
+            cell: ({ getValue }) =>
+              getValue() ? (
+                <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  {getValue()}
+                </span>
+              ) : (
+                <span className="dark:text-dark-muted text-sm text-gray-500">
+                  -
+                </span>
+              ),
+          },
+        ),
+        column.accessor(
+          (member) => (member.responsibilities ?? []).join(" · "),
+          {
+            id: "responsibilities",
+            header: "Aufgaben",
+            cell: ({ row }) => {
+              const items = row.original.responsibilities ?? [];
+              if (items.length === 0) {
+                return (
+                  <span className="dark:text-dark-muted text-sm text-gray-500">
+                    -
+                  </span>
+                );
+              }
+              return (
+                <ul className="dark:text-dark-muted max-w-xs text-sm text-gray-600">
+                  {items.slice(0, 2).map((entry, i) => (
+                    <li key={i} className="truncate">
+                      • {entry}
+                    </li>
+                  ))}
+                  {items.length > 2 && (
+                    <li className="text-gray-400">
+                      + {items.length - 2} weitere
+                    </li>
+                  )}
+                </ul>
+              );
+            },
+          },
+        ),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => {
+            const index = teamMembers?.indexOf(row.original) ?? -1;
+            return (
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => void handleMove(index, "up")}
+                  disabled={index <= 0 || isReordering}
+                  aria-label="Nach oben"
+                  title="Nach oben"
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                >
+                  <ChevronUpIcon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => void handleMove(index, "down")}
+                  disabled={
+                    index === -1 ||
+                    index === (teamMembers?.length ?? 0) - 1 ||
+                    isReordering
+                  }
+                  aria-label="Nach unten"
+                  title="Nach unten"
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                >
+                  <ChevronDownIcon className="h-4 w-4" />
+                </button>
+                <Link
+                  href={`/dashboard/team/${row.original.id}/edit`}
+                  className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                  title="Bearbeiten"
+                >
+                  <EditIcon className="h-4 w-4" />
+                </Link>
+                <button
+                  onClick={() => handleDelete(row.original.id)}
+                  disabled={deletingId === row.original.id}
+                  className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20"
+                  title="Löschen"
+                >
+                  {deletingId === row.original.id ? (
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
+                  ) : (
+                    <TrashIcon className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            );
+          },
+        }),
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [teamMembers, deletingId, isReordering],
+  );
+
   if (isPending || profileLoading || membersLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -151,188 +333,32 @@ export default function DashboardTeamPage() {
         </Link>
       }
     >
-      {/* Members List */}
-      {!teamMembers || teamMembers.length === 0 ? (
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-          <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-            <UsersIcon className="h-12 w-12" />
-          </div>
-          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-            Keine Teammitglieder
-          </h3>
-          <p className="dark:text-dark-muted mb-6 text-gray-600">
-            Es wurden noch keine Teammitglieder angelegt.
-          </p>
-          <Link
-            href="/dashboard/team/new"
-            className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
-          >
-            Erstes Mitglied anlegen
-          </Link>
-        </div>
-      ) : (
-        <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Mitglied
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Rolle
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Bereich
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aufgaben
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {teamMembers.map((member, index) => {
-                  const displayName = member.person.name || "Unbekannt";
-                  const displayEmail = member.person.email || "-";
-                  const imageUrl = member.person.image?.url;
-
-                  return (
-                    <tr
-                      key={member.id}
-                      className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
-                          {imageUrl ? (
-                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
-                              <Image
-                                src={imageUrl}
-                                alt={displayName}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="dark:bg-dark-background-secondary flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                              <span className="dark:text-dark-muted text-sm font-medium text-gray-500">
-                                {displayName.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div>
-                            <Link
-                              href={`/dashboard/team/${member.id}`}
-                              className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
-                            >
-                              {displayName}
-                            </Link>
-                            {!member.userId && (
-                              <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-300">
-                                ohne Konto
-                              </span>
-                            )}
-                            <p className="dark:text-dark-muted text-sm text-gray-500">
-                              {displayEmail}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="dark:text-dark-text text-sm text-gray-900">
-                          {member.role || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {member.contactType ? (
-                          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                            {CONTACT_TYPE_LABELS[member.contactType] ||
-                              member.contactType}
-                          </span>
-                        ) : (
-                          <span className="dark:text-dark-muted text-sm text-gray-500">
-                            -
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="max-w-xs">
-                          {member.responsibilities &&
-                          member.responsibilities.length > 0 ? (
-                            <ul className="dark:text-dark-muted text-sm text-gray-600">
-                              {member.responsibilities
-                                .slice(0, 2)
-                                .map((r, i) => (
-                                  <li key={i} className="truncate">
-                                    • {r}
-                                  </li>
-                                ))}
-                              {member.responsibilities.length > 2 && (
-                                <li className="text-gray-400">
-                                  + {member.responsibilities.length - 2} weitere
-                                </li>
-                              )}
-                            </ul>
-                          ) : (
-                            <span className="dark:text-dark-muted text-sm text-gray-500">
-                              -
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => void handleMove(index, "up")}
-                            disabled={index === 0 || isReordering}
-                            aria-label="Nach oben"
-                            title="Nach oben"
-                            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                          >
-                            <ChevronUpIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => void handleMove(index, "down")}
-                            disabled={
-                              index === teamMembers.length - 1 || isReordering
-                            }
-                            aria-label="Nach unten"
-                            title="Nach unten"
-                            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                          >
-                            <ChevronDownIcon className="h-4 w-4" />
-                          </button>
-                          <Link
-                            href={`/dashboard/team/${member.id}/edit`}
-                            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-                            title="Bearbeiten"
-                          >
-                            <EditIcon className="h-4 w-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(member.id)}
-                            disabled={deletingId === member.id}
-                            className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50 hover:text-red-700 disabled:opacity-50 dark:hover:bg-red-900/20"
-                            title="Löschen"
-                          >
-                            {deletingId === member.id ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500 border-t-transparent" />
-                            ) : (
-                              <TrashIcon className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable
+        data={teamMembers}
+        columns={columns}
+        getRowId={(member) => member.id}
+        isLoading={membersLoading}
+        rowNoun={["Teammitglied", "Teammitglieder"]}
+        searchPlaceholder="Name, E-Mail oder Rolle suchen…"
+        initialSorting={[{ id: "position", desc: false }]}
+        emptyState={
+          <>
+            <UsersIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+              Keine Teammitglieder
+            </h3>
+            <p className="dark:text-dark-muted mb-6 text-gray-600">
+              Es wurden noch keine Teammitglieder angelegt.
+            </p>
+            <Link
+              href="/dashboard/team/new"
+              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-white transition-colors"
+            >
+              Erstes Mitglied anlegen
+            </Link>
+          </>
+        }
+      />
     </DashboardPage>
   );
 }
