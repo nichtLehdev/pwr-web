@@ -120,29 +120,16 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 });
 
 /**
- * Sperrt öffentliche Schreibzugriffe, solange der Wartungsmodus läuft.
- *
- * Absichtlich nur Mutationen: Lesen bleibt erlaubt, damit freigeschaltete
- * Besucher die echte Seite ansehen können. Geschrieben werden darf trotzdem
- * nicht — eine Kursanmeldung oder ein Newsletter-Opt-in, das während der
- * Umstellung hereinkommt, landet sonst in einer Datenbank, die gerade
- * umgezogen wird, oder verschickt eine Mail mit der alten Adresse.
- *
- * `protectedProcedure` hängt nicht an dieser Kette. Angemeldete Redaktion
- * kann also weiterarbeiten — das ist ja der Zweck der Wartung.
- */
-/**
- * Mutationen, die trotz Wartung durchlaufen dürfen.
- *
- * `stats.recordView` ist Telemetrie, keine Absicht eines Besuchers: Sie läuft
- * bei jedem Seitenaufruf mit — auch auf der Wartungsseite selbst und bei
- * freigeschalteten Mitarbeitenden, die die Seite durchsehen. Gesperrt würde sie
- * dort im Sekundentakt 503 werfen und Konsole wie Container-Log zumüllen,
- * während der Gewinn bei null liegt: Eine verlorene Zeile Seitenstatistik
- * kostet nichts, eine verlorene Kursanmeldung schon.
+ * `stats.recordView` ist Telemetrie und läuft bei jedem Seitenaufruf mit, auch
+ * auf der Wartungsseite. Gesperrt würde sie dort nur 503 werfen.
  */
 const MAINTENANCE_EXEMPT_MUTATIONS = new Set(["stats.recordView"]);
 
+/**
+ * Sperrt öffentliche Schreibzugriffe während der Wartung. Nur Mutationen —
+ * Lesen bleibt erlaubt. `protectedProcedure` hängt nicht an dieser Kette,
+ * angemeldete Redaktion arbeitet also weiter.
+ */
 const maintenanceGuard = t.middleware(async ({ next, type, path }) => {
   if (type !== "mutation") return next();
   if (MAINTENANCE_EXEMPT_MUTATIONS.has(path)) return next();

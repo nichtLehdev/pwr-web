@@ -1,26 +1,16 @@
-/**
- * Gemeinsame Konstanten für den Wartungsmodus — von Middleware (Edge),
- * Server-Routen (Node) und Client geteilt. Hier darf deshalb nichts stehen,
- * was Node-Module braucht.
- */
+/** Gemeinsame Konstanten für den Wartungsmodus. Ohne Node-Abhängigkeiten. */
 
-/** Cookie, das die Wartungsseite überspringt. Wird über den Freischaltlink gesetzt. */
 export const MAINTENANCE_BYPASS_COOKIE = "pwr_maintenance_bypass";
 
-/** Pfad der Wartungsseite. Muss selbst erreichbar bleiben. */
 export const MAINTENANCE_PATH = "/wartung";
 
-/** Standardtext, wenn im Dashboard keiner hinterlegt ist. */
 export const MAINTENANCE_DEFAULT_MESSAGE =
   "Wir arbeiten gerade an der Seite und sind in Kürze wieder für Sie da.";
 
 /**
- * Pfade, die auch im Wartungsmodus durchgelassen werden.
- *
- * Anmeldung und Dashboard müssen offen bleiben — sonst sperrt der
- * Wartungsmodus genau die Leute aus, die ihn wieder abschalten sollen.
- * `/api/maintenance` ist die Auskunftsroute, die die Middleware selbst
- * abfragt; wäre sie gesperrt, könnte nichts mehr entscheiden.
+ * Anmeldung und Dashboard müssen offen bleiben, sonst sperrt der
+ * Wartungsmodus die Leute aus, die ihn wieder abschalten sollen. Unter
+ * `/api/maintenance` liegt der Freischaltlink.
  */
 export const MAINTENANCE_ALLOWED_PREFIXES = [
   MAINTENANCE_PATH,
@@ -39,7 +29,6 @@ export const MAINTENANCE_ALLOWED_PREFIXES = [
   "/settings",
 ] as const;
 
-/** Statische Next-Assets und Dateien mit Endung nie abfangen. */
 export function isInfrastructurePath(pathname: string): boolean {
   return (
     pathname.startsWith("/_next/") ||
@@ -59,11 +48,9 @@ export function isMaintenanceAllowedPath(pathname: string): boolean {
 }
 
 export interface MaintenanceVerdict {
-  /** Wartungsmodus ist grundsätzlich aktiv. */
   active: boolean;
-  /** Dieser Aufrufer sieht die Wartungsseite (also aktiv und keine Freischaltung). */
+  /** Aktiv und keine Freischaltung: Dieser Aufrufer sieht die Wartungsseite. */
   blocked: boolean;
   message: string;
-  /** ISO-Zeitstempel oder null — rein informativ. */
   until: string | null;
 }
