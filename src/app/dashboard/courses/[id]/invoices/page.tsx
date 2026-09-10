@@ -254,8 +254,8 @@ export default function CourseInvoicesPage() {
       "Teilnehmer:innen",
       "Interne Kursnummer",
       "Rechnungsnummer",
-      "Gesamtbetrag",
-      "Förderverein-Anteil",
+      "Zu überweisender Betrag",
+      "Förderverein Zuschuss",
     ];
     const keys: (keyof (typeof rows)[number])[] = [
       "registrant",
