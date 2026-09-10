@@ -207,6 +207,29 @@ async function notifyCourseTeamOfNewRegistration(
   }
 }
 
+/** Übersetzt die Sortierspalte der Anmeldungsliste in eine Prisma-Sortierung. */
+function registrationOrderBy(
+  sortBy: "createdAt" | "registrant" | "course" | "totalPrice" | "status",
+  sortOrder: "asc" | "desc",
+): Prisma.CourseRegistrationOrderByWithRelationInput[] {
+  switch (sortBy) {
+    case "registrant":
+      return [
+        { registrantLastName: sortOrder },
+        { registrantFirstName: sortOrder },
+        { createdAt: "desc" },
+      ];
+    case "course":
+      return [{ course: { title: sortOrder } }, { createdAt: "desc" }];
+    case "totalPrice":
+      return [{ totalPrice: sortOrder }, { createdAt: "desc" }];
+    case "status":
+      return [{ registrationStatus: sortOrder }, { createdAt: "desc" }];
+    default:
+      return [{ createdAt: sortOrder }];
+  }
+}
+
 export const registrationsRouter = createTRPCRouter({
   create: rateLimitedPublicProcedure("registrations.create", {
     maxRequests: 20,
@@ -1023,22 +1046,36 @@ export const registrationsRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().min(1).default(1),
-        limit: z.number().min(1).max(100).default(25),
+        limit: z.number().min(1).max(250).default(25),
         search: z.string().max(200).optional(),
-        registrationStatus: z.nativeEnum(RegistrationStatus).optional(),
+        /* Set filters: an empty array means "no restriction". */
+        registrationStatus: z
+          .array(z.nativeEnum(RegistrationStatus))
+          .optional(),
         /** Nur Anmeldungen mit noch offener bzw. beglichener Rechnung. */
         paid: z.boolean().optional(),
-        siblingDiscountStatus: z.nativeEnum(SiblingDiscountStatus).optional(),
-        courseId: z.string().optional(),
+        siblingDiscountStatus: z
+          .array(z.nativeEnum(SiblingDiscountStatus))
+          .optional(),
+        courseId: z.array(z.string()).optional(),
+        sortBy: z
+          .enum(["createdAt", "registrant", "course", "totalPrice", "status"])
+          .default("createdAt"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
       // Die Rabattberechtigung öffnet nur die Anmeldungen, über die sie
       // entscheidet: die mit einem Rabatt. NONE zählt ausdrücklich nicht dazu —
       // danach zu filtern wäre die ganze Tabelle minus einer Handvoll Zeilen.
+      const discountStatuses = input.siblingDiscountStatus?.length
+        ? input.siblingDiscountStatus
+        : undefined;
       const scopedToSiblingDiscount =
-        input.siblingDiscountStatus !== undefined &&
-        input.siblingDiscountStatus !== SiblingDiscountStatus.NONE;
+        discountStatuses !== undefined &&
+        discountStatuses.every(
+          (status) => status !== SiblingDiscountStatus.NONE,
+        );
 
       if (!scopedToSiblingDiscount) {
         const canSeeEveryRegistration = await userHasPermission(
@@ -1055,12 +1092,15 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       const search = input.search?.trim();
+      const statuses = input.registrationStatus?.length
+        ? input.registrationStatus
+        : undefined;
+      const courseIds = input.courseId?.length ? input.courseId : undefined;
+
       const where: Prisma.CourseRegistrationWhereInput = {
-        ...(input.registrationStatus && {
-          registrationStatus: input.registrationStatus,
-        }),
-        ...(input.siblingDiscountStatus && {
-          siblingDiscountStatus: input.siblingDiscountStatus,
+        ...(statuses && { registrationStatus: { in: statuses } }),
+        ...(discountStatuses && {
+          siblingDiscountStatus: { in: discountStatuses },
         }),
         ...(input.paid === undefined
           ? {}
@@ -1078,7 +1118,7 @@ export const registrationsRouter = createTRPCRouter({
                   some: { status: InvoiceStatus.PUBLISHED, paidAt: null },
                 },
               }),
-        ...(input.courseId && { courseId: input.courseId }),
+        ...(courseIds && { courseId: { in: courseIds } }),
         ...(search && {
           OR: [
             { registrantEmail: { contains: search, mode: "insensitive" } },
@@ -1129,7 +1169,9 @@ export const registrationsRouter = createTRPCRouter({
             },
             _count: { select: { participants: true } },
           },
-          orderBy: { createdAt: "desc" },
+          // Zweites Kriterium, damit das Blättern bei gleichen Werten stabil
+          // bleibt und keine Zeile zweimal auf verschiedenen Seiten auftaucht.
+          orderBy: registrationOrderBy(input.sortBy, input.sortOrder),
           skip: (input.page - 1) * input.limit,
           take: input.limit,
         }),

@@ -288,11 +288,17 @@ export const usersRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().min(1).default(1),
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(250).default(20),
         // role filter removed - use permissions system instead
         search: z.string().optional(),
         sortBy: z
-          .enum(["displayName", "email", "createdAt"])
+          .enum([
+            "displayName",
+            "email",
+            "createdAt",
+            "lastLoginAt",
+            "emailVerified",
+          ])
           .default("createdAt"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
@@ -335,7 +341,12 @@ export const usersRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: { [input.sortBy]: input.sortOrder },
+          // Zweites Kriterium, damit das Blättern bei gleichen Werten stabil
+          // bleibt und keine Zeile zweimal auf verschiedenen Seiten auftaucht.
+          orderBy:
+            input.sortBy === "createdAt"
+              ? [{ createdAt: input.sortOrder }]
+              : [{ [input.sortBy]: input.sortOrder }, { createdAt: "desc" }],
         }),
         ctx.db.user.count({ where }),
       ]);
