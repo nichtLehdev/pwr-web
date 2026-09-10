@@ -13,20 +13,6 @@ on:
       - "prisma.config.ts"
 
 jobs:
-  read-pnpm-version:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Read pnpm version from package.json
-        id: pnpm
-        run: echo "version=$(jq -r '.packageManager' package.json | sed 's/pnpm@//')" >> $GITHUB_OUTPUT
-
-      - name: Use version
-        run: echo "PNPM version is ${{ steps.pnpm.outputs.version }}"
-
   prisma-validate:
     name: Validate Prisma Schema
     runs-on: ubuntu-latest
@@ -42,10 +28,10 @@ jobs:
         with:
           node-version: "22"
 
+      # Ohne `version` liest die Action das `packageManager`-Feld aus
+      # package.json — dieselbe Quelle, die auch pnpm selbst verwendet.
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
-        with:
-          version: ${{ steps.pnpm.outputs.version }}
 
       - name: Get pnpm store directory
         shell: bash
@@ -74,3 +60,92 @@ jobs:
         run: pnpm prisma generate
         env:
           DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+
+  # `prisma validate` prüft nur, ob das Schema in sich stimmig ist. Es sagt
+  # nichts darüber, ob die Migrationen auf einer leeren Datenbank überhaupt
+  # durchlaufen — und genau das passiert beim Deploy auf mittwald. Schlägt es
+  # dort fehl, startet die App nicht (30 Versuche, dann Abbruch). Dieser Job
+  # zieht den Fehlschlag in die PR vor.
+  migrate-deploy:
+    name: Migrations & Drift
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: posaunenwerk_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/posaunenwerk_ci
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Der eigentliche Test: alle Migrationen auf einer jungfräulichen
+      # Datenbank, so wie beim ersten Start auf einem neuen Server.
+      - name: Apply all migrations from scratch
+        run: pnpm prisma migrate deploy
+
+      # Fängt den Fall ab, dass jemand schema.prisma ändert und die passende
+      # Migration vergisst: die Datenbank läuft dann auseinander mit dem
+      # Client, den `prisma generate` erzeugt. --exit-code liefert 2, wenn ein
+      # Unterschied bleibt.
+      - name: Check for schema drift
+        run: >-
+          pnpm prisma migrate diff
+          --from-config-datasource
+          --to-schema prisma/schema.prisma
+          --exit-code
+
+      # Beide Skripte laufen bei jedem Produktions-Deploy automatisch und sind
+      # dort bewusst "non-fatal" — ein Fehler würde also still durchgehen.
+      # Hier dürfen sie scheitern.
+      - name: Run post-migration setup
+        run: pnpm tsx prisma/post-migration-setup.ts
+
+      - name: Run slug backfill
+        run: pnpm tsx prisma/backfill-slugs.ts
+
+      # Wiederholbarkeit ist die Eigenschaft, auf die sich die Deploy-Skripte
+      # verlassen: Sie laufen bei *jedem* Start, nicht nur beim ersten.
+      - name: Re-run setup and backfill (idempotency)
+        run: |
+          pnpm tsx prisma/post-migration-setup.ts
+          pnpm tsx prisma/backfill-slugs.ts
