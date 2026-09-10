@@ -293,6 +293,10 @@ jobs:
           SMTP_FROM: ${{ vars.SMTP_FROM }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          # Wartungsmodus: leer lassen, solange die Seite offen sein soll.
+          # Der Alltagsschalter sitzt im Dashboard und braucht kein Deployment.
+          MAINTENANCE_MODE: ${{ vars.MAINTENANCE_MODE }}
+          MAINTENANCE_BYPASS_TOKEN: ${{ secrets.MAINTENANCE_BYPASS_TOKEN }}
         with:
           api_token: ${{ secrets.MITTWALD_API_TOKEN }}
           stack_id: ${{ vars.MITTWALD_STACK_ID }}
