@@ -1,382 +1,250 @@
 # Deployment-Checkliste
 
-Diese Checkliste hilft dir dabei, alle Änderungen sicher auf deinem Server zu deployen.
-
-## ⚠️ KRITISCHER HINWEIS FÜR DIESES DEPLOYMENT
-
-**Das Permission-System wurde komplett refactored!** Nach der Migration hat **NIEMAND** mehr Rechte, bis das Post-Migration-Setup ausgeführt wurde.
-
-**Du MUSST nach dem Deployment folgendes ausführen** (auf dem Server reichen `.env` + `docker-compose.prod.yml` – der Befehl läuft im Container; das Image enthält tsconfig + nötige `src`-Dateien für Path-Aliase wie `@/`).
-
-**Variante A – mit Profil (empfohlen):** E-Mail in `.env` setzen (`ADMIN_EMAIL=deine-email@example.com`), dann:
-```bash
-docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
-```
-
-**Variante B – E-Mail als Argument:** (kein Repo auf dem Server nötig, läuft im App-Image):
-```bash
-docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
-```
-
-Dieses Skript:
-- ✅ Erstellt alle System-Permissions
-- ✅ Erstellt alle System-Rollen
-- ✅ Weist dir automatisch die Administrator-Rolle zu
-
-**Ohne diesen Schritt kannst du nicht auf das Dashboard zugreifen!**
-
-## 📋 Vor dem Deployment
-
-### 1. Code-Qualität prüfen
-- [ ] **Linter-Fehler beheben**: `pnpm run lint`
-- [ ] **TypeScript-Fehler prüfen**: `pnpm run typecheck`
-- [ ] **Tests ausführen** (falls vorhanden)
-- [ ] **Code-Review durchführen** (falls im Team)
-
-### 2. Datenbank-Migrationen prüfen
-- [ ] **Alle Migrationen sind committed**:
-  ```bash
-  git status prisma/migrations/
-  ```
-- [ ] **Migrationen lokal testen**:
-  ```bash
-  # Lokale Datenbank zurücksetzen und Migrationen testen
-  pnpm prisma migrate reset
-  pnpm prisma migrate deploy
-  ```
-- [ ] **Prisma Client generieren**:
-  ```bash
-  pnpm prisma generate
-  ```
-
-### 2b. Slug-Backfill
-Die Migrationen `20260808000051_add_post_and_ensemble_slug` (Beiträge, Chöre)
-und `20260813120000_add_event_and_course_slug` (Termine, Kurse) legen die
-Spalten nur an — gefüllt werden sie von `prisma/backfill-slugs.ts`. Ohne den
-Backfill bleibt die Seite voll funktionsfähig (Detailseiten fallen auf die
-UUID zurück), aber die sprechenden URLs fehlen. Das Skript fasst nur Zeilen
-an, deren Slug noch `NULL` ist, und ist damit gefahrlos wiederholbar.
-
-**In allen Deploy-Wegen läuft der Backfill automatisch nach `migrate deploy`.**
-Er ist bewusst „non-fatal": schlägt er fehl, startet die App trotzdem, weil
-die Slugs nullable sind und die Routen auf die UUID zurückfallen. Ein
-Fehlschlag steht im Log des jeweiligen Containers.
-
-- [ ] **mittwald**: automatisch im Startbefehl in `deploy/stack.yaml`.
-- [ ] **docker-compose (Vorabversion / alter Server)**: automatisch im
-  `db-migrate`-Service.
-- [ ] **Lokal**: automatisch in `pnpm db:migrate`.
-
-Manuell nachziehen — nötig, wenn zwischen zwei Deployments Zeilen ohne Slug
-entstanden sind (Import und Duplizieren lassen den Slug absichtlich `NULL`):
-
-- [ ] **docker-compose**:
-  ```bash
-  docker compose -f docker-compose.prod.yml --profile slug-backfill up
-  ```
-- [ ] **In einem laufenden Container**:
-  ```bash
-  docker exec -it posaunenwerk-app node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts
-  ```
-  Kein `pnpm` im Image — `tsx` und `prisma` sind normale Dependencies und
-  werden direkt über `node node_modules/...` aufgerufen (siehe Dockerfile).
-- [ ] **Lokal**: `pnpm backfill:slugs`
-
-> Wichtig: Skripte unter `prisma/`, die im Container laufen, dürfen nur
-> `src/`-Dateien importieren, die das Dockerfile explizit ins Runner-Image
-> kopiert. Aktuell sind das `server/db.ts`, `lib/permissions.ts`,
-> `lib/bezirke.ts` und `lib/slug.ts`.
-
-### 3. Wichtige Änderungen seit letztem Deployment
-
-#### Permission-System Refactoring
-- [ ] **UserRole Enum entfernt**: Alle Referenzen zu `UserRole` wurden entfernt
-- [ ] **Neues Permission-System**: Custom Roles und Permissions sind implementiert
-- [ ] **Migrationen vorhanden**:
-  - `20260216141710_add_custom_permissions`
-  - `20260216151701_remove_userrole_add_district_role`
-  - `20260216162645_add_role_hierarchy`
-- [ ] **⚠️ KRITISCH: Post-Migration-Setup erforderlich**:
-  - Permissions müssen geseedet werden
-  - Rollen müssen erstellt werden
-  - Admin-User muss Administrator-Rolle zugewiesen bekommen
-  - Siehe Schritt 4 unten
-
-#### Bezirksobleute-Filterung
-- [ ] **tRPC Queries gefiltert**: Nur User mit `districtRoleName` werden angezeigt
-- [ ] **Betroffene Routen**:
-  - `src/server/api/routers/bezirke.ts` - `getAll`, `getById`, `getByNumber`, `getStatistics`
-
-### 4. Admin-User vorbereiten
-**⚠️ WICHTIG: Nach der Migration hast du keine Rechte mehr, wenn du keine Rolle zugewiesen bekommst!**
-
-- [ ] **Deine E-Mail-Adresse notieren**: Diese wird benötigt, um dir die Admin-Rolle zuzuweisen
-- [ ] **ADMIN_EMAIL Environment Variable setzen** (optional, kann auch beim Skript-Aufruf übergeben werden):
-  ```bash
-  # Auf dem Server in .env oder docker-compose.prod.yml
-  ADMIN_EMAIL=deine-email@example.com
-  ```
-
-### 4. Datenbank-Backup erstellen
-**⚠️ KRITISCH: Immer vor Deployment ein Backup erstellen!**
-
-```bash
-# Auf dem Server (via SSH)
-cd /path/to/project
-docker compose -f docker-compose.prod.yml exec db-backup /scripts/backup-db.sh /backups
-
-# Oder manuell
-docker compose -f docker-compose.prod.yml exec db-backup pg_dump -U postgres posaunenwerk | gzip > backup_$(date +%Y%m%d_%H%M%S).sql.gz
-```
-
-- [ ] **Backup erfolgreich erstellt**
-- [ ] **Backup-Datei lokal gesichert** (falls möglich)
-- [ ] **Backup-Verifizierung**: Prüfe, ob Backup-Datei existiert und nicht leer ist
-
-### 5. Environment Variables prüfen
-- [ ] **Alle benötigten ENV-Variablen sind gesetzt**:
-  - `DATABASE_URL`
-  - `BETTER_AUTH_SECRET`
-  - `BETTER_AUTH_URL`
-  - `NEXT_PUBLIC_APP_URL`
-  - `GITHUB_TOKEN` (falls verwendet)
-  - `SMTP_*` (falls E-Mail verwendet wird)
-
-### 6. Git-Status prüfen
-- [ ] **Alle Änderungen committed**:
-  ```bash
-  git status
-  ```
-- [ ] **Auf dem richtigen Branch** (z.B. `main` oder `master`)
-- [ ] **Keine uncommitted Änderungen**
-
-## 🚀 Deployment-Prozess
-
-### Option A: Automatisches Deployment via GitHub Release
-
-1. **Release erstellen**:
-   - [ ] Gehe zu GitHub → Releases → "Draft a new release"
-   - [ ] Tag-Version erstellen (z.B. `v1.2.3`)
-   - [ ] Release-Notes schreiben
-   - [ ] **NICHT als Pre-Release markieren** (sonst wird nicht deployed)
-   - [ ] Release veröffentlichen
-
-2. **GitHub Actions überwachen**:
-   - [ ] Workflow `Release & Deploy` startet automatisch
-   - [ ] Build-Job erfolgreich
-   - [ ] Deploy-Job erfolgreich
-   - [ ] Verification erfolgreich
-
-### Option B: Manuelles Deployment
-
-1. **Auf dem Server einloggen**:
-   ```bash
-   ssh user@your-server
-   cd /path/to/project
-   ```
-
-2. **Aktuelle Container stoppen** (optional, für Zero-Downtime):
-   ```bash
-   docker compose -f docker-compose.prod.yml pull
-   ```
-
-3. **Neue Images pullen**:
-   ```bash
-   docker login ghcr.io -u nichtlehdev
-   docker pull ghcr.io/nichtlehdev/pwr-web:latest
-   docker pull ghcr.io/nichtlehdev/pwr-backup:latest
-   ```
-
-4. **Container aktualisieren**:
-   ```bash
-   docker compose -f docker-compose.prod.yml up -d
-   ```
-
-## ✅ Nach dem Deployment
-
-### 1. Migrationen prüfen
-- [ ] **Migration-Container erfolgreich**:
-  ```bash
-  docker compose -f docker-compose.prod.yml logs db-migrate
-  ```
-- [ ] **Keine Fehler in Migration-Logs**
-- [ ] **Falls Migration fehlgeschlagen**: Siehe "Fehlerbehebung" unten
-
-### 2. Post-Migration-Setup ausführen
-**⚠️ KRITISCH: Dieser Schritt ist ESSENTIELL, sonst hast du keinen Zugriff!**
-(Kein Repo auf dem Server nötig – Skript liegt im App-Image.)
-
-- [ ] **Permissions und Rollen erstellen**:
-  ```bash
-  # E-Mail als Argument (empfohlen)
-  docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
-  ```
-  Oder mit Profil (wenn ADMIN_EMAIL in .env gesetzt ist):
-  ```bash
-  docker compose -f docker-compose.prod.yml --profile post-migration run --rm post-migration-setup
-  ```
-
-- [ ] **Skript erfolgreich ausgeführt**:
-  - ✓ Permissions erstellt
-  - ✓ Rollen erstellt
-  - ✓ Admin-Rolle zugewiesen
-
-- [ ] **Falls User nicht gefunden**: Skript zeigt verfügbare User an
-
-### 3. Container-Status prüfen
-- [ ] **Alle Container laufen**:
-  ```bash
-  docker compose -f docker-compose.prod.yml ps
-  ```
-- [ ] **App-Container ist "healthy"**
-- [ ] **Database-Container ist "healthy"**
-
-### 4. Application-Logs prüfen
-- [ ] **Keine kritischen Fehler**:
-  ```bash
-  docker compose -f docker-compose.prod.yml logs app --tail 100
-  ```
-- [ ] **Prisma Client erfolgreich generiert**
-- [ ] **Server startet erfolgreich**
-
-### 5. Funktionale Tests
-- [ ] **Homepage lädt**: `https://pwr.lehdev.de`
-- [ ] **Login funktioniert**
-- [ ] **Bezirke-Seite funktioniert**: `/ueber-uns/bezirke`
-  - [ ] Karte wird angezeigt
-  - [ ] Hover zeigt Haupt-Obleute an
-  - [ ] Nur User mit `districtRoleName` werden angezeigt
-- [ ] **Dashboard funktioniert** (falls Zugriff vorhanden)
-- [ ] **Permission-System funktioniert**: Rollen und Permissions werden korrekt angewendet
-
-### 6. Datenbank-Status prüfen
-- [ ] **Datenbank-Verbindung funktioniert**:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec db pg_isready
-  ```
-- [ ] **Migrationen sind angewendet**:
-  ```bash
-  docker compose -f docker-compose.prod.yml exec db psql -U postgres -d posaunenwerk -c "SELECT * FROM _prisma_migrations ORDER BY finished_at DESC LIMIT 5;"
-  ```
-
-### 7. Performance-Monitoring
-- [ ] **Seiten laden schnell** (< 3 Sekunden)
-- [ ] **Keine Memory-Leaks** (Container-Speicher stabil)
-- [ ] **Keine CPU-Spitzen**
-
-## 🔧 Fehlerbehebung
-
-### Migration-Fehler
-
-**Problem**: `migrate found failed migrations in the target database` (P3009)
-
-**Lösung Option A** - Migration wurde bereits angewendet:
-```bash
-docker compose -f docker-compose.prod.yml run --rm db-migrate pnpm prisma migrate resolve --applied <migration-name>
-```
-
-**Lösung Option B** - Migration wurde nicht angewendet:
-```bash
-docker compose -f docker-compose.prod.yml run --rm db-migrate pnpm prisma migrate resolve --rolled-back <migration-name>
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Container startet nicht
-
-1. **Logs prüfen**:
-   ```bash
-   docker compose -f docker-compose.prod.yml logs app
-   ```
-
-2. **Environment Variables prüfen**:
-   ```bash
-   docker compose -f docker-compose.prod.yml config
-   ```
-
-3. **Datenbank-Verbindung testen**:
-   ```bash
-   docker compose -f docker-compose.prod.yml exec app pnpm prisma db pull
-   ```
-
-### Rollback (falls nötig)
-
-1. **Altes Image wiederherstellen**:
-   ```bash
-   # Bestimmte Version pullen
-   docker pull ghcr.io/nichtlehdev/pwr-web:v1.2.2
-
-   # docker-compose.prod.yml anpassen (Image-Tag ändern)
-   # Oder direkt:
-   docker tag ghcr.io/nichtlehdev/pwr-web:v1.2.2 ghcr.io/nichtlehdev/pwr-web:latest
-   docker compose -f docker-compose.prod.yml up -d
-   ```
-
-2. **Datenbank-Rollback** (nur wenn Migration rückgängig gemacht werden muss):
-   ```bash
-   # ⚠️ VORSICHT: Nur wenn absolut notwendig!
-   # Backup wiederherstellen
-   docker compose -f docker-compose.prod.yml exec db-backup /scripts/restore-db.sh /backups/backup_YYYYMMDD_HHMMSS.sql.gz
-   ```
-
-## 📝 Spezielle Hinweise für aktuelle Änderungen
-
-### Permission-System Migration
-
-Die Migrationen entfernen das alte `UserRole` Enum und führen ein neues Permission-System ein:
-
-1. **⚠️ KRITISCH**: Nach der Migration hat NIEMAND mehr Rechte!
-2. **Post-Migration-Setup MUSS ausgeführt werden** (läuft im Container, kein Repo auf dem Server nötig):
-   ```bash
-   docker compose -f docker-compose.prod.yml run --rm app pnpm tsx prisma/post-migration-setup.ts deine-email@example.com
-   ```
-3. **Dieses Skript**:
-   - Erstellt alle System-Permissions
-   - Erstellt alle System-Rollen (Administrator, Landesposaunenwart, etc.)
-   - Weist deinem User automatisch die Administrator-Rolle zu
-4. **Falls du ausgesperrt bist**:
-   - Skript erneut ausführen mit deiner E-Mail
-   - Oder manuell über Datenbank:
-     ```sql
-     -- Finde deine User-ID
-     SELECT id, email FROM "User" WHERE email = 'deine-email@example.com';
-
-     -- Finde Administrator-Rollen-ID
-     SELECT id FROM "Role" WHERE name = 'Administrator';
-
-     -- Weise Rolle zu
-     INSERT INTO "user_role_assignment" (id, "userId", "roleId", "createdAt")
-     VALUES (gen_random_uuid(), 'DEINE_USER_ID', 'ADMIN_ROLE_ID', NOW());
-     ```
-
-### Bezirksobleute-Filterung
-
-Die Filterung zeigt nur User mit `districtRoleName` an:
-
-1. **Prüfe Datenbank**: Stelle sicher, dass alle Bezirksobleute ein `districtRoleName` haben:
-   ```sql
-   SELECT b.number, b.shortName, u.displayName, u.districtRoleName
-   FROM "Bezirk" b
-   LEFT JOIN "User" u ON u."bezirkId" = b.id
-   WHERE u."districtRoleName" IS NOT NULL;
-   ```
-
-2. **Falls User fehlen**: Diese müssen über das Dashboard mit `districtRoleName` zugewiesen werden
-
-## 🔐 Sicherheits-Checkliste
-
-- [ ] **Keine Secrets im Code** (nur in Environment Variables)
-- [ ] **Docker Images sind aktuell** (keine bekannten Vulnerabilities)
-- [ ] **SSL/TLS ist aktiviert** (HTTPS)
-- [ ] **Backups sind verschlüsselt** (falls möglich)
-- [ ] **Zugriffsrechte sind korrekt** (SSH-Keys, etc.)
-
-## 📞 Support & Dokumentation
-
-- **Deployment-Dokumentation**: `docs/deployment.md`
-- **Backup-Dokumentation**: `docs/backups.md`
-- **Migration-Dokumentation**: `docs/permissions-migration.md`
+Diese Checkliste deckt die beiden Deploy-Wege ab, die es tatsächlich gibt:
+
+| Umgebung        | Ziel                    | Konfiguration              | Auslöser                        |
+| --------------- | ----------------------- | -------------------------- | ------------------------------- |
+| **Produktion**  | mittwald Container-Stack | `deploy/stack.yaml`        | GitHub-Release (**kein** Pre-Release) |
+| **Vorabversion** | alter Server, `pwr.lehdev.de` | `docker-compose.prod.yml` | jedes Release, auch Pre-Release |
+
+Beide bekommen dasselbe Image (`ghcr.io/nichtlehdev/pwr-web`). Unterschieden
+werden sie über `APP_ENV`: nur `production` ist die öffentliche Seite, alles
+andere blendet das Beta-Banner ein.
 
 ---
 
-**Letzte Aktualisierung**: 2026-02-16
-**Version**: 1.0
+## Was beim Deploy automatisch läuft
+
+Der Startbefehl des App-Containers (siehe `deploy/stack.yaml`) erledigt in
+dieser Reihenfolge:
+
+1. `prisma migrate deploy` — bis zu 30 Versuche im 5-Sekunden-Abstand, danach
+   bricht der Container ab. **Das ist der einzige Schritt, der den Start
+   verhindern kann.**
+2. `prisma/post-migration-setup.ts` — legt Permissions, System-Rollen und die
+   13 Bezirke an, weist `ADMIN_EMAIL` die Administrator-Rolle zu.
+3. `prisma/backfill-slugs.ts` — füllt fehlende Slugs für Beiträge, Chöre,
+   Termine und Kurse.
+4. `prisma/backfill-phone-format.ts` — normalisiert Telefonnummern.
+
+Schritte 2–4 sind bewusst **non-fatal**: Schlagen sie fehl, startet die App
+trotzdem. Der Fehler steht dann nur im Container-Log. Nach einem Deploy also
+kurz reinschauen — siehe „Nach dem Deployment".
+
+Migrationen und Drift werden seit `CI - Database Validation` auch in der CI auf
+einer leeren Datenbank durchgespielt, inklusive der beiden Backfills. Ein
+Deploy, der an Schritt 1 scheitert, sollte damit nicht mehr überraschend kommen.
+
+---
+
+## Vor dem Deployment
+
+### 1. Code-Qualität
+
+- [ ] `pnpm run check` (Lint + Typecheck)
+- [ ] `pnpm test`
+- [ ] CI auf `main` ist grün
+
+### 2. Migrationen
+
+- [ ] Alle Migrationen sind committed: `git status prisma/migrations/`
+- [ ] `CI - Database Validation` ist für den letzten Commit grün — der Job
+      `Migrations & Drift` fährt alle Migrationen auf einer leeren Datenbank
+      hoch und prüft, ob `schema.prisma` und Migrationsstand auseinanderlaufen.
+
+Lokal dasselbe nachstellen:
+
+```bash
+pnpm prisma migrate deploy
+pnpm prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+```
+
+### 3. Datenbank-Backup
+
+- **mittwald**: Backups laufen über die Plattform (mStudio). Vor einem Release
+  mit Migrationen dort kurz prüfen, dass ein aktueller Stand vorliegt, und im
+  Zweifel manuell eines anstoßen.
+- **docker compose**: der `db-backup`-Service sichert nach `BACKUP_SCHEDULE`.
+  Manuell:
+
+  ```bash
+  docker compose -f docker-compose.prod.yml exec db-backup /scripts/backup-db.sh /backups
+  ```
+
+- [ ] Aktuelles Backup vorhanden und nicht leer
+
+### 4. GitHub-Konfiguration prüfen
+
+Der Job `deploy-production` füllt jeden `{{ .Env.* }}`-Platzhalter aus
+`deploy/stack.yaml`. Fehlt einer, startet der Stack mit leerem Wert.
+
+**Environment `production` → Secrets:**
+
+- [ ] `MITTWALD_API_TOKEN`
+- [ ] `POSTGRES_PASSWORD`
+- [ ] `BETTER_AUTH_SECRET` (min. 32 Zeichen)
+- [ ] `SMTP_PASSWORD`
+- [ ] `CRON_SECRET` (min. 16 Zeichen)
+- [ ] `ADMIN_EMAIL`
+
+**Environment `production` → Variables:**
+
+- [ ] `MITTWALD_STACK_ID`
+- [ ] `APP_URL` — **die endgültige öffentliche Domain**, nicht die der
+      Vorabversion. Der Wert wird zu `NEXT_PUBLIC_APP_URL` *und*
+      `BETTER_AUTH_URL`; er landet damit in Canonicals, Open-Graph-URLs,
+      Bestätigungs- und Passwort-Reset-Links.
+- [ ] `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_FROM`
+
+---
+
+## Deployment
+
+1. [ ] GitHub → Releases → „Draft a new release"
+2. [ ] Tag vergeben (z. B. `v1.2.3`)
+3. [ ] Release-Notes schreiben
+4. [ ] **Nicht** als Pre-Release markieren — sonst geht es nur auf die
+       Vorabversion und *nicht* auf die Produktion
+5. [ ] Release veröffentlichen
+6. [ ] Workflow `Release & Deploy` beobachten: `build-and-push` →
+       `deploy-production` → `Verify deployment`
+
+Der Verify-Schritt pollt `APP_URL` bis zu zehnmal. Läuft er auf einen Fehler,
+steht die App nicht — dann direkt ins Container-Log.
+
+---
+
+## Nach dem Deployment
+
+### 1. Logs prüfen
+
+Im mStudio das Log des App-Containers öffnen und nach den vier Startschritten
+sehen. Besonders auf die non-fatalen achten:
+
+- [ ] `All migrations have been successfully applied.`
+- [ ] `✅ Post-migration setup completed successfully!`
+- [ ] Kein `Slug backfill failed` / `Phone format backfill failed`
+
+### 2. Admin-Zugang
+
+`post-migration-setup.ts` weist die Administrator-Rolle nur zu, wenn unter
+`ADMIN_EMAIL` **bereits ein registrierter Benutzer existiert**. Auf einer
+frischen Datenbank ist das nicht der Fall — der Schritt wird dann übersprungen
+und niemand kommt ins Dashboard.
+
+Reihenfolge beim ersten Deploy auf eine leere Datenbank:
+
+1. [ ] Deploy läuft, Seite ist erreichbar
+2. [ ] Über `/register` mit genau der Adresse aus `ADMIN_EMAIL` registrieren
+3. [ ] Setup erneut anstoßen — am einfachsten durch einen Neustart des
+       App-Containers im mStudio (das Startskript ruft es ohnehin bei jedem
+       Start auf, und es ist wiederholbar)
+4. [ ] Einloggen und Dashboard-Zugriff prüfen
+
+### 3. Cronjobs (mStudio)
+
+Die geplanten Jobs laufen auf mittwald **nicht** im Stack, sondern als
+mStudio-Cronjobs. Sie müssen dort einmalig angelegt sein — ohne sie werden
+keine Anmeldeschluss-Mails verschickt und unbestätigte Newsletter-Anmeldungen
+nie gelöscht (was die Datenschutzerklärung mit 30 Tagen zusagt).
+
+- [ ] `registration-closed` — ruft `POST /api/cron/registration-closed` auf
+      (Vorschlag: alle 6 Stunden), Skript `scripts/trigger-registration-closed.mjs`
+- [ ] `newsletter-cleanup` — ruft `POST /api/cron/newsletter-cleanup` auf
+      (Vorschlag: täglich), Skript `scripts/trigger-newsletter-cleanup.mjs`
+
+Beide brauchen `Authorization: Bearer $CRON_SECRET` — ohne den Header
+antworten die Routen mit 401. Einmal von Hand testen:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<APP_URL>/api/cron/registration-closed
+```
+
+### 4. Funktionale Stichproben
+
+- [ ] Startseite lädt
+- [ ] **Kein Beta-Banner** (sonst steht `APP_ENV` nicht auf `production`)
+- [ ] Login funktioniert
+- [ ] `/termine` und eine Kurs-Detailseite
+- [ ] `/ueber-uns/bezirke` — Karte lädt, Obleute erscheinen
+- [ ] Dashboard erreichbar, Rollen greifen
+- [ ] Eine Test-E-Mail versenden (z. B. Passwort-Reset)
+- [ ] `robots.txt` und `sitemap.xml` zeigen auf die richtige Domain
+
+---
+
+## Fehlerbehebung
+
+### Migration schlägt fehl (P3009)
+
+`migrate found failed migrations in the target database`
+
+Migration war bereits angewendet:
+
+```bash
+pnpm prisma migrate resolve --applied <migration-name>
+```
+
+Migration war nicht angewendet:
+
+```bash
+pnpm prisma migrate resolve --rolled-back <migration-name>
+```
+
+Auf mittwald läuft beides über eine Shell im App-Container. Kein `pnpm` im
+Image — Binaries direkt aufrufen:
+
+```bash
+node node_modules/prisma/build/index.js migrate resolve --applied <migration-name>
+```
+
+### Niemand kommt ins Dashboard
+
+Meist ist Schritt 2 des Startskripts übersprungen worden, weil es den Benutzer
+zu `ADMIN_EMAIL` nicht gab. Siehe „Admin-Zugang" oben. Manuell nachziehen:
+
+```sql
+SELECT id, email FROM "user" WHERE email = 'deine-email@example.com';
+SELECT id FROM "role" WHERE name = 'Administrator';
+
+INSERT INTO "user_role_assignment" (id, "userId", "roleId", "createdAt")
+VALUES (gen_random_uuid(), '<user-id>', '<role-id>', NOW());
+```
+
+### Slugs fehlen (URLs zeigen UUIDs)
+
+Harmlos — die Routen fallen auf die UUID zurück. Nachziehen:
+
+```bash
+node node_modules/tsx/dist/cli.mjs prisma/backfill-slugs.ts
+```
+
+Import und Duplizieren lassen den Slug absichtlich `NULL`; zwischen zwei
+Deployments können also neue Zeilen ohne Slug entstehen.
+
+> Skripte unter `prisma/`, die im Container laufen, dürfen nur `src/`-Dateien
+> importieren, die das Dockerfile ins Runner-Image kopiert. Aktuell:
+> `server/db.ts`, `lib/permissions.ts`, `lib/bezirke.ts`, `lib/slug.ts`.
+
+### Rollback
+
+Im mStudio die vorherige Image-Version des Stacks auswählen (bzw.
+`RELEASE_VERSION` auf den alten Tag setzen und neu deployen).
+
+**Achtung:** Ein Rollback des Images macht keine Migration rückgängig. Wenn das
+neue Release eine Migration mitgebracht hat, die das alte Image nicht versteht,
+muss das Datenbank-Backup zurückgespielt werden.
+
+---
+
+## Sicherheits-Checkliste
+
+- [ ] Keine Secrets im Code — alles über GitHub Secrets bzw. `.env`
+- [ ] `BETTER_AUTH_SECRET` ist nicht der Beispielwert und wurde nie committed
+- [ ] `CRON_SECRET` gesetzt (sonst laufen die Jobs nie)
+- [ ] HTTPS aktiv (die App schickt HSTS mit `preload`)
+- [ ] Dependabot-PRs abgearbeitet
+
+---
+
+**Letzte Aktualisierung**: 2026-09-10
