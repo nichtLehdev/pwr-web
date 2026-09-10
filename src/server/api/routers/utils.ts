@@ -11,7 +11,7 @@ import { sendEmail } from "@/server/email/send-email";
 import { generateNewsletterHtml } from "@/server/email/templates/newsletter-html";
 import { maskEmail } from "@/lib/mask-email";
 import { getBaseUrl } from "@/server/utils/get-base-url";
-import { ContentStatus } from "~/generated/prisma/client";
+import { ContentStatus, type Prisma } from "~/generated/prisma/client";
 import { marked } from "marked";
 import { geocodeAddress } from "@/server/utils/geocoding";
 import { searchAddresses } from "@/server/utils/address-search";
@@ -33,7 +33,9 @@ export const locationsRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().min(1).default(1),
-        limit: z.number().min(1).max(100).default(50),
+        // Bis 1000: die Standortverwaltung im Dashboard holt die ganze Liste
+        // auf einmal und sortiert und filtert sie im Browser.
+        limit: z.number().min(1).max(1000).default(50),
         city: z.string().optional(),
         zipCode: z.string().optional(),
         search: z.string().optional(),
@@ -340,20 +342,60 @@ export const newsletterRouter = createTRPCRouter({
     .input(
       z.object({
         page: z.number().min(1).default(1),
-        limit: z.number().min(1).max(100).default(50),
+        limit: z.number().min(1).max(250).default(50),
         isActive: z.boolean().optional(),
+        /**
+         * Set filter over the three states the list shows. `confirmed` is what
+         * a newsletter actually reaches; `pending` signed up but never clicked
+         * the confirmation link.
+         */
+        status: z
+          .array(z.enum(["confirmed", "pending", "inactive"]))
+          .optional(),
         search: z.string().optional(),
+        sortBy: z
+          .enum(["email", "name", "subscribedAt", "isActive"])
+          .default("subscribedAt"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const where = {
+      const statuses = input.status?.length ? input.status : undefined;
+      const statusClauses: Prisma.NewsletterSubscriberWhereInput[] = (
+        statuses ?? []
+      ).map((status) =>
+        status === "confirmed"
+          ? { isActive: true, confirmedAt: { not: null } }
+          : status === "pending"
+            ? { isActive: true, confirmedAt: null }
+            : { isActive: false },
+      );
+
+      const where: Prisma.NewsletterSubscriberWhereInput = {
         ...(input.isActive !== undefined && { isActive: input.isActive }),
-        ...(input.search && {
-          OR: [
-            { email: { contains: input.search, mode: "insensitive" as const } },
-            { name: { contains: input.search, mode: "insensitive" as const } },
-          ],
-        }),
+        AND: [
+          ...(statusClauses.length ? [{ OR: statusClauses }] : []),
+          ...(input.search
+            ? [
+                {
+                  OR: [
+                    {
+                      email: {
+                        contains: input.search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                    {
+                      name: {
+                        contains: input.search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  ],
+                },
+              ]
+            : []),
+        ],
       };
 
       const [subscribers, total] = await Promise.all([
@@ -361,7 +403,15 @@ export const newsletterRouter = createTRPCRouter({
           where,
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: { subscribedAt: "desc" },
+          // Zweites Kriterium, damit das Blättern bei gleichen Werten stabil
+          // bleibt und keine Zeile zweimal auf verschiedenen Seiten auftaucht.
+          orderBy:
+            input.sortBy === "subscribedAt"
+              ? [{ subscribedAt: input.sortOrder }]
+              : [
+                  { [input.sortBy]: input.sortOrder },
+                  { subscribedAt: "desc" as const },
+                ],
         }),
         ctx.db.newsletterSubscriber.count({ where }),
       ]);
