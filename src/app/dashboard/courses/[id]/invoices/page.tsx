@@ -24,13 +24,8 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-import {
-  formatDate,
-  formatEuro,
-  lineItemTotal,
-  SIBLING_DISCOUNT_LINE_DESCRIPTION,
-  type InvoiceLineItem,
-} from "@/lib/invoice-document";
+import { formatDate, formatEuro } from "@/lib/invoice-document";
+import { downloadResponseAsFile } from "@/lib/download-file";
 import { InvoiceStatus } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
@@ -44,27 +39,6 @@ import {
   UploadIcon,
   XIcon,
 } from "lucide-react";
-
-/** `;`-getrennt wie der Teilnehmer-Export, damit Excel (de-DE) es ohne Import-Dialog öffnet. */
-function escapeCSVValue(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-/** Summe der Geschwisterkindrabatt-Zeilen einer Rechnung, als positiver Betrag. */
-function siblingDiscountAmount(lineItems: unknown): number {
-  const items = Array.isArray(lineItems) ? lineItems : [];
-  const discountTotal = items
-    .filter(
-      (raw) =>
-        (raw as Partial<InvoiceLineItem>).description ===
-        SIBLING_DISCOUNT_LINE_DESCRIPTION,
-    )
-    .reduce((sum, raw) => sum + lineItemTotal(raw as InvoiceLineItem), 0);
-  return -discountTotal;
-}
 
 type CourseInvoice = RouterOutputs["invoices"]["listForCourse"][number];
 
@@ -97,6 +71,7 @@ export default function CourseInvoicesPage() {
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [showPicker, setShowPicker] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [finalizeOpen, setFinalizeOpen] = useState(false);
   const [reviewedConfirmed, setReviewedConfirmed] = useState(false);
   const [notifyRegistrants, setNotifyRegistrants] = useState(true);
@@ -350,71 +325,24 @@ export default function CourseInvoicesPage() {
     (invoice) => invoice.status === InvoiceStatus.PUBLISHED,
   );
 
-  const handleExportCsv = () => {
-    const rows = exportableInvoices.map((invoice) => {
-      const registration = invoice.registration;
-      const registrantName = registration
-        ? `${registration.registrantFirstName} ${registration.registrantLastName}`.trim()
-        : "";
-      const participantNames = (registration?.participants ?? [])
-        .map((p) => `${p.firstName} ${p.lastName}`.trim())
-        .join(", ");
-
-      return {
-        registrant: registrantName,
-        registrantEmail: registration?.registrantEmail ?? "",
-        participants: participantNames,
-        courseNumber: course?.courseNumber ?? "",
-        invoiceNumber: invoice.invoiceNumber ?? "",
-        totalAmount: invoice.totalAmount.toFixed(2),
-        siblingDiscountAmount: siblingDiscountAmount(invoice.lineItems).toFixed(
-          2,
-        ),
-      };
-    });
-
-    const headers = [
-      "Anmelder:in",
-      "E-Mail",
-      "Teilnehmer:innen",
-      "Interne Kursnummer",
-      "Rechnungsnummer",
-      "Zu überweisender Betrag",
-      "Förderverein Zuschuss",
-    ];
-    const keys: (keyof (typeof rows)[number])[] = [
-      "registrant",
-      "registrantEmail",
-      "participants",
-      "courseNumber",
-      "invoiceNumber",
-      "totalAmount",
-      "siblingDiscountAmount",
-    ];
-
-    const csvContent = [
-      headers.map(escapeCSVValue).join(";"),
-      ...rows.map((row) =>
-        keys.map((key) => escapeCSVValue(String(row[key]))).join(";"),
-      ),
-    ].join("\n");
-
-    const bom = "﻿";
-    const blob = new Blob([bom + csvContent], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const filenameBase = (course?.title ?? "kurs").replace(
-      /[^a-zA-Z0-9äöüÄÖÜß]/g,
-      "_",
-    );
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${filenameBase}_rechnungen_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleExportXlsx = async () => {
+    setExporting(true);
+    try {
+      const response = await fetch(
+        `/api/courses/${courseId}/exports/invoices`,
+        {
+          method: "GET",
+        },
+      );
+      if (!response.ok) {
+        throw new Error(String(response.status));
+      }
+      await downloadResponseAsFile(response, "rechnungen.xlsx");
+    } catch {
+      toast.error("Die Rechnungsübersicht konnte nicht erstellt werden.");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const toggle = (id: string) => {
@@ -484,12 +412,12 @@ export default function CourseInvoicesPage() {
           </Link>
           <button
             type="button"
-            onClick={handleExportCsv}
-            disabled={exportableInvoices.length === 0}
+            onClick={handleExportXlsx}
+            disabled={exportableInvoices.length === 0 || exporting}
             className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
           >
             <DownloadIcon className="h-4 w-4" />
-            CSV exportieren
+            {exporting ? "Wird erstellt …" : "Excel exportieren"}
           </button>
           {summary.drafts > 0 && (
             <button
