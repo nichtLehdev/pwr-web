@@ -422,10 +422,6 @@ export default function CourseParticipantsPage() {
     registrationsData?.registrations
       .filter((r) => r.registrationStatus === RegistrationStatus.CANCELLED)
       .reduce((sum, r) => sum + r.participants.length, 0) ?? 0;
-  const totalRevenue =
-    registrationsData?.registrations
-      .filter((r) => r.registrationStatus === RegistrationStatus.CONFIRMED)
-      .reduce((sum, r) => sum + r.totalPrice, 0) ?? 0;
   const paidRevenue =
     registrationsData?.registrations
       .filter((r) => registrationPaymentState(r.invoices) === "PAID")
@@ -684,7 +680,7 @@ export default function CourseParticipantsPage() {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               {confirmedCount}
@@ -707,14 +703,6 @@ export default function CourseParticipantsPage() {
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Storniert
-            </div>
-          </div>
-          <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-              {totalRevenue.toFixed(2)} €
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Gesamtumsatz
             </div>
           </div>
           <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
