@@ -287,6 +287,21 @@ nothing is worse than no control.
 stacked card below `md`; the toolbar and pager stay. Without it the table
 scrolls horizontally, which is fine up to about five columns.
 
+**Card grid or table.** The overview lists (Termine, Kurse, Beiträge) offer both
+and remember the choice per list:
+
+```tsx
+import {
+  DashboardListViewToggle,
+  useDashboardListView,
+} from "@/app/_components/dashboard";
+
+const [view, setView] = useDashboardListView("dashboard-events-view");
+```
+
+In table mode the toolbar's status and sort selects are hidden — those live in
+the column headers there, and showing both would be two controls for one thing.
+
 ## Form Example
 
 ```tsx
