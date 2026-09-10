@@ -3,6 +3,10 @@ import { getDistrictColor } from "@/lib/district-color";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import type { ContentStatus } from "~/generated/prisma/enums";
 import {
+  CONTENT_STATUS_BADGE_CLASSES,
+  CONTENT_STATUS_LABELS,
+} from "./content-status";
+import {
   Calendar,
   Eye,
   Edit,
@@ -30,37 +34,6 @@ interface DashboardEventCardProps {
   createdAt?: Date;
 }
 
-const statusConfig: Record<
-  ContentStatus,
-  { label: string; bgColor: string; textColor: string }
-> = {
-  DRAFT: {
-    label: "Entwurf",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-700 dark:text-gray-300",
-  },
-  PENDING: {
-    label: "Zur Prüfung",
-    bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-    textColor: "text-yellow-800 dark:text-yellow-300",
-  },
-  APPROVED: {
-    label: "Veröffentlicht",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
-    textColor: "text-green-800 dark:text-green-300",
-  },
-  REJECTED: {
-    label: "Abgelehnt",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
-    textColor: "text-red-800 dark:text-red-300",
-  },
-  ARCHIVED: {
-    label: "Archiviert",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-600 dark:text-gray-400",
-  },
-};
-
 export default function DashboardEventCard({
   id,
   slug,
@@ -75,7 +48,7 @@ export default function DashboardEventCard({
   createdAt,
 }: DashboardEventCardProps) {
   const districtColor = getDistrictColor(district);
-  const statusInfo = statusConfig[status];
+  const statusClasses = CONTENT_STATUS_BADGE_CLASSES[status];
 
   const creatorLine =
     createdBy &&
@@ -108,9 +81,9 @@ export default function DashboardEventCard({
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           <span
-            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusClasses}`}
           >
-            <span className="truncate">{statusInfo.label}</span>
+            <span className="truncate">{CONTENT_STATUS_LABELS[status]}</span>
           </span>
           {cancelled ? (
             <span className="inline-flex shrink-0 rounded-md bg-red-600/12 px-2 py-1 text-xs font-medium text-red-800 dark:text-red-300">

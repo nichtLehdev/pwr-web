@@ -3,6 +3,10 @@ import { getDistrictColor } from "@/lib/district-color";
 import { coursePath } from "@/lib/slug";
 import type { ContentStatus, CourseType } from "~/generated/prisma/enums";
 import {
+  CONTENT_STATUS_BADGE_CLASSES,
+  CONTENT_STATUS_LABELS,
+} from "./content-status";
+import {
   Calendar,
   MapPin,
   Tag,
@@ -35,37 +39,6 @@ interface DashboardCourseCardProps {
   createdAt?: Date;
 }
 
-const statusConfig: Record<
-  ContentStatus,
-  { label: string; bgColor: string; textColor: string }
-> = {
-  DRAFT: {
-    label: "Entwurf",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-700 dark:text-gray-300",
-  },
-  PENDING: {
-    label: "Zur Prüfung",
-    bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-    textColor: "text-yellow-800 dark:text-yellow-300",
-  },
-  APPROVED: {
-    label: "Veröffentlicht",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
-    textColor: "text-green-800 dark:text-green-300",
-  },
-  REJECTED: {
-    label: "Abgelehnt",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
-    textColor: "text-red-800 dark:text-red-300",
-  },
-  ARCHIVED: {
-    label: "Archiviert",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-600 dark:text-gray-400",
-  },
-};
-
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
   FREIZEIT: "Freizeit",
@@ -94,7 +67,7 @@ export default function DashboardCourseCard({
   createdAt,
 }: DashboardCourseCardProps) {
   const districtColor = getDistrictColor(district);
-  const statusInfo = statusConfig[status];
+  const statusClasses = CONTENT_STATUS_BADGE_CLASSES[status];
   const isFull = maxParticipants ? confirmedCount >= maxParticipants : false;
   const isDeadlinePassed = registrationDeadline
     ? new Date(registrationDeadline) < new Date()
@@ -137,9 +110,9 @@ export default function DashboardCourseCard({
       <div className="mb-2.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           <span
-            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusClasses}`}
           >
-            <span className="truncate">{statusInfo.label}</span>
+            <span className="truncate">{CONTENT_STATUS_LABELS[status]}</span>
           </span>
           {isRegistrationNotOpenYet && registrationOpen ? (
             <span className="inline-flex shrink-0 rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-900 dark:text-purple-200">
