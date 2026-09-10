@@ -30,9 +30,9 @@ git clone https://github.com/nichtLehdev/pwr-web.git
 cd pwr-web
 
 # 2. Set environment variables
-# Required: DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_GITHUB_CLIENT_ID, 
-#           BETTER_AUTH_GITHUB_CLIENT_SECRET, GITHUB_TOKEN, GITHUB_REPO
-# Optional: SMTP_* (for email)
+# Required: DATABASE_URL, BETTER_AUTH_SECRET
+# Optional: SMTP_* (email), GITHUB_TOKEN + GITHUB_REPO (feedback page),
+#           CRON_SECRET (scheduled jobs), APP_ENV (production = public site)
 
 # 3. Start services
 docker compose up -d
@@ -68,13 +68,17 @@ pnpm dev
 **Required:**
 - `DATABASE_URL` - PostgreSQL connection string
 - `BETTER_AUTH_SECRET` - Auth secret (generate: `openssl rand -base64 32`)
-- `BETTER_AUTH_GITHUB_CLIENT_ID` - GitHub OAuth client ID
-- `BETTER_AUTH_GITHUB_CLIENT_SECRET` - GitHub OAuth secret
-- `GITHUB_TOKEN` - GitHub API token
-- `GITHUB_REPO` - GitHub repository (format: `owner/repo`)
 
-**Optional (Email):**
+**Optional:**
+- `APP_ENV` - `production` for the public site; anything else shows the beta banner
+- `GITHUB_TOKEN`, `GITHUB_REPO` - feedback page → GitHub issues. Leave both
+  unset to disable `/feedback` (it redirects to `/kontakt`, the production behavior)
+- `CRON_SECRET` - bearer token for the `/api/cron/*` routes; without it they return 401
+- `CONTACT_EMAIL` - contact form recipient (defaults to `info@posaunenwerk-rheinland.de`)
+- `LOG_LEVEL` - `debug` | `info` | `warn` | `error` | `silent`
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`
+
+See `.env.example` for the annotated full list.
 
 ## Scripts
 
