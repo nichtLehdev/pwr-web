@@ -5,11 +5,6 @@ import {
   isMaintenanceAllowedPath,
 } from "../maintenance";
 
-/**
- * Diese beiden Funktionen entscheiden, was im Wartungsmodus erreichbar bleibt.
- * Ein Fehler nach der einen Seite sperrt die Redaktion aus ihrem eigenen
- * Dashboard aus, nach der anderen bleibt die Seite offen, die zu sein sollte.
- */
 describe("isMaintenanceAllowedPath", () => {
   it("lässt Anmeldung und Dashboard durch — sonst sperrt sich die Redaktion aus", () => {
     for (const path of [
@@ -49,8 +44,6 @@ describe("isMaintenanceAllowedPath", () => {
   });
 
   it("greift nur auf Segmentgrenzen, nicht auf Namenspräfixe", () => {
-    // "/loginentwurf" ist keine Unterseite von "/login" und darf nicht
-    // versehentlich freigegeben werden.
     expect(isMaintenanceAllowedPath("/loginentwurf")).toBe(false);
     expect(isMaintenanceAllowedPath("/dashboards")).toBe(false);
     expect(isMaintenanceAllowedPath("/settings-alt")).toBe(false);
@@ -74,7 +67,6 @@ describe("isInfrastructurePath", () => {
   it("hält normale Seiten nicht für Infrastruktur", () => {
     expect(isInfrastructurePath("/")).toBe(false);
     expect(isInfrastructurePath("/termine")).toBe(false);
-    // Kein Präfix-Treffer auf einer echten Seite, die so anfängt.
     expect(isInfrastructurePath("/sitemap-hinweise")).toBe(false);
   });
 });

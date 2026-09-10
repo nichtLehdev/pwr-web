@@ -8,16 +8,10 @@ import { MAINTENANCE_DEFAULT_MESSAGE } from "@/lib/maintenance";
 
 const maintenanceProcedure = permissionProcedure(PERMISSIONS.SYSTEM_MANAGE);
 
-/** Die Tabelle hat genau eine Zeile; die Migration legt sie an. */
 const ROW_ID = 1;
 
 export const maintenanceRouter = createTRPCRouter({
-  /**
-   * Aktueller Zustand für das Dashboard.
-   *
-   * Öffentlich lesbar: Die Wartungsseite zeigt denselben Text ohnehin jedem
-   * Besucher, hier steckt nichts Schützenswertes drin.
-   */
+  /** Öffentlich lesbar — die Wartungsseite zeigt denselben Text ohnehin. */
   get: publicProcedure.query(async ({ ctx }) => {
     const row = await ctx.db.maintenanceState.findUnique({
       where: { id: ROW_ID },
@@ -32,11 +26,7 @@ export const maintenanceRouter = createTRPCRouter({
       until: row?.until ?? null,
       updatedAt: row?.updatedAt ?? null,
       updatedBy: row?.updatedBy ?? null,
-      /**
-       * Wenn MAINTENANCE_MODE gesetzt ist, lässt sich die Wartung im Dashboard
-       * nicht abschalten — das Dashboard soll das sagen können, statt einen
-       * Schalter anzubieten, der nichts bewirkt.
-       */
+      /** Ist die Wartung per Env erzwungen, bewirkt der Schalter nichts. */
       forcedByEnv:
         process.env.MAINTENANCE_MODE?.trim().toLowerCase() === "true" ||
         process.env.MAINTENANCE_MODE?.trim() === "1",
@@ -48,7 +38,6 @@ export const maintenanceRouter = createTRPCRouter({
     .input(
       z.object({
         enabled: z.boolean(),
-        // Leerer Text bedeutet "Standardtext", nicht "leere Seite".
         message: z.string().trim().max(500).optional(),
         until: z.date().nullable().optional(),
       }),
@@ -67,7 +56,6 @@ export const maintenanceRouter = createTRPCRouter({
         update: data,
       });
 
-      // Ohne das griffe der Schalter erst, wenn der kurze Cache abgelaufen ist.
       clearMaintenanceCache();
 
       return row;

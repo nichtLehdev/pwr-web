@@ -4,13 +4,7 @@ import { Wrench } from "lucide-react";
 import { resolveMaintenance } from "@/server/maintenance";
 import { MAINTENANCE_DEFAULT_MESSAGE } from "@/lib/maintenance";
 
-/**
- * Wartungsseite. Wird von der Middleware per Rewrite ausgeliefert, die
- * angefragte Adresse bleibt dabei stehen.
- *
- * Bewusst ohne Navigation und ohne Datenbank-Inhalte: Sie soll auch dann noch
- * stehen, wenn an der Seite gerade geschraubt wird.
- */
+/** Wird vom Proxy per Rewrite ausgeliefert; bewusst ohne Navigation. */
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {

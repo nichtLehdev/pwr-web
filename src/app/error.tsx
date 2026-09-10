@@ -5,12 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, RefreshCw, TriangleAlert } from "lucide-react";
 
 /**
- * Fängt Render-Fehler aus allen Routen unterhalb von `app/` ab — das
- * Root-Layout (Navigation, Footer) bleibt dabei stehen, die Seite ist also
- * weiter bedienbar.
- *
- * Nur Fehler im Root-Layout selbst kommen hier nicht an; die fängt
- * `global-error.tsx`.
+ * Fängt Render-Fehler unterhalb von `app/` ab; das Root-Layout bleibt stehen.
+ * Fehler im Root-Layout selbst fängt `global-error.tsx`.
  */
 export default function Error({
   error,
@@ -20,9 +16,6 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // In Produktion ersetzt Next die Fehlermeldung durch `digest`. Der Wert
-    // steht unten auf der Seite, damit ein Bericht aus dem Support dem
-    // Server-Log zugeordnet werden kann.
     console.error("Unbehandelter Fehler:", error);
   }, [error]);
 

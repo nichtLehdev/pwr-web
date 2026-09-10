@@ -3,16 +3,6 @@
 import { useEffect } from "react";
 import "../styles/globals.css";
 
-/**
- * Letzte Auffanglinie: greift nur, wenn das Root-Layout selbst beim Rendern
- * scheitert. Weil dieses Layout dann ersetzt wird, gibt es hier weder
- * Navigation noch Footer noch Provider — `<html>` und `<body>` müssen deshalb
- * von Hand gesetzt werden, und alles auf dieser Seite muss ohne den
- * App-Kontext auskommen (kein `next/link`, kein tRPC, kein ThemeProvider).
- *
- * Das Theme-Skript ist absichtlich aus dem Root-Layout dupliziert: ohne es
- * stünde die Seite immer im Hell-Modus, auch bei dunkel eingestelltem System.
- */
 const themeBootstrap = `
   (function() {
     try {
@@ -32,6 +22,10 @@ const themeBootstrap = `
   })();
 `;
 
+/**
+ * Greift nur, wenn das Root-Layout selbst scheitert. Ohne Provider und ohne
+ * Layout — `<html>`/`<body>` und das Theme-Skript daher von Hand.
+ */
 export default function GlobalError({
   error,
   reset,
@@ -72,12 +66,7 @@ export default function GlobalError({
               >
                 Erneut versuchen
               </button>
-              {/*
-                Bewusst kein <Link>: Wenn das Root-Layout gescheitert ist, ist
-                der App-Router-Kontext nicht mehr verlässlich. Ein echter
-                Seitenwechsel baut die Anwendung sauber neu auf — genau das,
-                was hier gebraucht wird.
-              */}
+              {/* Kein <Link>: Der Router-Kontext ist hier nicht verlässlich. */}
               {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
               <a
                 href="/"

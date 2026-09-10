@@ -15,9 +15,7 @@ export function PageViewTracker() {
   const pathname = usePathname();
   const consent = useTrackingConsent();
   const { data: session } = useSession();
-  // Seitenstatistik ist Beiwerk. Schlägt sie fehl — Wartungsmodus, Rate-Limit,
-  // kurzer Netzaussetzer —, darf das weder in der Konsole noch als Fehler beim
-  // Besucher landen; die Zeile ist dann eben weg.
+  // Fehler der Seitenstatistik sind belanglos und gehören nicht in die Konsole.
   const recordView = api.stats.recordView.useMutation({
     onError: () => undefined,
   });
