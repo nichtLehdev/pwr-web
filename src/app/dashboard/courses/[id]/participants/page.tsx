@@ -10,6 +10,7 @@ import { formatCustomFieldValueForDisplay } from "@/lib/course-custom-fields";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS, type PermissionKey } from "@/lib/permissions";
 import { useToast } from "@/app/_components/ui/toast";
+import { downloadResponseAsFile } from "@/lib/download-file";
 import {
   CourseCollaboratorRole,
   InvoiceStatus,
@@ -149,6 +150,7 @@ export default function CourseParticipantsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportingXlsx, setExportingXlsx] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<null | "paid" | "confirm">(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -594,8 +596,42 @@ export default function CourseParticipantsPage() {
       (r) => r.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
     ) ?? false;
 
+  /**
+   * Excel entsteht auf dem Server: exceljs gehört nicht ins Browser-Bundle,
+   * und derselbe Baustein schreibt die Liste, die nach Anmeldeschluss per
+   * E-Mail herausgeht. Mitgeschickt wird nur die gefilterte Auswahl.
+   */
+  const handleXlsxExport = async () => {
+    setExportingXlsx(true);
+    try {
+      const response = await fetch(
+        `/api/courses/${courseId}/exports/participants`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            registrationIds: filteredRegistrations.map((r) => r.id),
+          }),
+        },
+      );
+      if (!response.ok) {
+        throw new Error(String(response.status));
+      }
+      await downloadResponseAsFile(response, "teilnehmer.xlsx");
+    } catch {
+      toast.error("Die Teilnehmerliste konnte nicht erstellt werden.");
+    } finally {
+      setExportingXlsx(false);
+    }
+  };
+
   const handleExport = (format: ExportFormat) => {
     setShowExportMenu(false);
+
+    if (format === "excel") {
+      void handleXlsxExport();
+      return;
+    }
 
     const customFieldNames = course.customFields?.map((f) => f.fieldName) ?? [];
 
@@ -665,24 +701,6 @@ export default function CourseParticipantsPage() {
         type: "text/csv;charset=utf-8",
       });
       downloadBlob(blob, `${filename}.csv`);
-    } else if (format === "excel") {
-      const headers = Object.keys(exportData[0] ?? {});
-      const csvContent = [
-        headers.map(escapeCSVValue).join(";"),
-        ...exportData.map((row) =>
-          headers
-            .map((header) =>
-              escapeCSVValue(String(row[header as keyof typeof row] ?? "")),
-            )
-            .join(";"),
-        ),
-      ].join("\r\n");
-
-      const bom = "\uFEFF";
-      const blob = new Blob([bom + csvContent], {
-        type: "application/vnd.ms-excel;charset=utf-8",
-      });
-      downloadBlob(blob, `${filename}.xls`);
     }
   };
 
@@ -792,10 +810,11 @@ export default function CourseParticipantsPage() {
                   </button>
                   <button
                     onClick={() => handleExport("excel")}
-                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    disabled={exportingXlsx}
+                    className="dark:text-dark-text dark:hover:bg-dark-background-secondary flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <DownloadIcon className="h-4 w-4 text-green-700" />
-                    Excel (.xls)
+                    {exportingXlsx ? "Wird erstellt …" : "Excel (.xlsx)"}
                   </button>
                   <button
                     onClick={() => handleExport("json")}

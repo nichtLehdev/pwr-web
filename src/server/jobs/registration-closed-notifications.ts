@@ -1,12 +1,8 @@
 import "server-only";
 
 import { db } from "@/server/db";
-import {
-  buildCourseParticipantsExcelBuffer,
-  buildCourseParticipantsExportRows,
-  computeCourseRegistrationStats,
-  sanitizeCourseTitleForFilename,
-} from "@/lib/course-participants-export";
+import { computeCourseRegistrationStats } from "@/lib/course-participants-export";
+import { buildCourseParticipantsXlsx } from "@/server/utils/course-exports";
 import { getBaseUrl } from "@/server/utils/get-base-url";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import {
@@ -116,13 +112,11 @@ async function notifyCourse(courseId: string): Promise<"emailed" | "skipped"> {
   }
 
   const stats = computeCourseRegistrationStats(course.registrations);
-  const exportRows = buildCourseParticipantsExportRows(
+  const { buffer: excelBuffer, filename } = await buildCourseParticipantsXlsx({
     course,
-    course.registrations,
-  );
-  const excelBuffer = buildCourseParticipantsExcelBuffer(exportRows);
-  const dateStr = now.toISOString().split("T")[0];
-  const filename = `${sanitizeCourseTitleForFilename(course.title)}_teilnehmer_${dateStr}.xls`;
+    registrations: course.registrations,
+    now,
+  });
 
   const baseUrl = getBaseUrl();
   const participantsUrl = `${baseUrl}/dashboard/courses/${course.id}/participants`;
