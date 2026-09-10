@@ -881,6 +881,10 @@ export const postsRouter = createTRPCRouter({
           .enum(["publishedAt", "title", "createdAt", "status"])
           .default("createdAt"),
         sortOrder: z.enum(["asc", "desc"]).default("desc"),
+        /** Set-Filter über Bezirke; leer heißt "alle". */
+        bezirkId: z.array(z.string()).optional(),
+        /** Freitext über Titel und Anrisstext, für die Suche der Tabellenansicht. */
+        search: z.string().trim().max(200).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -944,6 +948,29 @@ export const postsRouter = createTRPCRouter({
       const scopeFilter = districtScopeFilter(scope, userId);
       if (scopeFilter) {
         where = { AND: [{ ...where }, scopeFilter] };
+      }
+
+      if (input.bezirkId?.length) {
+        // Zusätzlich zum Bezirks-Scope, nicht statt seiner: wer nur den eigenen
+        // Bezirk sehen darf, filtert damit innerhalb dieser Auswahl.
+        where = {
+          AND: [{ ...where }, { bezirkId: { in: input.bezirkId } }],
+        };
+      }
+
+      if (input.search) {
+        const search = input.search;
+        where = {
+          AND: [
+            { ...where },
+            {
+              OR: [
+                { title: { contains: search, mode: "insensitive" } },
+                { excerpt: { contains: search, mode: "insensitive" } },
+              ],
+            },
+          ],
+        };
       }
 
       const [posts, total] = await Promise.all([
