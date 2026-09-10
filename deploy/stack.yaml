@@ -53,6 +53,11 @@ services:
       SMTP_PASSWORD: "{{ .Env.SMTP_PASSWORD }}"
       SMTP_FROM: "{{ .Env.SMTP_FROM }}"
       CRON_SECRET: "{{ .Env.CRON_SECRET }}"
+      # Wartungsmodus. Leer = aus; der Alltagsschalter sitzt im Dashboard.
+      # Auf "true" setzen, um die Seite unabhaengig von der Datenbank zu
+      # schliessen (Deployment-Fenster) — greift auch waehrend einer Migration.
+      MAINTENANCE_MODE: "{{ .Env.MAINTENANCE_MODE }}"
+      MAINTENANCE_BYPASS_TOKEN: "{{ .Env.MAINTENANCE_BYPASS_TOKEN }}"
       ADMIN_EMAIL: "{{ .Env.ADMIN_EMAIL }}"
 
 volumes:
