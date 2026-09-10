@@ -6,15 +6,22 @@
 # Database
 DATABASE_URL=postgresql://user:password@host:5432/posaunenwerk
 
-# Authentication
+# Authentication (E-Mail + Passwort; kein externer OAuth-Anbieter)
 BETTER_AUTH_SECRET=<generate-with-openssl-rand-base64-32>
-BETTER_AUTH_GITHUB_CLIENT_ID=<github-oauth-client-id>
-BETTER_AUTH_GITHUB_CLIENT_SECRET=<github-oauth-secret>
 BETTER_AUTH_URL=https://your-domain.com
 
-# GitHub (for file storage)
+# Deployment-Kennung: nur "production" ist die öffentliche Seite,
+# alles andere zeigt das Beta-Banner.
+APP_ENV=production
+
+# GitHub (nur für die Feedback-Seite -> GitHub-Issues).
+# Beide weglassen, um /feedback zu deaktivieren; die Seite leitet dann
+# auf /kontakt um. Genau so läuft die Produktion.
 GITHUB_TOKEN=<github-personal-access-token>
 GITHUB_REPO=owner/repo
+
+# Secret für die /api/cron/*-Routen. Ohne Wert antworten sie mit 401.
+CRON_SECRET=<generate-with-openssl-rand-base64-32>
 
 # Email (optional but recommended)
 SMTP_HOST=mail.your-domain.com
