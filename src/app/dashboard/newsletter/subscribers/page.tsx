@@ -2,23 +2,72 @@
 
 import { useSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { api } from "@/trpc/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
 import { useToast } from "@/app/_components/ui/toast";
 import { Mail } from "lucide-react";
+
+type Subscriber =
+  RouterOutputs["newsletter"]["getSubscribers"]["subscribers"][number];
+
+/** The columns the server can sort by. */
+const SORTABLE_COLUMNS = {
+  email: "email",
+  name: "name",
+  subscribedAt: "subscribedAt",
+} as const;
+
+type SortableColumn = keyof typeof SORTABLE_COLUMNS;
+
+const STATUS_OPTIONS = [
+  { value: "confirmed", label: "Bestätigt" },
+  { value: "pending", label: "Ausstehend" },
+  { value: "inactive", label: "Inaktiv" },
+];
+
+const column = createDataTableColumnHelper<Subscriber>();
+
+/** Der Status, den die Statusspalte zeigt — passend zum Serverfilter benannt. */
+function subscriberStatus(subscriber: Subscriber): string {
+  if (!subscriber.isActive) return "inactive";
+  return subscriber.confirmedAt ? "confirmed" : "pending";
+}
+
+/** Reads one set filter out of the table's filter state. */
+function setFilterValues(filters: ColumnFiltersState, id: string): string[] {
+  const value = filters.find((filter) => filter.id === id)?.value;
+  return Array.isArray(value) ? (value as string[]) : [];
+}
 
 export default function DashboardNewsletterSubscribersPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
-  const [page, setPage] = useState(1);
+  // Die Abonnentenliste wächst unbegrenzt und wird deshalb serverseitig
+  // geblättert; Sortierung, Statusfilter und Suche sind darum Abfrageparameter
+  // — sonst würden sie nur die gerade geladene Seite betreffen.
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "subscribedAt", desc: true },
+  ]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 50,
+  });
   const [search, setSearch] = useState("");
-  const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(
-    true,
-  );
 
   const { data: profile, isLoading: profileLoading } =
     api.users.getMyProfile.useQuery(undefined, {
@@ -28,13 +77,22 @@ export default function DashboardNewsletterSubscribersPage() {
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const canManageNewsletter = hasPermission(PERMISSIONS.NEWSLETTER_MANAGE);
 
+  const statusFilter = setFilterValues(columnFilters, "status");
+
   const { data: subscribersData, isLoading: subscribersLoading } =
     api.newsletter.getSubscribers.useQuery(
       {
-        page,
-        limit: 50,
-        isActive: isActiveFilter,
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        status: statusFilter.length
+          ? (statusFilter as ("confirmed" | "pending" | "inactive")[])
+          : undefined,
         search: search || undefined,
+        sortBy:
+          SORTABLE_COLUMNS[
+            (sorting[0]?.id ?? "subscribedAt") as SortableColumn
+          ],
+        sortOrder: sorting[0]?.desc === false ? "asc" : "desc",
       },
       {
         enabled: !!session?.user && !!profile,
@@ -83,6 +141,84 @@ export default function DashboardNewsletterSubscribersPage() {
       redirect("/dashboard");
     }
   }, [profile, profileLoading, permissionsLoading, canManageNewsletter]);
+
+  const columns = useMemo<DataTableColumn<Subscriber>[]>(
+    () =>
+      column.columns([
+        column.accessor((subscriber) => subscriber.email, {
+          id: "email",
+          header: "E-Mail",
+          enableColumnFilter: false,
+          meta: { alwaysVisible: true, cellClassName: "whitespace-nowrap" },
+        }),
+        column.accessor((subscriber) => subscriber.name ?? "", {
+          id: "name",
+          header: "Name",
+          enableColumnFilter: false,
+          cell: ({ getValue }) => getValue() || "-",
+        }),
+        column.accessor(subscriberStatus, {
+          id: "status",
+          header: "Status",
+          enableSorting: false,
+          meta: { filterVariant: "set", filterOptions: STATUS_OPTIONS },
+          cell: ({ row }) => {
+            const subscriber = row.original;
+            if (subscriber.isActive && subscriber.confirmedAt) {
+              return (
+                <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                  Bestätigt
+                </span>
+              );
+            }
+            if (subscriber.isActive) {
+              return (
+                <span
+                  className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                  title="Anmeldung wurde noch nicht über den Link in der Bestätigungs-E-Mail bestätigt — erhält keinen Newsletter."
+                >
+                  Ausstehend
+                </span>
+              );
+            }
+            return (
+              <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                Inaktiv
+              </span>
+            );
+          },
+        }),
+        column.accessor((subscriber) => subscriber.subscribedAt, {
+          id: "subscribedAt",
+          header: "Abonniert am",
+          enableColumnFilter: false,
+          meta: { cellClassName: "whitespace-nowrap" },
+          cell: ({ getValue }) =>
+            new Date(getValue()).toLocaleDateString("de-DE"),
+        }),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => (
+            <button
+              onClick={() => {
+                if (
+                  confirm(`Möchtest du ${row.original.email} wirklich löschen?`)
+                ) {
+                  deleteSubscriber.mutate({ id: row.original.id });
+                }
+              }}
+              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+            >
+              Löschen
+            </button>
+          ),
+        }),
+      ]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   if (isPending || profileLoading) {
     return (
@@ -152,167 +288,38 @@ export default function DashboardNewsletterSubscribersPage() {
       )}
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Suche nach E-Mail oder Name..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="dark:bg-dark-surface dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
-          />
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setIsActiveFilter(undefined)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isActiveFilter === undefined
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            }`}
-          >
-            Alle
-          </button>
-          <button
-            onClick={() => setIsActiveFilter(true)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isActiveFilter === true
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            }`}
-          >
-            Aktiv
-          </button>
-          <button
-            onClick={() => setIsActiveFilter(false)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isActiveFilter === false
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            }`}
-          >
-            Inaktiv
-          </button>
-        </div>
-      </div>
-
-      {/* Subscribers List */}
-      {subscribersLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
-        </div>
-      ) : subscribersData && subscribersData.subscribers.length > 0 ? (
-        <>
-          <div className="dark:bg-dark-surface overflow-x-auto rounded-lg border border-gray-200 bg-white shadow dark:border-gray-700">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="dark:bg-dark-surface bg-gray-50">
-                <tr>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    E-Mail
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Name
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Status
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Abonniert am
-                  </th>
-                  <th className="dark:text-dark-text px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="dark:bg-dark-surface divide-y divide-gray-200 bg-white dark:divide-gray-700">
-                {subscribersData.subscribers.map((subscriber) => (
-                  <tr key={subscriber.id}>
-                    <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                      {subscriber.email}
-                    </td>
-                    <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                      {subscriber.name || "-"}
-                    </td>
-                    <td className="px-6 py-4 text-sm whitespace-nowrap">
-                      {subscriber.isActive && subscriber.confirmedAt ? (
-                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                          Bestätigt
-                        </span>
-                      ) : subscriber.isActive ? (
-                        <span
-                          className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          title="Anmeldung wurde noch nicht über den Link in der Bestätigungs-E-Mail bestätigt — erhält keinen Newsletter."
-                        >
-                          Ausstehend
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-                          Inaktiv
-                        </span>
-                      )}
-                    </td>
-                    <td className="dark:text-dark-text px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                      {new Date(subscriber.subscribedAt).toLocaleDateString(
-                        "de-DE",
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-                      <button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              `Möchtest du ${subscriber.email} wirklich löschen?`,
-                            )
-                          ) {
-                            deleteSubscriber.mutate({ id: subscriber.id });
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        Löschen
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {subscribersData.pages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Zurück
-              </button>
-              <span className="dark:text-dark-text text-sm text-gray-700">
-                Seite {page} von {subscribersData.pages}
-              </span>
-              <button
-                onClick={() =>
-                  setPage((p) => Math.min(subscribersData.pages, p + 1))
-                }
-                disabled={page === subscribersData.pages}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-              >
-                Weiter
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center dark:border-gray-700">
-          <p className="dark:text-dark-muted text-gray-600">
+      <DataTable
+        data={subscribersData?.subscribers}
+        columns={columns}
+        getRowId={(subscriber) => subscriber.id}
+        isLoading={subscribersLoading}
+        rowNoun={["Abonnent", "Abonnenten"]}
+        searchPlaceholder="Suche nach E-Mail oder Name…"
+        pageSizeOptions={[50, 100, 250]}
+        emptyState={
+          <span className="dark:text-dark-muted text-gray-600">
             Keine Abonnenten gefunden.
-          </p>
-        </div>
-      )}
+          </span>
+        }
+        sorting={sorting}
+        onSortingChange={setSorting}
+        manualSorting
+        columnFilters={columnFilters}
+        onColumnFiltersChange={(updater) => {
+          setColumnFilters(updater);
+          setPagination((current) => ({ ...current, pageIndex: 0 }));
+        }}
+        manualFiltering
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPagination((current) => ({ ...current, pageIndex: 0 }));
+        }}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        manualPagination
+        rowCount={subscribersData?.total ?? 0}
+      />
     </DashboardPage>
   );
 }
