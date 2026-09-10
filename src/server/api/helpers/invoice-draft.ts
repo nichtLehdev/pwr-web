@@ -115,8 +115,7 @@ export function lineItemsFromRegistration(
     priceOptionId: string | null;
     priceOption: string | null;
   }) =>
-    resolveParticipantPriceOption(participant, course.priceOptions)?.price ??
-    0;
+    resolveParticipantPriceOption(participant, course.priceOptions)?.price ?? 0;
 
   // Insertion-ordered, so the categories appear in the order they were booked
   // rather than in some hash order. Keyed by priceOptionId (falling back to
@@ -128,7 +127,10 @@ export function lineItemsFromRegistration(
     { label: string; unitPrice: number; names: string[] }
   >();
   for (const participant of registration.participants) {
-    const option = resolveParticipantPriceOption(participant, course.priceOptions);
+    const option = resolveParticipantPriceOption(
+      participant,
+      course.priceOptions,
+    );
     const key = option
       ? `id:${option.id}`
       : `label:${participant.priceOption?.trim() || UNCATEGORIZED_LABEL}`;
