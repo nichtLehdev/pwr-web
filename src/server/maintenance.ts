@@ -13,21 +13,16 @@ import { createLogger } from "@/server/utils/logger";
 const log = createLogger("Maintenance");
 
 /**
- * Harte Übersteuerung per Umgebungsvariable.
- *
- * Sie gilt unabhängig von der Datenbank und ist damit der Schalter für ein
- * Deployment-Fenster: Sie greift auch dann, wenn gerade migriert wird oder die
- * Datenbank nicht erreichbar ist. Ausschalten heißt hier: Stack anpassen.
- *
- * Bewusst kein Eintrag in `src/env.js`: Der Wert wird zur Anfragezeit gelesen,
- * nicht beim Start. Dasselbe Image läuft auf Produktion und Vorabversion.
+ * Harte Übersteuerung, unabhängig von der Datenbank — greift also auch
+ * während einer Migration. Bewusst nicht in `src/env.js`: Der Wert wird zur
+ * Anfragezeit gelesen, und dasselbe Image läuft auf Produktion und
+ * Vorabversion.
  */
 function envOverride(): boolean {
   const raw = process.env.MAINTENANCE_MODE?.trim().toLowerCase();
   return raw === "true" || raw === "1";
 }
 
-/** Der Datenbank-Schalter aus dem Dashboard. Fällt bei Fehlern auf "aus" zurück. */
 async function dbState(): Promise<{
   enabled: boolean;
   message: string | null;
@@ -41,21 +36,14 @@ async function dbState(): Promise<{
       until: row?.until ?? null,
     };
   } catch (error) {
-    // Absichtlich "aus": Ein Datenbankfehler darf nicht dazu führen, dass die
-    // Seite plötzlich für alle zu ist. Wer die Seite bewusst schließen will,
-    // hat dafür MAINTENANCE_MODE, das ohne Datenbank auskommt.
+    // Absichtlich "aus": Ein Datenbankfehler darf die Seite nicht für alle
+    // schließen. Wer das bewusst will, nimmt MAINTENANCE_MODE.
     log.error("Wartungsstatus konnte nicht gelesen werden:", error);
     return { enabled: false, message: null, until: null };
   }
 }
 
-/**
- * Darf dieser Aufrufer trotz Wartungsmodus auf die echte Seite?
- *
- * Zwei Wege: eine angemeldete Sitzung mit Dashboard-Zugriff, oder das
- * Freischalt-Cookie aus dem geheimen Link. Beides wird hier serverseitig
- * geprüft — die Middleware kann das nicht, sie sieht nur Cookie-Namen.
- */
+/** Angemeldet mit Dashboard-Zugriff, oder Freischalt-Cookie aus dem Link. */
 async function hasBypass(headers: Headers): Promise<boolean> {
   const token = process.env.MAINTENANCE_BYPASS_TOKEN?.trim();
   if (token) {
@@ -78,23 +66,28 @@ async function hasBypass(headers: Headers): Promise<boolean> {
   }
 }
 
-/** Vollständige Auskunft für genau diese Anfrage. */
+/**
+ * Läuft im Proxy bei jedem Aufruf. Wartung aus kostet deshalb nur den
+ * zwischengespeicherten Schalter; die Freischaltprüfung hängt an Sitzung und
+ * Cookie und ist erst fällig, wenn die Seite ohnehin geschlossen ist.
+ */
 export async function resolveMaintenance(
   headers: Headers,
 ): Promise<MaintenanceVerdict> {
-  const forced = envOverride();
-  const state = forced
+  const off: MaintenanceVerdict = {
+    active: false,
+    blocked: false,
+    message: MAINTENANCE_DEFAULT_MESSAGE,
+    until: null,
+  };
+
+  if (!(await isMaintenanceActive())) return off;
+
+  const state = envOverride()
     ? { enabled: true, message: null, until: null }
     : await dbState();
 
-  if (!state.enabled) {
-    return {
-      active: false,
-      blocked: false,
-      message: MAINTENANCE_DEFAULT_MESSAGE,
-      until: null,
-    };
-  }
+  if (!state.enabled) return off;
 
   return {
     active: true,
@@ -105,14 +98,8 @@ export async function resolveMaintenance(
 }
 
 /**
- * Nur der globale Schalter, ohne Sitzungsprüfung.
- *
- * Für Stellen, die den Zustand kennen müssen, aber keinen konkreten Aufrufer
- * haben — etwa der tRPC-Wächter, der öffentliche Schreibzugriffe sperrt.
- *
- * Kurz zwischengespeichert, weil das an heißen Pfaden hängt: `stats.recordView`
- * ist eine öffentliche Mutation und läuft bei jedem Seitenaufruf. Ohne Cache
- * käme pro Aufruf eine Abfrage dazu.
+ * Nur der globale Schalter. Kurz zwischengespeichert, weil `stats.recordView`
+ * als öffentliche Mutation bei jedem Seitenaufruf hier vorbeikommt.
  */
 const ACTIVE_CACHE_TTL_MS = 5_000;
 let activeCache: { value: boolean; at: number } | null = null;
