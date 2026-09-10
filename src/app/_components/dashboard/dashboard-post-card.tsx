@@ -2,6 +2,10 @@ import Link from "next/link";
 import { getDistrictColor } from "@/lib/district-color";
 import type { ContentStatus, PostCategory } from "~/generated/prisma/client";
 import {
+  CONTENT_STATUS_BADGE_CLASSES,
+  CONTENT_STATUS_LABELS,
+} from "./content-status";
+import {
   CalendarIcon,
   CheckCircleIcon,
   ExternalLinkIcon,
@@ -32,37 +36,6 @@ interface DashboardPostCardProps {
   } | null;
   reviewDate?: Date | null;
 }
-
-const statusConfig: Record<
-  ContentStatus,
-  { label: string; bgColor: string; textColor: string }
-> = {
-  DRAFT: {
-    label: "Entwurf",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-700 dark:text-gray-300",
-  },
-  PENDING: {
-    label: "Zur Prüfung",
-    bgColor: "bg-yellow-100 dark:bg-yellow-900/30",
-    textColor: "text-yellow-800 dark:text-yellow-300",
-  },
-  APPROVED: {
-    label: "Veröffentlicht",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
-    textColor: "text-green-800 dark:text-green-300",
-  },
-  REJECTED: {
-    label: "Abgelehnt",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
-    textColor: "text-red-800 dark:text-red-300",
-  },
-  ARCHIVED: {
-    label: "Archiviert",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    textColor: "text-gray-600 dark:text-gray-400",
-  },
-};
 
 const categoryConfig: Record<
   PostCategory,
@@ -110,7 +83,7 @@ export default function DashboardPostCard({
   reviewDate,
 }: DashboardPostCardProps) {
   const districtColor = getDistrictColor(district);
-  const statusInfo = statusConfig[status];
+  const statusClasses = CONTENT_STATUS_BADGE_CLASSES[status];
   const categoryInfo = categoryConfig[category];
   const metaIconClass =
     "mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500";
@@ -122,9 +95,9 @@ export default function DashboardPostCard({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
           {/* Status Badge */}
           <span
-            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor}`}
+            className={`inline-flex max-w-full shrink-0 items-center rounded-md px-2 py-1 text-xs font-medium ${statusClasses}`}
           >
-            {statusInfo.label}
+            {CONTENT_STATUS_LABELS[status]}
           </span>
 
           {/* Pinned Badge */}
