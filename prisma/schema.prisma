@@ -85,6 +85,8 @@ model User {
 
   gameResults GameResult[] @relation("UserGameResults")
 
+  maintenanceUpdates MaintenanceState[] @relation("MaintenanceUpdatedBy")
+
   createdInvoices   Invoice[] @relation("InvoiceCreator")
   publishedInvoices Invoice[] @relation("InvoicePublisher")
   paidInvoices      Invoice[] @relation("InvoicePayer")
@@ -1610,6 +1612,30 @@ model NewsletterSubscriber {
   consentVersion String?
 
   @@index([isActive, confirmedAt])
+}
+
+/// Einzeiliger Datensatz (id = 1) fuer den Wartungsmodus.
+///
+/// Die Umgebungsvariable MAINTENANCE_MODE hat Vorrang: Sie gilt auch dann,
+/// wenn die Datenbank gerade nicht erreichbar ist, und ist damit der Schalter
+/// fuer ein Deployment-Fenster. Dieser Datensatz ist der Schalter fuer den
+/// Alltag — aus dem Dashboard heraus, ohne Redeploy.
+model MaintenanceState {
+  id      Int     @id @default(1)
+  enabled Boolean @default(false)
+
+  /// Optionaler Text auf der Wartungsseite. Ohne Wert steht dort der Standardtext.
+  message String?
+
+  /// Rein informativ fuer die Wartungsseite ("voraussichtlich bis ..."). Es
+  /// schaltet sich nichts automatisch wieder ein.
+  until DateTime?
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("MaintenanceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("maintenance_state")
 }
 
 model HomepageCarouselItem {

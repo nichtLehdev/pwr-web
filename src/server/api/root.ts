@@ -25,6 +25,7 @@ import { contactRouter } from "./routers/contact";
 import { noteSetsRouter } from "./routers/note-sets";
 import { gamesRouter } from "./routers/games";
 import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
+import { maintenanceRouter } from "./routers/maintenance";
 
 /**
  * This is the primary router for your server.
@@ -32,6 +33,7 @@ import { customFieldTemplatesRouter } from "./routers/custom-field-templates";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
+  maintenance: maintenanceRouter,
   users: usersRouter,
   events: eventsRouter,
   courses: coursesRouter,
