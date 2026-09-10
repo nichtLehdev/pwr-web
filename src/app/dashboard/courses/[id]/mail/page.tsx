@@ -8,7 +8,10 @@ import { api } from "@/trpc/react";
 import { useToast } from "@/app/_components/ui/toast";
 import { useAutosave } from "@/lib/useAutosave";
 import { useBeforeUnload } from "@/lib/useBeforeUnload";
-import { DraftRestorePrompt } from "@/app/_components/dashboard";
+import {
+  CourseInvoicesButton,
+  DraftRestorePrompt,
+} from "@/app/_components/dashboard";
 import RichTextEditor from "@/app/_components/editor/rich-text-editor-lazy";
 import {
   ScrollableModal,
@@ -515,13 +518,16 @@ function CourseMailPageContent() {
               {course.title}
             </p>
           </div>
-          <Link
-            href={`/dashboard/courses/${courseId}/participants`}
-            className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-            Zurück zu den Teilnehmern
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <CourseInvoicesButton courseId={courseId} short />
+            <Link
+              href={`/dashboard/courses/${courseId}/participants`}
+              className="dark:border-dark-border dark:bg-dark-surface dark:text-dark-text inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Zurück zu den Teilnehmern
+            </Link>
+          </div>
         </div>
 
         {selectedRegistrationIds.length > 0 && (

@@ -45,3 +45,4 @@ export {
   type CreatedLocation,
 } from "./new-location-form";
 export { SocialLinksEditor, cleanSocialLinks } from "./social-links-editor";
+export { CourseInvoicesButton } from "./course-invoices-button";
