@@ -108,7 +108,7 @@ export default function DashboardPage() {
     { enabled: ready && canManageRegistrations },
   );
   const { data: waitlisted } = api.registrations.getAllAdmin.useQuery(
-    { page: 1, limit: 1, registrationStatus: RegistrationStatus.WAITLIST },
+    { page: 1, limit: 1, registrationStatus: [RegistrationStatus.WAITLIST] },
     { enabled: ready && canManageRegistrations },
   );
   // Geschwisterrabatte gehören in dieselbe Freigabe-Warteschlange wie Kurse,
@@ -119,7 +119,7 @@ export default function DashboardPage() {
     {
       page: 1,
       limit: 1,
-      siblingDiscountStatus: SiblingDiscountStatus.PENDING,
+      siblingDiscountStatus: [SiblingDiscountStatus.PENDING],
     },
     { enabled: ready && (canManageRegistrations || canManageSiblingDiscount) },
   );

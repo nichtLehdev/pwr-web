@@ -30,7 +30,10 @@ import {
   PencilIcon,
   CircleXIcon,
 } from "lucide-react";
-import { DashboardOverflowMenu } from "@/app/_components/dashboard";
+import {
+  CourseInvoicesButton,
+  DashboardOverflowMenu,
+} from "@/app/_components/dashboard";
 import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
 import { COURSE_PAYMENT_METHOD_LABELS } from "@/lib/course-payment-methods";
 import {
@@ -423,6 +426,7 @@ export default function RegistrationDetailPage() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <CourseInvoicesButton courseId={courseId} short />
             {canEdit && editingStatus ? (
               <div className="flex items-center gap-2">
                 <Select

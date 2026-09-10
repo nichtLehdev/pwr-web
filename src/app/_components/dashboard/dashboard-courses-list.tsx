@@ -1,16 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { api } from "@/trpc/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import type { PermissionKey } from "@/lib/permissions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { getDistrictColor } from "@/lib/district-color";
+import { coursePath } from "@/lib/slug";
 import DashboardCourseCard from "./dashboard-course-card";
-import type { ContentStatus } from "~/generated/prisma/enums";
+import {
+  DashboardListViewToggle,
+  useDashboardListView,
+} from "./dashboard-list-view";
+import { CONTENT_STATUS_OPTIONS, ContentStatusBadge } from "./content-status";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  SortingState,
+} from "@tanstack/react-table";
+import type { ContentStatus, CourseType } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import {
   ArrowDownIcon,
   ArrowLeftIcon,
+  ExternalLinkIcon,
   ArrowRightIcon,
   ArrowUpIcon,
   CheckIcon,
@@ -31,6 +50,26 @@ import {
 import { cn } from "@/lib/utils";
 
 type DashboardCoursesListProps = Record<string, never>;
+
+type DashboardCourse =
+  RouterOutputs["courses"]["getDashboardCourses"]["courses"][number];
+
+/** Die Standardordnung der Liste — auch das Ziel des dritten Sortierklicks. */
+const DEFAULT_SORTING = { id: "startDate", desc: false } as const;
+
+/** Die Spalten, nach denen der Server sortieren kann. */
+type TableSortColumn = "title" | "startDate" | "status" | "createdAt";
+
+const courseTypeLabels: Record<CourseType, string> = {
+  LEHRGANG: "Lehrgang",
+  FREIZEIT: "Freizeit",
+  WORKSHOP: "Workshop",
+  KOMPONISTENPORTRAIT: "Komponistenportrait",
+  VERANSTALTUNG: "Veranstaltung",
+  OTHER: "Sonstiges",
+};
+
+const column = createDataTableColumnHelper<DashboardCourse>();
 
 type DashboardCoursesScheduleFilter = "active" | "all" | "past";
 
@@ -70,20 +109,37 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   );
   const [scheduleFilter, setScheduleFilter] =
     useState<DashboardCoursesScheduleFilter>("active");
-  const [sortBy, setSortBy] = useState<
-    "startDate" | "title" | "createdAt" | "status"
-  >("startDate");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  // Die Sortierung selbst ist der Zustand — eine leere Sortierung ist der
+  // dritte Klick auf einen Spaltenkopf und bedeutet "wieder Standardordnung".
+  // Aus ihr werden Spalte und Richtung für Abfrage und Kartenansicht abgeleitet.
+  const [sorting, setSorting] = useState<SortingState>([DEFAULT_SORTING]);
+  const activeSort = sorting[0] ?? DEFAULT_SORTING;
+  const sortBy = activeSort.id as TableSortColumn;
+  const sortOrder = activeSort.desc ? "desc" : "asc";
+
+  const setSortBy = (next: TableSortColumn) =>
+    setSorting([{ id: next, desc: activeSort.desc }]);
+  /** Bezirks-Set-Filter; leer heißt "alle Bezirke". */
+  const [bezirkFilter, setBezirkFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [view, setView] = useDashboardListView("dashboard-courses-view");
+  // Nur die Tabellenansicht sucht: in der Kartenansicht gäbe es kein Feld dazu,
+  // und ein Filter ohne sichtbaren Schalter ist ein Filter, den niemand findet.
+  const [search, setSearch] = useState("");
+  const [tablePageSize, setTablePageSize] = useState(25);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showStatusChange, setShowStatusChange] = useState(false);
   const [newStatus, setNewStatus] = useState<ContentStatus | null>(null);
-  const limit = 12;
+  // Karten füllen ein Raster, Tabellenzeilen eine Seite — beide brauchen
+  // eine andere Seitengröße.
+  const limit = view === "table" ? tablePageSize : 12;
 
   const utils = api.useUtils();
+
+  const { data: bezirke } = api.bezirke.getAll.useQuery();
 
   const { data, isLoading, error } = api.courses.getDashboardCourses.useQuery({
     page,
@@ -92,6 +148,8 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     schedule: scheduleFilter,
     sortBy,
     sortOrder,
+    bezirkId: bezirkFilter.length ? bezirkFilter : undefined,
+    search: view === "table" && search ? search : undefined,
   });
 
   useEffect(() => {
@@ -167,17 +225,58 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   const adjustedFilterCount = useMemo(() => {
     return (
       (statusFilter !== "all" ? 1 : 0) +
+      (bezirkFilter.length > 0 ? 1 : 0) +
       (scheduleFilter !== "active" ? 1 : 0) +
       (sortBy !== "startDate" || sortOrder !== "asc" ? 1 : 0)
     );
-  }, [statusFilter, scheduleFilter, sortBy, sortOrder]);
+  }, [statusFilter, bezirkFilter, scheduleFilter, sortBy, sortOrder]);
+
+  /** Beim Wechsel neu aufsetzen: die Seitengröße unterscheidet sich. */
+  const handleViewChange = (next: "cards" | "table") => {
+    setView(next);
+    setPage(1);
+    if (next === "cards") setSearch("");
+  };
+
+  const bezirkColumnOptions = useMemo(
+    () =>
+      (bezirke ?? []).map((bezirk) => ({
+        value: bezirk.id,
+        label:
+          `${bezirk.number} · ${bezirk.shortName ?? bezirk.name ?? ""}`.trim(),
+      })),
+    [bezirke],
+  );
+
+  const statusColumnOptions = useMemo(
+    () =>
+      CONTENT_STATUS_OPTIONS.filter(
+        (option) => hasApprovePermission || option.value !== "DRAFT",
+      ),
+    [hasApprovePermission],
+  );
+
+  const columnFilters: ColumnFiltersState = useMemo(
+    () => [
+      ...(statusFilter === "all"
+        ? []
+        : [{ id: "status", value: [statusFilter] }]),
+      ...(bezirkFilter.length ? [{ id: "district", value: bezirkFilter }] : []),
+    ],
+    [statusFilter, bezirkFilter],
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({ pageIndex: page - 1, pageSize: limit }),
+    [page, limit],
+  );
 
   const toggleSortOrder = () => {
-    setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    setSorting([{ id: sortBy, desc: sortOrder === "asc" }]);
     setPage(1);
   };
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -187,7 +286,191 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
       }
       return newSet;
     });
-  };
+  }, []);
+
+  const columns = useMemo<DataTableColumn<DashboardCourse>[]>(() => {
+    const select = selectionMode
+      ? [
+          column.display({
+            id: "select",
+            header: "",
+            meta: { alwaysVisible: true, headerClassName: "w-10" },
+            cell: ({ row }) => (
+              <input
+                type="checkbox"
+                checked={selectedIds.has(row.original.id)}
+                onChange={() => toggleSelection(row.original.id)}
+                aria-label={`${row.original.title} auswählen`}
+                className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
+              />
+            ),
+          }),
+        ]
+      : [];
+
+    return column.columns([
+      ...select,
+      column.accessor((course) => course.title, {
+        id: "title",
+        header: "Titel",
+        enableColumnFilter: false,
+        meta: { alwaysVisible: true },
+        cell: ({ row }) => (
+          <Link
+            href={`/dashboard/courses/${row.original.id}`}
+            className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+          >
+            {row.original.title}
+          </Link>
+        ),
+      }),
+      column.accessor((course) => course.startDate, {
+        id: "startDate",
+        header: "Zeitraum",
+        enableColumnFilter: false,
+        meta: { cellClassName: "whitespace-nowrap tabular-nums" },
+        cell: ({ row }) => {
+          const start = new Date(row.original.startDate);
+          const end = new Date(row.original.endDate);
+          const format = (date: Date) =>
+            date.toLocaleDateString("de-DE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          return start.getTime() === end.getTime()
+            ? format(start)
+            : `${format(start)} – ${format(end)}`;
+        },
+      }),
+      column.accessor((course) => course.location?.city ?? "", {
+        id: "location",
+        header: "Ort",
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: ({ getValue }) => getValue() || "–",
+      }),
+      column.accessor((course) => courseTypeLabels[course.courseType], {
+        id: "courseType",
+        header: "Kursart",
+        enableSorting: false,
+        enableColumnFilter: false,
+      }),
+      column.accessor((course) => course.bezirkId ?? "", {
+        id: "district",
+        header: "Bezirk",
+        enableSorting: false,
+        meta: {
+          align: "center",
+          label: "Bezirk",
+          filterVariant: "set",
+          filterOptions: bezirkColumnOptions,
+        },
+        cell: ({ row }) => {
+          const number = row.original.bezirk?.number;
+          if (!number) return "–";
+          return (
+            <span
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
+              style={{ backgroundColor: getDistrictColor(number) }}
+            >
+              {number}
+            </span>
+          );
+        },
+      }),
+      column.accessor((course) => course._count.participants, {
+        id: "participants",
+        header: "Teiln.",
+        enableSorting: false,
+        enableColumnFilter: false,
+        meta: {
+          align: "right",
+          label: "Teilnehmerzahl",
+          cellClassName: "tabular-nums whitespace-nowrap",
+        },
+        cell: ({ row }) =>
+          row.original.maxParticipants
+            ? `${row.original._count.participants} / ${row.original.maxParticipants}`
+            : String(row.original._count.participants),
+      }),
+      column.accessor(
+        (course) => (course.registrationOpen ? "Offen" : "Geschlossen"),
+        {
+          id: "registration",
+          header: "Anmeldung",
+          enableSorting: false,
+          enableColumnFilter: false,
+          cell: ({ row }) => (
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${
+                row.original.registrationOpen
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+              }`}
+            >
+              {row.original.registrationOpen ? "Offen" : "Geschlossen"}
+            </span>
+          ),
+        },
+      ),
+      column.accessor((course) => course.status, {
+        id: "status",
+        header: "Status",
+        meta: { filterVariant: "set", filterOptions: statusColumnOptions },
+        cell: ({ row }) => <ContentStatusBadge status={row.original.status} />,
+      }),
+      column.accessor((course) => course.createdBy?.displayName ?? "", {
+        id: "createdBy",
+        header: "Erstellt von",
+        enableSorting: false,
+        enableColumnFilter: false,
+        cell: ({ getValue }) => getValue() || "–",
+      }),
+      column.accessor((course) => course.createdAt, {
+        id: "createdAt",
+        header: "Erstellt am",
+        enableColumnFilter: false,
+        meta: { cellClassName: "whitespace-nowrap tabular-nums" },
+        cell: ({ getValue }) =>
+          new Date(getValue()).toLocaleDateString("de-DE"),
+      }),
+      column.display({
+        id: "actions",
+        header: "Aktionen",
+        meta: { align: "right", label: "Aktionen" },
+        cell: ({ row }) => (
+          <div className="flex items-center justify-end gap-2">
+            <Link
+              href={`/dashboard/courses/${row.original.id}/edit`}
+              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+              title="Bearbeiten"
+            >
+              <PencilIcon className="h-4 w-4" />
+            </Link>
+            <Link
+              href={coursePath({
+                id: row.original.id,
+                slug: row.original.slug,
+              })}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+              title="Öffentliche Seite"
+            >
+              <ExternalLinkIcon className="h-4 w-4" />
+            </Link>
+          </div>
+        ),
+      }),
+    ]);
+  }, [
+    selectionMode,
+    selectedIds,
+    statusColumnOptions,
+    bezirkColumnOptions,
+    toggleSelection,
+  ]);
 
   const selectAll = () => {
     if (data?.courses) {
@@ -268,55 +551,84 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
   const selectClass =
     "dark:border-dark-border dark:bg-dark-background min-h-9 min-w-0 rounded-md border border-gray-200/90 bg-white px-2.5 py-1.5 text-sm text-gray-900 dark:text-dark-text";
 
+  // In der Tabelle sitzen Status und Sortierung in den Spaltenköpfen — beides
+  // zusätzlich in der Leiste zu zeigen wären zwei Schalter für dieselbe Sache.
   const filterControlsRow = (
     <div className="-mx-0.5 flex flex-nowrap items-center gap-x-2 overflow-x-auto px-0.5 pb-1 sm:mx-0 sm:gap-x-3 sm:overflow-visible sm:pb-0">
       <div className="shrink-0">{scheduleSegment}</div>
-      <Select
-        value={statusFilter}
-        onChange={(e) => {
-          setStatusFilter(e.target.value as ContentStatus | "all");
-          setPage(1);
-        }}
-        className={cn(selectClass, "w-[10.25rem] shrink-0 sm:w-[11.75rem]")}
-        aria-label="Status"
-      >
-        {availableFilters.map((filter) => (
-          <option key={String(filter.value)} value={String(filter.value)}>
-            {filter.label}
-          </option>
-        ))}
-      </Select>
-      <div className="flex shrink-0 items-center gap-1.5">
-        <Select
-          value={sortBy}
-          onChange={(e) => {
-            setSortBy(
-              e.target.value as "startDate" | "title" | "createdAt" | "status",
-            );
-            setPage(1);
-          }}
-          className={cn(selectClass, "w-[9.5rem]")}
-          aria-label="Sortierung"
-        >
-          {sortOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
-        <button
-          type="button"
-          onClick={toggleSortOrder}
-          className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
-          title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
-        >
-          {sortOrder === "asc" ? (
-            <ArrowUpIcon className="h-4 w-4" />
-          ) : (
-            <ArrowDownIcon className="h-4 w-4" />
-          )}
-        </button>
-      </div>
+      {view === "table" ? null : (
+        <>
+          <div className="w-[10.25rem] shrink-0 sm:w-[11.75rem]">
+            <Select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as ContentStatus | "all");
+                setPage(1);
+              }}
+              className={cn(selectClass, "w-full")}
+              aria-label="Status"
+            >
+              {availableFilters.map((filter) => (
+                <option key={String(filter.value)} value={String(filter.value)}>
+                  {filter.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="w-[9.75rem] shrink-0 sm:w-[10.75rem]">
+            <Select
+              value={bezirkFilter[0] ?? "all"}
+              onChange={(e) => {
+                setBezirkFilter(
+                  e.target.value === "all" ? [] : [e.target.value],
+                );
+                setPage(1);
+              }}
+              className={cn(selectClass, "w-full")}
+              aria-label="Bezirk"
+            >
+              <option value="all">Alle Bezirke</option>
+              {bezirkColumnOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Select
+              value={sortBy}
+              onChange={(e) => {
+                setSortBy(
+                  e.target.value as
+                    "startDate" | "title" | "createdAt" | "status",
+                );
+                setPage(1);
+              }}
+              className={cn(selectClass, "w-[9.5rem]")}
+              aria-label="Sortierung"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+            <button
+              type="button"
+              onClick={toggleSortOrder}
+              className="text-dark dark:text-dark-text dark:border-dark-border dark:bg-dark-background-secondary dark:hover:bg-dark-surface inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-200/90 bg-white text-gray-600 transition-colors hover:bg-gray-50"
+              title={sortOrder === "asc" ? "Aufsteigend" : "Absteigend"}
+            >
+              {sortOrder === "asc" ? (
+                <ArrowUpIcon className="h-4 w-4" />
+              ) : (
+                <ArrowDownIcon className="h-4 w-4" />
+              )}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -324,32 +636,45 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
     <div className="space-y-3">
       {!selectionMode && (
         <div className="dark:border-dark-border border-b border-gray-200/80 pb-2">
-          <div className="hidden w-full flex-nowrap items-center gap-x-3 sm:flex">
-            <p className="shrink-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
-              {isLoading ? (
-                <span className="text-gray-500">Liste wird geladen…</span>
-              ) : data ? (
-                <>
-                  <span className="text-dark dark:text-dark-text font-semibold">
-                    {data.total}
-                  </span>{" "}
-                  {data.total === 1 ? "Kurs" : "Kurse"}
-                  {scheduleFilter === "active" && " · aktuell & geplant"}
-                  {scheduleFilter === "past" && " · vergangen"}
-                  {scheduleFilter === "all" && " · alle Zeiträume"}
-                </>
-              ) : null}
-            </p>
-            <div className="min-w-0 flex-1">{filterControlsRow}</div>
-            <Button
-              onClick={() => setSelectionMode(true)}
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-            >
-              <SquareDashed className="h-4 w-4" />
-              Auswählen
-            </Button>
+          {/* Zählung und Ansichtsschalter oben, die Filter darunter über die
+              volle Breite: die Selects haben feste Breiten und drängeln sich in
+              einer gemeinsamen Zeile bei mittleren Fenstern gegenseitig weg. */}
+          <div className="hidden space-y-2 sm:block">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <p className="min-w-0 text-sm text-gray-600 tabular-nums dark:text-gray-400">
+                {isLoading ? (
+                  <span className="text-gray-500">Liste wird geladen…</span>
+                ) : data ? (
+                  <>
+                    <span className="text-dark dark:text-dark-text font-semibold">
+                      {data.total}
+                    </span>{" "}
+                    {data.total === 1 ? "Kurs" : "Kurse"}
+                    {scheduleFilter === "active" && " · aktuell & geplant"}
+                    {scheduleFilter === "past" && " · vergangen"}
+                    {scheduleFilter === "all" && " · alle Zeiträume"}
+                  </>
+                ) : null}
+              </p>
+              <div className="flex items-center gap-2">
+                <DashboardListViewToggle
+                  view={view}
+                  onChange={handleViewChange}
+                />
+                <Button
+                  onClick={() => setSelectionMode(true)}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                >
+                  <SquareDashed className="h-4 w-4" />
+                  Auswählen
+                </Button>
+              </div>
+            </div>
+            {filterControlsRow ? (
+              <div className="min-w-0">{filterControlsRow}</div>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap items-end justify-between gap-3 sm:hidden">
@@ -368,15 +693,21 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
                 </>
               ) : null}
             </p>
-            <Button
-              onClick={() => setSelectionMode(true)}
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-            >
-              <SquareDashed className="h-4 w-4" />
-              Auswählen
-            </Button>
+            <div className="flex items-center gap-2">
+              <DashboardListViewToggle
+                view={view}
+                onChange={handleViewChange}
+              />
+              <Button
+                onClick={() => setSelectionMode(true)}
+                variant="outline"
+                size="sm"
+                className="shrink-0"
+              >
+                <SquareDashed className="h-4 w-4" />
+                Auswählen
+              </Button>
+            </div>
           </div>
 
           <div className="mt-2 sm:hidden">
@@ -387,7 +718,7 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
             >
               <span className="flex items-center gap-2">
                 <FilterIcon className="h-4 w-4 text-gray-400" />
-                Zeitraum, Status, Sortierung
+                Zeitraum, Status, Bezirk, Sortierung
               </span>
               {adjustedFilterCount > 0 ? (
                 <span className="dark:bg-dark-border rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 tabular-nums dark:text-gray-200">
@@ -485,124 +816,190 @@ export default function DashboardCoursesList({}: DashboardCoursesListProps) {
       )}
 
       {/* Loading State */}
-      {isLoading && (
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="dark:border-dark-border dark:bg-dark-surface h-52 animate-pulse rounded-lg border border-gray-200/70 bg-gray-100"
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Courses Grid */}
-      {!isLoading && data?.courses && data.courses.length > 0 && (
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {data.courses.map((course) => (
-            <div key={course.id} className="relative">
-              {selectionMode && (
+      {view === "table" ? (
+        <DataTable
+          data={data?.courses}
+          columns={columns}
+          getRowId={(course) => course.id}
+          isLoading={isLoading}
+          rowNoun={["Kurs", "Kurse"]}
+          searchPlaceholder="Titel oder Ort suchen…"
+          pageSizeOptions={[25, 50, 100]}
+          emptyState={
+            <>
+              <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
+              <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
+                Keine Kurse gefunden
+              </h3>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Passe Zeitraum, Status oder Suche an.
+              </p>
+            </>
+          }
+          sorting={sorting}
+          onSortingChange={(updater) => {
+            setSorting(
+              typeof updater === "function" ? updater(sorting) : updater,
+            );
+            setPage(1);
+          }}
+          manualSorting
+          columnFilters={columnFilters}
+          onColumnFiltersChange={(updater) => {
+            const next =
+              typeof updater === "function" ? updater(columnFilters) : updater;
+            const read = (id: string) =>
+              next.find((filter) => filter.id === id)?.value as
+                string[] | undefined;
+            // Der Server kennt nur einen Status je Abfrage; die Mehrfachauswahl
+            // der Spalte wird darum auf den ersten Wert eingedampft. Bezirke
+            // nimmt er dagegen als Liste entgegen.
+            const status = read("status");
+            setStatusFilter(
+              status?.length ? (status[0] as ContentStatus) : "all",
+            );
+            setBezirkFilter(read("district") ?? []);
+            setPage(1);
+          }}
+          manualFiltering
+          search={search}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          pagination={pagination}
+          onPaginationChange={(updater) => {
+            const next =
+              typeof updater === "function" ? updater(pagination) : updater;
+            setTablePageSize(next.pageSize);
+            setPage(next.pageIndex + 1);
+          }}
+          manualPagination
+          rowCount={data?.total ?? 0}
+        />
+      ) : (
+        <>
+          {isLoading && (
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
                 <div
-                  className={`absolute inset-0 z-10 cursor-pointer rounded-lg border-2 transition-colors ${
-                    selectedIds.has(course.id)
-                      ? "border-primary bg-primary/10"
-                      : "border-transparent hover:border-gray-300 hover:bg-gray-50/50 dark:hover:border-gray-600"
-                  }`}
-                  onClick={() => toggleSelection(course.id)}
-                >
-                  <div className="absolute top-3 left-3">
-                    <div
-                      className={`flex h-6 w-6 items-center justify-center rounded border-2 transition-colors ${
-                        selectedIds.has(course.id)
-                          ? "border-primary bg-primary text-white"
-                          : "dark:bg-dark-surface border-gray-300 bg-white dark:border-gray-600"
-                      }`}
-                    >
-                      {selectedIds.has(course.id) && (
-                        <CheckIcon className="h-4 w-4" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <DashboardCourseCard
-                id={course.id}
-                slug={course.slug}
-                title={course.title}
-                startDate={new Date(course.startDate)}
-                endDate={new Date(course.endDate)}
-                location={course.location?.city}
-                courseType={course.courseType}
-                district={course.bezirk?.number}
-                status={course.status}
-                registrationOpen={course.registrationOpen}
-                registrationOpensAt={
-                  course.registrationOpensAt
-                    ? new Date(course.registrationOpensAt)
-                    : null
-                }
-                registrationDeadline={
-                  course.registrationDeadline
-                    ? new Date(course.registrationDeadline)
-                    : null
-                }
-                maxParticipants={course.maxParticipants}
-                confirmedCount={course._count.participants}
-                createdBy={course.createdBy}
-                createdAt={new Date(course.createdAt)}
-              />
+                  key={i}
+                  className="dark:border-dark-border dark:bg-dark-surface h-52 animate-pulse rounded-lg border border-gray-200/70 bg-gray-100"
+                />
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {/* Courses Grid */}
+          {!isLoading && data?.courses && data.courses.length > 0 && (
+            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {data.courses.map((course) => (
+                <div key={course.id} className="relative">
+                  {selectionMode && (
+                    <div
+                      className={`absolute inset-0 z-10 cursor-pointer rounded-lg border-2 transition-colors ${
+                        selectedIds.has(course.id)
+                          ? "border-primary bg-primary/10"
+                          : "border-transparent hover:border-gray-300 hover:bg-gray-50/50 dark:hover:border-gray-600"
+                      }`}
+                      onClick={() => toggleSelection(course.id)}
+                    >
+                      <div className="absolute top-3 left-3">
+                        <div
+                          className={`flex h-6 w-6 items-center justify-center rounded border-2 transition-colors ${
+                            selectedIds.has(course.id)
+                              ? "border-primary bg-primary text-white"
+                              : "dark:bg-dark-surface border-gray-300 bg-white dark:border-gray-600"
+                          }`}
+                        >
+                          {selectedIds.has(course.id) && (
+                            <CheckIcon className="h-4 w-4" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <DashboardCourseCard
+                    id={course.id}
+                    slug={course.slug}
+                    title={course.title}
+                    startDate={new Date(course.startDate)}
+                    endDate={new Date(course.endDate)}
+                    location={course.location?.city}
+                    courseType={course.courseType}
+                    district={course.bezirk?.number}
+                    status={course.status}
+                    registrationOpen={course.registrationOpen}
+                    registrationOpensAt={
+                      course.registrationOpensAt
+                        ? new Date(course.registrationOpensAt)
+                        : null
+                    }
+                    registrationDeadline={
+                      course.registrationDeadline
+                        ? new Date(course.registrationDeadline)
+                        : null
+                    }
+                    maxParticipants={course.maxParticipants}
+                    confirmedCount={course._count.participants}
+                    createdBy={course.createdBy}
+                    createdAt={new Date(course.createdAt)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!isLoading && data?.courses && data.courses.length === 0 && (
+            <div className="dark:border-dark-border border-t border-gray-200/80 py-14 text-center">
+              <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
+              <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
+                Keine Kurse gefunden
+              </h3>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {statusFilter !== "all"
+                  ? "Für diese Statusfilter gibt es keine Treffer."
+                  : scheduleFilter === "active"
+                    ? "Keine Kurse mehr im aktuellen Zeitraum. Versuche „Alle Zeiträume“ oder „Vergangen“, oder lege einen neuen Kurs an."
+                    : scheduleFilter === "past"
+                      ? "Keine vergangenen Kurse gefunden."
+                      : "Es gibt noch keine Kurse."}
+              </p>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {view === "cards" && data && data.pages > 1 && (
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowLeftIcon className="h-4 w-4" />
+              </button>
+
+              <span className="text-dark dark:text-dark-text text-sm tabular-nums">
+                Seite {page} von {data.pages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
+                disabled={page === data.pages}
+                className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+        </>
       )}
 
-      {/* Empty State */}
-      {!isLoading && data?.courses && data.courses.length === 0 && (
-        <div className="dark:border-dark-border border-t border-gray-200/80 py-14 text-center">
-          <SquareDashed className="mx-auto h-10 w-10 text-gray-400/80 dark:text-gray-500" />
-          <h3 className="text-dark dark:text-dark-text mt-4 text-lg font-semibold">
-            Keine Kurse gefunden
-          </h3>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            {statusFilter !== "all"
-              ? "Für diese Statusfilter gibt es keine Treffer."
-              : scheduleFilter === "active"
-                ? "Keine Kurse mehr im aktuellen Zeitraum. Versuche „Alle Zeiträume“ oder „Vergangen“, oder lege einen neuen Kurs an."
-                : scheduleFilter === "past"
-                  ? "Keine vergangenen Kurse gefunden."
-                  : "Es gibt noch keine Kurse."}
-          </p>
-        </div>
-      )}
-
-      {/* Pagination */}
-      {data && data.pages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowLeftIcon className="h-4 w-4" />
-          </button>
-
-          <span className="text-dark dark:text-dark-text text-sm tabular-nums">
-            Seite {page} von {data.pages}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-            disabled={page === data.pages}
-            className="dark:border-dark-border dark:bg-dark-surface dark:hover:bg-dark-background-secondary rounded-lg border border-gray-200/90 bg-white px-3 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <ArrowRightIcon className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <ScrollableModal>
           <ScrollableModalCard maxW="md">

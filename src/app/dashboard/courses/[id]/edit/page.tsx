@@ -36,6 +36,7 @@ import {
   DashboardFormZoneHeader,
   DashboardFormBlock,
   CourseFormEditMetaBar,
+  CourseInvoicesButton,
   CourseCustomFieldsEditor,
   DraftRestorePrompt,
   SlugField,
@@ -1089,6 +1090,7 @@ export default function EditCoursePage() {
           { label: course.title, href: `/dashboard/courses/${courseId}` },
           { label: "Bearbeiten" },
         ]}
+        actions={<CourseInvoicesButton courseId={courseId} />}
         maxWidth="7xl"
       >
         <DraftRestorePrompt

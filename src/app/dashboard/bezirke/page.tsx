@@ -2,12 +2,17 @@
 
 import { useSession } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
-import { api } from "@/trpc/react";
+import { useEffect, useMemo, useRef } from "react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import { usePermissions } from "@/lib/use-permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import Link from "next/link";
 import { DashboardPage } from "@/app/_components/dashboard";
+import {
+  DataTable,
+  createDataTableColumnHelper,
+  type DataTableColumn,
+} from "@/app/_components/ui/data-table";
 import {
   BookIcon,
   CalendarIcon,
@@ -16,6 +21,31 @@ import {
   EyeIcon,
   PencilIcon,
 } from "lucide-react";
+
+type Bezirk = RouterOutputs["bezirke"]["getAll"][number];
+
+const column = createDataTableColumnHelper<Bezirk>();
+
+/** `_count` fehlt in manchen Varianten der Abfrage — dann zählt alles als 0. */
+function bezirkCounts(bezirk: Bezirk): {
+  ensembles: number;
+  events: number;
+  courses: number;
+} {
+  const counts =
+    "_count" in bezirk
+      ? (bezirk._count as {
+          ensembles?: number;
+          events?: number;
+          courses?: number;
+        })
+      : {};
+  return {
+    ensembles: counts.ensembles ?? 0,
+    events: counts.events ?? 0,
+    courses: counts.courses ?? 0,
+  };
+}
 
 export default function DashboardBezirkePage() {
   const router = useRouter();
@@ -55,6 +85,139 @@ export default function DashboardBezirkePage() {
     }
   }, [profile, profileLoading, permissionsLoading, canManageBezirke, router]);
 
+  const columns = useMemo<DataTableColumn<Bezirk>[]>(
+    () =>
+      column.columns([
+        column.accessor((bezirk) => bezirk.number, {
+          id: "number",
+          header: "Nr.",
+          enableColumnFilter: false,
+          meta: { alwaysVisible: true, label: "Nummer" },
+          cell: ({ row }) => (
+            <span
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
+              style={{
+                backgroundColor: `var(--color-district-${row.original.number})`,
+              }}
+            >
+              {row.original.number}
+            </span>
+          ),
+        }),
+        column.accessor((bezirk) => bezirk.name ?? "", {
+          id: "name",
+          header: "Bezirk",
+          meta: { alwaysVisible: true },
+          cell: ({ row }) => (
+            <div>
+              <Link
+                href={`/dashboard/bezirke/${row.original.id}`}
+                className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
+              >
+                {row.original.name}
+              </Link>
+              <p className="dark:text-dark-muted text-sm text-gray-500">
+                {row.original.shortName}
+              </p>
+            </div>
+          ),
+        }),
+        column.accessor(
+          (bezirk) => bezirk.obleute.map((person) => person.name).join(", "),
+          {
+            id: "obleute",
+            header: "Obleute",
+            cell: ({ row }) => {
+              const obleute = row.original.obleute;
+              return (
+                <div className="flex flex-col gap-1">
+                  {obleute.length > 0 ? (
+                    obleute.slice(0, 2).map((person) => (
+                      <span
+                        key={person.id}
+                        className="dark:text-dark-muted text-sm text-gray-600"
+                      >
+                        {person.name}
+                        <span className="ml-1 text-xs text-gray-400">
+                          ({person.roleName})
+                        </span>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="dark:text-dark-muted text-sm text-gray-400 italic">
+                      Keine Obleute zugewiesen
+                    </span>
+                  )}
+                  {obleute.length > 2 && (
+                    <span className="text-xs text-gray-400">
+                      +{obleute.length - 2} weitere
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          },
+        ),
+        column.accessor((bezirk) => bezirkCounts(bezirk).ensembles, {
+          id: "ensembles",
+          header: "Ensembles",
+          meta: { align: "right", filterVariant: "number" },
+          cell: ({ getValue }) => (
+            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+              <MusicIcon className="h-3 w-3" />
+              {getValue()}
+            </span>
+          ),
+        }),
+        column.accessor((bezirk) => bezirkCounts(bezirk).events, {
+          id: "events",
+          header: "Termine",
+          meta: { align: "right", filterVariant: "number" },
+          cell: ({ getValue }) => (
+            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+              <CalendarIcon className="h-3 w-3" />
+              {getValue()}
+            </span>
+          ),
+        }),
+        column.accessor((bezirk) => bezirkCounts(bezirk).courses, {
+          id: "courses",
+          header: "Kurse",
+          meta: { align: "right", filterVariant: "number" },
+          cell: ({ getValue }) => (
+            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+              <BookIcon className="h-3 w-3" />
+              {getValue()}
+            </span>
+          ),
+        }),
+        column.display({
+          id: "actions",
+          header: "Aktionen",
+          meta: { align: "right", label: "Aktionen" },
+          cell: ({ row }) => (
+            <div className="flex items-center justify-end gap-2">
+              <Link
+                href={`/dashboard/bezirke/${row.original.id}`}
+                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                title="Details anzeigen"
+              >
+                <EyeIcon className="h-4 w-4" />
+              </Link>
+              <Link
+                href={`/dashboard/bezirke/${row.original.id}/edit`}
+                className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
+                title="Obleute bearbeiten"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </Link>
+            </div>
+          ),
+        }),
+      ]),
+    [],
+  );
+
   if (isPending || profileLoading || bezirkeLoading) {
     return (
       <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
@@ -76,170 +239,26 @@ export default function DashboardBezirkePage() {
         { label: "Bezirke" },
       ]}
     >
-      {/* Bezirke List */}
-      {!bezirke || bezirke.length === 0 ? (
-        <div className="dark:border-dark-border dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
-          <div className="dark:text-dark-muted mx-auto mb-4 h-12 w-12 text-gray-400">
-            <MapPinIcon className="h-12 w-12" />
-          </div>
-          <h3 className="dark:text-dark-text mb-2 text-lg font-semibold text-gray-900">
-            Keine Bezirke vorhanden
-          </h3>
-          <p className="dark:text-dark-muted text-gray-600">
-            Die Bezirke wurden noch nicht in der Datenbank angelegt.
-          </p>
-        </div>
-      ) : (
-        <div className="dark:border-dark-border dark:bg-dark-surface overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="dark:border-dark-border dark:bg-dark-background-secondary border-b border-gray-200 bg-gray-50">
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Nr.
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Bezirk
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Obleute
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Statistiken
-                  </th>
-                  <th className="dark:text-dark-muted px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
-                    Aktionen
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {bezirke.map((bezirk) => (
-                  <tr
-                    key={bezirk.id}
-                    className="dark:hover:bg-dark-background-secondary hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-                        style={{
-                          backgroundColor: `var(--color-district-${bezirk.number})`,
-                        }}
-                      >
-                        {bezirk.number}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <Link
-                          href={`/dashboard/bezirke/${bezirk.id}`}
-                          className="hover:text-primary dark:text-dark-text font-medium text-gray-900"
-                        >
-                          {bezirk.name}
-                        </Link>
-                        <p className="dark:text-dark-muted text-sm text-gray-500">
-                          {bezirk.shortName}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        {bezirk.obleute.length > 0 ? (
-                          bezirk.obleute.slice(0, 2).map((person) => (
-                            <span
-                              key={person.id}
-                              className="dark:text-dark-muted text-sm text-gray-600"
-                            >
-                              {person.name}
-                              <span className="ml-1 text-xs text-gray-400">
-                                ({person.roleName})
-                              </span>
-                            </span>
-                          ))
-                        ) : (
-                          <span className="dark:text-dark-muted text-sm text-gray-400 italic">
-                            Keine Obleute zugewiesen
-                          </span>
-                        )}
-                        {bezirk.obleute.length > 2 && (
-                          <span className="text-xs text-gray-400">
-                            +{bezirk.obleute.length - 2} weitere
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        {"_count" in bezirk && (
-                          <>
-                            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                              <MusicIcon className="h-3 w-3" />
-                              {
-                                (bezirk._count as { ensembles: number })
-                                  .ensembles
-                              }{" "}
-                              Ensembles
-                            </span>
-                            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                              <CalendarIcon className="h-3 w-3" />
-                              {
-                                (bezirk._count as { events: number }).events
-                              }{" "}
-                              Termine
-                            </span>
-                            <span className="dark:bg-dark-background-secondary dark:text-dark-text inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
-                              <BookIcon className="h-3 w-3" />
-                              {
-                                (bezirk._count as { courses: number }).courses
-                              }{" "}
-                              Kurse
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/bezirke/${bezirk.id}`}
-                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                          title="Details anzeigen"
-                        >
-                          <EyeIcon
-                            className="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                          </EyeIcon>
-                        </Link>
-                        <Link
-                          href={`/dashboard/bezirke/${bezirk.id}/edit`}
-                          className="dark:text-dark-muted dark:hover:text-dark-text rounded p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                          title="Obleute bearbeiten"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable
+        data={bezirke}
+        columns={columns}
+        getRowId={(bezirk) => bezirk.id}
+        isLoading={bezirkeLoading}
+        rowNoun={["Bezirk", "Bezirke"]}
+        searchPlaceholder="Bezirk oder Obmann/Obfrau suchen…"
+        initialSorting={[{ id: "number", desc: false }]}
+        emptyState={
+          <>
+            <MapPinIcon className="dark:text-dark-muted mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="dark:text-dark-text mt-4 mb-2 text-lg font-semibold text-gray-900">
+              Keine Bezirke vorhanden
+            </h3>
+            <p className="dark:text-dark-muted text-gray-600">
+              Die Bezirke wurden noch nicht in der Datenbank angelegt.
+            </p>
+          </>
+        }
+      />
     </DashboardPage>
   );
 }
