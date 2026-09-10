@@ -97,7 +97,9 @@ async function loadCourseForInvoicing(
       startDate: true,
       createdById: true,
       invoicingEnabled: true,
-      priceOptions: { select: { label: true, price: true } },
+      priceOptions: {
+        select: { id: true, label: true, description: true, price: true },
+      },
     },
   });
 

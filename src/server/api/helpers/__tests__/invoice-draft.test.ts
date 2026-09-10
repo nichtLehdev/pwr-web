@@ -13,8 +13,8 @@ const COURSE_START = new Date("2026-09-01T10:00:00");
 const course: CourseForDraft = {
   startDate: COURSE_START,
   priceOptions: [
-    { label: "Vollzahler", price: 145 },
-    { label: "Ermäßigt", price: 95 },
+    { id: "opt-voll", label: "Vollzahler", description: null, price: 145 },
+    { id: "opt-erm", label: "Ermäßigt", description: null, price: 95 },
   ],
 };
 
@@ -48,6 +48,7 @@ const registration = (
     {
       firstName: "Ben",
       lastName: "Muster",
+      priceOptionId: null,
       priceOption: "Vollzahler",
       siblingGroupId: null,
       birthDate: bornYearsAgo(12),
@@ -115,6 +116,7 @@ describe("lineItemsFromRegistration", () => {
   ): RegistrationForDraft["participants"][number] => ({
     firstName,
     lastName: "Muster",
+    priceOptionId: null,
     priceOption,
     siblingGroupId: null,
     birthDate: bornYearsAgo(12),
@@ -177,6 +179,89 @@ describe("lineItemsFromRegistration", () => {
     ]);
   });
 
+  it("uses the participant's own price option when two share a name", () => {
+    const duplicateNameCourse: CourseForDraft = {
+      startDate: COURSE_START,
+      priceOptions: [
+        {
+          id: "opt-a",
+          label: "Einzelzimmer",
+          description: "Haus A",
+          price: 120,
+        },
+        {
+          id: "opt-b",
+          label: "Einzelzimmer",
+          description: "Haus B",
+          price: 150,
+        },
+      ],
+    };
+
+    const items = lineItemsFromRegistration(
+      registration({
+        participants: [
+          participant("Ben", "Einzelzimmer", { priceOptionId: "opt-b" }),
+        ],
+      }),
+      duplicateNameCourse,
+    );
+
+    expect(items).toEqual([
+      {
+        description: "Einzelzimmer (Haus B)",
+        detail: "Ben Muster",
+        quantity: 1,
+        unitPrice: 150,
+      },
+    ]);
+  });
+
+  it("keeps participants of same-named categories on separate lines", () => {
+    const duplicateNameCourse: CourseForDraft = {
+      startDate: COURSE_START,
+      priceOptions: [
+        {
+          id: "opt-a",
+          label: "Einzelzimmer",
+          description: "Haus A",
+          price: 120,
+        },
+        {
+          id: "opt-b",
+          label: "Einzelzimmer",
+          description: "Haus B",
+          price: 150,
+        },
+      ],
+    };
+
+    const items = lineItemsFromRegistration(
+      registration({
+        participants: [
+          participant("Ben", "Einzelzimmer", { priceOptionId: "opt-a" }),
+          participant("Clara", "Einzelzimmer", { priceOptionId: "opt-b" }),
+        ],
+      }),
+      duplicateNameCourse,
+    );
+
+    expect(items).toEqual([
+      {
+        description: "Einzelzimmer (Haus A)",
+        detail: "Ben Muster",
+        quantity: 1,
+        unitPrice: 120,
+      },
+      {
+        description: "Einzelzimmer (Haus B)",
+        detail: "Clara Muster",
+        quantity: 1,
+        unitPrice: 150,
+      },
+    ]);
+  });
+
   it("prices an unknown or missing price option at zero rather than guessing", () => {
     const items = lineItemsFromRegistration(
       registration({ participants: [participant("Ben", null)] }),
@@ -194,6 +279,7 @@ describe("lineItemsFromRegistration", () => {
     {
       firstName: "Ben",
       lastName: "Muster",
+      priceOptionId: null,
       priceOption: "Vollzahler",
       siblingGroupId: "group-1",
       birthDate: bornYearsAgo(14),
@@ -201,6 +287,7 @@ describe("lineItemsFromRegistration", () => {
     {
       firstName: "Clara",
       lastName: "Muster",
+      priceOptionId: null,
       priceOption: "Vollzahler",
       siblingGroupId: "group-1",
       birthDate: bornYearsAgo(11),
@@ -418,6 +505,7 @@ describe("buildInvoiceDraft", () => {
           {
             firstName: "Ben",
             lastName: "Muster",
+            priceOptionId: null,
             priceOption: "Vollzahler",
             siblingGroupId: "group-1",
             birthDate: bornYearsAgo(14),
@@ -425,6 +513,7 @@ describe("buildInvoiceDraft", () => {
           {
             firstName: "Clara",
             lastName: "Muster",
+            priceOptionId: null,
             priceOption: "Ermäßigt",
             siblingGroupId: "group-1",
             birthDate: bornYearsAgo(11),

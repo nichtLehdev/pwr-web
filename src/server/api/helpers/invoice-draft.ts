@@ -11,6 +11,10 @@ import {
   type InvoiceLineItem,
   type InvoiceRecipient,
 } from "@/lib/invoice-document";
+import {
+  participantPriceOptionLabel,
+  resolveParticipantPriceOption,
+} from "@/lib/course-price-options";
 import { computeSiblingDiscounts } from "@/lib/sibling-discount";
 import { SiblingDiscountStatus } from "~/generated/prisma/enums";
 
@@ -34,6 +38,7 @@ export interface RegistrationForDraft {
   participants: {
     firstName: string;
     lastName: string;
+    priceOptionId: string | null;
     priceOption: string | null;
     siblingGroupId: string | null;
     birthDate: Date;
@@ -42,7 +47,12 @@ export interface RegistrationForDraft {
 
 export interface CourseForDraft {
   startDate: Date;
-  priceOptions: { label: string; price: number }[];
+  priceOptions: {
+    id: string;
+    label: string;
+    description: string | null;
+    price: number;
+  }[];
 }
 
 /**
@@ -101,25 +111,40 @@ export function lineItemsFromRegistration(
   registration: RegistrationForDraft,
   course: CourseForDraft,
 ): InvoiceLineItem[] {
-  const priceFor = (label: string | null) =>
-    course.priceOptions.find((option) => option.label === label)?.price ?? 0;
+  const priceFor = (participant: {
+    priceOptionId: string | null;
+    priceOption: string | null;
+  }) =>
+    resolveParticipantPriceOption(participant, course.priceOptions)?.price ??
+    0;
 
   // Insertion-ordered, so the categories appear in the order they were booked
-  // rather than in some hash order.
-  const byCategory = new Map<string, { unitPrice: number; names: string[] }>();
+  // rather than in some hash order. Keyed by priceOptionId (falling back to
+  // the raw label for pre-id registrations) rather than by label text alone —
+  // two categories can share a name, and grouping by name would silently
+  // merge them onto one line at whichever price was found first.
+  const byCategory = new Map<
+    string,
+    { label: string; unitPrice: number; names: string[] }
+  >();
   for (const participant of registration.participants) {
-    const label = participant.priceOption?.trim() ?? "";
-    const key = label || UNCATEGORIZED_LABEL;
+    const option = resolveParticipantPriceOption(participant, course.priceOptions);
+    const key = option
+      ? `id:${option.id}`
+      : `label:${participant.priceOption?.trim() || UNCATEGORIZED_LABEL}`;
     const group = byCategory.get(key) ?? {
-      unitPrice: priceFor(participant.priceOption),
+      label:
+        participantPriceOptionLabel(participant, course.priceOptions) ||
+        UNCATEGORIZED_LABEL,
+      unitPrice: option?.price ?? 0,
       names: [],
     };
     group.names.push(participantName(participant));
     byCategory.set(key, group);
   }
 
-  const items: InvoiceLineItem[] = [...byCategory].map(
-    ([label, { unitPrice, names }]) => ({
+  const items: InvoiceLineItem[] = [...byCategory.values()].map(
+    ({ label, unitPrice, names }) => ({
       description: label,
       detail: names.join(", "),
       quantity: names.length,
@@ -137,7 +162,7 @@ export function lineItemsFromRegistration(
       registration.participants.map((participant) => ({
         birthDate: participant.birthDate,
         siblingGroupId: participant.siblingGroupId,
-        price: priceFor(participant.priceOption),
+        price: priceFor(participant),
       })),
     );
 
