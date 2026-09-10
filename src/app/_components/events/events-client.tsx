@@ -2,6 +2,7 @@
 import { Select } from "@/app/_components/ui";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStoredPreference } from "@/lib/use-stored-preference";
 import { useRouter, useSearchParams } from "next/navigation";
 import type {
   EventWithRelations,
@@ -17,12 +18,13 @@ import PublicPage from "../general/public-page";
 import { useBanner } from "../ui/banner-context";
 import EventCard from "./event-card";
 import CourseCard from "./course-card";
+import { COURSE_TYPE_MAP, EVENT_CATEGORY_MAP } from "@/lib/termine-labels";
 import CalendarView from "./calendar/calendar-view";
 import DesktopCalendarView from "./calendar/desktop-calendar-view";
 import {
   CalendarIcon,
+  CalendarRangeIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
   FunnelIcon,
   FunnelXIcon,
 } from "lucide-react";
@@ -30,23 +32,66 @@ import { ListIcon, Calendar } from "lucide-react";
 import FeedConfigModal from "../feeds/feed-config-modal";
 
 type ViewMode = "list" | "calendar";
+
+const VIEW_MODES: ViewMode[] = ["list", "calendar"];
+
+/**
+ * Monatsüberschriften an oder aus. Ohne sie fließt das Kartenraster
+ * durchgehend, statt nach jedem Monat umzubrechen — bei wenigen Terminen je
+ * Monat steht sonst mehr Überschrift als Inhalt auf der Seite.
+ */
+type MonthGrouping = "on" | "off";
+
+function isMonthGrouping(value: string): value is MonthGrouping {
+  return value === "on" || value === "off";
+}
+
+function isViewMode(value: string | null): value is ViewMode {
+  return value !== null && (VIEW_MODES as string[]).includes(value);
+}
 type FilterType = "all" | "events" | "courses";
 
-const EVENT_CATEGORY_MAP: Record<string, string> = {
-  Konzert: "KONZERT",
-  Gottesdienst: "GOTTESDIENST",
-  Probe: "PROBE",
-  Andere: "ANDERE",
-};
-
-const COURSE_TYPE_MAP: Record<string, string> = {
-  Lehrgang: "LEHRGANG",
-  Freizeit: "FREIZEIT",
-  Workshop: "WORKSHOP",
-  Komponistenportrait: "KOMPONISTENPORTRAIT",
-  Veranstaltung: "VERANSTALTUNG",
-  Andere: "OTHER",
-};
+/**
+ * Monatsüberschrift zum Auf- und Zuklappen.
+ *
+ * Bewusst nur Typografie und eine Haarlinie statt einer Kachel mit grauer
+ * Kopfzeile: die Termine darunter sind in beiden Ansichten selbst schon Karten
+ * oder Zeilen, und eine Box um Boxen legt eine Verschachtelung nahe, die es
+ * inhaltlich nicht gibt.
+ */
+function MonthHeading({
+  label,
+  count,
+  expanded,
+  onToggle,
+}: {
+  label: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      className="group dark:border-dark-border flex w-full items-baseline gap-3 border-b border-gray-200 py-2 text-left transition-colors"
+    >
+      <h2 className="text-dark dark:text-dark-text group-hover:text-primary text-lg font-bold transition-colors md:text-xl">
+        {label}
+      </h2>
+      <span className="text-sm text-gray-500 dark:text-gray-400">
+        {count} {count === 1 ? "Termin" : "Termine"}
+      </span>
+      <ChevronDownIcon
+        className={`ml-auto h-5 w-5 shrink-0 self-center text-gray-400 transition-transform dark:text-gray-500 ${
+          expanded ? "" : "-rotate-90"
+        }`}
+        aria-hidden
+      />
+    </button>
+  );
+}
 
 interface EventsClientProps {
   initialEvents: EventWithRelations[];
@@ -87,10 +132,7 @@ export default function EventsClient({
           typeof profile.preferences === "string"
             ? JSON.parse(profile.preferences)
             : profile.preferences;
-        if (
-          prefs.termineDefaultView === "calendar" ||
-          prefs.termineDefaultView === "list"
-        ) {
+        if (isViewMode(prefs.termineDefaultView)) {
           return prefs.termineDefaultView;
         }
       } catch {}
@@ -117,7 +159,7 @@ export default function EventsClient({
   const [viewWhenNoUrl, setViewWhenNoUrl] = useState<ViewMode>("list");
 
   const effectiveViewMode = useMemo((): ViewMode => {
-    if (viewParam === "list" || viewParam === "calendar") {
+    if (isViewMode(viewParam)) {
       return viewParam;
     }
     if (userHasChangedView) {
@@ -152,6 +194,12 @@ export default function EventsClient({
   const [selectedCategory, setSelectedCategory] = useState<string>(
     params.get("category") || "all",
   );
+  const [monthGrouping, setMonthGrouping] = useStoredPreference<MonthGrouping>(
+    "termineMonthGrouping",
+    "on",
+    isMonthGrouping,
+  );
+  const groupByMonth = monthGrouping === "on";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [icalModalOpen, setIcalModalOpen] = useState(false);
 
@@ -277,30 +325,6 @@ export default function EventsClient({
     });
   }, [allItems, now, applyFilters]);
 
-  const pastGroupedByMonth = useMemo(() => {
-    return pastItems.reduce(
-      (acc, item) => {
-        const date = new Date(
-          item.type === "event" ? item.eventDate : item.startDate,
-        );
-        const monthKey = `${date.getFullYear()}-${String(
-          date.getMonth() + 1,
-        ).padStart(2, "0")}`;
-        const monthLabel = date.toLocaleDateString("de-DE", {
-          year: "numeric",
-          month: "long",
-        });
-
-        if (!acc[monthKey]) {
-          acc[monthKey] = { label: monthLabel, items: [] };
-        }
-        acc[monthKey].items.push(item);
-        return acc;
-      },
-      {} as Record<string, { label: string; items: typeof pastItems }>,
-    );
-  }, [pastItems]);
-
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(
     new Set(),
   );
@@ -321,24 +345,41 @@ export default function EventsClient({
 
   const [pastEventsExpanded, setPastEventsExpanded] = useState(false);
 
-  const [expandedPastMonths, setExpandedPastMonths] = useState<Set<string>>(
-    new Set(),
-  );
-
-  const togglePastMonth = (monthKey: string) => {
-    setExpandedPastMonths((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(monthKey)) {
-        newSet.delete(monthKey);
-      } else {
-        newSet.add(monthKey);
-      }
-      return newSet;
-    });
+  /** Ein Kartenraster — mit oder ohne Monatsüberschrift darüber. */
+  const renderItemGroup = (items: CalendarItem[], keyPrefix: string) => {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {items.map((item) =>
+          item.type === "event" ? (
+            <EventCard
+              key={`${keyPrefix}-event-${item.id}`}
+              id={item.id}
+              slug={item.slug}
+              title={item.title}
+              date={item.eventDate}
+              duration={item.duration}
+              location={item.location?.city || ""}
+              category={item.category}
+              district={item.bezirk?.number}
+              openToParticipants={item.openToParticipants}
+              cancelled={item.cancelled}
+            />
+          ) : (
+            <CourseCard
+              key={`${keyPrefix}-course-${item.id}`}
+              id={item.id}
+              title={item.title}
+              startDate={item.startDate}
+              endDate={item.endDate}
+              location={item.location?.city || ""}
+              courseType={item.courseType}
+              district={item.bezirk?.number}
+            />
+          ),
+        )}
+      </div>
+    );
   };
-
-  const isPastMonthExpanded = (monthKey: string) =>
-    expandedPastMonths.has(monthKey);
 
   const districtSelectOptions = [
     "all",
@@ -385,7 +426,8 @@ export default function EventsClient({
                       ? "bg-primary text-white"
                       : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                   }`}
-                  aria-label="Listenansicht"
+                  aria-label="Kartenansicht"
+                  title="Kartenansicht"
                 >
                   <ListIcon className="h-5 w-5" />
                 </button>
@@ -397,6 +439,7 @@ export default function EventsClient({
                       : "text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background bg-gray-100 hover:bg-gray-200"
                   }`}
                   aria-label="Kalenderansicht"
+                  title="Kalenderansicht"
                 >
                   <CalendarIcon className="h-5 w-5" />
                 </button>
@@ -559,6 +602,43 @@ export default function EventsClient({
                   </div>
                 </div>
 
+                {/* Darstellung */}
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Darstellung
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMonthGrouping(groupByMonth ? "off" : "on")
+                    }
+                    aria-pressed={groupByMonth}
+                    className="text-dark dark:text-dark-text dark:bg-dark-background-secondary dark:hover:bg-dark-background flex w-full items-center justify-between gap-3 rounded-lg bg-gray-100 px-3 py-2 text-sm font-semibold transition-colors hover:bg-gray-200"
+                  >
+                    <span className="flex items-center gap-2">
+                      <CalendarRangeIcon className="h-4 w-4 text-gray-400" />
+                      Nach Monaten gruppieren
+                    </span>
+                    <span
+                      className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+                        groupByMonth
+                          ? "bg-primary"
+                          : "bg-gray-300 dark:bg-gray-600"
+                      }`}
+                    >
+                      {/* `left-0.5` plus ganze Schritte: eine halbe
+                          Abstandseinheit gibt es in der Skala nicht, und die
+                          Klasse fiele wirkungslos aus — der Knopf bliebe
+                          stehen. */}
+                      <span
+                        className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+                          groupByMonth ? "translate-x-4" : "translate-x-0"
+                        }`}
+                      />
+                    </span>
+                  </button>
+                </div>
+
                 {/* Reset Button */}
                 {(filterType !== "all" ||
                   selectedDistrict !== "all" ||
@@ -583,71 +663,32 @@ export default function EventsClient({
         <section className="py-6 md:py-12">
           <div className="container mx-auto px-4">
             {effectiveViewMode === "list" ? (
-              /* List View - Grouped by month */
-              <div className="space-y-4 md:space-y-6">
-                {/* Upcoming Events */}
-                {Object.entries(groupedByMonth).map(
-                  ([monthKey, { label, items }]) => (
-                    <div
-                      key={monthKey}
-                      className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200"
-                    >
-                      <button
-                        onClick={() => toggleMonth(monthKey)}
-                        aria-expanded={isMonthExpanded(monthKey)}
-                        aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
-                        className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
-                      >
-                        <h2 className="text-dark dark:text-dark-text text-lg font-bold md:text-2xl">
-                          {label}
-                          <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                            ({items.length}{" "}
-                            {items.length === 1 ? "Termin" : "Termine"})
-                          </span>
-                        </h2>
-                        {isMonthExpanded(monthKey) ? (
-                          <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                        ) : (
-                          <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                        )}
-                      </button>
-                      {isMonthExpanded(monthKey) && (
-                        <div className="p-4">
-                          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-                            {items.map((item) =>
-                              item.type === "event" ? (
-                                <EventCard
-                                  key={`event-${item.id}`}
-                                  id={item.id}
-                                  slug={item.slug}
-                                  title={item.title}
-                                  date={item.eventDate}
-                                  duration={item.duration}
-                                  location={item.location?.city || ""}
-                                  category={item.category}
-                                  district={item.bezirk?.number}
-                                  openToParticipants={item.openToParticipants}
-                                  cancelled={item.cancelled}
-                                />
-                              ) : (
-                                <CourseCard
-                                  key={`course-${item.id}`}
-                                  id={item.id}
-                                  title={item.title}
-                                  startDate={item.startDate}
-                                  endDate={item.endDate}
-                                  location={item.location?.city || ""}
-                                  courseType={item.courseType}
-                                  district={item.bezirk?.number}
-                                />
-                              ),
-                            )}
-                          </div>
+              /* Kartenraster, wahlweise nach Monaten gruppiert */
+              <div className="space-y-6 md:space-y-8">
+                {/* Upcoming Events — ohne Monatsgruppierung fließen alle
+                    Termine durch dasselbe Raster, statt nach jedem Monat
+                    umzubrechen. */}
+                {groupByMonth
+                  ? Object.entries(groupedByMonth).map(
+                      ([monthKey, { label, items }]) => (
+                        <div key={monthKey}>
+                          <MonthHeading
+                            label={label}
+                            count={items.length}
+                            expanded={isMonthExpanded(monthKey)}
+                            onToggle={() => toggleMonth(monthKey)}
+                          />
+                          {isMonthExpanded(monthKey) && (
+                            <div className="pt-4">
+                              {renderItemGroup(items, monthKey)}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  ),
-                )}
+                      ),
+                    )
+                  : sortedItems.length > 0
+                    ? renderItemGroup(sortedItems, "upcoming")
+                    : null}
 
                 {sortedItems.length === 0 && (
                   <div className="py-8 text-center md:py-12">
@@ -657,103 +698,25 @@ export default function EventsClient({
                   </div>
                 )}
 
-                {/* Past Events Section */}
+                {/* Past Events Section — ohne Monatsgruppierung: die
+                    Vergangenheit ist ein Nachschlagewerk, keine Planung. Wer
+                    hier aufklappt, sucht einen bestimmten Termin und liest die
+                    Liste von neu nach alt durch. */}
                 {pastItems.length > 0 && (
-                  <div className="mt-8 md:mt-12">
-                    <div className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-300">
-                      <button
-                        onClick={() =>
-                          setPastEventsExpanded(!pastEventsExpanded)
-                        }
-                        aria-expanded={pastEventsExpanded}
-                        aria-label={`Vergangene Termine - ${pastItems.length} ${pastItems.length === 1 ? "Termin" : "Termine"}`}
-                        className="dark:bg-dark-background-secondary dark:hover:bg-dark-surface flex w-full items-center justify-between bg-gray-100 px-4 py-4 text-left transition-colors hover:bg-gray-200"
-                      >
-                        <h2 className="text-dark dark:text-dark-text text-xl font-bold md:text-2xl">
-                          Vergangene Termine
-                          <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                            ({pastItems.length}{" "}
-                            {pastItems.length === 1 ? "Termin" : "Termine"})
-                          </span>
-                        </h2>
-                        {pastEventsExpanded ? (
-                          <ChevronDownIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-                        ) : (
-                          <ChevronRightIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
-                        )}
-                      </button>
-                      {pastEventsExpanded && (
-                        <div className="space-y-4 p-4 md:space-y-6">
-                          {Object.entries(pastGroupedByMonth)
-                            .sort(([a], [b]) => b.localeCompare(a)) // Sort months descending (most recent first)
-                            .map(([monthKey, { label, items }]) => (
-                              <div
-                                key={monthKey}
-                                className="dark:border-dark-border overflow-hidden rounded-lg border border-gray-200"
-                              >
-                                <button
-                                  onClick={() => togglePastMonth(monthKey)}
-                                  aria-expanded={isPastMonthExpanded(monthKey)}
-                                  aria-label={`${label} - ${items.length} ${items.length === 1 ? "Termin" : "Termine"}`}
-                                  className="dark:bg-dark-surface dark:hover:bg-dark-background-secondary flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left transition-colors hover:bg-gray-100"
-                                >
-                                  <h3 className="text-dark dark:text-dark-text text-base font-semibold md:text-lg">
-                                    {label}
-                                    <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-                                      ({items.length}{" "}
-                                      {items.length === 1
-                                        ? "Termin"
-                                        : "Termine"}
-                                      )
-                                    </span>
-                                  </h3>
-                                  {isPastMonthExpanded(monthKey) ? (
-                                    <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                                  ) : (
-                                    <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                                  )}
-                                </button>
-                                {isPastMonthExpanded(monthKey) && (
-                                  <div className="p-4">
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-                                      {items.map((item) =>
-                                        item.type === "event" ? (
-                                          <EventCard
-                                            key={`past-event-${item.id}`}
-                                            id={item.id}
-                                            slug={item.slug}
-                                            title={item.title}
-                                            date={item.eventDate}
-                                            duration={item.duration}
-                                            location={item.location?.city || ""}
-                                            category={item.category}
-                                            district={item.bezirk?.number}
-                                            openToParticipants={
-                                              item.openToParticipants
-                                            }
-                                            cancelled={item.cancelled}
-                                          />
-                                        ) : (
-                                          <CourseCard
-                                            key={`past-course-${item.id}`}
-                                            id={item.id}
-                                            title={item.title}
-                                            startDate={item.startDate}
-                                            endDate={item.endDate}
-                                            location={item.location?.city || ""}
-                                            courseType={item.courseType}
-                                            district={item.bezirk?.number}
-                                          />
-                                        ),
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
+                  <div className="mt-10 md:mt-14">
+                    <MonthHeading
+                      label="Vergangene Termine"
+                      count={pastItems.length}
+                      expanded={pastEventsExpanded}
+                      onToggle={() =>
+                        setPastEventsExpanded(!pastEventsExpanded)
+                      }
+                    />
+                    {pastEventsExpanded && (
+                      <div className="pt-4">
+                        {renderItemGroup(pastItems, "past")}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useStoredPreference } from "@/lib/use-stored-preference";
 import { LayoutGridIcon, TableIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type DashboardListView = "cards" | "table";
+
+function isDashboardListView(value: string): value is DashboardListView {
+  return value === "cards" || value === "table";
+}
 
 const VIEWS: {
   value: DashboardListView;
@@ -27,63 +31,19 @@ const VIEWS: {
 ];
 
 /**
- * Abonnenten der gespeicherten Ansicht. `localStorage` meldet Änderungen nur an
- * *andere* Tabs, nicht an den schreibenden — die Listen dieses Tabs brauchen
- * deshalb einen eigenen Verteiler.
- */
-const listeners = new Set<() => void>();
-
-function subscribe(onChange: () => void) {
-  listeners.add(onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    listeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function readView(storageKey: string): DashboardListView | null {
-  try {
-    const stored = window.localStorage.getItem(storageKey);
-    return stored === "cards" || stored === "table" ? stored : null;
-  } catch {
-    // Privater Modus oder blockierte Site-Daten: dann eben die Vorgabe.
-    return null;
-  }
-}
-
-/**
  * Kartenraster oder Tabelle — die Wahl bleibt pro Liste gespeichert, weil sie
  * zur Arbeitsweise gehört und nicht zur einzelnen Sitzung: wer die Termine
  * lieber als Tabelle pflegt, will sie beim nächsten Aufruf wieder so sehen.
- *
- * `useSyncExternalStore` statt eines Effekts: der Server kennt `localStorage`
- * nicht und liefert immer die Vorgabe, und React weiß dadurch selbst, dass die
- * erste Client-Ausgabe davon abweichen darf.
  */
 export function useDashboardListView(
   storageKey: string,
   fallback: DashboardListView = "cards",
 ): [DashboardListView, (next: DashboardListView) => void] {
-  const view = useSyncExternalStore(
-    subscribe,
-    () => readView(storageKey) ?? fallback,
-    () => fallback,
+  return useStoredPreference<DashboardListView>(
+    storageKey,
+    fallback,
+    isDashboardListView,
   );
-
-  const update = useCallback(
-    (next: DashboardListView) => {
-      try {
-        window.localStorage.setItem(storageKey, next);
-      } catch {
-        // Nicht speicherbar — dann bleibt es bei der Vorgabe.
-      }
-      listeners.forEach((listener) => listener());
-    },
-    [storageKey],
-  );
-
-  return [view, update];
 }
 
 /** Umschalter zwischen Kartenraster und Tabelle. */
