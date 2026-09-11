@@ -42,6 +42,8 @@ export const ensemblesRouter = createTRPCRouter({
         page: z.number().min(1).default(1),
         limit: z.number().min(1).max(500).default(50),
         bezirkId: z.string().optional(),
+        /** Mehrere Bezirke, z.B. der Schreib-Zuschnitt eines Obmanns. */
+        bezirkIds: z.array(z.string()).optional(),
         isActive: z.boolean().optional(),
         search: z.string().optional(),
       }),
@@ -50,6 +52,7 @@ export const ensemblesRouter = createTRPCRouter({
       const where = {
         ...(input.isActive !== undefined && { isActive: input.isActive }),
         ...(input.bezirkId && { bezirkId: input.bezirkId }),
+        ...(input.bezirkIds && { bezirkId: { in: input.bezirkIds } }),
         ...(input.search && {
           OR: [
             { name: { contains: input.search, mode: "insensitive" as const } },

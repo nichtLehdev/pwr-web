@@ -6,6 +6,7 @@ import {
   districtAllowed,
   districtScopeFilter,
   districtScopeFor,
+  ensembleLinkNeedsDistrictCheck,
   type DistrictScope,
 } from "@/lib/district-scope";
 
@@ -146,6 +147,38 @@ describe("assertDistrictChangeAllowed", () => {
     expect(() =>
       assertDistrictChangeAllowed(unrestricted, null, "b12"),
     ).not.toThrow();
+  });
+});
+
+describe("ensembleLinkNeedsDistrictCheck", () => {
+  it("lets the reviewing side link any ensemble", () => {
+    expect(ensembleLinkNeedsDistrictCheck(unrestricted, "e99", null)).toBe(
+      false,
+    );
+  });
+
+  it("checks a newly linked ensemble", () => {
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", null)).toBe(true);
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e42")).toBe(true);
+  });
+
+  // Same trap as assertDistrictChangeAllowed: the event form resubmits every
+  // field, so checking the value instead of the change would block every save
+  // on an event that an approver had linked across districts.
+  it("ignores a link that was already stored", () => {
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "e99", "e99")).toBe(false);
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, undefined, "e99")).toBe(
+      false,
+    );
+  });
+
+  it("ignores removing the link", () => {
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, null, "e99")).toBe(false);
+    expect(ensembleLinkNeedsDistrictCheck(bezirk12, "", "e99")).toBe(false);
+  });
+
+  it("checks an account without any responsibility", () => {
+    expect(ensembleLinkNeedsDistrictCheck(noBezirk, "e99", null)).toBe(true);
   });
 });
 

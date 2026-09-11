@@ -12,6 +12,7 @@ import { authorMayChangeStatus } from "../helpers/content-status";
 import {
   assertDistrictAllowed,
   assertDistrictChangeAllowed,
+  assertEnsembleDistrictChangeAllowed,
   districtAllowed,
   districtScopeFilter,
   resolveDistrictScope,
@@ -504,6 +505,12 @@ export const eventsRouter = createTRPCRouter({
         ctx.permissionCache,
       );
       assertDistrictAllowed(scope, input.bezirkId);
+      await assertEnsembleDistrictChangeAllowed(
+        ctx.db,
+        scope,
+        input.ensembleId,
+        null,
+      );
 
       const event = await ctx.db.event.create({
         data: {
@@ -604,7 +611,12 @@ export const eventsRouter = createTRPCRouter({
 
       const event = await ctx.db.event.findUnique({
         where: { id },
-        select: { createdById: true, status: true, bezirkId: true },
+        select: {
+          createdById: true,
+          status: true,
+          bezirkId: true,
+          ensembleId: true,
+        },
       });
 
       if (!event) {
@@ -648,6 +660,12 @@ export const eventsRouter = createTRPCRouter({
         ctx.permissionCache,
       );
       assertDistrictChangeAllowed(scope, updateData.bezirkId, event.bezirkId);
+      await assertEnsembleDistrictChangeAllowed(
+        ctx.db,
+        scope,
+        updateData.ensembleId,
+        event.ensembleId,
+      );
 
       if (priceOptions) {
         await ctx.db.eventPriceOption.deleteMany({
