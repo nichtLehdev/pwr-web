@@ -92,6 +92,19 @@ export function ParticipantPriceOptionField({
   const noOptionForAge =
     age !== null && !allowAgeMismatch && !priceOptions.some(ageFits);
 
+  const isDisabled = (option: PriceOptionChoice) =>
+    (isOptionDisabled?.(option.id) ?? false) ||
+    (!allowAgeMismatch && !ageFits(option));
+
+  // Wählbares nach oben — ausgebucht oder außerhalb der Altersgrenze steht
+  // hinten. Bei vielen Kategorien scrollt man sonst an gesperrten Einträgen
+  // vorbei, um die zwei zu finden, die überhaupt in Frage kommen. Innerhalb
+  // der beiden Gruppen bleibt die Reihenfolge des Kurses erhalten.
+  const orderedOptions = [
+    ...priceOptions.filter((option) => !isDisabled(option)),
+    ...priceOptions.filter(isDisabled),
+  ];
+
   return (
     <div className={cn("md:col-span-2", className)}>
       <label className={labelClassName}>Preisoption *</label>
@@ -115,18 +128,13 @@ export function ParticipantPriceOptionField({
             fieldSize={FIELD_SELECT_SIZE}
           >
             {placeholderOption ? <option value="">Bitte wählen</option> : null}
-            {priceOptions.map((option) => {
+            {orderedOptions.map((option) => {
               const ageRange = priceOptionAgeLabel(option);
               return (
                 <option
                   key={option.id}
                   value={option.id}
-                  // Ausgebucht (vom Aufrufer) oder außerhalb der
-                  // Altersgrenze — beides sperrt denselben Eintrag.
-                  disabled={
-                    (isOptionDisabled?.(option.id) ?? false) ||
-                    (!allowAgeMismatch && !ageFits(option))
-                  }
+                  disabled={isDisabled(option)}
                   // Price (and availability) as trailing text, so a long option
                   // name truncates on narrow screens without taking the price
                   // with it.
@@ -160,9 +168,8 @@ export function ParticipantPriceOptionField({
               role="alert"
               className="mt-1.5 text-sm text-red-700 dark:text-red-400"
             >
-              Für dieses Alter ({age} Jahre am ersten Kurstag) gibt es in diesem
-              Kurs keine passende Preiskategorie. Bitte wende dich an das
-              Kursteam.
+              Zu Kursbeginn sind es {age} Jahre. Dafür gibt es in diesem Kurs
+              keine passende Preiskategorie — bitte wende dich an das Kursteam.
             </p>
           ) : selected?.description ? (
             <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">
