@@ -41,6 +41,7 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
+import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -878,6 +879,12 @@ export default function CourseDetailPage() {
                         {option.description && (
                           <p className="text-sm text-gray-500">
                             {option.description}
+                          </p>
+                        )}
+                        {priceOptionAgeLabel(option) && (
+                          <p className="text-sm text-gray-500">
+                            {priceOptionAgeLabel(option)} — Alter am ersten
+                            Kurstag
                           </p>
                         )}
                       </div>

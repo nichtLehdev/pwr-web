@@ -18,6 +18,7 @@ import {
   DashboardFormBlock,
   CourseCustomFieldsEditor,
   DraftRestorePrompt,
+  PriceOptionAgeLimits,
   SlugField,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
@@ -41,6 +42,7 @@ import {
   needsDistinguishingDescription,
   validatePriceOptionDistinctness,
 } from "@/lib/course-price-options";
+import { validatePriceOptionAgeRanges } from "@/lib/course-price-option-age";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -67,6 +69,9 @@ interface PriceOption {
   label: string;
   description: string;
   maxParticipants?: number;
+  /** Vollendete Jahre am ersten Kurstag; undefined heißt „keine Grenze“. */
+  minAge?: number;
+  maxAge?: number;
 }
 
 export default function NewCoursePage() {
@@ -546,16 +551,28 @@ export default function NewCoursePage() {
       !isExternalProvider && !isFree
         ? priceOptions
             .filter((opt) => opt.label.trim())
-            .map(({ label, price, description, maxParticipants }) => ({
-              label: label.trim(),
-              price,
-              description: description.trim() || undefined,
-              maxParticipants: maxParticipants || undefined,
-            }))
+            .map(
+              ({
+                label,
+                price,
+                description,
+                maxParticipants,
+                minAge,
+                maxAge,
+              }) => ({
+                label: label.trim(),
+                price,
+                description: description.trim() || undefined,
+                maxParticipants: maxParticipants || undefined,
+                minAge: minAge ?? null,
+                maxAge: maxAge ?? null,
+              }),
+            )
         : undefined;
 
     const priceOptionProblem = preparedPriceOptions
-      ? validatePriceOptionDistinctness(preparedPriceOptions)
+      ? (validatePriceOptionDistinctness(preparedPriceOptions) ??
+        validatePriceOptionAgeRanges(preparedPriceOptions))
       : null;
     if (priceOptionProblem) {
       setError(priceOptionProblem);
@@ -1697,6 +1714,13 @@ export default function NewCoursePage() {
                                     auseinanderzuhalten.
                                   </p>
                                 )}
+                                <PriceOptionAgeLimits
+                                  option={option}
+                                  onChange={(field, value) =>
+                                    updatePriceOption(option.id, field, value)
+                                  }
+                                  inputClassName="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text w-full rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:ring-1 focus:outline-none"
+                                />
                               </div>
                               <button
                                 type="button"

@@ -3,6 +3,11 @@ import { isPlausibleEmail } from "@/lib/email-address";
 import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
 import {
+  ageOnDate,
+  isAgeWithinPriceOption,
+  priceOptionAgeReferenceDate,
+} from "@/lib/course-price-option-age";
+import {
   registrationNeedsPaymentMethod,
   courseRequiresPaymentMethodChoice,
 } from "@/lib/course-payment-methods";
@@ -168,6 +173,22 @@ export function validateStep(
           birthDate < maxAge
         ) {
           return false;
+        }
+        // Die Altersgrenze der gewählten Kategorie. Das Kursteam darf sie
+        // übergehen, Anmeldende nicht — wie auf dem Server.
+        if (!staffMode) {
+          const priceOption = course.priceOptions.find(
+            (po) => po.id === p.priceOptionId,
+          );
+          if (
+            priceOption &&
+            !isAgeWithinPriceOption(
+              priceOption,
+              ageOnDate(birthDate, priceOptionAgeReferenceDate(course)),
+            )
+          ) {
+            return false;
+          }
         }
         // Check required custom fields
         if (course.customFields) {

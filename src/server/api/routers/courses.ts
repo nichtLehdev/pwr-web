@@ -27,6 +27,11 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCourseCapacitySummary } from "@/lib/course-available-slots";
 import { validatePriceOptionDistinctness } from "@/lib/course-price-options";
 import {
+  MAX_PRICE_OPTION_AGE,
+  MIN_PRICE_OPTION_AGE,
+  validatePriceOptionAgeRanges,
+} from "@/lib/course-price-option-age";
+import {
   isExternalCourse,
   normalizeExternalRegistrationUrl,
 } from "@/lib/course-external";
@@ -123,6 +128,33 @@ const priceOptionsMustBeDistinct = (
   const message = validatePriceOptionDistinctness(options);
   if (message) ctx.addIssue({ code: "custom", message });
 };
+
+/** Mindest- und Höchstalter müssen zusammenpassen, bevor irgendwer sie sieht. */
+const priceOptionAgesMustBeValid = (
+  options:
+    | ReadonlyArray<{
+        label: string;
+        minAge?: number | null;
+        maxAge?: number | null;
+      }>
+    | undefined,
+  ctx: z.RefinementCtx,
+) => {
+  if (!options) return;
+  const message = validatePriceOptionAgeRanges(options);
+  if (message) ctx.addIssue({ code: "custom", message });
+};
+
+/**
+ * Altersgrenze einer Preiskategorie, in vollendeten Jahren am ersten Kurstag.
+ * `null` löscht eine gesetzte Grenze wieder.
+ */
+const priceOptionAgeSchema = z
+  .number()
+  .int()
+  .min(MIN_PRICE_OPTION_AGE)
+  .max(MAX_PRICE_OPTION_AGE)
+  .nullish();
 
 export const coursesRouter = createTRPCRouter({
   getAll: publicProcedure
@@ -703,10 +735,13 @@ export const coursesRouter = createTRPCRouter({
                 label: z.string().min(1).max(100),
                 description: z.string().max(500).optional(),
                 maxParticipants: z.number().min(1).max(500).optional(),
+                minAge: priceOptionAgeSchema,
+                maxAge: priceOptionAgeSchema,
               }),
             )
             .optional()
-            .superRefine(priceOptionsMustBeDistinct),
+            .superRefine(priceOptionsMustBeDistinct)
+            .superRefine(priceOptionAgesMustBeValid),
           customFields: z
             .array(
               z.object({
@@ -947,10 +982,13 @@ export const coursesRouter = createTRPCRouter({
                 label: z.string().min(1).max(100),
                 description: z.string().max(500).optional(),
                 maxParticipants: z.number().min(1).max(500).optional(),
+                minAge: priceOptionAgeSchema,
+                maxAge: priceOptionAgeSchema,
               }),
             )
             .optional()
-            .superRefine(priceOptionsMustBeDistinct),
+            .superRefine(priceOptionsMustBeDistinct)
+            .superRefine(priceOptionAgesMustBeValid),
           customFields: z
             .array(
               z.object({
@@ -1342,12 +1380,18 @@ export const coursesRouter = createTRPCRouter({
 
             if (
               inputOption.label !== existing.label ||
-              inputOption.price !== existing.price
+              inputOption.price !== existing.price ||
+              // Altersgrenzen gehören zu Bezeichnung und Preis, nicht zur
+              // Beschreibung: sie entscheiden, wer welchen Preis zahlt.
+              // Nachträglich verschoben, stünden Angemeldete plötzlich in
+              // einer Kategorie, die ihnen nicht mehr zusteht.
+              (inputOption.minAge ?? null) !== existing.minAge ||
+              (inputOption.maxAge ?? null) !== existing.maxAge
             ) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
                 message:
-                  "Bezeichnung und Preis einer Preiskategorie können nach Anmeldungen nicht mehr geändert werden.",
+                  "Bezeichnung, Preis und Altersgrenzen einer Preiskategorie können nach Anmeldungen nicht mehr geändert werden.",
               });
             }
 
@@ -1380,6 +1424,8 @@ export const coursesRouter = createTRPCRouter({
                   // ließe sich ein bestehender Kurs mit doppeltem Namen nicht
                   // mehr in einen gültigen Zustand bringen.
                   description: inputOption.description ?? null,
+                  // minAge/maxAge stehen hier bewusst nicht: die Prüfung oben
+                  // lässt sie ohnehin nur unverändert durch.
                 },
               });
             }),
@@ -1396,6 +1442,8 @@ export const coursesRouter = createTRPCRouter({
               label: option.label,
               description: option.description,
               maxParticipants: option.maxParticipants,
+              minAge: option.minAge ?? null,
+              maxAge: option.maxAge ?? null,
             })),
           });
         }
@@ -2036,6 +2084,8 @@ export const coursesRouter = createTRPCRouter({
               label: po.label,
               price: po.price,
               description: po.description,
+              minAge: po.minAge,
+              maxAge: po.maxAge,
             })),
           },
           customFields: {
@@ -2119,6 +2169,8 @@ export const coursesRouter = createTRPCRouter({
                   label: po.label,
                   price: po.price,
                   description: po.description,
+                  minAge: po.minAge,
+                  maxAge: po.maxAge,
                 })),
               },
               customFields: {

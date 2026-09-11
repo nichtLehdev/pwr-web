@@ -39,6 +39,7 @@ import {
   CourseInvoicesButton,
   CourseCustomFieldsEditor,
   DraftRestorePrompt,
+  PriceOptionAgeLimits,
   SlugField,
   type CourseCustomFieldDraft,
   type DashboardSectionNavItem,
@@ -57,6 +58,7 @@ import {
   needsDistinguishingDescription,
   validatePriceOptionDistinctness,
 } from "@/lib/course-price-options";
+import { validatePriceOptionAgeRanges } from "@/lib/course-price-option-age";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -98,6 +100,9 @@ interface PriceOption {
   label: string;
   description: string;
   maxParticipants?: number | null;
+  /** Vollendete Jahre am ersten Kurstag; null heißt „keine Grenze“. */
+  minAge?: number | null;
+  maxAge?: number | null;
 }
 
 type CustomField = CourseCustomFieldDraft;
@@ -414,6 +419,8 @@ export default function EditCoursePage() {
             label: opt.label,
             description: opt.description || "",
             maxParticipants: opt.maxParticipants || null,
+            minAge: opt.minAge,
+            maxAge: opt.maxAge,
           })) || [],
         prerequisites: course.prerequisites || "",
         whatToBring: course.whatToBring || "",
@@ -605,6 +612,8 @@ export default function EditCoursePage() {
             label: opt.label,
             description: opt.description || "",
             maxParticipants: opt.maxParticipants,
+            minAge: opt.minAge,
+            maxAge: opt.maxAge,
           }));
           setPriceOptions(options);
         }
@@ -950,17 +959,30 @@ export default function EditCoursePage() {
       !isExternalProvider && !isFree
         ? priceOptions
             .filter((opt) => opt.label && opt.price >= 0)
-            .map(({ id, label, price, description, maxParticipants }) => ({
-              id: id.startsWith("new-") ? undefined : id,
-              label,
-              price,
-              description: description || undefined,
-              maxParticipants: maxParticipants || undefined,
-            }))
+            .map(
+              ({
+                id,
+                label,
+                price,
+                description,
+                maxParticipants,
+                minAge,
+                maxAge,
+              }) => ({
+                id: id.startsWith("new-") ? undefined : id,
+                label,
+                price,
+                description: description || undefined,
+                maxParticipants: maxParticipants || undefined,
+                minAge: minAge ?? null,
+                maxAge: maxAge ?? null,
+              }),
+            )
         : [];
 
     const priceOptionProblem =
-      validatePriceOptionDistinctness(preparedPriceOptions);
+      validatePriceOptionDistinctness(preparedPriceOptions) ??
+      validatePriceOptionAgeRanges(preparedPriceOptions);
     if (priceOptionProblem) {
       setError(priceOptionProblem);
       setIsSubmitting(false);
@@ -2374,11 +2396,11 @@ export default function EditCoursePage() {
                         </p>
                         <p className="mt-1 text-sm text-amber-700 dark:text-amber-200">
                           Es gibt bereits {registrationCount} Teilnehmer für
-                          diesen Kurs. Bezeichnung und Preis der Preiskategorien
-                          können nicht mehr geändert werden. Die Beschreibung
-                          sowie die maximale Teilnehmerzahl (gesamt und pro
-                          Preiskategorie) lassen sich weiter anpassen – die
-                          Teilnehmerzahl mindestens auf die Zahl bereits
+                          diesen Kurs. Bezeichnung, Preis und Altersgrenzen der
+                          Preiskategorien können nicht mehr geändert werden. Die
+                          Beschreibung sowie die maximale Teilnehmerzahl (gesamt
+                          und pro Preiskategorie) lassen sich weiter anpassen –
+                          die Teilnehmerzahl mindestens auf die Zahl bereits
                           angemeldeter Teilnehmer.
                         </p>
                       </div>
@@ -2708,6 +2730,20 @@ export default function EditCoursePage() {
                                         auseinanderzuhalten.
                                       </p>
                                     )}
+                                  </div>
+                                  <div className="mt-3">
+                                    <PriceOptionAgeLimits
+                                      option={option}
+                                      onChange={(field, value) =>
+                                        updatePriceOption(
+                                          option.id,
+                                          field,
+                                          value ?? null,
+                                        )
+                                      }
+                                      disabled={hasRegistrations}
+                                      inputClassName="focus:border-primary focus:ring-primary dark:border-dark-border dark:bg-dark-background-secondary dark:text-dark-text dark:disabled:bg-dark-background w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:text-gray-500"
+                                    />
                                   </div>
                                 </div>
                               ))}
