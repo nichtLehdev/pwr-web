@@ -271,9 +271,22 @@ export default function NewEventPage() {
     search: locationSearch || undefined,
   });
 
-  const { data: ensemblesData } = api.ensembles.getAll.useQuery({
-    bezirkId: !isHigherRole && lockedBezirkId ? lockedBezirkId : undefined,
-  });
+  const { data: ensemblesData } = api.ensembles.getAll.useQuery(
+    {
+      limit: 100,
+      search: ensembleSearch || undefined,
+      // Derselbe Zuschnitt, den der Server beim Speichern prüft.
+      bezirkIds: selectableBezirkIds ?? undefined,
+    },
+    // Ohne die alte Liste klappt das Dropdown bei jedem Tastendruck zu.
+    { placeholderData: (prev) => prev },
+  );
+
+  // Die Suche läuft auf dem Server; dessen Treffer aus der Beschreibung
+  // gehören nicht in eine Namenssuche.
+  const ensembleOptions = (ensemblesData?.ensembles ?? []).filter((e) =>
+    e.name.toLowerCase().includes(ensembleSearch.toLowerCase()),
+  );
 
   const { data: auswahlchoereData } = api.auswahlchoere.getAll.useQuery(
     {},
@@ -973,39 +986,29 @@ export default function NewEventPage() {
                             className="overflow-y-auto"
                             style={{ maxHeight: "240px" }}
                           >
-                            {ensemblesData.ensembles
-                              ?.filter((e) =>
-                                e.name
-                                  .toLowerCase()
-                                  .includes(ensembleSearch.toLowerCase()),
-                              )
-                              .map((ensemble) => (
-                                <button
-                                  key={ensemble.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setEnsembleId(ensemble.id);
-                                    setEnsembleSearch(ensemble.name);
-                                    setShowEnsembleDropdown(false);
-                                  }}
-                                  className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                                >
-                                  <span className="dark:text-dark-text font-medium text-gray-900">
-                                    {ensemble.name}
+                            {ensembleOptions.map((ensemble) => (
+                              <button
+                                key={ensemble.id}
+                                type="button"
+                                onClick={() => {
+                                  setEnsembleId(ensemble.id);
+                                  setEnsembleSearch(ensemble.name);
+                                  setShowEnsembleDropdown(false);
+                                }}
+                                className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                              >
+                                <span className="dark:text-dark-text font-medium text-gray-900">
+                                  {ensemble.name}
+                                </span>
+                                {ensemble.bezirk && (
+                                  <span className="text-gray-500 dark:text-gray-400">
+                                    {" "}
+                                    – Bezirk {ensemble.bezirk.number}
                                   </span>
-                                  {ensemble.bezirk && (
-                                    <span className="text-gray-500 dark:text-gray-400">
-                                      {" "}
-                                      – Bezirk {ensemble.bezirk.number}
-                                    </span>
-                                  )}
-                                </button>
-                              ))}
-                            {ensemblesData.ensembles?.filter((e) =>
-                              e.name
-                                .toLowerCase()
-                                .includes(ensembleSearch.toLowerCase()),
-                            ).length === 0 && (
+                                )}
+                              </button>
+                            ))}
+                            {ensembleOptions.length === 0 && (
                               <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                 Keine Ensembles gefunden
                               </div>

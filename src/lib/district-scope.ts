@@ -86,6 +86,29 @@ export function assertDistrictChangeAllowed(
 }
 
 /**
+ * Muss eine Ensemble-Verknüpfung gegen den Zuschnitt geprüft werden?
+ *
+ * Ein verlinktes Ensemble führt den Termin auf seiner öffentlichen Seite
+ * (`ensembles.getById`). Der Bezirk des Termins allein reicht als Grenze
+ * deshalb nicht: der Eintrag wird woanders sichtbar. Ein Gastchor von
+ * außerhalb steht weiterhin als freier Name im Termin.
+ *
+ * Wie bei `assertDistrictChangeAllowed` zählt der Wechsel, nicht die
+ * Erwähnung — sonst blockiert ein längst verknüpftes fremdes Ensemble jedes
+ * weitere Speichern. Die Verknüpfung zu lösen nimmt nichts weg, was nicht
+ * schon dastand, und bleibt ungeprüft.
+ */
+export function ensembleLinkNeedsDistrictCheck(
+  scope: DistrictScope,
+  submitted: string | null | undefined,
+  stored: string | null,
+): submitted is string {
+  if (scope.unrestricted) return false;
+  if (submitted === undefined || submitted === stored) return false;
+  return Boolean(submitted);
+}
+
+/**
  * Listen-Filter: eigene Inhalte plus alles aus den eigenen Bezirken.
  *
  * `null` heißt "kein Filter nötig" — der Aufrufer lässt seine `where`-Klausel

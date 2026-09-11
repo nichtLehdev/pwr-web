@@ -1,5 +1,11 @@
+import { TRPCError } from "@trpc/server";
 import type { PrismaClient } from "~/generated/prisma/client";
-import { districtScopeFor, type ContentResource } from "@/lib/district-scope";
+import {
+  districtAllowed,
+  districtScopeFor,
+  ensembleLinkNeedsDistrictCheck,
+  type ContentResource,
+} from "@/lib/district-scope";
 import type { DistrictScope } from "@/lib/district-scope";
 import {
   resolveUserPermissionsCached,
@@ -13,6 +19,7 @@ export {
   assertDistrictChangeAllowed,
   districtAllowed,
   districtScopeFilter,
+  ensembleLinkNeedsDistrictCheck,
 } from "@/lib/district-scope";
 export type { ContentResource, DistrictScope } from "@/lib/district-scope";
 
@@ -43,4 +50,38 @@ export async function resolveDistrictScope(
     resource,
     scopes.map((s) => s.bezirkId),
   );
+}
+
+/**
+ * Schlägt den Bezirk des Ensembles nach; die Regel selbst steht in
+ * `ensembleLinkNeedsDistrictCheck`.
+ */
+export async function assertEnsembleDistrictChangeAllowed(
+  db: PrismaClient,
+  scope: DistrictScope,
+  submitted: string | null | undefined,
+  stored: string | null,
+): Promise<void> {
+  if (!ensembleLinkNeedsDistrictCheck(scope, submitted, stored)) return;
+
+  const ensemble = await db.ensemble.findUnique({
+    where: { id: submitted },
+    select: { bezirkId: true },
+  });
+
+  if (!ensemble) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Ensemble nicht gefunden",
+    });
+  }
+
+  if (!districtAllowed(scope, ensemble.bezirkId)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Du kannst nur Ensembles aus deinem eigenen Bezirk verknüpfen. " +
+        "Für Gäste von außerhalb gib bitte einen freien Namen ein.",
+    });
+  }
 }
