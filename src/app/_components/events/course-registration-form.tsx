@@ -7,6 +7,11 @@ import { useToast } from "@/app/_components/ui/toast";
 import { cn } from "@/lib/utils";
 import { hasDiscountEligibleSiblingGroup } from "@/lib/sibling-discount";
 import { isRequiredCustomFieldEmpty } from "@/lib/course-custom-fields";
+import {
+  ageOnDate,
+  priceOptionAgeMismatchMessage,
+  priceOptionAgeReferenceDate,
+} from "@/lib/course-price-option-age";
 import type {
   RegistrationData,
   Step,
@@ -225,6 +230,26 @@ export default function CourseRegistrationForm({
         if (fieldErrors.length > 0) {
           errors[index] = `Fehlende Pflichtfelder: ${fieldErrors.join(", ")}`;
         }
+
+        // Altersgrenze der gewählten Kategorie — zuletzt und nur, wenn sonst
+        // nichts ansteht: ohne Geburtsdatum oder Kategorie gibt es nichts zu
+        // vergleichen, und deren Fehlen ist die nähere Ursache.
+        if (!staffMode && !errors[index] && p.birthDate && p.priceOptionId) {
+          const option = course.priceOptions.find(
+            (po) => po.id === p.priceOptionId,
+          );
+          const mismatch = option
+            ? priceOptionAgeMismatchMessage(
+                option,
+                ageOnDate(p.birthDate, priceOptionAgeReferenceDate(course)),
+              )
+            : null;
+          if (mismatch) {
+            errors[index] = mismatch;
+            missingFieldKeys.push("priceOptionId");
+          }
+        }
+
         if (missingFieldKeys.length > 0) {
           missing[index] = missingFieldKeys;
         }
@@ -239,7 +264,7 @@ export default function CourseRegistrationForm({
         setMissingFields({});
       });
     }
-  }, [currentStep, registrationData.participants, course.customFields]);
+  }, [currentStep, registrationData.participants, course, staffMode]);
 
   // Validate sibling discount eligibility - compute error message with useMemo
   const siblingDiscountError = useMemo(() => {
@@ -484,6 +509,7 @@ export default function CourseRegistrationForm({
           setShowParticipantLibrary={setShowParticipantLibrary}
           groupIdCounterRef={groupIdCounterRef}
           siblingDiscountError={siblingDiscountError}
+          staffMode={staffMode}
         />
       )}
       {currentStep === 3 && (

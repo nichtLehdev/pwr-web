@@ -32,6 +32,12 @@ import {
   roundMoney,
 } from "@/lib/sibling-discount";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
+import {
+  ageOnDate,
+  priceOptionAgeMismatchMessage,
+  priceOptionAgeReferenceDate,
+  priceOptionIdForAge,
+} from "@/lib/course-price-option-age";
 
 interface Participant {
   id: string;
@@ -348,9 +354,31 @@ export default function EditRegistrationPage() {
     value: unknown,
   ) => {
     setParticipants(
-      participants.map((p) =>
-        p.id === participantId ? { ...p, [field]: value } : p,
-      ),
+      participants.map((p) => {
+        if (p.id !== participantId) return p;
+        const next = { ...p, [field]: value };
+
+        // Ein neues Geburtsdatum kann die gewählte Kategorie aus ihrer
+        // Altersgrenze fallen lassen. Bleibt genau eine passende übrig, wird
+        // sie gesetzt; sonst bleibt die bisherige und die Prüfung meldet es.
+        //
+        // Nicht für das Kursteam: dort ist eine Kategorie außerhalb der
+        // Altersgrenze eine Absicht, und ein korrigierter Tippfehler im
+        // Geburtsdatum soll nicht stillschweigend den Preis ändern.
+        if (field === "birthDate" && !isStaff && registration?.course) {
+          next.priceOptionId =
+            priceOptionIdForAge(
+              registration.course.priceOptions,
+              ageOnDate(
+                next.birthDate,
+                priceOptionAgeReferenceDate(registration.course),
+              ),
+              next.priceOptionId,
+            ) ?? next.priceOptionId;
+        }
+
+        return next;
+      }),
     );
   };
 
@@ -505,6 +533,43 @@ export default function EditRegistrationPage() {
   };
 
   /**
+   * Altersgrenze der gewählten Preiskategorie, oder undefined wenn sie passt.
+   * Für das Kursteam immer undefined: es darf eine Kategorie bewusst entgegen
+   * ihrer Grenze vergeben, genau wie der Server es zulässt.
+   */
+  const participantAgeError = (
+    participant: Participant,
+  ): string | undefined => {
+    if (isStaff || !registration?.course) return undefined;
+
+    // Wer in dieser Kategorie schon angemeldet ist, bleibt es — auch wenn ihre
+    // Altersgrenze nachträglich enger gezogen wurde. Sonst ließe sich die
+    // Anmeldung nicht einmal mehr in einem anderen Feld ändern. Der Server
+    // lässt dieselbe Ausnahme zu.
+    const booked = registration.participants.find(
+      (p) => p.id === participant.id,
+    );
+    if (booked && booked.priceOptionId === participant.priceOptionId) {
+      return undefined;
+    }
+
+    const priceOption = registration.course.priceOptions.find(
+      (po) => po.id === participant.priceOptionId,
+    );
+    if (!priceOption) return undefined;
+
+    return (
+      priceOptionAgeMismatchMessage(
+        priceOption,
+        ageOnDate(
+          participant.birthDate,
+          priceOptionAgeReferenceDate(registration.course),
+        ),
+      ) ?? undefined
+    );
+  };
+
+  /**
    * One line describing what is wrong with a participant, or undefined when it
    * is complete. Computed on every render rather than only on submit, so the
    * card badges say which person still needs attention before you try to save.
@@ -514,7 +579,7 @@ export default function EditRegistrationPage() {
       return "Geburtsdatum muss in der Vergangenheit liegen";
     }
     const missing = participantMissingFields(participant);
-    if (missing.length === 0) return undefined;
+    if (missing.length === 0) return participantAgeError(participant);
     const names = missing.map(
       (key) =>
         PARTICIPANT_FIELD_LABELS[key] ?? key.slice("customField:".length),
@@ -639,6 +704,13 @@ export default function EditRegistrationPage() {
         setError(
           "Bitte fülle alle Pflichtfelder für jeden Teilnehmer aus (einschließlich Zusatzfelder).",
         );
+        setIsSubmitting(false);
+        return;
+      }
+
+      const ageProblem = participantAgeError(p);
+      if (ageProblem) {
+        setError(`${p.firstName} ${p.lastName}: ${ageProblem}`);
         setIsSubmitting(false);
         return;
       }
@@ -1384,6 +1456,16 @@ export default function EditRegistrationPage() {
                     editingParticipant.priceOptionId === optionId;
                   return !isAvailable && !isCurrent ? " (ausgebucht)" : "";
                 },
+                ageReferenceDate: registration.course.startDate,
+                // Das Kursteam darf eine Kategorie entgegen ihrer
+                // Altersgrenze vergeben — der Hinweis bleibt trotzdem stehen.
+                allowAgeMismatch: isStaff,
+                // Und die Kategorie, in der jemand schon steckt, bleibt ihm
+                // erhalten, auch wenn ihre Grenze inzwischen enger ist.
+                ageExemptOptionId:
+                  registration.participants.find(
+                    (p) => p.id === editingParticipant.id,
+                  )?.priceOptionId ?? null,
               }}
               siblings={
                 registration.course.allowSiblingDiscount &&
