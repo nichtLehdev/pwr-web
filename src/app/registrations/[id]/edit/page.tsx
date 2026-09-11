@@ -36,6 +36,7 @@ import {
   ageOnDate,
   priceOptionAgeMismatchMessage,
   priceOptionAgeReferenceDate,
+  priceOptionIdForAge,
 } from "@/lib/course-price-option-age";
 
 interface Participant {
@@ -353,9 +354,31 @@ export default function EditRegistrationPage() {
     value: unknown,
   ) => {
     setParticipants(
-      participants.map((p) =>
-        p.id === participantId ? { ...p, [field]: value } : p,
-      ),
+      participants.map((p) => {
+        if (p.id !== participantId) return p;
+        const next = { ...p, [field]: value };
+
+        // Ein neues Geburtsdatum kann die gewählte Kategorie aus ihrer
+        // Altersgrenze fallen lassen. Bleibt genau eine passende übrig, wird
+        // sie gesetzt; sonst bleibt die bisherige und die Prüfung meldet es.
+        //
+        // Nicht für das Kursteam: dort ist eine Kategorie außerhalb der
+        // Altersgrenze eine Absicht, und ein korrigierter Tippfehler im
+        // Geburtsdatum soll nicht stillschweigend den Preis ändern.
+        if (field === "birthDate" && !isStaff && registration?.course) {
+          next.priceOptionId =
+            priceOptionIdForAge(
+              registration.course.priceOptions,
+              ageOnDate(
+                next.birthDate,
+                priceOptionAgeReferenceDate(registration.course),
+              ),
+              next.priceOptionId,
+            ) ?? next.priceOptionId;
+        }
+
+        return next;
+      }),
     );
   };
 
