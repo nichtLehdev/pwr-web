@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
 import { isExternalCourse } from "@/lib/course-external";
+import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { coursePath, courseRegistrationPath } from "@/lib/slug";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 
@@ -735,6 +736,12 @@ export default function CourseDetailView({
                                 {option.description && (
                                   <p className="text-xs text-gray-500 dark:text-gray-500">
                                     {option.description}
+                                  </p>
+                                )}
+                                {priceOptionAgeLabel(option) && (
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                    {priceOptionAgeLabel(option)} — Alter am
+                                    ersten Kurstag
                                   </p>
                                 )}
                               </div>
