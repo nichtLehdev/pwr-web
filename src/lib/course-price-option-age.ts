@@ -111,10 +111,11 @@ export function priceOptionAgeMismatchMessage(
   // Kategorie an, die mindestens eine der beiden gesetzt hat.
   if (isAgeWithinPriceOption(option, age)) return null;
 
-  // Zwei kurze Sätze statt eines langen mit Gedankenstrich: erst die Regel,
-  // dann der Wert, an dem sie scheitert. Wo der Name des Teilnehmers fehlt,
-  // steht die Meldung ohnehin bei seinen Feldern.
-  return `„${option.label}“ gilt ${rangeAsClause(option)}. Zu Kursbeginn sind es ${age} Jahre.`;
+  // Erst die Regel, dann der Wert, an dem sie scheitert. Der zweite Teil ist
+  // bewusst eine Beschriftung und kein Satz: ein Satz bräuchte ein Subjekt,
+  // und das ist hier je nach Aufrufer der Teilnehmer, sein Name oder gar
+  // nichts. Wo der Name gebraucht wird, stellt ihn der Aufrufer voran.
+  return `„${option.label}“ gilt ${rangeAsClause(option)}. Alter zu Kursbeginn: ${age} Jahre.`;
 }
 
 /** „für 12 bis 17 Jahre" / „ab 18 Jahren" / „bis 17 Jahre" */

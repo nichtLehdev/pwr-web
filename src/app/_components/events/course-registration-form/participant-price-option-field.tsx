@@ -168,8 +168,9 @@ export function ParticipantPriceOptionField({
               role="alert"
               className="mt-1.5 text-sm text-red-700 dark:text-red-400"
             >
-              Zu Kursbeginn sind es {age} Jahre. Dafür gibt es in diesem Kurs
-              keine passende Preiskategorie — bitte wende dich an das Kursteam.
+              Für ein Alter von {age} Jahren zu Kursbeginn gibt es in diesem
+              Kurs keine passende Preiskategorie. Bitte wende dich an das
+              Kursteam.
             </p>
           ) : selected?.description ? (
             <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-400">

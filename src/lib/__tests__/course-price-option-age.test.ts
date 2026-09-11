@@ -119,20 +119,20 @@ describe("priceOptionAgeMismatchMessage", () => {
         19,
       ),
     ).toBe(
-      "„Kinder & Jugendliche“ gilt für 6 bis 17 Jahre. Zu Kursbeginn sind es 19 Jahre.",
+      "„Kinder & Jugendliche“ gilt für 6 bis 17 Jahre. Alter zu Kursbeginn: 19 Jahre.",
     );
     expect(
       priceOptionAgeMismatchMessage(
         { label: "Erwachsene", minAge: 27, maxAge: null },
         26,
       ),
-    ).toBe("„Erwachsene“ gilt ab 27 Jahren. Zu Kursbeginn sind es 26 Jahre.");
+    ).toBe("„Erwachsene“ gilt ab 27 Jahren. Alter zu Kursbeginn: 26 Jahre.");
     expect(
       priceOptionAgeMismatchMessage(
         { label: "Kinder", minAge: null, maxAge: 16 },
         24,
       ),
-    ).toBe("„Kinder“ gilt bis 16 Jahre. Zu Kursbeginn sind es 24 Jahre.");
+    ).toBe("„Kinder“ gilt bis 16 Jahre. Alter zu Kursbeginn: 24 Jahre.");
   });
 
   it("stays silent when the age fits or is unknown", () => {
