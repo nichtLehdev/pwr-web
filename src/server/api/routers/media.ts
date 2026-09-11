@@ -617,6 +617,88 @@ export const mediaRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  /** Mehrfachauswahl aus der Übersicht — eine Bestätigung statt zwanzig. */
+  bulkDelete: protectedProcedure
+    .input(z.object({ ids: z.array(z.string()).min(1).max(200) }))
+    .mutation(async ({ ctx, input }) => {
+      const canDeleteMedia = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.MEDIA_DELETE,
+        ctx.permissionCache,
+      );
+
+      const items = await ctx.db.media.findMany({
+        where: { id: { in: input.ids } },
+        select: { id: true, path: true, uploadedById: true },
+      });
+
+      const deletable = items.filter(
+        (item) => canDeleteMedia || item.uploadedById === ctx.session.user.id,
+      );
+
+      if (deletable.length === 0) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Insufficient permissions",
+        });
+      }
+
+      await ctx.db.media.deleteMany({
+        where: { id: { in: deletable.map((item) => item.id) } },
+      });
+      await Promise.all(deletable.map((item) => unlinkMediaFile(item.path)));
+
+      return {
+        deleted: deletable.length,
+        skipped: input.ids.length - deletable.length,
+      };
+    }),
+
+  bulkReview: permissionProcedure(PERMISSIONS.MEDIA_APPROVE)
+    .input(
+      z.object({
+        ids: z.array(z.string()).min(1).max(200),
+        status: z.enum([ContentStatus.APPROVED, ContentStatus.REJECTED]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const result = await ctx.db.media.updateMany({
+        where: { id: { in: input.ids } },
+        data: { status: input.status },
+      });
+      return { updated: result.count };
+    }),
+
+  bulkSetPublic: protectedProcedure
+    .input(
+      z.object({
+        ids: z.array(z.string()).min(1).max(200),
+        isPublic: z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const canEditMedia =
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_EDIT,
+          ctx.permissionCache,
+        )) ||
+        (await userHasPermission(
+          ctx.session.user.id,
+          PERMISSIONS.MEDIA_APPROVE,
+          ctx.permissionCache,
+        ));
+
+      const result = await ctx.db.media.updateMany({
+        where: {
+          id: { in: input.ids },
+          ...(canEditMedia ? {} : { uploadedById: ctx.session.user.id }),
+        },
+        data: { isPublic: input.isPublic },
+      });
+      return { updated: result.count };
+    }),
+
   review: permissionProcedure(PERMISSIONS.MEDIA_APPROVE)
     .input(
       z.object({
