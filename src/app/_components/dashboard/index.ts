@@ -22,6 +22,10 @@ export {
   customFieldTypeLabels,
   type CourseCustomFieldDraft,
 } from "./course-custom-fields-editor";
+export {
+  PriceOptionAgeLimits,
+  type PriceOptionAgeDraft,
+} from "./price-option-age-limits";
 export { DashboardSectionedFormLayout } from "./dashboard-sectioned-form-layout";
 export {
   DashboardOverflowMenu,
