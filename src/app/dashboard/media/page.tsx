@@ -15,6 +15,7 @@ import { CropIcon, EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
 import { Button, Input, Label, Select } from "@/app/_components/ui";
+import { formatMediaTags, splitMediaTags } from "@/lib/media-tags";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -132,6 +133,10 @@ export default function DashboardMediaPage() {
       limit,
       mimeType: mimeTypeFilter || undefined,
       search: search || undefined,
+      // Der Statusfilter läuft auf dem Server. Im Browser angewandt betraf er
+      // nur die geladene Seite: "Ausstehend" blieb leer, obwohl auf Seite 3
+      // welche lagen, und die Seitenzahl darunter zählte trotzdem alle.
+      status: statusFilter ? [statusFilter] : undefined,
       includeAll: true,
     },
     { enabled: !!profile },
@@ -227,7 +232,7 @@ export default function DashboardMediaPage() {
     setEditTitle(media.title ?? "");
     setEditCopyright(media.copyright ?? "");
     setEditCreator(media.creator ?? "");
-    setEditTags(typeof media.tags === "string" ? media.tags : "");
+    setEditTags(formatMediaTags(media.tags));
     setEditIsPublic(media.isPublic);
     setEditError("");
     setShowEditModal(media.id);
@@ -236,14 +241,24 @@ export default function DashboardMediaPage() {
   const handleUpdate = () => {
     if (!showEditModal) return;
 
+    const name = editName.trim();
+    if (!name) {
+      setEditError("Der Name darf nicht leer sein.");
+      return;
+    }
+
     updateMutation.mutate({
       id: showEditModal,
-      alt: editAlt || undefined,
-      caption: editCaption || undefined,
-      title: editTitle || undefined,
-      copyright: editCopyright || undefined,
-      creator: editCreator || undefined,
-      tags: editTags || undefined,
+      name,
+      // `|| null` statt `|| undefined`: ein geleertes Feld soll die Spalte
+      // leeren. `undefined` heißt für Prisma "nicht anfassen" — der Dialog
+      // meldete deshalb eine Änderung, die nie stattgefunden hat.
+      alt: editAlt.trim() || null,
+      caption: editCaption.trim() || null,
+      title: editTitle.trim() || null,
+      copyright: editCopyright.trim() || null,
+      creator: editCreator.trim() || null,
+      tags: splitMediaTags(editTags),
       isPublic: editIsPublic,
     });
   };
@@ -382,9 +397,7 @@ export default function DashboardMediaPage() {
     return null;
   }
 
-  const filteredMedia = statusFilter
-    ? data?.media.filter((m) => m.status === statusFilter)
-    : data?.media;
+  const filteredMedia = data?.media;
 
   const isReviewer = hasApprovePermission;
   const canDelete = hasDeletePermission;
@@ -956,7 +969,7 @@ export default function DashboardMediaPage() {
                 return null;
               })()}
 
-              {/* Name (read-only) */}
+              {/* Name */}
               <div>
                 <label className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700">
                   Name
@@ -964,8 +977,8 @@ export default function DashboardMediaPage() {
                 <input
                   type="text"
                   value={editName}
-                  disabled
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-muted w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2"
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-1 focus:outline-none"
                 />
               </div>
 
