@@ -2,15 +2,52 @@ import { z } from "zod";
 import { unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { ContentStatus, type Prisma } from "~/generated/prisma/client";
+import { ContentStatus, Prisma } from "~/generated/prisma/client";
 import { userHasPermission } from "../helpers/permissions";
 import { PERMISSIONS } from "@/lib/permissions";
 import { permissionProcedure } from "../middleware/permissions";
 import { resolveUploadFsPath } from "@/server/utils/uploads-dir";
 
 import { createLogger } from "@/server/utils/logger";
+import { parseMediaTags } from "@/lib/media-tags";
 
 const log = createLogger("Media");
+
+/**
+ * Profilbilder liegen zwar in derselben Tabelle, gehören aber der
+ * Benutzerverwaltung — die Medienverwaltung blendet sie überall aus, auch in
+ * der Statistik. Sonst nennt die Kachel „Gesamt“ eine Zahl, die sich durch
+ * Blättern nie erreichen lässt.
+ */
+const NON_PROFILE_MEDIA: Prisma.MediaWhereInput = {
+  folder: { not: "profiles" },
+};
+
+/**
+ * Leere Formularfelder kommen als `null` an und müssen die Spalte auch leeren.
+ * `undefined` bedeutet für Prisma „nicht anfassen“ — beides auseinanderzuhalten
+ * ist der ganze Zweck der `.nullable()`-Eingaben unten.
+ */
+function emptyToNull(
+  value: string | null | undefined,
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** Die Datei zu einem Medium von der Platte entfernen, soweit vorhanden. */
+async function unlinkMediaFile(storedPath: string) {
+  const fullPath = resolveUploadFsPath(storedPath);
+  if (!fullPath) return;
+  try {
+    await unlink(/* turbopackIgnore: true */ fullPath);
+  } catch (err) {
+    // Fehlende Datei ist kein Fehler: der Datenbankeintrag soll trotzdem weg.
+    log.warn("Could not delete media file:", fullPath, err);
+  }
+}
 
 // Stored url/path values must be exactly what /api/upload produces:
 // /api/uploads/<folder>/<sanitized filename>. Anything else (absolute paths,
@@ -67,6 +104,18 @@ export const mediaRouter = createTRPCRouter({
         search: z.string().optional(),
         uploadedById: z.string().optional(),
         includeAll: z.boolean().optional(),
+        /**
+         * Serverseitig, nicht im Browser: eine Seite umfasst nur einen
+         * Ausschnitt, ein Filter über `media` allein würde Treffer auf den
+         * übrigen Seiten verschweigen.
+         */
+        status: z.array(z.enum(ContentStatus)).optional(),
+        /** Schnellfilter der Redaktion: was noch Pflege braucht. */
+        missing: z.enum(["alt", "copyright"]).optional(),
+        sortBy: z
+          .enum(["createdAt", "name", "size", "status"])
+          .default("createdAt"),
+        sortOrder: z.enum(["asc", "desc"]).default("desc"),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -82,22 +131,38 @@ export const mediaRouter = createTRPCRouter({
         ctx.permissionCache,
       );
 
-      const where: Prisma.MediaWhereInput = {
-        folder: { not: "profiles" },
-        ...(input.mimeType && { mimeType: { contains: input.mimeType } }),
-        ...(input.folder && { folder: input.folder }),
-        ...(input.uploadedById && { uploadedById: input.uploadedById }),
-      };
+      /**
+       * Jede Bedingung als eigener `AND`-Eintrag statt als Feld auf `where`:
+       * Sichtbarkeit, Suche und die „fehlt noch“-Filter brauchen alle ein
+       * eigenes `OR`, und auf einem gemeinsamen Objekt überschreibt der letzte
+       * Schreibzugriff die vorherigen — genau so ging der Statusfilter früher
+       * gegen die Sichtbarkeitsregel verloren.
+       */
+      const and: Prisma.MediaWhereInput[] = [NON_PROFILE_MEDIA];
+
+      if (input.mimeType) and.push({ mimeType: { contains: input.mimeType } });
+      if (input.folder) and.push({ folder: input.folder });
+      if (input.uploadedById) and.push({ uploadedById: input.uploadedById });
+      if (input.status?.length) and.push({ status: { in: input.status } });
+
+      if (input.missing === "alt") {
+        and.push({ OR: [{ alt: null }, { alt: "" }] });
+      } else if (input.missing === "copyright") {
+        and.push({ OR: [{ copyright: null }, { copyright: "" }] });
+        and.push({ OR: [{ creator: null }, { creator: "" }] });
+      }
 
       if (input.search) {
-        where.OR = [
-          { name: { contains: input.search, mode: "insensitive" } },
-          { alt: { contains: input.search, mode: "insensitive" } },
-          { caption: { contains: input.search, mode: "insensitive" } },
-          { title: { contains: input.search, mode: "insensitive" } },
-          { copyright: { contains: input.search, mode: "insensitive" } },
-          { creator: { contains: input.search, mode: "insensitive" } },
-        ];
+        and.push({
+          OR: [
+            { name: { contains: input.search, mode: "insensitive" } },
+            { alt: { contains: input.search, mode: "insensitive" } },
+            { caption: { contains: input.search, mode: "insensitive" } },
+            { title: { contains: input.search, mode: "insensitive" } },
+            { copyright: { contains: input.search, mode: "insensitive" } },
+            { creator: { contains: input.search, mode: "insensitive" } },
+          ],
+        });
       }
 
       if (input.includeAll) {
@@ -105,24 +170,22 @@ export const mediaRouter = createTRPCRouter({
           // Can see all media
         } else if (canUploadMedia) {
           // Can see approved + own pending
-          where.AND = [
-            {
-              OR: [
-                { status: ContentStatus.APPROVED },
-                { status: ContentStatus.PENDING, uploadedById: userId },
-              ],
-            },
-          ];
+          and.push({
+            OR: [
+              { status: ContentStatus.APPROVED },
+              { status: ContentStatus.PENDING, uploadedById: userId },
+            ],
+          });
         } else {
-          where.status = ContentStatus.APPROVED;
+          and.push({ status: ContentStatus.APPROVED });
         }
       } else {
-        where.AND = [
-          {
-            OR: [{ status: ContentStatus.APPROVED }, { uploadedById: userId }],
-          },
-        ];
+        and.push({
+          OR: [{ status: ContentStatus.APPROVED }, { uploadedById: userId }],
+        });
       }
+
+      const where: Prisma.MediaWhereInput = { AND: and };
 
       const [media, total] = await Promise.all([
         ctx.db.media.findMany({
@@ -137,13 +200,19 @@ export const mediaRouter = createTRPCRouter({
           },
           skip: (input.page - 1) * input.limit,
           take: input.limit,
-          orderBy: { createdAt: "desc" },
+          orderBy: { [input.sortBy]: input.sortOrder },
         }),
         ctx.db.media.count({ where }),
       ]);
 
       return {
-        media,
+        // Tags immer als Array herausgeben, egal ob in der JSON-Spalte ein
+        // Array oder ein alter Komma-String steht — die Ansichten sollen sich
+        // mit dem Unterschied nicht befassen müssen.
+        media: media.map((item) => ({
+          ...item,
+          tags: parseMediaTags(item.tags),
+        })),
         total,
         pages: Math.ceil(total / input.limit),
       };
@@ -194,7 +263,7 @@ export const mediaRouter = createTRPCRouter({
         copyright: z.string().max(500).optional(),
         creator: z.string().max(255).optional(),
         folder: z.string().optional(),
-        tags: z.string().optional(),
+        tags: z.array(z.string().max(50)).max(50).optional(),
         isPublic: z.boolean().default(true),
         focalPointX: z.number().min(0).max(100).optional().nullable(),
         focalPointY: z.number().min(0).max(100).optional().nullable(),
@@ -210,6 +279,7 @@ export const mediaRouter = createTRPCRouter({
       const media = await ctx.db.media.create({
         data: {
           ...input,
+          tags: input.tags?.length ? input.tags : Prisma.DbNull,
           uploadedById: ctx.session.user.id,
           status: canApproveMedia
             ? ContentStatus.APPROVED
@@ -224,20 +294,27 @@ export const mediaRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        alt: z.string().max(500).optional(),
-        caption: z.string().max(1000).optional(),
-        title: z.string().max(200).optional(),
-        copyright: z.string().max(500).optional(),
-        creator: z.string().max(255).optional(),
-        folder: z.string().optional(),
-        tags: z.string().optional(),
+        /**
+         * Durchweg `.nullable()`: ein geleertes Feld schickt `null` und löscht
+         * die Spalte, ein weggelassenes Feld bleibt `undefined` und damit
+         * unangetastet. Mit `.optional()` allein waren beide Fälle identisch —
+         * das Formular meldete „gespeichert“, und der alte Wert stand noch da.
+         */
+        name: z.string().min(1).max(255).optional(),
+        alt: z.string().max(500).nullable().optional(),
+        caption: z.string().max(1000).nullable().optional(),
+        title: z.string().max(200).nullable().optional(),
+        copyright: z.string().max(500).nullable().optional(),
+        creator: z.string().max(255).nullable().optional(),
+        folder: z.string().max(100).nullable().optional(),
+        tags: z.array(z.string().max(50)).max(50).nullable().optional(),
         isPublic: z.boolean().optional(),
         focalPointX: z.number().min(0).max(100).optional().nullable(),
         focalPointY: z.number().min(0).max(100).optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...updateData } = input;
+      const { id, tags, ...rest } = input;
 
       const media = await ctx.db.media.findUnique({
         where: { id },
@@ -274,7 +351,21 @@ export const mediaRouter = createTRPCRouter({
 
       return await ctx.db.media.update({
         where: { id },
-        data: updateData,
+        data: {
+          ...rest,
+          name: rest.name?.trim(),
+          alt: emptyToNull(rest.alt),
+          caption: emptyToNull(rest.caption),
+          title: emptyToNull(rest.title),
+          copyright: emptyToNull(rest.copyright),
+          creator: emptyToNull(rest.creator),
+          folder: emptyToNull(rest.folder),
+          // Ein leeres Array ist „keine Tags“ und damit ebenfalls NULL —
+          // sonst bliebe `[]` als Wert stehen, den keine Ansicht unterscheidet.
+          ...(tags !== undefined && {
+            tags: tags && tags.length > 0 ? tags : Prisma.DbNull,
+          }),
+        },
       });
     }),
 
@@ -326,14 +417,7 @@ export const mediaRouter = createTRPCRouter({
         });
       }
 
-      const fullPath = resolveUploadFsPath(media.path);
-      if (fullPath) {
-        try {
-          await unlink(/* turbopackIgnore: true */ fullPath);
-        } catch (err) {
-          log.warn("Could not delete old media file:", fullPath, err);
-        }
-      }
+      await unlinkMediaFile(media.path);
 
       return await ctx.db.media.update({
         where: { id: input.id },
@@ -352,12 +436,153 @@ export const mediaRouter = createTRPCRouter({
       });
     }),
 
+  /**
+   * Wo ein Medium verwendet wird — Grundlage für die Warnung im Löschdialog.
+   *
+   * Zwei Beziehungen stehen auf `onDelete: Cascade`: mit dem Bild verschwindet
+   * das ganze Bläserheft bzw. die Karussell-Folie. Das ist im Dialog nicht
+   * dasselbe wie „ein Beitrag verliert sein Titelbild“ und deshalb als
+   * `cascade` markiert.
+   */
+  getUsage: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const media = await ctx.db.media.findUnique({
+        where: { id: input.id },
+        include: {
+          usersProfile: { select: { id: true, displayName: true } },
+          eventsCover: { select: { id: true, title: true } },
+          postsCover: { select: { id: true, title: true } },
+          courseImages: { select: { id: true, title: true } },
+          ensembleImages: { select: { id: true, name: true } },
+          auswahlChorImages: { select: { id: true, name: true } },
+          teamMemberImages: { select: { id: true, name: true } },
+          bezirkPersonImages: { select: { id: true, name: true } },
+          vorstandMemberImages: { select: { id: true, name: true } },
+          posaunenratMemberImages: { select: { id: true, name: true } },
+          foerdervereinMemberImgs: { select: { id: true, name: true } },
+          posaunenwartImages: { select: { id: true, name: true } },
+          historyEventImages: { select: { id: true, title: true } },
+          blaeserheftImages: { select: { id: true, title: true, year: true } },
+          homepageCarouselItems: { select: { id: true, title: true } },
+        },
+      });
+
+      if (!media) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Media not found" });
+      }
+
+      const usages: {
+        kind: string;
+        label: string;
+        href?: string;
+        cascade: boolean;
+      }[] = [
+        ...media.blaeserheftImages.map((entry) => ({
+          kind: "Bläserheft",
+          label: `${entry.title} (${entry.year})`,
+          href: `/dashboard/blaeserhefte`,
+          cascade: true,
+        })),
+        ...media.homepageCarouselItems.map((entry) => ({
+          kind: "Startseiten-Karussell",
+          label: entry.title ?? "Folie ohne Titel",
+          href: `/dashboard/homepage`,
+          cascade: true,
+        })),
+        ...media.postsCover.map((entry) => ({
+          kind: "Beitrag",
+          label: entry.title,
+          href: `/dashboard/posts/${entry.id}/edit`,
+          cascade: false,
+        })),
+        ...media.eventsCover.map((entry) => ({
+          kind: "Termin",
+          label: entry.title,
+          href: `/dashboard/events/${entry.id}/edit`,
+          cascade: false,
+        })),
+        ...media.courseImages.map((entry) => ({
+          kind: "Kurs",
+          label: entry.title,
+          href: `/dashboard/courses/${entry.id}/edit`,
+          cascade: false,
+        })),
+        ...media.historyEventImages.map((entry) => ({
+          kind: "Chronik",
+          label: entry.title,
+          href: `/dashboard/history-timeline`,
+          cascade: false,
+        })),
+        ...media.ensembleImages.map((entry) => ({
+          kind: "Ensemble",
+          label: entry.name,
+          href: `/dashboard/ensembles`,
+          cascade: false,
+        })),
+        ...media.auswahlChorImages.map((entry) => ({
+          kind: "Auswahlchor",
+          label: entry.name,
+          href: `/dashboard/auswahlchoere`,
+          cascade: false,
+        })),
+        ...media.usersProfile.map((entry) => ({
+          kind: "Profilbild",
+          label: entry.displayName ?? "Ohne Namen",
+          href: `/dashboard/users`,
+          cascade: false,
+        })),
+        ...media.teamMemberImages.map((entry) => ({
+          kind: "Team",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/team`,
+          cascade: false,
+        })),
+        ...media.vorstandMemberImages.map((entry) => ({
+          kind: "Vorstand",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/vorstand`,
+          cascade: false,
+        })),
+        ...media.posaunenratMemberImages.map((entry) => ({
+          kind: "Posaunenrat",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/posaunenrat`,
+          cascade: false,
+        })),
+        ...media.foerdervereinMemberImgs.map((entry) => ({
+          kind: "Förderverein",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/foerderverein`,
+          cascade: false,
+        })),
+        ...media.posaunenwartImages.map((entry) => ({
+          kind: "Posaunenwart:in",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/posaunenwarte`,
+          cascade: false,
+        })),
+        ...media.bezirkPersonImages.map((entry) => ({
+          kind: "Bezirksperson",
+          label: entry.name ?? "Ohne Namen",
+          href: `/dashboard/bezirke`,
+          cascade: false,
+        })),
+      ];
+
+      return {
+        usages,
+        total: usages.length,
+        cascadeCount: usages.filter((usage) => usage.cascade).length,
+      };
+    }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const media = await ctx.db.media.findUnique({
         where: { id: input.id },
-        select: { uploadedById: true },
+        select: { uploadedById: true, path: true },
       });
 
       if (!media) {
@@ -385,6 +610,9 @@ export const mediaRouter = createTRPCRouter({
       await ctx.db.media.delete({
         where: { id: input.id },
       });
+      // Erst nach dem erfolgreichen Löschen des Datensatzes: schlägt der fehl
+      // (z. B. wegen einer Beziehung), soll die Datei noch da sein.
+      await unlinkMediaFile(media.path);
 
       return { success: true };
     }),
@@ -469,16 +697,22 @@ export const mediaRouter = createTRPCRouter({
       documentCount,
       videoCount,
       userUploads,
+      pendingCount,
+      missingAltCount,
     ] = await Promise.all([
-      ctx.db.media.count(),
+      // Überall `NON_PROFILE_MEDIA`: die Übersicht blendet Profilbilder aus,
+      // also darf die Statistik sie auch nicht mitzählen.
+      ctx.db.media.count({ where: NON_PROFILE_MEDIA }),
       ctx.db.media.aggregate({
+        where: NON_PROFILE_MEDIA,
         _sum: { size: true },
       }),
       ctx.db.media.count({
-        where: { mimeType: { startsWith: "image/" } },
+        where: { ...NON_PROFILE_MEDIA, mimeType: { startsWith: "image/" } },
       }),
       ctx.db.media.count({
         where: {
+          ...NON_PROFILE_MEDIA,
           OR: [
             { mimeType: { startsWith: "application/" } },
             { mimeType: { startsWith: "text/" } },
@@ -486,10 +720,20 @@ export const mediaRouter = createTRPCRouter({
         },
       }),
       ctx.db.media.count({
-        where: { mimeType: { startsWith: "video/" } },
+        where: { ...NON_PROFILE_MEDIA, mimeType: { startsWith: "video/" } },
       }),
       ctx.db.media.count({
-        where: { uploadedById: ctx.session.user.id },
+        where: { ...NON_PROFILE_MEDIA, uploadedById: ctx.session.user.id },
+      }),
+      ctx.db.media.count({
+        where: { ...NON_PROFILE_MEDIA, status: ContentStatus.PENDING },
+      }),
+      ctx.db.media.count({
+        where: {
+          ...NON_PROFILE_MEDIA,
+          mimeType: { startsWith: "image/" },
+          OR: [{ alt: null }, { alt: "" }],
+        },
       }),
     ]);
 
@@ -500,6 +744,8 @@ export const mediaRouter = createTRPCRouter({
       documentCount,
       videoCount,
       userUploads,
+      pendingCount,
+      missingAltCount,
     };
   }),
 
