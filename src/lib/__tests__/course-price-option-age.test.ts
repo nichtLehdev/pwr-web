@@ -6,6 +6,7 @@ import {
   priceOptionAgeLabel,
   priceOptionAgeMismatchMessage,
   priceOptionAgeReferenceDate,
+  priceOptionIdForAge,
   priceOptionsForAge,
   validatePriceOptionAgeRange,
   validatePriceOptionAgeRanges,
@@ -118,16 +119,20 @@ describe("priceOptionAgeMismatchMessage", () => {
         19,
       ),
     ).toBe(
-      "„Kinder & Jugendliche“ gilt für 6 bis 17 Jahre — am ersten Kurstag sind es 19 Jahre.",
+      "„Kinder & Jugendliche“ gilt für 6 bis 17 Jahre. Zu Kursbeginn sind es 19 Jahre.",
     );
     expect(
       priceOptionAgeMismatchMessage(
         { label: "Erwachsene", minAge: 27, maxAge: null },
         26,
       ),
-    ).toBe(
-      "„Erwachsene“ gilt ab 27 Jahren — am ersten Kurstag sind es 26 Jahre.",
-    );
+    ).toBe("„Erwachsene“ gilt ab 27 Jahren. Zu Kursbeginn sind es 26 Jahre.");
+    expect(
+      priceOptionAgeMismatchMessage(
+        { label: "Kinder", minAge: null, maxAge: 16 },
+        24,
+      ),
+    ).toBe("„Kinder“ gilt bis 16 Jahre. Zu Kursbeginn sind es 24 Jahre.");
   });
 
   it("stays silent when the age fits or is unknown", () => {
@@ -161,6 +166,48 @@ describe("priceOptionsForAge", () => {
 
   it("can come back empty when no category covers the age", () => {
     expect(priceOptionsForAge(options.slice(0, 1), 40)).toEqual([]);
+  });
+});
+
+describe("priceOptionIdForAge", () => {
+  const options = [
+    { id: "kid", label: "Kinder", minAge: null, maxAge: 12 },
+    { id: "youth", label: "Jugendliche", minAge: 13, maxAge: 26 },
+    { id: "adult", label: "Erwachsene", minAge: 27, maxAge: null },
+  ];
+
+  it("picks the only category left when the current one no longer fits", () => {
+    expect(priceOptionIdForAge(options, 30, "kid")).toBe("adult");
+  });
+
+  it("picks the only fitting category when none was chosen yet", () => {
+    expect(priceOptionIdForAge(options, 8, null)).toBe("kid");
+  });
+
+  it("leaves a still-valid choice alone", () => {
+    // "Tagesgast" would fit too, but the registrant already decided.
+    const withOpenTier = [
+      ...options,
+      { id: "guest", label: "Tagesgast", minAge: null, maxAge: null },
+    ];
+    expect(priceOptionIdForAge(withOpenTier, 30, "guest")).toBe("guest");
+  });
+
+  it("keeps the current choice when several categories would fit", () => {
+    const withOpenTier = [
+      ...options,
+      { id: "guest", label: "Tagesgast", minAge: null, maxAge: null },
+    ];
+    expect(priceOptionIdForAge(withOpenTier, 30, "kid")).toBe("kid");
+  });
+
+  it("keeps the current choice when nothing fits at all", () => {
+    expect(priceOptionIdForAge(options.slice(0, 1), 40, "kid")).toBe("kid");
+  });
+
+  it("changes nothing while the age is unknown", () => {
+    expect(priceOptionIdForAge(options, null, "kid")).toBe("kid");
+    expect(priceOptionIdForAge(options, null, null)).toBeNull();
   });
 });
 

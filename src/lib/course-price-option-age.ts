@@ -111,7 +111,10 @@ export function priceOptionAgeMismatchMessage(
   // Kategorie an, die mindestens eine der beiden gesetzt hat.
   if (isAgeWithinPriceOption(option, age)) return null;
 
-  return `„${option.label}“ gilt ${rangeAsClause(option)} — am ersten Kurstag sind es ${age} Jahre.`;
+  // Zwei kurze Sätze statt eines langen mit Gedankenstrich: erst die Regel,
+  // dann der Wert, an dem sie scheitert. Wo der Name des Teilnehmers fehlt,
+  // steht die Meldung ohnehin bei seinen Feldern.
+  return `„${option.label}“ gilt ${rangeAsClause(option)}. Zu Kursbeginn sind es ${age} Jahre.`;
 }
 
 /** „für 12 bis 17 Jahre" / „ab 18 Jahren" / „bis 17 Jahre" */
@@ -129,6 +132,30 @@ export function priceOptionsForAge<T extends PriceOptionAgeLimits>(
   age: number | null,
 ): T[] {
   return options.filter((option) => isAgeWithinPriceOption(option, age));
+}
+
+/**
+ * Welche Kategorie nach einer Änderung des Geburtsdatums gelten soll.
+ *
+ * Passt die bisherige weiterhin, bleibt sie stehen — an einer einmal
+ * getroffenen Wahl wird nicht herumgeschoben. Passt sie nicht mehr und bleibt
+ * genau eine übrig, wird die genommen: eine Auswahl mit nur einer gültigen
+ * Antwort ist keine Auswahl, und der Preis steht sichtbar daneben. Bei
+ * mehreren Möglichkeiten bleibt es bei der bisherigen; welche gemeint ist,
+ * weiß nur der Mensch davor, und die Prüfung sagt ihm, dass er wählen muss.
+ */
+export function priceOptionIdForAge<
+  T extends PriceOptionAgeLimits & { id: string },
+>(
+  options: readonly T[],
+  age: number | null,
+  currentId: string | null | undefined,
+): string | null | undefined {
+  const current = options.find((option) => option.id === currentId);
+  if (current && isAgeWithinPriceOption(current, age)) return currentId;
+
+  const eligible = priceOptionsForAge(options, age);
+  return eligible.length === 1 ? eligible[0]!.id : currentId;
 }
 
 /**
