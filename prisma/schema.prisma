@@ -668,6 +668,19 @@ model CoursePriceOption {
   description     String?
   maxParticipants Int?
 
+  /**
+   * Altersgrenzen in vollendeten Jahren, jeweils einschließlich. Stichtag ist
+   * der erste Kurstag — nicht der Tag der Anmeldung, sonst rutschte ein
+   * Teilnehmer zwischen Anmeldung und Kurs aus seiner Kategorie und der Preis
+   * stimmte nachträglich nicht mehr.
+   * Bewusst pro Kategorie statt einer globalen Jugend-Definition: ab wann
+   * jemand als erwachsen gilt, ist von Haus zu Haus verschieden (mal ab 18,
+   * mal erst ab 27). Beide Werte sind optional — nur `minAge` heißt „ab“, nur
+   * `maxAge` heißt „bis“.
+   */
+  minAge Int?
+  maxAge Int?
+
   participants Participant[]
 
   createdAt DateTime @default(now())
