@@ -67,7 +67,9 @@ export const organizationRouter = createTRPCRouter({
 
     const grouped = {
       landeskirchenmusikdirektor: members.filter(
-        (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
+        (m) =>
+          m.role === "LANDESKIRCHENMUSIKDIREKTOR" ||
+          m.role === "LANDESKIRCHENMUSIKDIREKTORIN",
       ),
       vorstand: members.filter((m) => m.role === "VORSTAND"),
       sachverstaendige: members.filter(
