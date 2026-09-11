@@ -40,6 +40,11 @@ interface Step2ParticipantsProps {
   setShowParticipantLibrary: (show: boolean) => void;
   groupIdCounterRef: React.MutableRefObject<number>;
   siblingDiscountError: string;
+  /**
+   * Dashboard mode: the course team may put a participant into a category
+   * whose age limits they fall outside of.
+   */
+  staffMode?: boolean;
 }
 
 export function Step2Participants({
@@ -55,6 +60,7 @@ export function Step2Participants({
   setShowParticipantLibrary,
   groupIdCounterRef,
   siblingDiscountError,
+  staffMode = false,
 }: Step2ParticipantsProps) {
   /** Index of the participant whose fields are open in the sheet. */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -483,6 +489,10 @@ export function Step2Participants({
           <ParticipantEditor
             priceOptions={course.priceOptions}
             customFields={course.customFields ?? []}
+            priceOptionField={{
+              ageReferenceDate: course.startDate,
+              allowAgeMismatch: staffMode,
+            }}
             participant={editingParticipant}
             onChange={(field, value) =>
               updateParticipant(editingIndex, field, value)

@@ -45,6 +45,12 @@ interface ParticipantEditorProps {
     placeholderOption?: boolean;
     isOptionDisabled?: (optionId: string) => boolean;
     getOptionSuffix?: (optionId: string) => string;
+    /** Stichtag der Altersgrenzen: der erste Kurstag. */
+    ageReferenceDate?: Date | string | null;
+    /** Nur das Kursteam darf eine Kategorie entgegen ihrer Grenze vergeben. */
+    allowAgeMismatch?: boolean;
+    /** Die schon gebuchte Kategorie bleibt wählbar, egal wie alt jemand ist. */
+    ageExemptOptionId?: string | null;
   };
   /** Left out when the course has no sibling discount or nobody to link to. */
   siblings?: {
@@ -210,6 +216,10 @@ export function ParticipantEditor({
             placeholderOption={priceOptionField?.placeholderOption}
             isOptionDisabled={priceOptionField?.isOptionDisabled}
             getOptionSuffix={priceOptionField?.getOptionSuffix}
+            birthDate={participant.birthDate}
+            ageReferenceDate={priceOptionField?.ageReferenceDate}
+            allowAgeMismatch={priceOptionField?.allowAgeMismatch}
+            ageExemptOptionId={priceOptionField?.ageExemptOptionId}
           />
         ) : null}
 
