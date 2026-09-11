@@ -10,12 +10,19 @@ import Image from "next/image";
 import { DashboardPage } from "@/app/_components/dashboard";
 import { ContentStatus } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
-import { CheckIcon, ImageIcon, PlusIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon, ImageIcon, PlusIcon } from "lucide-react";
 import { CropIcon, EditIcon, XIcon } from "lucide-react";
 import { TrashIcon } from "lucide-react";
 import ImageCropEditor from "@/app/_components/posts/image-crop-editor";
 import { Button, Input, Label, Select } from "@/app/_components/ui";
 import { formatMediaTags, splitMediaTags } from "@/lib/media-tags";
+import { useMediaDownload } from "@/app/_components/media/use-media-download";
+import {
+  MEDIA_UPLOAD_ACCEPT,
+  MEDIA_UPLOAD_EXTENSIONS_LABEL,
+  MEDIA_UPLOAD_MAX_BYTES,
+  MEDIA_UPLOAD_MAX_LABEL,
+} from "@/lib/media-upload";
 import {
   ScrollableModal,
   ScrollableModalCard,
@@ -71,6 +78,7 @@ export default function DashboardMediaPage() {
   const { data: session, isPending } = useSession();
   const hasRedirected = useRef(false);
   const toast = useToast();
+  const { downloadOne } = useMediaDownload();
 
   const [search, setSearch] = useState("");
   const [mimeTypeFilter, setMimeTypeFilter] = useState("");
@@ -316,8 +324,10 @@ export default function DashboardMediaPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      setUploadError("Die Datei ist zu groß. Maximal 50MB erlaubt.");
+    if (file.size > MEDIA_UPLOAD_MAX_BYTES) {
+      setUploadError(
+        `Die Datei ist zu groß. Maximal ${MEDIA_UPLOAD_MAX_LABEL} erlaubt.`,
+      );
       return;
     }
 
@@ -334,10 +344,6 @@ export default function DashboardMediaPage() {
         body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error("Upload fehlgeschlagen");
-      }
-
       const data = (await response.json()) as {
         url: string;
         filename: string;
@@ -345,7 +351,15 @@ export default function DashboardMediaPage() {
         mimeType: string;
         path: string;
         extension: string;
+        error?: string;
       };
+
+      if (!response.ok) {
+        // Die Route sagt genau, was nicht stimmt (Typ, Größe, Inhalt). Diese
+        // Meldung ging bisher verloren und wurde zu einem pauschalen
+        // "Upload fehlgeschlagen".
+        throw new Error(data.error ?? "Upload fehlgeschlagen");
+      }
 
       setUploadedFile({
         url: data.url,
@@ -587,6 +601,18 @@ export default function DashboardMediaPage() {
 
                 {/* Actions Overlay: always visible on touch/mobile, hover on desktop */}
                 <div className="absolute right-2 bottom-14 flex gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
+                  {/* Download der Originaldatei */}
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadOne(media);
+                    }}
+                    variant="secondary"
+                    size="icon"
+                    title="Herunterladen"
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                  </Button>
                   {/* Re-crop (real crop) for images */}
                   {media.mimeType.startsWith("image/") && isReviewer && (
                     <Button
@@ -697,9 +723,12 @@ export default function DashboardMediaPage() {
                   ref={fileInputRef}
                   type="file"
                   onChange={handleFileUpload}
-                  accept="image/*,video/*,audio/*,application/pdf"
+                  accept={MEDIA_UPLOAD_ACCEPT}
                   className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text w-full rounded-lg border border-gray-300 px-4 py-2"
                 />
+                <p className="dark:text-dark-muted mt-1 text-xs text-gray-500">
+                  {MEDIA_UPLOAD_EXTENSIONS_LABEL}, bis {MEDIA_UPLOAD_MAX_LABEL}
+                </p>
                 {isUploading && (
                   <p className="mt-1 text-sm text-gray-500">Lädt hoch...</p>
                 )}
@@ -830,14 +859,12 @@ export default function DashboardMediaPage() {
                 <p className="dark:text-dark-text mt-4 text-lg font-medium">
                   {previewItem.name}
                 </p>
-                <a
-                  href={previewItem.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => downloadOne(previewItem)}
                   className="text-primary mt-2 inline-block hover:underline"
                 >
                   Herunterladen
-                </a>
+                </button>
               </div>
             )}
 

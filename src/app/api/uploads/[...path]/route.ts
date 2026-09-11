@@ -40,6 +40,33 @@ function getMimeType(filename: string): string {
 }
 
 /**
+ * Dateiname für `Content-Disposition`. Der Wunschname kommt aus der Query und
+ * ist damit Nutzereingabe: Pfadtrenner und Steuerzeichen fliegen raus, und die
+ * Endung der tatsächlichen Datei wird angehängt, damit ein umbenanntes Bild
+ * nicht als endungsloser Brocken im Downloads-Ordner landet.
+ */
+function downloadFilename(requested: string | null, filePath: string): string {
+  const storedName = filePath.split("/").pop() ?? "download";
+  const extension = storedName.includes(".")
+    ? `.${storedName.split(".").pop()!.toLowerCase()}`
+    : "";
+
+  // Positivliste statt Sperrliste: was kein Buchstabe, keine Ziffer und
+  // kein harmloses Satzzeichen ist, wird zum Leerzeichen. Das erwischt
+  // Pfadtrenner und Steuerzeichen gleichermaßen, ohne Umlaute zu opfern.
+  const cleaned = (requested ?? "")
+    .replace(/[^\p{L}\p{N} ._\-()+&,']/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+
+  if (!cleaned) return storedName;
+  return cleaned.toLowerCase().endsWith(extension)
+    ? cleaned
+    : `${cleaned}${extension}`;
+}
+
+/**
  * Enforce the visibility rules stored in the database before streaming a
  * file. Mirrors the metadata rules of the materials/media routers:
  * - downloads: public+approved for everyone, otherwise session required
@@ -145,6 +172,15 @@ export async function GET(
     // the browser might interpret (svg/html/xml → XSS on this origin).
     if (mimeType === "application/octet-stream") {
       headers["Content-Disposition"] = "attachment";
+    } else if (request.nextUrl.searchParams.has("download")) {
+      // `?download=1` macht aus der Vorschau-URL einen echten Download. Der
+      // Name kommt als Parameter mit, weil auf der Platte der entstellte
+      // Speichername steht ("bild-DFbip-176…jpg") und niemand den im
+      // Downloads-Ordner wiederfindet.
+      headers["Content-Disposition"] =
+        `attachment; filename*=UTF-8''${encodeURIComponent(
+          downloadFilename(request.nextUrl.searchParams.get("name"), filePath),
+        )}`;
     }
 
     return new NextResponse(webStream, { headers });
