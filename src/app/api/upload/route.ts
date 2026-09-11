@@ -3,6 +3,10 @@ import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { auth } from "@/server/better-auth";
 import { UPLOADS_ROOT } from "@/server/utils/uploads-dir";
+import {
+  MEDIA_UPLOAD_MAX_BYTES,
+  MEDIA_UPLOAD_MIME_TYPES,
+} from "@/lib/media-upload";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -35,7 +39,7 @@ const validTypesByFolder: Record<string, string[]> = {
     "audio/wav",
     "audio/ogg",
   ],
-  media: ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"],
+  media: [...MEDIA_UPLOAD_MIME_TYPES],
   // Attachments for course mails. No audio: these travel inside the message,
   // where a 30 MB recording would just bounce off the recipients' mailboxes.
   "course-mail": [
@@ -54,7 +58,7 @@ const validTypesByFolder: Record<string, string[]> = {
 const maxSizeByFolder: Record<string, number> = {
   profiles: 5 * 1024 * 1024,
   downloads: 50 * 1024 * 1024,
-  media: 10 * 1024 * 1024,
+  media: MEDIA_UPLOAD_MAX_BYTES,
   // Per file; the send mutation additionally caps the combined size, since
   // mail servers reject the whole message once it grows past ~25 MB.
   "course-mail": 10 * 1024 * 1024,
