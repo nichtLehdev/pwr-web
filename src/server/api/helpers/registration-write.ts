@@ -11,28 +11,55 @@ import {
   type CoursePaymentFlags,
 } from "@/lib/course-payment-methods";
 import { roundMoney } from "@/lib/sibling-discount";
+import {
+  ageOnDate,
+  priceOptionAgeMismatchMessage,
+  priceOptionAgeReferenceDate,
+} from "@/lib/course-price-option-age";
 
-type PriceOption = { id: string; label: string; price: number };
+type PriceOption = {
+  id: string;
+  label: string;
+  price: number;
+  minAge?: number | null;
+  maxAge?: number | null;
+};
 
 /**
  * Validates a submitted participant list against its course: custom-field
  * values are normalised and checked, price options are resolved to their
- * label, and the undiscounted total is summed up.
+ * label and age limits, and the undiscounted total is summed up.
  *
  * Shared by the public registration, the staff-side registration and the
  * registration edit so all three price and persist participants identically.
+ *
+ * `allowAgeMismatch` is the one thing the course team may do and registrants
+ * may not. An age limit is the rule, not the law: whoever records the
+ * registration knows the exception it has to bend for and can enter it,
+ * without the category losing its limit for everybody else. As a predicate it
+ * decides per participant — the edit path uses that to leave someone already
+ * booked into a category alone when they no longer fit it, whether the team
+ * put them there deliberately or the limits moved while nobody was confirmed
+ * yet. Without it they could not save an edit to any other field either.
  */
 export function prepareParticipantsForCourse<
   T extends {
+    firstName: string;
+    lastName: string;
+    birthDate: Date;
     priceOptionId: string;
     customFields?: Record<string, unknown> | undefined;
   },
 >(
   participantsInput: readonly T[],
   course: {
+    startDate: Date | string;
     customFields?: readonly CourseCustomFieldRule[] | null;
     priceOptions: readonly PriceOption[];
   },
+  {
+    allowAgeMismatch = false,
+  }: { allowAgeMismatch?: boolean | ((participant: T) => boolean) } = {},
 ): {
   participants: Array<
     T & { customFields: Record<string, unknown>; priceOption: string }
@@ -43,6 +70,7 @@ export function prepareParticipantsForCourse<
     T & { customFields: Record<string, unknown>; priceOption: string }
   > = [];
   let total = 0;
+  const ageReferenceDate = priceOptionAgeReferenceDate(course);
 
   for (const participant of participantsInput) {
     const resolved = resolveParticipantCustomFieldsForPersist(
@@ -61,6 +89,24 @@ export function prepareParticipantsForCourse<
         code: "BAD_REQUEST",
         message: `Invalid price option ID: ${participant.priceOptionId}`,
       });
+    }
+
+    const mayMismatch =
+      typeof allowAgeMismatch === "function"
+        ? allowAgeMismatch(participant)
+        : allowAgeMismatch;
+
+    if (!mayMismatch) {
+      const mismatch = priceOptionAgeMismatchMessage(
+        priceOption,
+        ageOnDate(participant.birthDate, ageReferenceDate),
+      );
+      if (mismatch) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `${participant.firstName} ${participant.lastName}: ${mismatch}`,
+        });
+      }
     }
 
     total += priceOption.price;
