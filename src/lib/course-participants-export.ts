@@ -9,19 +9,13 @@ import {
   participantPriceOptionLabel,
   resolveParticipantPriceOption,
 } from "@/lib/course-price-options";
+import type { XlsxColumn, XlsxRow } from "@/server/utils/xlsx";
 
 export const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
   WAITLIST: "Warteliste",
   CANCELLED: "Storniert",
 };
-
-function escapeCSVValue(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
 
 export function getCustomFieldValue(
   participant: { customFields?: unknown },
@@ -50,6 +44,7 @@ export function getCustomFieldValue(
 type ExportParticipant = {
   firstName: string;
   lastName: string;
+  birthDate?: Date | string | null;
   city: string | null;
   instrument: string | null;
   /** Führend für die Preiszuordnung; siehe resolveParticipantPriceOption. */
@@ -81,11 +76,75 @@ type ExportCourse = {
   }>;
 };
 
+/**
+ * Spaltenschlüssel eines Zusatzfelds. Der Präfix trennt es von den festen
+ * Spalten — ein Zusatzfeld namens "status" überschrieb sonst den Anmeldestatus.
+ */
+function customFieldKey(fieldName: string): string {
+  return `zusatz:${fieldName}`;
+}
+
+export type CourseParticipantsExportOptions = {
+  excludeCancelled?: boolean;
+  /**
+   * Geburtsdatum mitexportieren. Aus: der Kurs-E-Mail an die Organisation
+   * liegt keine Geburtsdatenliste bei, die dort niemand angefordert hat.
+   */
+  includeBirthDate?: boolean;
+};
+
+export function courseParticipantsColumns(
+  course: Pick<ExportCourse, "customFields">,
+  options?: CourseParticipantsExportOptions,
+): XlsxColumn[] {
+  const customFieldColumns: XlsxColumn[] = (course.customFields ?? []).map(
+    (field) => ({
+      header: field.fieldName,
+      key: customFieldKey(field.fieldName),
+    }),
+  );
+
+  return [
+    { header: "Vorname", key: "vorname" },
+    { header: "Nachname", key: "nachname" },
+    ...(options?.includeBirthDate
+      ? [
+          {
+            header: "Geburtsdatum",
+            key: "geburtsdatum",
+            format: "date" as const,
+          },
+        ]
+      : []),
+    { header: "Ort", key: "ort" },
+    { header: "Instrument", key: "instrument" },
+    { header: "Preiskategorie", key: "preiskategorie" },
+    { header: "Preis", key: "preis", format: "currency", total: true },
+    ...customFieldColumns,
+    { header: "Status", key: "status" },
+    { header: "Anmelder:in Vorname", key: "anmelder_vorname" },
+    { header: "Anmelder:in Nachname", key: "anmelder_nachname" },
+    { header: "Anmelder:in E-Mail", key: "anmelder_email" },
+    { header: "Anmelder:in Telefon", key: "anmelder_telefon" },
+    // Bewusst ohne Summe: eine Anmeldung mit drei Teilnehmenden steht in drei
+    // Zeilen, ihr Gesamtpreis würde dreifach gezählt.
+    { header: "Gesamtpreis Anmeldung", key: "gesamtpreis", format: "currency" },
+    { header: "Anmeldedatum", key: "anmeldedatum", format: "date" },
+    { header: "Anmerkungen", key: "anmerkungen", wrap: true },
+  ];
+}
+
+function toDateOrNull(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function buildCourseParticipantsExportRows(
   course: ExportCourse,
   registrations: ExportRegistration[],
-  options?: { excludeCancelled?: boolean },
-): Record<string, string>[] {
+  options?: CourseParticipantsExportOptions,
+): XlsxRow[] {
   const excludeCancelled = options?.excludeCancelled ?? true;
   const customFieldNames = course.customFields?.map((f) => f.fieldName) ?? [];
 
@@ -97,9 +156,9 @@ export function buildCourseParticipantsExportRows(
 
   return filtered.flatMap((registration) =>
     registration.participants.map((participant) => {
-      const customFieldValues: Record<string, string> = {};
+      const customFieldValues: XlsxRow = {};
       for (const fieldName of customFieldNames) {
-        customFieldValues[fieldName] = getCustomFieldValue(
+        customFieldValues[customFieldKey(fieldName)] = getCustomFieldValue(
           participant,
           fieldName,
         );
@@ -109,58 +168,32 @@ export function buildCourseParticipantsExportRows(
         participant,
         course.priceOptions,
       );
-      const participantPrice = priceOption?.price ?? 0;
 
       return {
         vorname: participant.firstName,
         nachname: participant.lastName,
+        ...(options?.includeBirthDate
+          ? { geburtsdatum: toDateOrNull(participant.birthDate) }
+          : {}),
         ort: participant.city ?? "",
         instrument: participant.instrument ?? "",
         preiskategorie: participantPriceOptionLabel(
           participant,
           course.priceOptions,
         ),
-        preis: participantPrice.toFixed(2),
+        preis: priceOption?.price ?? 0,
         ...customFieldValues,
         status: registrationStatusLabels[registration.registrationStatus],
         anmelder_vorname: registration.registrantFirstName,
         anmelder_nachname: registration.registrantLastName,
         anmelder_email: registration.registrantEmail,
         anmelder_telefon: registration.registrantPhone ?? "",
-        gesamtpreis: registration.totalPrice.toFixed(2),
-        anmeldedatum: new Date(registration.createdAt).toLocaleDateString(
-          "de-DE",
-        ),
+        gesamtpreis: registration.totalPrice,
+        anmeldedatum: toDateOrNull(registration.createdAt),
         anmerkungen: registration.notes ?? "",
-      };
+      } satisfies XlsxRow;
     }),
   );
-}
-
-/** Semicolon-separated Excel-compatible file (UTF-8 BOM), same as dashboard export. */
-export function buildCourseParticipantsExcelBuffer(
-  rows: Record<string, string>[],
-): Buffer {
-  const headers = Object.keys(
-    rows[0] ?? {
-      vorname: "",
-      nachname: "",
-      status: "",
-    },
-  );
-  const csvContent = [
-    headers.map(escapeCSVValue).join(";"),
-    ...rows.map((row) =>
-      headers
-        .map((header) =>
-          escapeCSVValue(String(row[header as keyof typeof row] ?? "")),
-        )
-        .join(";"),
-    ),
-  ].join("\r\n");
-
-  const bom = "\uFEFF";
-  return Buffer.from(bom + csvContent, "utf-8");
 }
 
 export function sanitizeCourseTitleForFilename(title: string): string {
