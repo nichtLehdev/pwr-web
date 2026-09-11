@@ -596,8 +596,13 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      // Die Altersgrenzen einer Kategorie gelten für Anmeldende; das Kursteam
+      // darf sie im Einzelfall übergehen — es kennt die Ausnahme, die es
+      // gerade einträgt.
       const { participants: participantsWithPriceOptions, originalTotalPrice } =
-        prepareParticipantsForCourse(participantsInput, course);
+        prepareParticipantsForCourse(participantsInput, course, {
+          allowAgeMismatch: true,
+        });
 
       let totalPrice = originalTotalPrice;
       let siblingDiscountAmount = 0;
@@ -1405,10 +1410,26 @@ export const registrationsRouter = createTRPCRouter({
 
       const course = registration.course;
 
+      /** Preiskategorie, in der ein Teilnehmer bereits gespeichert ist. */
+      const bookedPriceOptionId = new Map(
+        registration.participants.map((p) => [p.id, p.priceOptionId]),
+      );
+
       const {
         participants: participantsWithPriceOptions,
         originalTotalPrice: undiscountedTotalPrice,
-      } = prepareParticipantsForCourse(participantsInput, course);
+      } = prepareParticipantsForCourse(participantsInput, course, {
+        allowAgeMismatch: (participant) =>
+          // Das Kursteam darf eine Kategorie entgegen ihrer Altersgrenze
+          // vergeben, wie bei `createByStaff`.
+          isStaff ||
+          // Und wer in einer Kategorie schon angemeldet ist, bleibt es: wurde
+          // die Grenze nachträglich enger gezogen, ließe sich die Anmeldung
+          // sonst nicht einmal mehr in einem anderen Feld ändern.
+          (participant.id != null &&
+            bookedPriceOptionId.get(participant.id) ===
+              participant.priceOptionId),
+      });
 
       let originalTotalPrice = undiscountedTotalPrice;
       let totalPrice = originalTotalPrice;
