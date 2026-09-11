@@ -11,6 +11,11 @@ import { ParticipantCard } from "./participant-card";
 import { ParticipantEditor } from "./participant-editor";
 import { ParticipantSheet } from "./participant-sheet";
 import type { User } from "~/generated/prisma/client";
+import {
+  ageOnDate,
+  priceOptionIdForAge,
+  priceOptionAgeReferenceDate,
+} from "@/lib/course-price-option-age";
 
 /** The two places the add buttons appear: above the list and after it. */
 type LibraryAnchor = "top" | "bottom";
@@ -62,6 +67,28 @@ export function Step2Participants({
   siblingDiscountError,
   staffMode = false,
 }: Step2ParticipantsProps) {
+  /**
+   * Die Preiskategorie, die zu diesem Geburtsdatum passt. Bleibt genau eine
+   * übrig, wird sie gesetzt — sonst bleibt die bisherige stehen und die
+   * Prüfung sagt, dass gewählt werden muss.
+   *
+   * Nicht im Kursteam-Modus: dort ist eine Kategorie außerhalb der
+   * Altersgrenze eine Absicht und kein Versehen, das korrigiert gehört.
+   */
+  const priceOptionForBirthDate = (
+    birthDate: Date | string | null | undefined,
+    currentId: string,
+  ): string => {
+    if (staffMode) return currentId;
+    return (
+      priceOptionIdForAge(
+        course.priceOptions,
+        ageOnDate(birthDate, priceOptionAgeReferenceDate(course)),
+        currentId,
+      ) ?? currentId
+    );
+  };
+
   /** Index of the participant whose fields are open in the sheet. */
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   /** Set once "Fertig" is pressed on an incomplete participant. */
@@ -151,7 +178,10 @@ export function Step2Participants({
             : ("" as any),
           city: currentUser?.city || "",
           instrument: "",
-          priceOptionId: firstPriceOption.id,
+          priceOptionId: priceOptionForBirthDate(
+            currentUser?.birthDate,
+            firstPriceOption.id,
+          ),
           customFields: {},
           siblingGroupId: undefined,
         },
@@ -181,7 +211,10 @@ export function Step2Participants({
           birthDate: new Date(saved.birthDate),
           city: saved.city,
           instrument: saved.instrument || "",
-          priceOptionId: firstPriceOption.id,
+          priceOptionId: priceOptionForBirthDate(
+            saved.birthDate,
+            firstPriceOption.id,
+          ),
           customFields: (saved.customFields as Record<string, any>) || {},
           siblingGroupId: undefined,
         },
@@ -235,6 +268,17 @@ export function Step2Participants({
     } else {
       (updated[index] as any)[field] = value;
     }
+
+    // Ein neues Geburtsdatum kann die gewählte Kategorie aus ihrer
+    // Altersgrenze fallen lassen.
+    const target = updated[index];
+    if (field === "birthDate" && target) {
+      target.priceOptionId = priceOptionForBirthDate(
+        target.birthDate,
+        target.priceOptionId,
+      );
+    }
+
     setRegistrationData({ ...registrationData, participants: updated });
   };
 
