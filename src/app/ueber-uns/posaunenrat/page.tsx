@@ -37,8 +37,15 @@ export default async function PosaunenratPage() {
   );
 
   const lkmd = posaunenratMembers.find(
-    (m) => m.role === "LANDESKIRCHENMUSIKDIREKTOR",
+    (m) =>
+      m.role === "LANDESKIRCHENMUSIKDIREKTOR" ||
+      m.role === "LANDESKIRCHENMUSIKDIREKTORIN",
   );
+
+  const lkmdLabel =
+    lkmd?.role === "LANDESKIRCHENMUSIKDIREKTORIN"
+      ? "Landeskirchenmusikdirektorin"
+      : "Landeskirchenmusikdirektor";
 
   return (
     <PublicPage
@@ -80,10 +87,10 @@ export default async function PosaunenratPage() {
             </h2>
             <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
               Dem Landesposaunenrat gehören die Vorstandsmitglieder, die
-              Bezirksobleute, der Landeskirchenmusikdirektor und etwa zehn
-              Sachverständige an – Theologen, Musiker, Pädagogen,
-              Verwaltungsfachleute und sonstige in der Posaunenarbeit erfahrene
-              Persönlichkeiten.
+              Bezirksobleute, die Landeskirchenmusikdirektorin bzw. der
+              Landeskirchenmusikdirektor und etwa zehn Sachverständige an –
+              Theologen, Musiker, Pädagogen, Verwaltungsfachleute und sonstige
+              in der Posaunenarbeit erfahrene Persönlichkeiten.
             </p>
 
             {/* Mitglieder-Übersicht */}
@@ -143,17 +150,17 @@ export default async function PosaunenratPage() {
                 </p>
               </div>
 
-              {/* Landeskirchenmusikdirektor */}
+              {/* Landeskirchenmusikdirektor:in */}
               {lkmd && (
                 <div>
                   <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
                     <div className="bg-primary h-8 w-1 rounded-full"></div>
-                    Landeskirchenmusikdirektor
+                    {lkmdLabel}
                   </h3>
                   <PeopleCard
                     image={lkmd.person.image ?? undefined}
                     name={lkmd.person.name ?? "Unbekannt"}
-                    subtitle="Landeskirchenmusikdirektor"
+                    subtitle={lkmdLabel}
                   />
                 </div>
               )}

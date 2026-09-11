@@ -25,6 +25,10 @@ const POSAUNENRAT_ROLE_OPTIONS: { value: PosaunenratRole; label: string }[] = [
     value: PosaunenratRole.LANDESKIRCHENMUSIKDIREKTOR,
     label: "Landeskirchenmusikdirektor",
   },
+  {
+    value: PosaunenratRole.LANDESKIRCHENMUSIKDIREKTORIN,
+    label: "Landeskirchenmusikdirektorin",
+  },
   { value: PosaunenratRole.SACHVERSTAENDIGER, label: "Sachverständiger" },
   { value: PosaunenratRole.SACHVERSTAENDIGE, label: "Sachverständige" },
 ];

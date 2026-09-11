@@ -29,6 +29,7 @@ import { computeReorderUpdates } from "@/lib/reorder";
 const POSAUNENRAT_ROLE_LABELS: Record<string, string> = {
   VORSTAND: "Vorstand",
   LANDESKIRCHENMUSIKDIREKTOR: "Landeskirchenmusikdirektor",
+  LANDESKIRCHENMUSIKDIREKTORIN: "Landeskirchenmusikdirektorin",
   SACHVERSTAENDIGER: "Sachverständiger",
   SACHVERSTAENDIGE: "Sachverständige",
 };
