@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 /**
  * Mobile-first modal: overlay scrolls when content is tall, inner card is
  * max-h-[90vh] with scrollable body and sticky footer so actions stay visible.
@@ -9,18 +11,34 @@ const Z_DEFAULT = "z-50";
 export function ScrollableModal({
   children,
   onBackdropClick,
+  onClose,
   className = "",
   zIndex = Z_DEFAULT,
 }: {
   children: React.ReactNode;
   onBackdropClick?: () => void;
+  /**
+   * Schließt den Dialog per Klick auf den Hintergrund *und* per Escape. Wo nur
+   * `onBackdropClick` gesetzt ist, bleibt es beim bisherigen Verhalten — ein
+   * Formular mit ungesicherten Eingaben soll nicht versehentlich weggehen.
+   */
+  onClose?: () => void;
   className?: string;
   zIndex?: string;
 }) {
+  useEffect(() => {
+    if (!onClose) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose!();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
       className={`fixed inset-0 ${zIndex} flex min-h-full items-start justify-center overflow-y-auto bg-black/50 p-4 py-6 sm:items-center sm:py-4 ${className}`}
-      onClick={onBackdropClick}
+      onClick={onBackdropClick ?? onClose}
     >
       {children}
     </div>
