@@ -43,6 +43,7 @@ export async function POST(
       id: true,
       title: true,
       createdById: true,
+      downPaymentMode: true,
       customFields: { orderBy: { sortOrder: "asc" } },
       priceOptions: {
         select: { id: true, label: true, description: true, price: true },

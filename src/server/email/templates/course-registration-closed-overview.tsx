@@ -145,6 +145,20 @@ export function CourseRegistrationClosedOverview({
                   </Text>
                 </>
               ) : null}
+              {stats.downPaymentsReceived > 0 || stats.downPaymentsOpen > 0 ? (
+                <Text style={statsLine}>
+                  <strong>Anzahlungen:</strong>{" "}
+                  {formatPrice(stats.downPaymentsReceived)} eingegangen,{" "}
+                  {formatPrice(stats.downPaymentsOpen)} offen
+                </Text>
+              ) : null}
+              {stats.refundPendingRegistrations > 0 ? (
+                <Text style={statsLineHighlight}>
+                  <strong>Anzahlung nach Stornierung zu klären:</strong>{" "}
+                  {stats.refundPendingRegistrations} – bitte mit der Kasse
+                  abstimmen.
+                </Text>
+              ) : null}
             </Section>
 
             <Text style={paragraph}>

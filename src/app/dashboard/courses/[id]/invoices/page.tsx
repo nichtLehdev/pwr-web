@@ -24,7 +24,13 @@ import {
   ScrollableModalBody,
   ScrollableModalFooter,
 } from "@/app/_components/ui/scrollable-modal";
-import { formatDate, formatEuro } from "@/lib/invoice-document";
+import {
+  DOWN_PAYMENT_LINE_DESCRIPTION,
+  formatDate,
+  formatEuro,
+} from "@/lib/invoice-document";
+import { downPaymentCredit } from "@/lib/course-down-payment";
+import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
 import { downloadResponseAsFile } from "@/lib/download-file";
 import { InvoiceStatus } from "~/generated/prisma/enums";
 import {
@@ -53,6 +59,23 @@ function invoiceRecipient(invoice: CourseInvoice): string {
     ]
       .filter(Boolean)
       .join(" · ") || "—"
+  );
+}
+
+/**
+ * Anzahlung als eingegangen verbucht, auf der Rechnung aber nicht abgezogen —
+ * etwa weil der Entwurf vor dem Zahlungseingang angelegt wurde.
+ */
+function lacksDownPaymentCredit(invoice: CourseInvoice): boolean {
+  if (invoice.status === InvoiceStatus.CANCELLED || !invoice.registration) {
+    return false;
+  }
+  if (downPaymentCredit(invoice.registration) <= 0) return false;
+  const items = Array.isArray(invoice.lineItems) ? invoice.lineItems : [];
+  return !items.some(
+    (item) =>
+      (item as { description?: unknown } | null)?.description ===
+      DOWN_PAYMENT_LINE_DESCRIPTION,
   );
 }
 
@@ -278,7 +301,16 @@ export default function CourseInvoicesPage() {
             filterVariant: "number",
             cellClassName: "font-semibold whitespace-nowrap",
           },
-          cell: ({ getValue }) => formatEuro(getValue()),
+          cell: ({ row, getValue }) => (
+            <>
+              {formatEuro(getValue())}
+              {lacksDownPaymentCredit(row.original) && (
+                <span className="mt-0.5 block text-xs font-medium whitespace-nowrap text-amber-600 dark:text-amber-400">
+                  Anzahlung nicht abgezogen
+                </span>
+              )}
+            </>
+          ),
         }),
         invoiceColumn.accessor(
           (invoice) => INVOICE_STATUS_LABELS[invoice.status],
@@ -561,6 +593,10 @@ export default function CourseInvoicesPage() {
                           ? ""
                           : "nen"} · {formatEuro(registration.totalPrice)}
                       </p>
+                      <DownPaymentBadge
+                        registration={registration}
+                        className="mt-1"
+                      />
                     </div>
                     {existing ? (
                       <span className="dark:text-dark-muted text-xs text-gray-500">
