@@ -30,6 +30,12 @@ import {
   UserIcon,
 } from "lucide-react";
 import { formatAcceptedCoursePaymentMethods } from "@/lib/course-payment-methods";
+import {
+  courseHasDownPayment,
+  downPaymentForPriceOption,
+  downPaymentRefundNotice,
+} from "@/lib/course-down-payment";
+import { formatEuro } from "@/lib/invoice-document";
 import { isExternalCourse } from "@/lib/course-external";
 import { priceOptionAgeLabel } from "@/lib/course-price-option-age";
 import { coursePath, courseRegistrationPath } from "@/lib/slug";
@@ -745,9 +751,24 @@ export default function CourseDetailView({
                                   </p>
                                 )}
                               </div>
-                              <p className="text-primary shrink-0 text-lg font-bold whitespace-nowrap tabular-nums">
-                                {option.price.toFixed(2)}&nbsp;€
-                              </p>
+                              <div className="shrink-0 text-right">
+                                <p className="text-primary text-lg font-bold whitespace-nowrap tabular-nums">
+                                  {option.price.toFixed(2)}&nbsp;€
+                                </p>
+                                {downPaymentForPriceOption(course, option.id) >
+                                  0 && (
+                                  <p className="text-xs whitespace-nowrap text-gray-600 tabular-nums dark:text-gray-400">
+                                    davon{" "}
+                                    {formatEuro(
+                                      downPaymentForPriceOption(
+                                        course,
+                                        option.id,
+                                      ),
+                                    )}{" "}
+                                    Anzahlung
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -777,6 +798,24 @@ export default function CourseDetailView({
                             />
                             {formatAcceptedCoursePaymentMethods(course)}
                           </p>
+                          {/* Vor dem Klick auf „Jetzt anmelden“: dass und wie die
+                              Anzahlung fällig wird, und ob sie erstattet wird. */}
+                          {courseHasDownPayment(course) && (
+                            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-gray-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-gray-300">
+                              <p>
+                                {course.downPaymentMode === "COURSE" &&
+                                course.downPaymentAmount
+                                  ? `Bei der Anmeldung wird eine Anzahlung von ${formatEuro(course.downPaymentAmount)} pro Teilnehmer per Überweisung fällig.`
+                                  : "Bei der Anmeldung wird je nach Preiskategorie eine Anzahlung per Überweisung fällig (siehe oben)."}{" "}
+                                Der Restbetrag folgt mit der Rechnung.
+                              </p>
+                              {downPaymentRefundNotice(course) && (
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                  {downPaymentRefundNotice(course)}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                   </div>
