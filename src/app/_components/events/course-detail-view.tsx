@@ -755,19 +755,22 @@ export default function CourseDetailView({
                                 <p className="text-primary text-lg font-bold whitespace-nowrap tabular-nums">
                                   {option.price.toFixed(2)}&nbsp;€
                                 </p>
-                                {downPaymentForPriceOption(course, option.id) >
-                                  0 && (
-                                  <p className="text-xs whitespace-nowrap text-gray-600 tabular-nums dark:text-gray-400">
-                                    davon{" "}
-                                    {formatEuro(
-                                      downPaymentForPriceOption(
-                                        course,
-                                        option.id,
-                                      ),
-                                    )}{" "}
-                                    Anzahlung
-                                  </p>
-                                )}
+                                {/* Nur je Kategorie: ein Betrag pro Teilnehmer
+                                    steht einmal im Hinweis unter „Zahlung“. */}
+                                {course.downPaymentMode === "TICKET" &&
+                                  downPaymentForPriceOption(course, option.id) >
+                                    0 && (
+                                    <p className="text-xs whitespace-nowrap text-gray-600 tabular-nums dark:text-gray-400">
+                                      davon{" "}
+                                      {formatEuro(
+                                        downPaymentForPriceOption(
+                                          course,
+                                          option.id,
+                                        ),
+                                      )}{" "}
+                                      Anzahlung
+                                    </p>
+                                  )}
                               </div>
                             </div>
                           ))}
