@@ -32,6 +32,7 @@ import {
   roundMoney,
 } from "@/lib/sibling-discount";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
+import { downPaymentForPriceOption } from "@/lib/course-down-payment";
 import {
   ageOnDate,
   priceOptionAgeMismatchMessage,
@@ -254,6 +255,20 @@ export default function EditRegistrationPage() {
   const canEdit = management?.canEdit ?? (isOwner && canEditRegistration());
   const canCancel = management?.canCancel ?? isOwner;
 
+  // Mit Anzahlung bleibt die Teilnehmerzahl dem Kursteam vorbehalten — und
+  // hängt der Betrag an der Kategorie, auch die Kategorien. Eine Anmeldung ohne
+  // Anzahlung darf keine Kategorie mit Anzahlung dazubuchen. Der Server prüft
+  // dasselbe (registrantEditViolation).
+  const hasDownPayment = !!registration?.downPaymentAmount;
+  const participantsLocked = !isStaff && hasDownPayment;
+  const ticketsLocked =
+    participantsLocked && registration?.course.downPaymentMode === "TICKET";
+  const optionNeedsStaff = (optionId: string) =>
+    !isStaff &&
+    !hasDownPayment &&
+    !!registration &&
+    downPaymentForPriceOption(registration.course, optionId) > 0;
+
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("de-DE", {
       day: "2-digit",
@@ -266,6 +281,7 @@ export default function EditRegistrationPage() {
 
   const canAddParticipant = () => {
     if (!availability) return false;
+    if (participantsLocked) return false;
     const currentActive = activeParticipants.length;
     const originalCount = registration?.participants.length ?? 0;
     const netNew = currentActive - originalCount;
@@ -305,8 +321,8 @@ export default function EditRegistrationPage() {
   const addParticipant = () => {
     if (!registration?.course?.priceOptions) return;
 
-    const availablePriceOption = registration.course.priceOptions.find((po) =>
-      isPriceOptionAvailable(po.id),
+    const availablePriceOption = registration.course.priceOptions.find(
+      (po) => isPriceOptionAvailable(po.id) && !optionNeedsStaff(po.id),
     );
 
     participantIdCounter.current += 1;
@@ -1185,6 +1201,14 @@ export default function EditRegistrationPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Zum Bearbeiten auf eine Person tippen.
                 </p>
+                {participantsLocked && (
+                  <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+                    Für diese Anmeldung ist eine Anzahlung vereinbart.
+                    Teilnehmer hinzufügen oder entfernen
+                    {ticketsLocked ? " und Preiskategorien ändern" : ""} kann
+                    nur das Kursteam.
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -1211,7 +1235,9 @@ export default function EditRegistrationPage() {
                     validationError={participantError(participant)}
                     siblingGroupSize={siblingGroupSize(participant)}
                     badge={participant.isNew ? "Neu" : undefined}
-                    canRemove={activeParticipants.length > 1}
+                    canRemove={
+                      activeParticipants.length > 1 && !participantsLocked
+                    }
                     onEdit={() => openParticipant(participant.id)}
                     onRemove={() => removeParticipant(participant.id)}
                   />
@@ -1444,17 +1470,25 @@ export default function EditRegistrationPage() {
               showProblems={doneAttempted}
               priceOptionField={{
                 placeholderOption: true,
-                isOptionDisabled: (optionId) =>
-                  !editingParticipant.isNew || isPriceOptionAvailable(optionId)
-                    ? false
-                    : editingParticipant.priceOptionId !== optionId,
+                isOptionDisabled: (optionId) => {
+                  if (editingParticipant.priceOptionId === optionId) {
+                    return false;
+                  }
+                  if (ticketsLocked || optionNeedsStaff(optionId)) return true;
+                  return (
+                    !!editingParticipant.isNew &&
+                    !isPriceOptionAvailable(optionId)
+                  );
+                },
                 getOptionSuffix: (optionId) => {
-                  const isAvailable =
-                    !editingParticipant.isNew ||
-                    isPriceOptionAvailable(optionId);
-                  const isCurrent =
-                    editingParticipant.priceOptionId === optionId;
-                  return !isAvailable && !isCurrent ? " (ausgebucht)" : "";
+                  if (editingParticipant.priceOptionId === optionId) return "";
+                  if (optionNeedsStaff(optionId)) {
+                    return " (mit Anzahlung – über das Kursteam)";
+                  }
+                  return editingParticipant.isNew &&
+                    !isPriceOptionAvailable(optionId)
+                    ? " (ausgebucht)"
+                    : "";
                 },
                 ageReferenceDate: registration.course.startDate,
                 // Das Kursteam darf eine Kategorie entgegen ihrer
