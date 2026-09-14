@@ -528,6 +528,13 @@ export default function CourseRegistrationForm({
           setTermsAccepted={setTermsAccepted}
           downPaymentAcknowledged={downPaymentAcknowledged}
           setDownPaymentAcknowledged={setDownPaymentAcknowledged}
+          // "Meine Anmeldungen" finds registrations by the account's e-mail,
+          // not by who was signed in when submitting.
+          listedInMyRegistrations={
+            !!currentUser?.email &&
+            registrationData.registrantEmail.trim().toLowerCase() ===
+              currentUser.email.toLowerCase()
+          }
           isWaitlist={isWaitlist}
           staff={
             staffMode

@@ -33,6 +33,8 @@ interface Step3SummaryProps {
   setTermsAccepted: (accepted: boolean) => void;
   downPaymentAcknowledged: boolean;
   setDownPaymentAcknowledged: (acknowledged: boolean) => void;
+  /** Signed in with the registrant's e-mail, so "Meine Anmeldungen" lists it. */
+  listedInMyRegistrations: boolean;
   isWaitlist: boolean;
   /** Set when the course team records the registration itself. */
   staff?: {
@@ -53,6 +55,7 @@ export function Step3Summary({
   setTermsAccepted,
   downPaymentAcknowledged,
   setDownPaymentAcknowledged,
+  listedInMyRegistrations,
   isWaitlist,
   staff,
 }: Step3SummaryProps) {
@@ -322,6 +325,9 @@ export function Step3Summary({
                   onChange: setDownPaymentAcknowledged,
                 }
           }
+          // Staff record on someone else's behalf — their own account says
+          // nothing about where the registrant finds the details again.
+          listedInMyRegistrations={!staff && listedInMyRegistrations}
         />
       )}
 

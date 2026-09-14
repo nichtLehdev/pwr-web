@@ -25,12 +25,18 @@ interface DownPaymentSummaryProps {
     checked: boolean;
     onChange: (checked: boolean) => void;
   };
+  /**
+   * Die Anmeldung erscheint unter „Meine Anmeldungen“: angemeldet und mit der
+   * E-Mail-Adresse des Kontos angemeldet — nur danach sucht diese Seite.
+   */
+  listedInMyRegistrations: boolean;
 }
 
 /**
  * Anzahlung im letzten Schritt: Preisaufteilung, Überweisungsdaten mit
  * GiroCode und der Erstattungshinweis, den die Anmeldung bestätigen muss.
- * Dieselben Angaben gehen mit der Bestätigungsmail noch einmal hinaus.
+ * Dieselben Angaben gehen mit der Bestätigungsmail noch einmal hinaus — der
+ * Hinweis darauf erspart das Abschreiben der Bankdaten vor dem Absenden.
  */
 export function DownPaymentSummary({
   course,
@@ -39,6 +45,7 @@ export function DownPaymentSummary({
   totalPrice,
   isWaitlist,
   acknowledgement,
+  listedInMyRegistrations,
 }: DownPaymentSummaryProps) {
   const reference = downPaymentReference(
     course.courseNumber,
@@ -86,12 +93,27 @@ export function DownPaymentSummary({
 
       {isWaitlist ? (
         <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
-          Die Anzahlung wird erst fällig, wenn Ihr Platz bestätigt ist. Die
-          Überweisungsdaten erhalten Sie dann mit der Bestätigung per E-Mail.
+          Die Anzahlung wird erst fällig, wenn Ihr Platz bestätigt ist. Betrag,
+          Bankverbindung und Verwendungszweck erhalten Sie dann mit der
+          Bestätigung per E-Mail
+          {listedInMyRegistrations
+            ? " und finden sie ab dann auch unter „Meine Anmeldungen“"
+            : ""}
+          .
         </p>
       ) : (
         <div className="mt-4">
           <DownPaymentTransferDetails amount={amount} reference={reference} />
+          {acknowledgement && (
+            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+              Alle Angaben zur Anzahlung – Betrag, Bankverbindung und
+              Verwendungszweck – finden Sie auch in Ihrer Bestätigungsmail
+              {listedInMyRegistrations
+                ? " und jederzeit unter „Meine Anmeldungen“"
+                : ""}
+              .
+            </p>
+          )}
         </div>
       )}
 
