@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   COURSES_VIEW: "courses.view",
   COURSES_MANAGE_REGISTRATIONS: "courses.manage_registrations",
   COURSES_ENABLE_INVOICING: "courses.enable_invoicing",
+  COURSES_ENABLE_DOWN_PAYMENT: "courses.enable_down_payment",
   REGISTRATIONS_MARK_PAID: "registrations.mark_paid",
   REGISTRATIONS_MANAGE_SIBLING_DISCOUNT:
     "registrations.manage_sibling_discount",
@@ -216,6 +217,13 @@ export const PERMISSION_DEFINITIONS: Array<{
     name: "Rechnungsstellung für Kurse freischalten",
     description:
       "Berechtigung, beim Anlegen oder Bearbeiten eines Kurses festzulegen, ob für ihn Rechnungen erstellt werden dürfen",
+    category: "courses",
+  },
+  {
+    key: PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
+    name: "Anzahlungen für Kurse festlegen",
+    description:
+      "Berechtigung, für einen Kurs eine Anzahlung (pro Teilnehmer oder je Preiskategorie) und die Kursnummer für deren Verwendungszweck festzulegen",
     category: "courses",
   },
   {
