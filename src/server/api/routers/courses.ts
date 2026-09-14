@@ -6,6 +6,8 @@ import {
   ContentStatus,
   CustomFieldType,
   CourseCollaboratorRole,
+  DownPaymentMode,
+  DownPaymentRefundPolicy,
   RegistrationStatus,
 } from "~/generated/prisma/client";
 import type { Prisma, PrismaClient } from "~/generated/prisma/client";
@@ -36,6 +38,12 @@ import {
   normalizeExternalRegistrationUrl,
 } from "@/lib/course-external";
 import { getCourseRegistrationStats } from "@/lib/course-registration-stats";
+import {
+  downPaymentSettingsChanged,
+  normalizeDownPaymentConfig,
+  priceOptionDownPaymentAmount,
+  validateDownPaymentSettings,
+} from "@/lib/course-down-payment";
 import {
   COURSE_NUMBER_PATTERN,
   normalizeCourseNumber,
@@ -105,6 +113,9 @@ const courseNumberSchema = z
     message: "Die Kursnummer darf nur aus Ziffern bestehen (maximal 10).",
   })
   .nullish();
+
+/** Anzahlung in Euro; leer heißt "keine Anzahlung" (am Kurs bzw. an der Kategorie). */
+const downPaymentAmountSchema = z.number().positive().max(100_000).nullish();
 
 const externalRegistrationUrlSchema = z
   .string()
@@ -359,7 +370,26 @@ export const coursesRouter = createTRPCRouter({
             ctx.session.user.id,
             PERMISSIONS.COURSES_ENABLE_INVOICING,
             ctx.permissionCache,
+          )) ||
+          (await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
+            ctx.permissionCache,
           )));
+      // Mit Anzahlung steht die Kursnummer im Verwendungszweck, den Anmeldende
+      // schon im Formular überweisen sollen — dann ist sie nicht mehr intern.
+      const hasDownPayment = courseRaw.downPaymentMode !== DownPaymentMode.NONE;
+
+      // Anzahlungs-Einstellungen sind gesperrt, solange jemand aktiv angemeldet
+      // ist (auch auf der Warteliste). Nur für das Kursformular relevant.
+      const downPaymentLocked = ctx.session?.user
+        ? (await ctx.db.courseRegistration.count({
+            where: {
+              courseId: courseRaw.id,
+              registrationStatus: { not: RegistrationStatus.CANCELLED },
+            },
+          })) > 0
+        : false;
 
       // Nur relevant, solange es überhaupt eine Nummer zu sperren gibt — der
       // öffentliche Pfad zahlt für diese Abfrage also nie.
@@ -372,9 +402,12 @@ export const coursesRouter = createTRPCRouter({
 
       return {
         ...coursePublic,
-        courseNumber: maySeeCourseNumber ? courseNumber : null,
+        courseNumber:
+          maySeeCourseNumber || hasDownPayment ? courseNumber : null,
         /** Ausgestellte Rechnungen frieren die Kursnummer ein, siehe `update`. */
         courseNumberLocked,
+        /** Aktive Anmeldungen frieren die Anzahlung ein, siehe `update`. */
+        downPaymentLocked,
         viewerCollaboratorRole,
         _count: {
           participants: registrationStats.totalConfirmedParticipants,
@@ -725,6 +758,12 @@ export const coursesRouter = createTRPCRouter({
           paymentInvoiceAllowed: z.boolean().default(true),
           invoicingEnabled: z.boolean().default(false),
           courseNumber: courseNumberSchema,
+          downPaymentMode: z.enum(DownPaymentMode).default("NONE"),
+          downPaymentAmount: downPaymentAmountSchema,
+          downPaymentRefundPolicy: z
+            .enum(DownPaymentRefundPolicy)
+            .default("NON_REFUNDABLE"),
+          downPaymentRefundText: z.string().trim().max(1000).nullish(),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -737,6 +776,7 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
                 minAge: priceOptionAgeSchema,
                 maxAge: priceOptionAgeSchema,
+                downPaymentAmount: downPaymentAmountSchema,
               }),
             )
             .optional()
@@ -869,19 +909,65 @@ export const coursesRouter = createTRPCRouter({
         });
       }
 
-      // Die Kursnummer steuert nur die Rechnungsstellung, also hängt sie an
-      // derselben Berechtigung wie deren Freischaltung.
+      const canEnableDownPayment = await userHasPermission(
+        ctx.session.user.id,
+        PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
+        ctx.permissionCache,
+      );
+      const downPayment = normalizeDownPaymentConfig({
+        downPaymentMode: external
+          ? DownPaymentMode.NONE
+          : input.downPaymentMode,
+        downPaymentAmount: input.downPaymentAmount ?? null,
+        downPaymentRefundPolicy: input.downPaymentRefundPolicy,
+        downPaymentRefundText: input.downPaymentRefundText ?? null,
+      });
+      if (
+        downPayment.downPaymentMode !== DownPaymentMode.NONE &&
+        !canEnableDownPayment
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, eine Anzahlung festzulegen",
+        });
+      }
+
+      // Die Kursnummer steuert Rechnungsstellung und Verwendungszweck der
+      // Anzahlung, also hängt sie an denselben Berechtigungen.
       const courseNumber = external
         ? null
         : normalizeCourseNumber(input.courseNumber);
       if (courseNumber) {
-        if (!canEnableInvoicing) {
+        if (!canEnableInvoicing && !canEnableDownPayment) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Keine Berechtigung, eine Kursnummer zu vergeben",
           });
         }
         await assertCourseNumberAvailable(ctx.db, courseNumber);
+      }
+
+      const priceOptionsToCreate = (priceOptions ?? []).map((option) => ({
+        ...option,
+        downPaymentAmount: priceOptionDownPaymentAmount(
+          downPayment.downPaymentMode,
+          option.downPaymentAmount,
+        ),
+      }));
+
+      const downPaymentProblem = validateDownPaymentSettings({
+        ...downPayment,
+        isFree: courseData.isFree,
+        isExternal: external,
+        courseNumber,
+        allowSiblingDiscount: input.allowSiblingDiscount && canManageDiscounts,
+        priceOptions: priceOptionsToCreate,
+      });
+      if (downPaymentProblem) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: downPaymentProblem,
+        });
       }
 
       const course = await ctx.db.course.create({
@@ -907,12 +993,13 @@ export const coursesRouter = createTRPCRouter({
             ? false
             : input.invoicingEnabled && canEnableInvoicing,
           courseNumber,
+          ...downPayment,
           isFree: external ? true : courseData.isFree,
           createdById: ctx.session.user.id,
           priceOptions:
             !external && priceOptions
               ? {
-                  create: priceOptions,
+                  create: priceOptionsToCreate,
                 }
               : undefined,
           customFields:
@@ -971,6 +1058,10 @@ export const coursesRouter = createTRPCRouter({
           paymentInvoiceAllowed: z.boolean().optional(),
           invoicingEnabled: z.boolean().optional(),
           courseNumber: courseNumberSchema,
+          downPaymentMode: z.enum(DownPaymentMode).optional(),
+          downPaymentAmount: downPaymentAmountSchema,
+          downPaymentRefundPolicy: z.enum(DownPaymentRefundPolicy).optional(),
+          downPaymentRefundText: z.string().trim().max(1000).nullish(),
           priceInfo: z.string().max(1000).optional(),
           prerequisites: z.string().max(1000).optional(),
           whatToBring: z.string().max(1000).optional(),
@@ -984,6 +1075,8 @@ export const coursesRouter = createTRPCRouter({
                 maxParticipants: z.number().min(1).max(500).optional(),
                 minAge: priceOptionAgeSchema,
                 maxAge: priceOptionAgeSchema,
+                /** Weglassen heißt: gespeicherten Betrag der Kategorie behalten. */
+                downPaymentAmount: downPaymentAmountSchema,
               }),
             )
             .optional()
@@ -1053,6 +1146,10 @@ export const coursesRouter = createTRPCRouter({
         customFields,
         status,
         slug: requestedSlug,
+        downPaymentMode,
+        downPaymentAmount,
+        downPaymentRefundPolicy,
+        downPaymentRefundText,
         ...updateData
       } = input;
 
@@ -1069,6 +1166,18 @@ export const coursesRouter = createTRPCRouter({
           invoicingEnabled: true,
           courseNumber: true,
           allowSiblingDiscount: true,
+          downPaymentMode: true,
+          downPaymentAmount: true,
+          downPaymentRefundPolicy: true,
+          downPaymentRefundText: true,
+          priceOptions: {
+            select: {
+              id: true,
+              label: true,
+              price: true,
+              downPaymentAmount: true,
+            },
+          },
           startDate: true,
           registrationOpensAt: true,
           registrationDeadline: true,
@@ -1303,6 +1412,11 @@ export const coursesRouter = createTRPCRouter({
               ctx.session.user.id,
               PERMISSIONS.COURSES_ENABLE_INVOICING,
               ctx.permissionCache,
+            )) &&
+            !(await userHasPermission(
+              ctx.session.user.id,
+              PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
+              ctx.permissionCache,
             ))
           ) {
             throw new TRPCError({
@@ -1335,6 +1449,112 @@ export const coursesRouter = createTRPCRouter({
 
         data.courseNumber = nextCourseNumber;
       }
+
+      // Anzahlung: nur mit eigener Berechtigung änderbar, gesperrt solange
+      // aktive Anmeldungen bestehen (deren Betrag und Hinweise sind bestätigt),
+      // und bei jedem Speichern gegen Preise und Kursnummer geprüft.
+      const nextDownPayment = normalizeDownPaymentConfig({
+        downPaymentMode: mergedExternal
+          ? DownPaymentMode.NONE
+          : (downPaymentMode ?? course.downPaymentMode),
+        downPaymentAmount:
+          downPaymentAmount !== undefined
+            ? downPaymentAmount
+            : course.downPaymentAmount,
+        downPaymentRefundPolicy:
+          downPaymentRefundPolicy ?? course.downPaymentRefundPolicy,
+        downPaymentRefundText:
+          downPaymentRefundText !== undefined
+            ? downPaymentRefundText
+            : course.downPaymentRefundText,
+      });
+      const priceOptionPairing =
+        priceOptions && !mergedExternal
+          ? pairPriceOptions(priceOptions, course.priceOptions)
+          : null;
+      // Index-gleich mit `priceOptions`, sofern eingereicht. Ein weggelassener
+      // Betrag heißt "gespeicherten behalten" — so überschreibt ein Formular
+      // ohne Anzahlungsrecht nichts.
+      const nextPriceOptions = mergedExternal
+        ? []
+        : priceOptions && priceOptionPairing
+          ? priceOptions.map((option) => {
+              const stored = priceOptionPairing.get(option);
+              return {
+                id: stored?.id,
+                label: option.label,
+                price: option.price,
+                downPaymentAmount: priceOptionDownPaymentAmount(
+                  nextDownPayment.downPaymentMode,
+                  option.downPaymentAmount !== undefined
+                    ? option.downPaymentAmount
+                    : (stored?.downPaymentAmount ?? null),
+                ),
+              };
+            })
+          : course.priceOptions.map((option) => ({
+              ...option,
+              downPaymentAmount: priceOptionDownPaymentAmount(
+                nextDownPayment.downPaymentMode,
+                option.downPaymentAmount,
+              ),
+            }));
+
+      if (
+        downPaymentSettingsChanged(
+          { ...course, priceOptions: course.priceOptions },
+          { ...nextDownPayment, priceOptions: nextPriceOptions },
+        )
+      ) {
+        if (
+          !(await userHasPermission(
+            ctx.session.user.id,
+            PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
+            ctx.permissionCache,
+          ))
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Keine Berechtigung, die Anzahlung zu ändern",
+          });
+        }
+        const activeRegistrations = await ctx.db.courseRegistration.count({
+          where: {
+            courseId: id,
+            registrationStatus: { not: RegistrationStatus.CANCELLED },
+          },
+        });
+        if (activeRegistrations > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message:
+              "Die Anzahlung kann nicht geändert werden, solange es aktive Anmeldungen gibt.",
+          });
+        }
+      }
+
+      const downPaymentProblem = validateDownPaymentSettings({
+        ...nextDownPayment,
+        isFree: mergedIsFree,
+        isExternal: mergedExternal,
+        courseNumber:
+          input.courseNumber !== undefined
+            ? mergedExternal
+              ? null
+              : normalizeCourseNumber(input.courseNumber)
+            : course.courseNumber,
+        allowSiblingDiscount:
+          !mergedExternal &&
+          (updateData.allowSiblingDiscount ?? course.allowSiblingDiscount),
+        priceOptions: nextPriceOptions,
+      });
+      if (downPaymentProblem) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: downPaymentProblem,
+        });
+      }
+      Object.assign(data, nextDownPayment);
 
       if (priceOptions && !mergedExternal) {
         const registrationStats = await getCourseRegistrationStats(ctx.db, id);
@@ -1436,12 +1656,14 @@ export const coursesRouter = createTRPCRouter({
           });
 
           await ctx.db.coursePriceOption.createMany({
-            data: priceOptions.map((option) => ({
+            data: priceOptions.map((option, index) => ({
               courseId: id,
               price: option.price,
               label: option.label,
               description: option.description,
               maxParticipants: option.maxParticipants,
+              downPaymentAmount:
+                nextPriceOptions[index]?.downPaymentAmount ?? null,
               minAge: option.minAge ?? null,
               maxAge: option.maxAge ?? null,
             })),
