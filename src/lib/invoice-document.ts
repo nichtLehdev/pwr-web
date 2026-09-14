@@ -135,6 +135,13 @@ export const DEFAULT_INVOICE_CLOSING_TEXT =
  */
 export const SIBLING_DISCOUNT_LINE_DESCRIPTION = "Geschwisterkindrabatt (20 %)";
 
+/**
+ * Description of the negative line item for a down payment that was already
+ * received, so the invoice asks only for the remainder. Exported for the same
+ * reason as the sibling discount line: exports find the amount by this name.
+ */
+export const DOWN_PAYMENT_LINE_DESCRIPTION = "Anzahlung (bereits gezahlt)";
+
 /** Cent-safe rounding — floats accumulate visible drift over many lines. */
 function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100;
