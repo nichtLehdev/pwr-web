@@ -48,6 +48,10 @@ import {
 } from "@/app/_components/dashboard/invoice-payment-badge";
 import { formatEuro } from "@/lib/invoice-document";
 import { ParticipantCard } from "@/app/_components/events/course-registration-form/participant-card";
+import {
+  DownPaymentBadge,
+  DownPaymentPanel,
+} from "@/app/_components/dashboard/down-payment-panel";
 
 const registrationStatusLabels: Record<RegistrationStatus, string> = {
   CONFIRMED: "Bestätigt",
@@ -519,6 +523,10 @@ export default function RegistrationDetailPage() {
               invoices={registration.invoices}
               className="px-3 py-1"
             />
+            <DownPaymentBadge
+              registration={registration}
+              className="px-3 py-1"
+            />
             {/* Phones keep only the primary action; everything else moves into
                 the "…" menu, so the header stays one short row instead of three
                 stacked rows of buttons. From sm up the full row is shown. */}
@@ -933,6 +941,13 @@ export default function RegistrationDetailPage() {
           </div>
         </div>
 
+        <DownPaymentPanel
+          registration={registration}
+          courseNumber={registration.course.courseNumber}
+          canBook={canBookPayments}
+          onChanged={invalidatePayment}
+        />
+
         {/* Participants */}
         <div className="dark:bg-dark-surface dark:border-dark-border rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
@@ -1032,6 +1047,13 @@ export default function RegistrationDetailPage() {
                   eine Bestätigung per E-Mail. Diese Aktion kann nicht
                   rückgängig gemacht werden.
                 </p>
+                {registration.downPaymentStatus === "PAID" && (
+                  <p className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                    Die Anzahlung ist bereits eingegangen. Ob sie erstattet oder
+                    einbehalten wird, bitte mit der Kasse klären und
+                    anschließend unter „Anzahlung“ vermerken.
+                  </p>
+                )}
                 {cancelError && (
                   <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                     <p className="text-sm text-red-800 dark:text-red-300">
