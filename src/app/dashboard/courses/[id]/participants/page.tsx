@@ -33,6 +33,12 @@ import {
   type DataTableColumn,
 } from "@/app/_components/ui/data-table";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
+import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentReceived,
+  downPaymentState,
+} from "@/lib/course-down-payment";
 import {
   registrationOpenAmount,
   registrationPaymentState,
@@ -67,8 +73,12 @@ const registrationStatusColors: Record<RegistrationStatus, string> = {
   CANCELLED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
 };
 
-/** Filterwerte der Zahlungsspalte — abgeleitet aus den Rechnungen. */
-type PaymentFilter = "ALL" | "OPEN" | "PAID" | "NONE";
+/**
+ * Filterwerte der Zahlungsspalte — abgeleitet aus den Rechnungen, bei Kursen
+ * mit Anzahlung zusätzlich aus deren Stand.
+ */
+type PaymentFilter =
+  "ALL" | "OPEN" | "PAID" | "NONE" | "DOWN_PAYMENT_OPEN" | "REFUND_PENDING";
 
 const siblingDiscountStatusLabels: Record<SiblingDiscountStatus, string> = {
   NONE: "",
@@ -304,7 +314,17 @@ export default function CourseParticipantsPage() {
           return false;
         }
 
-        if (paymentFilter !== "ALL") {
+        if (
+          paymentFilter === "DOWN_PAYMENT_OPEN" ||
+          paymentFilter === "REFUND_PENDING"
+        ) {
+          const state = downPaymentState(registration);
+          const matches =
+            paymentFilter === "REFUND_PENDING"
+              ? state === "REFUND_PENDING"
+              : state === "OPEN" || state === "PARTIAL";
+          if (!matches) return false;
+        } else if (paymentFilter !== "ALL") {
           const state = registrationPaymentState(registration.invoices);
           const matches =
             paymentFilter === "PAID"
@@ -470,8 +490,43 @@ export default function CourseParticipantsPage() {
       ),
     ];
 
-    return participantColumn.columns([...base, ...customColumns, ...tail]);
-  }, [courseId, course?.priceOptions, course?.customFields, showCustomFields]);
+    const downPaymentColumns =
+      course?.downPaymentMode && course.downPaymentMode !== "NONE"
+        ? [
+            participantColumn.accessor(
+              ({ registration }) =>
+                DOWN_PAYMENT_STATE_LABELS[downPaymentState(registration)],
+              {
+                id: "downPayment",
+                header: "Anzahlung",
+                meta: {
+                  filterVariant: "set",
+                  cellClassName: "whitespace-nowrap",
+                },
+                cell: ({ row }) => (
+                  <DownPaymentBadge
+                    registration={row.original.registration}
+                    withPrefix={false}
+                  />
+                ),
+              },
+            ),
+          ]
+        : [];
+
+    return participantColumn.columns([
+      ...base,
+      ...customColumns,
+      ...downPaymentColumns,
+      ...tail,
+    ]);
+  }, [
+    courseId,
+    course?.priceOptions,
+    course?.customFields,
+    course?.downPaymentMode,
+    showCustomFields,
+  ]);
 
   if (sessionLoading || profileLoading || permissionsLoading || courseLoading) {
     return (
@@ -669,6 +724,15 @@ export default function CourseParticipantsPage() {
           anmelder_email: registration.registrantEmail,
           anmelder_telefon: registration.registrantPhone || "",
           gesamtpreis: registration.totalPrice.toFixed(2),
+          ...(course.downPaymentMode !== "NONE" && {
+            anzahlung: registration.downPaymentAmount?.toFixed(2) ?? "",
+            anzahlung_eingegangen: registration.downPaymentAmount
+              ? downPaymentReceived(registration).toFixed(2)
+              : "",
+            anzahlung_status: registration.downPaymentAmount
+              ? DOWN_PAYMENT_STATE_LABELS[downPaymentState(registration)]
+              : "",
+          }),
           anmeldedatum: new Date(registration.createdAt).toLocaleDateString(
             "de-DE",
           ),
@@ -996,6 +1060,14 @@ export default function CourseParticipantsPage() {
                 <option value="OPEN">Offen</option>
                 <option value="PAID">Bezahlt</option>
                 <option value="NONE">Ohne Rechnung</option>
+                {course.downPaymentMode !== "NONE" && (
+                  <>
+                    <option value="DOWN_PAYMENT_OPEN">Anzahlung offen</option>
+                    <option value="REFUND_PENDING">
+                      Anzahlung: Erstattung klären
+                    </option>
+                  </>
+                )}
               </Select>
             </div>
           </div>
@@ -1169,6 +1241,10 @@ export default function CourseParticipantsPage() {
                         </span>
                         <RegistrationPaymentBadge
                           invoices={registration.invoices}
+                          className="px-3 py-1"
+                        />
+                        <DownPaymentBadge
+                          registration={registration}
                           className="px-3 py-1"
                         />
                         {registration.siblingDiscountStatus &&
