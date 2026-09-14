@@ -8,6 +8,8 @@ import {
   Hr,
 } from "@react-email/components";
 import { ManageRegistrationCta } from "./manage-registration-cta";
+import { DownPaymentSection } from "./down-payment-section";
+import type { DownPaymentMailInfo } from "../down-payment";
 
 interface CourseRegistrationWaitlistProps {
   registrantFirstName: string;
@@ -20,6 +22,7 @@ interface CourseRegistrationWaitlistProps {
   registrationId: string;
   /** Magic link letting the registrant manage the anmeldung without an account. */
   manageUrl?: string;
+  downPayment?: DownPaymentMailInfo | null;
 }
 
 export function CourseRegistrationWaitlist({
@@ -32,6 +35,7 @@ export function CourseRegistrationWaitlist({
   participantsCount,
   registrationId,
   manageUrl,
+  downPayment,
 }: CourseRegistrationWaitlistProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -89,6 +93,14 @@ export function CourseRegistrationWaitlist({
                 <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
               </Text>
             </Section>
+
+            {downPayment && (
+              <DownPaymentSection
+                info={downPayment}
+                totalPrice={totalPrice}
+                hasQrCode={false}
+              />
+            )}
 
             <Hr style={hr} />
 

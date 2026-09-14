@@ -6,6 +6,10 @@ import {
   runSerializable,
 } from "./course-capacity";
 import { registrationAccessUrl } from "./registration-access";
+import {
+  downPaymentMailInfo,
+  type DownPaymentMailInfo,
+} from "@/server/email/down-payment";
 
 import { createLogger } from "@/server/utils/logger";
 
@@ -23,6 +27,8 @@ type PromotedRegistration = {
   courseTitle: string;
   courseStartDate: Date;
   courseEndDate: Date;
+  /** Mit der Platzbestätigung wird eine gespeicherte Anzahlung fällig. */
+  downPayment: DownPaymentMailInfo | null;
 };
 
 /**
@@ -45,6 +51,9 @@ export async function promoteFromWaitlist(
         title: true,
         startDate: true,
         endDate: true,
+        courseNumber: true,
+        downPaymentRefundPolicy: true,
+        downPaymentRefundText: true,
         allowWaitingList: true,
         maxParticipants: true,
         priceOptions: { select: { label: true, maxParticipants: true } },
@@ -143,6 +152,10 @@ export async function promoteFromWaitlist(
         courseTitle: course.title,
         courseStartDate: course.startDate,
         courseEndDate: course.endDate,
+        downPayment: downPaymentMailInfo(
+          { ...registration, registrationStatus: RegistrationStatus.CONFIRMED },
+          course,
+        ),
       });
     }
 
@@ -172,6 +185,7 @@ export async function sendPromotionEmails(
           registration.participantsCount,
           registration.id,
           registrationAccessUrl(registration),
+          registration.downPayment,
         );
       } catch (error) {
         log.error(
