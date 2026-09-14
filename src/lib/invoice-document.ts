@@ -170,9 +170,21 @@ export function toDate(value: Date | string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/**
+ * Kalendertag, wie ihn Empfänger:innen und Geschäftsstelle lesen. Rechnung
+ * und Anzahlungszeile entstehen auf dem Server, und der läuft in UTC: eine
+ * Zahlung um 01:30 deutscher Zeit stand dort sonst einen Tag zu früh auf der
+ * Rechnung, eine nach Mitternacht ausgestellte Rechnung trug das Datum von
+ * gestern. Auf UTC-Mitternacht gespeicherte Tage (Geburtsdaten) bleiben, weil
+ * Berlin UTC voraus ist, derselbe Tag.
+ */
+const DOCUMENT_TIME_ZONE = "Europe/Berlin";
+
 export function formatDate(value: Date | string | null | undefined): string {
   const date = toDate(value);
-  return date ? date.toLocaleDateString("de-DE") : "";
+  return date
+    ? date.toLocaleDateString("de-DE", { timeZone: DOCUMENT_TIME_ZONE })
+    : "";
 }
 
 export function formatLongDate(
@@ -181,6 +193,7 @@ export function formatLongDate(
   const date = toDate(value);
   return date
     ? date.toLocaleDateString("de-DE", {
+        timeZone: DOCUMENT_TIME_ZONE,
         day: "numeric",
         month: "long",
         year: "numeric",
