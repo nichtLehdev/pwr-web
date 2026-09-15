@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
  * Kasten (öffentliche Variante von `ui/card`): ein Block, der sich vom
  * umgebenden Satz abheben muss, etwa ein Ablauf oder ein Formular. Er trennt
  * sich mit einem 2px-Tintenrahmen, nie mit Schatten oder Rundung (Printed
- * Depth Rule). Keine Raster aus gleichen Kästen: Aufzählungen sind Zeilen.
+ * Depth Rule), im Nachtdruck gleich gebaut (Nachtschrift-Rahmen auf
+ * Nachtgrund). Höchstens ein Kasten pro Seite; Aufzählungen sind Zeilen.
  */
 export function Panel({
   as: Tag = "div",
@@ -22,7 +23,7 @@ export function Panel({
     <Tag
       aria-labelledby={labelledBy}
       className={cn(
-        "border-ink bg-paper dark:border-night-rule dark:bg-night-raised border-2 p-6 md:p-8",
+        "border-ink bg-paper dark:border-night-text dark:bg-night border-2 p-6 md:p-8",
         className,
       )}
     >

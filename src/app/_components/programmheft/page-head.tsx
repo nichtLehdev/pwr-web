@@ -22,15 +22,16 @@ interface PageHeadProps {
 
 /**
  * Bausteine für Meta-Zeilen im kompakten Seitenkopf (Kurs, Termin,
- * Anmeldung, Ensemble): Zeile mit Haarlinie, Icons und Trenner in Schiefer,
- * kleine Outline-Aktionen wie „Bearbeiten“ und „Teilen“.
+ * Anmeldung, Ensemble): Art, Dauer und Bezirk als halbschmaler Text, Zeilen
+ * mit Haarlinie, Icons und Trenner in Schiefer. Umrandet sind nur Aktionen
+ * wie „Bearbeiten“ und „Teilen“ — Etiketten sehen nie wie Schaltflächen aus.
  */
 export const headMeta = {
   line: "border-rule dark:border-night-rule flex flex-col gap-2 border-t pt-3 text-[0.9375rem] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2",
   icon: "text-dark dark:text-night-muted h-4 w-4 shrink-0",
   separator: "text-dark dark:text-night-muted hidden shrink-0 px-1 sm:inline",
-  bezirk:
-    "semi-condensed text-dark dark:text-night-muted px-1 text-sm font-semibold",
+  label:
+    "semi-condensed text-dark dark:text-night-muted pr-2 text-sm font-semibold",
   action:
     "semi-condensed border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night inline-flex min-h-10 cursor-pointer items-center gap-2 border-2 px-3 text-sm font-semibold transition-colors",
 } as const;
@@ -40,12 +41,13 @@ const LONG_TITLE = 44;
 
 /**
  * Seitenkopf einer Innenseite: auf Papier gesetzt, mit Brotkrumen, großem
- * schmal-fettem Titel, Satzstrich und Leitsatz, abgeschlossen von einem
- * 2px-Tintenstrich. Ab 64rem steht der Leitsatz rechts neben dem Titel,
- * unten bündig.
+ * schmal-fettem Titel und Satzstrich, abgeschlossen von einem vollbreiten
+ * 2px-Strich wie zwischen den Abschnitten.
  *
- * Besteht die Beschreibung aus genau einem Absatz, spricht sie in der
- * Lead-Stimme; längere Beschreibungen stehen als ruhiger Vorspann.
+ * Ein Leitsatz (genau ein Absatz) steht ab 64rem rechts neben dem Titel,
+ * unten bündig, in der Lead-Stimme; kompakte Köpfe setzen ihre Meta-Spalte
+ * dort oben bündig. Ein längerer Vorspann steht in ruhiger Zeilenlänge unter
+ * dem Titel, statt die schmale Spalte zu füllen.
  */
 export function PageHead({
   title,
@@ -58,12 +60,13 @@ export function PageHead({
   const compact = size === "compact";
   const displayTitle = !compact && title.length <= LONG_TITLE;
   const leadVoice = isValidElement(description) && description.type === "p";
+  const besideTitle = description != null && (leadVoice || compact);
 
   return (
-    <header className="sheet">
+    <header className="border-ink dark:border-night-rule border-b-2">
       <div
         className={cn(
-          "border-ink dark:border-night-text border-b-2",
+          "sheet",
           compact ? "pt-3 pb-8 md:pb-10" : "pt-4 pb-10 md:pt-6 md:pb-14",
         )}
       >
@@ -104,18 +107,15 @@ export function PageHead({
         <div
           className={cn(
             compact ? "mt-3 md:mt-4" : "mt-5 md:mt-8",
-            description
+            besideTitle
               ? cn(
                   "lg:grid lg:grid-cols-12 lg:gap-10",
-                  // Ein Leitsatz steht unten bündig neben dem Titel; ein
-                  // längerer Vorspann beginnt oben, sonst schwebt der Titel
-                  // unter einer leeren Fläche.
                   leadVoice ? "lg:items-end" : "lg:items-start",
                 )
               : undefined,
           )}
         >
-          <div className="lg:col-span-7">
+          <div className={besideTitle ? "lg:col-span-7" : undefined}>
             <h1
               className={cn(
                 "condensed text-ink dark:text-night-text font-extrabold text-balance",
@@ -145,10 +145,11 @@ export function PageHead({
           {description ? (
             <div
               className={cn(
-                "text-ink dark:text-night-text mt-6 lg:col-span-5 lg:mt-0",
+                "text-ink dark:text-night-text",
+                besideTitle ? "mt-6 lg:col-span-5 lg:mt-0" : "mt-8",
                 leadVoice
                   ? "semi-condensed max-w-[34ch] text-[clamp(1.25rem,1.9vw,1.625rem)] leading-snug font-medium text-pretty"
-                  : "max-w-[62ch] text-lg leading-relaxed",
+                  : "max-w-[65ch] text-lg leading-relaxed",
               )}
             >
               {description}

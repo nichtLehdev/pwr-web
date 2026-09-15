@@ -2,22 +2,20 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Etikett (öffentliche Variante von `ui/badge`): rechteckig, halbschmal,
- * ohne Versalien oder Sperrung.
+ * Etikett (öffentliche Variante von `ui/badge`) für Zustände: rechteckig,
+ * gefüllt, halbschmal, ohne Versalien oder Sperrung. Umrandet sind im
+ * Programmheft nur Aktionen; Art, Dauer oder Ort stehen als Meta-Text.
  * - `ink`: immer Tinte mit Papierschrift, z. B. auf Orange
  * - `inverse`: Tinte auf Papier, im Nachtdruck Nachtschrift auf Nachtgrund
- * - `orange`: Druckorange mit Tinte
- * - `outline`: 2px-Rahmen in Schriftfarbe
+ * - `orange`: Druckorange mit Tinte (z. B. „Nur Warteliste“)
  * - `cancelled`: nur für „Abgesagt“
  */
-export type TagTone = "ink" | "inverse" | "orange" | "outline" | "cancelled";
+export type TagTone = "ink" | "inverse" | "orange" | "cancelled";
 
 const TONE: Record<TagTone, string> = {
   ink: "bg-ink text-paper",
   inverse: "bg-ink text-paper dark:bg-night-text dark:text-night",
   orange: "bg-primary text-ink",
-  outline:
-    "border-ink text-ink dark:border-night-text dark:text-night-text border-2",
   cancelled: "bg-red-700 text-paper dark:bg-red-400 dark:text-night",
 };
 
