@@ -27,7 +27,6 @@ export default function LizenzenPage() {
   return (
     <PublicPage
       title="Open-Source-Lizenzen"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Impressum", href: "/impressum" },

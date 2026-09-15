@@ -154,7 +154,6 @@ export default function AktuellesClient() {
     return (
       <PublicPage
         title="Aktuelles"
-        color="primary"
         breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
       >
         <div className="bg-background dark:bg-dark-background min-h-screen">
@@ -169,7 +168,6 @@ export default function AktuellesClient() {
   return (
     <PublicPage
       title="Aktuelles"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Aktuelles" }]}
       description={<p>News, Berichte und Ankündigungen aus dem Posaunenwerk</p>}
     >

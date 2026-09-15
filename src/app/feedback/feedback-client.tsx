@@ -127,7 +127,6 @@ export default function FeedbackClient() {
   return (
     <PublicPage
       title="Feedback"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Feedback" }]}
       description={
         <p>

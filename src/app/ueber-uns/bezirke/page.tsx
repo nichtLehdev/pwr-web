@@ -328,7 +328,6 @@ export default function BezirkePage() {
     <PublicPage
       title="Bezirke"
       heroTitle="Bezirke im Posaunenwerk Rheinland"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },

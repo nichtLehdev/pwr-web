@@ -83,7 +83,6 @@ export default function MitmachenPage() {
   return (
     <PublicPage
       title="Mitmachen im Posaunenwerk"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Mitmachen" }]}
       description={
         <p>

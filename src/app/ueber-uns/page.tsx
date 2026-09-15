@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
-import ParticipationCard from "../_components/general/participation-card";
+import { PageSection } from "../_components/programmheft/page-section";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import {
   ArrowRightIcon,
   BuildingIcon,
@@ -24,48 +25,36 @@ export default function UeberUnsPage() {
       description:
         "Erfahre mehr über die Geschichte des Posaunenwerks Rheinland und wie wir organisiert sind.",
       href: "/ueber-uns/struktur",
-      icon: "building" as const,
-      color: "primary",
     },
     {
       title: "Vorstand",
       description:
         "Lerne die Mitglieder unseres Vorstands kennen, die das Posaunenwerk leiten.",
       href: "/ueber-uns/vorstand",
-      icon: "users" as const,
-      color: "district-1",
     },
     {
       title: "Auswahlchöre",
       description:
         "Unsere Auswahlchöre repräsentieren die musikalische Spitze des Posaunenwerks.",
       href: "/ueber-uns/auswahlchoere",
-      icon: "music" as const,
-      color: "district-3",
     },
     {
       title: "Posaunenrat",
       description:
         "Der Posaunenrat berät den Vorstand und vertritt die Interessen der Chöre.",
       href: "/ueber-uns/posaunenrat",
-      icon: "users" as const,
-      color: "district-2",
     },
     {
       title: "Bezirke & Obleute",
       description:
         "Informationen zu unseren Bezirken und deren Ansprechpartner*innen.",
       href: "/ueber-uns/bezirke",
-      icon: "document" as const,
-      color: "district-5",
     },
     {
       title: "Posaunenwarte",
       description:
         "Die Posaunenwarte leiten das Posaunenwerk in musikalischer Hinsicht.",
       href: "/ueber-uns/posaunenwarte",
-      icon: "users" as const,
-      color: "primary",
     },
   ];
 
@@ -73,7 +62,6 @@ export default function UeberUnsPage() {
     <PublicPage
       title="Über uns"
       heroTitle="Über das Posaunenwerk Rheinland"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Über uns" }]}
       description={
         <>
@@ -94,23 +82,19 @@ export default function UeberUnsPage() {
         </>
       }
     >
-      {/* Sections Grid */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {sections.map((section) => (
-              <ParticipationCard
-                key={section.href}
-                title={section.title}
-                description={section.description}
-                href={section.href}
-                icon={section.icon}
-                color={section.color}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Unterseiten als Register direkt unter dem Seitenkopf */}
+      <PageSection flush="top">
+        <WayList rule={false} columns={2}>
+          {sections.map((section) => (
+            <WayRow
+              key={section.href}
+              href={section.href}
+              title={section.title}
+              description={section.description}
+            />
+          ))}
+        </WayList>
+      </PageSection>
 
       {/* Geschichte Section */}
       <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">

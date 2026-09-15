@@ -36,7 +36,6 @@ export default async function PosaunenwartePage() {
     <PublicPage
       title="Posaunenwarte"
       heroTitle="Unsere Posaunenwarte"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },

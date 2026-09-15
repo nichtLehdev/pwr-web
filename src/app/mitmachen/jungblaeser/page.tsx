@@ -84,7 +84,6 @@ export default function JungblaserPage() {
   return (
     <PublicPage
       title="Jungbläserarbeit"
-      color="district-9"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },

@@ -43,7 +43,6 @@ export default function PraeventionPage() {
     <PublicPage
       title="Prävention sexualisierter Gewalt"
       heroTitle="Prävention und Schutz gegen sexualisierte Gewalt gegen Kinder und Jugendliche"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über uns", href: "/ueber-uns" },

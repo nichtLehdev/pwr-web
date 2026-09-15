@@ -8,6 +8,9 @@ import { getDistrictColor } from "@/lib/district-color";
 import { sanitizeHtml } from "@/lib/sanitize";
 import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper";
 import PublicPage from "@/app/_components/general/public-page";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { Tag } from "@/app/_components/programmheft/tag";
 import MediaCredit from "@/app/_components/general/media-credit";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import {
@@ -141,24 +144,6 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
     ? getDistrictColor(ensemble.bezirk.number)
     : "#6b7280";
 
-  const district = !ensemble.bezirk
-    ? "primary"
-    : (`district-${ensemble.bezirk.number}` as
-        | "district-1"
-        | "district-2"
-        | "district-3"
-        | "district-4"
-        | "district-5"
-        | "district-6"
-        | "district-7"
-        | "district-8"
-        | "district-9"
-        | "district-10"
-        | "district-11"
-        | "district-12"
-        | "district-13"
-        | undefined);
-
   let latitude: number | null = null;
   let longitude: number | null = null;
 
@@ -199,7 +184,6 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
   return (
     <PublicPage
       title={ensemble.name}
-      color={district}
       heroSize="compact"
       breadcrumbs={[
         { label: "Start", href: "/" },
@@ -211,22 +195,21 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               {ensemble.bezirk && (
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
-                  Bezirk {ensemble.bezirk.number}
-                  {ensemble.bezirk.name && ` (${ensemble.bezirk.shortName})`}
+                <span className={headMeta.bezirk}>
+                  <BezirkLabel bezirk={ensemble.bezirk} />
                 </span>
               )}
               {ensemble.location?.city && (
-                <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">
+                <Tag tone="outline">
                   {ensemble.location.city}
                   {ensemble.location.zipCode &&
                     `, ${ensemble.location.zipCode}`}
-                </span>
+                </Tag>
               )}
             </div>
             {ensemble.image?.url && (
               <div className="flex shrink-0 flex-col gap-1 sm:items-end">
-                <div className="relative h-24 w-24 overflow-hidden rounded-lg shadow-lg sm:h-28 sm:w-28">
+                <div className="bg-rule dark:bg-night-rule relative h-24 w-24 overflow-hidden sm:h-28 sm:w-28">
                   <Image
                     src={ensemble.image.url}
                     alt={ensemble.name}
@@ -238,7 +221,7 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
                   copyright={ensemble.image.copyright}
                   creator={ensemble.image.creator}
                   showCreatorIcon
-                  className="max-w-28 text-right text-white/80"
+                  className="max-w-28 sm:justify-end sm:text-right"
                 />
               </div>
             )}

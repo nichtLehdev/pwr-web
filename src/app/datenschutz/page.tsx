@@ -14,7 +14,6 @@ export default function DatenschutzPage() {
   return (
     <PublicPage
       title="Datenschutzerklärung"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Datenschutzerklärung" },

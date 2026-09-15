@@ -29,7 +29,6 @@ export default async function VorstandPage() {
     <PublicPage
       title="Vorstand"
       heroTitle="Der Vorstand des Posaunenwerks"
-      color="district-1"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },

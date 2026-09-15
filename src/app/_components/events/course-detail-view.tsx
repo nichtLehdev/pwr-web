@@ -12,6 +12,9 @@ import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
 import { calendarDaysInclusive } from "@/lib/format-date-range";
 import { formatAvailableSlots } from "@/lib/format-available-slots";
 import PublicPage from "../general/public-page";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { Tag } from "@/app/_components/programmheft/tag";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import {
@@ -133,24 +136,6 @@ export default function CourseDetailView({
     !isRegistrationNotOpenYet &&
     (isExternal || !spots.isFull || course.allowWaitingList);
 
-  const district = !course.bezirk
-    ? "primary"
-    : (`district-${course.bezirk.number}` as
-        | "district-1"
-        | "district-2"
-        | "district-3"
-        | "district-4"
-        | "district-5"
-        | "district-6"
-        | "district-7"
-        | "district-8"
-        | "district-9"
-        | "district-10"
-        | "district-11"
-        | "district-12"
-        | "district-13"
-        | undefined);
-
   const handleDownloadIcs = () => {
     // Server-generated single-item ICS: proper escaping, description, URL
     window.location.href = `/api/feed/ical?courseId=${course.id}`;
@@ -178,43 +163,35 @@ export default function CourseDetailView({
   const acceptedPaymentHero = formatAcceptedCoursePaymentMethods(course);
 
   const heroDescription = (
-    <div className="mt-1 space-y-4">
+    <div className="space-y-4">
       {course.motto ? (
-        <p className="italic opacity-90">{course.motto}</p>
+        <p className="semi-condensed text-xl leading-snug font-medium">
+          {course.motto}
+        </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-          {course.courseType}
-        </span>
+        <Tag tone="outline">{course.courseType}</Tag>
         {course.bezirk && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-            {`Bezirk ${course.bezirk.number} (${course.bezirk.shortName})`}
+          <span className={headMeta.bezirk}>
+            <BezirkLabel bezirk={course.bezirk} />
           </span>
         )}
         {!isSameDay && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
+          <Tag tone="outline">
             {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
-          </span>
+          </Tag>
         )}
-        {isPast && (
-          <span className="rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-semibold">
-            Vergangen
-          </span>
-        )}
+        {isPast && <Tag>Vergangen</Tag>}
         {!isExternal && spots.isFull && !course.allowWaitingList && (
-          <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold">
-            Ausgebucht
-          </span>
+          <Tag>Ausgebucht</Tag>
         )}
         {!isExternal && spots.isFull && course.allowWaitingList && (
-          <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-xs font-semibold">
-            Nur Warteliste
-          </span>
+          <Tag tone="orange">Nur Warteliste</Tag>
         )}
         {canEdit && (
           <Link
             href={`/dashboard/courses/${course.id}/edit`}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+            className={headMeta.action}
           >
             <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
             Bearbeiten
@@ -223,24 +200,24 @@ export default function CourseDetailView({
         <PublicShareButton
           title={course.title}
           text={course.motto || course.description || course.title}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+          className={headMeta.action}
         />
       </div>
-      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+      <div className={headMeta.line}>
         <span className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          <Calendar className={headMeta.icon} aria-hidden />
           {formatCourseSchedule(course)}
         </span>
         {locationLine ? (
           <>
             <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              className={headMeta.separator}
               aria-hidden
             >
               ·
             </span>
             <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <MapPin className={headMeta.icon} aria-hidden />
               {locationLine}
             </span>
           </>
@@ -248,13 +225,13 @@ export default function CourseDetailView({
         {!isPast && capacityMeta ? (
           <>
             <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              className={headMeta.separator}
               aria-hidden
             >
               ·
             </span>
             <span className="flex items-center gap-2">
-              <Users className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Users className={headMeta.icon} aria-hidden />
               {capacityMeta}
             </span>
           </>
@@ -262,13 +239,13 @@ export default function CourseDetailView({
         {!isExternal && !course.isFree && acceptedPaymentHero ? (
           <>
             <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              className={headMeta.separator}
               aria-hidden
             >
               ·
             </span>
             <span className="flex min-w-0 items-center gap-2">
-              <Wallet className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Wallet className={headMeta.icon} aria-hidden />
               <span className="truncate">{acceptedPaymentHero}</span>
             </span>
           </>
@@ -276,10 +253,10 @@ export default function CourseDetailView({
       </div>
       {(registrationOpensAt && isRegistrationNotOpenYet) ||
       (registrationDeadline && !isPast) ? (
-        <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+        <div className={headMeta.line}>
           {registrationOpensAt && isRegistrationNotOpenYet && (
             <span className="flex items-center gap-2">
-              <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <Clock className={headMeta.icon} aria-hidden />
               Anmeldung ab:{" "}
               {registrationOpensAt.toLocaleDateString("de-DE", {
                 day: "2-digit",
@@ -295,14 +272,14 @@ export default function CourseDetailView({
             <>
               {registrationOpensAt && isRegistrationNotOpenYet ? (
                 <span
-                  className="hidden shrink-0 px-1 text-white/45 sm:inline"
+                  className={headMeta.separator}
                   aria-hidden
                 >
                   ·
                 </span>
               ) : null}
               <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+                <Clock className={headMeta.icon} aria-hidden />
                 Anmeldeschluss:{" "}
                 {registrationDeadline.toLocaleDateString("de-DE", {
                   day: "2-digit",
@@ -320,7 +297,6 @@ export default function CourseDetailView({
   return (
     <PublicPage
       title={course.title}
-      color={district}
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
@@ -329,7 +305,7 @@ export default function CourseDetailView({
       heroSize="compact"
       description={heroDescription}
     >
-      <div className="bg-background dark:bg-dark-background -mt-2 min-h-screen md:-mt-4">
+      <div className="bg-background dark:bg-dark-background min-h-screen">
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

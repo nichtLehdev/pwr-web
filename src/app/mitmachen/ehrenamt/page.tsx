@@ -97,7 +97,6 @@ export default function EhrenamtPage() {
   return (
     <PublicPage
       title="Ehrenamtlich engagieren"
-      color="district-5"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },

@@ -20,7 +20,6 @@ export default async function AuswahlchoerePage() {
     <PublicPage
       title="Auswahlchöre"
       heroTitle="Unsere Auswahlchöre"
-      color="district-3"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },

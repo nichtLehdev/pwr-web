@@ -1,7 +1,7 @@
 import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
 import { api } from "@/trpc/server";
-import PeopleCard from "../_components/general/people-card";
+import { PersonList, PersonRow } from "../_components/programmheft/person-row";
 import { capitalizeFirstLetter } from "@/lib/utils";
 import {
   DownloadIcon,
@@ -47,7 +47,7 @@ export default async function FoerdervereinPage() {
   return (
     <PublicPage
       title="Förderverein Rheinisches Posaunenwerk"
-      color="foerderverein"
+      tone="foerderverein"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },
@@ -350,17 +350,17 @@ export default async function FoerdervereinPage() {
             </h2>
 
             <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-              <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <PersonList columns={2} className="mb-6">
                 {boardMembers.map((member) => (
-                  <PeopleCard
+                  <PersonRow
                     key={member.id}
-                    image={member.person.image ?? undefined}
+                    image={member.person.image}
                     name={member.person.name ?? "Unbekannt"}
-                    subtitle={capitalizeFirstLetter(member.role)}
-                    email={member.person.email ?? undefined}
+                    role={capitalizeFirstLetter(member.role)}
+                    email={member.person.email}
                   />
                 ))}
-              </div>
+              </PersonList>
 
               <div className="dark:border-dark-border border-t border-gray-200 pt-6">
                 <h3 className="text-dark dark:text-dark-text mb-3 font-bold">
