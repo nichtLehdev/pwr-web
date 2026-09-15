@@ -8,6 +8,8 @@ import {
   Hr,
 } from "@react-email/components";
 import { ManageRegistrationCta } from "./manage-registration-cta";
+import { DownPaymentSection } from "./down-payment-section";
+import type { DownPaymentMailInfo } from "../down-payment";
 
 interface CourseRegistrationConfirmedProps {
   registrantFirstName: string;
@@ -20,6 +22,8 @@ interface CourseRegistrationConfirmedProps {
   registrationId: string;
   /** Magic link letting the registrant manage the anmeldung without an account. */
   manageUrl?: string;
+  downPayment?: DownPaymentMailInfo | null;
+  downPaymentHasQr?: boolean;
 }
 
 export function CourseRegistrationConfirmed({
@@ -32,6 +36,8 @@ export function CourseRegistrationConfirmed({
   participantsCount,
   registrationId,
   manageUrl,
+  downPayment,
+  downPaymentHasQr = false,
 }: CourseRegistrationConfirmedProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -88,6 +94,14 @@ export function CourseRegistrationConfirmed({
                 <strong>Gesamtpreis:</strong> {formatPrice(totalPrice)}
               </Text>
             </Section>
+
+            {downPayment && (
+              <DownPaymentSection
+                info={downPayment}
+                totalPrice={totalPrice}
+                hasQrCode={downPaymentHasQr}
+              />
+            )}
 
             <Hr style={hr} />
 

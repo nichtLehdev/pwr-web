@@ -21,6 +21,10 @@ import {
 import { ContactMessage } from "./templates/contact-message";
 import { generateCourseMailHtml } from "./templates/course-mail-html";
 import type { CourseRegistrationStats } from "@/lib/course-participants-export";
+import {
+  downPaymentQrAttachment,
+  type DownPaymentMailInfo,
+} from "./down-payment";
 
 export async function sendVerificationEmail(
   email: string,
@@ -91,7 +95,11 @@ export async function sendCourseRegistrationConfirmedEmail(
   participantsCount: number,
   registrationId: string,
   manageUrl?: string,
+  downPayment?: DownPaymentMailInfo | null,
 ) {
+  const qrCode = downPayment
+    ? await downPaymentQrAttachment(downPayment)
+    : null;
   const html = await render(
     CourseRegistrationConfirmed({
       registrantFirstName,
@@ -103,6 +111,8 @@ export async function sendCourseRegistrationConfirmedEmail(
       participantsCount,
       registrationId,
       manageUrl,
+      downPayment,
+      downPaymentHasQr: qrCode !== null,
     }),
   );
 
@@ -110,6 +120,7 @@ export async function sendCourseRegistrationConfirmedEmail(
     to: email,
     subject: `Anmeldung bestätigt: ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    ...(qrCode && { attachments: [qrCode] }),
   });
 }
 
@@ -124,7 +135,9 @@ export async function sendCourseRegistrationWaitlistEmail(
   participantsCount: number,
   registrationId: string,
   manageUrl?: string,
+  downPayment?: DownPaymentMailInfo | null,
 ) {
+  // Warteliste: nie ein QR-Code, fällig wird erst mit der Platzbestätigung.
   const html = await render(
     CourseRegistrationWaitlist({
       registrantFirstName,
@@ -136,6 +149,7 @@ export async function sendCourseRegistrationWaitlistEmail(
       participantsCount,
       registrationId,
       manageUrl,
+      downPayment,
     }),
   );
 
@@ -196,7 +210,11 @@ export async function sendCourseRegistrationPendingDiscountEmail(
   participantsCount: number,
   registrationId: string,
   manageUrl?: string,
+  downPayment?: DownPaymentMailInfo | null,
 ) {
+  const qrCode = downPayment
+    ? await downPaymentQrAttachment(downPayment)
+    : null;
   const html = await render(
     CourseRegistrationPendingDiscount({
       registrantFirstName,
@@ -210,6 +228,8 @@ export async function sendCourseRegistrationPendingDiscountEmail(
       participantsCount,
       registrationId,
       manageUrl,
+      downPayment,
+      downPaymentHasQr: qrCode !== null,
     }),
   );
 
@@ -217,6 +237,7 @@ export async function sendCourseRegistrationPendingDiscountEmail(
     to: email,
     subject: `Anmeldung erhalten (Rabatt prüfen): ${courseTitle} - Posaunenwerk Rheinland`,
     html,
+    ...(qrCode && { attachments: [qrCode] }),
   });
 }
 

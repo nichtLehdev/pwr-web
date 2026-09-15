@@ -9,6 +9,7 @@ import {
 import {
   CourseCollaboratorRole,
   CoursePaymentMethod,
+  DownPaymentStatus,
   InvoiceStatus,
   RegistrationStatus,
   SiblingDiscountStatus,
@@ -17,7 +18,18 @@ import type { Prisma } from "~/generated/prisma/client";
 import type { db as database } from "@/server/db";
 import { isExternalCourse } from "@/lib/course-external";
 import { isRegistrationDeadlinePassed } from "@/lib/registration-deadline";
-import { invoiceOpenAmount } from "@/lib/invoice-payment";
+import { bookedAmountFor, invoiceOpenAmount } from "@/lib/invoice-payment";
+import {
+  downPaymentReceived,
+  pinnedPaidAmountAfterChange,
+  registrantEditViolation,
+  registrantMayCancelDownPayment,
+  registrationDownPayment,
+} from "@/lib/course-down-payment";
+import {
+  downPaymentMailInfo,
+  type DownPaymentMailInfo,
+} from "@/server/email/down-payment";
 
 function collaboratorsForViewer(userId: string | null) {
   return {
@@ -96,6 +108,8 @@ async function sendRegistrationCreatedEmail(args: {
   originalTotalPrice: number;
   siblingDiscountAmount: number;
   totalPrice: number;
+  /** Überweisungsdaten der Anzahlung, sofern eine fällig ist. */
+  downPayment: DownPaymentMailInfo | null;
 }): Promise<void> {
   const {
     registration,
@@ -104,6 +118,7 @@ async function sendRegistrationCreatedEmail(args: {
     originalTotalPrice,
     siblingDiscountAmount,
     totalPrice,
+    downPayment,
   } = args;
 
   const emailService = await getEmailService();
@@ -128,6 +143,7 @@ async function sendRegistrationCreatedEmail(args: {
         registration.participants.length,
         registration.id,
         registrationAccessUrl(registration),
+        downPayment,
       );
     } else if (registrationStatus === RegistrationStatus.CONFIRMED) {
       await emailService.sendCourseRegistrationConfirmedEmail(
@@ -141,6 +157,7 @@ async function sendRegistrationCreatedEmail(args: {
         registration.participants.length,
         registration.id,
         registrationAccessUrl(registration),
+        downPayment,
       );
     } else if (registrationStatus === RegistrationStatus.WAITLIST) {
       await emailService.sendCourseRegistrationWaitlistEmail(
@@ -154,6 +171,7 @@ async function sendRegistrationCreatedEmail(args: {
         registration.participants.length,
         registration.id,
         registrationAccessUrl(registration),
+        downPayment,
       );
     }
   } catch (error) {
@@ -256,6 +274,8 @@ export const registrationsRouter = createTRPCRouter({
         notes: z.string().max(2000).optional(),
         paymentMethod: z.nativeEnum(CoursePaymentMethod).optional(),
         siblingDiscountApplied: z.boolean().optional().default(false),
+        /** Hinweise zur Anzahlung bestätigt — Pflicht, sobald eine fällig wird. */
+        downPaymentAcknowledged: z.boolean().optional(),
         participants: z.array(
           z.object({
             firstName: z.string().min(1).max(100),
@@ -276,6 +296,7 @@ export const registrationsRouter = createTRPCRouter({
       const {
         participants: participantsInput,
         paymentMethod: inputPaymentMethod,
+        downPaymentAcknowledged,
         ...registrationData
       } = input;
 
@@ -334,6 +355,19 @@ export const registrationsRouter = createTRPCRouter({
 
       const { participants: participantsWithPriceOptions, originalTotalPrice } =
         prepareParticipantsForCourse(participantsInput, course);
+
+      // Die Anzahlung wird bei der Anmeldung festgehalten. Betrag, Bankdaten
+      // und Erstattungshinweis muss die Anmeldung ausdrücklich bestätigen.
+      const downPaymentAmount = registrationDownPayment(
+        course,
+        participantsWithPriceOptions,
+      );
+      if (downPaymentAmount && !downPaymentAcknowledged) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Bitte bestätige die Hinweise zur Anzahlung.",
+        });
+      }
 
       let totalPrice = originalTotalPrice;
       let siblingDiscountAmount = 0;
@@ -422,6 +456,10 @@ export const registrationsRouter = createTRPCRouter({
                 ? { paymentMethod: resolvedPaymentMethod }
                 : {}),
               totalPrice, // Use server-calculated price (after discount if applied)
+              downPaymentAmount,
+              downPaymentStatus: downPaymentAmount
+                ? DownPaymentStatus.OPEN
+                : null,
               originalTotalPrice:
                 input.siblingDiscountApplied && siblingDiscountAmount > 0
                   ? originalTotalPrice
@@ -468,6 +506,7 @@ export const registrationsRouter = createTRPCRouter({
         originalTotalPrice,
         siblingDiscountAmount,
         totalPrice,
+        downPayment: downPaymentMailInfo(registration, course),
       });
 
       await notifyCourseTeamOfNewRegistration(ctx.db, {
@@ -538,6 +577,8 @@ export const registrationsRouter = createTRPCRouter({
           .optional(),
         allowOverbooking: z.boolean().default(false),
         sendConfirmationEmail: z.boolean().default(true),
+        /** Anzahlung lag der Anmeldung schon bei (z. B. Papierformular mit Überweisung). */
+        downPaymentAlreadyPaid: z.boolean().default(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -547,6 +588,7 @@ export const registrationsRouter = createTRPCRouter({
         registrationStatus: requestedStatus,
         allowOverbooking,
         sendConfirmationEmail,
+        downPaymentAlreadyPaid,
         ...registrationData
       } = input;
 
@@ -603,6 +645,16 @@ export const registrationsRouter = createTRPCRouter({
         prepareParticipantsForCourse(participantsInput, course, {
           allowAgeMismatch: true,
         });
+
+      // Das Team bestätigt die Hinweise im Namen der Anmeldung (wie die
+      // Teilnahmebedingungen) und kann eine schon eingegangene Anzahlung
+      // gleich mit verbuchen.
+      const downPaymentAmount = registrationDownPayment(
+        course,
+        participantsWithPriceOptions,
+      );
+      const downPaymentBooked =
+        Boolean(downPaymentAmount) && downPaymentAlreadyPaid;
 
       let totalPrice = originalTotalPrice;
       let siblingDiscountAmount = 0;
@@ -685,6 +737,16 @@ export const registrationsRouter = createTRPCRouter({
                 ? { paymentMethod: resolvedPaymentMethod }
                 : {}),
               totalPrice,
+              downPaymentAmount,
+              downPaymentStatus: downPaymentAmount
+                ? downPaymentBooked
+                  ? DownPaymentStatus.PAID
+                  : DownPaymentStatus.OPEN
+                : null,
+              ...(downPaymentBooked && {
+                downPaymentPaidAt: new Date(),
+                downPaymentPaidById: ctx.session.user.id,
+              }),
               originalTotalPrice:
                 siblingDiscountAmount > 0 ? originalTotalPrice : null,
               siblingDiscountAmount:
@@ -726,6 +788,7 @@ export const registrationsRouter = createTRPCRouter({
           originalTotalPrice,
           siblingDiscountAmount,
           totalPrice,
+          downPayment: downPaymentMailInfo(registration, course),
         });
       }
 
@@ -855,6 +918,13 @@ export const registrationsRouter = createTRPCRouter({
               maxParticipants: true,
               allowWaitingList: true,
               allowSiblingDiscount: true,
+              // Anzahlung: Kursnummer für den Verwendungszweck, Modus und
+              // Beträge für die Bearbeitungsregeln, Hinweis zur Erstattung.
+              courseNumber: true,
+              downPaymentMode: true,
+              downPaymentAmount: true,
+              downPaymentRefundPolicy: true,
+              downPaymentRefundText: true,
               createdById: true,
               collaborators: collaboratorsForViewer(viewerId(ctx)),
               priceOptions: {
@@ -866,6 +936,7 @@ export const registrationsRouter = createTRPCRouter({
                   description: true,
                   price: true,
                   maxParticipants: true,
+                  downPaymentAmount: true,
                 },
               },
               customFields: {
@@ -1001,7 +1072,10 @@ export const registrationsRouter = createTRPCRouter({
       const canEdit =
         canView &&
         (isCancelled ? false : isStaff ? true : isOwner && ownerCanEditByTime);
-      const canCancel = (isOwner || isStaff) && !isCancelled;
+      // Mit Anzahlung storniert nur das Kursteam (siehe `cancel`).
+      const canCancel =
+        !isCancelled &&
+        (isStaff || (isOwner && registrantMayCancelDownPayment(registration)));
 
       // Zahlungen folgen nicht der Anmeldungs-, sondern der Rechnungsregel —
       // deshalb dieselbe Funktion, die auch die Mutation durchsetzt, statt die
@@ -1157,6 +1231,9 @@ export const registrationsRouter = createTRPCRouter({
             siblingDiscountAmount: true,
             paymentMethod: true,
             totalPrice: true,
+            downPaymentAmount: true,
+            downPaymentStatus: true,
+            downPaymentPaidAmount: true,
             invoiceId: true,
             createdAt: true,
             invoices: {
@@ -1464,6 +1541,45 @@ export const registrationsRouter = createTRPCRouter({
         originalTotalPrice = 0;
       }
 
+      // Anzahlung: Anmeldende dürfen die Teilnehmerzahl (und, wenn der Betrag
+      // an der Kategorie hängt, die Kategorien) nicht selbst ändern. Das
+      // Kursteam darf — der Betrag wird dann neu berechnet, ein bereits
+      // eingegangener Betrag bleibt als solcher festgehalten.
+      if (!isStaff) {
+        const violation = registrantEditViolation({
+          course,
+          bookedDownPayment: registration.downPaymentAmount,
+          before: registration.participants,
+          after: participantsWithPriceOptions,
+        });
+        if (violation) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: violation });
+        }
+      }
+      const recalculatedDownPayment = registrationDownPayment(
+        course,
+        participantsWithPriceOptions,
+      );
+      const nextDownPaymentAmount =
+        recalculatedDownPayment ??
+        (downPaymentReceived(registration) > 0
+          ? registration.downPaymentAmount
+          : null);
+      const downPaymentData: Prisma.CourseRegistrationUncheckedUpdateInput =
+        nextDownPaymentAmount === registration.downPaymentAmount
+          ? {}
+          : {
+              downPaymentAmount: nextDownPaymentAmount,
+              downPaymentStatus:
+                nextDownPaymentAmount == null
+                  ? null
+                  : (registration.downPaymentStatus ?? DownPaymentStatus.OPEN),
+              downPaymentPaidAmount: pinnedPaidAmountAfterChange(
+                registration,
+                nextDownPaymentAmount,
+              ),
+            };
+
       // Capacity checks and the delete-and-rewrite of participants run in one
       // SERIALIZABLE transaction: no overbooking through concurrent edits, and
       // no half-rewritten participant list if anything fails midway.
@@ -1562,6 +1678,7 @@ export const registrationsRouter = createTRPCRouter({
           data: {
             ...registrationData,
             totalPrice, // Use server-calculated price
+            ...downPaymentData,
             siblingDiscountApplied:
               input.siblingDiscountApplied ??
               registration.siblingDiscountApplied,
@@ -1701,6 +1818,8 @@ export const registrationsRouter = createTRPCRouter({
             updatedRegistration.participants.length,
             updatedRegistration.id,
             registrationAccessUrl(updatedRegistration),
+            // Mit der Platzbestätigung wird die Anzahlung fällig.
+            downPaymentMailInfo(updatedRegistration, registration.course),
           );
         } catch (error) {
           log.error("Failed to send confirmation email:", error);
@@ -1791,6 +1910,16 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      // Mit Anzahlung storniert nur das Kursteam: ob und wie erstattet wird,
+      // klärt es mit der Kasse.
+      if (!canCancelAsStaff && !registrantMayCancelDownPayment(registration)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Anmeldungen mit Anzahlung kann nur das Kursteam stornieren. Bitte wende dich an das Kursteam.",
+        });
+      }
+
       const wasAlreadyCancelled =
         registration.registrationStatus === RegistrationStatus.CANCELLED;
 
@@ -1837,6 +1966,141 @@ export const registrationsRouter = createTRPCRouter({
         );
         await sendPromotionEmails(promoted);
       }
+
+      return updated;
+    }),
+
+  /**
+   * Anzahlung einer Anmeldung verbuchen: eingegangen, zurückgenommen, oder —
+   * nach einer Stornierung — erstattet bzw. einbehalten. Es gilt dieselbe
+   * Rechteregel wie für Zahlungen an Rechnungen (Kursorganisation oder
+   * registrations.mark_paid), siehe helpers/invoice-access.
+   */
+  setDownPaymentStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        status: z.enum(DownPaymentStatus),
+        /** Wertstellung; ohne Angabe der heutige Tag (bzw. der bisherige). */
+        paidAt: z.date().optional(),
+        /** Eingegangener Betrag; weglassen heißt "voller Betrag". */
+        paidAmount: z.number().min(0).max(100_000).nullish(),
+        note: z.string().trim().max(500).nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const registration = await ctx.db.courseRegistration.findUnique({
+        where: { id: input.id },
+        select: {
+          id: true,
+          courseId: true,
+          registrationStatus: true,
+          downPaymentAmount: true,
+          downPaymentStatus: true,
+          downPaymentPaidAt: true,
+          downPaymentPaidAmount: true,
+          course: {
+            select: { id: true, createdById: true, invoicingEnabled: true },
+          },
+        },
+      });
+      if (!registration) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Registration not found",
+        });
+      }
+
+      if (
+        !(await userCanBookInvoicePayments(
+          ctx.db,
+          ctx.session.user.id,
+          registration.course,
+          ctx.permissionCache,
+        ))
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Keine Berechtigung, Anzahlungen zu verbuchen",
+        });
+      }
+
+      const amount = registration.downPaymentAmount;
+      const previous = registration.downPaymentStatus;
+      if (!amount || !previous) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Diese Anmeldung hat keine Anzahlung.",
+        });
+      }
+
+      const settlesRefund =
+        input.status === DownPaymentStatus.REFUNDED ||
+        input.status === DownPaymentStatus.RETAINED;
+      if (settlesRefund && previous === DownPaymentStatus.OPEN) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Erstattet oder einbehalten werden kann nur eine eingegangene Anzahlung.",
+        });
+      }
+
+      // Aus "erstattet"/"einbehalten" zurück auf "bezahlt" behält Datum und
+      // Betrag der ursprünglichen Buchung.
+      const wasReceived = previous !== DownPaymentStatus.OPEN;
+      const note =
+        input.note !== undefined ? { downPaymentNote: input.note } : {};
+
+      let data: Prisma.CourseRegistrationUpdateInput;
+      if (input.status === DownPaymentStatus.OPEN) {
+        data = {
+          downPaymentStatus: DownPaymentStatus.OPEN,
+          downPaymentPaidAt: null,
+          downPaymentPaidAmount: null,
+          downPaymentPaidBy: { disconnect: true },
+          ...note,
+        };
+      } else if (input.status === DownPaymentStatus.PAID) {
+        data = {
+          downPaymentStatus: DownPaymentStatus.PAID,
+          downPaymentPaidAt:
+            input.paidAt ??
+            (wasReceived ? registration.downPaymentPaidAt : null) ??
+            new Date(),
+          downPaymentPaidAmount:
+            input.paidAmount != null
+              ? (bookedAmountFor(input.paidAmount, amount) ?? null)
+              : input.paidAmount === null || !wasReceived
+                ? null
+                : registration.downPaymentPaidAmount,
+          ...(!wasReceived && {
+            downPaymentPaidBy: { connect: { id: ctx.session.user.id } },
+          }),
+          ...note,
+        };
+      } else {
+        data = { downPaymentStatus: input.status, ...note };
+      }
+
+      const updated = await ctx.db.courseRegistration.update({
+        where: { id: registration.id },
+        data,
+      });
+
+      void logAudit(ctx.db, {
+        actorId: ctx.session.user.id,
+        actorEmail: ctx.session.user.email,
+        action: "registration.down_payment",
+        entityType: "registration",
+        entityId: registration.id,
+        details: {
+          courseId: registration.courseId,
+          previousStatus: previous,
+          status: input.status,
+          downPaymentAmount: amount,
+          paidAmount: updated.downPaymentPaidAmount ?? amount,
+        },
+      });
 
       return updated;
     }),
@@ -2540,6 +2804,7 @@ export const registrationsRouter = createTRPCRouter({
             updated.participants.length,
             updated.id,
             registrationAccessUrl(updated),
+            downPaymentMailInfo(updated, registration.course),
           );
         } catch (error) {
           log.error("Failed to send confirmation email:", error);

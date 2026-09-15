@@ -41,6 +41,8 @@ export interface StaffRegistrationOptions {
   sendConfirmationEmail: boolean;
   /** Required to confirm a registration beyond the course capacity. */
   allowOverbooking: boolean;
+  /** Down payment already received (e.g. paper form with transfer slip). */
+  downPaymentAlreadyPaid: boolean;
 }
 
 export interface CourseRegistrationFormProps {

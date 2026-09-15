@@ -23,6 +23,7 @@ import {
   type InvoiceDocument,
   type InvoiceOrganization,
 } from "./invoice-document";
+import { buildEpcQrPayload } from "./epc-qr";
 
 export interface RenderInvoiceOptions {
   organization?: Partial<InvoiceOrganization>;
@@ -30,33 +31,6 @@ export interface RenderInvoiceOptions {
   logoBase64?: string;
   /** data: URL of a handwritten signature placed above the signer's name. */
   signatureBase64?: string;
-}
-
-/**
- * EPC QR payload (BCD 002) for a SEPA credit transfer. Banking apps scan this
- * to pre-fill recipient, IBAN, amount and reference.
- */
-function buildEpcQrPayload(
-  beneficiaryName: string,
-  iban: string,
-  amountEur: number,
-  reference: string,
-  bic?: string,
-): string {
-  return [
-    "BCD", // Service tag
-    "002", // Version
-    "1", // Character set UTF-8
-    "SCT", // SEPA Credit Transfer
-    bic?.replace(/\s/g, "") ?? "", // BIC (optional for domestic)
-    beneficiaryName.slice(0, 70),
-    iban.replace(/\s/g, ""),
-    `EUR${amountEur.toFixed(2)}`,
-    "", // Purpose (optional)
-    "", // Structured creditor reference
-    reference.slice(0, 140), // Remittance (Verwendungszweck)
-    "", // Beneficiary to originator info
-  ].join("\n");
 }
 
 /**

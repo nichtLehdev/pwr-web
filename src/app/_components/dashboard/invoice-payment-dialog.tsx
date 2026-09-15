@@ -25,14 +25,14 @@ const labelClass =
   "dark:text-dark-text mb-1 block text-sm font-medium text-gray-700";
 
 /** Heute als YYYY-MM-DD in lokaler Zeit — `<input type="date">` will kein ISO-Instant. */
-function todayInputValue(): string {
+export function todayInputValue(): string {
   const now = new Date();
   const offset = now.getTimezoneOffset() * 60_000;
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
 /** Lokale Mitternacht des gewählten Tages. `new Date("2026-08-26")` wäre UTC. */
-function dateFromInput(value: string): Date | undefined {
+export function dateFromInput(value: string): Date | undefined {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return undefined;
   return new Date(year, month - 1, day);

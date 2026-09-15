@@ -59,6 +59,12 @@ import {
   validatePriceOptionDistinctness,
 } from "@/lib/course-price-options";
 import { validatePriceOptionAgeRanges } from "@/lib/course-price-option-age";
+import { CourseDownPaymentSettings } from "@/app/_components/dashboard/course-down-payment-settings";
+import {
+  validateDownPaymentSettings,
+  type DownPaymentModeValue,
+  type DownPaymentRefundPolicyValue,
+} from "@/lib/course-down-payment";
 
 const courseTypeLabels: Record<CourseType, string> = {
   LEHRGANG: "Lehrgang",
@@ -103,6 +109,8 @@ interface PriceOption {
   /** Vollendete Jahre am ersten Kurstag; null heißt „keine Grenze“. */
   minAge?: number | null;
   maxAge?: number | null;
+  /** Anzahlung pro Teilnehmer, nur bei Anzahlung "je Preiskategorie". */
+  downPaymentAmount?: number | null;
 }
 
 type CustomField = CourseCustomFieldDraft;
@@ -146,6 +154,14 @@ export default function EditCoursePage() {
   const [paymentInvoiceAllowed, setPaymentInvoiceAllowed] = useState(true);
   const [invoicingEnabled, setInvoicingEnabled] = useState(false);
   const [courseNumber, setCourseNumber] = useState("");
+  const [downPaymentMode, setDownPaymentMode] =
+    useState<DownPaymentModeValue>("NONE");
+  const [downPaymentAmount, setDownPaymentAmount] = useState<number | null>(
+    null,
+  );
+  const [downPaymentRefundPolicy, setDownPaymentRefundPolicy] =
+    useState<DownPaymentRefundPolicyValue>("NON_REFUNDABLE");
+  const [downPaymentRefundText, setDownPaymentRefundText] = useState("");
   const [priceInfo, setPriceInfo] = useState("");
   const [priceOptions, setPriceOptions] = useState<PriceOption[]>([]);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -189,6 +205,10 @@ export default function EditCoursePage() {
     paymentInvoiceAllowed: boolean;
     invoicingEnabled: boolean;
     courseNumber: string;
+    downPaymentMode: DownPaymentModeValue;
+    downPaymentAmount: number | null;
+    downPaymentRefundPolicy: DownPaymentRefundPolicyValue;
+    downPaymentRefundText: string;
     priceInfo: string;
     priceOptions: PriceOption[];
     prerequisites: string;
@@ -207,9 +227,14 @@ export default function EditCoursePage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Ab der ersten ausgestellten Rechnung ist die Kursnummer eingefroren; der
-  // Server lehnt eine Änderung ohnehin ab, das Feld sagt es nur vorher.
+  // Ab der ersten ausgestellten Rechnung bzw. der ersten Anmeldung mit
+  // Anzahlung ist die Kursnummer eingefroren; der Server lehnt eine Änderung
+  // ohnehin ab, das Feld sagt es nur vorher — und warum.
   const courseNumberLocked = course?.courseNumberLocked ?? false;
+  const courseNumberLockedBy = course?.courseNumberLockedBy ?? null;
+  // Aktive Anmeldungen haben die Anzahlung bestätigt; der Server lehnt eine
+  // Änderung dann ab.
+  const downPaymentLocked = course?.downPaymentLocked ?? false;
 
   const formData = useMemo(
     () => ({
@@ -241,6 +266,10 @@ export default function EditCoursePage() {
       paymentInvoiceAllowed,
       invoicingEnabled,
       courseNumber,
+      downPaymentMode,
+      downPaymentAmount,
+      downPaymentRefundPolicy,
+      downPaymentRefundText,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -279,6 +308,10 @@ export default function EditCoursePage() {
       paymentInvoiceAllowed,
       invoicingEnabled,
       courseNumber,
+      downPaymentMode,
+      downPaymentAmount,
+      downPaymentRefundPolicy,
+      downPaymentRefundText,
       priceInfo,
       priceOptions,
       prerequisites,
@@ -359,6 +392,12 @@ export default function EditCoursePage() {
       setPaymentInvoiceAllowed(saved.paymentInvoiceAllowed ?? true);
       setInvoicingEnabled(saved.invoicingEnabled ?? false);
       setCourseNumber(saved.courseNumber || "");
+      setDownPaymentMode(saved.downPaymentMode ?? "NONE");
+      setDownPaymentAmount(saved.downPaymentAmount ?? null);
+      setDownPaymentRefundPolicy(
+        saved.downPaymentRefundPolicy ?? "NON_REFUNDABLE",
+      );
+      setDownPaymentRefundText(saved.downPaymentRefundText || "");
       setPriceInfo(saved.priceInfo || "");
       setPriceOptions(saved.priceOptions || []);
       setPrerequisites(saved.prerequisites || "");
@@ -411,6 +450,10 @@ export default function EditCoursePage() {
         paymentInvoiceAllowed: course.paymentInvoiceAllowed ?? true,
         invoicingEnabled: course.invoicingEnabled ?? false,
         courseNumber: course.courseNumber || "",
+        downPaymentMode: course.downPaymentMode,
+        downPaymentAmount: course.downPaymentAmount,
+        downPaymentRefundPolicy: course.downPaymentRefundPolicy,
+        downPaymentRefundText: course.downPaymentRefundText || "",
         priceInfo: course.priceInfo || "",
         priceOptions:
           course.priceOptions?.map((opt) => ({
@@ -421,6 +464,7 @@ export default function EditCoursePage() {
             maxParticipants: opt.maxParticipants || null,
             minAge: opt.minAge,
             maxAge: opt.maxAge,
+            downPaymentAmount: opt.downPaymentAmount,
           })) || [],
         prerequisites: course.prerequisites || "",
         whatToBring: course.whatToBring || "",
@@ -473,6 +517,10 @@ export default function EditCoursePage() {
   const isHigherRole = hasApprovePermission;
   const canEnableInvoicing = hasPermission(
     "courses.enable_invoicing" as PermissionKey,
+  );
+  // Anzahlung und Kursnummer — dieselbe Berechtigung prüft courses.update.
+  const canEnableDownPayment = hasPermission(
+    PERMISSIONS.COURSES_ENABLE_DOWN_PAYMENT,
   );
   // Dieselbe Berechtigung, die courses.create/update serverseitig prüft.
   const canManageSiblingDiscount = hasPermission(
@@ -604,6 +652,10 @@ export default function EditCoursePage() {
         setPaymentInvoiceAllowed(course.paymentInvoiceAllowed ?? true);
         setInvoicingEnabled(course.invoicingEnabled ?? false);
         setCourseNumber(course.courseNumber || "");
+        setDownPaymentMode(course.downPaymentMode);
+        setDownPaymentAmount(course.downPaymentAmount);
+        setDownPaymentRefundPolicy(course.downPaymentRefundPolicy);
+        setDownPaymentRefundText(course.downPaymentRefundText || "");
         setPriceInfo(course.priceInfo || "");
         if (course.priceOptions && course.priceOptions.length > 0) {
           const options = course.priceOptions.map((opt) => ({
@@ -614,6 +666,7 @@ export default function EditCoursePage() {
             maxParticipants: opt.maxParticipants,
             minAge: opt.minAge,
             maxAge: opt.maxAge,
+            downPaymentAmount: opt.downPaymentAmount,
           }));
           setPriceOptions(options);
         }
@@ -968,6 +1021,7 @@ export default function EditCoursePage() {
                 maxParticipants,
                 minAge,
                 maxAge,
+                downPaymentAmount: optionDownPayment,
               }) => ({
                 id: id.startsWith("new-") ? undefined : id,
                 label,
@@ -976,6 +1030,14 @@ export default function EditCoursePage() {
                 maxParticipants: maxParticipants || undefined,
                 minAge: minAge ?? null,
                 maxAge: maxAge ?? null,
+                // Ohne Berechtigung weglassen: der Server behält dann den
+                // gespeicherten Betrag der Kategorie.
+                ...(canEnableDownPayment && {
+                  downPaymentAmount:
+                    downPaymentMode === "TICKET"
+                      ? (optionDownPayment ?? null)
+                      : null,
+                }),
               }),
             )
         : [];
@@ -985,6 +1047,31 @@ export default function EditCoursePage() {
       validatePriceOptionAgeRanges(preparedPriceOptions);
     if (priceOptionProblem) {
       setError(priceOptionProblem);
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Wie auf dem Server: kostenlose und externe Kurse haben keine Anzahlung.
+    const effectiveDownPaymentMode: DownPaymentModeValue =
+      isExternalProvider || isFree ? "NONE" : downPaymentMode;
+    const downPaymentProblem = canEnableDownPayment
+      ? validateDownPaymentSettings({
+          downPaymentMode: effectiveDownPaymentMode,
+          downPaymentAmount,
+          downPaymentRefundPolicy,
+          downPaymentRefundText,
+          isFree,
+          isExternal: isExternalProvider,
+          courseNumber,
+          allowSiblingDiscount,
+          priceOptions: preparedPriceOptions.map((option) => ({
+            ...option,
+            downPaymentAmount: option.downPaymentAmount ?? null,
+          })),
+        })
+      : null;
+    if (downPaymentProblem) {
+      setError(downPaymentProblem);
       setIsSubmitting(false);
       return;
     }
@@ -1060,11 +1147,19 @@ export default function EditCoursePage() {
       // Ohne die Berechtigung wird das Feld gar nicht angezeigt und der Wert
       // kommt redigiert an — dann darf der Speichervorgang ihn auch nicht
       // mitschicken, sonst würde er die Nummer löschen wollen und scheitern.
-      courseNumber: !canEnableInvoicing
-        ? undefined
-        : isExternalProvider
-          ? ""
-          : courseNumber.trim(),
+      courseNumber:
+        !canEnableInvoicing && !canEnableDownPayment
+          ? undefined
+          : isExternalProvider
+            ? ""
+            : courseNumber.trim(),
+      ...(canEnableDownPayment && {
+        downPaymentMode: effectiveDownPaymentMode,
+        downPaymentAmount:
+          effectiveDownPaymentMode === "COURSE" ? downPaymentAmount : null,
+        downPaymentRefundPolicy,
+        downPaymentRefundText: downPaymentRefundText.trim() || null,
+      }),
       priceInfo: priceInfo.trim() || undefined,
       prerequisites: prerequisites.trim() || undefined,
       whatToBring: whatToBring.trim() || undefined,
@@ -2483,30 +2578,38 @@ export default function EditCoursePage() {
                           </label>
                         </div>
 
-                        {canEnableInvoicing ? (
+                        {canEnableInvoicing || canEnableDownPayment ? (
                           <div className="dark:border-dark-border space-y-2 rounded-lg border border-gray-200 p-4">
-                            <label className="flex cursor-pointer items-start gap-3">
-                              <input
-                                type="checkbox"
-                                checked={invoicingEnabled}
-                                onChange={(e) =>
-                                  setInvoicingEnabled(e.target.checked)
-                                }
-                                className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
-                              />
-                              <span>
-                                <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
-                                  Rechnungsstellung aktivieren
+                            {canEnableInvoicing && (
+                              <label className="flex cursor-pointer items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={invoicingEnabled}
+                                  onChange={(e) =>
+                                    setInvoicingEnabled(e.target.checked)
+                                  }
+                                  className="text-primary focus:ring-primary mt-0.5 h-4 w-4 rounded border-gray-300"
+                                />
+                                <span>
+                                  <span className="dark:text-dark-text block text-sm font-medium text-gray-700">
+                                    Rechnungsstellung aktivieren
+                                  </span>
+                                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                    Erlaubt dem Kurs-Team, für diesen Kurs
+                                    Rechnungen zu erstellen, zu bearbeiten und
+                                    an die Anmelder:innen auszustellen.
+                                  </span>
                                 </span>
-                                <span className="block text-xs text-gray-500 dark:text-gray-400">
-                                  Erlaubt dem Kurs-Team, für diesen Kurs
-                                  Rechnungen zu erstellen, zu bearbeiten und an
-                                  die Anmelder:innen auszustellen.
-                                </span>
-                              </span>
-                            </label>
+                              </label>
+                            )}
 
-                            <div className="dark:border-dark-border border-t border-gray-200 pt-3">
+                            <div
+                              className={
+                                canEnableInvoicing
+                                  ? "dark:border-dark-border border-t border-gray-200 pt-3"
+                                  : undefined
+                              }
+                            >
                               <label
                                 htmlFor="courseNumber"
                                 className="dark:text-dark-text mb-1 block text-sm font-medium text-gray-700"
@@ -2534,13 +2637,23 @@ export default function EditCoursePage() {
                               />
                               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 {courseNumberLocked ? (
-                                  <>
-                                    Für diesen Kurs wurden bereits Rechnungen
-                                    ausgestellt — sie tragen die Kursnummer in
-                                    Nummernkreis und Verwendungszweck und sind
-                                    eingefroren. Die Nummer lässt sich deshalb
-                                    nicht mehr ändern.
-                                  </>
+                                  courseNumberLockedBy === "DOWN_PAYMENTS" ? (
+                                    <>
+                                      Es gibt bereits Anmeldungen mit Anzahlung
+                                      — sie haben die Kursnummer im
+                                      Verwendungszweck ihrer Überweisung
+                                      erhalten. Die Nummer lässt sich deshalb
+                                      nicht mehr ändern.
+                                    </>
+                                  ) : (
+                                    <>
+                                      Für diesen Kurs wurden bereits Rechnungen
+                                      ausgestellt — sie tragen die Kursnummer in
+                                      Nummernkreis und Verwendungszweck und sind
+                                      eingefroren. Die Nummer lässt sich deshalb
+                                      nicht mehr ändern.
+                                    </>
+                                  )
                                 ) : (
                                   <>
                                     Interne Nummer für die Buchhaltung. Mit
@@ -2550,7 +2663,8 @@ export default function EditCoursePage() {
                                     der Verwendungszweck nennt zusätzlich
                                     „Bläserlehrgang {courseNumber || "<Nr.>"}“.
                                     Ab der ersten ausgestellten Rechnung ist sie
-                                    fest.
+                                    fest, bei Kursen mit Anzahlung schon ab der
+                                    ersten Anmeldung.
                                   </>
                                 )}
                               </p>
@@ -2570,6 +2684,25 @@ export default function EditCoursePage() {
                             </div>
                           )
                         )}
+
+                        <CourseDownPaymentSettings
+                          mode={downPaymentMode}
+                          onModeChange={setDownPaymentMode}
+                          amount={downPaymentAmount}
+                          onAmountChange={setDownPaymentAmount}
+                          refundPolicy={downPaymentRefundPolicy}
+                          onRefundPolicyChange={setDownPaymentRefundPolicy}
+                          refundText={downPaymentRefundText}
+                          onRefundTextChange={setDownPaymentRefundText}
+                          priceOptions={priceOptions}
+                          onPriceOptionAmountChange={(id, amount) =>
+                            updatePriceOption(id, "downPaymentAmount", amount)
+                          }
+                          canEdit={canEnableDownPayment}
+                          locked={downPaymentLocked}
+                          allowSiblingDiscount={allowSiblingDiscount}
+                          courseNumber={courseNumber}
+                        />
 
                         <div>
                           <div className="mb-2 flex items-center justify-between">
