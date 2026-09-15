@@ -101,32 +101,88 @@ export async function findFullPriceTier(
     const priceOption = priceOptions.find((p) => p.id === optionId);
     if (priceOption?.maxParticipants == null) continue;
 
-    const labelIsUnique =
-      priceOptions.filter((p) => p.label === priceOption.label).length === 1;
-
-    const currentCount = await db.participant.count({
-      where: {
-        OR: [
-          { priceOptionId: optionId },
-          ...(labelIsUnique
-            ? [{ priceOptionId: null, priceOption: priceOption.label }]
-            : []),
-        ],
-        registration: {
-          courseId,
-          registrationStatus: RegistrationStatus.CONFIRMED,
-          ...(excludeRegistrationId
-            ? { id: { not: excludeRegistrationId } }
-            : {}),
-        },
-      },
-    });
+    const currentCount = await countConfirmedInPriceOption(
+      db,
+      courseId,
+      priceOption,
+      priceOptions,
+      excludeRegistrationId,
+    );
 
     if (currentCount + addition > priceOption.maxParticipants) {
       return priceOption;
     }
   }
   return null;
+}
+
+/** Bestätigte Teilnehmer einer Kategorie, gezählt wie in {@link findFullPriceTier}. */
+async function countConfirmedInPriceOption(
+  db: Db | Tx,
+  courseId: string,
+  priceOption: TierPriceOption,
+  priceOptions: TierPriceOption[],
+  excludeRegistrationId?: string,
+): Promise<number> {
+  const labelIsUnique =
+    priceOptions.filter((p) => p.label === priceOption.label).length === 1;
+
+  return db.participant.count({
+    where: {
+      OR: [
+        { priceOptionId: priceOption.id },
+        ...(labelIsUnique
+          ? [{ priceOptionId: null, priceOption: priceOption.label }]
+          : []),
+      ],
+      registration: {
+        courseId,
+        registrationStatus: RegistrationStatus.CONFIRMED,
+        ...(excludeRegistrationId
+          ? { id: { not: excludeRegistrationId } }
+          : {}),
+      },
+    },
+  });
+}
+
+/**
+ * Freie Plätze eines Kurses nach denselben Regeln wie die Prüfungen beim
+ * Bestätigen: Kurskapazität minus Bestätigte, dazu die Restplätze jeder
+ * begrenzten Kategorie — nach id, nicht nach Label. Grundlage fürs Nachrücken.
+ */
+export async function loadSeatAvailability(
+  db: Db | Tx,
+  course: {
+    id: string;
+    maxParticipants: number | null;
+    priceOptions: TierPriceOption[];
+  },
+): Promise<{
+  availableSlots: number;
+  priceOptions: TierPriceOption[];
+  capacityByPriceOption: Record<string, number>;
+}> {
+  const confirmed = await countConfirmedParticipants(db, course.id);
+  const capacityByPriceOption: Record<string, number> = {};
+  for (const option of course.priceOptions) {
+    if (option.maxParticipants == null) continue;
+    const used = await countConfirmedInPriceOption(
+      db,
+      course.id,
+      option,
+      course.priceOptions,
+    );
+    capacityByPriceOption[option.id] = Math.max(
+      0,
+      option.maxParticipants - used,
+    );
+  }
+  return {
+    availableSlots: Math.max(0, computeCourseCapacity(course) - confirmed),
+    priceOptions: course.priceOptions,
+    capacityByPriceOption,
+  };
 }
 
 /** Wie {@link findFullPriceTier}, lehnt eine volle Kategorie aber ab. */

@@ -848,6 +848,20 @@ model CourseRegistration {
    */
   registrationGroupId String?
 
+  /**
+   * Nachrück-Angebot: Es wurden Plätze frei, die nicht für alle Teilnehmer
+   * dieser wartenden Anmeldung reichen. Bis zu diesem Zeitpunkt wählen die
+   * Anmeldenden, wer nachrückt — so lange hält die Warteliste an.
+   */
+  promotionOfferExpiresAt      DateTime?
+  /** Wann das Kursteam an das auslaufende Angebot erinnert wurde. */
+  promotionOfferReminderSentAt DateTime?
+  /**
+   * Angebot abgelehnt oder verfallen, als so viele Plätze nutzbar waren: bis
+   * mehr frei werden, gehen sie an die Nächsten auf der Warteliste.
+   */
+  promotionOfferPassedSeats    Int?
+
   // Relations
   participants Participant[]
   invoices     Invoice[]
@@ -863,6 +877,7 @@ model CourseRegistration {
   @@index([courseId, registrationStatus])
   @@index([registrantId])
   @@index([registrationGroupId])
+  @@index([promotionOfferExpiresAt])
 }
 
 /// One e-mail an organizer sent to the registrants of a course, archived so

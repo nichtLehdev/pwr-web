@@ -1,4 +1,5 @@
 import {
+  type Prisma,
   RegistrationStatus,
   type SiblingDiscountStatus,
 } from "~/generated/prisma/client";
@@ -15,7 +16,7 @@ type GroupMember = { id: string; registrationGroupId: string | null };
  * Teil ihn nicht verliert, nur weil das ältere Geschwister im anderen steht.
  */
 export async function otherPartParticipants(
-  db: Db,
+  db: Db | Prisma.TransactionClient,
   registration: GroupMember,
 ): Promise<
   Array<{

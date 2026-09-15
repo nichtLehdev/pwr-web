@@ -194,15 +194,28 @@ export function planRegistrationParts<
   };
 }
 
-/** Preise eines Teils: seine Teilnehmer, Rabatt über die ganze Gruppe. */
+/**
+ * Preise eines Teils: seine Teilnehmer, Rabatt über die ganze Gruppe. Gehört
+ * die Anmeldung schon zu einer Gruppe, zählen deren übrige Teile als
+ * `otherParticipants` mit.
+ */
 export function partPricing(
   participants: readonly SiblingDiscountParticipant[],
   ownIndexes: readonly number[],
-  { withSiblingDiscount }: { withSiblingDiscount: boolean },
+  {
+    withSiblingDiscount,
+    otherParticipants = [],
+  }: {
+    withSiblingDiscount: boolean;
+    otherParticipants?: readonly SiblingDiscountParticipant[];
+  },
 ): PartPricing {
   const ownSet = new Set(ownIndexes);
   const own = participants.filter((_, index) => ownSet.has(index));
-  const others = participants.filter((_, index) => !ownSet.has(index));
+  const others = [
+    ...participants.filter((_, index) => !ownSet.has(index)),
+    ...otherParticipants,
+  ];
 
   const originalTotalPrice = roundMoney(
     own.reduce((sum, participant) => sum + participant.price, 0),
