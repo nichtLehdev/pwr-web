@@ -15,6 +15,7 @@ import PublicPage from "../general/public-page";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { courseTypeLabel } from "@/lib/termine-labels";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
 import {
@@ -170,7 +171,7 @@ export default function CourseDetailView({
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <Tag tone="outline">{course.courseType}</Tag>
+        <Tag tone="outline">{courseTypeLabel(course.courseType)}</Tag>
         {course.bezirk && (
           <span className={headMeta.bezirk}>
             <BezirkLabel bezirk={course.bezirk} />
