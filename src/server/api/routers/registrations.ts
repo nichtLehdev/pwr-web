@@ -53,16 +53,29 @@ import {
   permissionProcedure,
   permissionProcedureAny,
 } from "../middleware/permissions";
-import { computeSiblingDiscounts, roundMoney } from "@/lib/sibling-discount";
+import { roundMoney } from "@/lib/sibling-discount";
+import {
+  otherPartParticipants,
+  siblingDiscountParts,
+  sumDiscountParts,
+} from "../helpers/registration-group";
 import {
   assertPriceTierCapacity,
+  assertSeatSelectionFits,
   computeCourseCapacity,
   countConfirmedParticipants,
   findFullPriceTier,
   priceTierFullMessage,
   runSerializable,
 } from "../helpers/course-capacity";
+import { randomUUID } from "node:crypto";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
+import {
+  normalizeSeatSelection,
+  planRegistrationParts,
+  siblingDiscountWithinGroup,
+} from "@/lib/registration-split";
+import { createRegistrationAccessToken } from "@/server/utils/registration-access-token";
 import { logAudit } from "../helpers/audit";
 import {
   createNotification,
@@ -182,6 +195,133 @@ async function sendRegistrationCreatedEmail(args: {
   }
 }
 
+type CreatedRegistrationPart = Prisma.CourseRegistrationGetPayload<{
+  include: {
+    participants: true;
+    course: { select: { title: true; startDate: true; endDate: true } };
+  };
+}>;
+
+/** Die Anmeldung(en) eines Absendens: aufgeteilt bestätigt + wartend. */
+type CreatedParts<T extends CreatedRegistrationPart = CreatedRegistrationPart> =
+  {
+    primary: { registration: T };
+    waitlist: { registration: T } | null;
+  };
+
+/** Preis der gewählten Kategorie eines Teilnehmers. */
+function priceOptionPrice(
+  course: { priceOptions: Array<{ id: string; price: number }> },
+  participant: { priceOptionId?: string | null },
+): number {
+  return (
+    course.priceOptions.find(
+      (option) => option.id === participant.priceOptionId,
+    )?.price ?? 0
+  );
+}
+
+/**
+ * Die übermittelte Auswahl fürs Aufteilen, geprüft; `null` ohne Auswahl. Ob
+ * tatsächlich aufgeteilt wird, entscheidet sich erst an den freien Plätzen.
+ */
+function parseSeatSelection(
+  indexes: number[] | undefined,
+  participantCount: number,
+  course: { allowWaitingList: boolean | null },
+): number[] | null {
+  if (!indexes) return null;
+  const selection = normalizeSeatSelection(indexes, participantCount);
+  if (!selection) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Die Auswahl für die freien Plätze ist ungültig.",
+    });
+  }
+  if (!course.allowWaitingList) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message:
+        "Dieser Kurs hat keine Warteliste – die Anmeldung lässt sich nicht aufteilen.",
+    });
+  }
+  return selection;
+}
+
+/**
+ * Mail zu einem Absenden. Aufgeteilt geht eine Mail für beide Teile hinaus —
+ * zwei hätten nebeneinander „bestätigt“ und „Warteliste“ gemeldet.
+ */
+async function sendRegistrationPartsEmail(
+  { primary, waitlist }: CreatedParts,
+  course: Parameters<typeof downPaymentMailInfo>[1],
+): Promise<void> {
+  if (!waitlist) {
+    const { registration } = primary;
+    await sendRegistrationCreatedEmail({
+      registration,
+      registrationStatus: registration.registrationStatus,
+      siblingDiscountStatus: registration.siblingDiscountStatus,
+      originalTotalPrice:
+        registration.originalTotalPrice ?? registration.totalPrice,
+      siblingDiscountAmount: registration.siblingDiscountAmount ?? 0,
+      totalPrice: registration.totalPrice,
+      downPayment: downPaymentMailInfo(registration, course),
+    });
+    return;
+  }
+
+  const emailService = await getEmailService();
+  if (!emailService.isEmailConfigured()) return;
+
+  const mailPart = (registration: CreatedRegistrationPart) => ({
+    registrationId: registration.id,
+    participantNames: registration.participants.map(
+      (participant) => `${participant.firstName} ${participant.lastName}`,
+    ),
+    totalPrice: registration.totalPrice,
+    manageUrl: registrationAccessUrl(registration),
+    downPayment: downPaymentMailInfo(registration, course),
+  });
+
+  try {
+    await emailService.sendCourseRegistrationSplitEmail({
+      email: primary.registration.registrantEmail,
+      registrantFirstName: primary.registration.registrantFirstName,
+      registrantLastName: primary.registration.registrantLastName,
+      courseTitle: primary.registration.course.title,
+      startDate: primary.registration.course.startDate,
+      endDate: primary.registration.course.endDate,
+      confirmed: mailPart(primary.registration),
+      waitlist: mailPart(waitlist.registration),
+      discountPending: [primary, waitlist].some(
+        ({ registration }) =>
+          registration.siblingDiscountStatus === SiblingDiscountStatus.PENDING,
+      ),
+    });
+  } catch (error) {
+    log.error("Failed to send split registration email:", error);
+  }
+}
+
+/**
+ * Antwort auf ein Absenden: die bestätigte (oder einzige) Anmeldung, dazu der
+ * wartende Teil einer Aufteilung.
+ */
+function withWaitlistPart<T extends CreatedRegistrationPart>(
+  parts: CreatedParts<T>,
+) {
+  return {
+    ...parts.primary.registration,
+    waitlistPart: parts.waitlist
+      ? {
+          id: parts.waitlist.registration.id,
+          participantCount: parts.waitlist.registration.participants.length,
+        }
+      : null,
+  };
+}
+
 /** In-app notification for the course team (creator + organizers). */
 async function notifyCourseTeamOfNewRegistration(
   db: typeof database,
@@ -193,6 +333,8 @@ async function notifyCourseTeamOfNewRegistration(
     actorId: string | null;
     registration: CreatedRegistration;
     registrationStatus: RegistrationStatus;
+    /** The waiting-list part when the registration was split. */
+    waitlistRegistration?: CreatedRegistration;
     /** Marks entries the team recorded manually instead of public sign-ups. */
     byStaff?: boolean;
   },
@@ -213,13 +355,18 @@ async function notifyCourseTeamOfNewRegistration(
       args.registrationStatus === RegistrationStatus.WAITLIST;
     const participantCount = args.registration.participants.length;
     const prefix = args.byStaff ? "Nachgetragene Anmeldung" : "Neue Anmeldung";
+    const registrant = `${args.registration.registrantFirstName} ${args.registration.registrantLastName}`;
     for (const userId of recipients) {
       await createNotification(db, userId, {
         type: "registration.new",
-        title: isWaitlisted
-          ? `${prefix} (Warteliste): ${args.courseTitle}`
-          : `${prefix}: ${args.courseTitle}`,
-        body: `${args.registration.registrantFirstName} ${args.registration.registrantLastName} — ${participantCount} ${participantCount === 1 ? "Teilnehmer" : "Teilnehmer"}`,
+        title: args.waitlistRegistration
+          ? `${prefix} (teilweise Warteliste): ${args.courseTitle}`
+          : isWaitlisted
+            ? `${prefix} (Warteliste): ${args.courseTitle}`
+            : `${prefix}: ${args.courseTitle}`,
+        body: args.waitlistRegistration
+          ? `${registrant} — ${participantCount} bestätigt, ${args.waitlistRegistration.participants.length} auf der Warteliste`
+          : `${registrant} — ${participantCount} ${participantCount === 1 ? "Teilnehmer" : "Teilnehmer"}`,
         url: `/dashboard/courses/${args.courseId}/participants/${args.registration.id}`,
       });
     }
@@ -293,6 +440,13 @@ export const registrationsRouter = createTRPCRouter({
             siblingGroupId: z.string().optional(), // Groups siblings together for discount
           }),
         ),
+        /**
+         * Reichen die Plätze nicht für alle: die Teilnehmer (Index in
+         * `participants`), die die freien Plätze bekommen. Die übrigen kommen
+         * als eigene, verknüpfte Anmeldung auf die Warteliste. Ohne Angabe
+         * wartet die ganze Anmeldung.
+         */
+        confirmedParticipantIndexes: z.array(z.number().int()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -300,6 +454,7 @@ export const registrationsRouter = createTRPCRouter({
         participants: participantsInput,
         paymentMethod: inputPaymentMethod,
         downPaymentAcknowledged,
+        confirmedParticipantIndexes,
         ...registrationData
       } = input;
 
@@ -356,11 +511,12 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const { participants: participantsWithPriceOptions, originalTotalPrice } =
+      const { participants: participantsWithPriceOptions } =
         prepareParticipantsForCourse(participantsInput, course);
 
       // Die Anzahlung wird bei der Anmeldung festgehalten. Betrag, Bankdaten
-      // und Erstattungshinweis muss die Anmeldung ausdrücklich bestätigen.
+      // und Erstattungshinweis muss die Anmeldung ausdrücklich bestätigen —
+      // bei einer Aufteilung für beide Teile zugleich.
       const downPaymentAmount = registrationDownPayment(
         course,
         participantsWithPriceOptions,
@@ -372,30 +528,11 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      let totalPrice = originalTotalPrice;
-      let siblingDiscountAmount = 0;
-      let siblingDiscountStatus: SiblingDiscountStatus =
-        SiblingDiscountStatus.NONE;
-
-      if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        // Age eligibility is evaluated at course start, so the discount does
-        // not change between registration and invoicing.
-        const { totalDiscount } = computeSiblingDiscounts(
-          participantsWithPriceOptions.map((p) => ({
-            birthDate: p.birthDate,
-            siblingGroupId: p.siblingGroupId,
-            price:
-              course.priceOptions.find((po) => po.id === p.priceOptionId)
-                ?.price ?? 0,
-          })),
-        );
-        siblingDiscountAmount = totalDiscount;
-
-        if (siblingDiscountAmount > 0) {
-          totalPrice = roundMoney(originalTotalPrice - siblingDiscountAmount);
-          siblingDiscountStatus = SiblingDiscountStatus.PENDING;
-        }
-      }
+      const seatSelection = parseSeatSelection(
+        confirmedParticipantIndexes,
+        participantsWithPriceOptions.length,
+        course,
+      );
 
       const resolvedPaymentMethod = resolveCoursePaymentMethod(
         course,
@@ -403,89 +540,120 @@ export const registrationsRouter = createTRPCRouter({
       );
 
       // Capacity check and insert run in one SERIALIZABLE transaction so two
-      // concurrent registrations cannot both take the last seat.
-      const { registration, registrationStatus } = await runSerializable(
-        ctx.db,
-        async (tx) => {
-          const currentParticipantsCount = await countConfirmedParticipants(
-            tx,
-            input.courseId,
-          );
+      // concurrent registrations cannot both take the last seat. The sibling
+      // discount is priced per part there, over all participants.
+      const parts = await runSerializable(ctx.db, async (tx) => {
+        const currentParticipantsCount = await countConfirmedParticipants(
+          tx,
+          input.courseId,
+        );
 
-          const newParticipants = participantsWithPriceOptions.length;
-          const totalAfterRegistration =
-            currentParticipantsCount + newParticipants;
-          const maxParticipants = computeCourseCapacity(course);
-          const availableSpots = maxParticipants - currentParticipantsCount;
+        const newParticipants = participantsWithPriceOptions.length;
+        const totalAfterRegistration =
+          currentParticipantsCount + newParticipants;
+        const maxParticipants = computeCourseCapacity(course);
+        const availableSpots = maxParticipants - currentParticipantsCount;
 
-          let status: RegistrationStatus = RegistrationStatus.CONFIRMED;
+        let status: RegistrationStatus = RegistrationStatus.CONFIRMED;
 
-          if (totalAfterRegistration > maxParticipants) {
-            if (!course.allowWaitingList) {
-              if (availableSpots > 0 && availableSpots < newParticipants) {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer oder kontaktieren Sie uns.`,
-                });
-              }
+        if (totalAfterRegistration > maxParticipants) {
+          if (!course.allowWaitingList) {
+            if (availableSpots > 0 && availableSpots < newParticipants) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
-                message: "Course is full and waiting list is not available",
+                message: `Nur noch ${availableSpots} ${availableSpots === 1 ? "Platz" : "Plätze"} verfügbar, aber Sie versuchen ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"} anzumelden. Bitte reduzieren Sie die Anzahl der Teilnehmer oder kontaktieren Sie uns.`,
+              });
+            }
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Course is full and waiting list is not available",
+            });
+          }
+          status = RegistrationStatus.WAITLIST;
+        }
+
+        // Auch die Preiskategorien haben ihre Grenzen. Eine ausgebuchte gilt
+        // wie ein voller Kurs: mit Warteliste kommt die Anmeldung darauf,
+        // ohne wird sie abgelehnt — sie scheiterte sonst trotz Warteliste.
+        if (status === RegistrationStatus.CONFIRMED) {
+          const additionsByOptionId: Record<string, number> = {};
+          for (const participant of participantsWithPriceOptions) {
+            additionsByOptionId[participant.priceOptionId] =
+              (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
+          }
+          const fullOption = await findFullPriceTier(
+            tx,
+            input.courseId,
+            course.priceOptions,
+            additionsByOptionId,
+          );
+          if (fullOption) {
+            if (!course.allowWaitingList) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: priceTierFullMessage(fullOption),
               });
             }
             status = RegistrationStatus.WAITLIST;
           }
+        }
 
-          // Auch die Preiskategorien haben ihre Grenzen. Eine ausgebuchte gilt
-          // wie ein voller Kurs: mit Warteliste kommt die Anmeldung darauf,
-          // ohne wird sie abgelehnt — sie scheiterte sonst trotz Warteliste.
-          if (status === RegistrationStatus.CONFIRMED) {
-            const additionsByOptionId: Record<string, number> = {};
-            for (const participant of participantsWithPriceOptions) {
-              additionsByOptionId[participant.priceOptionId] =
-                (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
-            }
-            const fullOption = await findFullPriceTier(
-              tx,
-              input.courseId,
-              course.priceOptions,
-              additionsByOptionId,
-            );
-            if (fullOption) {
-              if (!course.allowWaitingList) {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message: priceTierFullMessage(fullOption),
-                });
-              }
-              status = RegistrationStatus.WAITLIST;
-            }
-          }
+        // Aufgeteilt wird nur, wenn die Anmeldenden es gewählt haben und
+        // nicht ohnehin alle Platz haben. Passt ihre Auswahl inzwischen
+        // nicht mehr, entscheiden sie neu: still anders aufzuteilen hieße,
+        // an ihrer Stelle zu bestimmen, wer mitfährt.
+        const confirmedIndexes =
+          status === RegistrationStatus.WAITLIST ? seatSelection : null;
+        if (confirmedIndexes) {
+          await assertSeatSelectionFits(tx, {
+            course,
+            participants: participantsWithPriceOptions,
+            selection: confirmedIndexes,
+            confirmedCount: currentParticipantsCount,
+          });
+        }
 
-          const created = await tx.courseRegistration.create({
+        const plan = planRegistrationParts(
+          participantsWithPriceOptions,
+          (participant) => priceOptionPrice(course, participant),
+          {
+            status,
+            confirmedIndexes,
+            withSiblingDiscount:
+              input.siblingDiscountApplied && course.allowSiblingDiscount,
+          },
+        );
+        const registrationGroupId = plan.waitlist ? randomUUID() : null;
+
+        const createPart = async (part: typeof plan.primary) => {
+          const partDownPayment = registrationDownPayment(
+            course,
+            part.participants,
+          );
+          const discounted = part.siblingDiscountAmount > 0;
+          const registration = await tx.courseRegistration.create({
             data: {
               ...registrationData,
               ...(resolvedPaymentMethod != null
                 ? { paymentMethod: resolvedPaymentMethod }
                 : {}),
-              totalPrice, // Use server-calculated price (after discount if applied)
-              downPaymentAmount,
-              downPaymentStatus: downPaymentAmount
+              totalPrice: part.totalPrice,
+              downPaymentAmount: partDownPayment,
+              downPaymentStatus: partDownPayment
                 ? DownPaymentStatus.OPEN
                 : null,
-              originalTotalPrice:
-                input.siblingDiscountApplied && siblingDiscountAmount > 0
-                  ? originalTotalPrice
-                  : null,
-              siblingDiscountAmount:
-                input.siblingDiscountApplied && siblingDiscountAmount > 0
-                  ? siblingDiscountAmount
-                  : null,
+              originalTotalPrice: discounted ? part.originalTotalPrice : null,
+              siblingDiscountAmount: discounted
+                ? part.siblingDiscountAmount
+                : null,
               siblingDiscountApplied: input.siblingDiscountApplied ?? false,
-              siblingDiscountStatus,
-              registrationStatus: status,
+              siblingDiscountStatus: discounted
+                ? SiblingDiscountStatus.PENDING
+                : SiblingDiscountStatus.NONE,
+              registrationStatus: part.status,
+              registrationGroupId,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => ({
+                create: part.participants.map((participant) => ({
                   ...participant,
                   // Führend für Kapazität und Belegung; `priceOption` bleibt
                   // als Anzeige-Snapshot daneben stehen.
@@ -507,31 +675,28 @@ export const registrationsRouter = createTRPCRouter({
               },
             },
           });
+          return { registration, part };
+        };
 
-          return { registration: created, registrationStatus: status };
-        },
-      );
-
-      await sendRegistrationCreatedEmail({
-        registration,
-        registrationStatus,
-        siblingDiscountStatus,
-        originalTotalPrice,
-        siblingDiscountAmount,
-        totalPrice,
-        downPayment: downPaymentMailInfo(registration, course),
+        return {
+          primary: await createPart(plan.primary),
+          waitlist: plan.waitlist ? await createPart(plan.waitlist) : null,
+        };
       });
+
+      await sendRegistrationPartsEmail(parts, course);
 
       await notifyCourseTeamOfNewRegistration(ctx.db, {
         courseId: input.courseId,
         courseTitle: course.title,
         courseCreatedById: course.createdById,
         actorId: ctx.session?.user.id ?? null,
-        registration,
-        registrationStatus,
+        registration: parts.primary.registration,
+        registrationStatus: parts.primary.part.status,
+        waitlistRegistration: parts.waitlist?.registration,
       });
 
-      return registration;
+      return withWaitlistPart(parts);
     }),
 
   /**
@@ -592,6 +757,12 @@ export const registrationsRouter = createTRPCRouter({
         sendConfirmationEmail: z.boolean().default(true),
         /** Anzahlung lag der Anmeldung schon bei (z. B. Papierformular mit Überweisung). */
         downPaymentAlreadyPaid: z.boolean().default(false),
+        /**
+         * Wie bei `create`: die Teilnehmer, die die freien Plätze bekommen,
+         * während die übrigen als verknüpfte Anmeldung warten. Nur ohne
+         * ausdrücklichen Status.
+         */
+        confirmedParticipantIndexes: z.array(z.number().int()).optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -602,6 +773,7 @@ export const registrationsRouter = createTRPCRouter({
         allowOverbooking,
         sendConfirmationEmail,
         downPaymentAlreadyPaid,
+        confirmedParticipantIndexes,
         ...registrationData
       } = input;
 
@@ -654,115 +826,127 @@ export const registrationsRouter = createTRPCRouter({
       // Die Altersgrenzen einer Kategorie gelten für Anmeldende; das Kursteam
       // darf sie im Einzelfall übergehen — es kennt die Ausnahme, die es
       // gerade einträgt.
-      const { participants: participantsWithPriceOptions, originalTotalPrice } =
+      const { participants: participantsWithPriceOptions } =
         prepareParticipantsForCourse(participantsInput, course, {
           allowAgeMismatch: true,
         });
 
-      // Das Team bestätigt die Hinweise im Namen der Anmeldung (wie die
-      // Teilnahmebedingungen) und kann eine schon eingegangene Anzahlung
-      // gleich mit verbuchen.
-      const downPaymentAmount = registrationDownPayment(
-        course,
-        participantsWithPriceOptions,
-      );
-      const downPaymentBooked =
-        Boolean(downPaymentAmount) && downPaymentAlreadyPaid;
-
-      let totalPrice = originalTotalPrice;
-      let siblingDiscountAmount = 0;
-      let siblingDiscountStatus: SiblingDiscountStatus =
-        SiblingDiscountStatus.NONE;
-
-      if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        const { totalDiscount } = computeSiblingDiscounts(
-          participantsWithPriceOptions.map((p) => ({
-            birthDate: p.birthDate,
-            siblingGroupId: p.siblingGroupId,
-            price:
-              course.priceOptions.find((po) => po.id === p.priceOptionId)
-                ?.price ?? 0,
-          })),
-        );
-        siblingDiscountAmount = totalDiscount;
-
-        if (siblingDiscountAmount > 0) {
-          totalPrice = roundMoney(originalTotalPrice - siblingDiscountAmount);
-          siblingDiscountStatus = SiblingDiscountStatus.PENDING;
-        }
-      }
+      // Aufgeteilt wird wie bei der öffentlichen Anmeldung — aber nur, wenn
+      // das Team keinen Status ausdrücklich vorgibt.
+      const seatSelection = requestedStatus
+        ? null
+        : parseSeatSelection(
+            confirmedParticipantIndexes,
+            participantsWithPriceOptions.length,
+            course,
+          );
 
       const resolvedPaymentMethod = resolveCoursePaymentMethod(
         course,
         inputPaymentMethod,
       );
 
-      const { registration, registrationStatus } = await runSerializable(
-        ctx.db,
-        async (tx) => {
-          const confirmedCount = await countConfirmedParticipants(
-            tx,
-            input.courseId,
+      const parts = await runSerializable(ctx.db, async (tx) => {
+        const confirmedCount = await countConfirmedParticipants(
+          tx,
+          input.courseId,
+        );
+        const capacity = computeCourseCapacity(course);
+        const newParticipants = participantsWithPriceOptions.length;
+        const fitsInCapacity = confirmedCount + newParticipants <= capacity;
+
+        const additionsByOptionId: Record<string, number> = {};
+        for (const participant of participantsWithPriceOptions) {
+          additionsByOptionId[participant.priceOptionId] =
+            (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
+        }
+        const fullOption = await findFullPriceTier(
+          tx,
+          input.courseId,
+          course.priceOptions,
+          additionsByOptionId,
+        );
+
+        // "Automatisch" behandelt eine ausgebuchte Preiskategorie wie einen
+        // vollen Kurs, genau wie die öffentliche Anmeldung.
+        const status: RegistrationStatus =
+          requestedStatus ??
+          ((fitsInCapacity && !fullOption) || !course.allowWaitingList
+            ? RegistrationStatus.CONFIRMED
+            : RegistrationStatus.WAITLIST);
+
+        if (
+          status === RegistrationStatus.CONFIRMED &&
+          !fitsInCapacity &&
+          !allowOverbooking
+        ) {
+          const availableSpots = Math.max(0, capacity - confirmedCount);
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Der Kurs hat nur noch ${availableSpots} ${availableSpots === 1 ? "freien Platz" : "freie Plätze"}, die Anmeldung umfasst ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"}. Auf die Warteliste setzen oder Überbuchung ausdrücklich zulassen.`,
+          });
+        }
+
+        // The overbooking acknowledgement covers per-price-option caps too:
+        // staff who knowingly exceed the course capacity should not be
+        // stopped by a tier limit right afterwards.
+        if (
+          status === RegistrationStatus.CONFIRMED &&
+          fullOption &&
+          !allowOverbooking
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: priceTierFullMessage(fullOption),
+          });
+        }
+
+        const confirmedIndexes =
+          status === RegistrationStatus.WAITLIST ? seatSelection : null;
+        if (confirmedIndexes) {
+          await assertSeatSelectionFits(tx, {
+            course,
+            participants: participantsWithPriceOptions,
+            selection: confirmedIndexes,
+            confirmedCount,
+          });
+        }
+
+        const plan = planRegistrationParts(
+          participantsWithPriceOptions,
+          (participant) => priceOptionPrice(course, participant),
+          {
+            status,
+            confirmedIndexes,
+            withSiblingDiscount:
+              input.siblingDiscountApplied && course.allowSiblingDiscount,
+          },
+        );
+        const registrationGroupId = plan.waitlist ? randomUUID() : null;
+
+        const createPart = async (part: typeof plan.primary) => {
+          const partDownPayment = registrationDownPayment(
+            course,
+            part.participants,
           );
-          const capacity = computeCourseCapacity(course);
-          const newParticipants = participantsWithPriceOptions.length;
-          const fitsInCapacity = confirmedCount + newParticipants <= capacity;
-
-          const additionsByOptionId: Record<string, number> = {};
-          for (const participant of participantsWithPriceOptions) {
-            additionsByOptionId[participant.priceOptionId] =
-              (additionsByOptionId[participant.priceOptionId] ?? 0) + 1;
-          }
-          const fullOption = await findFullPriceTier(
-            tx,
-            input.courseId,
-            course.priceOptions,
-            additionsByOptionId,
-          );
-
-          // "Automatisch" behandelt eine ausgebuchte Preiskategorie wie einen
-          // vollen Kurs, genau wie die öffentliche Anmeldung.
-          const status: RegistrationStatus =
-            requestedStatus ??
-            ((fitsInCapacity && !fullOption) || !course.allowWaitingList
-              ? RegistrationStatus.CONFIRMED
-              : RegistrationStatus.WAITLIST);
-
-          if (
-            status === RegistrationStatus.CONFIRMED &&
-            !fitsInCapacity &&
-            !allowOverbooking
-          ) {
-            const availableSpots = Math.max(0, capacity - confirmedCount);
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Der Kurs hat nur noch ${availableSpots} ${availableSpots === 1 ? "freien Platz" : "freie Plätze"}, die Anmeldung umfasst ${newParticipants} ${newParticipants === 1 ? "Teilnehmer" : "Teilnehmer"}. Auf die Warteliste setzen oder Überbuchung ausdrücklich zulassen.`,
-            });
-          }
-
-          // The overbooking acknowledgement covers per-price-option caps too:
-          // staff who knowingly exceed the course capacity should not be
-          // stopped by a tier limit right afterwards.
-          if (
-            status === RegistrationStatus.CONFIRMED &&
-            fullOption &&
-            !allowOverbooking
-          ) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: priceTierFullMessage(fullOption),
-            });
-          }
-
-          const created = await tx.courseRegistration.create({
+          // Das Team bestätigt die Hinweise im Namen der Anmeldung (wie die
+          // Teilnahmebedingungen) und kann eine schon eingegangene Anzahlung
+          // gleich mit verbuchen — aufgeteilt beim bestätigten Teil, dem
+          // einzigen, bei dem sie schon fällig ist.
+          const downPaymentBooked =
+            Boolean(partDownPayment) &&
+            downPaymentAlreadyPaid &&
+            (!plan.waitlist || part.status === RegistrationStatus.CONFIRMED);
+          const discounted = part.siblingDiscountAmount > 0;
+          const registration = await tx.courseRegistration.create({
             data: {
               ...registrationData,
               ...(resolvedPaymentMethod != null
                 ? { paymentMethod: resolvedPaymentMethod }
                 : {}),
-              totalPrice,
-              downPaymentAmount,
-              downPaymentStatus: downPaymentAmount
+              totalPrice: part.totalPrice,
+              downPaymentAmount: partDownPayment,
+              downPaymentStatus: partDownPayment
                 ? downPaymentBooked
                   ? DownPaymentStatus.PAID
                   : DownPaymentStatus.OPEN
@@ -771,15 +955,18 @@ export const registrationsRouter = createTRPCRouter({
                 downPaymentPaidAt: new Date(),
                 downPaymentPaidById: ctx.session.user.id,
               }),
-              originalTotalPrice:
-                siblingDiscountAmount > 0 ? originalTotalPrice : null,
-              siblingDiscountAmount:
-                siblingDiscountAmount > 0 ? siblingDiscountAmount : null,
+              originalTotalPrice: discounted ? part.originalTotalPrice : null,
+              siblingDiscountAmount: discounted
+                ? part.siblingDiscountAmount
+                : null,
               siblingDiscountApplied: input.siblingDiscountApplied ?? false,
-              siblingDiscountStatus,
-              registrationStatus: status,
+              siblingDiscountStatus: discounted
+                ? SiblingDiscountStatus.PENDING
+                : SiblingDiscountStatus.NONE,
+              registrationStatus: part.status,
+              registrationGroupId,
               participants: {
-                create: participantsWithPriceOptions.map((participant) => ({
+                create: part.participants.map((participant) => ({
                   ...participant,
                   priceOptionId: participant.priceOptionId,
                   customFields:
@@ -799,21 +986,19 @@ export const registrationsRouter = createTRPCRouter({
               },
             },
           });
+          return { registration, part };
+        };
 
-          return { registration: created, registrationStatus: status };
-        },
-      );
+        return {
+          primary: await createPart(plan.primary),
+          waitlist: plan.waitlist ? await createPart(plan.waitlist) : null,
+        };
+      });
+
+      const { registration } = parts.primary;
 
       if (sendConfirmationEmail) {
-        await sendRegistrationCreatedEmail({
-          registration,
-          registrationStatus,
-          siblingDiscountStatus,
-          originalTotalPrice,
-          siblingDiscountAmount,
-          totalPrice,
-          downPayment: downPaymentMailInfo(registration, course),
-        });
+        await sendRegistrationPartsEmail(parts, course);
       }
 
       await notifyCourseTeamOfNewRegistration(ctx.db, {
@@ -822,7 +1007,8 @@ export const registrationsRouter = createTRPCRouter({
         courseCreatedById: course.createdById,
         actorId: ctx.session.user.id,
         registration,
-        registrationStatus,
+        registrationStatus: registration.registrationStatus,
+        waitlistRegistration: parts.waitlist?.registration,
         byStaff: true,
       });
 
@@ -836,8 +1022,13 @@ export const registrationsRouter = createTRPCRouter({
           courseId: input.courseId,
           registrantEmail: registration.registrantEmail,
           participantCount: registration.participants.length,
-          registrationStatus,
-          totalPrice,
+          registrationStatus: registration.registrationStatus,
+          totalPrice: registration.totalPrice,
+          ...(parts.waitlist && {
+            waitlistRegistrationId: parts.waitlist.registration.id,
+            waitlistParticipantCount:
+              parts.waitlist.registration.participants.length,
+          }),
           allowOverbooking,
           sendConfirmationEmail,
           afterDeadline: isRegistrationDeadlinePassed(
@@ -846,7 +1037,7 @@ export const registrationsRouter = createTRPCRouter({
         },
       });
 
-      return registration;
+      return withWaitlistPart(parts);
     }),
 
   /**
@@ -1034,12 +1225,41 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
+      // Die übrigen Teile einer aufgeteilten Anmeldung. Sie gehören derselben
+      // Anmeldung an, also sieht sie, wer diesen Teil sehen darf; wer über
+      // einen Zugangslink kommt, bekommt die Links zu den anderen Teilen mit.
+      const groupParts = registration.registrationGroupId
+        ? await ctx.db.courseRegistration.findMany({
+            where: {
+              registrationGroupId: registration.registrationGroupId,
+              id: { not: registration.id },
+            },
+            select: {
+              id: true,
+              registrationStatus: true,
+              registrantEmail: true,
+              participants: { select: { firstName: true, lastName: true } },
+            },
+            orderBy: { createdAt: "asc" },
+          })
+        : [];
+
       const {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         course: { createdById, collaborators, ...course },
         ...rest
       } = registration;
-      return { ...rest, course };
+      return {
+        ...rest,
+        course,
+        groupParts: groupParts.map(({ registrantEmail, ...part }) => ({
+          ...part,
+          accessToken:
+            isOwner && input.accessToken
+              ? createRegistrationAccessToken(part.id, registrantEmail)
+              : null,
+        })),
+      };
     }),
 
   canManageRegistration: protectedProcedure
@@ -1538,16 +1758,38 @@ export const registrationsRouter = createTRPCRouter({
       let siblingDiscountStatus = registration.siblingDiscountStatus;
 
       if (input.siblingDiscountApplied && course.allowSiblingDiscount) {
-        const { totalDiscount } = computeSiblingDiscounts(
-          participantsWithPriceOptions.map((p) => ({
-            birthDate: p.birthDate,
-            siblingGroupId: p.siblingGroupId,
-            price:
-              course.priceOptions.find((po) => po.id === p.priceOptionId)
-                ?.price ?? 0,
-          })),
+        // Bei einer aufgeteilten Anmeldung zählen die Geschwister in den
+        // anderen, nicht stornierten Teilen mit — sonst verlöre ein Teil beim
+        // Bearbeiten seinen Rabatt, nur weil das ältere Geschwister wartet.
+        const otherPartParticipants = registration.registrationGroupId
+          ? await ctx.db.participant.findMany({
+              where: {
+                registration: {
+                  registrationGroupId: registration.registrationGroupId,
+                  id: { not: id },
+                  registrationStatus: { not: RegistrationStatus.CANCELLED },
+                },
+              },
+              select: {
+                birthDate: true,
+                siblingGroupId: true,
+                priceOptionId: true,
+              },
+            })
+          : [];
+        const priced = (p: {
+          birthDate: Date;
+          siblingGroupId?: string | null;
+          priceOptionId?: string | null;
+        }) => ({
+          birthDate: p.birthDate,
+          siblingGroupId: p.siblingGroupId,
+          price: priceOptionPrice(course, p),
+        });
+        siblingDiscountAmount = siblingDiscountWithinGroup(
+          participantsWithPriceOptions.map(priced),
+          otherPartParticipants.map(priced),
         );
-        siblingDiscountAmount = totalDiscount;
 
         if (siblingDiscountAmount > 0) {
           totalPrice = roundMoney(originalTotalPrice - siblingDiscountAmount);
@@ -2331,11 +2573,21 @@ export const registrationsRouter = createTRPCRouter({
       // updateStatus, which re-checks capacity) and a cancelled one stays
       // cancelled. The previous behavior force-set CONFIRMED here, which
       // could overbook a full course.
-      const updated = await ctx.db.courseRegistration.update({
-        where: { id: input.registrationId },
+      // Aufgeteilt gilt die Entscheidung für alle Teile, über die der Rabatt
+      // berechnet wurde — mit einer Mail über die Summe.
+      const parts = await siblingDiscountParts(
+        ctx.db,
+        registration,
+        SiblingDiscountStatus.PENDING,
+      );
+      await ctx.db.courseRegistration.updateMany({
+        where: { id: { in: parts.map((part) => part.id) } },
         data: {
           siblingDiscountStatus: SiblingDiscountStatus.APPROVED,
         },
+      });
+      const updated = await ctx.db.courseRegistration.findUniqueOrThrow({
+        where: { id: input.registrationId },
         include: {
           participants: true,
           course: {
@@ -2347,12 +2599,12 @@ export const registrationsRouter = createTRPCRouter({
           },
         },
       });
+      const totals = sumDiscountParts(parts);
 
       const emailService = await getEmailService();
       if (
         emailService.isEmailConfigured() &&
-        updated.originalTotalPrice &&
-        updated.siblingDiscountAmount
+        totals.siblingDiscountAmount > 0
       ) {
         try {
           await emailService.sendSiblingDiscountApprovedEmail(
@@ -2362,10 +2614,10 @@ export const registrationsRouter = createTRPCRouter({
             updated.course.title,
             updated.course.startDate,
             updated.course.endDate,
-            updated.originalTotalPrice,
-            updated.siblingDiscountAmount,
-            updated.totalPrice,
-            updated.participants.length,
+            totals.originalTotalPrice,
+            totals.siblingDiscountAmount,
+            totals.totalPrice,
+            totals.participantCount,
             updated.id,
             registrationAccessUrl(updated),
           );
@@ -2407,16 +2659,29 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const originalPrice =
-        registration.originalTotalPrice ?? registration.totalPrice;
-      const updated = await ctx.db.courseRegistration.update({
+      // Wie beim Genehmigen: aufgeteilt gilt die Ablehnung für alle Teile,
+      // jeder zurück auf seinen eigenen vollen Preis.
+      const parts = await siblingDiscountParts(
+        ctx.db,
+        registration,
+        SiblingDiscountStatus.PENDING,
+      );
+      await ctx.db.$transaction(
+        parts.map((part) =>
+          ctx.db.courseRegistration.update({
+            where: { id: part.id },
+            data: {
+              siblingDiscountStatus: SiblingDiscountStatus.REJECTED,
+              totalPrice: part.originalTotalPrice ?? part.totalPrice,
+              siblingDiscountAmount: null,
+              originalTotalPrice: null,
+            },
+          }),
+        ),
+      );
+      const totals = sumDiscountParts(parts);
+      const updated = await ctx.db.courseRegistration.findUniqueOrThrow({
         where: { id: input.registrationId },
-        data: {
-          siblingDiscountStatus: SiblingDiscountStatus.REJECTED,
-          totalPrice: originalPrice,
-          siblingDiscountAmount: null,
-          originalTotalPrice: null,
-        },
         include: {
           participants: true,
           course: {
@@ -2439,8 +2704,8 @@ export const registrationsRouter = createTRPCRouter({
             updated.course.title,
             updated.course.startDate,
             updated.course.endDate,
-            originalPrice,
-            updated.participants.length,
+            totals.originalTotalPrice,
+            totals.participantCount,
             updated.id,
             registrationAccessUrl(updated),
           );
@@ -2542,15 +2807,20 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const { totalDiscount } = computeSiblingDiscounts(
-        registration.participants.map((participant) => ({
-          birthDate: participant.birthDate,
-          siblingGroupId: participant.siblingGroupId,
-          price:
-            registration.course.priceOptions.find(
-              (option) => option.id === participant.priceOptionId,
-            )?.price ?? 0,
-        })),
+      // Aufgeteilt zählen die Geschwister in den übrigen Teilen mit; dieser
+      // Teil bekommt den Anteil seiner eigenen Teilnehmer.
+      const priced = (participant: {
+        birthDate: Date;
+        siblingGroupId: string | null;
+        priceOptionId: string | null;
+      }) => ({
+        birthDate: participant.birthDate,
+        siblingGroupId: participant.siblingGroupId,
+        price: priceOptionPrice(registration.course, participant),
+      });
+      const totalDiscount = siblingDiscountWithinGroup(
+        registration.participants.map(priced),
+        (await otherPartParticipants(ctx.db, registration)).map(priced),
       );
 
       if (totalDiscount <= 0) {
@@ -2825,15 +3095,68 @@ export const registrationsRouter = createTRPCRouter({
         });
       }
 
-      const updated = await ctx.db.courseRegistration.update({
-        where: { id: input.registrationId },
+      // Aufgeteilt gilt die Zusage zum vollen Preis für alle abgelehnten
+      // Teile. Der Status bleibt, wie er ist: früher wurde hier „bestätigt“
+      // erzwungen, womit eine wartende Anmeldung den Kurs überbucht hätte.
+      const parts = await siblingDiscountParts(
+        ctx.db,
+        registration,
+        SiblingDiscountStatus.REJECTED,
+      );
+      const partIds = parts.map((part) => part.id);
+      await ctx.db.courseRegistration.updateMany({
+        where: { id: { in: partIds } },
         data: {
           siblingDiscountStatus: SiblingDiscountStatus.NONE,
           siblingDiscountApplied: false,
           siblingDiscountAmount: null,
           originalTotalPrice: null,
-          registrationStatus: RegistrationStatus.CONFIRMED,
         },
+      });
+      const updatedParts = await ctx.db.courseRegistration.findMany({
+        where: { id: { in: partIds } },
+        include: {
+          participants: true,
+          course: {
+            select: {
+              title: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      // Eine Bestätigung bekommt nur, was tatsächlich einen Platz hat.
+      const emailService = await getEmailService();
+      if (emailService.isEmailConfigured()) {
+        for (const part of updatedParts) {
+          if (part.registrationStatus !== RegistrationStatus.CONFIRMED) {
+            continue;
+          }
+          try {
+            await emailService.sendCourseRegistrationConfirmedEmail(
+              part.registrantEmail,
+              part.registrantFirstName,
+              part.registrantLastName,
+              part.course.title,
+              part.course.startDate,
+              part.course.endDate,
+              part.totalPrice,
+              part.participants.length,
+              part.id,
+              registrationAccessUrl(part),
+              downPaymentMailInfo(part, registration.course),
+            );
+          } catch (error) {
+            log.error("Failed to send confirmation email:", error);
+          }
+        }
+      }
+
+      return ctx.db.courseRegistration.findUniqueOrThrow({
+        where: { id: input.registrationId },
         include: {
           participants: true,
           course: {
@@ -2845,28 +3168,5 @@ export const registrationsRouter = createTRPCRouter({
           },
         },
       });
-
-      const emailService = await getEmailService();
-      if (emailService.isEmailConfigured()) {
-        try {
-          await emailService.sendCourseRegistrationConfirmedEmail(
-            updated.registrantEmail,
-            updated.registrantFirstName,
-            updated.registrantLastName,
-            updated.course.title,
-            updated.course.startDate,
-            updated.course.endDate,
-            updated.totalPrice,
-            updated.participants.length,
-            updated.id,
-            registrationAccessUrl(updated),
-            downPaymentMailInfo(updated, registration.course),
-          );
-        } catch (error) {
-          log.error("Failed to send confirmation email:", error);
-        }
-      }
-
-      return updated;
     }),
 });
