@@ -65,9 +65,15 @@ import {
   computeCourseCapacity,
   countConfirmedParticipants,
   findFullPriceTier,
+  loadSeatAvailability,
   priceTierFullMessage,
   runSerializable,
 } from "../helpers/course-capacity";
+import {
+  acceptPromotionOffer,
+  assertMayAnswerPromotionOffer,
+  declinePromotionOffer,
+} from "../helpers/waitlist-offer";
 import { randomUUID } from "node:crypto";
 import { resolveParticipantPriceOption } from "@/lib/course-price-options";
 import {
@@ -82,6 +88,7 @@ import {
   notifyUsersWithPermission,
 } from "../helpers/notifications";
 import {
+  CLEARED_PROMOTION_OFFER,
   promoteFromWaitlist,
   sendPromotionEmails,
 } from "../helpers/waitlist-promotion";
@@ -1244,6 +1251,21 @@ export const registrationsRouter = createTRPCRouter({
           })
         : [];
 
+      // Ein laufendes Nachrück-Angebot, mit den gerade nutzbaren Plätzen — die
+      // Auswahl trifft die Detailseite.
+      const promotionOffer =
+        registration.registrationStatus === RegistrationStatus.WAITLIST &&
+        registration.promotionOfferExpiresAt &&
+        registration.promotionOfferExpiresAt > new Date()
+          ? {
+              expiresAt: registration.promotionOfferExpiresAt,
+              availability: await loadSeatAvailability(
+                ctx.db,
+                registration.course,
+              ),
+            }
+          : null;
+
       const {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         course: { createdById, collaborators, ...course },
@@ -1252,6 +1274,7 @@ export const registrationsRouter = createTRPCRouter({
       return {
         ...rest,
         course,
+        promotionOffer,
         groupParts: groupParts.map(({ registrantEmail, ...part }) => ({
           ...part,
           accessToken:
@@ -2088,6 +2111,9 @@ export const registrationsRouter = createTRPCRouter({
           data: {
             registrationStatus: input.registrationStatus,
             notes: input.notes,
+            // Ein Nachrück-Angebot gilt nur, solange die Anmeldung wartet.
+            ...(input.registrationStatus !== RegistrationStatus.WAITLIST &&
+              CLEARED_PROMOTION_OFFER),
           },
           include: {
             participants: true,
@@ -2266,6 +2292,43 @@ export const registrationsRouter = createTRPCRouter({
       }
 
       return updated;
+    }),
+
+  /**
+   * Nachrück-Angebot annehmen: die gewählten Teilnehmer rücken nach, die
+   * übrigen warten weiter. Antworten dürfen die Anmeldenden (auch über den
+   * Zugangslink) und das Kursteam.
+   */
+  acceptPromotionOffer: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        accessToken: z.string().optional(),
+        participantIds: z.array(z.string()).min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertMayAnswerPromotionOffer(ctx, input.id, input.accessToken);
+      return acceptPromotionOffer(ctx.db, {
+        registrationId: input.id,
+        participantIds: input.participantIds,
+        actorId: viewerId(ctx),
+      });
+    }),
+
+  /**
+   * Nachrück-Angebot ablehnen: die Plätze gehen an die Nächsten, die
+   * Anmeldung behält ihren Platz auf der Warteliste.
+   */
+  declinePromotionOffer: publicProcedure
+    .input(z.object({ id: z.string(), accessToken: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertMayAnswerPromotionOffer(ctx, input.id, input.accessToken);
+      await declinePromotionOffer(ctx.db, {
+        registrationId: input.id,
+        actorId: viewerId(ctx),
+      });
+      return { declined: true };
     }),
 
   /**
