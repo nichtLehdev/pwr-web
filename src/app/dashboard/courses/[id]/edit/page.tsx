@@ -227,9 +227,11 @@ export default function EditCoursePage() {
       { enabled: !!courseId && !!session?.user },
     );
 
-  // Ab der ersten ausgestellten Rechnung ist die Kursnummer eingefroren; der
-  // Server lehnt eine Änderung ohnehin ab, das Feld sagt es nur vorher.
+  // Ab der ersten ausgestellten Rechnung bzw. der ersten Anmeldung mit
+  // Anzahlung ist die Kursnummer eingefroren; der Server lehnt eine Änderung
+  // ohnehin ab, das Feld sagt es nur vorher — und warum.
   const courseNumberLocked = course?.courseNumberLocked ?? false;
+  const courseNumberLockedBy = course?.courseNumberLockedBy ?? null;
   // Aktive Anmeldungen haben die Anzahlung bestätigt; der Server lehnt eine
   // Änderung dann ab.
   const downPaymentLocked = course?.downPaymentLocked ?? false;
@@ -2635,13 +2637,23 @@ export default function EditCoursePage() {
                               />
                               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 {courseNumberLocked ? (
-                                  <>
-                                    Für diesen Kurs wurden bereits Rechnungen
-                                    ausgestellt — sie tragen die Kursnummer in
-                                    Nummernkreis und Verwendungszweck und sind
-                                    eingefroren. Die Nummer lässt sich deshalb
-                                    nicht mehr ändern.
-                                  </>
+                                  courseNumberLockedBy === "DOWN_PAYMENTS" ? (
+                                    <>
+                                      Es gibt bereits Anmeldungen mit Anzahlung
+                                      — sie haben die Kursnummer im
+                                      Verwendungszweck ihrer Überweisung
+                                      erhalten. Die Nummer lässt sich deshalb
+                                      nicht mehr ändern.
+                                    </>
+                                  ) : (
+                                    <>
+                                      Für diesen Kurs wurden bereits Rechnungen
+                                      ausgestellt — sie tragen die Kursnummer in
+                                      Nummernkreis und Verwendungszweck und sind
+                                      eingefroren. Die Nummer lässt sich deshalb
+                                      nicht mehr ändern.
+                                    </>
+                                  )
                                 ) : (
                                   <>
                                     Interne Nummer für die Buchhaltung. Mit
@@ -2651,7 +2663,8 @@ export default function EditCoursePage() {
                                     der Verwendungszweck nennt zusätzlich
                                     „Bläserlehrgang {courseNumber || "<Nr.>"}“.
                                     Ab der ersten ausgestellten Rechnung ist sie
-                                    fest.
+                                    fest, bei Kursen mit Anzahlung schon ab der
+                                    ersten Anmeldung.
                                   </>
                                 )}
                               </p>
