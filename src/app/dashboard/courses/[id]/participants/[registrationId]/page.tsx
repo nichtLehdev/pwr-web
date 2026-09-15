@@ -486,6 +486,18 @@ export default function RegistrationDetailPage() {
                 >
                   {registrationStatusLabels[registration.registrationStatus]}
                 </span>
+                {registration.groupParts.map((part) => (
+                  <Link
+                    key={part.id}
+                    href={`/dashboard/courses/${courseId}/participants/${part.id}`}
+                    className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium whitespace-nowrap text-orange-800 hover:underline dark:bg-orange-900/30 dark:text-orange-300"
+                    title="Weiterer Teil dieser aufgeteilten Anmeldung"
+                  >
+                    Weiterer Teil:{" "}
+                    {registrationStatusLabels[part.registrationStatus]} (
+                    {part.participants.length})
+                  </Link>
+                ))}
                 {canEdit && (
                   <button
                     type="button"
