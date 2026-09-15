@@ -69,12 +69,14 @@ export default function CourseRegistrationForm({
   );
   const [showParticipantLibrary, setShowParticipantLibrary] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [downPaymentAcknowledged, setDownPaymentAcknowledged] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [staffOptions, setStaffOptions] = useState<StaffRegistrationOptions>({
     registrationStatus: "AUTO",
     sendConfirmationEmail: true,
     allowOverbooking: false,
+    downPaymentAlreadyPaid: false,
   });
   const [registrationData, setRegistrationData] = useState<RegistrationData>({
     registrantEmail: currentUser?.email || "",
@@ -301,6 +303,7 @@ export default function CourseRegistrationForm({
       validationErrors,
       termsAccepted,
       staffMode,
+      downPaymentAcknowledged,
     );
   };
 
@@ -431,13 +434,17 @@ export default function CourseRegistrationForm({
           }),
           allowOverbooking: staffOptions.allowOverbooking,
           sendConfirmationEmail: staffOptions.sendConfirmationEmail,
+          downPaymentAlreadyPaid: staffOptions.downPaymentAlreadyPaid,
         },
         handlers,
       );
       return;
     }
 
-    registrationMutation.mutate(payload, handlers);
+    registrationMutation.mutate(
+      { ...payload, downPaymentAcknowledged },
+      handlers,
+    );
   };
 
   const discardConfirm = showDiscardConfirm ? (
@@ -519,6 +526,15 @@ export default function CourseRegistrationForm({
           setRegistrationData={setRegistrationData}
           termsAccepted={termsAccepted}
           setTermsAccepted={setTermsAccepted}
+          downPaymentAcknowledged={downPaymentAcknowledged}
+          setDownPaymentAcknowledged={setDownPaymentAcknowledged}
+          // "Meine Anmeldungen" finds registrations by the account's e-mail,
+          // not by who was signed in when submitting.
+          listedInMyRegistrations={
+            !!currentUser?.email &&
+            registrationData.registrantEmail.trim().toLowerCase() ===
+              currentUser.email.toLowerCase()
+          }
           isWaitlist={isWaitlist}
           staff={
             staffMode
@@ -581,7 +597,7 @@ export default function CourseRegistrationForm({
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={submitMutation.isPending || !termsAccepted || blockedByFull}
+          disabled={submitMutation.isPending || !canProceed || blockedByFull}
           className="order-3 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5"
         >
           {submitMutation.isPending

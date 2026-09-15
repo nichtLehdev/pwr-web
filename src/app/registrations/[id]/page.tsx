@@ -32,6 +32,8 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import { participantPriceOptionLabel } from "@/lib/course-price-options";
+import { registrantMayCancelDownPayment } from "@/lib/course-down-payment";
+import { RegistrationDownPaymentCard } from "@/app/_components/events/registration-down-payment-card";
 
 export default function ViewRegistrationPage() {
   const params = useParams();
@@ -129,6 +131,8 @@ export default function ViewRegistrationPage() {
     if (!registration) return false;
     if (registration.registrationStatus === RegistrationStatus.CANCELLED)
       return false;
+    // Mit Anzahlung storniert nur das Kursteam.
+    if (!registrantMayCancelDownPayment(registration)) return false;
 
     const now = new Date();
     const deadline = registration.course.registrationDeadline
@@ -570,6 +574,11 @@ export default function ViewRegistrationPage() {
             })}
           </div>
         </div>
+
+        <RegistrationDownPaymentCard
+          registration={registration}
+          course={registration.course}
+        />
 
         {/* Price Summary */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

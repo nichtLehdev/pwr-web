@@ -3,6 +3,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { AlertTriangle, ClipboardList } from "lucide-react";
 import { Select } from "@/app/_components/ui";
+import { formatEuro } from "@/lib/invoice-document";
 import type { CourseWithRelations, StaffRegistrationOptions } from "./types";
 
 interface StaffOptionsProps {
@@ -13,6 +14,8 @@ interface StaffOptionsProps {
   seatsShort: boolean;
   /** What the selected status actually becomes on the server. */
   resolvedStatus: "CONFIRMED" | "WAITLIST";
+  /** Down payment of the entered participants, `null` when none is due. */
+  downPaymentAmount: number | null;
 }
 
 /**
@@ -25,6 +28,7 @@ export function StaffOptions({
   setOptions,
   seatsShort,
   resolvedStatus,
+  downPaymentAmount,
 }: StaffOptionsProps) {
   // Only a confirmed entry can overbook; a waiting-list entry never does.
   const needsOverbookingConsent = seatsShort && resolvedStatus === "CONFIRMED";
@@ -122,6 +126,30 @@ export function StaffOptions({
           </span>
         </span>
       </label>
+
+      {downPaymentAmount !== null && (
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={options.downPaymentAlreadyPaid}
+            onChange={(e) =>
+              setOptions((prev) => ({
+                ...prev,
+                downPaymentAlreadyPaid: e.target.checked,
+              }))
+            }
+            className="text-primary focus:ring-primary mt-1 h-4 w-4"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            Anzahlung von {formatEuro(downPaymentAmount)} ist bereits
+            eingegangen
+            <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+              Wird direkt als bezahlt verbucht, z. B. bei einem Papierformular
+              mit Überweisungsbeleg.
+            </span>
+          </span>
+        </label>
+      )}
     </div>
   );
 }

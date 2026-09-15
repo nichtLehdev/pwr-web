@@ -9,10 +9,12 @@ import type {
   StaffRegistrationOptions,
 } from "./types";
 import { StaffOptions } from "./staff-options";
+import { DownPaymentSummary } from "./down-payment-summary";
 import {
   calculateTotalPrice,
   calculateOriginalPrice,
   calculateDiscountAmount,
+  calculateDownPayment,
 } from "./utils";
 import {
   COURSE_PAYMENT_METHOD_LABELS,
@@ -29,6 +31,10 @@ interface Step3SummaryProps {
   setRegistrationData: Dispatch<SetStateAction<RegistrationData>>;
   termsAccepted: boolean;
   setTermsAccepted: (accepted: boolean) => void;
+  downPaymentAcknowledged: boolean;
+  setDownPaymentAcknowledged: (acknowledged: boolean) => void;
+  /** Signed in with the registrant's e-mail, so "Meine Anmeldungen" lists it. */
+  listedInMyRegistrations: boolean;
   isWaitlist: boolean;
   /** Set when the course team records the registration itself. */
   staff?: {
@@ -47,9 +53,14 @@ export function Step3Summary({
   setRegistrationData,
   termsAccepted,
   setTermsAccepted,
+  downPaymentAcknowledged,
+  setDownPaymentAcknowledged,
+  listedInMyRegistrations,
   isWaitlist,
   staff,
 }: Step3SummaryProps) {
+  const downPaymentAmount = calculateDownPayment(registrationData, course);
+
   return (
     <div className="space-y-6">
       <h3 className="text-dark dark:text-dark-text mb-4 text-xl font-bold">
@@ -221,8 +232,9 @@ export function Step3Summary({
                 )}
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Bei Überweisung erhalten Sie nach Bestätigung der Anmeldung eine
-                Rechnung mit den Zahlungsdaten.
+                {downPaymentAmount !== null
+                  ? "Die Anzahlung wird in jedem Fall vorab überwiesen; die Zahlungsweise gilt für den Restbetrag."
+                  : "Bei Überweisung erhalten Sie nach Bestätigung der Anmeldung eine Rechnung mit den Zahlungsdaten."}
               </p>
             </div>
           ) : (
@@ -232,9 +244,13 @@ export function Step3Summary({
                   registrationData.paymentMethod ??
                   (courseAcceptsCash(course) ? "CASH" : "INVOICE");
                 const detail =
-                  fixed === "INVOICE"
-                    ? "Sie erhalten nach Bestätigung eine Rechnung mit den Bankdaten."
-                    : "Die Gebühr wird vor Ort vor Beginn des Kurses in bar fällig.";
+                  downPaymentAmount !== null
+                    ? fixed === "INVOICE"
+                      ? "Den Restbetrag nach der Anzahlung begleichen Sie nach Erhalt der Rechnung."
+                      : "Der Restbetrag nach der Anzahlung wird vor Ort vor Beginn des Kurses in bar fällig."
+                    : fixed === "INVOICE"
+                      ? "Sie erhalten nach Bestätigung eine Rechnung mit den Bankdaten."
+                      : "Die Gebühr wird vor Ort vor Beginn des Kurses in bar fällig.";
                 return (
                   <>
                     <span className="font-semibold">
@@ -294,6 +310,27 @@ export function Step3Summary({
         </div>
       )}
 
+      {downPaymentAmount !== null && (
+        <DownPaymentSummary
+          course={course}
+          registrationData={registrationData}
+          amount={downPaymentAmount}
+          totalPrice={calculateTotalPrice(registrationData, course)}
+          isWaitlist={staff ? staff.resolvedStatus === "WAITLIST" : isWaitlist}
+          acknowledgement={
+            staff
+              ? undefined
+              : {
+                  checked: downPaymentAcknowledged,
+                  onChange: setDownPaymentAcknowledged,
+                }
+          }
+          // Staff record on someone else's behalf — their own account says
+          // nothing about where the registrant finds the details again.
+          listedInMyRegistrations={!staff && listedInMyRegistrations}
+        />
+      )}
+
       {staff ? (
         <>
           <StaffOptions
@@ -302,6 +339,7 @@ export function Step3Summary({
             setOptions={staff.setOptions}
             seatsShort={staff.seatsShort}
             resolvedStatus={staff.resolvedStatus}
+            downPaymentAmount={downPaymentAmount}
           />
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
             <label className="flex cursor-pointer items-start gap-3">

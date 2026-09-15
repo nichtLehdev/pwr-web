@@ -20,12 +20,14 @@ import {
 } from "@/app/_components/ui/scrollable-modal";
 import { invoiceOpenAmount } from "@/lib/invoice-payment";
 import {
+  DOWN_PAYMENT_LINE_DESCRIPTION,
   formatDate,
   formatEuro,
   invoiceTotal,
   lineItemTotal,
   type InvoiceLineItem,
 } from "@/lib/invoice-document";
+import { downPaymentCredit } from "@/lib/course-down-payment";
 import { InvoiceStatus } from "~/generated/prisma/enums";
 import {
   ArrowLeftIcon,
@@ -119,6 +121,17 @@ export default function InvoiceEditorPage() {
 
   const canManage = invoice?.canManage ?? false;
   const isEditable = invoice?.status === InvoiceStatus.DRAFT && canManage;
+
+  // Eine Anzahlung, die erst nach dem Anlegen des Entwurfs verbucht wurde,
+  // fehlt in dessen Positionen: der Entwurf ist eine Kopie der Anmeldung, kein
+  // Spiegel. Stornierte Dokumente fordern nichts mehr.
+  const receivedDownPayment = invoice?.registration
+    ? downPaymentCredit(invoice.registration)
+    : 0;
+  const missingDownPaymentCredit =
+    receivedDownPayment > 0 &&
+    invoice?.status !== InvoiceStatus.CANCELLED &&
+    !lines.some((line) => line.description === DOWN_PAYMENT_LINE_DESCRIPTION);
 
   // Load the record into the form once; later refetches must not stomp on
   // edits the organizer is in the middle of making.
@@ -663,6 +676,40 @@ export default function InvoiceEditorPage() {
               Position hinzufügen
             </button>
           </div>
+
+          {missingDownPaymentCredit && (
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                Für diese Anmeldung ist eine Anzahlung von{" "}
+                {formatEuro(receivedDownPayment)} eingegangen, die hier noch
+                nicht abgezogen wird.
+                {!isEditable &&
+                  invoice?.status === InvoiceStatus.PUBLISHED &&
+                  " Zum Korrigieren die Rechnung stornieren und neu ausstellen."}
+              </p>
+              {isEditable && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    mutateLines((current) => [
+                      ...current,
+                      {
+                        key: nextKey(),
+                        description: DOWN_PAYMENT_LINE_DESCRIPTION,
+                        detail: "",
+                        quantity: 1,
+                        unitPrice: -receivedDownPayment,
+                      },
+                    ])
+                  }
+                  className="text-primary inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  Als Position abziehen
+                </button>
+              )}
+            </div>
+          )}
 
           {lines.length === 0 ? (
             <p className="dark:text-dark-muted text-sm text-gray-500">

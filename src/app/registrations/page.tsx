@@ -11,6 +11,11 @@ import {
 } from "~/generated/prisma/enums";
 import { useToast } from "@/app/_components/ui/toast";
 import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentState,
+  registrantMayCancelDownPayment,
+} from "@/lib/course-down-payment";
+import {
   Calendar,
   MapPin,
   Users,
@@ -437,6 +442,17 @@ export default function MyRegistrationsPage() {
                               {registration.totalPrice.toFixed(2)} €
                             </span>
                           </div>
+                          {registration.downPaymentAmount ? (
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              davon Anzahlung{" "}
+                              {registration.downPaymentAmount.toFixed(2)} € ·{" "}
+                              {
+                                DOWN_PAYMENT_STATE_LABELS[
+                                  downPaymentState(registration)
+                                ]
+                              }
+                            </p>
+                          ) : null}
                           {(() => {
                             const invoice = invoiceByRegistration.get(
                               registration.id,
@@ -487,15 +503,17 @@ export default function MyRegistrationsPage() {
                                   ? "Wird bestätigt..."
                                   : "Zum vollen Preis bestätigen"}
                               </button>
-                              <button
-                                onClick={() =>
-                                  handleCancelClick(registration.id)
-                                }
-                                className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                              >
-                                <X className="h-4 w-4" />
-                                Stornieren
-                              </button>
+                              {registrantMayCancelDownPayment(registration) && (
+                                <button
+                                  onClick={() =>
+                                    handleCancelClick(registration.id)
+                                  }
+                                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                                >
+                                  <X className="h-4 w-4" />
+                                  Stornieren
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -519,15 +537,22 @@ export default function MyRegistrationsPage() {
                             Bearbeiten
                           </Link>
                         )}
-                        {editInfo.canEdit && (
-                          <button
-                            onClick={() => handleCancelClick(registration.id)}
-                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
-                          >
-                            <X className="h-4 w-4" />
-                            Stornieren
-                          </button>
-                        )}
+                        {editInfo.canEdit &&
+                          !registrantMayCancelDownPayment(registration) && (
+                            <span className="text-center text-xs text-gray-500 dark:text-gray-400">
+                              Stornierung über das Kursteam
+                            </span>
+                          )}
+                        {editInfo.canEdit &&
+                          registrantMayCancelDownPayment(registration) && (
+                            <button
+                              onClick={() => handleCancelClick(registration.id)}
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 hover:text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:border-red-600 dark:hover:bg-red-900/50 dark:hover:text-red-300"
+                            >
+                              <X className="h-4 w-4" />
+                              Stornieren
+                            </button>
+                          )}
 
                         {/* Meta info */}
                         <span className="mt-1 text-center text-xs text-gray-500 dark:text-gray-400">

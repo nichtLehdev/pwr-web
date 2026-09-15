@@ -17,6 +17,11 @@ import {
   SiblingDiscountStatus,
 } from "~/generated/prisma/enums";
 import { RegistrationPaymentBadge } from "@/app/_components/dashboard/invoice-payment-badge";
+import { DownPaymentBadge } from "@/app/_components/dashboard/down-payment-panel";
+import {
+  DOWN_PAYMENT_STATE_LABELS,
+  downPaymentState,
+} from "@/lib/course-down-payment";
 import { registrationPaymentState } from "@/lib/invoice-payment";
 import type {
   ColumnFiltersState,
@@ -259,6 +264,22 @@ export default function AdminRegistrationsPage() {
             meta: { filterVariant: "set", filterOptions: PAYMENT_OPTIONS },
             cell: ({ row }) => (
               <RegistrationPaymentBadge invoices={row.original.invoices} />
+            ),
+          },
+        ),
+        column.accessor(
+          (registration) =>
+            DOWN_PAYMENT_STATE_LABELS[downPaymentState(registration)],
+          {
+            id: "downPayment",
+            header: "Anzahlung",
+            enableSorting: false,
+            enableColumnFilter: false,
+            cell: ({ row }) => (
+              <DownPaymentBadge
+                registration={row.original}
+                withPrefix={false}
+              />
             ),
           },
         ),

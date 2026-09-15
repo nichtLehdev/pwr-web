@@ -8,6 +8,8 @@ import {
   Hr,
 } from "@react-email/components";
 import { ManageRegistrationCta } from "./manage-registration-cta";
+import { DownPaymentSection } from "./down-payment-section";
+import type { DownPaymentMailInfo } from "../down-payment";
 
 interface CourseRegistrationPendingDiscountProps {
   registrantFirstName: string;
@@ -22,6 +24,8 @@ interface CourseRegistrationPendingDiscountProps {
   registrationId: string;
   /** Magic link letting the registrant manage the anmeldung without an account. */
   manageUrl?: string;
+  downPayment?: DownPaymentMailInfo | null;
+  downPaymentHasQr?: boolean;
 }
 
 export function CourseRegistrationPendingDiscount({
@@ -36,6 +40,8 @@ export function CourseRegistrationPendingDiscount({
   participantsCount,
   registrationId,
   manageUrl,
+  downPayment,
+  downPaymentHasQr = false,
 }: CourseRegistrationPendingDiscountProps) {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat("de-DE", {
@@ -116,6 +122,14 @@ export function CourseRegistrationPendingDiscount({
                 während der Prüfung.
               </Text>
             </Section>
+
+            {downPayment && (
+              <DownPaymentSection
+                info={downPayment}
+                totalPrice={finalTotalPrice}
+                hasQrCode={downPaymentHasQr}
+              />
+            )}
 
             <Hr style={hr} />
 
