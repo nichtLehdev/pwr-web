@@ -305,6 +305,38 @@ export default function ViewRegistrationPage() {
           </div>
         </div>
 
+        {registration.groupParts.length > 0 && (
+          <div className="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
+            <p className="text-sm text-orange-800 dark:text-orange-300">
+              <strong>Aufgeteilte Anmeldung:</strong> Es waren nicht genug
+              Plätze für alle frei. Die übrigen Teilnehmer stehen in einer
+              eigenen Anmeldung:
+            </p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {registration.groupParts.map((part) => (
+                <li key={part.id} className="flex flex-wrap items-center gap-2">
+                  {getStatusBadge(part.registrationStatus)}
+                  <span className="text-dark dark:text-dark-text">
+                    {part.participants
+                      .map((p) => `${p.firstName} ${p.lastName}`)
+                      .join(", ")}
+                  </span>
+                  <Link
+                    href={withAccessToken(
+                      `/registrations/${part.id}`,
+                      part.accessToken ?? undefined,
+                    )}
+                    className="text-primary hover:text-primary-dark inline-flex items-center gap-1 font-medium"
+                  >
+                    Ansehen
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Course Info Card */}
         <div className="dark:bg-dark-surface dark:border-dark-border mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-dark dark:text-dark-text mb-4 flex items-center gap-2 text-lg font-semibold">
