@@ -351,6 +351,15 @@ export default function MyRegistrationsPage() {
                               Aufgeteilt
                             </span>
                           )}
+                          {registration.registrationStatus ===
+                            RegistrationStatus.WAITLIST &&
+                            registration.promotionOfferExpiresAt &&
+                            new Date(registration.promotionOfferExpiresAt) >
+                              new Date() && (
+                              <span className="bg-primary rounded-full px-3 py-1 text-sm font-semibold text-white">
+                                Nachrücken möglich
+                              </span>
+                            )}
                         </div>
 
                         <div className="mb-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
