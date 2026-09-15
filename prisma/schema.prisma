@@ -839,6 +839,15 @@ model CourseRegistration {
   invoiceId        String?   @unique
   invoiceDate      DateTime?
 
+  /**
+   * Teile einer aufgeteilten Anmeldung tragen dieselbe Gruppe: reichten die
+   * freien Plätze nicht für alle, wurden die Gewählten bestätigt und die
+   * übrigen auf die Warteliste gesetzt — als eigene Anmeldungen, weil
+   * Kapazität, Rechnungen und Anzahlung an der Anmeldung hängen. Der
+   * Geschwisterkindrabatt wird über die Gruppe berechnet. null: nicht geteilt.
+   */
+  registrationGroupId String?
+
   // Relations
   participants Participant[]
   invoices     Invoice[]
@@ -853,6 +862,7 @@ model CourseRegistration {
   @@index([siblingDiscountStatus])
   @@index([courseId, registrationStatus])
   @@index([registrantId])
+  @@index([registrationGroupId])
 }
 
 /// One e-mail an organizer sent to the registrants of a course, archived so

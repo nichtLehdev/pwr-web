@@ -1,6 +1,7 @@
 import { Prisma, RegistrationStatus } from "~/generated/prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { db as database } from "@/server/db";
+import { SEAT_SELECTION_OUTDATED_MESSAGE } from "@/lib/registration-split";
 
 type Db = typeof database;
 type Tx = Prisma.TransactionClient;
@@ -138,6 +139,59 @@ export async function assertPriceTierCapacity(
       code: "BAD_REQUEST",
       message: priceTierFullMessage(fullOption),
     });
+  }
+}
+
+/**
+ * Prüft beim Aufteilen, ob die für die freien Plätze gewählten Teilnehmer
+ * noch in Kurs und Preiskategorien passen. Die Plätze stammen vom Laden der
+ * Seite und können inzwischen vergeben sein.
+ */
+export async function assertSeatSelectionFits(
+  db: Db | Tx,
+  {
+    course,
+    participants,
+    selection,
+    confirmedCount,
+  }: {
+    course: {
+      id: string;
+      maxParticipants: number | null;
+      priceOptions: TierPriceOption[];
+    };
+    participants: ReadonlyArray<{ priceOptionId: string }>;
+    selection: readonly number[];
+    /** Bereits bestätigte Teilnehmer des Kurses. */
+    confirmedCount: number;
+  },
+): Promise<void> {
+  const outdated = () =>
+    new TRPCError({
+      code: "BAD_REQUEST",
+      message: SEAT_SELECTION_OUTDATED_MESSAGE,
+    });
+
+  if (confirmedCount + selection.length > computeCourseCapacity(course)) {
+    throw outdated();
+  }
+
+  const additionsByOptionId: Record<string, number> = {};
+  for (const index of selection) {
+    const optionId = participants[index]?.priceOptionId;
+    if (optionId) {
+      additionsByOptionId[optionId] = (additionsByOptionId[optionId] ?? 0) + 1;
+    }
+  }
+  if (
+    await findFullPriceTier(
+      db,
+      course.id,
+      course.priceOptions,
+      additionsByOptionId,
+    )
+  ) {
+    throw outdated();
   }
 }
 
