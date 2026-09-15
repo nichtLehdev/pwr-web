@@ -65,35 +65,31 @@ export default function HomepageClient({ startDate }: { startDate: Date }) {
 
       <Register />
 
-      {/* Schlussseite des Hefts: auf Papier gesetzt, der Weg als volle Zeile —
-          kein farbiges Aktionsband. */}
+      {/* Rückseite des Hefts: volle orange Fläche als Blickfang —
+          vom Eigentümer ausdrücklich so gewünscht. */}
       <section
         aria-labelledby="mitmachen-heading"
-        className="bg-paper dark:bg-night border-ink dark:border-night-rule border-t-2"
+        className="on-orange bg-primary text-ink"
       >
-        <div className="sheet py-16 md:py-20 lg:grid lg:grid-cols-12 lg:gap-10">
+        <div className="sheet py-16 md:py-24 lg:grid lg:grid-cols-12 lg:gap-10">
           <h2
             id="mitmachen-heading"
-            className="condensed text-ink dark:text-night-text text-[clamp(2.5rem,5.5vw,4.75rem)] leading-[0.92] font-extrabold text-balance lg:col-span-6"
+            className="condensed text-[clamp(2.5rem,6vw,5.25rem)] leading-[0.9] font-extrabold text-balance lg:col-span-6"
           >
             Lust auf Posaunenchor?
           </h2>
-          <div className="mt-6 lg:col-span-6 lg:mt-0 lg:self-end">
-            <p className="text-dark dark:text-night-muted max-w-[46ch] text-xl leading-relaxed">
+          <div className="mt-6 lg:col-span-5 lg:col-start-8 lg:mt-0 lg:self-end">
+            <p className="max-w-[40ch] text-xl leading-relaxed">
               Finde einen Chor in deiner Nähe oder erfahre mehr über unsere Aus-
               und Weiterbildungsangebote
             </p>
-            <ul className="border-ink dark:border-night-text mt-8 border-t-2">
-              <li className="fill-row border-rule dark:border-night-rule border-b">
-                <Link
-                  href="/mitmachen"
-                  className="condensed text-ink dark:text-night-text flex min-h-14 items-center justify-between gap-4 px-1 text-[1.5rem] font-bold"
-                >
-                  Mehr erfahren
-                  <ArrowRight className="h-5 w-5 shrink-0" aria-hidden />
-                </Link>
-              </li>
-            </ul>
+            <Link
+              href="/mitmachen"
+              className="semi-condensed bg-ink text-paper hover:bg-paper hover:text-ink mt-8 inline-flex h-12 items-center gap-3 px-6 text-lg font-semibold transition-colors"
+            >
+              Mehr erfahren
+              <ArrowRight className="h-5 w-5" aria-hidden />
+            </Link>
           </div>
         </div>
       </section>

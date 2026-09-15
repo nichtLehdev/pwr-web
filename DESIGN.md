@@ -191,7 +191,7 @@ Das Programmheft gilt ab der Startseite und der geteilten Chrome (Navigation, Be
 Eine Druckfarbe auf Papier und Tinte, in zwei Druckgängen (Tag und Nacht).
 
 ### Primary
-- **Druckorange** (#faa619): Die verbindliche Markenfarbe als volle Fläche: Titelblatt, Datumsfeld bei offener Anmeldung, Frist-Hervorhebung ≤ 7 Tage, Zeilenfüllung bei Hover/Fokus, Hover in Menüs, Beta-Banner, Aktiv-Unterstrich der Navigation, Textmarkierung. Auf Orange steht immer Tinte. Im Nachtdruck ist Druckorange auch Textfarbe (Links, Status „Anmeldung offen“, Fußzeilenköpfe) sowie Fokusring.
+- **Druckorange** (#faa619): Die verbindliche Markenfarbe als volle Fläche: Titelblatt, Schlussaufruf „Lust auf Posaunenchor?“, Datumsfeld bei offener Anmeldung, Frist-Hervorhebung ≤ 7 Tage, Zeilenfüllung bei Hover/Fokus, Hover in Menüs, Beta-Banner, Aktiv-Unterstrich der Navigation, Textmarkierung. Auf Orange steht immer Tinte. Im Nachtdruck ist Druckorange auch Textfarbe (Links, Status „Anmeldung offen“, Fußzeilenköpfe) sowie Fokusring.
 - **Messing-Tinte** (#a55800): Orange als Text auf hellem Grund – Links wie „Alle News“, Status „Anmeldung offen“, Caret. Nie als Fläche.
 
 ### Secondary
@@ -227,7 +227,7 @@ Eine Druckfarbe auf Papier und Tinte, in zwei Druckgängen (Tag und Nacht).
 
 ### Hierarchy
 - **Display** (800, clamp(2.75rem, 6vw, 5.75rem), 0.9, `wdth` 68, −0.01em): Titel auf dem Titelblatt.
-- **Headline** (800, clamp(2.25rem, 4.5vw, 3.5rem), 0.95, `wdth` 68): Abschnittsköpfe („Aktuelles“, Register); der Schlussabschnitt nutzt dieselbe Stimme größer (clamp(2.5rem, 5.5vw, 4.75rem), 0.92).
+- **Headline** (800, clamp(2.25rem, 4.5vw, 3.5rem), 0.95, `wdth` 68): Abschnittsköpfe („Aktuelles“, Register); der Schlussaufruf nutzt dieselbe Stimme größer (clamp(2.5rem, 6vw, 5.25rem), 0.9).
 - **Programmkopf** (800, 2.25rem, 1, `wdth` 68): Kopf einer Programmspalte, mit 2px-Tintenstrich darunter.
 - **Listenkopf** (800, 1.75rem, 1, `wdth` 68): Kopf einer Registerliste; Fußzeilenköpfe gleiche Stimme in 1.5rem.
 - **Title** (700, 1.5rem, 1.1, `wdth` 68): Zeilentitel in Programm, Register und Wegzeilen (1.375–1.5rem); Beitragstitel 1.75rem / 1.05.
@@ -246,9 +246,9 @@ Eine Druckfarbe auf Papier und Tinte, in zwei Druckgängen (Tag und Nacht).
 
 ## Layout
 
-Das Blatt (`sheet`) ist maximal 100rem breit, zentriert, mit Innenrand 1.25rem (mobil), 2.5rem (ab 40rem) und 3.5rem (ab 64rem). Größere Kompositionen folgen einem 12-Spalten-Raster ab 64rem: der erste Bildschirm teilt sich 7/12 Titelblatt und 5/12 Programmspalte und füllt mindestens min(56rem, Viewport minus Kopf); Register 8/4, Schlussabschnitt 6/6. Mobil stapelt sich alles einspaltig; das Titelblatt löst sich in Titel, dann Programm, dann Foto auf, damit offene Anmeldungen direkt unter dem Titel stehen.
+Das Blatt (`sheet`) ist maximal 100rem breit, zentriert, mit Innenrand 1.25rem (mobil), 2.5rem (ab 40rem) und 3.5rem (ab 64rem). Größere Kompositionen folgen einem 12-Spalten-Raster ab 64rem: der erste Bildschirm teilt sich 7/12 Titelblatt und 5/12 Programmspalte und füllt mindestens min(56rem, Viewport minus Kopf); Register 8/4, Schlussaufruf 6/12 Kopf und 5/12 Text ab Spalte 8. Mobil stapelt sich alles einspaltig; das Titelblatt löst sich in Titel, dann Programm, dann Foto auf, damit offene Anmeldungen direkt unter dem Titel stehen.
 
-Rhythmus: Abschnitte 4rem vertikal, ab 48rem 6rem (Schlussabschnitt 5rem). Zeilen 1rem vertikal mit 1–1.5rem Spaltenabstand; Wegzeilen mindestens 3.5rem hoch. Mehrspaltige Beitragslisten trennen Spalten mit 1px-Haarlinien und 2.5rem Innenabstand statt mit Lücken zwischen Kästen. Die Programmspalte zeigt im ersten Bildschirm höchstens drei Zeilen; ein fehlender Platz wird als gestalteter leerer Programmplatz (kurzer Strich + „Weitere Termine folgen.“) gesetzt. Klickziele sind mindestens 44px hoch.
+Rhythmus: Abschnitte 4rem vertikal, ab 48rem 6rem. Zeilen 1rem vertikal mit 1–1.5rem Spaltenabstand; Wegzeilen mindestens 3.5rem hoch. Mehrspaltige Beitragslisten trennen Spalten mit 1px-Haarlinien und 2.5rem Innenabstand statt mit Lücken zwischen Kästen. Die Programmspalte zeigt im ersten Bildschirm höchstens drei Zeilen; ein fehlender Platz wird als gestalteter leerer Programmplatz (kurzer Strich + „Weitere Termine folgen.“) gesetzt. Klickziele sind mindestens 44px hoch.
 
 Bewegung: Zeilenfüllung 280ms `cubic-bezier(0.16, 1, 0.3, 1)` von links; Titelblatt-Foto überblendet in 800ms, wechselt alle 7s nur ohne Hover/Fokus, ist anhaltbar und steht bei `prefers-reduced-motion` still.
 
@@ -281,13 +281,16 @@ Termine als Tabellensatz. Links der Datumsslot (64px, ab 40rem 80px): Tag als sc
 - **Hover/Fokus:** Zeilenfüllung (siehe Wegzeile), alle Texte werden Tinte.
 
 ### Wegzeile
-Wege und Abschluss-Aufrufe als volle Zeile auf Papier: Title-Stimme, mindestens 56px hoch, Pfeil rechts, 1px-Haarlinie unten; Gruppen beginnen mit einem 2px-Tintenstrich. Bei Hover (nur Zeigegeräte) und Fokus füllt sich die Zeile in 280ms von links mit Druckorange, alles darauf wird Tinte. Registerzeilen sind Wegzeilen mit Beschreibung in Body unter dem Titel, zweispaltig ab 48rem.
+Wege als volle Zeile auf Papier: Title-Stimme, mindestens 56px hoch, Pfeil rechts, 1px-Haarlinie unten; Gruppen beginnen mit einem 2px-Tintenstrich. Bei Hover (nur Zeigegeräte) und Fokus füllt sich die Zeile in 280ms von links mit Druckorange, alles darauf wird Tinte. Registerzeilen sind Wegzeilen mit Beschreibung in Body unter dem Titel, zweispaltig ab 48rem.
 
 ### Meldung (Beitragsspalte)
 Beiträge als Druckspalten, nicht als Karten: Bildfeld 3:2 auf Tinte (Nacht: Nacht erhöht), darunter Titel, Meta-Zeile (Datum, Kategorie, Bezirksmarke, „Angepinnt“) und Auszug (max. 4 Zeilen, 60ch). Spalten ab 64rem mit 1px-Haarlinie getrennt. Hover unterstreicht den Titel mit 3px Druckorange. Ohne Titelbild zeigt das Bildfeld das helle Logo auf Tinte, damit die Spalten gleich aufgebaut bleiben.
 
 ### Titelblatt
 Volle orange Fläche mit Tintenschrift: Display-Titel, Satzstrich, Lead, Primary-Schaltfläche. Darüber dem Foto eine Zeile mit Bildnachweis und Bildstrecken-Steuerung (Zurück, „n / m“ in Tabellenziffern, Weiter, Anhalten); das Foto läuft bis an die Kanten.
+
+### Schlussaufruf
+Volle orange Fläche als bewusster Blickfang am Seitenende – vom Eigentümer ausdrücklich so gewünscht; nicht auf Papier verlegen. Headline-Stimme groß (clamp(2.5rem, 6vw, 5.25rem), 0.9) links, rechts Text in Body und die Primary-Schaltfläche „Mehr erfahren“. Tinte auf Orange, im Nachtdruck unverändert Orange.
 
 ### Navigation
 Fixierte Leiste auf Papier (Nacht: Nachtgrund), 64px / ab 64rem 80px hoch, 2px-Tintenlinie unten. Links halbschmal 600, 1.0625rem, Schiefer; Hover Tinte mit 3px-Tintenunterstrich; aktiv Tinte mit 3px-Orange-Unterstrich. Aufklappmenüs und Benutzermenü: Papier mit 2px-Tintenrahmen, Einträge 12px/16px, Hover Orange mit Tinte, aktueller Eintrag mit 8px-Quadrat in Tinte (Nacht Orange). Mobil: Vollbild-Liste unter der Leiste, Zeilen mit Haarlinien, 1.25rem halbschmal, Untermenüs über eine 64px breite Aufklappzelle mit Haarlinie links, Hover Orange.
@@ -305,14 +308,14 @@ Volle Druckfläche über der Navigation, Info-Variante Orange mit Tinte, 0.875re
 - **Do** markiere offene Anmeldung mit orangem Datumsfeld, Statuszeile „Anmeldung offen“ und Outline-Schaltfläche „Anmelden“; orange Hinterlegung nur für den Countdown ab 7 Tagen.
 - **Do** kennzeichne Bezirke mit 10px-Quadrat plus „Bezirk NN · Name“ und schreibe „Bezirksübergreifend“ als Text.
 - **Do** trenne mit Linien: 2px Tinte unter Köpfen und über Weglisten, 1px Haarlinie zwischen Zeilen.
-- **Do** setze Wege und Abschluss-Aufrufe als volle Wegzeilen auf Papier mit Pfeil und Orange-Füllung bei Hover/Fokus.
+- **Do** setze Wege als volle Wegzeilen auf Papier mit Pfeil und Orange-Füllung bei Hover/Fokus; der Schlussaufruf „Lust auf Posaunenchor?“ steht bewusst auf voller oranger Fläche (Blickfang, vom Eigentümer gewünscht).
 - **Do** zeige Beiträge ohne Titelbild mit dem hellen Logo auf dem Tinten-Bildfeld.
 - **Do** halte WCAG 2.1 AA in Hell- und Dunkelmodus ein: Kontrast ≥ 4,5:1, 44px Klickziele, sichtbarer 3px-Fokus, anhaltbare Bildstrecke und `prefers-reduced-motion`.
 - **Do** reserviere Fördervereinsblau (#78a8da) für Förderverein-Inhalte.
 
 ### Don't:
 - **Don't** Karten, Schlagschatten oder Rundungen verwenden (Ausnahme: runde Avatar-Fotos); schwebende Menüs trennen sich mit 2px-Tintenrahmen.
-- **Don't** Icon-Kreise, farbige Seiten- oder Kopfstreifen oder farbige CTA-Bänder einsetzen.
+- **Don't** Icon-Kreise oder farbige Seiten- oder Kopfstreifen einsetzen; volle orange Flächen nur als bewusster Blickfang (Titelblatt, Schlussaufruf), nicht als Dekor für beliebige Abschnitte.
 - **Don't** ganze Zeilen dauerhaft orange füllen, um offene Anmeldungen zu markieren – wären alle Kurse offen, wäre die Seite orange.
 - **Don't** Bezirksfarben als Dekoration, Fläche oder Abschnittsfarbe nutzen.
 - **Don't** Kicker- oder Eyebrow-Labels über Überschriften setzen; Metadaten gehören unter den Titel.
