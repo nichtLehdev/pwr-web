@@ -2087,7 +2087,7 @@ export const registrationsRouter = createTRPCRouter({
             select: {
               maxParticipants: true,
               priceOptions: {
-                select: { label: true, maxParticipants: true },
+                select: { id: true, label: true, maxParticipants: true },
               },
             },
           });
@@ -2102,6 +2102,34 @@ export const registrationsRouter = createTRPCRouter({
               code: "BAD_REQUEST",
               message:
                 "Der Kurs ist bereits voll — die Anmeldung kann nicht bestätigt werden.",
+            });
+          }
+
+          // Auch die Preiskategorien: eine volle Kategorie hat keinen Platz,
+          // selbst wenn der Kurs noch welche hat. Gezählt wird nach id wie in
+          // allen übrigen Prüfungen — Altbestand über ein eindeutiges Label.
+          const additionsByOptionId: Record<string, number> = {};
+          for (const participant of registration.participants) {
+            const optionId = resolveParticipantPriceOption(
+              participant,
+              course.priceOptions,
+            )?.id;
+            if (optionId) {
+              additionsByOptionId[optionId] =
+                (additionsByOptionId[optionId] ?? 0) + 1;
+            }
+          }
+          const fullOption = await findFullPriceTier(
+            tx,
+            registration.courseId,
+            course.priceOptions,
+            additionsByOptionId,
+            registration.id,
+          );
+          if (fullOption) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `${priceTierFullMessage(fullOption)} Die Anmeldung kann nicht bestätigt werden.`,
             });
           }
         }
