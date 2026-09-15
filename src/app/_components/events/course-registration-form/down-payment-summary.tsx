@@ -18,6 +18,12 @@ interface DownPaymentSummaryProps {
   totalPrice: number;
   isWaitlist: boolean;
   /**
+   * Aufgeteilte Anmeldung: `amount` und `totalPrice` gelten dann für die
+   * bestätigten Teilnehmer, dies ist die Anzahlung der wartenden — fällig erst
+   * mit deren Platzbestätigung.
+   */
+  waitlistAmount?: number | null;
+  /**
    * Die Bestätigung der Hinweise — nur bei der öffentlichen Anmeldung. Erfasst
    * das Kursteam, gilt sie mit dessen Zustimmungs-Häkchen als gegeben.
    */
@@ -44,6 +50,7 @@ export function DownPaymentSummary({
   amount,
   totalPrice,
   isWaitlist,
+  waitlistAmount,
   acknowledgement,
   listedInMyRegistrations,
 }: DownPaymentSummaryProps) {
@@ -90,6 +97,14 @@ export function DownPaymentSummary({
           </dd>
         </div>
       </dl>
+
+      {waitlistAmount != null && waitlistAmount > 0 && (
+        <p className="mt-3 text-sm text-gray-700 dark:text-gray-300">
+          Die Beträge gelten für die bestätigten Teilnehmer. Für die Teilnehmer
+          auf der Warteliste wird eine Anzahlung von{" "}
+          {formatEuro(waitlistAmount)} erst mit deren Platzbestätigung fällig.
+        </p>
+      )}
 
       {isWaitlist ? (
         <p className="mt-4 text-sm text-gray-700 dark:text-gray-300">
