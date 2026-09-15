@@ -147,6 +147,10 @@ export default function Navigation() {
         { href: "/mitmachen/bildung", label: "Aus- und Weiterbildung" },
         { href: "/mitmachen/jungblaeser", label: "Jungbläserarbeit" },
         { href: "/mitmachen/ehrenamt", label: "Ehrenamtlich engagieren" },
+        {
+          href: "/mitmachen/mitgliedschaft",
+          label: "Mitgliedschaft & Versicherung",
+        },
       ],
     },
     {
