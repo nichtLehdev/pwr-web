@@ -1,18 +1,16 @@
 import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/trpc/server";
 import PublicPage from "@/app/_components/general/public-page";
+import { ClosingCall } from "@/app/_components/programmheft/closing-call";
 import {
-  ArrowRightIcon,
-  BookOpenIcon,
-  CircleUserRoundIcon,
-  ClockIcon,
-  HeartIcon,
-  MailIcon,
-  SquareArrowOutUpRightIcon,
-  UsersIcon,
-} from "lucide-react";
-import { CheckIcon, PhoneIcon } from "lucide-react";
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
+import { PersonContactRow } from "@/app/_components/programmheft/person-contact-row";
+import { PersonList } from "@/app/_components/programmheft/person-row";
+import { PointList } from "@/app/_components/programmheft/point-list";
+import { Heading } from "@/app/_components/programmheft/section-head";
+import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -21,6 +19,52 @@ export const metadata = buildPageMetadata({
     "Der Vorstand des Posaunenwerks Rheinland: Mitglieder, Ämter und Kontaktmöglichkeiten.",
   path: "/ueber-uns/vorstand",
 });
+
+const AUFGABEN = [
+  {
+    title: "Geschäftsführung",
+    text: "Führt die laufenden Geschäfte des Posaunenwerkes im Auftrag des Landesposaunenrates.",
+  },
+  {
+    title: "Beschlussumsetzung",
+    text: "Setzt die Beschlüsse der Vertreterversammlung und des Posaunenrates um und berichtet darüber.",
+  },
+  {
+    title: "Eilentscheidungen",
+    text: "Trifft unaufschiebbare Entscheidungen, wenn dies notwendig ist, bis zur nächsten Sitzung.",
+  },
+  {
+    title: "Vertretung nach außen",
+    text: "Der Landesobmann vertritt das Posaunenwerk nach außen und innen gegenüber allen Institutionen.",
+  },
+  {
+    title: "Berichterstattung",
+    text: "Erstattet regelmäßig Bericht an den Posaunenrat über die Arbeit und Entwicklung des Posaunenwerks.",
+  },
+  {
+    title: "Ehrenamtliche Arbeit",
+    text: "Alle Vorstandsmitglieder arbeiten ehrenamtlich und engagieren sich aus Überzeugung für die Posaunenchorarbeit.",
+  },
+];
+
+const STRUKTUR = [
+  {
+    title: "Vertreterversammlung",
+    text: "Oberstes Organ des Posaunenwerkes. Kommt mindestens einmal jährlich zusammen, beschließt über die Satzung und wählt die Sachverständigen in den Posaunenrat.",
+  },
+  {
+    title: "Landesposaunenrat",
+    text: "Leitet das Posaunenwerk und trifft Entscheidungen über Grundsätze und Ziele. Berät den Vorstand und kontrolliert die Ausführung der Beschlüsse.",
+  },
+  {
+    title: "Vorstand",
+    text: "Führt die laufenden Geschäfte des Posaunenwerkes und setzt die Beschlüsse um. Der Landesobmann vertritt das Posaunenwerk nach außen.",
+  },
+  {
+    title: "Posaunenwarte",
+    text: "Leiten das Posaunenwerk in musikalischer Hinsicht mit Schwerpunkt auf Weiterbildung der Bläser und Posaunenchorleiter.",
+  },
+];
 
 export default async function VorstandPage() {
   const vorstandMembers = await api.organization.getVorstand();
@@ -52,304 +96,101 @@ export default async function VorstandPage() {
       }
     >
       {/* Vorstandsmitglieder */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-            Die Vorstandsmitglieder
-          </h2>
-
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <PageSection labelledBy="mitglieder-heading" flush="top">
+        <Split
+          head={
+            <Heading id="mitglieder-heading" className="hyphens-manual">
+              Die Vorstands&shy;mitglieder
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <PersonList columns={3}>
             {vorstandMembers.map((member, index) => (
-              <article
+              <PersonContactRow
                 key={index}
-                className="dark:bg-dark-surface dark:shadow-dark-border flex flex-col overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
-              >
-                <div className={`h-64 ${member.color} relative`}>
-                  <Image
-                    src={
-                      member.person.image?.url ||
-                      "/images/profile-placeholder.jpg"
-                    }
-                    alt={
-                      member.person.image?.alt ||
-                      member.person.name ||
-                      "Vorstandsmitglied"
-                    }
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="flex flex-1 flex-col p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-1 text-2xl font-bold">
-                    {member.person.name}
-                  </h3>
-                  <p className="text-primary mb-3 text-sm font-semibold">
-                    {member.position}
-                  </p>
-                  {/* Kontakt Info */}
-                  <div className="mt-auto flex flex-col flex-wrap gap-x-4 gap-y-1">
-                    {member.person.email && (
-                      <Link
-                        href={`mailto:${member.person.email}`}
-                        className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                      >
-                        <MailIcon className="mr-2 h-4 w-4 shrink-0" />
-                        E-Mail senden
-                      </Link>
-                    )}
-                    {member.person.phone && (
-                      <Link
-                        href={`tel:${member.person.phone.replace(/[^0-9+]/g, "")}`}
-                        className="hover:text-primary flex items-center text-sm text-gray-700 transition-colors dark:text-gray-300"
-                      >
-                        <PhoneIcon className="mr-2 h-4 w-4 shrink-0" />
-                        {member.person.phone}
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </article>
+                name={member.person.name ?? ""}
+                role={member.position}
+                image={member.person.image}
+                email={member.person.email}
+                phone={member.person.phone}
+              />
             ))}
-          </div>
+          </PersonList>
 
-          <div className="bg-primary/10 dark:bg-primary/20 mx-auto mt-12 max-w-3xl rounded-lg p-6">
-            <div className="flex items-start gap-4">
-              <CircleUserRoundIcon className="text-primary mt-1 h-6 w-6 shrink-0" />
-              <div>
-                <h3 className="text-dark dark:text-dark-text mb-2 font-bold">
-                  Kontakt zum Vorstand
-                </h3>
-                <p className="leading-relaxed text-gray-600 dark:text-gray-400">
-                  Bei Fragen oder Anliegen an den Vorstand wenden Sie sich gerne
-                  per E-Mail an{" "}
-                  <a
-                    href="mailto:info@posaunenwerk-rheinland.de"
-                    className="text-primary hover:text-primary-dark font-semibold"
-                  >
-                    info@posaunenwerk-rheinland.de
-                  </a>{" "}
-                  oder telefonisch an unsere{" "}
-                  <Link
-                    href="/kontakt"
-                    className="text-primary hover:text-primary-dark font-semibold"
-                  >
-                    Geschäftsstelle
-                  </Link>
-                  .
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          <p className="text-ink dark:text-night-text mt-8 max-w-[65ch] text-lg leading-relaxed">
+            Bei Fragen oder Anliegen an den Vorstand wenden Sie sich gerne per
+            E-Mail an{" "}
+            <a
+              href="mailto:info@posaunenwerk-rheinland.de"
+              className="link-ink"
+            >
+              info@posaunenwerk-rheinland.de
+            </a>{" "}
+            oder telefonisch an unsere{" "}
+            <Link href="/kontakt" className="link-ink">
+              Geschäftsstelle
+            </Link>
+            .
+          </p>
+        </Split>
+      </PageSection>
 
       {/* Aufgaben des Vorstands */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <h2 className="text-dark dark:text-dark-text mb-12 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-            Aufgaben des Vorstands
-          </h2>
+      <PageSection labelledBy="aufgaben-heading" rule>
+        <Split
+          side="right"
+          head={<Heading id="aufgaben-heading">Aufgaben des Vorstands</Heading>}
+          bodyClassName="mt-8"
+        >
+          <PointList items={AUFGABEN} columns={2} />
+        </Split>
+      </PageSection>
 
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <BookOpenIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Geschäftsführung
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Führt die laufenden Geschäfte des Posaunenwerkes im Auftrag des
-                Landesposaunenrates.
-              </p>
-            </div>
+      {/* Organisationsstruktur */}
+      <PageSection labelledBy="struktur-heading" rule>
+        <Split
+          head={
+            <Heading id="struktur-heading" className="hyphens-manual">
+              Organisations&shy;struktur
+            </Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <ol className="border-ink dark:border-night-text border-t-2">
+            {STRUKTUR.map((step, index) => (
+              <li
+                key={step.title}
+                className="border-rule dark:border-night-rule flex gap-5 border-b py-5"
+              >
+                <span className="condensed text-ink dark:text-night-text w-8 shrink-0 text-2xl leading-tight font-extrabold tabular-nums">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span>
+                  <span className="condensed text-ink dark:text-night-text block text-[1.375rem] leading-tight font-bold">
+                    {step.title}
+                  </span>
+                  <span className="text-dark dark:text-night-muted mt-1 block max-w-[60ch] text-base leading-relaxed">
+                    {step.text}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ol>
 
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-district-1 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <CheckIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Beschlussumsetzung
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Setzt die Beschlüsse der Vertreterversammlung und des
-                Posaunenrates um und berichtet darüber.
-              </p>
-            </div>
+          <WayList className="mt-10">
+            <WayRow href="/ueber-uns/posaunenrat" title="Zum Posaunenrat" />
+            <WayRow href="/ueber-uns/struktur" title="Struktur & Geschichte" />
+          </WayList>
+        </Split>
+      </PageSection>
 
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-district-2 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <ClockIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Eilentscheidungen
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Trifft unaufschiebbare Entscheidungen, wenn dies notwendig ist,
-                bis zur nächsten Sitzung.
-              </p>
-            </div>
-
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-district-3 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <UsersIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Vertretung nach außen
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Der Landesobmann vertritt das Posaunenwerk nach außen und innen
-                gegenüber allen Institutionen.
-              </p>
-            </div>
-
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-district-5 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <SquareArrowOutUpRightIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Berichterstattung
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Erstattet regelmäßig Bericht an den Posaunenrat über die Arbeit
-                und Entwicklung des Posaunenwerks.
-              </p>
-            </div>
-
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-              <div className="bg-foerderverein mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                <HeartIcon className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                Ehrenamtliche Arbeit
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Alle Vorstandsmitglieder arbeiten ehrenamtlich und engagieren
-                sich aus Überzeugung für die Posaunenchorarbeit.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Organisationsstruktur Info */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Organisationsstruktur
-            </h2>
-
-            <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                    <span className="text-sm font-bold text-white">1</span>
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                      Vertreterversammlung
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Oberstes Organ des Posaunenwerkes. Kommt mindestens einmal
-                      jährlich zusammen, beschließt über die Satzung und wählt
-                      die Sachverständigen in den Posaunenrat.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-district-1 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                    <span className="text-sm font-bold text-white">2</span>
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                      Landesposaunenrat
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Leitet das Posaunenwerk und trifft Entscheidungen über
-                      Grundsätze und Ziele. Berät den Vorstand und kontrolliert
-                      die Ausführung der Beschlüsse.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-district-2 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                    <span className="text-sm font-bold text-white">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                      Vorstand
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Führt die laufenden Geschäfte des Posaunenwerkes und setzt
-                      die Beschlüsse um. Der Landesobmann vertritt das
-                      Posaunenwerk nach außen.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="bg-district-3 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                    <span className="text-sm font-bold text-white">4</span>
-                  </div>
-                  <div>
-                    <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                      Posaunenwarte
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      Leiten das Posaunenwerk in musikalischer Hinsicht mit
-                      Schwerpunkt auf Weiterbildung der Bläser und
-                      Posaunenchorleiter.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="dark:border-dark-border mt-8 border-t border-gray-200 pt-8">
-                <div className="flex flex-col justify-center gap-4 sm:flex-row">
-                  <Link
-                    href="/ueber-uns/posaunenrat"
-                    className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                  >
-                    Zum Posaunenrat
-                    <ArrowRightIcon className="ml-2 h-5 w-5" />
-                  </Link>
-                  <Link
-                    href="/ueber-uns/struktur"
-                    className="border-primary text-primary hover:bg-primary inline-flex items-center justify-center rounded-lg border-2 bg-transparent px-6 py-3 font-semibold transition-colors hover:text-white"
-                  >
-                    Struktur & Geschichte
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-primary dark:bg-primary-dark py-12 text-white md:py-16 lg:py-20">
-        <div className="container text-center">
-          <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-            Interesse an einer Mitarbeit?
-          </h2>
-          <p className="mx-auto mb-8 max-w-2xl text-lg md:text-xl">
-            Viele Funktionen im Posaunenwerk werden ehrenamtlich ausgefüllt.
-            Wenn Sie Interesse haben, sich einzubringen, freuen wir uns über
-            Ihre Kontaktaufnahme!
-          </p>
-          <Link
-            href="/kontakt"
-            className="text-primary inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100"
-          >
-            Kontakt aufnehmen
-          </Link>
-        </div>
-      </section>
+      <ClosingCall
+        id="mitarbeit-heading"
+        title="Interesse an einer Mitarbeit?"
+        text="Viele Funktionen im Posaunenwerk werden ehrenamtlich ausgefüllt. Wenn Sie Interesse haben, sich einzubringen, freuen wir uns über Ihre Kontaktaufnahme!"
+        actions={[{ href: "/kontakt", label: "Kontakt aufnehmen" }]}
+      />
     </PublicPage>
   );
 }

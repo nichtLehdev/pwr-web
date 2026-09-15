@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { api } from "@/trpc/server";
 import PublicPage from "@/app/_components/general/public-page";
+import { ClosingCall } from "@/app/_components/programmheft/closing-call";
+import {
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
 import {
   PersonList,
   PersonRow,
 } from "@/app/_components/programmheft/person-row";
-import { BuildingIcon, CheckIcon } from "lucide-react";
-import { ArrowRightIcon, UsersIcon } from "lucide-react";
-import { BanknoteIcon } from "lucide-react";
+import { PointList } from "@/app/_components/programmheft/point-list";
+import { Heading } from "@/app/_components/programmheft/section-head";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -16,6 +20,25 @@ export const metadata = buildPageMetadata({
     "Der Landesposaunenrat des Posaunenwerks Rheinland — Mitglieder, Aufgaben und Zuständigkeiten des leitenden Gremiums der rheinischen Bläserarbeit.",
   path: "/ueber-uns/posaunenrat",
 });
+
+const AUFGABEN = [
+  {
+    title: "Strategische Führung",
+    text: "Entscheidungen über Grundsätze und Ziele der Geschäftsführung des Posaunenwerkes sowie Beratung des Vorstands.",
+  },
+  {
+    title: "Personalentscheidungen",
+    text: "Anstellung und Entlassung von Landesposaunenwarten sowie Wahl des Vorstands zu Beginn der Wahlperiode.",
+  },
+  {
+    title: "Finanzverwaltung",
+    text: "Jährliche Verabschiedung des Haushaltsplans und Kontrolle über die sachgemäße Verwaltung der Finanzen.",
+  },
+  {
+    title: "Beschlusskontrolle",
+    text: "Überwachung der Ausführung gefasster Beschlüsse und Sicherung der satzungsgemäßen Arbeit.",
+  },
+];
 
 export default async function PosaunenratPage() {
   const [bezirke, posaunenratResponse, vorstandResponse] = await Promise.all([
@@ -81,211 +104,131 @@ export default async function PosaunenratPage() {
       }
     >
       {/* Zusammensetzung */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Zusammensetzung des Posaunenrats
-            </h2>
-            <p className="mb-8 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-              Dem Landesposaunenrat gehören die Vorstandsmitglieder, die
-              Bezirksobleute, die Landeskirchenmusikdirektorin bzw. der
-              Landeskirchenmusikdirektor und etwa zehn Sachverständige an –
-              Theologen, Musiker, Pädagogen, Verwaltungsfachleute und sonstige
-              in der Posaunenarbeit erfahrene Persönlichkeiten.
+      <PageSection labelledBy="zusammensetzung-heading" flush="top">
+        <Split
+          head={
+            <Heading
+              id="zusammensetzung-heading"
+              className="text-balance hyphens-manual"
+            >
+              Zusammen&shy;setzung des Posaunenrats
+            </Heading>
+          }
+          bodyClassName="mt-8 space-y-14"
+        >
+          <p className="text-ink dark:text-night-text max-w-[65ch] text-lg leading-relaxed">
+            Dem Landesposaunenrat gehören die Vorstandsmitglieder, die
+            Bezirksobleute, die Landeskirchenmusikdirektorin bzw. der
+            Landeskirchenmusikdirektor und etwa zehn Sachverständige an –
+            Theologen, Musiker, Pädagogen, Verwaltungsfachleute und sonstige in
+            der Posaunenarbeit erfahrene Persönlichkeiten.
+          </p>
+
+          {/* Vorstandsmitglieder */}
+          <div>
+            <Heading as="h3" size="list" rule>
+              Vorstandsmitglieder
+            </Heading>
+            <PersonList className="mt-5">
+              {vorstandMembers.map((member, index) => (
+                <PersonRow
+                  key={index}
+                  image={member.person.image}
+                  name={member.person.name ?? ""}
+                  role={member.position}
+                />
+              ))}
+            </PersonList>
+            <p className="text-dark dark:text-night-muted mt-4 text-base leading-relaxed">
+              Details zu den Vorstandsmitgliedern finden Sie auf der{" "}
+              <Link href="/ueber-uns/vorstand" className="link-ink">
+                Vorstand-Seite →
+              </Link>
             </p>
-
-            {/* Mitglieder-Übersicht */}
-            <div className="space-y-12">
-              {/* Vorstandsmitglieder */}
-              <div>
-                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
-                  <div className="bg-primary h-8 w-1 rounded-full"></div>
-                  Vorstandsmitglieder
-                </h3>
-                <PersonList className="mb-4">
-                  {vorstandMembers.map((member, index) => (
-                    <PersonRow
-                      key={index}
-                      image={member.person.image}
-                      name={member.person.name ?? ""}
-                      role={member.position}
-                    />
-                  ))}
-                </PersonList>
-                <p className="mb-4 text-gray-600 dark:text-gray-400">
-                  Details zu den Vorstandsmitgliedern finden Sie auf der{" "}
-                  <Link
-                    href="/ueber-uns/vorstand"
-                    className="text-primary hover:text-primary-dark font-semibold"
-                  >
-                    Vorstand-Seite →
-                  </Link>
-                </p>
-              </div>
-
-              {/* Bezirksobleute */}
-              <div>
-                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
-                  <div className="bg-primary h-8 w-1 rounded-full"></div>
-                  Bezirksobleute
-                </h3>
-                <PersonList className="mb-4">
-                  {obleute.map((member, index) => (
-                    <PersonRow
-                      key={index}
-                      image={member.image}
-                      name={member.name ?? ""}
-                      role={`${member.roleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
-                    />
-                  ))}
-                </PersonList>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Ausführliche Informationen zu den Bezirksobfrauen und
-                  -obmännern finden Sie auf der{" "}
-                  <Link
-                    href="/ueber-uns/bezirke"
-                    className="text-primary hover:text-primary-dark font-semibold"
-                  >
-                    Bezirke-Seite →
-                  </Link>
-                </p>
-              </div>
-
-              {/* Landeskirchenmusikdirektor:in */}
-              {lkmd && (
-                <div>
-                  <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
-                    <div className="bg-primary h-8 w-1 rounded-full"></div>
-                    {lkmdLabel}
-                  </h3>
-                  <PersonList columns={1}>
-                    <PersonRow
-                      image={lkmd.person.image}
-                      name={lkmd.person.name ?? "Unbekannt"}
-                      role={lkmdLabel}
-                    />
-                  </PersonList>
-                </div>
-              )}
-
-              {/* Sachverständige */}
-              <div>
-                <h3 className="text-dark dark:text-dark-text mb-6 flex items-center gap-3 text-xl font-bold md:text-2xl">
-                  <div className="bg-primary h-8 w-1 rounded-full"></div>
-                  Sachverständige
-                </h3>
-                <PersonList columns={4}>
-                  {sachverstaendige.map((member, index) => (
-                    <PersonRow key={index} name={member.person.name ?? ""} />
-                  ))}
-                </PersonList>
-                <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
-                  Die Sachverständigen sind Theologen, Musiker, Pädagogen,
-                  Verwaltungsfachleute und sonstige in der Posaunenarbeit
-                  erfahrene Persönlichkeiten, die den Posaunenrat mit ihrer
-                  fachlichen Expertise unterstützen.
-                </p>
-              </div>
-            </div>
           </div>
-        </div>
-      </section>
+
+          {/* Bezirksobleute */}
+          <div>
+            <Heading as="h3" size="list" rule>
+              Bezirksobleute
+            </Heading>
+            <PersonList className="mt-5">
+              {obleute.map((member, index) => (
+                <PersonRow
+                  key={index}
+                  image={member.image}
+                  name={member.name ?? ""}
+                  role={`${member.roleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
+                />
+              ))}
+            </PersonList>
+            <p className="text-dark dark:text-night-muted mt-4 text-base leading-relaxed">
+              Ausführliche Informationen zu den Bezirksobfrauen und -obmännern
+              finden Sie auf der{" "}
+              <Link href="/ueber-uns/bezirke" className="link-ink">
+                Bezirke-Seite →
+              </Link>
+            </p>
+          </div>
+
+          {/* Landeskirchenmusikdirektor:in */}
+          {lkmd && (
+            <div>
+              <Heading as="h3" size="list" rule>
+                {lkmdLabel}
+              </Heading>
+              <PersonList columns={1} className="mt-5">
+                <PersonRow
+                  image={lkmd.person.image}
+                  name={lkmd.person.name ?? "Unbekannt"}
+                  role={lkmdLabel}
+                />
+              </PersonList>
+            </div>
+          )}
+
+          {/* Sachverständige */}
+          <div>
+            <Heading as="h3" size="list" rule>
+              Sachverständige
+            </Heading>
+            <PersonList columns={4} className="mt-5">
+              {sachverstaendige.map((member, index) => (
+                <PersonRow key={index} name={member.person.name ?? ""} />
+              ))}
+            </PersonList>
+            <p className="text-dark dark:text-night-muted mt-6 max-w-[65ch] text-base leading-relaxed">
+              Die Sachverständigen sind Theologen, Musiker, Pädagogen,
+              Verwaltungsfachleute und sonstige in der Posaunenarbeit erfahrene
+              Persönlichkeiten, die den Posaunenrat mit ihrer fachlichen
+              Expertise unterstützen.
+            </p>
+          </div>
+        </Split>
+      </PageSection>
 
       {/* Aufgaben und Verantwortung */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Aufgaben und Verantwortung
-            </h2>
+      <PageSection labelledBy="aufgaben-heading" rule>
+        <Split
+          side="right"
+          head={
+            <Heading id="aufgaben-heading">Aufgaben und Verantwortung</Heading>
+          }
+          bodyClassName="mt-8"
+        >
+          <PointList items={AUFGABEN} columns={2} />
+        </Split>
+      </PageSection>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <BuildingIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                  Strategische Führung
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Entscheidungen über Grundsätze und Ziele der Geschäftsführung
-                  des Posaunenwerkes sowie Beratung des Vorstands.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <UsersIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                  Personalentscheidungen
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Anstellung und Entlassung von Landesposaunenwarten sowie Wahl
-                  des Vorstands zu Beginn der Wahlperiode.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <BanknoteIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                  Finanzverwaltung
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Jährliche Verabschiedung des Haushaltsplans und Kontrolle über
-                  die sachgemäße Verwaltung der Finanzen.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <CheckIcon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold">
-                  Beschlusskontrolle
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Überwachung der Ausführung gefasster Beschlüsse und Sicherung
-                  der satzungsgemäßen Arbeit.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-primary py-12 text-white md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Fragen zum Posaunenrat?
-            </h2>
-            <p className="mb-8 text-lg opacity-95">
-              Bei Fragen zur Arbeit des Posaunenrats wenden Sie sich gerne an
-              unseren Vorstand.
-            </p>
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/ueber-uns/vorstand"
-                className="text-primary inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 font-semibold transition-colors hover:bg-gray-100"
-              >
-                Zum Vorstand
-                <ArrowRightIcon className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                href="/kontakt"
-                className="hover:text-primary inline-flex items-center justify-center rounded-lg border-2 border-white px-6 py-3 font-semibold text-white transition-colors hover:bg-white"
-              >
-                Kontakt aufnehmen
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ClosingCall
+        id="fragen-heading"
+        title="Fragen zum Posaunenrat?"
+        text="Bei Fragen zur Arbeit des Posaunenrats wenden Sie sich gerne an unseren Vorstand."
+        actions={[
+          { href: "/ueber-uns/vorstand", label: "Zum Vorstand" },
+          { href: "/kontakt", label: "Kontakt aufnehmen" },
+        ]}
+      />
     </PublicPage>
   );
 }
