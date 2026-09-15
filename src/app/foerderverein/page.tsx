@@ -13,21 +13,6 @@ import { MailIcon, GiftIcon } from "lucide-react";
 import { UsersIcon } from "lucide-react";
 import { buildPageMetadata } from "@/lib/seo";
 
-const sonderaktionen = [
-  {
-    title: "Geschenk-CD für Neumitglieder",
-    description:
-      "Wer bis zum 31. Dezember 2025 Mitglied wird, erhält eine CD zum Bläserheft nach Wahl geschenkt!",
-    options: ["England", "Skandinavien", "Osteuropa", "Italien", "USA"],
-  },
-  {
-    title: "Werbeaktion mit Verlosung",
-    description:
-      "Wer bis Ende Juni 2025 ein Mitglied wirbt, bekommt die Chance auf einen der drei Hauptpreise!",
-    subtitle: "Verlosung am 12. Juli in Bonn während unseres Fördervereintags.",
-  },
-];
-
 export const metadata = buildPageMetadata({
   title: "Förderverein",
   description:
@@ -60,67 +45,6 @@ export default async function FoerdervereinPage() {
         </p>
       }
     >
-      {/* Sonderaktionen 2025 */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-8 text-center">
-              <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Sonderaktionen 2025
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Jetzt Mitglied werden und von exklusiven Vorteilen profitieren!
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {sonderaktionen.map((aktion, i) => (
-                <div
-                  key={i}
-                  className="border-foerderverein dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-l-4 bg-white p-6 shadow-lg"
-                >
-                  <div className="mb-4 flex items-start gap-3">
-                    <MusicIcon className="text-foerderverein h-8 w-8 shrink-0" />
-                    <div>
-                      <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
-                        {aktion.title}
-                      </h3>
-                      <p className="mb-3 text-gray-600 dark:text-gray-400">
-                        {aktion.description}
-                      </p>
-                      {aktion.options && (
-                        <p className="text-sm text-gray-500 dark:text-gray-500">
-                          Auswahl: {aktion.options.join(", ")}
-                          <br />
-                          <em>
-                            (Bitte bei der Anmeldung die Auswahl vermerken)
-                          </em>
-                        </p>
-                      )}
-                      {aktion.subtitle && (
-                        <p className="text-sm text-gray-500 dark:text-gray-500">
-                          {aktion.subtitle}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 text-center">
-              <a
-                href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                className="bg-foerderverein inline-flex items-center rounded-lg px-8 py-4 text-lg font-semibold text-white shadow-lg transition-opacity hover:opacity-90"
-              >
-                <MailIcon className="mr-2 h-6 w-6" />
-                Jetzt Mitglied werden
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Was wir tun */}
       <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
         <div className="container">
@@ -158,8 +82,8 @@ export default async function FoerdervereinPage() {
                   Geschwisterermäßigung
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  25 € Ermäßigung pro weiteres Geschwisterkind bei Lehrgängen
-                  des Posaunenwerks – der Förderverein gleicht den Betrag aus.
+                  20 % Ermäßigung auf die Lehrgangskosten ab dem zweiten
+                  Geschwisterkind – der Förderverein gleicht den Betrag aus.
                 </p>
               </div>
 
@@ -234,7 +158,8 @@ export default async function FoerdervereinPage() {
                 <div className="flex items-start gap-3">
                   <GiftIcon className="text-foerderverein mt-0.5 h-6 w-6 shrink-0" />
                   <p className="text-gray-700 dark:text-gray-300">
-                    <strong>2025:</strong> Geschenk-CD für Neumitglieder!
+                    <strong>Geschenk-CD</strong> zum Bläserheft nach Wahl für
+                    alle Neumitglieder
                   </p>
                 </div>
               </div>
