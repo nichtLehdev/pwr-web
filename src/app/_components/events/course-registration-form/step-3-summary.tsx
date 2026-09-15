@@ -10,6 +10,8 @@ import type {
 } from "./types";
 import { StaffOptions } from "./staff-options";
 import { DownPaymentSummary } from "./down-payment-summary";
+import { SeatShortageNotice } from "./seat-shortage-notice";
+import type { SeatShortage } from "@/lib/registration-seat-shortage";
 import {
   calculateTotalPrice,
   calculateOriginalPrice,
@@ -36,6 +38,8 @@ interface Step3SummaryProps {
   /** Signed in with the registrant's e-mail, so "Meine Anmeldungen" lists it. */
   listedInMyRegistrations: boolean;
   isWaitlist: boolean;
+  /** Too few free seats for the participants entered, if so. */
+  seatShortage: SeatShortage | null;
   /** Set when the course team records the registration itself. */
   staff?: {
     options: StaffRegistrationOptions;
@@ -57,6 +61,7 @@ export function Step3Summary({
   setDownPaymentAcknowledged,
   listedInMyRegistrations,
   isWaitlist,
+  seatShortage,
   staff,
 }: Step3SummaryProps) {
   const downPaymentAmount = calculateDownPayment(registrationData, course);
@@ -396,14 +401,12 @@ export function Step3Summary({
         </div>
       )}
 
-      {isWaitlist && !staff && (
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
-          <p className="text-sm text-orange-800 dark:text-orange-300">
-            <strong>Hinweis:</strong> Der Kurs ist bereits ausgebucht. Sie
-            werden auf die Warteliste gesetzt und bei einem freigewordenen Platz
-            benachrichtigt.
-          </p>
-        </div>
+      {!staff && seatShortage && (
+        <SeatShortageNotice
+          course={course}
+          shortage={seatShortage}
+          participantCount={registrationData.participants.length}
+        />
       )}
     </div>
   );

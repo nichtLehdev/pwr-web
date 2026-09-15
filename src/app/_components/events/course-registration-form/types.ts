@@ -58,11 +58,13 @@ export interface CourseRegistrationFormProps {
    */
   staffMode?: boolean;
   /**
-   * Free seats left in the course, used in staff mode to ask for an
-   * overbooking consent as soon as the entered participants no longer fit —
-   * not only when the course is already completely full.
+   * Free seats left in the course. Step 3 warns as soon as the entered
+   * participants no longer fit — not only when the course is already
+   * completely full — and staff mode asks for an overbooking consent then.
    */
   availableSlots?: number;
+  /** Free seats per price option (by id), as `getAvailableSlots` reports them. */
+  capacityByPriceOption?: Record<string, number> | null;
 }
 
 export type Step = 1 | 2 | 3;
