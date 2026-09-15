@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useBanner } from "./banner-context";
 import { XIcon } from "lucide-react";
 import { ArrowRightIcon } from "lucide-react";
+import { Tag, type TagTone } from "../programmheft/tag";
 
-export type BannerVariant = "info" | "warning" | "success" | "maintenance";
+export type BannerVariant = "info" | "warning" | "maintenance";
 
 export interface AnnouncementBannerProps {
   /** Unique ID used for localStorage dismissal tracking */
@@ -30,12 +31,21 @@ export interface AnnouncementBannerProps {
   icon?: React.ReactNode;
 }
 
-/** Schrift immer mit ≥ 4,5:1 auf der Bannerfläche (WCAG 1.4.3). */
+/**
+ * Druckflächen aus dem Programmheft, Schrift immer mit ≥ 4,5:1 (WCAG 1.4.3):
+ * Hinweise auf Orange mit Tinte; Warnung und Wartung als Tintenfläche
+ * (Nachtdruck: Nachtschrift als Fläche), die Art nennt das Etikett.
+ */
 const variantStyles: Record<BannerVariant, string> = {
   info: "bg-primary text-ink",
-  warning: "bg-amber-400 text-ink",
-  success: "bg-green-700 text-white",
-  maintenance: "bg-slate-700 text-white",
+  warning: "bg-ink text-paper dark:bg-night-text dark:text-night",
+  maintenance: "bg-ink text-paper dark:bg-night-text dark:text-night",
+};
+
+const badgeTone: Record<BannerVariant, TagTone> = {
+  info: "ink",
+  warning: "orange",
+  maintenance: "orange",
 };
 
 function useBannerVisibility(id: string) {
@@ -157,9 +167,9 @@ export function AnnouncementBanner({
         <div className="flex flex-1 items-center justify-center gap-2 text-sm font-medium sm:justify-start">
           {icon && <span className="shrink-0">{icon}</span>}
           {badge && (
-            <span className="shrink-0 bg-current/15 px-2 py-0.5 text-xs font-bold tracking-wide uppercase">
+            <Tag tone={badgeTone[variant]} className="shrink-0">
               {badge}
-            </span>
+            </Tag>
           )}
           <span className="hidden sm:inline">{message}</span>
           <span className="sm:hidden">{mobileMessage ?? message}</span>
