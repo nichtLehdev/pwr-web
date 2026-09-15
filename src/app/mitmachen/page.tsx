@@ -1,13 +1,8 @@
-import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
-import { ButtonLink } from "../_components/programmheft/button-link";
 import { ClosingCall } from "../_components/programmheft/closing-call";
-import { Note } from "../_components/programmheft/note";
 import { PageSection, Split } from "../_components/programmheft/page-section";
-import { Panel } from "../_components/programmheft/panel";
 import { PointList } from "../_components/programmheft/point-list";
-import { Heading, SectionHead } from "../_components/programmheft/section-head";
-import { ValueTable } from "../_components/programmheft/value-table";
+import { Heading } from "../_components/programmheft/section-head";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
 
@@ -26,16 +21,16 @@ const EINSTIEGE = [
       "Finde einen Posaunenchor in deiner Nähe und werde Teil einer musikalischen Gemeinschaft.",
   },
   {
-    href: "/mitmachen/bildung",
-    title: "Aus- und Weiterbildung",
-    description:
-      "Von Anfängerkursen bis zu Fortbildungen – entdecke unsere vielfältigen Bildungsangebote.",
-  },
-  {
     href: "/mitmachen/jungblaeser",
     title: "Jungbläserarbeit",
     description:
       "Musik von Anfang an – Angebote für Kinder und Jugendliche im Posaunenchor.",
+  },
+  {
+    href: "/mitmachen/bildung",
+    title: "Aus- und Weiterbildung",
+    description:
+      "Von Anfängerkursen bis zu Fortbildungen – entdecke unsere vielfältigen Bildungsangebote.",
   },
   {
     href: "/mitmachen/ehrenamt",
@@ -50,12 +45,6 @@ const EINSTIEGE = [
       "Unterstütze unsere Arbeit durch eine Mitgliedschaft im Förderverein oder eine Spende.",
     tone: "foerderverein" as const,
   },
-];
-
-const FOERDERVEREIN_FAKTEN = [
-  { title: "Nur 36 € / Jahr" },
-  { title: "Geschenk-CD 2025", text: "für Neumitglieder" },
-  { title: "Direkte Förderung", text: "Lehrgänge & Projekte" },
 ];
 
 const GRUENDE = [
@@ -77,29 +66,20 @@ const GRUENDE = [
   },
 ];
 
-const BEITRAEGE = [
-  { label: "Grundbeitrag", value: "45 €" },
-  { label: "Je Chormitglied mit Einkommen", value: "16 €" },
-  { label: "Je Chormitglied ohne Einkommen", value: "8 €" },
+const FOERDERVEREIN_FAKTEN = [
+  { title: "Nur 36 € / Jahr" },
+  { title: "Geschenk-CD", text: "für alle Neumitglieder" },
+  {
+    title: "20 % Geschwister-Ermäßigung",
+    text: "auf die Lehrgangskosten ab dem zweiten Kind",
+  },
+  { title: "Direkte Förderung", text: "Lehrgänge & Projekte" },
 ];
-
-const UNTERLAGEN = [
-  "Schriftliche Schilderung des Schadens­hergangs",
-  "Genaue Bezeichnung des geschädigten Instrumentes",
-  "Wenn möglich: Angebot einer Fachfirma zur Schadens­höhe",
-];
-
-/** Fließtext der Seite: Tinte, ruhige Zeilenlänge. */
-const PROSE =
-  "text-ink dark:text-night-text max-w-[65ch] space-y-4 text-lg leading-relaxed";
-
-/** Kleiner Kopf innerhalb eines Abschnitts, z. B. „Jährliche Mitgliedsbeiträge:“. */
-const LABEL_HEAD =
-  "semi-condensed text-ink dark:text-night-text text-lg font-semibold";
 
 /**
- * Die Köpfe der Abschnitte wechseln ab 64rem die Seite (links, rechts, links …)
- * wie die Seiten eines Programmhefts; mobil stehen sie immer über dem Inhalt.
+ * Einstiegsseite für Neue, durchgehend mit „du“. Abschnittsköpfe stehen links
+ * vor dem Inhalt; nur die blaue Förderverein-Fläche setzt ihren Kopf rechts.
+ * Mitgliedschaft und Versicherung für Chöre stehen auf eigener Seite.
  */
 export default function MitmachenPage() {
   return (
@@ -138,6 +118,15 @@ export default function MitmachenPage() {
         </Split>
       </PageSection>
 
+      <PageSection labelledBy="warum-heading">
+        <Split
+          head={<Heading id="warum-heading">Warum Posaunenchor?</Heading>}
+          bodyClassName="mt-8"
+        >
+          <PointList items={GRUENDE} />
+        </Split>
+      </PageSection>
+
       {/* Hier spricht der Förderverein: volle blaue Druckfläche. */}
       <PageSection labelledBy="foerderverein-heading" surface="foerderverein">
         <Split
@@ -149,15 +138,15 @@ export default function MitmachenPage() {
               </Heading>
               <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
               <p className="mt-6 max-w-[40ch] text-xl leading-relaxed">
-                Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig! Werden
-                Sie Mitglied im Förderverein und profitieren Sie von exklusiven
-                Vorteilen.
+                Unterstütze die Arbeit des Posaunenwerks nachhaltig! Werde
+                Mitglied im Förderverein – dein Beitrag fördert Lehrgänge und
+                Projekte.
               </p>
             </>
           }
           bodyClassName="mt-10"
         >
-          <PointList items={FOERDERVEREIN_FAKTEN} columns={3} titleAs="p" />
+          <PointList items={FOERDERVEREIN_FAKTEN} columns={2} titleAs="p" />
           <WayList className="mt-10">
             <WayRow href="/foerderverein" title="Mehr zum Förderverein" />
             <WayRow
@@ -168,209 +157,23 @@ export default function MitmachenPage() {
         </Split>
       </PageSection>
 
-      <PageSection labelledBy="warum-heading">
+      <PageSection labelledBy="choere-heading" rule>
         <Split
-          head={<Heading id="warum-heading">Warum Posaunenchor?</Heading>}
+          head={<Heading id="choere-heading">Für Posaunenchöre</Heading>}
           bodyClassName="mt-8"
         >
-          <PointList items={GRUENDE} />
-        </Split>
-      </PageSection>
-
-      <PageSection
-        id="mitgliedschaft"
-        labelledBy="mitgliedschaft-heading"
-        rule
-        className="scroll-mt-24"
-      >
-        <Split
-          side="right"
-          head={
-            <SectionHead
-              id="mitgliedschaft-heading"
-              title="Mitgliedschaft im Posaunenwerk"
-              className="text-balance"
-              intro="Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk Rheinland freuen wir uns sehr."
+          <WayList labelledBy="choere-heading">
+            <WayRow
+              href="/mitmachen/mitgliedschaft"
+              title="Mitgliedschaft & Versicherung"
+              description="Mitgliedsbeiträge, Satzung und Aufnahmeantrag, Ehrungen und die Instrumentenversicherung."
             />
-          }
-          bodyClassName="mt-12 space-y-16"
-        >
-          <div>
-            <Heading as="h3" size="list" rule>
-              Einzelmitgliedschaft
-            </Heading>
-            <div className={`${PROSE} mt-5`}>
-              <p>
-                Da das Posaunenwerk im Kern ein Verbund von Posaunenchören ist,
-                ist eine Einzelmitgliedschaft nur in besonderen und eng
-                begrenzten Ausnahmefällen möglich. Wir freuen uns, dass Sie uns
-                verbunden sein möchten, und empfehlen hierzu die Mitgliedschaft
-                in unserem{" "}
-                <Link href="/foerderverein" className="link-ink">
-                  Förderverein
-                </Link>
-                .
-              </p>
-              <p>
-                Über eine solche Mitgliedschaft erhalten Sie auch unser
-                Blechblatt sowie alle Informationen und Einladungen zu unseren
-                Veranstaltungen.
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <Heading as="h3" size="list" rule>
-              Mitgliedschaft für Posaunenchöre
-            </Heading>
-            <div className={`${PROSE} mt-5`}>
-              <p>
-                Die Mitgliedschaft eines Posaunenchores im Posaunenwerk der Ev.
-                Kirche im Rheinland e.V. kann schriftlich bei der Geschäftsstelle
-                beantragt werden.
-              </p>
-            </div>
-
-            <h4 className={`${LABEL_HEAD} mt-8`}>Jährliche Mitgliedsbeiträge:</h4>
-            <ValueTable rows={BEITRAEGE} className="mt-3" />
-
-            <WayList className="mt-10">
-              <WayRow
-                href="/downloads/satzung-posaunenwerk.pdf"
-                kind="download"
-                title="Satzung herunterladen"
-              />
-              <WayRow
-                href="/downloads/aufnahmeantrag-choere.pdf"
-                kind="download"
-                title="Aufnahmeantrag herunterladen"
-              />
-            </WayList>
-          </div>
-
-          <div>
-            <Heading as="h3" size="list" rule>
-              Ehrungen
-            </Heading>
-            <div className={`${PROSE} mt-5`}>
-              <p>
-                Informationen zu Ehrungen finden sich in der{" "}
-                <a
-                  href="/downloads/ehrenordnung.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link-ink"
-                >
-                  Ehrenordnung des Posaunenwerks
-                  <span className="sr-only"> (PDF, öffnet in neuem Tab)</span>
-                </a>
-                .
-              </p>
-              <p>
-                Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
-                beantwortet gerne die{" "}
-                <Link href="/kontakt" className="link-ink">
-                  Geschäftsstelle
-                </Link>
-                .
-              </p>
-            </div>
-          </div>
-        </Split>
-      </PageSection>
-
-      <PageSection labelledBy="versicherung-heading" rule>
-        <Split
-          head={
-            <SectionHead
-              id="versicherung-heading"
-              title={<>Instrumenten&shy;versicherung</>}
-              className="hyphens-manual"
-              intro={
-                <>
-                  Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
-                  günstigen Rahmen&shy;versicherung.
-                </>
-              }
-            />
-          }
-          bodyClassName="mt-12 space-y-16"
-        >
-          <div>
-            <Heading as="h3" size="list" rule>
-              Unser Rahmen&shy;vertrag
-            </Heading>
-            <div className={`${PROSE} mt-5`}>
-              <p>
-                Das Posaunenwerk der Ev. Kirche im Rheinland e.V. hat einen
-                Rahmenvertrag über eine preisgünstige
-                Musik&shy;instrumenten&shy;versicherung mit der{" "}
-                <strong className="font-semibold whitespace-nowrap">
-                  Sparkassen-Versicherung AG
-                </strong>{" "}
-                in 70365 Stuttgart abgeschlossen, vermittelt durch{" "}
-                <strong className="font-semibold">ECCLESIA</strong> -
-                Versicherungs&shy;dienst GmbH in 32754 Detmold.
-              </p>
-              <p>
-                Innerhalb dieses Rahmens können unsere Mitglieds&shy;chöre
-                Versicherungen abschließen, die durch uns vermittelt und deren
-                Versicherungs&shy;beiträge durch uns eingezogen werden.
-              </p>
-            </div>
-            <Note tone="important" className="mt-8">
-              <p className="text-lg">
-                <strong className="font-semibold">Hinweis:</strong> Die
-                Versicherung verlängert sich automatisch zu den gleichen
-                Bedingungen um ein weiteres Jahr, wenn uns bis zum{" "}
-                <strong className="font-semibold whitespace-nowrap">
-                  30. November
-                </strong>{" "}
-                keine Änderungs&shy;meldung bzw. Kündigung zugeht.
-              </p>
-            </Note>
-          </div>
-
-          <Panel as="section" labelledBy="schadensfall-heading">
-            <Heading as="h3" id="schadensfall-heading" size="list">
-              Im Schadensfall
-            </Heading>
-            <p className="text-ink dark:text-night-text mt-4 max-w-[65ch] text-lg leading-relaxed">
-              Ansprechpartner beim Posaunenwerk für die Meldung und Abwicklung
-              eines unter den Versicherungs&shy;schutz fallenden Schadens ist
-              die{" "}
-              <Link href="/kontakt" className="link-ink whitespace-nowrap">
-                Geschäftsstelle
-              </Link>
-              .
-            </p>
-
-            <h4 className={`${LABEL_HEAD} mt-8`}>Benötigte Unterlagen:</h4>
-            <ul className="border-ink dark:border-night-text mt-3 border-t-2">
-              {UNTERLAGEN.map((unterlage) => (
-                <li
-                  key={unterlage}
-                  className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug"
-                >
-                  <span
-                    aria-hidden
-                    className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
-                  />
-                  {unterlage}
-                </li>
-              ))}
-            </ul>
-
-            <ButtonLink href="/kontakt" className="mt-8">
-              Schaden melden
-            </ButtonLink>
-          </Panel>
+          </WayList>
         </Split>
       </PageSection>
 
       <PageSection labelledBy="newsletter-heading" rule>
         <Split
-          side="right"
           head={
             <Heading id="newsletter-heading" className="text-balance">
               Bleib auf dem Laufenden

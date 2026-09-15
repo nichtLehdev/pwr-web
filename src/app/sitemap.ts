@@ -31,6 +31,7 @@ const STATIC_ROUTES: Array<{ path: string; priority: number }> = [
   { path: "/mitmachen/jungblaeser", priority: 0.7 },
   { path: "/mitmachen/bildung", priority: 0.7 },
   { path: "/mitmachen/ehrenamt", priority: 0.6 },
+  { path: "/mitmachen/mitgliedschaft", priority: 0.6 },
   { path: "/materialien", priority: 0.7 },
   { path: "/materialien/literatur", priority: 0.6 },
   { path: "/materialien/blechblatt", priority: 0.6 },

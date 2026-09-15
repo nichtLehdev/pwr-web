@@ -32,6 +32,10 @@ export default function Footer() {
       { label: "Mitmachen", href: "/mitmachen" },
       { label: "Chor finden", href: "/mitmachen/chor-finden" },
       { label: "Aus- und Weiterbildung", href: "/mitmachen/bildung" },
+      {
+        label: "Mitgliedschaft & Versicherung",
+        href: "/mitmachen/mitgliedschaft",
+      },
       { label: "Förderverein", href: "/foerderverein" },
     ],
     resources: [
