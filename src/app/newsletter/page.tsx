@@ -69,98 +69,106 @@ export default function NewsletterPage() {
         </p>
       }
     >
+      {/* Formular links, die Zusicherungen als Randnotiz rechts daneben —
+          sonst steht die halbe Seite leer. */}
       <PageSection flush="top">
-        <div className="max-w-[38rem]">
-          <p className="text-ink dark:text-night-text text-lg leading-relaxed">
-            Nach dem Absenden erhältst du eine E-Mail mit einem
-            Bestätigungslink. Erst wenn du ihn öffnest, ist die Anmeldung aktiv
-            (Double-Opt-In).
-          </p>
+        <div className="lg:grid lg:grid-cols-12 lg:gap-10">
+          <div className="max-w-[38rem] lg:col-span-7">
+            <p className="text-ink dark:text-night-text text-lg leading-relaxed">
+              Nach dem Absenden erhältst du eine E-Mail mit einem
+              Bestätigungslink. Erst wenn du ihn öffnest, ist die Anmeldung
+              aktiv (Double-Opt-In).
+            </p>
 
-          {status === "success" ? (
-            <Note
-              tone="info"
-              title="Bitte bestätige deine Anmeldung"
-              className="mt-8"
-            >
-              <p>{message}</p>
-              <p className="mt-3">
-                Ohne diese Bestätigung schicken wir dir nichts. Schau bitte auch
-                im Spam-Ordner nach — der Link ist 7 Tage gültig.
-              </p>
-            </Note>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-              <div>
-                <label htmlFor="email" className={FIELD_LABEL}>
-                  E-Mail-Adresse *
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className={FIELD}
-                  placeholder="deine@email.de"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="name" className={FIELD_LABEL}>
-                  Name (optional)
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={FIELD}
-                  placeholder="Dein Name"
-                />
-              </div>
-
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="consent"
-                  name="consent"
-                  required
-                  checked={consent}
-                  onChange={(e) => setConsent(e.target.checked)}
-                  className="accent-ink dark:accent-primary mt-1 h-5 w-5 shrink-0"
-                />
-                <label
-                  htmlFor="consent"
-                  className="text-ink dark:text-night-text text-sm leading-relaxed"
-                >
-                  Ich möchte den Newsletter des Posaunenwerks Rheinland per
-                  E-Mail erhalten und habe die{" "}
-                  <Link href="/datenschutz" className="link-ink">
-                    Datenschutzerklärung
-                  </Link>{" "}
-                  zur Kenntnis genommen. Diese Einwilligung kann ich jederzeit
-                  über den Abmeldelink in jedem Newsletter widerrufen. *
-                </label>
-              </div>
-
-              {status === "error" && message && (
-                <Note tone="error">
-                  <p>{message}</p>
-                </Note>
-              )}
-
-              <button
-                type="submit"
-                disabled={status === "loading" || !consent}
-                className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            {status === "success" ? (
+              <Note
+                tone="info"
+                title="Bitte bestätige deine Anmeldung"
+                className="mt-8"
               >
-                {status === "loading" ? "Wird abonniert…" : "Abonnieren"}
-              </button>
-            </form>
-          )}
+                <p>{message}</p>
+                <p className="mt-3">
+                  Ohne diese Bestätigung schicken wir dir nichts. Schau bitte
+                  auch im Spam-Ordner nach — der Link ist 7 Tage gültig.
+                </p>
+              </Note>
+            ) : (
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                <div>
+                  <label htmlFor="email" className={FIELD_LABEL}>
+                    E-Mail-Adresse *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={FIELD}
+                    placeholder="deine@email.de"
+                  />
+                </div>
 
-          <div className="border-rule dark:border-night-rule mt-10 border-t pt-6">
+                <div>
+                  <label htmlFor="name" className={FIELD_LABEL}>
+                    Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={FIELD}
+                    placeholder="Dein Name"
+                  />
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="consent"
+                    name="consent"
+                    required
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="accent-ink dark:accent-primary mt-1 h-5 w-5 shrink-0"
+                  />
+                  <label
+                    htmlFor="consent"
+                    className="text-ink dark:text-night-text text-sm leading-relaxed"
+                  >
+                    Ich möchte den Newsletter des Posaunenwerks Rheinland per
+                    E-Mail erhalten und habe die{" "}
+                    <Link href="/datenschutz" className="link-ink">
+                      Datenschutzerklärung
+                    </Link>{" "}
+                    zur Kenntnis genommen. Diese Einwilligung kann ich jederzeit
+                    über den Abmeldelink in jedem Newsletter widerrufen. *
+                  </label>
+                </div>
+
+                {status === "error" && message && (
+                  <Note tone="error">
+                    <p>{message}</p>
+                  </Note>
+                )}
+
+                {/* Nicht deaktiviert, solange die Einwilligung fehlt: ein von
+                    Anfang an grauer Knopf sieht kaputt aus und sagt nicht,
+                    was fehlt. Das `required` am Kästchen bringt den Browser
+                    dazu, genau dort hinzuspringen. */}
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {status === "loading" ? "Wird abonniert…" : "Abonnieren"}
+                </button>
+              </form>
+            )}
+          </div>
+
+          <aside className="border-rule dark:border-night-rule mt-10 border-t pt-6 lg:col-span-4 lg:col-start-9 lg:mt-0">
             <p className="text-dark dark:text-night-muted text-sm leading-relaxed">
               Du kannst dich jederzeit wieder abmelden. Der Newsletter enthält
               keine Werbung und wird nur bei wichtigen Neuigkeiten versendet.
@@ -170,7 +178,7 @@ export default function NewsletterPage() {
                 Datenschutzerklärung
               </Link>
             </p>
-          </div>
+          </aside>
         </div>
       </PageSection>
     </PublicPage>
