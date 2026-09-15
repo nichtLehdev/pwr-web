@@ -39,7 +39,6 @@ export default async function KontaktPage() {
   return (
     <PublicPage
       title="Kontakt"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Kontakt" }]}
       description={
         <p>

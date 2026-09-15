@@ -7,7 +7,7 @@ import Link from "next/link";
 import { capitalizeFirstLetter, getFileIcon } from "@/lib/utils";
 import { api } from "@/trpc/react";
 import PublicPage from "../_components/general/public-page";
-import ParticipationCard from "../_components/general/participation-card";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { DownloadCategory } from "~/generated/prisma/enums";
 import LoadingSpinner from "../_components/general/loading-spinner";
 import {
@@ -71,7 +71,6 @@ function MaterialienContent() {
     <PublicPage
       title="Materialien"
       heroTitle="Materialien & Downloads"
-      color="district-4"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Materialien" }]}
       description={
         <p>
@@ -89,22 +88,18 @@ function MaterialienContent() {
               Unsere Material-Bereiche
             </h2>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-              <ParticipationCard
+            <WayList columns={2} className="mb-8">
+              <WayRow
+                href="/materialien/blechblatt"
                 title="Rheinisches Blechblatt"
                 description="Unser Magazin mit Artikeln, Terminen und Neuigkeiten aus der Posaunenchorarbeit"
-                icon="document"
-                href="/materialien/blechblatt"
-                color="primary"
               />
-              <ParticipationCard
+              <WayRow
+                href="/materialien/literatur"
                 title="Literatur & CDs"
                 description="Notenmaterial, Choräle und Aufnahmen für Ihren Posaunenchor"
-                icon="music"
-                href="/materialien/literatur"
-                color="district-2"
               />
-            </div>
+            </WayList>
           </div>
         </div>
       </section>

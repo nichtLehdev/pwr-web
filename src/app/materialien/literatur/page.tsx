@@ -19,7 +19,6 @@ export default async function LiteraturPage() {
     <PublicPage
       title="Literatur & CDs"
       heroTitle="Bläserliteratur und CDs"
-      color="district-2"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Materialien", href: "/materialien" },

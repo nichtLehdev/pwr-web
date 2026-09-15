@@ -26,7 +26,6 @@ export default async function StrukturGeschichtePage() {
   return (
     <PublicPage
       title="Struktur & Geschichte"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },

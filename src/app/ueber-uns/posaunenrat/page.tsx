@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { api } from "@/trpc/server";
 import PublicPage from "@/app/_components/general/public-page";
-import PeopleCard from "@/app/_components/general/people-card";
+import {
+  PersonList,
+  PersonRow,
+} from "@/app/_components/programmheft/person-row";
 import { BuildingIcon, CheckIcon } from "lucide-react";
 import { ArrowRightIcon, UsersIcon } from "lucide-react";
 import { BanknoteIcon } from "lucide-react";
@@ -50,7 +53,6 @@ export default async function PosaunenratPage() {
   return (
     <PublicPage
       title="Landesposaunenrat"
-      color="district-2"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Über Uns", href: "/ueber-uns" },
@@ -101,16 +103,16 @@ export default async function PosaunenratPage() {
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Vorstandsmitglieder
                 </h3>
-                <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <PersonList className="mb-4">
                   {vorstandMembers.map((member, index) => (
-                    <PeopleCard
+                    <PersonRow
                       key={index}
-                      image={member.person.image ?? undefined}
+                      image={member.person.image}
                       name={member.person.name ?? ""}
-                      subtitle={member.position}
+                      role={member.position}
                     />
                   ))}
-                </div>
+                </PersonList>
                 <p className="mb-4 text-gray-600 dark:text-gray-400">
                   Details zu den Vorstandsmitgliedern finden Sie auf der{" "}
                   <Link
@@ -128,16 +130,16 @@ export default async function PosaunenratPage() {
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Bezirksobleute
                 </h3>
-                <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <PersonList className="mb-4">
                   {obleute.map((member, index) => (
-                    <PeopleCard
+                    <PersonRow
                       key={index}
-                      image={member.image ?? undefined}
+                      image={member.image}
                       name={member.name ?? ""}
-                      subtitle={`${member.roleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
+                      role={`${member.roleName} für Bezirk ${member.districtNumber} (${member.districtName})`}
                     />
                   ))}
-                </div>
+                </PersonList>
                 <p className="text-gray-600 dark:text-gray-400">
                   Ausführliche Informationen zu den Bezirksobfrauen und
                   -obmännern finden Sie auf der{" "}
@@ -157,11 +159,13 @@ export default async function PosaunenratPage() {
                     <div className="bg-primary h-8 w-1 rounded-full"></div>
                     {lkmdLabel}
                   </h3>
-                  <PeopleCard
-                    image={lkmd.person.image ?? undefined}
-                    name={lkmd.person.name ?? "Unbekannt"}
-                    subtitle={lkmdLabel}
-                  />
+                  <PersonList columns={1}>
+                    <PersonRow
+                      image={lkmd.person.image}
+                      name={lkmd.person.name ?? "Unbekannt"}
+                      role={lkmdLabel}
+                    />
+                  </PersonList>
                 </div>
               )}
 
@@ -171,18 +175,11 @@ export default async function PosaunenratPage() {
                   <div className="bg-primary h-8 w-1 rounded-full"></div>
                   Sachverständige
                 </h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <PersonList columns={4}>
                   {sachverstaendige.map((member, index) => (
-                    <div
-                      key={index}
-                      className="dark:border-dark-border dark:bg-dark-surface dark:shadow-dark-border rounded-lg border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <p className="text-dark dark:text-dark-text text-center font-semibold">
-                        {member.person.name}
-                      </p>
-                    </div>
+                    <PersonRow key={index} name={member.person.name ?? ""} />
                   ))}
-                </div>
+                </PersonList>
                 <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
                   Die Sachverständigen sind Theologen, Musiker, Pädagogen,
                   Verwaltungsfachleute und sonstige in der Posaunenarbeit

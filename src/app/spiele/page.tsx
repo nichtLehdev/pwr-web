@@ -1,5 +1,6 @@
 import PublicPage from "@/app/_components/general/public-page";
-import ParticipationCard from "@/app/_components/general/participation-card";
+import { Tag } from "@/app/_components/programmheft/tag";
+import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { Info } from "lucide-react";
 import { GAMES, UPCOMING_GAMES } from "./_lib/games";
 import { InstallHintCard } from "./_components/install-hint-card";
@@ -19,7 +20,6 @@ export default function SpielePage() {
     <PublicPage
       title="Spiele"
       heroTitle="Spiele & Übungen"
-      color="district-6"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Spiele" }]}
       description={
         <p>
@@ -51,28 +51,24 @@ export default function SpielePage() {
             <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
               Angebote
             </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <WayList columns={2}>
               {GAMES.map((game) => (
-                <ParticipationCard
+                <WayRow
                   key={game.slug}
+                  href={`/spiele/${game.slug}`}
                   title={game.cardTitle}
                   description={game.cardDescription}
-                  icon="music"
-                  href={`/spiele/${game.slug}`}
-                  color="district-6"
                 />
               ))}
               {UPCOMING_GAMES.map((game) => (
-                <ParticipationCard
+                <WayRow
                   key={game.cardTitle}
                   title={game.cardTitle}
                   description={game.cardDescription}
-                  icon="music"
-                  color="district-6"
-                  comingSoon
+                  status={<Tag tone="outline">Demnächst</Tag>}
                 />
               ))}
-            </div>
+            </WayList>
           </div>
         </div>
       </section>

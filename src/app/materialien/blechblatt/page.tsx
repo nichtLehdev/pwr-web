@@ -41,7 +41,6 @@ export default function BlechblattPage() {
   return (
     <PublicPage
       title="Rheinisches Blechblatt"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Materialien", href: "/materialien" },

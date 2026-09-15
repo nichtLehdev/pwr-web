@@ -347,7 +347,6 @@ function ChorFindenContent() {
   return (
     <PublicPage
       title="Finde deinen Posaunenchor"
-      color="primary"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },

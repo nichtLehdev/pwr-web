@@ -71,7 +71,6 @@ export default function BildungPage() {
   return (
     <PublicPage
       title="Aus- und Weiterbildung"
-      color="district-2"
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Mitmachen", href: "/mitmachen" },

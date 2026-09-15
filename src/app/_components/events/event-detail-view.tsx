@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import PublicPage from "../general/public-page";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { headMeta } from "@/app/_components/programmheft/page-head";
+import { Tag } from "@/app/_components/programmheft/tag";
 import Image from "next/image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
@@ -96,31 +99,13 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
     window.location.href = `/api/feed/ical?eventId=${event.id}`;
   };
 
-  const district = !event.bezirk
-    ? "primary"
-    : (`district-${event.bezirk.number}` as
-        | "district-1"
-        | "district-2"
-        | "district-3"
-        | "district-4"
-        | "district-5"
-        | "district-6"
-        | "district-7"
-        | "district-8"
-        | "district-9"
-        | "district-10"
-        | "district-11"
-        | "district-12"
-        | "district-13"
-        | undefined);
-
   const heroDescription = (
-    <div className="mt-1 space-y-4">
+    <div className="space-y-4">
       {event.motto ? (
         <p
           className={cn(
-            "italic opacity-90",
-            event.cancelled && "line-through opacity-75",
+            "semi-condensed text-xl leading-snug font-medium",
+            event.cancelled && "text-dark dark:text-night-muted line-through",
           )}
         >
           {event.motto}
@@ -128,34 +113,28 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         {event.cancelled && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white">
+          <Tag tone="cancelled">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            ABGESAGT
-          </span>
+            Abgesagt
+          </Tag>
         )}
-        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-          {event.category}
-        </span>
+        <Tag tone="outline">{event.category}</Tag>
         {event.bezirk && (
-          <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-            {`Bezirk ${event.bezirk.number} (${event.bezirk.shortName})`}
+          <span className={headMeta.bezirk}>
+            <BezirkLabel bezirk={event.bezirk} />
           </span>
         )}
         {event.openToParticipants && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-700 px-2.5 py-0.5 text-xs font-bold text-white">
+          <Tag tone="orange">
             <Users className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Mitspielen möglich!
-          </span>
+          </Tag>
         )}
-        {isPast && (
-          <span className="rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-semibold">
-            Vergangen
-          </span>
-        )}
+        {isPast && <Tag>Vergangen</Tag>}
         {canEdit && (
           <Link
             href={`/dashboard/events/${event.id}/edit`}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+            className={headMeta.action}
           >
             <EditIcon className="h-4 w-4 shrink-0" aria-hidden />
             Bearbeiten
@@ -168,24 +147,24 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             event.description ||
             `${event.title} am ${eventDate.toLocaleDateString("de-DE")}`
           }
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-white/20 px-2.5 py-1 text-xs font-semibold transition-colors hover:bg-white/30 sm:gap-2 sm:px-3 sm:py-1.5"
+          className={headMeta.action}
         />
       </div>
-      <div className="flex flex-col gap-2 border-t border-white/20 pt-3 text-sm sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-1 sm:gap-y-2">
+      <div className={headMeta.line}>
         <span className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+          <Calendar className={headMeta.icon} aria-hidden />
           {formatEventHeroSchedule(eventDate, event.duration)}
         </span>
         {locationLine ? (
           <>
             <span
-              className="hidden shrink-0 px-1 text-white/45 sm:inline"
+              className={headMeta.separator}
               aria-hidden
             >
               ·
             </span>
             <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 shrink-0 text-white/90" aria-hidden />
+              <MapPin className={headMeta.icon} aria-hidden />
               {locationLine}
             </span>
           </>
@@ -197,7 +176,6 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
   return (
     <PublicPage
       title={event.title}
-      color={district}
       breadcrumbs={[
         { label: "Start", href: "/" },
         { label: "Termine", href: "/termine" },
@@ -206,7 +184,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
       heroSize="compact"
       description={heroDescription}
     >
-      <div className="bg-background dark:bg-dark-background -mt-2 min-h-screen md:-mt-4">
+      <div className="bg-background dark:bg-dark-background min-h-screen">
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

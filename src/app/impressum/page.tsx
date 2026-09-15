@@ -14,7 +14,6 @@ export default function ImpressumPage() {
   return (
     <PublicPage
       title="Impressum"
-      color="primary"
       breadcrumbs={[{ label: "Start", href: "/" }, { label: "Impressum" }]}
       description={
         <p>Angaben gemäß § 5 DDG und weitere rechtliche Informationen</p>
