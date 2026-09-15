@@ -5,6 +5,7 @@ import PublicPage from "../general/public-page";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { headMeta } from "@/app/_components/programmheft/page-head";
 import { Tag } from "@/app/_components/programmheft/tag";
+import { eventCategoryLabel } from "@/lib/termine-labels";
 import Image from "next/image";
 import MediaCredit from "@/app/_components/general/media-credit";
 import PublicShareButton from "@/app/_components/general/public-share-button";
@@ -118,7 +119,7 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             Abgesagt
           </Tag>
         )}
-        <Tag tone="outline">{event.category}</Tag>
+        <Tag tone="outline">{eventCategoryLabel(event.category)}</Tag>
         {event.bezirk && (
           <span className={headMeta.bezirk}>
             <BezirkLabel bezirk={event.bezirk} />
