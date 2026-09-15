@@ -122,9 +122,11 @@ export default function CourseRegistrationPage({
           : "Füllen Sie die folgenden Schritte aus, um Ihre Anmeldung abzuschließen."}
       </p>
       <div className="flex flex-wrap items-center gap-2">
-        <Tag tone="outline">{courseTypeLabel(course.courseType)}</Tag>
+        <span className={headMeta.label}>
+          {courseTypeLabel(course.courseType)}
+        </span>
         {course.bezirk && (
-          <span className={headMeta.bezirk}>
+          <span className={headMeta.label}>
             <BezirkLabel bezirk={course.bezirk} />
           </span>
         )}

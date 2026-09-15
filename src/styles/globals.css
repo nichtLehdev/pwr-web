@@ -104,8 +104,31 @@
   outline-color: var(--color-primary);
 }
 
-.dark .programm .on-orange :focus-visible {
+.dark .programm .on-orange :focus-visible,
+.dark .programm .print-field :focus-visible {
   outline-color: var(--color-ink);
+}
+
+/*
+ * Druckfläche in Fördervereinsblau: darauf steht alles in Tinte, auch im
+ * Nachtdruck (Tinte auf #78a8da ≈ 6,8:1). Schiefer wäre dort zu schwach.
+ * Kopfstriche werden Tinte, Haarlinien Tinte 30 %, Zeilen füllen sich
+ * papierweiß. Ungelayert, damit es die hellen/dunklen Utilities überstimmt.
+ */
+.print-field :is(h2, h3, h4, p, span, svg, a, li, dt, dd) {
+  color: var(--color-ink);
+}
+
+.print-field .border-ink {
+  border-color: var(--color-ink);
+}
+
+.print-field .border-rule {
+  border-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+}
+
+.print-field .fill-row::before {
+  background-color: var(--color-paper);
 }
 
 /*

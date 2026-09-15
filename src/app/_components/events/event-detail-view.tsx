@@ -119,9 +119,11 @@ export default function EventDetailView({ event }: EventDetailViewProps) {
             Abgesagt
           </Tag>
         )}
-        <Tag tone="outline">{eventCategoryLabel(event.category)}</Tag>
+        <span className={headMeta.label}>
+          {eventCategoryLabel(event.category)}
+        </span>
         {event.bezirk && (
-          <span className={headMeta.bezirk}>
+          <span className={headMeta.label}>
             <BezirkLabel bezirk={event.bezirk} />
           </span>
         )}

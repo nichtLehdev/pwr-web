@@ -9,6 +9,8 @@ import { PointList } from "../_components/programmheft/point-list";
 import { Heading, SectionHead } from "../_components/programmheft/section-head";
 import { ValueTable } from "../_components/programmheft/value-table";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
+import ImageWithFallback from "../_components/ui/image-with-fallback";
+import { api } from "@/trpc/server";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -100,7 +102,17 @@ const LABEL_HEAD =
 /** Linke Spalte ab 64rem: Kopf und Einleitung; rechts der Inhalt. */
 const SPLIT = "lg:grid lg:grid-cols-12 lg:gap-10";
 
-export default function MitmachenPage() {
+export default async function MitmachenPage() {
+  // Bis eigene Mitmachen-Fotos gepflegt sind, leiht sich die Seite ein Bild
+  // aus der Bildstrecke der Startseite; ohne Bild entfällt das Fotofeld.
+  const photo = await api.homepage
+    .getCarouselItems()
+    .then((items) => items.at(-1)?.media ?? null)
+    .catch(() => null);
+  const photoCredit = photo
+    ? [photo.copyright, photo.creator].filter(Boolean).join(" · ")
+    : "";
+
   return (
     <PublicPage
       title="Mitmachen im Posaunenwerk"
@@ -114,14 +126,15 @@ export default function MitmachenPage() {
       }
     >
       <PageSection labelledBy="einstieg-heading" sheetClassName={SPLIT}>
-        <div className="lg:col-span-4">
-          <Heading id="einstieg-heading" className="hyphens-auto text-balance">
-            Deine Einstiegsmöglichkeiten
+        <div className="lg:col-span-5">
+          {/* Nur ein bewusster Umbruch, wo die Spalte zu schmal ist. */}
+          <Heading id="einstieg-heading" className="hyphens-manual">
+            Deine Einstiegs&shy;möglichkeiten
           </Heading>
         </div>
         <WayList
           labelledBy="einstieg-heading"
-          className="mt-8 lg:col-span-8 lg:mt-0"
+          className="mt-8 lg:col-span-7 lg:mt-0"
         >
           {EINSTIEGE.map((weg) => (
             <WayRow
@@ -135,40 +148,69 @@ export default function MitmachenPage() {
         </WayList>
       </PageSection>
 
-      <PageSection labelledBy="foerderverein-heading" rule sheetClassName={SPLIT}>
-        <div className="lg:col-span-4">
+      {/* Hier spricht der Förderverein: volle blaue Druckfläche. */}
+      <PageSection
+        labelledBy="foerderverein-heading"
+        surface="foerderverein"
+        sheetClassName={SPLIT}
+      >
+        <div className="lg:col-span-5">
           <Heading id="foerderverein-heading" className="text-balance">
             Förderverein – Bläser für Bläser
           </Heading>
-          <span aria-hidden className="bg-foerderverein mt-6 block h-1.5 w-24" />
-          <p className="text-dark dark:text-night-muted mt-6 max-w-[40ch] text-lg">
+          <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
+          <p className="mt-6 max-w-[40ch] text-xl leading-relaxed">
             Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig! Werden
             Sie Mitglied im Förderverein und profitieren Sie von exklusiven
             Vorteilen.
           </p>
         </div>
-        <div className="mt-10 lg:col-span-8 lg:mt-0">
+        <div className="mt-10 lg:col-span-7 lg:mt-0">
           <PointList items={FOERDERVEREIN_FAKTEN} columns={3} titleAs="p" />
           <WayList className="mt-10">
-            <WayRow
-              href="/foerderverein"
-              title="Mehr zum Förderverein"
-              tone="foerderverein"
-            />
+            <WayRow href="/foerderverein" title="Mehr zum Förderverein" />
             <WayRow
               href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
               title="Mitglied werden"
-              tone="foerderverein"
             />
           </WayList>
         </div>
       </PageSection>
 
       <PageSection labelledBy="warum-heading" sheetClassName={SPLIT}>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <Heading id="warum-heading">Warum Posaunenchor?</Heading>
+          {photo ? (
+            <figure className="mt-8">
+              <div className="bg-ink dark:bg-night-raised relative aspect-[4/3] overflow-hidden">
+                <ImageWithFallback
+                  src={photo.url}
+                  alt={photo.alt ?? ""}
+                  fill
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  className="object-cover"
+                  style={
+                    photo.focalPointX != null && photo.focalPointY != null
+                      ? {
+                          objectPosition: `${photo.focalPointX}% ${photo.focalPointY}%`,
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+              {photoCredit ? (
+                <figcaption className="text-dark dark:text-night-muted mt-2 text-sm">
+                  <span className="sr-only">Bildnachweis: </span>
+                  {photoCredit}
+                </figcaption>
+              ) : null}
+            </figure>
+          ) : null}
         </div>
-        <PointList items={GRUENDE} className="mt-8 lg:col-span-8 lg:mt-0" />
+        <PointList
+          items={GRUENDE}
+          className="mt-8 lg:col-span-7 lg:mt-0 lg:self-start"
+        />
       </PageSection>
 
       <PageSection
@@ -178,7 +220,7 @@ export default function MitmachenPage() {
         className="scroll-mt-24"
         sheetClassName={SPLIT}
       >
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <SectionHead
             id="mitgliedschaft-heading"
             title="Mitgliedschaft im Posaunenwerk"
@@ -187,7 +229,7 @@ export default function MitmachenPage() {
           />
         </div>
 
-        <div className="mt-12 space-y-16 lg:col-span-8 lg:mt-0">
+        <div className="mt-12 space-y-16 lg:col-span-7 lg:mt-0">
           <div>
             <Heading as="h3" size="list" rule>
               Einzelmitgliedschaft
@@ -225,7 +267,7 @@ export default function MitmachenPage() {
             </div>
 
             <h4 className={`${LABEL_HEAD} mt-8`}>Jährliche Mitgliedsbeiträge:</h4>
-            <ValueTable rows={BEITRAEGE} className="mt-3 max-w-2xl" />
+            <ValueTable rows={BEITRAEGE} className="mt-3" />
 
             <WayList className="mt-10">
               <WayRow
@@ -241,34 +283,39 @@ export default function MitmachenPage() {
             </WayList>
           </div>
 
-          <Note title="Ehrungen" titleAs="h3">
-            <p>
-              Informationen zu Ehrungen finden sich in der{" "}
-              <a
-                href="/downloads/ehrenordnung.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="link-ink"
-              >
-                Ehrenordnung des Posaunenwerks
-                <span className="sr-only"> (PDF, öffnet in neuem Tab)</span>
-              </a>
-              .
-            </p>
-            <p>
-              Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
-              beantwortet gerne die{" "}
-              <Link href="/kontakt" className="link-ink">
-                Geschäftsstelle
-              </Link>
-              .
-            </p>
-          </Note>
+          <div>
+            <Heading as="h3" size="list" rule>
+              Ehrungen
+            </Heading>
+            <div className={`${PROSE} mt-5`}>
+              <p>
+                Informationen zu Ehrungen finden sich in der{" "}
+                <a
+                  href="/downloads/ehrenordnung.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-ink"
+                >
+                  Ehrenordnung des Posaunenwerks
+                  <span className="sr-only"> (PDF, öffnet in neuem Tab)</span>
+                </a>
+                .
+              </p>
+              <p>
+                Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
+                beantwortet gerne die{" "}
+                <Link href="/kontakt" className="link-ink">
+                  Geschäftsstelle
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
         </div>
       </PageSection>
 
       <PageSection labelledBy="versicherung-heading" rule sheetClassName={SPLIT}>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <SectionHead
             id="versicherung-heading"
             title={<>Instrumenten&shy;versicherung</>}
@@ -282,7 +329,7 @@ export default function MitmachenPage() {
           />
         </div>
 
-        <div className="mt-12 space-y-16 lg:col-span-8 lg:mt-0">
+        <div className="mt-12 space-y-16 lg:col-span-7 lg:mt-0">
           <div>
             <Heading as="h3" size="list" rule>
               Unser Rahmen&shy;vertrag
@@ -305,7 +352,7 @@ export default function MitmachenPage() {
                 Versicherungs&shy;beiträge durch uns eingezogen werden.
               </p>
             </div>
-            <Note tone="important" className="mt-8 max-w-[65ch]">
+            <Note tone="important" className="mt-8">
               <p className="text-lg">
                 <strong className="font-semibold">Hinweis:</strong> Die
                 Versicherung verlängert sich automatisch zu den gleichen
@@ -356,12 +403,12 @@ export default function MitmachenPage() {
       </PageSection>
 
       <PageSection labelledBy="newsletter-heading" rule sheetClassName={SPLIT}>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5">
           <Heading id="newsletter-heading" className="text-balance">
             Bleib auf dem Laufenden
           </Heading>
         </div>
-        <div className="mt-6 lg:col-span-8 lg:mt-0">
+        <div className="mt-6 lg:col-span-7 lg:mt-0">
           <p className="text-ink dark:text-night-text max-w-[46ch] text-xl leading-relaxed">
             Abonniere unseren Newsletter und verpasse keine Neuigkeiten, Termine
             und Angebote.

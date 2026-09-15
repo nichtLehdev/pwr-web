@@ -65,7 +65,7 @@ export default function SpielePage() {
                   key={game.cardTitle}
                   title={game.cardTitle}
                   description={game.cardDescription}
-                  status={<Tag tone="outline">Demnächst</Tag>}
+                  status={<Tag>Demnächst</Tag>}
                 />
               ))}
             </WayList>

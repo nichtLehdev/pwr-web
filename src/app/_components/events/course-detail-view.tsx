@@ -171,16 +171,18 @@ export default function CourseDetailView({
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <Tag tone="outline">{courseTypeLabel(course.courseType)}</Tag>
+        <span className={headMeta.label}>
+          {courseTypeLabel(course.courseType)}
+        </span>
         {course.bezirk && (
-          <span className={headMeta.bezirk}>
+          <span className={headMeta.label}>
             <BezirkLabel bezirk={course.bezirk} />
           </span>
         )}
         {!isSameDay && (
-          <Tag tone="outline">
+          <span className={headMeta.label}>
             {durationDays} {durationDays === 1 ? "Tag" : "Tage"}
-          </Tag>
+          </span>
         )}
         {isPast && <Tag>Vergangen</Tag>}
         {!isExternal && spots.isFull && !course.allowWaitingList && (

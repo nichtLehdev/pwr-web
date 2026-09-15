@@ -10,7 +10,6 @@ import EnsembleMapWrapper from "@/app/_components/ensembles/ensemble-map-wrapper
 import PublicPage from "@/app/_components/general/public-page";
 import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
 import { headMeta } from "@/app/_components/programmheft/page-head";
-import { Tag } from "@/app/_components/programmheft/tag";
 import MediaCredit from "@/app/_components/general/media-credit";
 import LocationNavigationLink from "@/app/_components/general/location-navigation-link";
 import {
@@ -195,16 +194,16 @@ export default async function EnsembleDetailPage({ params }: PageProps) {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               {ensemble.bezirk && (
-                <span className={headMeta.bezirk}>
+                <span className={headMeta.label}>
                   <BezirkLabel bezirk={ensemble.bezirk} />
                 </span>
               )}
               {ensemble.location?.city && (
-                <Tag tone="outline">
+                <span className={headMeta.label}>
                   {ensemble.location.city}
                   {ensemble.location.zipCode &&
                     `, ${ensemble.location.zipCode}`}
-                </Tag>
+                </span>
               )}
             </div>
             {ensemble.image?.url && (

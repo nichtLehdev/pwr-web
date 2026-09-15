@@ -10,6 +10,12 @@ interface PageSectionProps {
   spacing?: "default" | "close";
   /** `top`: ohne Luft oben, z. B. eine Wegliste direkt unter dem Seitenkopf. */
   flush?: "top";
+  /**
+   * `foerderverein`: volle Druckfläche in Fördervereinsblau, nur wo der
+   * Förderverein spricht. Darauf steht alles in Tinte, auch im Nachtdruck
+   * (`.print-field`); ein Strich darüber entfällt.
+   */
+  surface?: "paper" | "foerderverein";
   className?: string;
   /** Klassen für das Blatt, z. B. ein 12-Spalten-Raster. */
   sheetClassName?: string;
@@ -23,10 +29,12 @@ export function PageSection({
   rule = false,
   spacing = "default",
   flush,
+  surface = "paper",
   className,
   sheetClassName,
   children,
 }: PageSectionProps) {
+  const printField = surface === "foerderverein";
   const padding =
     flush === "top"
       ? spacing === "close"
@@ -41,8 +49,10 @@ export function PageSection({
       id={id}
       aria-labelledby={labelledBy}
       className={cn(
-        "bg-paper dark:bg-night",
-        rule && "border-ink dark:border-night-rule border-t-2",
+        printField
+          ? "print-field bg-foerderverein text-ink"
+          : "bg-paper dark:bg-night",
+        rule && !printField && "border-ink dark:border-night-rule border-t-2",
         padding,
         className,
       )}
