@@ -1,20 +1,14 @@
 import Link from "next/link";
 import PublicPage from "../_components/general/public-page";
-import SectionHeader from "../_components/section-header";
-import ParticipationCard from "../_components/general/participation-card";
-import {
-  Gift,
-  Mail,
-  ChevronRight,
-  Music,
-  GraduationCap,
-  Users,
-  FileText,
-  Shield,
-  AlertTriangle,
-  Zap,
-  Download,
-} from "lucide-react";
+import { ButtonLink } from "../_components/programmheft/button-link";
+import { ClosingCall } from "../_components/programmheft/closing-call";
+import { Note } from "../_components/programmheft/note";
+import { PageSection } from "../_components/programmheft/page-section";
+import { Panel } from "../_components/programmheft/panel";
+import { PointList } from "../_components/programmheft/point-list";
+import { Heading, SectionHead } from "../_components/programmheft/section-head";
+import { ValueTable } from "../_components/programmheft/value-table";
+import { WayList, WayRow } from "../_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -24,62 +18,89 @@ export const metadata = buildPageMetadata({
   path: "/mitmachen",
 });
 
-export default function MitmachenPage() {
-  const participationOptions: {
-    id: string;
-    title: string;
-    description: string;
-    icon: "map" | "education" | "users" | "heart" | "gift" | "shield";
-    href: string;
-    color: string;
-  }[] = [
-    {
-      id: "chor-finden",
-      title: "Chor finden",
-      description:
-        "Finde einen Posaunenchor in deiner Nähe und werde Teil einer musikalischen Gemeinschaft.",
-      icon: "map",
-      href: "/mitmachen/chor-finden",
-      color: "primary",
-    },
-    {
-      id: "ausbildung",
-      title: "Aus- und Weiterbildung",
-      description:
-        "Von Anfängerkursen bis zu Fortbildungen – entdecke unsere vielfältigen Bildungsangebote.",
-      icon: "education",
-      href: "/mitmachen/bildung",
-      color: "district-2",
-    },
-    {
-      id: "jungblaeser",
-      title: "Jungbläserarbeit",
-      description:
-        "Musik von Anfang an – Angebote für Kinder und Jugendliche im Posaunenchor.",
-      icon: "users",
-      href: "/mitmachen/jungblaeser",
-      color: "district-3",
-    },
-    {
-      id: "ehrenamt",
-      title: "Ehrenamtlich engagieren",
-      description:
-        "Bringe deine Fähigkeiten ein und gestalte die Zukunft des Posaunenwerks aktiv mit.",
-      icon: "heart",
-      href: "/mitmachen/ehrenamt",
-      color: "district-5",
-    },
-    {
-      id: "foerdern",
-      title: "Fördern & Spenden",
-      description:
-        "Unterstütze unsere Arbeit durch eine Mitgliedschaft im Förderverein oder eine Spende.",
-      icon: "gift",
-      href: "/foerderverein",
-      color: "foerderverein",
-    },
-  ];
+const EINSTIEGE = [
+  {
+    href: "/mitmachen/chor-finden",
+    title: "Chor finden",
+    description:
+      "Finde einen Posaunenchor in deiner Nähe und werde Teil einer musikalischen Gemeinschaft.",
+  },
+  {
+    href: "/mitmachen/bildung",
+    title: "Aus- und Weiterbildung",
+    description:
+      "Von Anfängerkursen bis zu Fortbildungen – entdecke unsere vielfältigen Bildungsangebote.",
+  },
+  {
+    href: "/mitmachen/jungblaeser",
+    title: "Jungbläserarbeit",
+    description:
+      "Musik von Anfang an – Angebote für Kinder und Jugendliche im Posaunenchor.",
+  },
+  {
+    href: "/mitmachen/ehrenamt",
+    title: "Ehrenamtlich engagieren",
+    description:
+      "Bringe deine Fähigkeiten ein und gestalte die Zukunft des Posaunenwerks aktiv mit.",
+  },
+  {
+    href: "/foerderverein",
+    title: "Fördern & Spenden",
+    description:
+      "Unterstütze unsere Arbeit durch eine Mitgliedschaft im Förderverein oder eine Spende.",
+    tone: "foerderverein" as const,
+  },
+];
 
+const FOERDERVEREIN_FAKTEN = [
+  { title: "Nur 36 € / Jahr" },
+  { title: "Geschenk-CD 2025", text: "für Neumitglieder" },
+  { title: "Direkte Förderung", text: "Lehrgänge & Projekte" },
+];
+
+const GRUENDE = [
+  {
+    title: "Gemeinsam Musik machen",
+    text: "Erlebe die Freude am gemeinsamen Musizieren in einer starken Gemeinschaft von über 2.000 Bläserinnen und Bläsern im Rheinland.",
+  },
+  {
+    title: "Glauben leben",
+    text: "Verbinde deine Musikalität mit deinem Glauben und gestalte Gottesdienste und kirchliche Feste aktiv mit.",
+  },
+  {
+    title: "Persönlich wachsen",
+    text: "Entwickle deine musikalischen Fähigkeiten durch regelmäßiges Üben, Workshops und die Begleitung erfahrener Chorleiter.",
+  },
+  {
+    title: "Teil einer Bewegung",
+    text: "Werde Teil einer über 140 Jahre alten Tradition mit annähernd 200 Posaunenchören im Rheinland.",
+  },
+];
+
+const BEITRAEGE = [
+  { label: "Grundbeitrag", value: "45 €" },
+  { label: "Je Chormitglied mit Einkommen", value: "16 €" },
+  { label: "Je Chormitglied ohne Einkommen", value: "8 €" },
+];
+
+const UNTERLAGEN = [
+  "Schriftliche Schilderung des Schadens­hergangs",
+  "Genaue Bezeichnung des geschädigten Instrumentes",
+  "Wenn möglich: Angebot einer Fachfirma zur Schadens­höhe",
+];
+
+/** Fließtext der Seite: Tinte, ruhige Zeilenlänge. */
+const PROSE =
+  "text-ink dark:text-night-text max-w-[65ch] space-y-4 text-lg leading-relaxed";
+
+/** Kleiner Kopf innerhalb eines Abschnitts, z. B. „Jährliche Mitgliedsbeiträge:“. */
+const LABEL_HEAD =
+  "semi-condensed text-ink dark:text-night-text text-lg font-semibold";
+
+/** Linke Spalte ab 64rem: Kopf und Einleitung; rechts der Inhalt. */
+const SPLIT = "lg:grid lg:grid-cols-12 lg:gap-10";
+
+export default function MitmachenPage() {
   return (
     <PublicPage
       title="Mitmachen im Posaunenwerk"
@@ -92,473 +113,274 @@ export default function MitmachenPage() {
         </p>
       }
     >
-      {/* Einstiegsmöglichkeiten */}
-      <section className="bg-background dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <SectionHeader title="Deine Einstiegsmöglichkeiten" />
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {participationOptions.map((option) => (
-              <ParticipationCard
-                key={option.id}
-                title={option.title}
-                description={option.description}
-                icon={option.icon}
-                href={option.href}
-                color={option.color}
-              />
-            ))}
-          </div>
+      <PageSection labelledBy="einstieg-heading" sheetClassName={SPLIT}>
+        <div className="lg:col-span-4">
+          <Heading id="einstieg-heading" className="hyphens-auto text-balance">
+            Deine Einstiegsmöglichkeiten
+          </Heading>
         </div>
-      </section>
+        <WayList
+          labelledBy="einstieg-heading"
+          className="mt-8 lg:col-span-8 lg:mt-0"
+        >
+          {EINSTIEGE.map((weg) => (
+            <WayRow
+              key={weg.href}
+              href={weg.href}
+              title={weg.title}
+              description={weg.description}
+              tone={weg.tone}
+            />
+          ))}
+        </WayList>
+      </PageSection>
 
-      {/* Förderverein CTA Banner */}
-      <section className="bg-foerderverein/5 dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <div className="bg-foerderverein dark:bg-foerderverein-dark relative overflow-hidden rounded-2xl p-8 text-white shadow-2xl md:p-12">
-              {/* Dekorative Elemente - subtiler */}
-              <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-white/5"></div>
-              <div className="absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-white/5"></div>
-
-              <div className="relative z-10">
-                <div className="mb-6 flex items-start gap-6">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white">
-                    <Gift className="text-foerderverein h-8 w-8" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                      Förderverein – Bläser für Bläser
-                    </h2>
-                    <p className="mb-6 text-lg leading-relaxed opacity-95 md:text-xl">
-                      Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig!
-                      Werden Sie Mitglied im Förderverein und profitieren Sie
-                      von exklusiven Vorteilen.
-                    </p>
-
-                    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div className="flex h-full items-center rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="text-xl font-bold">Nur 36 € / Jahr</p>
-                      </div>
-                      <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="mb-1 text-lg font-bold">
-                          Geschenk-CD 2025
-                        </p>
-                        <p className="text-sm opacity-90">für Neumitglieder</p>
-                      </div>
-                      <div className="rounded-lg bg-white/10 p-4 backdrop-blur-sm">
-                        <p className="mb-1 text-lg font-bold">
-                          Direkte Förderung
-                        </p>
-                        <p className="text-sm opacity-90">
-                          Lehrgänge & Projekte
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-4 sm:flex-row">
-                      <Link
-                        href="/foerderverein"
-                        className="text-foerderverein inline-flex items-center justify-center rounded-lg bg-white px-8 py-4 font-bold shadow-lg transition-colors hover:bg-gray-100"
-                      >
-                        Mehr zum Förderverein
-                        <ChevronRight className="ml-2 h-5 w-5" />
-                      </Link>
-                      <a
-                        href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
-                        className="inline-flex items-center justify-center rounded-lg border-2 border-white bg-transparent px-8 py-4 font-semibold text-white transition-colors hover:bg-white/10"
-                      >
-                        <Mail className="mr-2 h-5 w-5" />
-                        Mitglied werden
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <PageSection labelledBy="foerderverein-heading" rule sheetClassName={SPLIT}>
+        <div className="lg:col-span-4">
+          <Heading id="foerderverein-heading" className="text-balance">
+            Förderverein – Bläser für Bläser
+          </Heading>
+          <span aria-hidden className="bg-foerderverein mt-6 block h-1.5 w-24" />
+          <p className="text-dark dark:text-night-muted mt-6 max-w-[40ch] text-lg">
+            Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig! Werden
+            Sie Mitglied im Förderverein und profitieren Sie von exklusiven
+            Vorteilen.
+          </p>
         </div>
-      </section>
-
-      {/* Warum Posaunenchor? */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-4xl">
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Warum Posaunenchor?
-            </h2>
-
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              <div className="dark:bg-dark-surface rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <Music className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Gemeinsam Musik machen
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Erlebe die Freude am gemeinsamen Musizieren in einer starken
-                  Gemeinschaft von über 2.000 Bläserinnen und Bläsern im
-                  Rheinland.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <GraduationCap className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Glauben leben
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Verbinde deine Musikalität mit deinem Glauben und gestalte
-                  Gottesdienste und kirchliche Feste aktiv mit.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <Zap className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Persönlich wachsen
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Entwickle deine musikalischen Fähigkeiten durch regelmäßiges
-                  Üben, Workshops und die Begleitung erfahrener Chorleiter.
-                </p>
-              </div>
-
-              <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-md">
-                <div className="bg-primary dark:bg-primary-light mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                  Teil einer Bewegung
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Werde Teil einer über 140 Jahre alten Tradition mit annähernd
-                  200 Posaunenchören im Rheinland.
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="mt-10 lg:col-span-8 lg:mt-0">
+          <PointList items={FOERDERVEREIN_FAKTEN} columns={3} titleAs="p" />
+          <WayList className="mt-10">
+            <WayRow
+              href="/foerderverein"
+              title="Mehr zum Förderverein"
+              tone="foerderverein"
+            />
+            <WayRow
+              href="mailto:foerderverein@posaunenwerk-rheinland.de?subject=Mitgliedschaft im Förderverein"
+              title="Mitglied werden"
+              tone="foerderverein"
+            />
+          </WayList>
         </div>
-      </section>
+      </PageSection>
 
-      {/* Mitgliedschaft im Posaunenwerk */}
-      <section
-        className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20"
+      <PageSection labelledBy="warum-heading" sheetClassName={SPLIT}>
+        <div className="lg:col-span-4">
+          <Heading id="warum-heading">Warum Posaunenchor?</Heading>
+        </div>
+        <PointList items={GRUENDE} className="mt-8 lg:col-span-8 lg:mt-0" />
+      </PageSection>
+
+      <PageSection
         id="mitgliedschaft"
+        labelledBy="mitgliedschaft-heading"
+        rule
+        className="scroll-mt-24"
+        sheetClassName={SPLIT}
       >
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <div className="border-primary dark:bg-dark-surface rounded-lg border-t-4 bg-white p-8 shadow-xl md:p-12">
-              <div className="mb-6 flex items-start gap-4">
-                <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
-                  <FileText className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                    Mitgliedschaft im Posaunenwerk
-                  </h2>
-                  <p className="mb-6 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
-                    Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk
-                    Rheinland freuen wir uns sehr.
-                  </p>
-                </div>
-              </div>
+        <div className="lg:col-span-4">
+          <SectionHead
+            id="mitgliedschaft-heading"
+            title="Mitgliedschaft im Posaunenwerk"
+            className="text-balance"
+            intro="Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk Rheinland freuen wir uns sehr."
+          />
+        </div>
 
-              <div className="space-y-6">
-                {/* Einzelmitgliedschaft */}
-                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                    Einzelmitgliedschaft
-                  </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Da das Posaunenwerk im Kern ein Verbund von Posaunenchören
-                    ist, ist eine Einzelmitgliedschaft nur in besonderen und eng
-                    begrenzten Ausnahmefällen möglich. Wir freuen uns, dass Sie
-                    uns verbunden sein möchten, und empfehlen hierzu die
-                    Mitgliedschaft in unserem{" "}
-                    <a
-                      href="/foerderverein"
-                      className="text-primary hover:text-primary-dark font-semibold"
-                    >
-                      Förderverein
-                    </a>
-                    .
-                  </p>
-                  <p className="leading-relaxed text-gray-600">
-                    Über eine solche Mitgliedschaft erhalten Sie auch unser
-                    Blechblatt sowie alle Informationen und Einladungen zu
-                    unseren Veranstaltungen.
-                  </p>
-                </div>
-
-                {/* Chormitgliedschaft */}
-                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-xl font-bold">
-                    Mitgliedschaft für Posaunenchöre
-                  </h3>
-                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Die Mitgliedschaft eines Posaunenchores im Posaunenwerk der
-                    Ev. Kirche im Rheinland e.V. kann schriftlich bei der
-                    Geschäftsstelle beantragt werden.
-                  </p>
-
-                  <div className="dark:bg-dark-surface mb-4 rounded-lg bg-white p-4">
-                    <h4 className="text-dark dark:text-dark-text mb-3 font-bold">
-                      Jährliche Mitgliedsbeiträge:
-                    </h4>
-                    <ul className="space-y-2 text-gray-600 dark:text-gray-400">
-                      <li className="flex items-center gap-2">
-                        <span className="bg-primary h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          <strong>Grundbeitrag:</strong> 45 €
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="bg-primary h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          <strong>Je Chormitglied mit Einkommen:</strong> 16 €
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <span className="bg-primary h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          <strong>Je Chormitglied ohne Einkommen:</strong> 8 €
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row">
-                    <a
-                      href="/downloads/satzung-posaunenwerk.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-primary hover:bg-primary-dark inline-flex items-center justify-center rounded-lg px-6 py-3 font-semibold text-white transition-colors"
-                    >
-                      <Download className="mr-2 h-5 w-5" />
-                      Satzung herunterladen
-                    </a>
-                    <a
-                      href="/downloads/aufnahmeantrag-choere.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="border-primary text-primary hover:bg-primary inline-flex items-center justify-center rounded-lg border-2 bg-white px-6 py-3 font-semibold transition-colors hover:text-white"
-                    >
-                      <FileText className="mr-2 h-5 w-5" />
-                      Aufnahmeantrag herunterladen
-                    </a>
-                  </div>
-                </div>
-
-                {/* Ehrungen */}
-                <div className="bg-primary-light/10 dark:bg-primary-light/20 border-primary rounded-lg border-l-4 p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                    Ehrungen
-                  </h3>
-                  <p className="mb-3 text-gray-600 dark:text-gray-400">
-                    Informationen zu Ehrungen finden sich in der{" "}
-                    <a
-                      href="/downloads/ehrenordnung.pdf"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:text-primary-dark font-semibold"
-                    >
-                      Ehrenordnung des Posaunenwerks
-                    </a>
-                    .
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
-                    beantwortet gerne die{" "}
-                    <Link
-                      href="/kontakt"
-                      className="text-primary hover:text-primary-dark font-semibold"
-                    >
-                      Geschäftsstelle
-                    </Link>
-                    .
-                  </p>
-                </div>
-              </div>
+        <div className="mt-12 space-y-16 lg:col-span-8 lg:mt-0">
+          <div>
+            <Heading as="h3" size="list" rule>
+              Einzelmitgliedschaft
+            </Heading>
+            <div className={`${PROSE} mt-5`}>
+              <p>
+                Da das Posaunenwerk im Kern ein Verbund von Posaunenchören ist,
+                ist eine Einzelmitgliedschaft nur in besonderen und eng
+                begrenzten Ausnahmefällen möglich. Wir freuen uns, dass Sie uns
+                verbunden sein möchten, und empfehlen hierzu die Mitgliedschaft
+                in unserem{" "}
+                <Link href="/foerderverein" className="link-ink">
+                  Förderverein
+                </Link>
+                .
+              </p>
+              <p>
+                Über eine solche Mitgliedschaft erhalten Sie auch unser
+                Blechblatt sowie alle Informationen und Einladungen zu unseren
+                Veranstaltungen.
+              </p>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Instrumentenversicherung */}
-      <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <div className="border-district-6 dark:bg-dark-surface dark:shadow-dark-border rounded-lg border-t-4 bg-white p-6 shadow-xl md:p-12">
-              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:gap-6">
-                <div className="bg-district-6 flex h-12 w-12 shrink-0 items-center justify-center rounded-full md:h-14 md:w-14">
-                  <Shield className="h-6 w-6 text-white md:h-7 md:w-7" />
-                </div>
-                <div>
-                  <h2 className="text-dark dark:text-dark-text mb-3 text-xl font-bold wrap-break-word md:mb-4 md:text-2xl lg:text-3xl xl:text-4xl">
-                    Instrumenten&shy;versicherung
-                  </h2>
-                  <p className="text-base leading-relaxed text-gray-600 md:text-lg dark:text-gray-400">
-                    Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
-                    günstigen Rahmen&shy;versicherung.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {/* Rahmenvertrag */}
-                <div className="bg-background-secondary dark:bg-dark-background-secondary rounded-lg p-4 md:p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-3 text-lg font-bold md:text-xl">
-                    Unser Rahmen&shy;vertrag
-                  </h3>
-                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base dark:text-gray-400">
-                    Das Posaunenwerk der Ev. Kirche im Rheinland e.V. hat einen
-                    Rahmenvertrag über eine preisgünstige
-                    Musik&shy;instrumenten&shy;versicherung mit der{" "}
-                    <strong className="whitespace-nowrap">
-                      Sparkassen-Versicherung AG
-                    </strong>{" "}
-                    in 70365 Stuttgart abgeschlossen, vermittelt durch{" "}
-                    <strong>ECCLESIA</strong> - Versicherungs&shy;dienst GmbH in
-                    32754 Detmold.
-                  </p>
-                  <p className="mb-3 text-sm leading-relaxed text-gray-600 md:mb-4 md:text-base dark:text-gray-400">
-                    Innerhalb dieses Rahmens können unsere Mitglieds&shy;chöre
-                    Versicherungen abschließen, die durch uns vermittelt und
-                    deren Versicherungs&shy;beiträge durch uns eingezogen
-                    werden.
-                  </p>
-
-                  <div className="bg-primary-light/10 dark:bg-primary-light/20 border-primary rounded-lg border-l-4 p-3 md:p-4">
-                    <p className="text-sm leading-relaxed text-gray-700 md:text-base dark:text-gray-300">
-                      <strong>Hinweis:</strong> Die Versicherung verlängert sich
-                      automatisch zu den gleichen Bedingungen um ein weiteres
-                      Jahr, wenn uns bis zum{" "}
-                      <strong className="whitespace-nowrap">
-                        30. November
-                      </strong>{" "}
-                      keine Änderungs&shy;meldung bzw. Kündigung zugeht.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Im Schadenfall */}
-                <div className="bg-district-6/10 dark:bg-district-6/20 rounded-lg p-4 md:p-6">
-                  <h3 className="text-dark dark:text-dark-text mb-3 flex items-start gap-2 text-lg font-bold md:text-xl">
-                    <AlertTriangle className="text-district-6 mt-0.5 h-5 w-5 shrink-0 md:h-6 md:w-6" />
-                    <span>Im Schadensfall</span>
-                  </h3>
-                  <p className="mb-4 text-sm leading-relaxed text-gray-600 md:text-base dark:text-gray-400">
-                    Ansprechpartner beim Posaunenwerk für die Meldung und
-                    Abwicklung eines unter den Versicherungs&shy;schutz
-                    fallenden Schadens ist die{" "}
-                    <Link
-                      href="/kontakt"
-                      className="text-primary hover:text-primary-dark font-semibold whitespace-nowrap"
-                    >
-                      Geschäftsstelle
-                    </Link>
-                    .
-                  </p>
-
-                  <div className="dark:bg-dark-surface rounded-lg bg-white p-3 md:p-4">
-                    <h4 className="text-dark dark:text-dark-text mb-3 text-base font-bold md:text-lg">
-                      Benötigte Unterlagen:
-                    </h4>
-                    <ul className="space-y-2 text-sm text-gray-600 md:text-base dark:text-gray-400">
-                      <li className="flex items-start gap-2">
-                        <span className="bg-district-6 mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          Schriftliche Schilderung des Schadens&shy;hergangs
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="bg-district-6 mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          Genaue Bezeichnung des geschädigten Instrumentes
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="bg-district-6 mt-2 h-2 w-2 shrink-0 rounded-full"></span>
-                        <span>
-                          Wenn möglich: Angebot einer Fachfirma zur
-                          Schadens&shy;höhe
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="mt-4">
-                    <Link
-                      href="/kontakt"
-                      className="bg-district-6 inline-flex w-full items-center justify-center rounded-lg px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 md:w-auto md:text-base"
-                    >
-                      <Mail className="mr-2 h-5 w-5 shrink-0" />
-                      Schaden melden
-                    </Link>
-                  </div>
-                </div>
-              </div>
+          <div>
+            <Heading as="h3" size="list" rule>
+              Mitgliedschaft für Posaunenchöre
+            </Heading>
+            <div className={`${PROSE} mt-5`}>
+              <p>
+                Die Mitgliedschaft eines Posaunenchores im Posaunenwerk der Ev.
+                Kirche im Rheinland e.V. kann schriftlich bei der Geschäftsstelle
+                beantragt werden.
+              </p>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Kontakt & Beratung */}
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-dark dark:text-dark-text mb-6 text-2xl font-bold md:text-3xl lg:text-4xl">
-              Noch Fragen?
-            </h2>
-            <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
-              Wir beraten dich gerne persönlich zu allen Möglichkeiten des
-              Mitmachens. Nimm einfach Kontakt mit uns auf!
+            <h4 className={`${LABEL_HEAD} mt-8`}>Jährliche Mitgliedsbeiträge:</h4>
+            <ValueTable rows={BEITRAEGE} className="mt-3 max-w-2xl" />
+
+            <WayList className="mt-10">
+              <WayRow
+                href="/downloads/satzung-posaunenwerk.pdf"
+                kind="download"
+                title="Satzung herunterladen"
+              />
+              <WayRow
+                href="/downloads/aufnahmeantrag-choere.pdf"
+                kind="download"
+                title="Aufnahmeantrag herunterladen"
+              />
+            </WayList>
+          </div>
+
+          <Note title="Ehrungen" titleAs="h3">
+            <p>
+              Informationen zu Ehrungen finden sich in der{" "}
+              <a
+                href="/downloads/ehrenordnung.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="link-ink"
+              >
+                Ehrenordnung des Posaunenwerks
+                <span className="sr-only"> (PDF, öffnet in neuem Tab)</span>
+              </a>
+              .
+            </p>
+            <p>
+              Fragen zu Ehrungen oder zur Mitgliedschaft im Allgemeinen
+              beantwortet gerne die{" "}
+              <Link href="/kontakt" className="link-ink">
+                Geschäftsstelle
+              </Link>
+              .
+            </p>
+          </Note>
+        </div>
+      </PageSection>
+
+      <PageSection labelledBy="versicherung-heading" rule sheetClassName={SPLIT}>
+        <div className="lg:col-span-4">
+          <SectionHead
+            id="versicherung-heading"
+            title={<>Instrumenten&shy;versicherung</>}
+            className="hyphens-manual"
+            intro={
+              <>
+                Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
+                günstigen Rahmen&shy;versicherung.
+              </>
+            }
+          />
+        </div>
+
+        <div className="mt-12 space-y-16 lg:col-span-8 lg:mt-0">
+          <div>
+            <Heading as="h3" size="list" rule>
+              Unser Rahmen&shy;vertrag
+            </Heading>
+            <div className={`${PROSE} mt-5`}>
+              <p>
+                Das Posaunenwerk der Ev. Kirche im Rheinland e.V. hat einen
+                Rahmenvertrag über eine preisgünstige
+                Musik&shy;instrumenten&shy;versicherung mit der{" "}
+                <strong className="font-semibold whitespace-nowrap">
+                  Sparkassen-Versicherung AG
+                </strong>{" "}
+                in 70365 Stuttgart abgeschlossen, vermittelt durch{" "}
+                <strong className="font-semibold">ECCLESIA</strong> -
+                Versicherungs&shy;dienst GmbH in 32754 Detmold.
+              </p>
+              <p>
+                Innerhalb dieses Rahmens können unsere Mitglieds&shy;chöre
+                Versicherungen abschließen, die durch uns vermittelt und deren
+                Versicherungs&shy;beiträge durch uns eingezogen werden.
+              </p>
+            </div>
+            <Note tone="important" className="mt-8 max-w-[65ch]">
+              <p className="text-lg">
+                <strong className="font-semibold">Hinweis:</strong> Die
+                Versicherung verlängert sich automatisch zu den gleichen
+                Bedingungen um ein weiteres Jahr, wenn uns bis zum{" "}
+                <strong className="font-semibold whitespace-nowrap">
+                  30. November
+                </strong>{" "}
+                keine Änderungs&shy;meldung bzw. Kündigung zugeht.
+              </p>
+            </Note>
+          </div>
+
+          <Panel as="section" labelledBy="schadensfall-heading">
+            <Heading as="h3" id="schadensfall-heading" size="list">
+              Im Schadensfall
+            </Heading>
+            <p className="text-ink dark:text-night-text mt-4 max-w-[65ch] text-lg leading-relaxed">
+              Ansprechpartner beim Posaunenwerk für die Meldung und Abwicklung
+              eines unter den Versicherungs&shy;schutz fallenden Schadens ist
+              die{" "}
+              <Link href="/kontakt" className="link-ink whitespace-nowrap">
+                Geschäftsstelle
+              </Link>
+              .
             </p>
 
-            <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Link
-                href="/kontakt"
-                className="bg-primary hover:bg-primary-dark rounded-lg px-8 py-3 font-semibold text-white shadow-lg transition-colors"
-              >
-                Kontakt aufnehmen
-              </Link>
-              <Link
-                href="/ueber-uns"
-                className="border-primary text-primary hover:bg-primary rounded-lg border-2 bg-transparent px-8 py-3 font-semibold transition-colors hover:text-white"
-              >
-                Mehr über uns
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+            <h4 className={`${LABEL_HEAD} mt-8`}>Benötigte Unterlagen:</h4>
+            <ul className="border-ink dark:border-night-text mt-3 border-t-2">
+              {UNTERLAGEN.map((unterlage) => (
+                <li
+                  key={unterlage}
+                  className="border-rule dark:border-night-rule text-ink dark:text-night-text flex gap-3 border-b px-1 py-3 text-lg leading-snug"
+                >
+                  <span
+                    aria-hidden
+                    className="bg-ink dark:bg-night-text mt-2 h-2 w-2 shrink-0"
+                  />
+                  {unterlage}
+                </li>
+              ))}
+            </ul>
 
-      {/* Newsletter CTA */}
-      <section className="bg-dark dark:bg-dark-background-secondary py-12 text-white md:py-16">
-        <div className="container">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="mb-4 text-2xl font-bold md:text-3xl">
-              Bleib auf dem Laufenden
-            </h2>
-            <p className="mb-6 text-lg">
-              Abonniere unseren Newsletter und verpasse keine Neuigkeiten,
-              Termine und Angebote.
-            </p>
-            <Link
-              href="/newsletter"
-              className="bg-primary hover:bg-primary-light inline-block rounded-lg px-8 py-3 font-semibold text-white transition-colors"
-            >
-              Newsletter abonnieren
-            </Link>
-          </div>
+            <ButtonLink href="/kontakt" className="mt-8">
+              Schaden melden
+            </ButtonLink>
+          </Panel>
         </div>
-      </section>
+      </PageSection>
+
+      <PageSection labelledBy="newsletter-heading" rule sheetClassName={SPLIT}>
+        <div className="lg:col-span-4">
+          <Heading id="newsletter-heading" className="text-balance">
+            Bleib auf dem Laufenden
+          </Heading>
+        </div>
+        <div className="mt-6 lg:col-span-8 lg:mt-0">
+          <p className="text-ink dark:text-night-text max-w-[46ch] text-xl leading-relaxed">
+            Abonniere unseren Newsletter und verpasse keine Neuigkeiten, Termine
+            und Angebote.
+          </p>
+          <WayList className="mt-8">
+            <WayRow href="/newsletter" title="Newsletter abonnieren" />
+          </WayList>
+        </div>
+      </PageSection>
+
+      <ClosingCall
+        id="fragen-heading"
+        title="Noch Fragen?"
+        text="Wir beraten dich gerne persönlich zu allen Möglichkeiten des Mitmachens. Nimm einfach Kontakt mit uns auf!"
+        actions={[
+          { href: "/kontakt", label: "Kontakt aufnehmen" },
+          { href: "/ueber-uns", label: "Mehr über uns" },
+        ]}
+      />
     </PublicPage>
   );
 }
