@@ -67,12 +67,19 @@ export async function countConfirmedParticipants(
   });
 }
 
+type TierPriceOption = {
+  id: string;
+  label: string;
+  maxParticipants: number | null;
+};
+
+export function priceTierFullMessage(option: { label: string }): string {
+  return `Die Preisoption "${option.label}" ist ausgebucht.`;
+}
+
 /**
- * Throws BAD_REQUEST when adding `additionsByLabel` participants would
- * overbook any limited price tier (counting CONFIRMED registrations only).
- */
-/**
- * Prüft je Preiskategorie, ob die neuen Teilnehmer noch hineinpassen.
+ * Die erste Preiskategorie, in die die neuen Teilnehmer nicht mehr passen —
+ * `null`, wenn alle passen. Gezählt werden nur bestätigte Anmeldungen.
  *
  * Zählt über `priceOptionId`, nicht über das Label: ein Kurs darf zwei
  * Kategorien mit demselben Namen führen, und über das Label wurde die eine
@@ -82,17 +89,13 @@ export async function countConfirmedParticipants(
  * Label im Kurs eindeutig ist; bei Duplikaten sind sie nicht zuzuordnen und
  * bleiben außen vor (die Kurs-Gesamtkapazität greift weiterhin).
  */
-export async function assertPriceTierCapacity(
+export async function findFullPriceTier(
   db: Db | Tx,
   courseId: string,
-  priceOptions: Array<{
-    id: string;
-    label: string;
-    maxParticipants: number | null;
-  }>,
+  priceOptions: TierPriceOption[],
   additionsByOptionId: Record<string, number>,
   excludeRegistrationId?: string,
-): Promise<void> {
+): Promise<TierPriceOption | null> {
   for (const [optionId, addition] of Object.entries(additionsByOptionId)) {
     const priceOption = priceOptions.find((p) => p.id === optionId);
     if (priceOption?.maxParticipants == null) continue;
@@ -119,11 +122,22 @@ export async function assertPriceTierCapacity(
     });
 
     if (currentCount + addition > priceOption.maxParticipants) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: `Die Preisoption "${priceOption.label}" ist ausgebucht.`,
-      });
+      return priceOption;
     }
+  }
+  return null;
+}
+
+/** Wie {@link findFullPriceTier}, lehnt eine volle Kategorie aber ab. */
+export async function assertPriceTierCapacity(
+  ...args: Parameters<typeof findFullPriceTier>
+): Promise<void> {
+  const fullOption = await findFullPriceTier(...args);
+  if (fullOption) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: priceTierFullMessage(fullOption),
+    });
   }
 }
 

@@ -279,9 +279,16 @@ export default function EditRegistrationPage() {
 
   const activeParticipants = participants.filter((p) => !p.isDeleted);
 
+  // Plätze belegt nur eine bestätigte Anmeldung. Auf der Warteliste darf sie
+  // wachsen und jede Kategorie wählen — die Plätze prüft erst das Nachrücken.
+  // Der Server hält es genauso.
+  const holdsSeats =
+    registration?.registrationStatus === RegistrationStatus.CONFIRMED;
+
   const canAddParticipant = () => {
     if (!availability) return false;
     if (participantsLocked) return false;
+    if (!holdsSeats) return true;
     const currentActive = activeParticipants.length;
     const originalCount = registration?.participants.length ?? 0;
     const netNew = currentActive - originalCount;
@@ -294,6 +301,7 @@ export default function EditRegistrationPage() {
   };
 
   const isPriceOptionAvailable = (priceOptionId: string) => {
+    if (!holdsSeats) return true;
     if (
       !availability?.capacityByPriceOption ||
       !registration?.course?.priceOptions
