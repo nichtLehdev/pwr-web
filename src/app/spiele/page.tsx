@@ -1,7 +1,12 @@
 import PublicPage from "@/app/_components/general/public-page";
+import { Note } from "@/app/_components/programmheft/note";
+import {
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
+import { Heading } from "@/app/_components/programmheft/section-head";
 import { Tag } from "@/app/_components/programmheft/tag";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
-import { Info } from "lucide-react";
 import { GAMES, UPCOMING_GAMES } from "./_lib/games";
 import { InstallHintCard } from "./_components/install-hint-card";
 import { OfflineReadyCard } from "./_components/offline-ready-card";
@@ -28,30 +33,22 @@ export default function SpielePage() {
         </p>
       }
     >
-      <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-        <div className="container">
-          <div className="mx-auto max-w-5xl">
-            <div
-              className="mb-8 flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950 md:p-5 md:text-base dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-100"
-              role="note"
-            >
-              <Info
-                className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
-                aria-hidden
-              />
-              <p>
-                Alle Spiele befinden sich derzeit in einer frühen
-                Entwicklungsphase und können sich noch ändern.
-                Schwierigkeitsstufen werden später angepasst.
-              </p>
-            </div>
-            <InstallHintCard />
-            <OfflineReadyCard />
-            <StatsSyncRunner />
-            <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl lg:text-4xl">
-              Angebote
-            </h2>
-            <WayList columns={2}>
+      <PageSection flush="top">
+        <Note tone="info" className="mb-8">
+          Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
+          und können sich noch ändern. Schwierigkeitsstufen werden später
+          angepasst.
+        </Note>
+        <InstallHintCard />
+        <OfflineReadyCard />
+        <StatsSyncRunner />
+
+        <div className="mt-10">
+          <Split
+            head={<Heading id="angebote-heading">Angebote</Heading>}
+            bodyClassName="mt-8"
+          >
+            <WayList labelledBy="angebote-heading" columns={2}>
               {GAMES.map((game) => (
                 <WayRow
                   key={game.slug}
@@ -69,9 +66,9 @@ export default function SpielePage() {
                 />
               ))}
             </WayList>
-          </div>
+          </Split>
         </div>
-      </section>
+      </PageSection>
     </PublicPage>
   );
 }
