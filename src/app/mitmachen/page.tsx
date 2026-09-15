@@ -3,14 +3,12 @@ import PublicPage from "../_components/general/public-page";
 import { ButtonLink } from "../_components/programmheft/button-link";
 import { ClosingCall } from "../_components/programmheft/closing-call";
 import { Note } from "../_components/programmheft/note";
-import { PageSection } from "../_components/programmheft/page-section";
+import { PageSection, Split } from "../_components/programmheft/page-section";
 import { Panel } from "../_components/programmheft/panel";
 import { PointList } from "../_components/programmheft/point-list";
 import { Heading, SectionHead } from "../_components/programmheft/section-head";
 import { ValueTable } from "../_components/programmheft/value-table";
 import { WayList, WayRow } from "../_components/programmheft/way-list";
-import ImageWithFallback from "../_components/ui/image-with-fallback";
-import { api } from "@/trpc/server";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata = buildPageMetadata({
@@ -99,20 +97,11 @@ const PROSE =
 const LABEL_HEAD =
   "semi-condensed text-ink dark:text-night-text text-lg font-semibold";
 
-/** Linke Spalte ab 64rem: Kopf und Einleitung; rechts der Inhalt. */
-const SPLIT = "lg:grid lg:grid-cols-12 lg:gap-10";
-
-export default async function MitmachenPage() {
-  // Bis eigene Mitmachen-Fotos gepflegt sind, leiht sich die Seite ein Bild
-  // aus der Bildstrecke der Startseite; ohne Bild entfällt das Fotofeld.
-  const photo = await api.homepage
-    .getCarouselItems()
-    .then((items) => items.at(-1)?.media ?? null)
-    .catch(() => null);
-  const photoCredit = photo
-    ? [photo.copyright, photo.creator].filter(Boolean).join(" · ")
-    : "";
-
+/**
+ * Die Köpfe der Abschnitte wechseln ab 64rem die Seite (links, rechts, links …)
+ * wie die Seiten eines Programmhefts; mobil stehen sie immer über dem Inhalt.
+ */
+export default function MitmachenPage() {
   return (
     <PublicPage
       title="Mitmachen im Posaunenwerk"
@@ -125,47 +114,49 @@ export default async function MitmachenPage() {
         </p>
       }
     >
-      <PageSection labelledBy="einstieg-heading" sheetClassName={SPLIT}>
-        <div className="lg:col-span-5">
-          {/* Nur ein bewusster Umbruch, wo die Spalte zu schmal ist. */}
-          <Heading id="einstieg-heading" className="hyphens-manual">
-            Deine Einstiegs&shy;möglichkeiten
-          </Heading>
-        </div>
-        <WayList
-          labelledBy="einstieg-heading"
-          className="mt-8 lg:col-span-7 lg:mt-0"
+      <PageSection labelledBy="einstieg-heading">
+        <Split
+          head={
+            // Nur ein bewusster Umbruch, wo die Spalte zu schmal ist.
+            <Heading id="einstieg-heading" className="hyphens-manual">
+              Deine Einstiegs&shy;möglichkeiten
+            </Heading>
+          }
+          bodyClassName="mt-8"
         >
-          {EINSTIEGE.map((weg) => (
-            <WayRow
-              key={weg.href}
-              href={weg.href}
-              title={weg.title}
-              description={weg.description}
-              tone={weg.tone}
-            />
-          ))}
-        </WayList>
+          <WayList labelledBy="einstieg-heading">
+            {EINSTIEGE.map((weg) => (
+              <WayRow
+                key={weg.href}
+                href={weg.href}
+                title={weg.title}
+                description={weg.description}
+                tone={weg.tone}
+              />
+            ))}
+          </WayList>
+        </Split>
       </PageSection>
 
       {/* Hier spricht der Förderverein: volle blaue Druckfläche. */}
-      <PageSection
-        labelledBy="foerderverein-heading"
-        surface="foerderverein"
-        sheetClassName={SPLIT}
-      >
-        <div className="lg:col-span-5">
-          <Heading id="foerderverein-heading" className="text-balance">
-            Förderverein – Bläser für Bläser
-          </Heading>
-          <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
-          <p className="mt-6 max-w-[40ch] text-xl leading-relaxed">
-            Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig! Werden
-            Sie Mitglied im Förderverein und profitieren Sie von exklusiven
-            Vorteilen.
-          </p>
-        </div>
-        <div className="mt-10 lg:col-span-7 lg:mt-0">
+      <PageSection labelledBy="foerderverein-heading" surface="foerderverein">
+        <Split
+          side="right"
+          head={
+            <>
+              <Heading id="foerderverein-heading" className="text-balance">
+                Förderverein – Bläser für Bläser
+              </Heading>
+              <span aria-hidden className="bg-ink mt-6 block h-1.5 w-24" />
+              <p className="mt-6 max-w-[40ch] text-xl leading-relaxed">
+                Unterstützen Sie die Arbeit des Posaunenwerks nachhaltig! Werden
+                Sie Mitglied im Förderverein und profitieren Sie von exklusiven
+                Vorteilen.
+              </p>
+            </>
+          }
+          bodyClassName="mt-10"
+        >
           <PointList items={FOERDERVEREIN_FAKTEN} columns={3} titleAs="p" />
           <WayList className="mt-10">
             <WayRow href="/foerderverein" title="Mehr zum Förderverein" />
@@ -174,43 +165,16 @@ export default async function MitmachenPage() {
               title="Mitglied werden"
             />
           </WayList>
-        </div>
+        </Split>
       </PageSection>
 
-      <PageSection labelledBy="warum-heading" sheetClassName={SPLIT}>
-        <div className="lg:col-span-5">
-          <Heading id="warum-heading">Warum Posaunenchor?</Heading>
-          {photo ? (
-            <figure className="mt-8">
-              <div className="bg-ink dark:bg-night-raised relative aspect-[4/3] overflow-hidden">
-                <ImageWithFallback
-                  src={photo.url}
-                  alt={photo.alt ?? ""}
-                  fill
-                  sizes="(min-width: 1024px) 40vw, 100vw"
-                  className="object-cover"
-                  style={
-                    photo.focalPointX != null && photo.focalPointY != null
-                      ? {
-                          objectPosition: `${photo.focalPointX}% ${photo.focalPointY}%`,
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-              {photoCredit ? (
-                <figcaption className="text-dark dark:text-night-muted mt-2 text-sm">
-                  <span className="sr-only">Bildnachweis: </span>
-                  {photoCredit}
-                </figcaption>
-              ) : null}
-            </figure>
-          ) : null}
-        </div>
-        <PointList
-          items={GRUENDE}
-          className="mt-8 lg:col-span-7 lg:mt-0 lg:self-start"
-        />
+      <PageSection labelledBy="warum-heading">
+        <Split
+          head={<Heading id="warum-heading">Warum Posaunenchor?</Heading>}
+          bodyClassName="mt-8"
+        >
+          <PointList items={GRUENDE} />
+        </Split>
       </PageSection>
 
       <PageSection
@@ -218,18 +182,19 @@ export default async function MitmachenPage() {
         labelledBy="mitgliedschaft-heading"
         rule
         className="scroll-mt-24"
-        sheetClassName={SPLIT}
       >
-        <div className="lg:col-span-5">
-          <SectionHead
-            id="mitgliedschaft-heading"
-            title="Mitgliedschaft im Posaunenwerk"
-            className="text-balance"
-            intro="Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk Rheinland freuen wir uns sehr."
-          />
-        </div>
-
-        <div className="mt-12 space-y-16 lg:col-span-7 lg:mt-0">
+        <Split
+          side="right"
+          head={
+            <SectionHead
+              id="mitgliedschaft-heading"
+              title="Mitgliedschaft im Posaunenwerk"
+              className="text-balance"
+              intro="Über Ihr Interesse an einer Mitgliedschaft im Posaunenwerk Rheinland freuen wir uns sehr."
+            />
+          }
+          bodyClassName="mt-12 space-y-16"
+        >
           <div>
             <Heading as="h3" size="list" rule>
               Einzelmitgliedschaft
@@ -311,25 +276,26 @@ export default async function MitmachenPage() {
               </p>
             </div>
           </div>
-        </div>
+        </Split>
       </PageSection>
 
-      <PageSection labelledBy="versicherung-heading" rule sheetClassName={SPLIT}>
-        <div className="lg:col-span-5">
-          <SectionHead
-            id="versicherung-heading"
-            title={<>Instrumenten&shy;versicherung</>}
-            className="hyphens-manual"
-            intro={
-              <>
-                Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
-                günstigen Rahmen&shy;versicherung.
-              </>
-            }
-          />
-        </div>
-
-        <div className="mt-12 space-y-16 lg:col-span-7 lg:mt-0">
+      <PageSection labelledBy="versicherung-heading" rule>
+        <Split
+          head={
+            <SectionHead
+              id="versicherung-heading"
+              title={<>Instrumenten&shy;versicherung</>}
+              className="hyphens-manual"
+              intro={
+                <>
+                  Schützen Sie Ihre wertvollen Instrumente optimal mit unserer
+                  günstigen Rahmen&shy;versicherung.
+                </>
+              }
+            />
+          }
+          bodyClassName="mt-12 space-y-16"
+        >
           <div>
             <Heading as="h3" size="list" rule>
               Unser Rahmen&shy;vertrag
@@ -399,16 +365,19 @@ export default async function MitmachenPage() {
               Schaden melden
             </ButtonLink>
           </Panel>
-        </div>
+        </Split>
       </PageSection>
 
-      <PageSection labelledBy="newsletter-heading" rule sheetClassName={SPLIT}>
-        <div className="lg:col-span-5">
-          <Heading id="newsletter-heading" className="text-balance">
-            Bleib auf dem Laufenden
-          </Heading>
-        </div>
-        <div className="mt-6 lg:col-span-7 lg:mt-0">
+      <PageSection labelledBy="newsletter-heading" rule>
+        <Split
+          side="right"
+          head={
+            <Heading id="newsletter-heading" className="text-balance">
+              Bleib auf dem Laufenden
+            </Heading>
+          }
+          bodyClassName="mt-6"
+        >
           <p className="text-ink dark:text-night-text max-w-[46ch] text-xl leading-relaxed">
             Abonniere unseren Newsletter und verpasse keine Neuigkeiten, Termine
             und Angebote.
@@ -416,7 +385,7 @@ export default async function MitmachenPage() {
           <WayList className="mt-8">
             <WayRow href="/newsletter" title="Newsletter abonnieren" />
           </WayList>
-        </div>
+        </Split>
       </PageSection>
 
       <ClosingCall

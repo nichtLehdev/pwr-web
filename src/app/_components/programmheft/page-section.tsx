@@ -22,6 +22,50 @@ interface PageSectionProps {
   children: ReactNode;
 }
 
+/**
+ * Zweispaltiger Abschnitt ab 64rem: Kopf und Einleitung (4/12) neben dem
+ * Inhalt (8/12). Mit `side="right"` wechselt der Kopf die Seite, so dass
+ * aufeinanderfolgende Abschnitte wie linke und rechte Heftseiten alternieren.
+ * Im DOM steht der Kopf immer zuerst; mobil steht er über dem Inhalt.
+ */
+export function Split({
+  head,
+  side = "left",
+  bodyClassName,
+  children,
+}: {
+  head: ReactNode;
+  side?: "left" | "right";
+  /** Abstand und Rhythmus des Inhalts, z. B. `mt-8` für die mobile Stapelung. */
+  bodyClassName?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="lg:grid lg:grid-cols-12 lg:gap-10">
+      <div
+        className={
+          side === "left"
+            ? "lg:col-span-4"
+            : "lg:col-span-4 lg:col-start-9 lg:row-start-1"
+        }
+      >
+        {head}
+      </div>
+      <div
+        className={cn(
+          side === "left"
+            ? "lg:col-span-8"
+            : "lg:col-span-8 lg:col-start-1 lg:row-start-1",
+          bodyClassName,
+          "lg:mt-0",
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** Abschnitt auf Papier (Nacht: Nachtgrund) mit dem Satzspiegel `sheet`. */
 export function PageSection({
   id,
