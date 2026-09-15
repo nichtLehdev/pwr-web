@@ -75,6 +75,37 @@ const courseCollaboratorsForPublic = {
   },
 };
 
+type CourseNumberLockReason = "INVOICES" | "DOWN_PAYMENTS";
+
+/**
+ * Warum die Kursnummer nicht mehr geändert werden darf — `null`, solange sie
+ * frei ist.
+ *
+ * - Ausgestellte Rechnungen tragen die Nummer in Nummernkreis und
+ *   Verwendungszweck und sind eingefroren (§14 UStG). Umnummeriert zeigten
+ *   sie auf eine Nummer, die es nicht mehr gibt, und eine neue Sequenz
+ *   startete wieder bei 001.
+ * - Anmeldungen mit Anzahlung haben die Nummer im Verwendungszweck ihrer
+ *   Überweisung bekommen (Formular, Mail). Der Verwendungszweck wird aus der
+ *   aktuellen Nummer gebildet — umnummeriert fände die Kasse frühe Zahlungen
+ *   unter der neuen Nummer nicht. Stornierte zählen mit: eine eingegangene
+ *   Anzahlung wird dort noch erstattet oder einbehalten.
+ */
+async function courseNumberLockReason(
+  db: PrismaClient,
+  courseId: string,
+): Promise<CourseNumberLockReason | null> {
+  const [issuedInvoices, downPaymentRegistrations] = await Promise.all([
+    db.invoice.count({ where: { courseId, invoiceNumber: { not: null } } }),
+    db.courseRegistration.count({
+      where: { courseId, downPaymentAmount: { not: null } },
+    }),
+  ]);
+  if (issuedInvoices > 0) return "INVOICES";
+  if (downPaymentRegistrations > 0) return "DOWN_PAYMENTS";
+  return null;
+}
+
 /**
  * Kursnummern sind global eindeutig: sie bilden die Rechnungsnummern-Sequenz
  * (RE-<Kursnummer>-<lfd.>), zwei Kurse mit derselben Nummer würden sich also
@@ -393,19 +424,21 @@ export const coursesRouter = createTRPCRouter({
 
       // Nur relevant, solange es überhaupt eine Nummer zu sperren gibt — der
       // öffentliche Pfad zahlt für diese Abfrage also nie.
-      const courseNumberLocked =
+      const courseNumberLockedBy =
         maySeeCourseNumber && courseNumber
-          ? (await ctx.db.invoice.count({
-              where: { courseId: courseRaw.id, invoiceNumber: { not: null } },
-            })) > 0
-          : false;
+          ? await courseNumberLockReason(ctx.db, courseRaw.id)
+          : null;
 
       return {
         ...coursePublic,
         courseNumber:
           maySeeCourseNumber || hasDownPayment ? courseNumber : null,
-        /** Ausgestellte Rechnungen frieren die Kursnummer ein, siehe `update`. */
-        courseNumberLocked,
+        /**
+         * Ausgestellte Rechnungen oder Anmeldungen mit Anzahlung frieren die
+         * Kursnummer ein, siehe `courseNumberLockReason`.
+         */
+        courseNumberLocked: courseNumberLockedBy !== null,
+        courseNumberLockedBy,
         /** Aktive Anmeldungen frieren die Anzahlung ein, siehe `update`. */
         downPaymentLocked,
         viewerCollaboratorRole,
@@ -1425,19 +1458,17 @@ export const coursesRouter = createTRPCRouter({
             });
           }
 
-          // Ausgestellte Rechnungen tragen die alte Nummer in Nummernkreis und
-          // Verwendungszweck und sind eingefroren (§14 UStG). Würde der Kurs
-          // umnummeriert, zeigten sie auf eine Nummer, die es hier nicht mehr
-          // gibt — und eine neue Sequenz startete wieder bei 001.
+          // Rechnungen und Anzahlungen tragen die bisherige Nummer bereits im
+          // Verwendungszweck, siehe courseNumberLockReason.
           if (course.courseNumber) {
-            const issued = await ctx.db.invoice.count({
-              where: { courseId: id, invoiceNumber: { not: null } },
-            });
-            if (issued > 0) {
+            const lockedBy = await courseNumberLockReason(ctx.db, id);
+            if (lockedBy) {
               throw new TRPCError({
                 code: "BAD_REQUEST",
                 message:
-                  "Die Kursnummer kann nicht mehr geändert werden, weil für diesen Kurs bereits Rechnungen ausgestellt wurden.",
+                  lockedBy === "INVOICES"
+                    ? "Die Kursnummer kann nicht mehr geändert werden, weil für diesen Kurs bereits Rechnungen ausgestellt wurden."
+                    : "Die Kursnummer kann nicht mehr geändert werden, weil bereits Anmeldungen mit Anzahlung bestehen — sie steht im Verwendungszweck ihrer Überweisung.",
               });
             }
           }
