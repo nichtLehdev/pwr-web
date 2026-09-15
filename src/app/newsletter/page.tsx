@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import PublicPage from "../_components/general/public-page";
+import { PageSection } from "../_components/programmheft/page-section";
+import { Note } from "../_components/programmheft/note";
+
+const FIELD =
+  "border-ink dark:border-night-text text-ink dark:text-night-text bg-paper dark:bg-night w-full border-2 px-4 py-3 text-base";
+const FIELD_LABEL =
+  "semi-condensed text-ink dark:text-night-text mb-2 block text-sm font-semibold";
 
 export default function NewsletterPage() {
   const [email, setEmail] = useState("");
@@ -48,42 +56,43 @@ export default function NewsletterPage() {
   };
 
   return (
-    <main className="dark:bg-dark-background min-h-screen bg-gray-50">
-      <div className="container mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="dark:bg-dark-surface rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700">
-          <h1 className="dark:text-dark-text mb-4 text-3xl font-bold text-gray-900">
-            Newsletter abonnieren
-          </h1>
-          <p className="dark:text-dark-muted mb-8 text-gray-600">
-            Bleibe auf dem Laufenden über neue Beiträge, kommende Termine und
-            wichtige Informationen vom Posaunenwerk Rheinland.
-          </p>
-          <p className="dark:text-dark-muted mb-8 text-sm text-gray-600">
+    <PublicPage
+      title="Newsletter abonnieren"
+      breadcrumbs={[
+        { label: "Start", href: "/" },
+        { label: "Newsletter abonnieren" },
+      ]}
+      description={
+        <p>
+          Bleibe auf dem Laufenden über neue Beiträge, kommende Termine und
+          wichtige Informationen vom Posaunenwerk Rheinland.
+        </p>
+      }
+    >
+      <PageSection flush="top">
+        <div className="max-w-[38rem]">
+          <p className="text-ink dark:text-night-text text-lg leading-relaxed">
             Nach dem Absenden erhältst du eine E-Mail mit einem
             Bestätigungslink. Erst wenn du ihn öffnest, ist die Anmeldung aktiv
             (Double-Opt-In).
           </p>
 
           {status === "success" ? (
-            <div className="rounded-lg bg-green-50 p-4 dark:bg-green-900/20">
-              <p className="font-semibold text-green-800 dark:text-green-400">
-                Bitte bestätige deine Anmeldung
-              </p>
-              <p className="mt-2 text-green-800 dark:text-green-400">
-                {message}
-              </p>
-              <p className="mt-2 text-sm text-green-800 dark:text-green-400">
+            <Note
+              tone="info"
+              title="Bitte bestätige deine Anmeldung"
+              className="mt-8"
+            >
+              <p>{message}</p>
+              <p className="mt-3">
                 Ohne diese Bestätigung schicken wir dir nichts. Schau bitte auch
                 im Spam-Ordner nach — der Link ist 7 Tage gültig.
               </p>
-            </div>
+            </Note>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               <div>
-                <label
-                  htmlFor="email"
-                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="email" className={FIELD_LABEL}>
                   E-Mail-Adresse *
                 </label>
                 <input
@@ -92,16 +101,13 @@ export default function NewsletterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
+                  className={FIELD}
                   placeholder="deine@email.de"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="name"
-                  className="dark:text-dark-text mb-2 block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="name" className={FIELD_LABEL}>
                   Name (optional)
                 </label>
                 <input
@@ -109,7 +115,7 @@ export default function NewsletterPage() {
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="dark:bg-dark-background dark:border-dark-border dark:text-dark-text focus:border-primary focus:ring-primary/20 w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:outline-none"
+                  className={FIELD}
                   placeholder="Dein Name"
                 />
               </div>
@@ -122,18 +128,15 @@ export default function NewsletterPage() {
                   required
                   checked={consent}
                   onChange={(e) => setConsent(e.target.checked)}
-                  className="text-primary focus:ring-primary dark:border-dark-border mt-1 h-4 w-4 rounded border-gray-300"
+                  className="accent-ink dark:accent-primary mt-1 h-5 w-5 shrink-0"
                 />
                 <label
                   htmlFor="consent"
-                  className="dark:text-dark-muted text-sm text-gray-600"
+                  className="text-ink dark:text-night-text text-sm leading-relaxed"
                 >
                   Ich möchte den Newsletter des Posaunenwerks Rheinland per
                   E-Mail erhalten und habe die{" "}
-                  <Link
-                    href="/datenschutz"
-                    className="text-primary hover:underline"
-                  >
+                  <Link href="/datenschutz" className="link-ink">
                     Datenschutzerklärung
                   </Link>{" "}
                   zur Kenntnis genommen. Diese Einwilligung kann ich jederzeit
@@ -142,37 +145,34 @@ export default function NewsletterPage() {
               </div>
 
               {status === "error" && message && (
-                <div className="rounded-lg bg-red-50 p-4 dark:bg-red-900/20">
-                  <p className="text-red-800 dark:text-red-400">{message}</p>
-                </div>
+                <Note tone="error">
+                  <p>{message}</p>
+                </Note>
               )}
 
               <button
                 type="submit"
                 disabled={status === "loading" || !consent}
-                className="bg-primary hover:bg-primary/90 w-full rounded-lg px-6 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="semi-condensed bg-ink text-paper hover:bg-primary hover:text-ink dark:bg-primary dark:text-ink dark:hover:bg-paper inline-flex min-h-12 w-full items-center justify-center px-6 text-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {status === "loading" ? "Wird abonniert..." : "Abonnieren"}
+                {status === "loading" ? "Wird abonniert…" : "Abonnieren"}
               </button>
             </form>
           )}
 
-          <div className="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-            <p className="dark:text-dark-muted text-sm text-gray-600">
+          <div className="border-rule dark:border-night-rule mt-10 border-t pt-6">
+            <p className="text-dark dark:text-night-muted text-sm leading-relaxed">
               Du kannst dich jederzeit wieder abmelden. Der Newsletter enthält
               keine Werbung und wird nur bei wichtigen Neuigkeiten versendet.
             </p>
-            <p className="dark:text-dark-muted mt-2 text-sm text-gray-600">
-              <Link
-                href="/datenschutz"
-                className="text-primary hover:underline"
-              >
+            <p className="mt-2 text-sm">
+              <Link href="/datenschutz" className="link-ink">
                 Datenschutzerklärung
               </Link>
             </p>
           </div>
         </div>
-      </div>
-    </main>
+      </PageSection>
+    </PublicPage>
   );
 }
