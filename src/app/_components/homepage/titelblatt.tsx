@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
-  ArrowRight,
   Camera,
   ChevronLeft,
   ChevronRight,
@@ -12,6 +10,7 @@ import {
 } from "lucide-react";
 import type { RouterOutputs } from "@/trpc/react";
 import ImageWithFallback from "@/app/_components/ui/image-with-fallback";
+import { ButtonLink } from "@/app/_components/programmheft/button-link";
 
 type CarouselItem = RouterOutputs["homepage"]["getCarouselItems"][number];
 
@@ -99,13 +98,9 @@ export default function Titelblatt({
         <p className="semi-condensed mt-5 max-w-[26ch] text-[clamp(1.25rem,2.1vw,1.875rem)] leading-snug font-medium text-balance">
           {subtitle}
         </p>
-        <Link
-          href="/mitmachen"
-          className="semi-condensed bg-ink text-paper hover:bg-paper hover:text-ink mt-8 inline-flex h-12 items-center gap-3 px-6 text-lg font-semibold transition-colors"
-        >
+        <ButtonLink href="/mitmachen" surface="orange" className="mt-8">
           Jetzt mitmachen
-          <ArrowRight className="h-5 w-5" aria-hidden />
-        </Link>
+        </ButtonLink>
       </div>
 
       {isLoading ? (
