@@ -49,8 +49,11 @@ export default function DashboardLayout({
 
   if (sessionPending || permissionsLoading || !session || !hasDashboardAccess) {
     return (
-      <div className="dark:bg-dark-background flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-b-2" />
+      <div className="bg-paper dark:bg-night flex min-h-screen items-center justify-center">
+        {/* Der Kreis bleibt rund: „keine Rundungen“ gilt Kästen, nicht einem
+            Ladezeiger. Die Farbe wird Tinte — Orange trug hier zu viel
+            Aufmerksamkeit für einen Zustand, der Sekundenbruchteile dauert. */}
+        <div className="border-ink dark:border-night-text h-8 w-8 animate-spin rounded-full border-b-2" />
       </div>
     );
   }

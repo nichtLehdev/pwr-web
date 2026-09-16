@@ -117,25 +117,34 @@ function ToastItem({
     ToastType,
     { bg: string; icon: React.ReactNode; border: string }
   > = {
+    // Auf Papier statt in einer pastelligen Blase: Die Bedeutung tragen Rand
+    // und Icon, nicht eine getönte Fläche. Die Farbwerte sind auf Kontrast
+    // gezogen (green-500/red-500/amber-500 auf Weiss waren zu schwach), und
+    // „info“ nimmt Tinte — Orange erreicht als Icon-Farbe auf hellem Grund
+    // den Kontrast nicht.
     success: {
-      bg: "bg-green-50 dark:bg-green-900/20",
-      border: "border-green-200 dark:border-green-800",
-      icon: <CheckCircle className="h-5 w-5 text-green-500" />,
+      bg: "bg-paper dark:bg-night-raised",
+      border: "border-green-700 dark:border-green-400",
+      icon: (
+        <CheckCircle className="h-5 w-5 text-green-700 dark:text-green-400" />
+      ),
     },
     error: {
-      bg: "bg-red-50 dark:bg-red-900/20",
-      border: "border-red-200 dark:border-red-800",
-      icon: <XCircle className="h-5 w-5 text-red-500" />,
+      bg: "bg-paper dark:bg-night-raised",
+      border: "border-red-700 dark:border-red-400",
+      icon: <XCircle className="h-5 w-5 text-red-700 dark:text-red-400" />,
     },
     warning: {
-      bg: "bg-amber-50 dark:bg-amber-900/20",
-      border: "border-amber-200 dark:border-amber-800",
-      icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+      bg: "bg-paper dark:bg-night-raised",
+      border: "border-yellow-600 dark:border-yellow-400",
+      icon: (
+        <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+      ),
     },
     info: {
-      bg: "bg-primary/5 dark:bg-primary/10",
-      border: "border-primary/20 dark:border-primary/30",
-      icon: <Info className="text-primary h-5 w-5" />,
+      bg: "bg-paper dark:bg-night-raised",
+      border: "border-ink dark:border-night-text",
+      icon: <Info className="text-ink dark:text-night-text h-5 w-5" />,
     },
   };
 
@@ -143,17 +152,18 @@ function ToastItem({
 
   return (
     <div
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-lg border p-4 shadow-lg backdrop-blur-sm transition-all duration-200 ease-out ${styles.bg} ${styles.border} ${isVisible && !isExiting ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"} `}
+      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 border-2 p-4 transition-all duration-200 ease-out ${styles.bg} ${styles.border} ${isVisible && !isExiting ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"} `}
     >
       <div className="shrink-0">{styles.icon}</div>
       <div className="flex-1 pt-0.5">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+        <p className="text-ink dark:text-night-text text-sm font-medium">
           {toast.message}
         </p>
       </div>
       <button
         onClick={handleClose}
-        className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+        aria-label="Meldung schließen"
+        className="text-dark hover:bg-rule/60 hover:text-ink dark:text-night-muted dark:hover:bg-night-rule dark:hover:text-night-text shrink-0 p-1 transition-colors"
       >
         <X className="h-4 w-4" />
       </button>
