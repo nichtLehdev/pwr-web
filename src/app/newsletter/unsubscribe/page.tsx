@@ -82,7 +82,7 @@ function UnsubscribeContent() {
         </p>
       }
     >
-      <PageSection flush="top">
+      <PageSection>
         <div className="max-w-[38rem]">
           {status === "success" ? (
             <Note tone="info">
@@ -140,7 +140,7 @@ export default function UnsubscribePage() {
     <Suspense
       fallback={
         <PublicPage title="Newsletter abmelden" breadcrumbs={BREADCRUMBS}>
-          <PageSection flush="top">
+          <PageSection>
             <div
               aria-busy="true"
               aria-label="Lädt"

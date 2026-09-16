@@ -79,7 +79,7 @@ export default async function StrukturGeschichtePage() {
       }
     >
       {/* Organisatorische Struktur */}
-      <PageSection labelledBy="struktur-heading" flush="top">
+      <PageSection labelledBy="struktur-heading">
         <Split
           head={
             <Heading id="struktur-heading">Organisatorische Struktur</Heading>

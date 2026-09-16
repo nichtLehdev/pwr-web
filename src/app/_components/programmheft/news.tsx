@@ -56,7 +56,10 @@ export function NewsColumn({
 
   return (
     <article className="group flex h-full flex-col">
-      <div className="bg-ink dark:bg-night-raised relative mb-5 aspect-[3/2] overflow-hidden">
+      {/* `shrink-0`: Ohne das staucht die Flex-Spalte das Bildfeld, sobald
+          Titel oder Auszug länger werden — dann stehen die Überschriften der
+          Spalten nicht mehr auf einer Linie. */}
+      <div className="bg-ink dark:bg-night-raised relative mb-5 aspect-[3/2] shrink-0 overflow-hidden">
         <ImageWithFallback
           src={post.coverImage?.url}
           alt=""
@@ -116,14 +119,14 @@ export function NewsColumns({
       <div
         aria-busy="true"
         aria-label="Neuigkeiten werden geladen"
-        className="grid lg:grid-cols-3"
+        className="grid lg:-ml-10 lg:grid-cols-3"
       >
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className={`${COLUMN} flex flex-col gap-3 ${
-              i > 0 ? "lg:border-l lg:pl-10" : ""
-            } ${i < 2 ? "lg:pr-10" : ""}`}
+            className={`${COLUMN} flex flex-col gap-3 lg:pl-10 ${
+              i > 0 ? "lg:border-l" : ""
+            }`}
           >
             <span className="bg-rule dark:bg-night-rule aspect-[3/2] w-full" />
             <span className="bg-rule dark:bg-night-rule h-6 w-4/5" />
@@ -139,13 +142,18 @@ export function NewsColumns({
   }
 
   return (
-    <ul className="grid lg:grid-cols-3">
+    // Jede Spalte bekommt denselben linken Innenabstand, das Raster wird dafür
+    // um genau diesen Betrag nach links gezogen. Vorher hingen die Abstände am
+    // laufenden Index — die mittleren Spalten waren dadurch schmaler, ihre
+    // Bildfelder bei festem Seitenverhältnis niedriger und die Überschriften
+    // standen nicht mehr auf einer Linie.
+    <ul className="grid lg:-ml-10 lg:grid-cols-3">
       {posts.map((post, i) => (
         <li
           key={post.id}
-          className={`stretch-item relative ${COLUMN} ${
-            i > 0 ? "lg:border-l lg:pl-10" : ""
-          } ${i < posts.length - 1 ? "lg:pr-10" : ""}`}
+          className={`stretch-item relative ${COLUMN} lg:pl-10 ${
+            i % 3 !== 0 ? "lg:border-l" : ""
+          }`}
         >
           <NewsColumn post={post} />
         </li>

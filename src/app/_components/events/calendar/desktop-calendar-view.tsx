@@ -397,7 +397,7 @@ export default function DesktopCalendarView({
     <>
       <div className="border-ink dark:border-night-text bg-paper dark:bg-night border-2">
         {/* Header */}
-        <div className="border-ink dark:border-night-text flex items-center justify-between border-b-2 p-4">
+        <div className="border-rule dark:border-night-rule flex items-center justify-between border-b p-4">
           <h2 className="condensed text-ink dark:text-night-text text-2xl font-extrabold">
             {monthName}
           </h2>
@@ -427,7 +427,7 @@ export default function DesktopCalendarView({
         </div>
 
         {/* Week days */}
-        <div className="border-ink dark:border-night-text grid grid-cols-7 border-b-2">
+        <div className="border-rule dark:border-night-rule grid grid-cols-7 border-b">
           {weekDays.map((day) => (
             <div
               key={day}

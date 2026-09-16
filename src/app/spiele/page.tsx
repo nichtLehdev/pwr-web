@@ -33,7 +33,7 @@ export default function SpielePage() {
         </p>
       }
     >
-      <PageSection flush="top">
+      <PageSection>
         <Note tone="info" className="mb-8">
           Alle Spiele befinden sich derzeit in einer frühen Entwicklungsphase
           und können sich noch ändern. Schwierigkeitsstufen werden später

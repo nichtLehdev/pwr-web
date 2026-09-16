@@ -91,10 +91,11 @@ export default async function LiteraturPage() {
       </PageSection>
 
       <PageSection labelledBy="hefte-heading" rule>
-        <Split
-          head={<Heading id="hefte-heading">Unsere Bläserhefte</Heading>}
-          bodyClassName="mt-10"
-        >
+        {/* Volle Satzbreite statt Kopfspalte: Jeder Eintrag bringt mit Cover
+            und Text schon zwei Spalten mit. In einem Split stünde daneben
+            eine dritte, ab der Überschrift dauerhaft leere Spalte. */}
+        <Heading id="hefte-heading">Unsere Bläserhefte</Heading>
+        <div className="mt-10">
           {blaesherhefte.map((heft, index) => (
             <BlaeserheftItem
               key={heft.id}
@@ -103,7 +104,7 @@ export default async function LiteraturPage() {
               divider={index > 0}
             />
           ))}
-        </Split>
+        </div>
       </PageSection>
 
       <ClosingCall

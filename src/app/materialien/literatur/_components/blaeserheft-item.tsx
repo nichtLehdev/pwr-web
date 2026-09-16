@@ -63,15 +63,24 @@ export function BlaeserheftItem({
   return (
     <article
       className={cn(
-        "flex flex-col gap-8 lg:flex-row",
-        reverse && "lg:flex-row-reverse",
+        // Raster statt Flex: Als Flex-Kind war das Bildfeld mit `w-full` und
+        // `shrink-0` mehrdeutig — WebKit gab ihm die ganze Zeilenbreite und
+        // quetschte den Text auf ein Wort. Eine feste Rasterspalte kann das
+        // nicht passieren.
+        "flex flex-col gap-8 lg:grid lg:items-start lg:gap-10",
+        reverse ? "lg:grid-cols-[1fr_20rem]" : "lg:grid-cols-[20rem_1fr]",
         divider && "border-rule dark:border-night-rule mt-16 border-t pt-16",
       )}
     >
       {/* Die Cover liegen alle im Querformat 3:2 vor. Das Feld übernimmt genau
           dieses Verhältnis, damit nichts beschnitten wird; `self-start`
           verhindert, dass die Flex-Zeile die Spalte auf Texthöhe streckt. */}
-      <div className="bg-ink dark:bg-night-raised relative aspect-[3/2] w-full shrink-0 self-start overflow-hidden lg:w-80">
+      <div
+        className={cn(
+          "bg-ink dark:bg-night-raised relative aspect-[3/2] w-full overflow-hidden",
+          reverse && "lg:col-start-2 lg:row-start-1",
+        )}
+      >
         <Image
           src={heft.image.url}
           alt={heft.image.alt || heft.title || "Bläserheft Cover"}

@@ -149,7 +149,7 @@ export default function UeberUnsPage() {
       }
     >
       {/* Unterseiten als Register direkt unter dem Seitenkopf */}
-      <PageSection flush="top">
+      <PageSection>
         <WayList rule={false} columns={2}>
           {SECTIONS.map((section) => (
             <WayRow

@@ -71,7 +71,7 @@ export default function NewsletterPage() {
     >
       {/* Formular links, die Zusicherungen als Randnotiz rechts daneben —
           sonst steht die halbe Seite leer. */}
-      <PageSection flush="top">
+      <PageSection>
         <div className="lg:grid lg:grid-cols-12 lg:gap-10">
           <div className="max-w-[38rem] lg:col-span-7">
             <p className="text-ink dark:text-night-text text-lg leading-relaxed">

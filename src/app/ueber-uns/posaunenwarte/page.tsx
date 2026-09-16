@@ -71,7 +71,7 @@ export default async function PosaunenwartePage() {
       }
     >
       {/* Landesposaunenwart */}
-      <PageSection labelledBy="lpw-heading" flush="top">
+      <PageSection labelledBy="lpw-heading">
         <Split
           head={
             <Heading id="lpw-heading" className="hyphens-manual">
