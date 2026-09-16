@@ -6,12 +6,14 @@ import {
   PageSection,
   Split,
 } from "@/app/_components/programmheft/page-section";
-import { PersonContactRow } from "@/app/_components/programmheft/person-contact-row";
-import { PersonList } from "@/app/_components/programmheft/person-row";
 import { PointList } from "@/app/_components/programmheft/point-list";
 import { Heading } from "@/app/_components/programmheft/section-head";
 import { WayList, WayRow } from "@/app/_components/programmheft/way-list";
 import { buildPageMetadata } from "@/lib/seo";
+import {
+  VorstandPortrait,
+  VorstandPortraitGrid,
+} from "./_components/vorstand-portrait";
 
 export const metadata = buildPageMetadata({
   title: "Vorstand",
@@ -96,7 +98,7 @@ export default async function VorstandPage() {
       }
     >
       {/* Vorstandsmitglieder */}
-      <PageSection labelledBy="mitglieder-heading" flush="top">
+      <PageSection labelledBy="mitglieder-heading">
         <Split
           head={
             <Heading id="mitglieder-heading" className="hyphens-manual">
@@ -105,9 +107,9 @@ export default async function VorstandPage() {
           }
           bodyClassName="mt-8"
         >
-          <PersonList columns={3}>
+          <VorstandPortraitGrid labelledBy="mitglieder-heading">
             {vorstandMembers.map((member, index) => (
-              <PersonContactRow
+              <VorstandPortrait
                 key={index}
                 name={member.person.name ?? ""}
                 role={member.position}
@@ -116,9 +118,9 @@ export default async function VorstandPage() {
                 phone={member.person.phone}
               />
             ))}
-          </PersonList>
+          </VorstandPortraitGrid>
 
-          <p className="text-ink dark:text-night-text mt-8 max-w-[65ch] text-lg leading-relaxed">
+          <p className="text-ink dark:text-night-text mt-12 max-w-[65ch] text-lg leading-relaxed">
             Bei Fragen oder Anliegen an den Vorstand wenden Sie sich gerne per
             E-Mail an{" "}
             <a
