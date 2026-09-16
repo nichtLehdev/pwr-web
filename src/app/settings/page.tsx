@@ -420,7 +420,10 @@ export default function SettingsPage() {
           })}
         </nav>
 
-        <div className="mt-10 max-w-3xl">
+        {/* 48rem war zu eng — das Formular klebte als schmale Säule am linken
+            Rand, während die halbe Seite leer blieb. Die volle Satzbreite
+            wäre das andere Extrem: 650px pro Feld für Vor- und Nachname. */}
+        <div className="mt-10 max-w-5xl">
           <form onSubmit={handleSubmit}>
             {/* Profile Tab */}
             {activeTab === "profile" && (
