@@ -27,21 +27,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
+    // Eckig, ohne Schatten, kein `focus:outline-none` — der Knopf steht auch
+    // ausserhalb von `.programm`, wo der globale 3px-Ring nicht greift.
     const baseStyles =
-      "inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+      "semi-condensed inline-flex items-center justify-center font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
 
+    // Die Hauptaktion ist mit Tinte gefuellt, nicht mit Orange: Im Heft ist
+    // Orange eine Flaeche zum Markieren, nicht die Farbe des Handelns. Das
+    // behebt zugleich `bg-primary text-white` — weiss auf Orange sind 1,99:1
+    // und fallen durch.
     const variants = {
       primary:
-        "bg-primary text-white hover:bg-primary-dark dark:bg-primary-light dark:hover:bg-primary shadow-lg",
+        "bg-ink text-paper hover:bg-dark dark:bg-night-text dark:text-night dark:hover:bg-night-muted",
       secondary:
-        "bg-gray-100 text-gray-900 hover:bg-gray-200 dark:bg-dark-background-secondary dark:text-dark-text dark:hover:bg-dark-border",
-      danger: "bg-red-600 text-white hover:bg-red-700 shadow",
-      success: "bg-green-600 text-white hover:bg-green-700 shadow",
+        "bg-rule/60 text-ink hover:bg-rule dark:bg-night-rule dark:text-night-text dark:hover:bg-night-muted dark:hover:text-night",
+      danger: "bg-red-700 text-paper hover:bg-red-800",
+      success: "bg-green-700 text-paper hover:bg-green-800",
       ghost:
-        "text-gray-700 hover:bg-gray-100 dark:text-dark-text dark:hover:bg-dark-background-secondary",
+        "text-ink hover:bg-rule/60 dark:text-night-text dark:hover:bg-night-rule",
       outline:
-        "border-2 border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background-secondary",
-      link: "text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary underline-offset-4 hover:underline bg-transparent shadow-none",
+        "border-ink text-ink hover:bg-ink hover:text-paper dark:border-night-text dark:text-night-text dark:hover:bg-night-text dark:hover:text-night border-2 bg-transparent",
+      link: "text-primary-ink dark:text-primary underline-offset-4 hover:underline bg-transparent",
     };
 
     const sizes = {
