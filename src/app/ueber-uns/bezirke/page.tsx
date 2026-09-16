@@ -1,18 +1,21 @@
 "use client";
 
+import { useState } from "react";
+import { BuildingIcon } from "lucide-react";
+import { api, type RouterOutputs } from "@/trpc/react";
 import LoadingSpinner from "@/app/_components/general/loading-spinner";
 import PublicPage from "@/app/_components/general/public-page";
-import { api, type RouterOutputs } from "@/trpc/react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
+import { BezirkLabel } from "@/app/_components/programmheft/bezirk-label";
+import { ClosingCall } from "@/app/_components/programmheft/closing-call";
+import { Note } from "@/app/_components/programmheft/note";
+import { Panel } from "@/app/_components/programmheft/panel";
 import {
-  ArrowRightIcon,
-  BuildingIcon,
-  MailIcon,
-  MousePointerIcon,
-  PhoneIcon,
-} from "lucide-react";
+  PageSection,
+  Split,
+} from "@/app/_components/programmheft/page-section";
+import { PersonContactRow } from "@/app/_components/programmheft/person-contact-row";
+import { Heading } from "@/app/_components/programmheft/section-head";
+
 type Bezirk = RouterOutputs["bezirke"]["getAll"][number];
 
 function getBezirkInfo(id: number) {
@@ -55,9 +58,9 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
     );
 
   return (
-    <div className="flex flex-col items-start gap-6 lg:flex-row">
+    <div className="flex flex-col items-start gap-10 lg:flex-row">
       {/* SVG Map */}
-      <div className="relative w-full shrink-0 lg:w-2/3">
+      <Panel className="relative w-full shrink-0 lg:w-2/3">
         <style>{`
           .bezirk-path {
             cursor: pointer;
@@ -267,40 +270,31 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
             onMouseLeave={() => setHoveredBezirk(null)}
           />
         </svg>
-      </div>
-      {/* Info Panel */}
-      <div className="my-auto w-full lg:sticky lg:top-24 lg:w-1/3">
-        <div className="dark:border-dark-border dark:bg-dark-surface flex min-h-[200px] items-center justify-center rounded-lg border-2 border-gray-200 bg-gray-50 p-6">
+      </Panel>
+      {/* Info-Spalte */}
+      <div className="w-full lg:sticky lg:top-24 lg:w-1/3">
+        <div className="border-ink dark:border-night-text border-t-2 pt-6">
           {currentBezirk ? (
-            <div className="text-center">
-              <div
-                className={`h-16 w-16 bg-district-${currentBezirk.number} mx-auto mb-4 flex items-center justify-center rounded-full text-2xl font-bold text-white`}
-              >
-                {String(currentBezirk.number).padStart(2, "0")}
-              </div>
-              <h3 className="text-dark dark:text-dark-text mb-2 text-xl font-bold">
+            <div>
+              <h3 className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
                 {currentBezirk.shortName}
               </h3>
-              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-dark dark:text-night-muted mt-1 text-[0.9375rem]">
+                <BezirkLabel bezirk={currentBezirk} variant="short" />
+              </p>
+              <p className="text-dark dark:text-night-muted mt-4 text-base leading-relaxed">
                 {getBezirkInfo(currentBezirk.number)}
               </p>
               {(() => {
                 const mainObleute = getMainObleute(currentBezirk);
                 return mainObleute.length > 0 ? (
-                  <div className="dark:border-dark-border border-t border-gray-300 pt-4">
+                  <div className="border-rule dark:border-night-rule mt-6 space-y-4 border-t pt-4">
                     {mainObleute.map((obmann, idx) => (
-                      <div
-                        key={idx}
-                        className={
-                          idx > 0
-                            ? "dark:border-dark-border mt-3 border-t border-gray-200 pt-3"
-                            : ""
-                        }
-                      >
-                        <p className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+                      <div key={idx}>
+                        <p className="text-dark dark:text-night-muted text-sm">
                           {obmann.roleName}
                         </p>
-                        <p className="text-dark dark:text-dark-text font-semibold">
+                        <p className="text-ink dark:text-night-text font-semibold">
                           {obmann.name}
                         </p>
                       </div>
@@ -310,10 +304,10 @@ function BezirkeMap({ bezirke }: { bezirke: Bezirk[] }) {
               })()}
             </div>
           ) : (
-            <div className="text-center text-gray-400">
-              <MousePointerIcon className="mx-auto mb-3 h-16 w-16 opacity-50" />
-              <p className="text-sm">Bewegen Sie die Maus über einen Bezirk</p>
-            </div>
+            <p className="text-dark dark:text-night-muted text-base leading-relaxed">
+              Bewegen Sie die Maus über einen Bezirk, um seine Ansprechpartner
+              zu sehen.
+            </p>
           )}
         </div>
       </div>
@@ -345,211 +339,144 @@ export default function BezirkePage() {
       }
     >
       {!bezirke.data ? (
-        <div className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-          <div className="container">
+        <div className="bg-paper dark:bg-night py-16 md:py-24">
+          <div className="sheet">
             <LoadingSpinner text={"Lade Bezirke..."} />
           </div>
         </div>
       ) : (
         <>
-          {/* Map Section */}
-          <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-            <div className="container">
-              <div className="mx-auto max-w-6xl">
-                <h2 className="text-dark dark:text-dark-text mb-8 text-center text-2xl font-bold md:text-3xl">
-                  Übersichtskarte der Bezirke
-                </h2>
+          {/* Übersichtskarte */}
+          <PageSection labelledBy="karte-heading" flush="top">
+            <Heading id="karte-heading" rule>
+              Übersichtskarte der Bezirke
+            </Heading>
 
-                {/* Desktop: Interactive Map */}
-                <div className="hidden md:block">
-                  <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-6 shadow-lg">
-                    <BezirkeMap bezirke={bezirke.data} />
-                    <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                      Klicken Sie auf einen Bezirk, um zu den Kontaktdaten zu
-                      springen
-                    </p>
-                  </div>
-                </div>
-
-                {/* Mobile: Text List */}
-                <div className="space-y-4 md:hidden">
-                  {bezirke.data.map((bezirk) => (
-                    <div
-                      key={bezirk.id}
-                      className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-4 shadow-md"
-                    >
-                      <div className="mb-2 flex items-center gap-3">
-                        <div
-                          className={`h-8 w-8 bg-district-${bezirk.number} flex items-center justify-center rounded-full text-sm font-bold text-white`}
-                        >
-                          {String(bezirk.number).padStart(2, "0")}
-                        </div>
-                        <h3 className="text-dark dark:text-dark-text font-bold">
-                          {bezirk.shortName}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {getBezirkInfo(bezirk.number)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Desktop: interaktive Karte */}
+            <div className="mt-8 hidden md:block">
+              <BezirkeMap bezirke={bezirke.data} />
+              <p className="text-dark dark:text-night-muted mt-4 text-sm">
+                Klicken Sie auf einen Bezirk, um zu den Kontaktdaten zu
+                springen.
+              </p>
             </div>
-          </section>
 
-          {/* Info Section */}
-          <section className="bg-background-secondary dark:bg-dark-background-secondary py-12 md:py-16">
-            <div className="container">
-              <div className="mx-auto max-w-4xl">
-                <div className="dark:bg-dark-surface dark:shadow-dark-border rounded-lg bg-white p-8 shadow-lg">
-                  <h2 className="text-dark dark:text-dark-text mb-4 text-2xl font-bold">
-                    Ihre Ansprechpartner vor Ort
-                  </h2>
-                  <p className="mb-4 leading-relaxed text-gray-600 dark:text-gray-400">
-                    Geleitet werden die Bezirke von einer Bezirksobfrau oder
-                    einem Bezirksobmann. Sprechen Sie die Bezirksobleute an,
-                    wenn Sie einen Posaunenchor in Ihrem Bereich suchen oder
-                    Fragen zu den besonderen Angeboten haben.
+            {/* Mobil: Liste statt Karte (keine Zeigegeräte-Interaktion) */}
+            <ul className="border-ink dark:border-night-text mt-8 border-t-2 md:hidden">
+              {bezirke.data.map((bezirk) => (
+                <li
+                  key={bezirk.id}
+                  className="border-rule dark:border-night-rule border-b py-4"
+                >
+                  <p className="condensed text-ink dark:text-night-text text-[1.5rem] leading-tight font-bold">
+                    {bezirk.shortName}
                   </p>
-                  <div className="bg-primary/10 dark:bg-primary/20 flex items-start gap-3 rounded-lg p-4">
-                    <ArrowRightIcon className="text-primary mt-1 h-6 w-6 shrink-0" />
-                    <div>
-                      <p className="text-dark dark:text-dark-text mb-1 font-semibold">
-                        Posaunenchor in der Nähe suchen
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Vorbeikommen und mitspielen! Herzliche Einladung dazu!
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+                  <p className="text-dark dark:text-night-muted mt-1 text-[0.9375rem]">
+                    <BezirkLabel bezirk={bezirk} variant="short" />
+                  </p>
+                  <p className="text-dark dark:text-night-muted mt-2 text-base leading-relaxed">
+                    {getBezirkInfo(bezirk.number)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </PageSection>
 
-          {/* Bezirke Grid */}
-          <section className="bg-background dark:bg-dark-background py-12 md:py-16 lg:py-20">
-            <div className="container">
-              <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Ansprechpartner-Hinweis */}
+          <PageSection labelledBy="ansprechpartner-intro-heading" rule>
+            <Split
+              head={
+                <Heading id="ansprechpartner-intro-heading">
+                  Ihre Ansprechpartner vor Ort
+                </Heading>
+              }
+              bodyClassName="mt-8"
+            >
+              <p className="text-ink dark:text-night-text max-w-[60ch] text-lg leading-relaxed">
+                Geleitet werden die Bezirke von einer Bezirksobfrau oder einem
+                Bezirksobmann. Sprechen Sie die Bezirksobleute an, wenn Sie
+                einen Posaunenchor in Ihrem Bereich suchen oder Fragen zu den
+                besonderen Angeboten haben.
+              </p>
+              {/* Rahmen statt Füllung: Der Schlussaufruf am Seitenende stellt
+                  dieselbe Bitte und ist der einzige orange Blickfang der
+                  Seite. Zweimal Orange nähme ihm seine Wirkung. */}
+              <Note
+                tone="info"
+                title="Posaunenchor in der Nähe suchen"
+                className="mt-6 max-w-[60ch]"
+              >
+                Vorbeikommen und mitspielen! Herzliche Einladung dazu!
+              </Note>
+            </Split>
+          </PageSection>
+
+          {/* Bezirke-Verzeichnis */}
+          <PageSection labelledBy="verzeichnis-heading" rule>
+            <Split
+              head={
+                <Heading id="verzeichnis-heading">
+                  Ansprechpartner nach Bezirk
+                </Heading>
+              }
+              bodyClassName="mt-8"
+            >
+              <ul className="border-ink dark:border-night-text border-t-2">
                 {bezirke.data.map((bezirk) => (
-                  <article
+                  <li
                     key={bezirk.id}
                     id={`bezirk-card-${bezirk.number}`}
-                    className="dark:bg-dark-surface dark:shadow-dark-border scroll-mt-24 overflow-hidden rounded-lg bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
+                    className="border-rule dark:border-night-rule scroll-mt-24 border-b py-8"
                   >
-                    {/* Header */}
-                    <div className={`bg-district-${bezirk.number} p-6`}>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-xl font-bold text-white">
-                          {String(bezirk.number).padStart(2, "0")}
-                        </div>
-                        <h3 className="text-xl font-bold text-white">
-                          {bezirk.shortName}
-                        </h3>
-                      </div>
-                    </div>
+                    <h3 className="condensed text-ink dark:text-night-text text-[1.75rem] leading-none font-extrabold">
+                      {bezirk.shortName}
+                    </h3>
+                    <p className="text-dark dark:text-night-muted mt-1.5 text-[0.9375rem]">
+                      <BezirkLabel bezirk={bezirk} variant="short" />
+                    </p>
+                    <p className="text-dark dark:text-night-muted mt-3 max-w-[60ch] text-base leading-relaxed">
+                      {getBezirkInfo(bezirk.number)}
+                    </p>
 
-                    {/* Content */}
-                    <div className="p-6">
-                      {bezirk.obleute.length > 0 && (
-                        <div className="space-y-8">
-                          {bezirk.obleute.map((obmann, idx) => (
-                            <div
-                              key={idx}
-                              className={`flex items-start gap-5 ${
-                                idx > 0
-                                  ? "dark:border-dark-border border-t border-gray-200 pt-8"
-                                  : ""
-                              }`}
-                            >
-                              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-100 md:h-28 md:w-28">
-                                <Image
-                                  src={
-                                    obmann.image?.url ||
-                                    "/images/profile-placeholder.jpg"
-                                  }
-                                  alt={
-                                    obmann.image?.alt ||
-                                    `Profilbild von ${obmann.name ?? "Obperson"}`
-                                  }
-                                  width={400}
-                                  height={400}
-                                  className="h-full w-full object-cover object-center"
-                                />
-                              </div>
-                              <div className="space-around h-full min-w-0 flex-1">
-                                <span
-                                  className={`mb-0 inline-block rounded-full pt-1 text-xs font-semibold bg-district-${bezirk.number}/20`}
-                                >
-                                  {obmann.roleName}
-                                </span>
-                                <h4 className="text-dark dark:text-dark-text mb-2 text-lg font-bold">
-                                  {obmann.name}
-                                </h4>
-                                <div className="space-y-1">
-                                  {obmann.address && (
-                                    <div className="flex items-start gap-2.5">
-                                      <BuildingIcon className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-                                      <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                                        {obmann.address}
-                                      </p>
-                                    </div>
-                                  )}
-
-                                  {obmann.phone && (
-                                    <a
-                                      href={`tel:${obmann.phone.replace(
-                                        /[\s-]/g,
-                                        "",
-                                      )}`}
-                                      className="hover:text-primary flex items-center gap-2.5 text-sm text-gray-600 transition-colors dark:text-gray-400"
-                                    >
-                                      <PhoneIcon className="h-4 w-4 shrink-0 text-gray-400" />
-                                      {obmann.phone}
-                                    </a>
-                                  )}
-
-                                  {obmann.email && (
-                                    <Link
-                                      href={`mailto:${obmann.email}`}
-                                      className="text-primary hover:text-primary-dark flex items-center gap-2.5 text-sm font-semibold transition-colors"
-                                    >
-                                      <MailIcon className="h-4 w-4 shrink-0 text-gray-400" />
-                                      E-Mail senden
-                                    </Link>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </article>
+                    {bezirk.obleute.length > 0 && (
+                      <ul className="border-ink dark:border-night-text mt-6 border-t-2">
+                        {bezirk.obleute.map((obmann, idx) => (
+                          <li key={idx}>
+                            <PersonContactRow
+                              name={obmann.name ?? ""}
+                              role={obmann.roleName}
+                              image={obmann.image}
+                              email={obmann.email}
+                              phone={obmann.phone}
+                              bio={obmann.bio}
+                              meta={
+                                obmann.address ? (
+                                  <p className="text-dark dark:text-night-muted mt-2 flex items-start gap-2 text-[0.9375rem]">
+                                    <BuildingIcon
+                                      aria-hidden
+                                      className="mt-0.5 h-4 w-4 shrink-0"
+                                    />
+                                    <span>{obmann.address}</span>
+                                  </p>
+                                ) : undefined
+                              }
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
                 ))}
-              </div>
-            </div>
-          </section>
+              </ul>
+            </Split>
+          </PageSection>
 
-          {/* CTA Section */}
-          <section className="bg-primary py-12 text-white md:py-16 lg:py-20">
-            <div className="container text-center">
-              <h2 className="mb-4 text-2xl font-bold md:text-3xl lg:text-4xl">
-                Einen Chor in Ihrer Nähe finden?
-              </h2>
-              <p className="mx-auto mb-8 max-w-2xl text-lg md:text-xl">
-                Kontaktieren Sie Ihre Bezirksobfrau oder Ihren Bezirksobmann, um
-                einen Posaunenchor in Ihrer Nähe zu finden!
-              </p>
-              <Link
-                href="/mitmachen/chor-finden"
-                className="text-primary inline-block rounded-lg bg-white px-8 py-3 font-semibold transition-colors hover:bg-gray-100"
-              >
-                Chor finden
-              </Link>
-            </div>
-          </section>
+          <ClosingCall
+            id="chor-finden-heading"
+            title="Einen Chor in Ihrer Nähe finden?"
+            text="Kontaktieren Sie Ihre Bezirksobfrau oder Ihren Bezirksobmann, um einen Posaunenchor in Ihrer Nähe zu finden!"
+            actions={[{ href: "/mitmachen/chor-finden", label: "Chor finden" }]}
+          />
         </>
       )}
     </PublicPage>
